@@ -212,9 +212,22 @@ jq -n --arg l "$LIFECYCLE_MMD" --arg p "$PIPELINE_MMD" --arg j "$PROJECTION_MMD"
                           supervision: {title: "The core model", source: "README.md mental model", mermaid: $s}}}' > "$OUT/diagrams.json"
 
 # ---------------------------------------------------------------- docs index (from docs/README.md table)
-DOCS="$(grep -E '^\| \[`' "$ROOT/docs/README.md" | sed -E 's/^\| \[`([^`]+)`\]\(([^)]+)\) \| ([^|]+) \| ([^|]+) \|$/\2|\3|\4/' | grep -vE '^\|' \
+# Only the first table becomes site routes. The "## Reference files" table below it lists
+# repository-only files whose content the site presents through other routes, so it is cut
+# here; site-check requires a route for every entry in docs.json.
+DOCS="$(awk '/^## Reference files/{exit} /^\| \[`/{print}' "$ROOT/docs/README.md" | sed -E 's/^\| \[`([^`]+)`\]\(([^)]+)\) \| ([^|]+) \| ([^|]+) \|$/\2|\3|\4/' | grep -vE '^\|' \
   | jq -Rn '[inputs | split("|") | {path: (.[0] | ltrimstr("../")), audience: (.[1]|gsub("^ +| +$";"")), summary: (.[2]|gsub("^ +| +$";""))}]')"
 printf '%s' "$DOCS" | jq '{schema:1, docs:.}' > "$OUT/docs.json"
+# Every file in docs/ is indexed in one of the two tables. An unindexed document is how the
+# index silently went stale before, so it is an error rather than a warning.
+BQ='`'
+for f in "$ROOT"/docs/*.md "$ROOT"/docs/*.yaml; do
+  [ -e "$f" ] || continue
+  b="$(basename "$f")"
+  [ "$b" = README.md ] && continue
+  grep -qF "[$BQ$b$BQ](" "$ROOT/docs/README.md" || {
+    echo "generate-site-data: docs/$b is in no table in docs/README.md (add a row; the site and the index both read it)" >&2; exit 10; }
+done
 
 # ---------------------------------------------------------------- derived Zola content (site/content/docs/*.md)
 # Long-form pages are the canonical Markdown with a generated front matter; they are written
