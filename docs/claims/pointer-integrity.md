@@ -1,0 +1,25 @@
+# Every repository-relative reference in the always-loaded file is proven to resolve
+
+## What it means
+
+The always-loaded instruction file may point workers at other files (`docs/DESIGN.md`, `.majordomus/state/decisions.md`). `doctor` extracts every repository-relative Markdown link from it and checks the target exists. A worker following a broken pointer wastes a session on a file that is not there.
+
+## How it works
+
+`lib/doctor.sh` scans the always-loaded projection for `](path)` links that are not absolute URLs and tests each against the filesystem relative to the file's directory. Each unresolved reference is a failing finding naming the path.
+
+## How to see it
+
+```bash
+sed -i.bak 's#docs/DESIGN.md#docs/MISSING.md#' .majordomus/providers/body.md && majordomus update --force
+majordomus doctor
+# FAIL links       CLAUDE.md — reference docs/MISSING.md does not resolve
+```
+
+## What it does not cover
+
+Only the always-loaded file is checked, and only file paths; anchors within files and external URLs are not verified.
+
+## Why it exists
+
+The source environment's instruction hubs accumulated over a hundred dangling references and headlined five onboarding scripts that did not exist as the recommended workflow. The linter that finally caught them had a single sharp line: an unresolvable reference is an error.

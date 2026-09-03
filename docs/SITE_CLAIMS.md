@@ -10,31 +10,31 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 
 | claim | source | implementation | test |
 |---|---|---|---|
-| The canonical policy is parsed and rejected if it contains an unknown key | `docs/SCHEMAS.md` | `lib/common.sh` | `test/cases/00_yaml_flatten.sh` |
-| Every profile is parsed, its unknown keys rejected, and the default profile proven to exist | `docs/SCHEMAS.md` | `lib/doctor.sh` | `test/cases/02_doctor_basic.sh` |
-| Every enforcement the policy declares is reconciled against what actually runs | `docs/DESIGN.md` | `lib/doctor.sh` | `test/cases/03_update.sh` |
-| Exit codes are a contract, and no code means "warn and continue" | `docs/CLI.md` | `lib/common.sh` | `test/cases/03_update.sh` |
-| Provider instruction files are generated from the one policy, deterministically | `docs/DESIGN.md` | `lib/update.sh` | `test/cases/03_update.sh` |
-| Every generated instruction file is fingerprinted, and a hand edit is detected | `docs/SCHEMAS.md` | `lib/update.sh` | `test/cases/03_update.sh` |
-| A hand-edited instruction file is never silently overwritten | `docs/CLI.md` | `lib/update.sh` | `test/cases/03_update.sh` |
-| The always-loaded instruction file has a line budget with a failing check | `share/skeleton/policy.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
-| Every repository-relative reference in the always-loaded file is proven to resolve | `docs/DESIGN.md` | `lib/doctor.sh` | `test/cases/03_update.sh` |
-| A hardcoded count in the always-loaded file is a failure | `docs/DESIGN.md` | `lib/doctor.sh` | `test/cases/03_update.sh` |
-| The append-only ledger and handover store have retention caps that are checked | `share/skeleton/policy.yaml` | `lib/doctor.sh` | `test/cases/02_doctor_basic.sh` |
-| Installing into a repository that already has an installation is refused | `docs/CLI.md` | `lib/init.sh` | `test/cases/01_init.sh` |
-| Every finding carries the command that reproduces it | `docs/DESIGN.md` | `lib/common.sh` | `test/cases/02_doctor_basic.sh` |
-| Nothing performs a network call, evaluates generated text, or deletes recursively | `docs/DESIGN.md` | `bin/majordomus` | `test/cases/08_no_forbidden_constructs.sh` |
-| A task is started with a declared file scope and a profile, and only one task is active per checkout | `docs/CLI.md` | `lib/start.sh` | `test/cases/04_start_check.sh` |
-| Identity fields on every state record are computed from git and never authored | `docs/SCHEMAS.md` | `lib/start.sh` | `test/cases/04_start_check.sh` |
-| check reports whether state, scope, blockers and checkpoint age are consistent right now | `docs/CLI.md` | `lib/check.sh` | `test/cases/04_start_check.sh` |
-| A touched file outside the claimed scope is a failure, not a warning | `docs/DESIGN.md` | `lib/check.sh` | `test/cases/04_start_check.sh` |
-| State read back is labelled exact, advanced, diverged or different_context against git | `docs/SCHEMAS.md` | `lib/common.sh` | `test/cases/04_start_check.sh` |
-| Overlap between parallel workers is computed on claimed paths in both containment directions | `docs/DESIGN.md` | `lib/check.sh` | `test/cases/04_start_check.sh` |
-| watch reports policy, projection, state, scope, handover, verification, staleness and retention drift | `docs/DESIGN.md` | `lib/watch.sh` | `test/cases/07_watch.sh` |
-| handover writes an append-only record with computed front matter and required sections | `docs/SCHEMAS.md` | `lib/handover.sh` | `test/cases/05_handover.sh` |
-| Handovers carry durable facts, never conversation transcripts | `docs/DESIGN.md` | `lib/handover.sh` | `test/cases/05_handover.sh` |
-| finish evaluates the finish contract line by line and refuses when any line is unmet | `docs/CLI.md` | `lib/finish.sh` | `test/cases/06_finish.sh` |
-| An outcome is a value from a closed vocabulary, not free text | `docs/SCHEMAS.md` | `lib/finish.sh` | `test/cases/06_finish.sh` |
+| [The canonical policy is parsed and rejected if it contains an unknown key](https://korczis.github.io/prismatic-majordomus/guarantees/policy-parse/) | `docs/SCHEMAS.md` | `lib/common.sh` | `test/cases/00_yaml_flatten.sh` |
+| [Every profile is parsed, its unknown keys rejected, and the default profile proven to exist](https://korczis.github.io/prismatic-majordomus/guarantees/profile-validate/) | `docs/SCHEMAS.md` | `lib/doctor.sh` | `test/cases/02_doctor_basic.sh` |
+| [Every enforcement the policy declares is reconciled against what actually runs](https://korczis.github.io/prismatic-majordomus/guarantees/wiring-reconciliation/) | `docs/DESIGN.md` | `lib/doctor.sh` | `test/cases/03_update.sh` |
+| [Exit codes are a contract, and no code means "warn and continue"](https://korczis.github.io/prismatic-majordomus/guarantees/exit-code-contract/) | `docs/CLI.md` | `lib/common.sh` | `test/cases/03_update.sh` |
+| [Provider instruction files are generated from the one policy, deterministically](https://korczis.github.io/prismatic-majordomus/guarantees/projection-generation/) | `docs/DESIGN.md` | `lib/update.sh` | `test/cases/03_update.sh` |
+| [Every generated instruction file is fingerprinted, and a hand edit is detected](https://korczis.github.io/prismatic-majordomus/guarantees/projection-fingerprint/) | `docs/SCHEMAS.md` | `lib/update.sh` | `test/cases/03_update.sh` |
+| [A hand-edited instruction file is never silently overwritten](https://korczis.github.io/prismatic-majordomus/guarantees/no-silent-overwrite/) | `docs/CLI.md` | `lib/update.sh` | `test/cases/03_update.sh` |
+| [The always-loaded instruction file has a line budget with a failing check](https://korczis.github.io/prismatic-majordomus/guarantees/context-budget/) | `share/skeleton/policy.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
+| [Every repository-relative reference in the always-loaded file is proven to resolve](https://korczis.github.io/prismatic-majordomus/guarantees/pointer-integrity/) | `docs/DESIGN.md` | `lib/doctor.sh` | `test/cases/03_update.sh` |
+| [A hardcoded count in the always-loaded file is a failure](https://korczis.github.io/prismatic-majordomus/guarantees/no-counts-in-context/) | `docs/DESIGN.md` | `lib/doctor.sh` | `test/cases/03_update.sh` |
+| [The append-only ledger and handover store have retention caps that are checked](https://korczis.github.io/prismatic-majordomus/guarantees/retention-caps/) | `share/skeleton/policy.yaml` | `lib/doctor.sh` | `test/cases/02_doctor_basic.sh` |
+| [Installing into a repository that already has an installation is refused](https://korczis.github.io/prismatic-majordomus/guarantees/init-refuses/) | `docs/CLI.md` | `lib/init.sh` | `test/cases/01_init.sh` |
+| [Every finding carries the command that reproduces it](https://korczis.github.io/prismatic-majordomus/guarantees/reproduce-command/) | `docs/DESIGN.md` | `lib/common.sh` | `test/cases/02_doctor_basic.sh` |
+| [Nothing performs a network call, evaluates generated text, or deletes recursively](https://korczis.github.io/prismatic-majordomus/guarantees/no-network/) | `docs/DESIGN.md` | `bin/majordomus` | `test/cases/08_no_forbidden_constructs.sh` |
+| [A task is started with a declared file scope and a profile, and only one task is active per checkout](https://korczis.github.io/prismatic-majordomus/guarantees/scoped-task/) | `docs/CLI.md` | `lib/start.sh` | `test/cases/04_start_check.sh` |
+| [Identity fields on every state record are computed from git and never authored](https://korczis.github.io/prismatic-majordomus/guarantees/git-identity/) | `docs/SCHEMAS.md` | `lib/start.sh` | `test/cases/04_start_check.sh` |
+| [check reports whether state, scope, blockers and checkpoint age are consistent right now](https://korczis.github.io/prismatic-majordomus/guarantees/consistency-check/) | `docs/CLI.md` | `lib/check.sh` | `test/cases/04_start_check.sh` |
+| [A touched file outside the claimed scope is a failure, not a warning](https://korczis.github.io/prismatic-majordomus/guarantees/scope-enforcement/) | `docs/DESIGN.md` | `lib/check.sh` | `test/cases/04_start_check.sh` |
+| [State read back is labelled exact, advanced, diverged or different_context against git](https://korczis.github.io/prismatic-majordomus/guarantees/divergence-label/) | `docs/SCHEMAS.md` | `lib/common.sh` | `test/cases/04_start_check.sh` |
+| [Overlap between parallel workers is computed on claimed paths in both containment directions](https://korczis.github.io/prismatic-majordomus/guarantees/overlap-report/) | `docs/DESIGN.md` | `lib/check.sh` | `test/cases/04_start_check.sh` |
+| [watch reports policy, projection, state, scope, handover, verification, staleness and retention drift](https://korczis.github.io/prismatic-majordomus/guarantees/drift-watch/) | `docs/DESIGN.md` | `lib/watch.sh` | `test/cases/07_watch.sh` |
+| [handover writes an append-only record with computed front matter and required sections](https://korczis.github.io/prismatic-majordomus/guarantees/handover-record/) | `docs/SCHEMAS.md` | `lib/handover.sh` | `test/cases/05_handover.sh` |
+| [Handovers carry durable facts, never conversation transcripts](https://korczis.github.io/prismatic-majordomus/guarantees/no-transcripts/) | `docs/DESIGN.md` | `lib/handover.sh` | `test/cases/05_handover.sh` |
+| [finish evaluates the finish contract line by line and refuses when any line is unmet](https://korczis.github.io/prismatic-majordomus/guarantees/finish-contract/) | `docs/CLI.md` | `lib/finish.sh` | `test/cases/06_finish.sh` |
+| [An outcome is a value from a closed vocabulary, not free text](https://korczis.github.io/prismatic-majordomus/guarantees/typed-outcome/) | `docs/SCHEMAS.md` | `lib/finish.sh` | `test/cases/06_finish.sh` |
 
 ## advisory
 
@@ -42,11 +42,11 @@ Projected into the worker's instructions. Whether a worker honours it is not obs
 
 | claim | source | implementation | test |
 |---|---|---|---|
-| Capability class, reasoning effort, output verbosity, context and verification are five independent axes | `share/skeleton/profiles/implementation.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
-| A profile names a capability class rather than a vendor model | `share/skeleton/profiles/deep-work.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
-| A profile declares which context a worker should load and no more | `share/skeleton/profiles/routine.yaml` | `lib/check.sh` | `test/cases/04_start_check.sh` |
-| Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed | `share/skeleton/profiles/debugging.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
-| A profile sets how often a worker should checkpoint, and a stale task is reported | `share/skeleton/policy.yaml` | `lib/check.sh` | `test/cases/04_start_check.sh` |
+| [Capability class, reasoning effort, output verbosity, context and verification are five independent axes](https://korczis.github.io/prismatic-majordomus/guarantees/profile-axes/) | `share/skeleton/profiles/implementation.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
+| [A profile names a capability class rather than a vendor model](https://korczis.github.io/prismatic-majordomus/guarantees/capability-class/) | `share/skeleton/profiles/deep-work.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
+| [A profile declares which context a worker should load and no more](https://korczis.github.io/prismatic-majordomus/guarantees/minimum-context/) | `share/skeleton/profiles/routine.yaml` | `lib/check.sh` | `test/cases/04_start_check.sh` |
+| [Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed](https://korczis.github.io/prismatic-majordomus/guarantees/effort-escalation/) | `share/skeleton/profiles/debugging.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
+| [A profile sets how often a worker should checkpoint, and a stale task is reported](https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-interval/) | `share/skeleton/policy.yaml` | `lib/check.sh` | `test/cases/04_start_check.sh` |
 
 ## planned
 
@@ -54,11 +54,11 @@ Specified and not implemented. Named so the omission is visible.
 
 | claim | source | implementation | test |
 |---|---|---|---|
-| Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits | `docs/DESIGN.md` | — | — |
-| Execution telemetry will be recorded once a provider exposes it honestly | `docs/DESIGN.md` | — | — |
-| Cost per accepted outcome will be reported from measured data only | `docs/DESIGN.md` | — | — |
-| Routing recommendations will be derived from measured cost and outcome data | `docs/DESIGN.md` | — | — |
-| One policy will be shared across repositories and workers | `docs/DESIGN.md` | — | — |
+| [Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits](https://korczis.github.io/prismatic-majordomus/guarantees/runtime-adapters/) | `docs/DESIGN.md` | — | — |
+| [Execution telemetry will be recorded once a provider exposes it honestly](https://korczis.github.io/prismatic-majordomus/guarantees/telemetry/) | `docs/DESIGN.md` | — | — |
+| [Cost per accepted outcome will be reported from measured data only](https://korczis.github.io/prismatic-majordomus/guarantees/cost-per-outcome/) | `docs/DESIGN.md` | — | — |
+| [Routing recommendations will be derived from measured cost and outcome data](https://korczis.github.io/prismatic-majordomus/guarantees/routing/) | `docs/DESIGN.md` | — | — |
+| [One policy will be shared across repositories and workers](https://korczis.github.io/prismatic-majordomus/guarantees/shared-policy/) | `docs/DESIGN.md` | — | — |
 
 ## rejected
 
@@ -66,5 +66,5 @@ Considered and deliberately refused, with the reason recorded.
 
 | claim | source | implementation | test |
 |---|---|---|---|
-| Dependencies between tasks are deliberately not represented | `docs/DESIGN.md` | — | — |
+| [Dependencies between tasks are deliberately not represented](https://korczis.github.io/prismatic-majordomus/guarantees/task-dependencies/) | `docs/DESIGN.md` | — | — |
 
