@@ -1,0 +1,16 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{%- set c = [x for x in caps.claims if x.id == page.extra.claim_id][0] -%}
+<div class="max-w-3xl">
+  <p class="flex flex-wrap items-center gap-3">{{ <badge status={c.status} /> }}<span class="text-sm text-body">{{ caps.statuses[c.status] }}</span></p>
+  {% if c.note %}<p class="mt-6 text-base text-heading">{{ c.note }}</p>{% endif %}
+  <dl class="mt-8 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
+    <dt class="text-body-subtle">defined in</dt><dd class="min-w-0 break-all"><a href="{{ project.repository_url }}/blob/master/{{ c.source }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></dd>
+    <dt class="text-body-subtle">implemented in</dt><dd class="min-w-0 break-all">{% if c.implementation %}<a href="{{ project.repository_url }}/blob/master/{{ c.implementation }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% else %}<span class="font-mono text-body-subtle">nothing yet</span>{% endif %}</dd>
+    <dt class="text-body-subtle">proved by</dt><dd class="min-w-0 break-all">{% if c.test %}<a href="{{ project.repository_url }}/blob/master/{{ c.test }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a>{% else %}<span class="font-mono text-body-subtle">no test</span>{% endif %}</dd>
+    <dt class="text-body-subtle">claim id</dt><dd class="font-mono text-heading">{{ c.id }}</dd>
+  </dl>
+  <p class="mt-8 text-sm text-body"><a href="{{ get_url(path="/guarantees/" ~ c.status ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">All {{ c.status }} claims →</a> · <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">The full matrix →</a></p>
+</div>
+{% endblock body %}

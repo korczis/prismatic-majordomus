@@ -42,6 +42,9 @@ for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/docs/*.md; do
 ${f#"$ROOT"/}"; done
 for f in $INPUTS; do [ -f "$ROOT/$f" ] || { echo "generate-site-data: canonical input missing: $f" >&2; exit 12; }; done
 
+# link rewriting for derived Markdown (repository paths -> site routes)
+LINKSED='s#\](\.\./AGENTS\.md)#](@/docs/contract.md)#g; s#\](AGENTS\.md)#](@/docs/contract.md)#g; s#\](\.\./CONTRIBUTING\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md)#g; s#\](\.\./SECURITY\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md)#g; s#\](CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](docs/CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](README\.md)#](@/docs/_index.md)#g; s#\]((\.\./)?test/cases/)#](https://github.com/korczis/prismatic-majordomus/tree/master/test/cases/)#g'
+
 flat() { local t; t="$(mktemp "${TMPDIR:-/tmp}/mj.f.XXXXXX")"; mj_yaml_flatten "$1" > "$t" || { echo "generate-site-data: $1 does not parse" >&2; exit 10; }; printf '%s' "$t"; }
 yv() { mj_yget "$1" "$2"; }
 jstr() { jq -Rn --arg v "$1" '$v'; }           # JSON string
@@ -162,6 +165,34 @@ jq -n --arg finish "$FINISH_BLOCK" --arg problem "$(section_of "$ROOT/README.md"
   --arg limits "$(section_of "$ROOT/README.md" "Limitations" "Roadmap")" \
   '{schema:1, finish_transcript:$finish, problem_md:$problem, not_md:$notwhat, limitations_md:$limits, does:$does}' > "$OUT/readme.json"
 
+# ---------------------------------------------------------------- commands.json (CLI reference sections per command)
+# docs/CLI.md has one `## `majordomus <name>`` section per command; each becomes a page.
+{
+  printf '{"schema":1,"commands":['
+  first=1
+  for name in $(jq -r '.commands[].name' "$OUT/project.json"); do
+    [ "$name" = version ] && continue
+    body="$(awk -v h="## \`majordomus $name" 'index($0,h)==1{f=1;next} f&&/^## /{exit} f' "$ROOT/docs/CLI.md" | sed -E "$LINKSED")"
+    [ -n "$body" ] || { echo "generate-site-data: docs/CLI.md has no section for command '$name'" >&2; exit 10; }
+    [ "$first" = 1 ] || printf ','; first=0
+    jq -cn --arg n "$name" --arg s "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/project.json")" \
+      --argjson ro "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .read_only' "$OUT/project.json")" --arg body "$body" \
+      '{name:$n, summary:$s, read_only:$ro, doc_md:$body}'
+  done
+  printf ']}'
+} | jq . > "$OUT/commands.json"
+
+# ---------------------------------------------------------------- responsibilities (README "What it does" rows, cross-linked)
+# The cross-links are data: which command owns a responsibility and which claims mention it, by
+# a keyword per row. Kept here, not in templates, so the templates only render.
+RESP_KEYS='{"Policy":[null,"policy|unknown key"],"Projection":["update","projection|instruction file|hand-edited"],"State":["start","identity|state|divergence"],"Scope":["check","scope|overlap"],"Profiles":["start","profile|capability class|axes|checkpoint|escalat"],"Handover":["handover","handover|transcript"],"Finish":["finish","finish|outcome"],"Doctor":["doctor","wiring|exit code|budget|resolve|count|retention|refused|reproduce|network"],"Watch":["watch","drift"]}'
+jq --argjson keys "$RESP_KEYS" --slurpfile caps "$OUT/capabilities.json" '
+  .does |= map(. as $row
+    | ($keys[$row.title] // [null, "(?!)"]) as $k
+    | . + {slug: ($row.title | ascii_downcase),
+           command: $k[0],
+           claim_ids: [ $caps[0].claims[] | select(.claim | test($k[1]; "i")) | .id ]})' "$OUT/readme.json" > "$OUT/readme.json.tmp" && mv "$OUT/readme.json.tmp" "$OUT/readme.json"
+
 # ---------------------------------------------------------------- diagrams.json (Mermaid source from data, never hand-drawn)
 LIFECYCLE_MMD="$(printf 'stateDiagram-v2\n    [*] --> active: start\n    active --> active: check --checkpoint\n    active --> handed_over: handover --close\n    handed_over --> [*]: next start archives the record\n'; for o in $(printf '%s' "$OUTCOMES" | jq -r '.[]'); do printf '    active --> %s: finish --outcome %s\n    %s --> [*]\n' "$o" "$o" "$o"; done)"
 PIPELINE_MMD="$(printf 'flowchart LR\n    subgraph canonical\n        A[share/skeleton]\n        B[docs + README]\n        C[docs/CLAIMS.yaml]\n    end\n    G[scripts/generate-site-data]\n    D[(site/data/generated)]\n    Z[Zola]\n    F[Tailwind + Flowbite + Alpine]\n    P[GitHub Pages]\n    A --> G\n    B --> G\n    C --> G\n    G --> D --> Z --> F --> P\n')"
@@ -185,7 +216,6 @@ printf '%s' "$DOCS" | jq '{schema:1, docs:.}' > "$OUT/docs.json"
 CONTENT="$ROOT/site/content/docs"
 [ "$CHECK" = 1 ] && CONTENT="$OUT/content-docs"
 rm -rf "$CONTENT"; mkdir -p "$CONTENT"
-LINKSED='s#\](\.\./AGENTS\.md)#](@/docs/contract.md)#g; s#\](AGENTS\.md)#](@/docs/contract.md)#g; s#\](\.\./CONTRIBUTING\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md)#g; s#\](\.\./SECURITY\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md)#g; s#\](CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](docs/CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](README\.md)#](@/docs/_index.md)#g; s#\]((\.\./)?test/cases/)#](https://github.com/korczis/prismatic-majordomus/tree/master/test/cases/)#g'
 for d in DESIGN CLI SCHEMAS CONCEPTS ADOPTION ECONOMICS EXTRACTION_REPORT; do
   src="$ROOT/docs/$d.md"; slug="$(printf '%s' "$d" | tr 'A-Z_' 'a-z-')"
   title="$(grep -m1 '^# ' "$src" | sed 's/^# //; s/ — .*//')"
@@ -229,6 +259,28 @@ COMMIT="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 jq -n --arg v "$VERSION" --arg c "$COMMIT" --arg h "$HASH" --argjson g "$GEN_VERSION" --arg inputs "$INPUTS" \
   '{schema:1, source_version:$v, source_commit:$c, source_hash:$h, generator_version:$g, input_files: ($inputs | split("\n"))}' > "$OUT/source.json"
 
+# ---------------------------------------------------------------- derived section pages (every tile is a page)
+mk_section() { # dir, title, description, section template, page template, weight
+  local d="$CONTENT_ROOT/$1"; mkdir -p "$d"
+  printf -- '+++\ntitle = %s\ndescription = %s\nsort_by = "weight"\ntemplate = "%s"\npage_template = "%s"\nweight = %s\n+++\n' "$(jstr "$2")" "$(jstr "$3")" "$4" "$5" "$6" > "$d/_index.md"
+}
+CONTENT_ROOT="$ROOT/site/content"; [ "$CHECK" = 1 ] && CONTENT_ROOT="$OUT/content"
+rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands"
+mk_section profiles "Execution profiles" "Capability class, reasoning effort, output verbosity, presentation, context toggles and verification are independent fields. Rendered from the profile files a fresh install writes." profiles.html profile.html 30
+i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jq -Rn 'input')" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
+mk_section guarantees "Guaranteed, advisory, planned" "What Majordomus actually does today, row by row, with the file that implements it and the test that proves it." guarantees.html claim.html 40
+i=0; for st in guaranteed advisory planned rejected; do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "status.html"\n[extra]\nstatus = %s\n+++\n' "$(jstr "$(printf '%s' "$st" | awk '{print toupper(substr($0,1,1)) substr($0,2)}') capabilities")" "$(jq -r --arg s "$st" '.statuses[$s]' "$OUT/capabilities.json" | jq -Rn 'input')" "$i" "$(jstr "$st")" > "$CONTENT_ROOT/guarantees/$st.md"; done
+jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | while IFS="$(printf '\t')" read -r id claim st; do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nclaim_id = %s\nstatus = %s\n+++\n' "$(jstr "$claim")" "$(jstr "Status: $st. Source, implementation and test for this claim.")" "$((i+10))" "$(jstr "$id")" "$(jstr "$st")" > "$CONTENT_ROOT/guarantees/$id.md"; done
+mk_section supervises "What Majordomus supervises" "Nine responsibilities, one directory. Each is a file in .majordomus/ and a subcommand that reads it." supervises-section.html responsibility.html 20
+i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while IFS="$(printf '\t')" read -r slug title text; do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$text" | sed -E 's/`([^`]*)`/\1/g' | jq -Rn 'input')" "$i" "$(jstr "$slug")" > "$CONTENT_ROOT/supervises/$slug.md"; done
+mk_section commands "Commands" "One executable, eight subcommands. Exit codes are a contract." commands-section.html command.html 25
+i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jq -Rn 'input')" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
+
 # ---------------------------------------------------------------- docs/SITE_CLAIMS.md (derived release artifact)
 SC="$ROOT/docs/SITE_CLAIMS.md"; [ "$CHECK" = 1 ] && SC="$OUT/SITE_CLAIMS.md"
 {
@@ -243,7 +295,7 @@ SC="$ROOT/docs/SITE_CLAIMS.md"; [ "$CHECK" = 1 ] && SC="$OUT/SITE_CLAIMS.md"
 # ---------------------------------------------------------------- check mode
 if [ "$CHECK" = 1 ]; then
   rc=0
-  for f in project profiles policy capabilities lifecycle docs diagrams readme; do
+  for f in project profiles policy capabilities lifecycle docs diagrams readme commands; do
     if ! diff -q "$OUT/$f.json" "$ROOT/site/data/generated/$f.json" >/dev/null 2>&1; then echo "STALE site/data/generated/$f.json (run: scripts/generate-site-data)"; rc=10; fi
   done
   diff -q "$OUT/SITE_CLAIMS.md" "$ROOT/docs/SITE_CLAIMS.md" >/dev/null 2>&1 || { echo "STALE docs/SITE_CLAIMS.md (run: scripts/generate-site-data)"; rc=10; }

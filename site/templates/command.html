@@ -1,0 +1,12 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set cmds = load_data(path="data/generated/commands.json") -%}
+{%- set c = [x for x in cmds.commands if x.name == page.extra.name][0] -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">{% if c.read_only %}<span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span> {% endif %}Rendered from <a href="{{ project.repository_url }}/blob/master/docs/CLI.md" class="font-mono hover:underline">docs/CLI.md</a>.</p>
+    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ c.doc_md | markdown | safe }}</article>
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</h2><ul class="space-y-1 text-sm">{% for q in cmds.commands %}<li><a href="{{ get_url(path="/commands/" ~ q.name ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 font-mono {% if q.name == c.name %}bg-brand-softer text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.name == c.name %} aria-current="page"{% endif %}>{{ q.name }}</a></li>{% endfor %}</ul><p class="mt-4 text-xs text-body-subtle"><a href="{{ get_url(path="/docs/cli/", trailing_slash=true) }}" class="hover:underline">Full CLI reference →</a></p></div></aside>
+</div>
+{% endblock body %}

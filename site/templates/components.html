@@ -49,3 +49,13 @@
   <div class="overflow-x-auto p-4"><pre class="mermaid m-0 min-w-[20rem] bg-transparent font-mono text-xs text-heading">{{ g.mermaid }}</pre></div>
 </figure>
 {% endcomponent diagram %}
+
+{#- A card that is a link: the whole tile navigates. -#}
+{% component linkcard(href, title, text, kicker="") %}
+<a href="{{ href }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+  {%- if kicker %}<span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">{{ kicker }}</span>{% endif -%}
+  <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ title }}</h3>
+  <p class="text-sm leading-relaxed text-body">{{ text | safe }}</p>
+  <span class="mt-auto pt-3 text-sm font-medium text-fg-brand">Read more →</span>
+</a>
+{% endcomponent linkcard %}

@@ -7,39 +7,122 @@
   "does": [
     {
       "title": "Policy",
-      "text": "one provider-neutral `policy.yaml`; unknown keys are errors"
+      "text": "one provider-neutral `policy.yaml`; unknown keys are errors",
+      "slug": "policy",
+      "command": null,
+      "claim_ids": [
+        "policy-parse",
+        "profile-validate",
+        "wiring-reconciliation",
+        "projection-generation",
+        "drift-watch",
+        "shared-policy"
+      ]
     },
     {
       "title": "Projection",
-      "text": "`update` generates `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any target you name, deterministically, and fingerprints them; a hand edit is detected and never silently overwritten"
+      "text": "`update` generates `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any target you name, deterministically, and fingerprints them; a hand edit is detected and never silently overwritten",
+      "slug": "projection",
+      "command": "update",
+      "claim_ids": [
+        "projection-generation",
+        "projection-fingerprint",
+        "no-silent-overwrite",
+        "context-budget",
+        "drift-watch"
+      ]
     },
     {
       "title": "State",
-      "text": "one active task per checkout in `current.yaml`, with `branch`, `head`, and `working_tree` computed from git, never authored"
+      "text": "one active task per checkout in `current.yaml`, with `branch`, `head`, and `working_tree` computed from git, never authored",
+      "slug": "state",
+      "command": "start",
+      "claim_ids": [
+        "git-identity",
+        "consistency-check",
+        "divergence-label",
+        "drift-watch"
+      ]
     },
     {
       "title": "Scope",
-      "text": "`start` takes the paths a task may touch; `check` and `finish` fail on files outside them; other worktrees' overlapping claims are reported"
+      "text": "`start` takes the paths a task may touch; `check` and `finish` fail on files outside them; other worktrees' overlapping claims are reported",
+      "slug": "scope",
+      "command": "check",
+      "claim_ids": [
+        "scoped-task",
+        "consistency-check",
+        "scope-enforcement",
+        "overlap-report",
+        "drift-watch"
+      ]
     },
     {
       "title": "Profiles",
-      "text": "four bundles that set capability class, reasoning effort, verbosity, presentation, context toggles, verification, and checkpoint interval independently"
+      "text": "four bundles that set capability class, reasoning effort, verbosity, presentation, context toggles, verification, and checkpoint interval independently",
+      "slug": "profiles",
+      "command": "start",
+      "claim_ids": [
+        "profile-validate",
+        "scoped-task",
+        "consistency-check",
+        "profile-axes",
+        "capability-class",
+        "minimum-context",
+        "effort-escalation",
+        "checkpoint-interval",
+        "runtime-adapters"
+      ]
     },
     {
       "title": "Handover",
-      "text": "append-only records with computed front matter and required sections, created atomically, never staged; `--resolve` finds the right one for this worktree and branch and labels how far git has moved since"
+      "text": "append-only records with computed front matter and required sections, created atomically, never staged; `--resolve` finds the right one for this worktree and branch and labels how far git has moved since",
+      "slug": "handover",
+      "command": "handover",
+      "claim_ids": [
+        "retention-caps",
+        "drift-watch",
+        "handover-record",
+        "no-transcripts"
+      ]
     },
     {
       "title": "Finish",
-      "text": "a typed outcome and a contract evaluated line by line; nothing written when any line fails"
+      "text": "a typed outcome and a contract evaluated line by line; nothing written when any line fails",
+      "slug": "finish",
+      "command": "finish",
+      "claim_ids": [
+        "finish-contract",
+        "typed-outcome",
+        "cost-per-outcome",
+        "routing"
+      ]
     },
     {
       "title": "Doctor",
-      "text": "proves the installation is real: policy parses, every declared enforcement is actually invoked by the hook it names without a swallowed exit code, projections match fingerprints, the always-loaded file is under budget"
+      "text": "proves the installation is real: policy parses, every declared enforcement is actually invoked by the hook it names without a swallowed exit code, projections match fingerprints, the always-loaded file is under budget",
+      "slug": "doctor",
+      "command": "doctor",
+      "claim_ids": [
+        "exit-code-contract",
+        "context-budget",
+        "pointer-integrity",
+        "no-counts-in-context",
+        "retention-caps",
+        "init-refuses",
+        "reproduce-command",
+        "no-network",
+        "drift-watch"
+      ]
     },
     {
       "title": "Watch",
-      "text": "reports drift between policy, projections, state, scope, and git, each finding with the command that reproduces it"
+      "text": "reports drift between policy, projections, state, scope, and git, each finding with the command that reproduces it",
+      "slug": "watch",
+      "command": "watch",
+      "claim_ids": [
+        "drift-watch"
+      ]
     }
   ]
 }

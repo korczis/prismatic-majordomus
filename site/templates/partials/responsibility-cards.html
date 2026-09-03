@@ -1,0 +1,10 @@
+{%- set readme = load_data(path="data/generated/readme.json") -%}
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {%- for row in readme.does -%}
+  <a href="{{ get_url(path="/supervises/" ~ row.slug ~ "/", trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+    <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ row.title }}</h3>
+    <p class="text-sm leading-relaxed text-body">{{ row.text | markdown(inline=true) | safe }}</p>
+    <span class="mt-auto pt-3 text-sm font-medium text-fg-brand">Read more →</span>
+  </a>
+  {%- endfor -%}
+</div>

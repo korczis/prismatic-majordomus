@@ -1,10 +1,17 @@
 {% extends "page.html" %}
-{% block body %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<p class="max-w-3xl text-body">A supervisory tool that overstates itself is the thing it was built to prevent. This page is generated from <code>docs/CLAIMS.yaml</code>; the build fails if any source, implementation or test path in it does not exist, or if a guaranteed claim names no test.</p>
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
-<article class="format break-words max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
 <div class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
   {%- for status in ["guaranteed", "advisory", "planned", "rejected"] -%}
-  <div class="rounded-base border border-default bg-neutral-primary-soft p-4"><div class="mb-2 flex items-center justify-between">{{ <badge status={status} /> }}<span class="font-mono text-sm text-body-subtle">{{ [c for c in caps.claims if c.status == status] | length }}</span></div><p class="text-sm text-body">{{ caps.statuses[status] }}</p></div>
+  <a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><div class="mb-2 flex items-center justify-between">{{ <badge status={status} /> }}<span class="font-mono text-sm text-body-subtle">{{ [c for c in caps.claims if c.status == status] | length }}</span></div><p class="text-sm text-body">{{ caps.statuses[status] }}</p></a>
   {%- endfor -%}
 </div>
 {%- for status in ["guaranteed", "advisory", "planned", "rejected"] -%}
@@ -16,7 +23,7 @@
       <tbody class="divide-y divide-default bg-neutral-primary-soft">
         {%- for c in [c for c in caps.claims if c.status == status] -%}
         <tr class="align-top">
-          <td class="px-4 py-3 text-heading">{{ c.claim }}{% if c.note %}<p class="mt-1 text-body-subtle">{{ c.note }}</p>{% endif %}</td>
+          <td class="px-4 py-3 text-heading"><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="hover:underline">{{ c.claim }}</a>{% if c.note %}<p class="mt-1 text-body-subtle">{{ c.note }}</p>{% endif %}</td>
           <td class="px-4 py-3"><a href="{{ project.repository_url }}/blob/master/{{ c.source }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></td>
           <td class="px-4 py-3">{% if c.implementation %}<a href="{{ project.repository_url }}/blob/master/{{ c.implementation }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% else %}<span class="font-mono text-body-subtle">—</span>{% endif %}</td>
           <td class="px-4 py-3">{% if c.test %}<a href="{{ project.repository_url }}/blob/master/{{ c.test }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a>{% else %}<span class="font-mono text-body-subtle">—</span>{% endif %}</td>
@@ -27,4 +34,5 @@
   </div>
 </section>
 {%- endfor -%}
-{% endblock body %}
+</div>
+{% endblock content %}

@@ -1,7 +1,7 @@
 {#- flowbite.com/docs/components/breadcrumb/ -#}
 <nav class="flex" aria-label="Breadcrumb">
   <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
-    <li class="inline-flex items-center"><a href="{{ get_url(path="/") }}" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li class="inline-flex items-center"><a href="{{ get_url(path="/", trailing_slash=true) }}" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
     {% if crumb_parent %}<li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="{{ crumb_parent.permalink }}" class="font-medium text-body hover:text-fg-brand">{{ crumb_parent.title }}</a></li>{% endif %}
     <li aria-hidden="true">/</li>
     <li aria-current="page" class="font-medium text-heading">{{ crumb_title }}</li>

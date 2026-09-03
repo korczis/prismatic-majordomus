@@ -1,0 +1,27 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set profiles = load_data(path="data/generated/profiles.json") -%}
+{%- set policy = load_data(path="data/generated/policy.json") -%}
+{%- set p = [x for x in profiles.profiles if x.slug == page.extra.slug][0] -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <div class="flex flex-wrap items-baseline gap-3">{% if p.slug == policy.profiles.default %}<span class="rounded bg-brand-softer px-1.5 py-0.5 font-mono text-xs text-fg-brand-strong">default profile</span>{% endif %}<span class="font-mono text-sm text-body-subtle">majordomus start "…" --profile {{ p.slug }}</span></div>
+    <div class="mt-6 grid gap-6 md:grid-cols-2">
+      <dl class="min-w-0 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr] sm:gap-y-2">
+        <dt class="text-body-subtle">capability class</dt><dd class="font-mono text-heading">{{ p.capability }}</dd>
+        <dt class="text-body-subtle">reasoning effort</dt><dd class="min-w-0 break-words font-mono text-heading">{{ p.effort }}{% if p.effort_escalation %} <span class="text-body">→ {{ p.effort_escalation.to }} after {{ p.effort_escalation.after_blocked_attempts }} blocked attempt{% if p.effort_escalation.after_blocked_attempts != 1 %}s{% endif %}</span>{% endif %}</dd>
+        <dt class="text-body-subtle">output verbosity</dt><dd class="font-mono text-heading">{{ p.verbosity }}</dd>
+        <dt class="text-body-subtle">presentation</dt><dd class="font-mono text-heading">{{ p.presentation }}</dd>
+        <dt class="text-body-subtle">checkpoint interval</dt><dd class="font-mono text-heading">{{ p.checkpoint_interval }}</dd>
+        <dt class="text-body-subtle">output contract</dt><dd class="min-w-0 break-words font-mono text-heading">{{ p.output_contract | join(sep=", ") }}</dd>
+      </dl>
+      <div class="min-w-0 grid gap-4 sm:grid-cols-2">
+        <div class="min-w-0"><h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">context loaded</h2><ul class="space-y-1 text-sm">{% for k, v in p.context %}<li class="flex flex-wrap justify-between gap-x-3"><span class="min-w-0 break-all font-mono text-heading">{{ k }}</span><span class="font-mono {% if v == true %}text-fg-success-strong{% elif v == false %}text-body-subtle{% else %}text-heading{% endif %}">{{ v }}</span></li>{% endfor %}</ul></div>
+        <div class="min-w-0"><h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">verification</h2><ul class="space-y-1 text-sm">{% for k, v in p.verification %}<li class="flex flex-wrap justify-between gap-x-3"><span class="min-w-0 break-all font-mono text-heading">{{ k }}</span><span class="font-mono {% if v == true %}text-fg-success-strong{% elif v == false %}text-body-subtle{% else %}text-heading{% endif %}">{{ v }}</span></li>{% endfor %}</ul></div>
+      </div>
+    </div>
+    <p class="mt-6 break-all text-xs text-body-subtle">Source: <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono hover:underline">{{ page.extra.source }}</a>. Capability classes are not vendor model names; the generated instructions tell the worker to pick the closest its environment offers.</p>
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">all profiles</h2><ul class="space-y-1 text-sm">{% for q in profiles.profiles %}<li><a href="{{ get_url(path="/profiles/" ~ q.slug ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 font-mono {% if q.slug == p.slug %}bg-brand-softer text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.slug == p.slug %} aria-current="page"{% endif %}>{{ q.slug }}</a></li>{% endfor %}</ul></div></aside>
+</div>
+{% endblock body %}

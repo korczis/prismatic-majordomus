@@ -14,7 +14,7 @@ pages="$(find "$PUB" -name '*.html')"
 # 1. data in sync with canonical sources
 if "$ROOT/scripts/generate-site-data" --check >/dev/null 2>&1; then ok sync "site/data/generated matches canonical inputs"; else bad sync "site/data/generated is stale; run scripts/generate-site-data"; fi
 # 2. generated data schema: every file parses and carries schema 1
-gen_files="project profiles policy capabilities lifecycle docs diagrams readme source"
+gen_files="project profiles policy capabilities lifecycle docs diagrams readme commands source"
 for f in $gen_files; do
   [ "$(jq -r '.schema' "$SITE/data/generated/$f.json" 2>/dev/null)" = 1 ] || bad schema "$f.json missing or schema != 1"
 done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -d ' ')) carries schema 1"
@@ -74,6 +74,13 @@ grep -rhoaE '/Users/[a-z]+/|/home/[a-z]+/dev/|\.internal\b|\.corp\b' "$PUB" | he
 grep -rhoaE '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}' "$PUB" | grep -viE 'id-token|GITHUB_TOKEN' | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
 # 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
 for d in $(jq -r '.docs[].path' "$SITE/data/generated/docs.json" | sed 's/\.md$//' | tr 'A-Z_' 'a-z-' | grep -v '^agents$'); do [ -f "$PUB/docs/$d/index.html" ] || bad docs "docs.json lists $d but no route was generated"; done; ok docs "every document in docs.json has a route"
+# 13b. every tile has a page: profiles, claims, statuses, responsibilities, commands
+for slug in $(jq -r '.profiles[].slug' "$SITE/data/generated/profiles.json"); do [ -f "$PUB/profiles/$slug/index.html" ] || bad tiles "no page for profile $slug"; done
+for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do [ -f "$PUB/guarantees/$id/index.html" ] || bad tiles "no page for claim $id"; done
+for st in guaranteed advisory planned rejected; do [ -f "$PUB/guarantees/$st/index.html" ] || bad tiles "no page for status $st"; done
+for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do [ -f "$PUB/supervises/$slug/index.html" ] || bad tiles "no page for responsibility $slug"; done
+for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do [ -f "$PUB/commands/$n/index.html" ] || bad tiles "no page for command $n"; done
+ok tiles "every profile, claim, status, responsibility and command has its own page"
 # 14. claims: the guarantees page carries every claim id count
 n="$(jq '.claims | length' "$SITE/data/generated/capabilities.json")"; m="$(grep -o '<tr class="align-top">' "$PUB/guarantees/index.html" | wc -l | tr -d ' ')"
 [ "$n" = "$m" ] && ok claims "$n claims rendered on /guarantees/" || bad claims "capabilities.json has $n claims, /guarantees/ renders $m"
