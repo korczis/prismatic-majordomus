@@ -118,8 +118,12 @@ mj_norm_path() {
   case "$p" in ""|/*|../*|*/../*|*/..|..) return 1 ;; esac
   printf '%s' "$p"
 }
-# does path a contain path b (or equal)?
-mj_path_contains() { case "$2" in "$1"|"$1"/*) return 0 ;; esac; return 1; }
+# does path a contain path b (or equal)? Both sides are normalised first: state files can be
+# hand-edited, so a trailing slash or ./ in a scope entry must not silently exclude everything.
+mj_path_contains() {
+  local a b; a="$(mj_norm_path "$1" 2>/dev/null || printf '%s' "$1")"; b="$(mj_norm_path "$2" 2>/dev/null || printf '%s' "$2")"
+  case "$b" in "$a"|"$a"/*) return 0 ;; esac; return 1
+}
 
 # "15m" / "2h" / "90s" -> seconds
 mj_duration_secs() {

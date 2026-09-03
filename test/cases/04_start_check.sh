@@ -12,6 +12,17 @@ expect_grep '^head: '"$(git rev-parse HEAD)"'$' .majordomus/state/current.yaml
 expect_grep '^branch: '"$(git branch --show-current)"'$' .majordomus/state/current.yaml
 expect_grep '^  - lib/auth$' .majordomus/state/current.yaml
 expect_grep '"event":"task.started"' .majordomus/state/ledger.jsonl
+# repeated --scope accumulates; spaces after commas are tolerated; a hand-edited trailing slash still contains
+printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover --close >/dev/null
+expect_exit 0 "$MJ" start "multi" --scope lib/auth --scope="lib/other, ./lib/auth/sub/"
+expect_grep 'scope=lib/auth,lib/other,lib/auth/sub$'
+sed -i.bak 's#^  - lib/auth$#  - lib/auth/#' .majordomus/state/current.yaml; rm -f .majordomus/state/current.yaml.bak
+echo z >> lib/auth/a.txt
+expect_exit 0 "$MJ" check
+expect_grep 'OK +scope'
+git checkout -q -- lib/auth/a.txt
+printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover --close >/dev/null
+expect_exit 0 "$MJ" start "fix auth" --scope lib/auth/,./lib/auth/sub --profile debugging --owner alice
 # one active task per checkout
 expect_exit 15 "$MJ" start "second" --scope lib/other
 expect_grep 'is active'
