@@ -9,15 +9,9 @@
 # site build dependencies (not part of the CLI)
 node_modules/
 
-# derived GitHub Pages output (built by scripts/generate-pages)
-_site/
-
-# derived Zola content, rebuilt by scripts/generate-site-data
+# derived site, rebuilt by scripts/generate-site-data and scripts/site-build
+# (site/static/images/ is copied from assets/ at build but committed, so it stays tracked)
 site/content/docs/
-site/public/
-site/static/app.css
-site/static/js/
-site/static/syntax-*.css
 site/content/render-test.md
 site/content/architecture.md
 site/content/profiles/
@@ -25,3 +19,7 @@ site/content/guarantees/
 site/content/supervises/
 site/content/commands/
 site/content/why/
+site/public/
+site/static/app.css
+site/static/js/
+site/static/syntax-*.css
