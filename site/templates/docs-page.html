@@ -11,6 +11,13 @@
   <div class="min-w-0">
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono hover:underline">{{ page.extra.source }}</a> — the same Markdown GitHub shows.</p>
     <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
+    {%- set caps = load_data(path="data/generated/capabilities.json") -%}
+    {%- set mine = [x for x in caps.claims if x.source == page.extra.source] -%}
+    {%- if mine | length > 0 -%}
+    <h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
+    <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in mine %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={x.status} /> }}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
+    {%- endif -%}
   </div>
 </div>
 {% endblock body %}

@@ -25,6 +25,12 @@ expect_grep '<pre class="mermaid">' "$P/render-test/index.html"
 for href in $(grep -oE 'href="[^"]*/(supervises|profiles|guarantees|commands|why)/[a-z0-9_-]+/"' "$P/index.html" | sed -E 's#.*/prismatic-majordomus/##; s#"$##' | sort -u); do [ -f "$P/$href/index.html" ] || { echo "    homepage tile links to missing $href"; exit 1; }; done
 [ "$(grep -oE 'href="[^"]*/supervises/[a-z]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')" = "$(jq '.does | length' "$ROOT/site/data/generated/readme.json")" ]
 [ "$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')" = "$(ls "$ROOT"/site/content-src/why/*.md | grep -vc _index)" ]
+# every claim listed on the homepage links to its page; claim pages carry provenance and a verify command
+[ "$(grep -oE 'href="[^"]*/guarantees/[a-z-]+/"' "$P/index.html" | grep -vE '/(guaranteed|advisory|planned|rejected)/' | sort -u | wc -l | tr -d ' ')" -ge 12 ]
+expect_grep 'bash test/run.sh 03_update' "$P/guarantees/wiring-reconciliation/index.html"
+expect_grep 'supervises/doctor/' "$P/guarantees/wiring-reconciliation/index.html"
+expect_grep 'why/two-rulebooks-one-repository/' "$P/guarantees/wiring-reconciliation/index.html"
+expect_grep 'guarantees/finish-contract/' "$P/commands/finish/index.html"
 # guarantees table rows == claims
 [ "$(grep -o '<tr class="align-top">' "$P/guarantees/index.html" | wc -l | tr -d ' ')" = "$(jq '.claims | length' "$ROOT/site/data/generated/capabilities.json")" ]
 # the full check passes

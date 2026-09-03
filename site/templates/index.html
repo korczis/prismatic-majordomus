@@ -141,14 +141,14 @@ majordomus finish --outcome completed --verify-command "make test"
     <div class="grid gap-4 md:grid-cols-3">
       {%- for status in ["guaranteed", "advisory", "planned"] -%}
       {%- set rows = [c for c in caps.claims if c.status == status] -%}
-      <a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary p-5 hover:bg-neutral-secondary-medium">
-        <div class="mb-3 flex items-center justify-between">{{ <badge status={status} /> }}<span class="font-mono text-sm text-body-subtle">{{ rows | length }}</span></div>
+      <div class="flex h-full flex-col rounded-base border border-default bg-neutral-primary p-5">
+        <div class="mb-3 flex items-center justify-between"><a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="hover:underline">{{ <badge status={status} /> }}</a><span class="font-mono text-sm text-body-subtle">{{ rows | length }}</span></div>
         <p class="mb-4 text-sm text-body">{{ caps.statuses[status] }}</p>
         <ul class="space-y-2 text-sm text-heading">
-          {%- for c in rows[:4] -%}<li class="flex gap-2"><span aria-hidden="true" class="text-body-subtle">·</span><span>{{ c.claim }}</span></li>{%- endfor -%}
+          {%- for c in rows[:4] -%}<li class="flex gap-2"><span aria-hidden="true" class="text-body-subtle">·</span><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>{%- endfor -%}
         </ul>
-        <span class="mt-4 inline-block text-sm font-medium text-fg-brand">All {{ status }} claims →</span>
-      </a>
+        <a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="mt-auto inline-block pt-4 text-sm font-medium text-fg-brand hover:underline">All {{ status }} claims →</a>
+      </div>
       {%- endfor -%}
     </div>
     <p class="mt-6"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand hover:underline">The full matrix with source, implementation and test for every row →</a></p>

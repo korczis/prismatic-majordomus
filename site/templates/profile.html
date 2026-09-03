@@ -20,6 +20,12 @@
         <div class="min-w-0"><h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">verification</h2><ul class="space-y-1 text-sm">{% for k, v in p.verification %}<li class="flex flex-wrap justify-between gap-x-3"><span class="min-w-0 break-all font-mono text-heading">{{ k }}</span><span class="font-mono {% if v == true %}text-fg-success-strong{% elif v == false %}text-body-subtle{% else %}text-heading{% endif %}">{{ v }}</span></li>{% endfor %}</ul></div>
       </div>
     </div>
+    {%- set caps = load_data(path="data/generated/capabilities.json") -%}
+    {%- set readme = load_data(path="data/generated/readme.json") -%}
+    {%- set prof = [r for r in readme.does if r.slug == "profiles"][0] -%}
+    {%- set mine = [x for x in caps.claims if x.id in prof.claim_ids or x.source == page.extra.source] -%}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What is claimed about profiles</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in mine %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={x.status} /> }}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
     <p class="mt-6 break-all text-xs text-body-subtle">Source: <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono hover:underline">{{ page.extra.source }}</a>. Capability classes are not vendor model names; the generated instructions tell the worker to pick the closest its environment offers.</p>
   </div>
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">all profiles</h2><ul class="space-y-1 text-sm">{% for q in profiles.profiles %}<li><a href="{{ get_url(path="/profiles/" ~ q.slug ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 font-mono {% if q.slug == p.slug %}bg-brand-softer text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.slug == p.slug %} aria-current="page"{% endif %}>{{ q.slug }}</a></li>{% endfor %}</ul></div></aside>

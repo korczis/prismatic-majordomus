@@ -82,6 +82,11 @@ for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do [ -f 
 for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do [ -f "$PUB/commands/$n/index.html" ] || bad tiles "no page for command $n"; done
 for f in "$SITE"/content-src/why/*.md; do slug="$(basename "$f" .md)"; [ "$slug" = _index ] && continue; [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
 ok tiles "every profile, claim, status, responsibility, command and why-moment has its own page"
+# 13c. every claim mention on the homepage is a link to its page
+for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do
+  claim="$(jq -r --arg i "$id" '.claims[] | select(.id==$i) | .claim' "$SITE/data/generated/capabilities.json")"
+  if grep -qF "$claim" "$PUB/index.html" && ! grep -F "$claim" "$PUB/index.html" | grep -qF "guarantees/$id/"; then bad claims "homepage mentions claim $id without linking its page"; fi
+done
 # 14. claims: the guarantees page carries every claim id count
 n="$(jq '.claims | length' "$SITE/data/generated/capabilities.json")"; m="$(grep -o '<tr class="align-top">' "$PUB/guarantees/index.html" | wc -l | tr -d ' ')"
 [ "$n" = "$m" ] && ok claims "$n claims rendered on /guarantees/" || bad claims "capabilities.json has $n claims, /guarantees/ renders $m"

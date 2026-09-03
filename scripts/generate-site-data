@@ -121,7 +121,13 @@ Cf="$(flat "$ROOT/docs/CLAIMS.yaml")"
     jq -cn --arg id "$(yv "$Cf" "claims.$i.id")" --arg claim "$(yv "$Cf" "claims.$i.claim")" --arg source "$(yv "$Cf" "claims.$i.source")" \
       --arg impl "$(yv "$Cf" "claims.$i.implementation")" --arg test "$(yv "$Cf" "claims.$i.test")" --arg status "$(yv "$Cf" "claims.$i.status")" \
       --arg note "$(yv "$Cf" "claims.$i.note")" \
-      '{id:$id, claim:$claim, source:$source, implementation:(if $impl=="-" then null else $impl end), test:(if $test=="-" then null else $test end), status:$status, note:(if $note=="" then null else $note end)}'
+      '{id:$id, claim:$claim, source:$source, implementation:(if $impl=="-" then null else $impl end), test:(if $test=="-" then null else $test end), status:$status, note:(if $note=="" then null else $note end),
+        source_route: ($source | if test("^docs/[A-Z_]+\\.md$") then "/docs/" + (ltrimstr("docs/") | rtrimstr(".md") | ascii_downcase | gsub("_";"-")) + "/"
+                                elif . == "AGENTS.md" then "/docs/contract/"
+                                elif startswith("share/skeleton/profiles/") then "/profiles/" + (ltrimstr("share/skeleton/profiles/") | rtrimstr(".yaml")) + "/"
+                                elif startswith("share/skeleton/policy") then "/policy/" else null end),
+        command: (if $impl | test("^lib/(init|doctor|start|check|watch|update|handover|finish)\\.sh$") then ($impl | ltrimstr("lib/") | rtrimstr(".sh")) else null end),
+        test_case: (if $test == "-" then null else ($test | ltrimstr("test/cases/") | rtrimstr(".sh")) end)}'
     i=$((i+1))
   done; printf ']}'
 } | jq . > "$OUT/capabilities.json"
@@ -186,7 +192,7 @@ jq -n --arg finish "$FINISH_BLOCK" --arg problem "$(section_of "$ROOT/README.md"
 # ---------------------------------------------------------------- responsibilities (README "What it does" rows, cross-linked)
 # The cross-links are data: which command owns a responsibility and which claims mention it, by
 # a keyword per row. Kept here, not in templates, so the templates only render.
-RESP_KEYS='{"Policy":[null,"policy|unknown key"],"Projection":["update","projection|instruction file|hand-edited"],"State":["start","identity|state|divergence"],"Scope":["check","scope|overlap"],"Profiles":["start","profile|capability class|axes|checkpoint|escalat"],"Handover":["handover","handover|transcript"],"Finish":["finish","finish|outcome"],"Doctor":["doctor","wiring|exit code|budget|resolve|count|retention|refused|reproduce|network"],"Watch":["watch","drift"]}'
+RESP_KEYS='{"Policy":[null,"policy|unknown key"],"Projection":["update","projection|instruction file|hand-edited"],"State":["start","identity|state|divergence"],"Scope":["check","scope|overlap"],"Profiles":["start","profile|capability class|axes|checkpoint|escalat"],"Handover":["handover","handover|transcript"],"Finish":["finish","finish|outcome"],"Doctor":["doctor","wiring|reconciled|enforcement|exit code|budget|resolve|count|retention|refused|reproduce|network|unknown key"],"Watch":["watch","drift"]}'
 jq --argjson keys "$RESP_KEYS" --slurpfile caps "$OUT/capabilities.json" '
   .does |= map(. as $row
     | ($keys[$row.title] // [null, "(?!)"]) as $k
