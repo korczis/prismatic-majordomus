@@ -254,6 +254,7 @@ Performed on this repository's contents before each push.
 | Users skip `start` and work unsupervised | `check` and `finish` refuse without `current.yaml`; the projected instructions tell the worker to run `start` |
 | Over-blocking creates bypass culture | blocking is limited to cheap, deterministic, self-evidently correct checks; everything about work-in-progress is reported, not blocked |
 | Scope creep during implementation | the "intentionally absent" list is a public commitment; the next phase's review asks, for each responsibility, documented / represented / validatable / enforced / measurable, and does not confuse the first with the last |
+| Two concurrent AI writers in one checkout, which the design says should be two worktrees | Observed while building v0.1 itself: the CLI and the derived website were written by two sessions in one working copy. It held because the scopes were disjoint by directory and both sides declared them to each other before touching anything, which is the claim step the design makes mandatory. The tool cannot yet enforce this on the checkout it lives in; `start` refuses a second task, so the second writer simply did not run it. Recorded as a limitation, not hidden |
 | The brand invites reading it as a slice of the source platform | the origin statement is one-way and explicit; there is no shared code |
 
 ## 10. Recommended Implementation Plan
