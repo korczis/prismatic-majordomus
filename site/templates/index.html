@@ -36,10 +36,8 @@
 {# 1b. recognition — marketing.toml; situations, not claims #}
 <section class="border-b border-default bg-brand-softer">
   <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
-    <h2 class="text-2xl font-bold tracking-tight text-fg-brand-strong sm:text-3xl">{{ m.recognise.title }}</h2>
-    <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {%- for it in m.recognise.items -%}<li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary p-4 text-base text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>{{ it }}</span></li>{%- endfor -%}
-    </ul>
+    <h2 class="text-2xl font-bold tracking-tight text-fg-brand-strong sm:text-3xl"><a href="{{ get_url(path="/why/", trailing_slash=true) }}" class="hover:underline">{{ m.recognise.title }}</a></h2>
+    <div class="mt-6">{% include "partials/why-cards.html" %}</div>
     <p class="mt-6 max-w-3xl text-base font-medium text-fg-brand-strong">{{ m.recognise.closing }}</p>
   </div>
 </section>

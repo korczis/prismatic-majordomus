@@ -144,9 +144,10 @@ jq -n --argjson outcomes "$OUTCOMES" --argjson labels "$LABELS" --argjson steps 
   '{schema:1, outcomes:$outcomes, divergence_labels:$labels, steps:$steps, principles:$principles}' > "$OUT/lifecycle.json"
 
 # hand-written site pages (no product claims) get the same projection; the source is site/content-src/
-for srcp in "$ROOT"/site/content-src/*.md; do
-  [ -f "$srcp" ] || continue
-  dst="$ROOT/site/content/$(basename "$srcp")"; [ "$CHECK" = 1 ] && dst="$OUT/content-$(basename "$srcp")"
+for srcp in $(cd "$ROOT/site/content-src" && find . -name '*.md' | sed 's#^\./##' | sort); do
+  srcp="$ROOT/site/content-src/$srcp"; rel="${srcp#"$ROOT"/site/content-src/}"
+  dst="$ROOT/site/content/$rel"; [ "$CHECK" = 1 ] && dst="$OUT/content-$(printf '%s' "$rel" | tr '/' '_')"
+  mkdir -p "$(dirname "$dst")"
   awk 'BEGIN{n=0} /^\+\+\+/{n++; print; next} n<2{print; next} n==2 && !b{print "{% raw %}"; b=1} {print}' "$srcp" \
     | awk -v lib="$ROOT/scripts/lib/project-markdown.awk" 'BEGIN{n=0} /^\+\+\+/{n++; print; next} n<2{print; next} {print | ("awk -f " lib)}' > "$dst"
   printf '{%% endraw %%}\n' >> "$dst"
