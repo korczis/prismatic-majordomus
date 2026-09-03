@@ -37,8 +37,17 @@ exit codes: 0 ok · 2 usage · 10 contract unmet · 11 drift found · 12 missing
 USAGE
 }
 
+# global options may precede the command
+pre=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --repo|--repo=*|--json) if [ "$1" = --repo ]; then pre+=("$1" "${2:-}"); shift 2; else pre+=("$1"); shift; fi ;;
+    *) break ;;
+  esac
+done
 [ $# -ge 1 ] || { usage; exit "$MJ_EX_USAGE"; }
 cmd="$1"; shift
+set -- "${pre[@]+"${pre[@]}"}" "$@"
 case "$cmd" in
   -h|--help|help) usage; exit 0 ;;
   version|--version) echo "majordomus $MJ_VERSION"; exit 0 ;;
