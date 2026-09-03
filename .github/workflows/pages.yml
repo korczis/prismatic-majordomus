@@ -1,0 +1,75 @@
+# Deploys the derived documentation site to GitHub Pages.
+#
+# The site is generated from canonical repository files by scripts/generate-pages; there
+# is no second, hand-maintained content tree. This workflow therefore does two things:
+# it proves the tree it is deploying from is healthy, and it proves the generated output
+# was built from the sources present in that same commit.
+name: pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Only what deployment needs. The generator makes no network calls and needs no secrets.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a newer push supersedes a queued one but never cancels a
+# run that is already publishing.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: install site build dependencies
+        run: npm ci --no-audit --no-fund
+
+      # The site claims the tool's tests pass. Deploying from a tree whose tests fail
+      # would publish a claim the tree does not support.
+      - name: behavioural tests
+        run: bash test/run.sh
+
+      # The repository supervises itself with its own tool. If doctor fails here, the
+      # policy and its projections disagree, and the site derives from those files.
+      - name: self-supervision
+        run: bin/majordomus doctor
+
+      # Generates into _site/ and then validates: every canonical source exists, every
+      # heading and code block the generator reads is present, every claim names an
+      # existing implementation and test, every route carries metadata and landmarks,
+      # no unresolved placeholder, no inline style, no remotely fetched asset, no
+      # credential or private path, and the manifest matches the sources on disk.
+      - name: generate and check the site
+        run: scripts/generate-pages --check
+
+      - name: manifest
+        run: cat _site/site-manifest.json
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

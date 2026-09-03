@@ -1,0 +1,24 @@
+/* Tailwind + Flowbite entry point. Compiled by scripts/generate-pages into
+   _site/assets/app.css. Structure follows the Flowbite v3 / Tailwind v4 quickstart:
+   https://flowbite.com/docs/getting-started/quickstart/ (see .claude/flowbite/llms-full.txt)
+
+   This project holds no custom CSS. Everything on the site is a Tailwind utility or a
+   Flowbite component class. If a rule ever has to live here, it needs a justification
+   in docs/GITHUB_PAGES_ARCHITECTURE.md. */
+
+@import "tailwindcss";
+@import "flowbite/src/themes/default";
+
+@plugin "flowbite/plugin";
+@plugin "flowbite-typography";
+
+/* Tailwind ignores node_modules and the generated output directory by default, so both
+   are declared explicitly. _site is scanned AFTER scripts/generate-pages writes the HTML,
+   which is why the generator runs the HTML step before the CSS step. */
+@source "../node_modules/flowbite";
+@source "../_site";
+
+/* Class-based dark mode, per the Flowbite dark-mode guide. Without this the compiled
+   output falls back to Tailwind's default `prefers-color-scheme` media query, and the
+   documented Flowbite theme switcher (which toggles `.dark` on <html>) has no effect. */
+@custom-variant dark (&:where(.dark, .dark *));

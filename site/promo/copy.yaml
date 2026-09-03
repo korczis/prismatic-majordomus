@@ -1,0 +1,34 @@
+# PROMOTIONAL COPY — the only hand-written prose on the website.
+#
+# Everything else rendered onto the site is derived from canonical repository files
+# (README.md, AGENTS.md, docs/**, share/skeleton/**). This file exists because a page
+# needs a meta description and a button label, and those do not belong in the README.
+#
+# Rules for this file:
+#   - No capability claims. Capabilities come from docs/CLAIMS.yaml, nothing else.
+#   - No numbers. The generator computes numbers from sources.
+#   - It has a line budget, checked by `scripts/generate-pages --check`. If a paragraph
+#     wants to live here, it probably belongs in the README instead.
+version: 1
+budget_lines: 60
+
+site:
+  name: Prismatic Majordomus
+  base_url: https://korczis.github.io/prismatic-majordomus
+  repo_url: https://github.com/korczis/prismatic-majordomus
+  description: A lightweight supervisory control layer for AI-assisted work. One portable directory in your repository holds the policy, the profiles, and the durable state that AI coding workers run under.
+  social_description: One canonical policy, named execution profiles, durable task state, and a check that proves every enforcement you declare is actually wired to something that runs.
+
+cta:
+  primary: Get started
+  primary_href: /getting-started/
+  secondary: View on GitHub
+
+leads:
+  problem: Every failure below was observed in a working environment before it was designed against. The evidence, with magnitudes, is in the extraction report.
+  model: Majordomus does not replace a worker and never invokes a model. It decides what a worker is told, what it may touch, and whether its claim of being done can be believed.
+  controls: Every responsibility below is a file in one directory. No runtime, no server, no daemon.
+  install: The policy layer is a directory and a pointer. Nothing is compiled, nothing is served, nothing runs in the background.
+  claims: A supervisory tool that overstates itself is the thing it was built to prevent. This table is generated from the repository and every path in it is checked to exist.
+  profiles: Rendered directly from the profile files a fresh install writes. Change the YAML, this page changes.
+  quickstart: From nothing to a supervised repository. The commands are the ones the CLI specification defines.
