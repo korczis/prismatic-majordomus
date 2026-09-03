@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# majordomus — a lightweight supervisory control layer for AI-assisted work.
+# Single entry point. Subcommands live in ../lib/<name>.sh and are sourced.
+set -eu
+
+MJ_VERSION="0.1.0"
+MJ_BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
+MJ_LIB_DIR="$MJ_BIN_DIR/../lib"
+export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+
+# shellcheck source=../lib/common.sh
+. "$MJ_LIB_DIR/common.sh"
+
+usage() {
+  cat <<USAGE
+majordomus $MJ_VERSION — a lightweight supervisory control layer for AI-assisted work
+
+usage: majordomus <command> [options]
+
+  init                 set up .majordomus/ in this repository (refuses to overwrite)
+  doctor               is Majordomus itself healthy and actually wired here?   (read-only)
+  start <task>         begin a scoped task under a profile
+  check                is the current task consistent with policy, scope, state? (read-only)
+  watch                what has drifted: state, policy, projections, retention   (read-only)
+  update               regenerate provider projections from policy
+  handover             write an append-only continuation record (body on stdin)
+  finish               evaluate the finish contract; refuse if unmet
+  version              print the version
+
+global options:
+  --repo <path>        repository to operate on (default: the git toplevel of the cwd)
+  --json               one JSON object per finding on stdout (read-only commands)
+  --help               this text, or <command> --help
+
+exit codes: 0 ok · 2 usage · 10 contract unmet · 11 drift found · 12 missing artifact
+            13 internal error · 15 refused
+USAGE
+}
+
+[ $# -ge 1 ] || { usage; exit "$MJ_EX_USAGE"; }
+cmd="$1"; shift
+case "$cmd" in
+  -h|--help|help) usage; exit 0 ;;
+  version|--version) echo "majordomus $MJ_VERSION"; exit 0 ;;
+  init|doctor|start|check|watch|update|handover|finish)
+    mj_parse_global_opts "$@"
+    # shellcheck disable=SC1090
+    . "$MJ_LIB_DIR/$cmd.sh"
+    "mj_cmd_$cmd" "${MJ_ARGS[@]+"${MJ_ARGS[@]}"}"
+    ;;
+  *) mj_err "unknown command: $cmd"; usage >&2; exit "$MJ_EX_USAGE" ;;
+esac
