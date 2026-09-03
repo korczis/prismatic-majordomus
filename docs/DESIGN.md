@@ -167,8 +167,9 @@ every collision in the evidence was invisible to a declaration-only check.
 
 Separate reasoning effort, output verbosity, context strategy, and model capability
 as independent axes. Bundle them under named profiles. Record effort as a delta from
-the default, never as an absolute. Do not claim to measure spend until spend is
-measured.
+the default, never as an absolute. Treat presentation (terse machine output, engineering
+detail, executive summary) as a final layer chosen by the profile, not as a property of
+the work itself. Do not claim to measure spend until spend is measured.
 
 ### Verification
 
@@ -384,6 +385,22 @@ done =
   + handover or completion note present with required sections
 ```
 
+Every completion note and every ledger record carries a **typed outcome** from a closed,
+validated vocabulary:
+
+```
+completed   objective satisfied and the finish contract met
+partial     some of the objective delivered; remainder named in next_action
+blocked     cannot proceed without a human decision; recorded in open-questions
+no_match    the work was done and the thing sought does not exist
+failed      the work could not be done; the reason is recorded
+```
+
+`no_match` and `failed` look alike in a transcript ("we found nothing" versus "we could
+not search"). Operationally they are different facts, and a supervisor that cannot tell
+them apart cannot decide whether to retry, escalate, or accept. Prose never substitutes
+for the typed field.
+
 Distinctions the evidence made necessary:
 
 - **Guaranteed versus observed.** A check is either deterministic and blocking, or it
@@ -439,7 +456,7 @@ semantically distinct subcommands:
 | `init` | set up `.majordomus/` in this repository | yes, refuses to overwrite |
 | `doctor` | is Majordomus itself healthy and actually wired here? | no |
 | `start <task>` | begin a scoped task with a profile | `state/current.yaml`, claim |
-| `check` | is the current task consistent with policy, scope, and state? | no |
+| `check` | is the current task consistent with policy, scope, and state? `--explain` prints the effective merged policy and profile | no |
 | `watch` | what has drifted: state, policy, projections, retention? | no |
 | `update` | regenerate projections from policy | projections, fingerprints |
 | `handover` | write an append-only continuation record | one new file |
@@ -539,7 +556,8 @@ v0.1 ships exactly:
 
 - `policy.yaml` with the schema above and a validator that rejects unknown keys
 - four profiles: `routine`, `implementation`, `debugging`, `deep-work`, each setting
-  effort, verbosity, context toggles, and verification requirements independently
+  effort, verbosity, context toggles, verification requirements, and the output
+  contract (which fields a completion note must carry) independently
 - state templates: current task, decisions, open questions, handover, completion note
 - the eight subcommands, in portable shell, with behavioural tests
 - `doctor` with all eight checks, including enforcement wiring reconciliation
