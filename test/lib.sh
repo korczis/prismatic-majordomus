@@ -20,3 +20,5 @@ expect_no_grep() {
   else grep -qE -- "$pat" "$src" && { printf '    did not expect /%s/ in %s\n' "$pat" "$src"; return 1; }; fi
   return 0
 }
+# octal permission bits of a file, GNU stat first (BSD stat has no -c and fails), then BSD
+file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }

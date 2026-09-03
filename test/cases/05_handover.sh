@@ -17,7 +17,7 @@ expect_grep 'computed'
 echo b >> lib/a
 expect_exit 0 bash -c "printf '# Objective\nfix it\n# Current State\nhalf done\n# Next Action\nfinish it\n' | '$MJ' handover"
 f="$LAST_OUT"; [ -f "$f" ]
-[ "$(stat -f %Lp "$f" 2>/dev/null || stat -c %a "$f")" = 600 ]
+[ "$(file_mode "$f")" = 600 ]
 expect_grep '^head: '"$(git rev-parse HEAD)"'$' "$f"
 expect_grep '^working_tree: dirty$' "$f"
 expect_grep '^  - lib/a$' "$f"
