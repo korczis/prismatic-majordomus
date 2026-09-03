@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# site-build — data → derived content → assets → Tailwind/Flowbite CSS → Zola. Deterministic.
+#   scripts/site-build            build into site/public/
+#   scripts/site-build --no-css   skip the Node steps (CSS and vendored JS are then absent)
+#   scripts/site-build --base-url URL   build for another origin (local previews); get_url is absolute in Zola
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; NOCSS=0; BASE=""
+while [ $# -gt 0 ]; do case "$1" in
+  --no-css) NOCSS=1; shift ;;
+  --base-url) BASE="$2"; shift 2 ;;
+  *) echo "site-build: unknown option $1" >&2; exit 2 ;;
+esac; done
+command -v zola >/dev/null || { echo "site-build: zola is required (brew install zola / see docs/GITHUB_PAGES_ARCHITECTURE.md)" >&2; exit 12; }
+echo "== data";    "$ROOT/scripts/generate-site-data"
+echo "== assets"
+mkdir -p "$SITE/static/images" "$SITE/static/js"
+cp "$ROOT/assets/logo.svg" "$ROOT/assets/logo-mark.svg" "$ROOT/assets/social-card.png" "$SITE/static/images/"
+if [ "$NOCSS" = 0 ]; then
+  [ -d "$ROOT/node_modules/tailwindcss" ] || { echo "site-build: node_modules absent; run: npm ci" >&2; exit 12; }
+  cp "$ROOT/node_modules/flowbite/dist/flowbite.min.js" "$SITE/static/js/flowbite.min.js"
+  cp "$ROOT/node_modules/alpinejs/dist/cdn.min.js" "$SITE/static/js/alpine.min.js"
+  cp "$ROOT/node_modules/mermaid/dist/mermaid.min.js" "$SITE/static/js/mermaid.min.js"
+fi
+cp "$SITE/theme.js" "$SITE/static/js/theme.js"
+cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
+if [ "$NOCSS" = 0 ]; then
+  echo "== css"
+  ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/tailwind.css" -o "$SITE/static/app.css" --minify )
+fi
+echo "== zola"
+( cd "$SITE" && if [ -n "$BASE" ]; then zola build --force --base-url "$BASE"; else zola build --force; fi )
+# Zola wrote the two highlighting themes into static/ and public/; scope the dark one under .dark
+# (generated CSS, not hand-written) so class-based dark mode picks the right palette.
+if [ -f "$SITE/public/giallo-dark.css" ]; then
+  sed -E 's/(^|,|\})[[:space:]]*(\.[a-z])/\1 .dark \2/g; s/^\.([a-z])/.dark .\1/' "$SITE/public/giallo-dark.css" > "$SITE/public/giallo-dark.css.tmp" && mv "$SITE/public/giallo-dark.css.tmp" "$SITE/public/giallo-dark.css"
+fi
+echo "site-build: ok — $(find "$SITE/public" -name 'index.html' | wc -l | tr -d ' ') routes in site/public/"

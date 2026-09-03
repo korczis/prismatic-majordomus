@@ -2,9 +2,10 @@
 # the constructs that break narrow viewports; it is static, so it catches the causes, not
 # the symptom. Rendered-width checks need a browser and are out of scope for a shell test.
 . "$ROOT/test/lib.sh"
-[ -x "$ROOT/scripts/generate-pages" ] || { echo "    no site generator; nothing to lint"; exit 0; }
-out="$T/site"
-expect_exit 0 bash "$ROOT/scripts/generate-pages" --out "$out" --no-css
+command -v zola >/dev/null || { echo "    zola absent; skipping"; exit 0; }
+command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+expect_exit 0 "$ROOT/scripts/site-build" --no-css
+out="$ROOT/site/public"
 pages="$(find "$out" -name '*.html')"
 [ -n "$pages" ]
 bad=0
@@ -16,13 +17,17 @@ for f in $pages; do
   #    inside the card instead of widening the page
   #    (compared on the whole file with newlines removed: wrapper and <pre> may sit on different lines)
   flat="$(tr -d '\n' < "$f")"
+  #    Typography containers (class="format ... [&_pre]:overflow-x-auto") scroll their own <pre>; a page
+  #    without such a container must wrap every <pre> in an overflow-x-auto element
   n_pre="$(printf '%s' "$flat" | grep -o '<pre' | wc -l | tr -d ' ')"
   n_wrapped="$(printf '%s' "$flat" | grep -oE 'overflow-x-auto[^>]*>[[:space:]]*<pre' | wc -l | tr -d ' ')"
-  [ "$n_pre" = "$n_wrapped" ] || { echo "    $rel: $((n_pre - n_wrapped)) of $n_pre <pre> block(s) not wrapped in overflow-x-auto"; bad=1; }
-  # 3. every <table> likewise
+  if printf '%s' "$flat" | grep -q 'class="format [^"]*\[&_pre\]:overflow-x-auto'; then :
+  elif [ "$n_pre" != "$n_wrapped" ]; then echo "    $rel: $((n_pre - n_wrapped)) of $n_pre <pre> block(s) not wrapped in overflow-x-auto"; bad=1; fi
+  # 3. every <table> likewise (Typography containers carry [&_table]:overflow-x-auto)
   n_tab="$(printf '%s' "$flat" | grep -o '<table' | wc -l | tr -d ' ')"
   n_tw="$(printf '%s' "$flat" | grep -oE 'overflow-x-auto[^>]*>[[:space:]]*<table' | wc -l | tr -d ' ')"
-  [ "$n_tab" = "$n_tw" ] || { echo "    $rel: $((n_tab - n_tw)) of $n_tab <table>(s) not wrapped in overflow-x-auto"; bad=1; }
+  if printf '%s' "$flat" | grep -q 'class="format [^"]*\[&_table\]:overflow-x-auto'; then :
+  elif [ "$n_tab" != "$n_tw" ]; then echo "    $rel: $((n_tab - n_tw)) of $n_tab <table>(s) not wrapped in overflow-x-auto"; bad=1; fi
   # 4. mobile-first grids: three or more columns only behind a breakpoint prefix
   if grep -oE 'class="[^"]*"' "$f" | grep -qE '(class="|[[:space:]])grid-cols-([3-9]|1[0-2])([[:space:]]|")'; then
     echo "    $rel: grid-cols-3+ without a breakpoint prefix (sm:/md:/lg:)"; bad=1; fi

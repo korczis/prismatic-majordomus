@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# site-serve — local preview with the production path prefix, so links resolve as deployed.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+"$ROOT/scripts/site-build"
+echo "serving http://127.0.0.1:1111/prismatic-majordomus/  (Ctrl-C to stop; rebuild with scripts/site-build in another shell)"
+cd "$ROOT/site" && zola serve --base-url 127.0.0.1 --port 1111

@@ -1,9 +1,10 @@
 # Deploys the derived documentation site to GitHub Pages.
 #
-# The site is generated from canonical repository files by scripts/generate-pages; there
-# is no second, hand-maintained content tree. This workflow therefore does two things:
-# it proves the tree it is deploying from is healthy, and it proves the generated output
-# was built from the sources present in that same commit.
+# The site is generated from canonical repository files: scripts/generate-site-data normalises
+# them into site/data/generated/, Zola renders templates over that data, Tailwind compiles the
+# Flowbite stylesheet. There is no second, hand-maintained content tree. The job first proves the
+# tree is healthy (tests, doctor), then that the committed derived data matches the sources, then
+# builds and checks the output, and only then deploys.
 name: pages
 
 on:
@@ -11,64 +12,51 @@ on:
     branches: [master]
   workflow_dispatch:
 
-# Only what deployment needs. The generator makes no network calls and needs no secrets.
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# One deployment at a time; a newer push supersedes a queued one but never cancels a
-# run that is already publishing.
 concurrency:
   group: pages
   cancel-in-progress: false
+
+env:
+  ZOLA_VERSION: "0.23.4"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
+      - name: install pinned Zola
+        run: |
+          curl -sSL "https://github.com/getzola/zola/releases/download/v${ZOLA_VERSION}/zola-v${ZOLA_VERSION}-x86_64-unknown-linux-gnu.tar.gz" | tar xz -C /usr/local/bin zola
+          zola --version
       - name: install site build dependencies
         run: npm ci --no-audit --no-fund
-
-      # The site claims the tool's tests pass. Deploying from a tree whose tests fail
-      # would publish a claim the tree does not support.
       - name: behavioural tests
         run: bash test/run.sh
-
-      # The repository supervises itself with its own tool. If doctor fails here, the
-      # policy and its projections disagree, and the site derives from those files.
-      # A fresh clone has no core.hooksPath, so the shipped hooks in .githooks/ are
-      # inactive and doctor would correctly report the declared enforcement as unwired.
-      # This is the same once-per-clone step CONTRIBUTING.md documents for contributors.
       - name: self-supervision
         run: |
           git config core.hooksPath .githooks
           bin/majordomus doctor
-
-      # Generates into _site/ and then validates: every canonical source exists, every
-      # heading and code block the generator reads is present, every claim names an
-      # existing implementation and test, every route carries metadata and landmarks,
-      # no unresolved placeholder, no inline style, no remotely fetched asset, no
-      # credential or private path, and the manifest matches the sources on disk.
-      - name: generate and check the site
-        run: scripts/generate-pages --check
-
+      - name: derived data is in sync with canonical sources
+        run: scripts/generate-site-data --check
+      - name: build the site
+        run: scripts/site-build
+      - name: check the site
+        run: scripts/site-check
       - name: manifest
-        run: cat _site/site-manifest.json
-
+        run: cat site/data/generated/source.json
       - uses: actions/configure-pages@v5
-
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
-
+          path: site/public
   deploy:
     needs: build
     runs-on: ubuntu-latest

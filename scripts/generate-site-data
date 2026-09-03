@@ -1,0 +1,255 @@
+#!/usr/bin/env bash
+# generate-site-data — normalise canonical repository data into a stable site data schema.
+#
+#   canonical                              derived (site/data/generated/)
+#   bin/majordomus (MJ_VERSION)        ->  project.json
+#   share/skeleton/profiles/*.yaml     ->  profiles.json
+#   share/skeleton/policy.yaml         ->  policy.json
+#   docs/CLAIMS.yaml                   ->  capabilities.json
+#   lib/finish.sh + share/skeleton     ->  lifecycle.json (outcome vocabulary, commands)
+#   share/skeleton/providers/body.md   ->  principles (the ten rules workers actually read)
+#   docs/*.md                          ->  docs index
+#   git                                ->  source.json (commit, input hash, generator version)
+#
+# Deterministic: same inputs, byte-identical outputs (except generated_at, kept in source.json
+# only). Zola templates render these files; they contain no business logic. Nothing here is a
+# second copy of product truth — every value is read from the file that owns it.
+#
+#   scripts/generate-site-data            write site/data/generated/*.json
+#   scripts/generate-site-data --check    write to a temp dir and diff against the committed files
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+OUT="$ROOT/site/data/generated"; CHECK=0
+[ "${1:-}" = --check ] && { CHECK=1; OUT="$(mktemp -d "${TMPDIR:-/tmp}/mj-sd.XXXXXX")"; }
+[ "${1:-}" = --out ] && OUT="$2"
+mkdir -p "$OUT"
+MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# shellcheck source=../lib/common.sh
+. "$ROOT/lib/common.sh"
+command -v jq >/dev/null || { echo "generate-site-data: jq is required" >&2; exit 12; }
+GEN_VERSION=1
+
+# ---------------------------------------------------------------- inputs
+INPUTS="bin/majordomus
+share/skeleton/policy.yaml
+share/skeleton/providers/body.md
+docs/CLAIMS.yaml
+README.md
+LICENSE"
+for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/docs/*.md; do
+  case "$f" in */docs/SITE_CLAIMS.md) continue ;; esac   # written by this script; never its own input
+  INPUTS="$INPUTS
+${f#"$ROOT"/}"; done
+for f in $INPUTS; do [ -f "$ROOT/$f" ] || { echo "generate-site-data: canonical input missing: $f" >&2; exit 12; }; done
+
+flat() { local t; t="$(mktemp "${TMPDIR:-/tmp}/mj.f.XXXXXX")"; mj_yaml_flatten "$1" > "$t" || { echo "generate-site-data: $1 does not parse" >&2; exit 10; }; printf '%s' "$t"; }
+yv() { mj_yget "$1" "$2"; }
+jstr() { jq -Rn --arg v "$1" '$v'; }           # JSON string
+jbool() { case "$1" in true) echo true ;; false) echo false ;; *) jstr "$1" ;; esac; }
+jnum_or_str() { case "$1" in ''|*[!0-9]*) jstr "$1" ;; *) printf '%s' "$1" ;; esac; }
+ylist_json() { mj_ylist "$1" "$2" | jq -R . | jq -sc .; }
+
+# ---------------------------------------------------------------- project.json
+VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus" | head -1)"
+TAGLINE="$(grep -m1 -E '^\*\*A lightweight' "$ROOT/README.md" | sed 's/\*\*//g')"
+LICENSE_NAME="$(head -1 "$ROOT/LICENSE" | sed 's/ License$//')"
+COMMANDS="$(sed -n '/^usage: majordomus <command>/,/^global options:/p' "$ROOT/bin/majordomus" \
+  | grep -E '^  [a-z]' | sed -E 's/^  ([a-z]+)( <[a-z]+>)? +(.*)$/\1|\3/' \
+  | jq -Rn '[inputs | split("|") | {name: .[0], summary: (.[1] | gsub("\\s+\\(read-only\\)$"; "") | gsub(" +$";"")), read_only: (.[1] | test("read-only"))}]')"
+EXIT_CODES="$(sed -n 's/^exit codes: //p; s/^            //p' "$ROOT/bin/majordomus" | tr '·' '\n' | sed 's/^ *//; s/ *$//' | grep -E '^[0-9]+ ' \
+  | jq -Rn '[inputs | capture("^(?<code>[0-9]+) (?<meaning>.+)$") | .code |= tonumber]')"
+jq -n --arg name "Prismatic Majordomus" --arg short "Majordomus" --arg version "$VERSION" --arg tagline "$TAGLINE" \
+  --arg license "$LICENSE_NAME" --arg repo "https://github.com/korczis/prismatic-majordomus" \
+  --argjson commands "$COMMANDS" --argjson exit_codes "$EXIT_CODES" \
+  '{schema: 1, name: $name, short_name: $short, version: $version, tagline: $tagline, license: $license,
+    repository_url: $repo, requirements: ["bash 3.2 or newer", "git", "sha256sum or shasum"],
+    commands: $commands, exit_codes: $exit_codes}' > "$OUT/project.json"
+
+# ---------------------------------------------------------------- profiles.json
+{
+  first=1; printf '{"schema":1,"profiles":['
+  for pf in "$ROOT"/share/skeleton/profiles/*.yaml; do
+    F="$(flat "$pf")"; slug="$(basename "$pf" .yaml)"
+    [ "$first" = 1 ] || printf ','; first=0
+    ctx="$(grep -E '^context\.' "$F" | sed 's/^context\.//' | jq -Rn '[inputs | split("=") | {key: .[0], value: (.[1] | if . == "true" then true elif . == "false" then false elif test("^[0-9]+$") then tonumber else . end)}] | from_entries')"
+    ver="$(grep -E '^verification\.' "$F" | sed 's/^verification\.//' | jq -Rn '[inputs | split("=") | {key: .[0], value: (.[1] | if . == "true" then true elif . == "false" then false else . end)}] | from_entries')"
+    esc_after="$(yv "$F" effort_escalation.after_blocked_attempts)"; esc_to="$(yv "$F" effort_escalation.to)"
+    jq -cn --arg slug "$slug" --arg name "$(yv "$F" name)" --arg description "$(yv "$F" description)" \
+      --arg capability "$(yv "$F" capability)" --arg effort "$(yv "$F" effort)" --arg verbosity "$(yv "$F" verbosity)" \
+      --arg presentation "$(yv "$F" presentation)" --arg checkpoint "$(yv "$F" checkpoint_interval)" \
+      --argjson context "$ctx" --argjson verification "$ver" --argjson contract "$(ylist_json "$F" output_contract)" \
+      --arg esc_after "$esc_after" --arg esc_to "$esc_to" \
+      '{slug: $slug, name: $name, description: $description, capability: $capability, effort: $effort,
+        effort_escalation: (if $esc_to == "" then null else {after_blocked_attempts: ($esc_after|tonumber), to: $esc_to} end),
+        verbosity: $verbosity, presentation: $presentation, checkpoint_interval: $checkpoint,
+        context: $context, verification: $verification, output_contract: $contract}'
+    rm -f "$F"
+  done
+  printf ']}'
+} | jq . > "$OUT/profiles.json"
+
+# ---------------------------------------------------------------- policy.json
+P="$(flat "$ROOT/share/skeleton/policy.yaml")"
+enf="$(i=0; printf '['; while [ -n "$(yv "$P" "enforcement.$i.name")" ]; do [ $i = 0 ] || printf ','; jq -cn --arg n "$(yv "$P" "enforcement.$i.name")" --arg p "$(yv "$P" "enforcement.$i.path")" --arg w "$(yv "$P" "enforcement.$i.wired_by")" --argjson a "$(ylist_json "$P" "enforcement.$i.args")" '{name:$n,path:$p,args:$a,wired_by:$w}'; i=$((i+1)); done; printf ']')"
+prj="$(i=0; printf '['; while [ -n "$(yv "$P" "projections.$i.target")" ]; do [ $i = 0 ] || printf ','; jq -cn --arg p "$(yv "$P" "projections.$i.provider")" --arg t "$(yv "$P" "projections.$i.target")" --arg a "$(yv "$P" "projections.$i.always_loaded")" '{provider:$p,target:$t,always_loaded:($a=="true")}'; i=$((i+1)); done; printf ']')"
+jq -n --argjson version "$(yv "$P" version)" \
+  --argjson budget "$(yv "$P" context.always_loaded_budget_lines)" --arg strategy "$(yv "$P" context.strategy)" \
+  --argjson transcript "$(jbool "$(yv "$P" context.transcript_is_state)")" \
+  --arg default_profile "$(yv "$P" profiles.default)" --arg checkpoint "$(yv "$P" profiles.checkpoint_interval_default)" \
+  --argjson req_changes "$(jbool "$(yv "$P" verification.required_for_changes)")" --argjson finish "$(ylist_json "$P" verification.finish_requires)" \
+  --argjson sections "$(ylist_json "$P" handover.required_sections)" --argjson ho_cap "$(yv "$P" handover.retention_max_files)" \
+  --argjson ledger_cap "$(yv "$P" ledger.retention_max_lines)" --argjson enforcement "$enf" --argjson projections "$prj" \
+  --rawfile raw "$ROOT/share/skeleton/policy.yaml" \
+  '{schema: 1, version: $version,
+    context: {always_loaded_budget_lines: $budget, strategy: $strategy, transcript_is_state: $transcript},
+    profiles: {default: $default_profile, checkpoint_interval_default: $checkpoint},
+    verification: {required_for_changes: $req_changes, finish_requires: $finish},
+    handover: {required_sections: $sections, retention_max_files: $ho_cap},
+    ledger: {retention_max_lines: $ledger_cap}, enforcement: $enforcement, projections: $projections,
+    raw: $raw}' > "$OUT/policy.json"
+rm -f "$P"
+
+# ---------------------------------------------------------------- capabilities.json (from docs/CLAIMS.yaml)
+Cf="$(flat "$ROOT/docs/CLAIMS.yaml")"
+{
+  i=0; first=1; printf '{"schema":1,"statuses":{"guaranteed":"Deterministic and blocking. Implemented, and a behavioural test proves it.","advisory":"Projected into the worker'"'"'s instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.","planned":"Specified and not implemented. Named so the omission is visible.","rejected":"Considered and deliberately refused, with the reason recorded."},"claims":['
+  while [ -n "$(yv "$Cf" "claims.$i.id")" ]; do
+    [ "$first" = 1 ] || printf ','; first=0
+    jq -cn --arg id "$(yv "$Cf" "claims.$i.id")" --arg claim "$(yv "$Cf" "claims.$i.claim")" --arg source "$(yv "$Cf" "claims.$i.source")" \
+      --arg impl "$(yv "$Cf" "claims.$i.implementation")" --arg test "$(yv "$Cf" "claims.$i.test")" --arg status "$(yv "$Cf" "claims.$i.status")" \
+      --arg note "$(yv "$Cf" "claims.$i.note")" \
+      '{id:$id, claim:$claim, source:$source, implementation:(if $impl=="-" then null else $impl end), test:(if $test=="-" then null else $test end), status:$status, note:(if $note=="" then null else $note end)}'
+    i=$((i+1))
+  done; printf ']}'
+} | jq . > "$OUT/capabilities.json"
+rm -f "$Cf"
+# every referenced path must exist; a guaranteed claim must name a test
+jq -r '.claims[] | [.id, .status, .source, (.implementation // "-"), (.test // "-")] | @tsv' "$OUT/capabilities.json" | while IFS="$(printf '\t')" read -r id status src impl test; do
+  for p in "$src" "$impl" "$test"; do
+    if [ "$p" != "-" ] && [ ! -e "$ROOT/$p" ]; then echo "generate-site-data: claim $id names missing path $p" >&2; exit 10; fi
+  done
+  if [ "$status" = guaranteed ] && [ "$test" = "-" ]; then echo "generate-site-data: guaranteed claim $id has no test" >&2; exit 10; fi
+done
+
+# ---------------------------------------------------------------- lifecycle.json
+OUTCOMES="$(grep -oE 'completed\|partial\|blocked\|no_match\|failed' "$ROOT/lib/finish.sh" | head -1 | tr '|' '\n' | jq -R . | jq -sc .)"
+LABELS='["exact","advanced","diverged","different_context"]'
+STEPS='[{"command":"start","what":"declare scope and profile; identity computed from git"},{"command":"check","what":"state, scope, checkpoint age, blockers"},{"command":"handover","what":"append-only continuation record, never staged"},{"command":"finish","what":"the contract, line by line; refused if any line fails"}]'
+PRINCIPLES="$(awk '/^### Ten rules/{f=1;next} /^### /{if(f)exit} f && /^[0-9]+\. \*\*/{sub(/^[0-9]+\. \*\*/,""); sub(/\*\*.*$/,""); print}' "$ROOT/share/skeleton/providers/body.md" | jq -R . | jq -sc .)"
+[ "$(printf '%s' "$PRINCIPLES" | jq length)" -ge 8 ] || { echo "generate-site-data: expected the ten rules in providers/body.md" >&2; exit 10; }
+jq -n --argjson outcomes "$OUTCOMES" --argjson labels "$LABELS" --argjson steps "$STEPS" --argjson principles "$PRINCIPLES" \
+  '{schema:1, outcomes:$outcomes, divergence_labels:$labels, steps:$steps, principles:$principles}' > "$OUT/lifecycle.json"
+
+# hand-written site pages (no product claims) get the same projection; the source is site/content-src/
+for srcp in "$ROOT"/site/content-src/*.md; do
+  [ -f "$srcp" ] || continue
+  dst="$ROOT/site/content/$(basename "$srcp")"; [ "$CHECK" = 1 ] && dst="$OUT/content-$(basename "$srcp")"
+  awk 'BEGIN{n=0} /^\+\+\+/{n++; print; next} n<2{print; next} n==2 && !b{print "{% raw %}"; b=1} {print}' "$srcp" \
+    | awk -v lib="$ROOT/scripts/lib/project-markdown.awk" 'BEGIN{n=0} /^\+\+\+/{n++; print; next} n<2{print; next} {print | ("awk -f " lib)}' > "$dst"
+  printf '{%% endraw %%}\n' >> "$dst"
+done
+
+# ---------------------------------------------------------------- readme.json (fragments the homepage renders)
+section_of() { # file, heading, next-heading -> body between them; fails if the heading is missing
+  grep -qx "## $2" "$1" || { echo "generate-site-data: README.md has no heading '## $2' (the site renders it)" >&2; exit 10; }
+  awk -v h="## $2" -v n="## $3" '$0==h{f=1;next} f&&$0==n{exit} f' "$1"
+}
+FINISH_BLOCK="$(awk '/^```/{c++; if(c==1){f=1;next} if(c==2){exit}} f' "$ROOT/README.md")"
+[ -n "$FINISH_BLOCK" ] || { echo "generate-site-data: README.md has no first fenced block (the hero renders it)" >&2; exit 10; }
+DOES_ROWS="$(section_of "$ROOT/README.md" "What it does" "Quick start" | grep -E '^\| \*\*' | sed -E 's/^\| \*\*([^*]+)\*\* \| (.*) \|$/\1|\2/' | jq -Rn '[inputs | split("|") | {title: .[0], text: .[1]}]')"
+jq -n --arg finish "$FINISH_BLOCK" --arg problem "$(section_of "$ROOT/README.md" "The problem" "What it does")" \
+  --arg notwhat "$(section_of "$ROOT/README.md" "What this is not" "Limitations")" --argjson does "$DOES_ROWS" \
+  --arg limits "$(section_of "$ROOT/README.md" "Limitations" "Roadmap")" \
+  '{schema:1, finish_transcript:$finish, problem_md:$problem, not_md:$notwhat, limitations_md:$limits, does:$does}' > "$OUT/readme.json"
+
+# ---------------------------------------------------------------- diagrams.json (Mermaid source from data, never hand-drawn)
+LIFECYCLE_MMD="$(printf 'stateDiagram-v2\n    [*] --> active: start\n    active --> active: check --checkpoint\n    active --> handed_over: handover --close\n    handed_over --> [*]: next start archives the record\n'; for o in $(printf '%s' "$OUTCOMES" | jq -r '.[]'); do printf '    active --> %s: finish --outcome %s\n    %s --> [*]\n' "$o" "$o" "$o"; done)"
+PIPELINE_MMD="$(printf 'flowchart LR\n    subgraph canonical\n        A[share/skeleton]\n        B[docs + README]\n        C[docs/CLAIMS.yaml]\n    end\n    G[scripts/generate-site-data]\n    D[(site/data/generated)]\n    Z[Zola]\n    F[Tailwind + Flowbite + Alpine]\n    P[GitHub Pages]\n    A --> G\n    B --> G\n    C --> G\n    G --> D --> Z --> F --> P\n')"
+PROJECTION_MMD="$(printf 'flowchart TD\n    P[.majordomus/policy.yaml]\n    U[majordomus update]\n    P --> U\n'; i=0; while :; do t="$(jq -r ".projections[$i].target // empty" "$OUT/policy.json")"; [ -n "$t" ] || break; pr="$(jq -r ".projections[$i].provider" "$OUT/policy.json")"; printf '    U --> T%s["%s<br/><small>%s</small>"]\n' "$i" "$t" "$pr"; i=$((i+1)); done; printf '    U --> FP[(generated/fingerprints.yaml)]\n    FP -.-> D[majordomus doctor]\n')"
+SUPERVISION_MMD="$(printf 'flowchart TD\n    H[Human / Organisation]\n    M[Majordomus<br/><small>policy · state · verification</small>]\n    W1[Claude Code]\n    W2[Codex]\n    W3[Gemini · Cursor · local]\n    V[Verified, accepted outcomes]\n    H --> M\n    M --> W1\n    M --> W2\n    M --> W3\n    W1 --> V\n    W2 --> V\n    W3 --> V\n')"
+jq -n --arg l "$LIFECYCLE_MMD" --arg p "$PIPELINE_MMD" --arg j "$PROJECTION_MMD" --arg s "$SUPERVISION_MMD" \
+  '{schema:1, diagrams: {lifecycle: {title: "Task lifecycle", source: "lib/finish.sh outcome vocabulary", mermaid: $l},
+                          pipeline: {title: "How this site is derived", source: "generate-site-data inputs", mermaid: $p},
+                          projection: {title: "Policy to instruction files", source: "share/skeleton/policy.yaml projections", mermaid: $j},
+                          supervision: {title: "The core model", source: "README.md mental model", mermaid: $s}}}' > "$OUT/diagrams.json"
+
+# ---------------------------------------------------------------- docs index (from docs/README.md table)
+DOCS="$(grep -E '^\| \[`' "$ROOT/docs/README.md" | sed -E 's/^\| \[`([^`]+)`\]\(([^)]+)\) \| ([^|]+) \| ([^|]+) \|$/\2|\3|\4/' | grep -vE '^\|' \
+  | jq -Rn '[inputs | split("|") | {path: (.[0] | ltrimstr("../")), audience: (.[1]|gsub("^ +| +$";"")), summary: (.[2]|gsub("^ +| +$";""))}]')"
+printf '%s' "$DOCS" | jq '{schema:1, docs:.}' > "$OUT/docs.json"
+
+# ---------------------------------------------------------------- derived Zola content (site/content/docs/*.md)
+# Long-form pages are the canonical Markdown with a generated front matter; they are written
+# here, gitignored, and rebuilt on every run. Nobody edits them. Repository-relative links are
+# rewritten to site routes so the same Markdown serves both GitHub and the site.
+CONTENT="$ROOT/site/content/docs"
+[ "$CHECK" = 1 ] && CONTENT="$OUT/content-docs"
+rm -rf "$CONTENT"; mkdir -p "$CONTENT"
+LINKSED='s#\](\.\./AGENTS\.md)#](@/docs/contract.md)#g; s#\](AGENTS\.md)#](@/docs/contract.md)#g; s#\](\.\./CONTRIBUTING\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md)#g; s#\](\.\./SECURITY\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md)#g; s#\](CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](docs/CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](README\.md)#](@/docs/_index.md)#g; s#\]((\.\./)?test/cases/)#](https://github.com/korczis/prismatic-majordomus/tree/master/test/cases/)#g'
+for d in DESIGN CLI SCHEMAS CONCEPTS ADOPTION ECONOMICS EXTRACTION_REPORT; do
+  src="$ROOT/docs/$d.md"; slug="$(printf '%s' "$d" | tr 'A-Z_' 'a-z-')"
+  title="$(grep -m1 '^# ' "$src" | sed 's/^# //; s/ — .*//')"
+  summary="$(jq -r --arg p "$d.md" '.docs[] | select(.path==$p) | .summary' "$OUT/docs.json")"
+  { printf -- '+++
+title = %s
+description = %s
+weight = %s
+[extra]
+source = "docs/%s.md"
++++
+
+' "$(jstr "$title")" "$(jstr "$summary")" "$(grep -n "^| \[\`$d.md\`" "$ROOT/docs/README.md" | cut -d: -f1 | head -1)" "$d"
+    printf '{%% raw %%}\n'
+    sed '1{/^# /d;}' "$src" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" | awk '{ while (match($0, /\]\([A-Z_]+\.md\)/)) { t=substr($0,RSTART+2,RLENGTH-3); gsub(/_/,"-",t); $0=substr($0,1,RSTART-1) "](@/docs/" tolower(t) ")" substr($0,RSTART+RLENGTH) } print }'
+    printf '{%% endraw %%}\n'
+  } > "$CONTENT/$slug.md"
+done
+# the repository's own generated contract, as a page
+{ printf -- '+++
+title = "Repository contract"
+description = "The operating contract for this repository, itself generated by majordomus update."
+weight = 90
+[extra]
+source = "AGENTS.md"
++++
+
+'; printf '{%% raw %%}\n'; sed '1{/^<!--/d;}' "$ROOT/AGENTS.md" | sed '1{/^# /d;}' | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"; printf '{%% endraw %%}\n'; } > "$CONTENT/contract.md"
+printf -- '+++
+title = "Documentation"
+description = "Every document in the repository, rendered from the same Markdown GitHub shows."
+sort_by = "weight"
+template = "docs-section.html"
+page_template = "docs-page.html"
++++
+' > "$CONTENT/_index.md"
+
+# ---------------------------------------------------------------- source.json
+HASH="$( (cd "$ROOT" && for f in $INPUTS; do printf '%s ' "$f"; mj_sha256 "$f"; done) | mj_sha256 /dev/stdin 2>/dev/null || (cd "$ROOT" && for f in $INPUTS; do printf '%s ' "$f"; mj_sha256 "$f"; done) | shasum -a 256 | cut -d' ' -f1)"
+COMMIT="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
+jq -n --arg v "$VERSION" --arg c "$COMMIT" --arg h "$HASH" --argjson g "$GEN_VERSION" --arg inputs "$INPUTS" \
+  '{schema:1, source_version:$v, source_commit:$c, source_hash:$h, generator_version:$g, input_files: ($inputs | split("\n"))}' > "$OUT/source.json"
+
+# ---------------------------------------------------------------- docs/SITE_CLAIMS.md (derived release artifact)
+SC="$ROOT/docs/SITE_CLAIMS.md"; [ "$CHECK" = 1 ] && SC="$OUT/SITE_CLAIMS.md"
+{
+  printf '# Site claims\n\nGenerated by `scripts/generate-site-data` from `docs/CLAIMS.yaml`. Do not edit; edit the YAML.\nEvery substantive public claim the website makes, with its status, the file that defines it,\nthe file that implements it, and the test that proves it. The website renders the same data.\n\n'
+  for st in guaranteed advisory planned rejected; do
+    printf '## %s\n\n%s\n\n| claim | source | implementation | test |\n|---|---|---|---|\n' "$st" "$(jq -r --arg s "$st" '.statuses[$s]' "$OUT/capabilities.json")"
+    jq -r --arg s "$st" '.claims[] | select(.status==$s) | "| \(.claim) | `\(.source)` | \(if .implementation then "`\(.implementation)`" else "—" end) | \(if .test then "`\(.test)`" else "—" end) |"' "$OUT/capabilities.json"
+    printf '\n'
+  done
+} > "$SC"
+
+# ---------------------------------------------------------------- check mode
+if [ "$CHECK" = 1 ]; then
+  rc=0
+  for f in project profiles policy capabilities lifecycle docs diagrams readme; do
+    if ! diff -q "$OUT/$f.json" "$ROOT/site/data/generated/$f.json" >/dev/null 2>&1; then echo "STALE site/data/generated/$f.json (run: scripts/generate-site-data)"; rc=10; fi
+  done
+  diff -q "$OUT/SITE_CLAIMS.md" "$ROOT/docs/SITE_CLAIMS.md" >/dev/null 2>&1 || { echo "STALE docs/SITE_CLAIMS.md (run: scripts/generate-site-data)"; rc=10; }
+  # source.json: compare hash only (commit changes every commit)
+  a="$(jq -r .source_hash "$OUT/source.json")"; b="$(jq -r .source_hash "$ROOT/site/data/generated/source.json" 2>/dev/null || true)"
+  [ "$a" = "$b" ] || { echo "STALE site/data/generated/source.json: input hash ${b:0:12} != ${a:0:12}"; rc=10; }
+  rm -rf "$OUT"; [ $rc = 0 ] && echo "site data: in sync ($(printf '%s' "$a" | cut -c1-12))"; exit $rc
+fi
+echo "site data: $(ls "$OUT" | wc -l | tr -d ' ') files in ${OUT#"$ROOT"/} (inputs $(printf '%s' "$HASH" | cut -c1-12))"

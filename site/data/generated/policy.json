@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "version": 1,
+  "context": {
+    "always_loaded_budget_lines": 150,
+    "strategy": "minimum-sufficient",
+    "transcript_is_state": false
+  },
+  "profiles": {
+    "default": "implementation",
+    "checkpoint_interval_default": "15m"
+  },
+  "verification": {
+    "required_for_changes": true,
+    "finish_requires": [
+      "scope_respected",
+      "verification_ran",
+      "state_updated",
+      "no_open_blockers",
+      "note_present"
+    ]
+  },
+  "handover": {
+    "required_sections": [
+      "Objective",
+      "Current State",
+      "Next Action"
+    ],
+    "retention_max_files": 200
+  },
+  "ledger": {
+    "retention_max_lines": 5000
+  },
+  "enforcement": [
+    {
+      "name": "doctor-on-commit",
+      "path": "majordomus",
+      "args": [
+        "doctor"
+      ],
+      "wired_by": "git-hook:pre-commit"
+    },
+    {
+      "name": "finish-on-push",
+      "path": "majordomus",
+      "args": [
+        "finish",
+        "--check"
+      ],
+      "wired_by": "git-hook:pre-push"
+    }
+  ],
+  "projections": [
+    {
+      "provider": "claude-code",
+      "target": "CLAUDE.md",
+      "always_loaded": true
+    },
+    {
+      "provider": "codex",
+      "target": "AGENTS.md",
+      "always_loaded": false
+    },
+    {
+      "provider": "gemini",
+      "target": "GEMINI.md",
+      "always_loaded": false
+    }
+  ],
+  "raw": "# Majordomus canonical policy. Provider-neutral. Edit this file, then run\n# `majordomus update` to regenerate the provider instruction files.\nversion: 1\n\ncontext:\n  always_loaded_budget_lines: 150\n  strategy: minimum-sufficient\n  transcript_is_state: false\n\nprofiles:\n  default: implementation\n  checkpoint_interval_default: 15m\n\nverification:\n  required_for_changes: true\n  finish_requires:\n    - scope_respected\n    - verification_ran\n    - state_updated\n    - no_open_blockers\n    - note_present\n\nhandover:\n  required_sections: [Objective, Current State, Next Action]\n  retention_max_files: 200\n\nledger:\n  retention_max_lines: 5000\n\n# Every entry here is reconciled by `majordomus doctor`: the path must resolve (on PATH,\n# repo-relative, or absolute in the hook line), be executable, and be invoked by the\n# artifact named in wired_by without its exit code being swallowed.\nenforcement:\n  - name: doctor-on-commit\n    path: majordomus\n    args: [doctor]\n    wired_by: git-hook:pre-commit\n  - name: finish-on-push\n    path: majordomus\n    args: [finish, --check]\n    wired_by: git-hook:pre-push\n\nprojections:\n  - provider: claude-code\n    target: CLAUDE.md\n    always_loaded: true\n  - provider: codex\n    target: AGENTS.md\n  - provider: gemini\n    target: GEMINI.md\n"
+}

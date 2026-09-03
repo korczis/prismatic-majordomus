@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "outcomes": [
+    "completed",
+    "partial",
+    "blocked",
+    "no_match",
+    "failed"
+  ],
+  "divergence_labels": [
+    "exact",
+    "advanced",
+    "diverged",
+    "different_context"
+  ],
+  "steps": [
+    {
+      "command": "start",
+      "what": "declare scope and profile; identity computed from git"
+    },
+    {
+      "command": "check",
+      "what": "state, scope, checkpoint age, blockers"
+    },
+    {
+      "command": "handover",
+      "what": "append-only continuation record, never staged"
+    },
+    {
+      "command": "finish",
+      "what": "the contract, line by line; refused if any line fails"
+    }
+  ],
+  "principles": [
+    "Sessions are workers, not memory.",
+    "Load minimum sufficient context.",
+    "Externalise decisions.",
+    "One worker, one scope.",
+    "Escalate capability and effort only when justified.",
+    "Execution depth is not output verbosity.",
+    "Define done before executing.",
+    "Verify outcomes, not activity.",
+    "Parallel work requires isolation.",
+    "Handovers transfer state, not transcripts."
+  ]
+}

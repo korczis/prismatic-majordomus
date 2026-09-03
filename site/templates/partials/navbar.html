@@ -1,0 +1,28 @@
+{#- Flowbite v4 default responsive navbar (flowbite.com/docs/components/navbar/): data-collapse-toggle + aria-controls/aria-expanded; the menu is `hidden w-full md:block md:w-auto`. -#}
+{% set nav = [["Getting started", "/getting-started/"], ["Concepts", "/concepts/"], ["Profiles", "/profiles/"], ["Policy", "/policy/"], ["Guarantees", "/guarantees/"], ["Architecture", "/architecture/"], ["Docs", "/docs/"]] %}
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="{{ get_url(path="/") }}" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">{{ project.short_name }}</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v{{ project.version }}</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      {% include "partials/theme-toggle.html" %}
+      <a href="{{ project.repository_url }}" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:space-x-6 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        {% for item in nav %}
+        {% set href = get_url(path=item[1]) %}
+        {% set active = (current_path or "") == item[1] %}
+        <li><a href="{{ href }}" class="block rounded px-3 py-2 {% if active %}bg-brand text-white md:bg-transparent md:text-fg-brand{% else %}text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand{% endif %} md:p-0"{% if active %} aria-current="page"{% endif %}>{{ item[0] }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</nav>

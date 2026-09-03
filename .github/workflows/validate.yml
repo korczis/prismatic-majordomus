@@ -23,7 +23,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y shellcheck >/dev/null
-          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh scripts/generate-pages
+          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/site-build scripts/site-check scripts/site-serve
       - name: behavioural tests
         run: bash test/run.sh
       - name: self-supervision
@@ -31,7 +31,6 @@ jobs:
           git config core.hooksPath .githooks
           bin/majordomus doctor
           bin/majordomus watch
-      # The site derives from canonical files; this proves every source, heading, claim
-      # path and route still resolves without installing Node. The CSS half is gated in pages.yml.
-      - name: derived site check (no CSS)
-        run: scripts/generate-pages --check --no-css
+      # The committed derived site data must match the canonical files it is generated from.
+      - name: derived site data in sync
+        run: scripts/generate-site-data --check

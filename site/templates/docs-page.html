@@ -1,0 +1,17 @@
+{% extends "page.html" %}
+{% block body %}
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1">
+      {%- set sec = get_section(path="docs/_index.md") -%}
+      {%- for p in sec.pages -%}<li><a href="{{ p.permalink }}" class="block rounded px-2 py-1 {% if p.permalink == page.permalink %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if p.permalink == page.permalink %} aria-current="page"{% endif %}>{{ p.title }}</a></li>{%- endfor -%}
+    </ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono hover:underline">{{ page.extra.source }}</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
+  </div>
+</div>
+{% endblock body %}
+{% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}

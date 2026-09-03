@@ -1,0 +1,335 @@
+{
+  "schema": 1,
+  "statuses": {
+    "guaranteed": "Deterministic and blocking. Implemented, and a behavioural test proves it.",
+    "advisory": "Projected into the worker's instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.",
+    "planned": "Specified and not implemented. Named so the omission is visible.",
+    "rejected": "Considered and deliberately refused, with the reason recorded."
+  },
+  "claims": [
+    {
+      "id": "policy-parse",
+      "claim": "The canonical policy is parsed and rejected if it contains an unknown key",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/common.sh",
+      "test": "test/cases/00_yaml_flatten.sh",
+      "status": "guaranteed",
+      "note": "A restricted YAML subset. Tabs, anchors, flow maps and multi-line scalars are refused rather than guessed at."
+    },
+    {
+      "id": "profile-validate",
+      "claim": "Every profile is parsed, its unknown keys rejected, and the default profile proven to exist",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/doctor.sh",
+      "test": "test/cases/02_doctor_basic.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "wiring-reconciliation",
+      "claim": "Every enforcement the policy declares is reconciled against what actually runs",
+      "source": "docs/DESIGN.md",
+      "implementation": "lib/doctor.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "guaranteed",
+      "note": "The path must exist, be executable, and be invoked by the named dispatcher. A hook that invokes it and discards the exit code counts as not wired."
+    },
+    {
+      "id": "exit-code-contract",
+      "claim": "Exit codes are a contract, and no code means \"warn and continue\"",
+      "source": "docs/CLI.md",
+      "implementation": "lib/common.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "projection-generation",
+      "claim": "Provider instruction files are generated from the one policy, deterministically",
+      "source": "docs/DESIGN.md",
+      "implementation": "lib/update.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "guaranteed",
+      "note": "Running update twice leaves the byte-identical file. The test asserts the hash."
+    },
+    {
+      "id": "projection-fingerprint",
+      "claim": "Every generated instruction file is fingerprinted, and a hand edit is detected",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/update.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "no-silent-overwrite",
+      "claim": "A hand-edited instruction file is never silently overwritten",
+      "source": "docs/CLI.md",
+      "implementation": "lib/update.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "guaranteed",
+      "note": "update refuses, offers a diff, and overwrites only under an explicit flag."
+    },
+    {
+      "id": "context-budget",
+      "claim": "The always-loaded instruction file has a line budget with a failing check",
+      "source": "share/skeleton/policy.yaml",
+      "implementation": "lib/update.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "guaranteed",
+      "note": "Over budget, nothing is written at all."
+    },
+    {
+      "id": "pointer-integrity",
+      "claim": "Every repository-relative reference in the always-loaded file is proven to resolve",
+      "source": "docs/DESIGN.md",
+      "implementation": "lib/doctor.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "no-counts-in-context",
+      "claim": "A hardcoded count in the always-loaded file is a failure",
+      "source": "docs/DESIGN.md",
+      "implementation": "lib/doctor.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "retention-caps",
+      "claim": "The append-only ledger and handover store have retention caps that are checked",
+      "source": "share/skeleton/policy.yaml",
+      "implementation": "lib/doctor.sh",
+      "test": "test/cases/02_doctor_basic.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "init-refuses",
+      "claim": "Installing into a repository that already has an installation is refused",
+      "source": "docs/CLI.md",
+      "implementation": "lib/init.sh",
+      "test": "test/cases/01_init.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "reproduce-command",
+      "claim": "Every finding carries the command that reproduces it",
+      "source": "docs/DESIGN.md",
+      "implementation": "lib/common.sh",
+      "test": "test/cases/02_doctor_basic.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "no-network",
+      "claim": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+      "source": "docs/DESIGN.md",
+      "implementation": "bin/majordomus",
+      "test": "test/cases/08_no_forbidden_constructs.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "scoped-task",
+      "claim": "A task is started with a declared file scope and a profile, and only one task is active per checkout",
+      "source": "docs/CLI.md",
+      "implementation": "lib/start.sh",
+      "test": "test/cases/04_start_check.sh",
+      "status": "guaranteed",
+      "note": "A scope path that escapes the repository root is refused. Starting a second task while one is active is refused."
+    },
+    {
+      "id": "git-identity",
+      "claim": "Identity fields on every state record are computed from git and never authored",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/start.sh",
+      "test": "test/cases/04_start_check.sh",
+      "status": "guaranteed",
+      "note": "A handover body that tries to set one is rejected rather than merged."
+    },
+    {
+      "id": "consistency-check",
+      "claim": "check reports whether state, scope, blockers and checkpoint age are consistent right now",
+      "source": "docs/CLI.md",
+      "implementation": "lib/check.sh",
+      "test": "test/cases/04_start_check.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "scope-enforcement",
+      "claim": "A touched file outside the claimed scope is a failure, not a warning",
+      "source": "docs/DESIGN.md",
+      "implementation": "lib/check.sh",
+      "test": "test/cases/04_start_check.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "divergence-label",
+      "claim": "State read back is labelled exact, advanced, diverged or different_context against git",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/common.sh",
+      "test": "test/cases/04_start_check.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "overlap-report",
+      "claim": "Overlap between parallel workers is computed on claimed paths in both containment directions",
+      "source": "docs/DESIGN.md",
+      "implementation": "lib/check.sh",
+      "test": "test/cases/04_start_check.sh",
+      "status": "guaranteed",
+      "note": "Reported, never blocking. Work in progress is reported and never blocked."
+    },
+    {
+      "id": "drift-watch",
+      "claim": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift",
+      "source": "docs/DESIGN.md",
+      "implementation": "lib/watch.sh",
+      "test": "test/cases/07_watch.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "handover-record",
+      "claim": "handover writes an append-only record with computed front matter and required sections",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/handover.sh",
+      "test": "test/cases/05_handover.sh",
+      "status": "guaranteed",
+      "note": "A body with a missing or empty required section is refused and names the sections."
+    },
+    {
+      "id": "no-transcripts",
+      "claim": "Handovers carry durable facts, never conversation transcripts",
+      "source": "docs/DESIGN.md",
+      "implementation": "lib/handover.sh",
+      "test": "test/cases/05_handover.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "finish-contract",
+      "claim": "finish evaluates the finish contract line by line and refuses when any line is unmet",
+      "source": "docs/CLI.md",
+      "implementation": "lib/finish.sh",
+      "test": "test/cases/06_finish.sh",
+      "status": "guaranteed",
+      "note": null
+    },
+    {
+      "id": "typed-outcome",
+      "claim": "An outcome is a value from a closed vocabulary, not free text",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/finish.sh",
+      "test": "test/cases/06_finish.sh",
+      "status": "guaranteed",
+      "note": "no_match means the work was done and the thing sought does not exist. failed means the work could not be done. They are different facts."
+    },
+    {
+      "id": "profile-axes",
+      "claim": "Capability class, reasoning effort, output verbosity, context and verification are five independent axes",
+      "source": "share/skeleton/profiles/implementation.yaml",
+      "implementation": "lib/update.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "advisory",
+      "note": "The axes are validated and projected into the worker's instructions. Whether a worker honours them is not observable from outside the worker."
+    },
+    {
+      "id": "capability-class",
+      "claim": "A profile names a capability class rather than a vendor model",
+      "source": "share/skeleton/profiles/deep-work.yaml",
+      "implementation": "lib/update.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "advisory",
+      "note": "Mapping a class to a concrete model is left to whoever runs the worker. Majordomus never selects or invokes a model."
+    },
+    {
+      "id": "minimum-context",
+      "claim": "A profile declares which context a worker should load and no more",
+      "source": "share/skeleton/profiles/routine.yaml",
+      "implementation": "lib/check.sh",
+      "test": "test/cases/04_start_check.sh",
+      "status": "advisory",
+      "note": "check --explain prints the context toggles for the active profile. Nothing measures what the worker actually read."
+    },
+    {
+      "id": "effort-escalation",
+      "claim": "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed",
+      "source": "share/skeleton/profiles/debugging.yaml",
+      "implementation": "lib/update.sh",
+      "test": "test/cases/03_update.sh",
+      "status": "advisory",
+      "note": null
+    },
+    {
+      "id": "checkpoint-interval",
+      "claim": "A profile sets how often a worker should checkpoint, and a stale task is reported",
+      "source": "share/skeleton/policy.yaml",
+      "implementation": "lib/check.sh",
+      "test": "test/cases/04_start_check.sh",
+      "status": "advisory",
+      "note": "The staleness report is guaranteed. Whether the worker checkpoints is not."
+    },
+    {
+      "id": "runtime-adapters",
+      "claim": "Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits",
+      "source": "docs/DESIGN.md",
+      "implementation": null,
+      "test": null,
+      "status": "planned",
+      "note": "v0.2. The one implementation studied was rolled back within days because its limits were global constants rather than task-derived."
+    },
+    {
+      "id": "telemetry",
+      "claim": "Execution telemetry will be recorded once a provider exposes it honestly",
+      "source": "docs/DESIGN.md",
+      "implementation": null,
+      "test": null,
+      "status": "planned",
+      "note": "v0.3. Nothing in v0.1 measures token spend. Any estimated_ field is labelled and excluded from enforcement."
+    },
+    {
+      "id": "cost-per-outcome",
+      "claim": "Cost per accepted outcome will be reported from measured data only",
+      "source": "docs/DESIGN.md",
+      "implementation": null,
+      "test": null,
+      "status": "planned",
+      "note": "v0.4."
+    },
+    {
+      "id": "routing",
+      "claim": "Routing recommendations will be derived from measured cost and outcome data",
+      "source": "docs/DESIGN.md",
+      "implementation": null,
+      "test": null,
+      "status": "planned",
+      "note": "v0.5. Recommendations only. Majordomus does not invoke a model."
+    },
+    {
+      "id": "shared-policy",
+      "claim": "One policy will be shared across repositories and workers",
+      "source": "docs/DESIGN.md",
+      "implementation": null,
+      "test": null,
+      "status": "planned",
+      "note": "v1.0."
+    },
+    {
+      "id": "task-dependencies",
+      "claim": "Dependencies between tasks are deliberately not represented",
+      "source": "docs/DESIGN.md",
+      "implementation": null,
+      "test": null,
+      "status": "rejected",
+      "note": "No use case in the evidence justified a dependency graph. Listed so that the omission is visible rather than assumed to be an oversight. Revisited only when a real case appears."
+    }
+  ]
+}

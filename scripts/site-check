@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# site-check — validates the derived site after scripts/site-build. Exit 0 clean, 10 findings, 12 missing.
+# Every check names what it proves. Nothing here needs Node or a browser.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"
+MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# shellcheck source=../lib/common.sh
+. "$ROOT/lib/common.sh"
+fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
+[ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
+PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
+pages="$(find "$PUB" -name '*.html')"
+
+# 1. data in sync with canonical sources
+if "$ROOT/scripts/generate-site-data" --check >/dev/null 2>&1; then ok sync "site/data/generated matches canonical inputs"; else bad sync "site/data/generated is stale; run scripts/generate-site-data"; fi
+# 2. generated data schema: every file parses and carries schema 1
+gen_files="project profiles policy capabilities lifecycle docs diagrams readme source"
+for f in $gen_files; do
+  [ "$(jq -r '.schema' "$SITE/data/generated/$f.json" 2>/dev/null)" = 1 ] || bad schema "$f.json missing or schema != 1"
+done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -d ' ')) carries schema 1"
+# 3. marketing copy: line budget, no numbers, no claim words
+ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 60 ] && ok promo "marketing.toml is $ml lines, budget 60" || bad promo "marketing.toml is $ml lines, budget 60"
+if grep -vE '^\s*#' "$SITE/data/marketing.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "marketing.toml contains a number; numbers are computed, never written"; fi
+# 4. routes: metadata, landmarks, no unresolved placeholders, one h1, viewport
+for f in $pages; do
+  rel="${f#"$PUB"/}"
+  grep -q '<meta name="viewport"' "$f" || bad route "$rel: no viewport meta"
+  grep -q '<meta name="description"' "$f" || bad route "$rel: no description"
+  grep -q '<main' "$f" || bad route "$rel: no <main> landmark"
+  [ "$(grep -o '<h1' "$f" | wc -l | tr -d ' ')" = 1 ] || bad route "$rel: expected exactly one <h1>"
+  grep -qE '\{\{|\{%|\[\[[A-Z_]+\]\]' "$f" && bad route "$rel: unresolved template placeholder"
+  grep -qE ' style="' "$f" && bad route "$rel: inline style attribute (forbidden by the custom CSS policy)"
+done; ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, description, main, one h1, no placeholders, no inline styles"
+# 5. prefix: every root-absolute href/src carries the deployment path
+if [ -n "$PREFIX" ]; then
+  if grep -rhoE '(href|src|content)="/[^"]*"' $pages | grep -vE "=\"$PREFIX(/|\")" | grep -vE '="/\)' | head -1 | grep -q .; then
+    bad prefix "root-absolute path without $PREFIX: $(grep -rhoE '(href|src|content)="/[^"]*"' $pages | grep -vE "=\"$PREFIX(/|\")" | head -1)"
+  else ok prefix "every root-absolute path carries $PREFIX"; fi
+fi
+# 6. internal links resolve to a generated file
+missing=0
+for l in $(grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PREFIX##" | sort -u); do
+  t="$PUB$l"; [ -f "$t" ] || [ -f "$t/index.html" ] || [ -f "${t%/}/index.html" ] || { bad link "$l does not resolve"; missing=1; }
+done; [ "$missing" = 0 ] && ok link "every internal link resolves"
+# 7. assets present
+for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js images/logo-mark.svg images/social-card.png giallo-light.css giallo-dark.css; do
+  [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
+done; ok asset "css, flowbite, alpine, mermaid, theme, diagrams, images, highlighting present"
+grep -qE '^[[:space:]]*\.dark ' "$PUB/giallo-dark.css" && ok darkcss "giallo-dark.css scoped under .dark" || bad darkcss "giallo-dark.css not scoped under .dark (site-build post-step)"
+# 8. no external runtime dependency: every script/stylesheet is served from this site's own origin
+BASE_URL="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')"
+remote="$(grep -rhoE '<(script|link)[^>]+(src|href)="https?://[^"]+"' $pages | grep -v 'rel="canonical"' | grep -vF "\"$BASE_URL/" | head -1 || true)"
+if [ -n "$remote" ]; then bad offline "remote script or stylesheet: $remote"; else ok offline "every script and stylesheet is same-origin; the site works offline after build"; fi
+# 9. flowbite + alpine hooks are used, and initFlowbite is called once per page
+for f in $pages; do
+  [ "$(grep -o 'initFlowbite()' "$f" | wc -l | tr -d ' ')" = 1 ] || bad js "${f#"$PUB"/}: initFlowbite() must appear exactly once"
+done; grep -q 'data-collapse-toggle="navbar-main"' "$PUB/index.html" && grep -q 'x-data=' "$PUB/index.html" && ok js "flowbite collapse and alpine x-data present; initFlowbite called once per page" || bad js "flowbite/alpine hooks missing on the homepage"
+# 10. mermaid: every diagram page has the runtime and at least one source block
+for f in $pages; do
+  if grep -q 'class="mermaid' "$f"; then grep -q 'js/mermaid.min.js' "$f" || bad mermaid "${f#"$PUB"/}: has diagrams but no mermaid runtime"; fi
+done; ok mermaid "every page with <pre class=\"mermaid\"> loads the runtime"
+# 11. responsive lint (structural causes of horizontal overflow)
+for f in $pages; do
+  rel="${f#"$PUB"/}"; flat="$(tr -d '\n' < "$f")"
+  npre="$(printf '%s' "$flat" | grep -o '<pre' | wc -l | tr -d ' ')"
+  nwrap="$(printf '%s' "$flat" | grep -oE '(overflow-x-auto[^>]*>[[:space:]]*<pre|class="format[^"]*"[^>]*>.*<pre)' | wc -l | tr -d ' ')"
+  # pres inside a Typography container scroll by the plugin's own rule; others need the wrapper
+  if [ "$npre" -gt 0 ] && [ "$nwrap" = 0 ]; then bad mobile "$rel: <pre> without overflow container"; fi
+  grep -oE 'class="[^"]*"' "$f" | grep -qE '(class="|[[:space:]])grid-cols-([3-9]|1[0-2])([[:space:]]|")' && bad mobile "$rel: grid-cols-3+ without a breakpoint prefix"
+  grep -oE '\b(min-)?w-\[[0-9]{3,}px\]' "$f" | awk -F'[][]' '{gsub(/px/,"",$2); if ($2+0 > 360) found=1} END{exit !found}' && bad mobile "$rel: fixed width over 360px"
+done; ok mobile "no unwrapped <pre>, no unprefixed grid-cols-3+, no fixed width over 360px"
+# 12. secrets and private paths in output
+grep -rhoaE '/Users/[a-z]+/|/home/[a-z]+/dev/|\.internal\b|\.corp\b' "$PUB" | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
+grep -rhoaE '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}' "$PUB" | grep -viE 'id-token|GITHUB_TOKEN' | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
+# 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
+for d in $(jq -r '.docs[].path' "$SITE/data/generated/docs.json" | sed 's/\.md$//' | tr 'A-Z_' 'a-z-' | grep -v '^agents$'); do [ -f "$PUB/docs/$d/index.html" ] || bad docs "docs.json lists $d but no route was generated"; done; ok docs "every document in docs.json has a route"
+# 14. claims: the guarantees page carries every claim id count
+n="$(jq '.claims | length' "$SITE/data/generated/capabilities.json")"; m="$(grep -o '<tr class="align-top">' "$PUB/guarantees/index.html" | wc -l | tr -d ' ')"
+[ "$n" = "$m" ] && ok claims "$n claims rendered on /guarantees/" || bad claims "capabilities.json has $n claims, /guarantees/ renders $m"
+
+printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

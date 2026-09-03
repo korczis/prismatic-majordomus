@@ -1,0 +1,35 @@
+# Zola configuration for the derived Prismatic Majordomus site.
+# Content and data come from the repository; see docs/GITHUB_PAGES_ARCHITECTURE.md.
+base_url = "https://korczis.github.io/prismatic-majordomus"
+title = "Prismatic Majordomus"
+description = "A lightweight supervisory control layer for AI-assisted work."
+default_language = "en"
+compile_sass = false
+build_search_index = false
+generate_feeds = false
+minify_html = false
+
+[markdown]
+insert_anchor_links = "heading"
+# GitHub alerts are projected into Flowbite alerts by scripts/lib/project-markdown.awk (zero custom
+# CSS); Zola's own alert markup would need styling, so it stays off.
+github_alerts = false
+render_emoji = false
+external_links_target_blank = false
+external_links_no_follow = false
+smart_punctuation = false
+bottom_footnotes = true
+
+[markdown.highlighting]
+# class-based highlighting (Zola 0.23): light and dark palettes are written as generated CSS at
+# build time; scripts/site-build scopes the dark palette under `.dark` for class-based dark mode.
+style = "class"
+light_theme = "ayu-light"
+dark_theme = "ayu-dark"
+add_color_scheme = false
+
+[link_checker]
+internal_level = "error"
+
+[extra]
+repository_url = "https://github.com/korczis/prismatic-majordomus"

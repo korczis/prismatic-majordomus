@@ -1,0 +1,44 @@
+{%- set project = load_data(path="data/generated/project.json") -%}
+{%- set source = load_data(path="data/generated/source.json") -%}
+{%- set m = load_data(path="data/marketing.toml") -%}
+{%- set page_url = current_url or config.base_url -%}
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ project.name }} — {{ project.tagline | lower | trim_end(pat=".") }}{% endblock title %}</title>
+<meta name="description" content="{% block description %}{{ project.tagline }}{% endblock description %}">
+<link rel="canonical" href="{{ page_url }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ project.name }}">
+<meta property="og:title" content="{% block ogtitle %}{{ project.name }}{% endblock ogtitle %}">
+<meta property="og:description" content="{% block ogdescription %}{{ project.tagline }}{% endblock ogdescription %}">
+<meta property="og:url" content="{{ page_url }}">
+<meta property="og:image" content="{{ get_url(path="images/social-card.png") }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{ get_url(path="images/social-card.png") }}">
+<link rel="icon" href="{{ get_url(path="images/logo-mark.svg") }}" type="image/svg+xml">
+<link rel="stylesheet" href="{{ get_url(path="app.css") }}">
+<link rel="stylesheet" href="{{ get_url(path="giallo-light.css") }}">
+<link rel="stylesheet" href="{{ get_url(path="giallo-dark.css") }}">
+{#- Theme before paint: flowbite.com/docs/customize/dark-mode/ reads localStorage 'color-theme', falls back to prefers-color-scheme. -#}
+<script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script>
+{#- The one custom CSS rule on the site: Alpine's documented x-cloak requirement (alpinejs.dev/directives/cloak). -#}
+<style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+{% include "partials/navbar.html" %}
+<main id="main">
+{% block content %}{% endblock content %}
+</main>
+{% include "partials/footer.html" %}
+<script src="{{ get_url(path="js/flowbite.min.js") }}"></script>
+<script src="{{ get_url(path="js/theme.js") }}"></script>
+<script defer src="{{ get_url(path="js/alpine.min.js") }}"></script>
+{#- Flowbite v4's bundle exposes window.initFlowbite and does not call it (verified in node_modules/flowbite/dist/flowbite.js); one explicit call, once. -#}
+<script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+{% block scripts %}{% endblock scripts %}
+</body>
+</html>
