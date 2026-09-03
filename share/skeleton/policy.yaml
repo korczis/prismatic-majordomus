@@ -40,6 +40,10 @@ enforcement:
     args: [finish, --check]
     wired_by: git-hook:pre-push
 
+# mode: file (the default) generates the whole target; mode: region generates only the
+# text between the <!-- majordomus:begin --> and <!-- majordomus:end --> markers and
+# leaves the rest of the file alone, which is how a repository that already has a
+# hand-written CLAUDE.md adopts Majordomus without losing it.
 projections:
   - provider: claude-code
     target: CLAUDE.md

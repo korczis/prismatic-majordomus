@@ -108,8 +108,21 @@ mj_sha256() {
   elif command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | cut -d' ' -f1
   else mj_die "$MJ_EX_MISSING" "need sha256sum or shasum"; fi
 }
-mj_lines() { wc -l < "$1" | tr -d ' '; }
+# NR counts a final line that carries no newline; wc -l does not, and a projection
+# written without a trailing newline would be measured one line under its budget.
+mj_lines() { awk 'END{ print NR + 0 }' "$1"; }
 mj_has()   { command -v "$1" >/dev/null 2>&1; }
+
+# policy + profiles, in that order, for the policy hash. An empty profiles/ is a policy
+# error that doctor reports, not a cat(1) failure that aborts whoever asked for the hash.
+mj_policy_cat() {
+  local pf
+  cat "$MJ_DIR/policy.yaml"
+  for pf in "$MJ_DIR"/profiles/*.yaml; do
+    if [ -f "$pf" ]; then cat "$pf"; fi
+  done
+  return 0
+}
 
 # normalise a repo-relative path: strip ./ and trailing /, collapse //, refuse escapes
 mj_norm_path() {
@@ -202,6 +215,55 @@ mj_yaml_unknown_keys() {
   return $bad
 }
 
+# ---------------------------------------------------------------- regions
+# A region projection owns only the text between two markers in a file it does not
+# otherwise control, so Majordomus can be adopted by a repository that already has a
+# hand-written CLAUDE.md. The begin marker carries the policy hash for the reader; it
+# is not part of the region content, so re-hashing the policy alone is not a hand edit.
+MJ_REGION_BEGIN_RE='^<!-- majordomus:begin( [0-9a-f]+)? -->$'
+MJ_REGION_END_RE='^<!-- majordomus:end -->$'
+MJ_REGION_END='<!-- majordomus:end -->'
+
+# prints the region body of file $1
+# exit 0 found · 1 no begin marker · 2 malformed (unclosed, out of order, or repeated)
+mj_region_extract() {
+  awk -v b="$MJ_REGION_BEGIN_RE" -v e="$MJ_REGION_END_RE" '
+    $0 ~ b { if (seen) { bad = 2; exit } seen = 1; inside = 1; next }
+    $0 ~ e { if (!inside) { bad = 2; exit } inside = 0; closed = 1; next }
+    inside { print }
+    END { if (bad) exit bad; if (!seen) exit 1; if (!closed) exit 2 }' "$1"
+}
+
+# does file $1 carry a begin marker at all?
+mj_region_present() { grep -qE "$MJ_REGION_BEGIN_RE" "$1" 2>/dev/null; }
+
+# host file $1 (may be absent), region body file $2, policy hash $3 -> whole new file
+# on stdout. An existing region is replaced in place; otherwise the region is appended.
+mj_region_splice() {
+  local host="$1" body="$2" sha="$3"
+  if [ -f "$host" ] && mj_region_present "$host"; then
+    awk -v b="$MJ_REGION_BEGIN_RE" -v e="$MJ_REGION_END_RE" -v body="$body" -v sha="$sha" '
+      $0 ~ b { print "<!-- majordomus:begin " sha " -->"
+               while ((getline l < body) > 0) print l
+               close(body)
+               print "<!-- majordomus:end -->"
+               skip = 1; next }
+      $0 ~ e { skip = 0; next }
+      !skip  { print }' "$host"
+  else
+    if [ -f "$host" ]; then cat "$host"; printf '\n'; fi
+    printf -- '<!-- majordomus:begin %s -->\n' "$sha"
+    cat "$body"
+    printf '%s\n' "$MJ_REGION_END"
+  fi
+}
+
+# projection mode of index $1: "file" (whole file) or "region" (between markers)
+mj_projection_mode() {
+  local m; m="$(mj_pol "projections.$1.mode")"
+  case "$m" in ""|file) printf 'file' ;; region) printf 'region' ;; *) printf '%s' "$m" ;; esac
+}
+
 # ---------------------------------------------------------------- ledger
 # mj_ledger_append event 'extra json fields without braces'
 mj_ledger_append() {
@@ -219,20 +281,22 @@ mj_load_current() {
   mj_yaml_flatten "$MJ_CUR" > "$MJ_CUR_FLAT" || return 2
   return 0
 }
-mj_cur() { mj_yget "$MJ_CUR_FLAT" "$1"; }
+mj_cur() { [ -n "${MJ_CUR_FLAT:-}" ] || return 0; mj_yget "$MJ_CUR_FLAT" "$1"; }
 
 mj_load_policy() {
   MJ_POL_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.pol.XXXXXX")"
   mj_yaml_flatten "$MJ_DIR/policy.yaml" > "$MJ_POL_FLAT" || return 1
 }
-mj_pol() { mj_yget "$MJ_POL_FLAT" "$1"; }
+mj_pol() { [ -n "${MJ_POL_FLAT:-}" ] || return 0; mj_yget "$MJ_POL_FLAT" "$1"; }
 mj_load_profile() {
   local name="$1"
+  # cleared first: a failed load must not leave the previous profile readable as this one
+  rm -f "${MJ_PRO_FLAT:-}" 2>/dev/null || true; MJ_PRO_FLAT=""
   [ -f "$MJ_DIR/profiles/$name.yaml" ] || return 1
   MJ_PRO_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.pro.XXXXXX")"
   mj_yaml_flatten "$MJ_DIR/profiles/$name.yaml" > "$MJ_PRO_FLAT" || return 2
 }
-mj_pro() { mj_yget "$MJ_PRO_FLAT" "$1"; }
+mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
 mj_cleanup() { rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" 2>/dev/null; }
 trap mj_cleanup EXIT

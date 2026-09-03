@@ -10,8 +10,9 @@ mj_cmd_watch() {
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
 
   # policy + projection drift via fingerprints
-  local fp="$MJ_DIR/generated/fingerprints.yaml" fpflat="" tmp psha
-  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.w.XXXXXX")"; cat "$MJ_DIR/policy.yaml" "$MJ_DIR"/profiles/*.yaml > "$tmp"; psha="$(mj_sha256 "$tmp")"; rm -f "$tmp"
+  local fp="$MJ_DIR/generated/fingerprints.yaml" fpflat="" tmp psha owned
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.w.XXXXXX")"; mj_policy_cat > "$tmp"; psha="$(mj_sha256 "$tmp")"; rm -f "$tmp"
+  owned="$(mktemp "${TMPDIR:-/tmp}/mj.wo.XXXXXX")"
   if [ -f "$fp" ]; then
     fpflat="$(mktemp "${TMPDIR:-/tmp}/mj.wf.XXXXXX")"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || { rm -f "$fpflat"; fpflat=""; }
   fi
@@ -19,10 +20,18 @@ mj_cmd_watch() {
   else
     if [ "$(mj_yget "$fpflat" policy_sha256)" = "$psha" ]; then mj_ok policy "policy+profiles" "match last update (${psha:0:12})"
     else mj_drift policy ".majordomus/policy.yaml" "policy or profiles changed after the last update" "majordomus update --dry-run"; fi
-    local k=0 tgt
+    local k=0 tgt mode rc
     while [ -n "$(mj_yget "$fpflat" "targets.$k.target")" ]; do
       tgt="$(mj_yget "$fpflat" "targets.$k.target")"
+      mode="$(mj_yget "$fpflat" "targets.$k.mode")"; [ -n "$mode" ] || mode="file"
       if [ ! -f "$MJ_ROOT/$tgt" ]; then mj_drift projection "$tgt" "missing" "majordomus update"
+      elif [ "$mode" = region ]; then
+        # only the region is Majordomus's; an edit outside the markers is not drift
+        rc=0; mj_region_extract "$MJ_ROOT/$tgt" > "$owned" 2>/dev/null || rc=$?
+        if [ "$rc" = 1 ]; then mj_drift projection "$tgt" "region markers are absent" "majordomus update"
+        elif [ "$rc" != 0 ]; then mj_drift projection "$tgt" "region markers are malformed" "grep -n 'majordomus:begin' $tgt"
+        elif [ "$(mj_sha256 "$owned")" != "$(mj_yget "$fpflat" "targets.$k.sha256")" ]; then mj_drift projection "$tgt" "region differs from fingerprint (hand-edited?)" "majordomus update --diff $tgt"
+        else mj_ok projection "$tgt" "region matches fingerprint"; fi
       elif [ "$(mj_sha256 "$MJ_ROOT/$tgt")" != "$(mj_yget "$fpflat" "targets.$k.sha256")" ]; then mj_drift projection "$tgt" "hash differs from fingerprint (hand-edited?)" "majordomus update --diff $tgt"
       else mj_ok projection "$tgt" "matches fingerprint"; fi
       k=$((k+1))
@@ -37,7 +46,8 @@ mj_cmd_watch() {
       exact|advanced) mj_ok state "$id" "$label" ;;
       *) mj_drift state "$id" "$label — record no longer describes this checkout" "majordomus check" ;;
     esac
-    mj_load_profile "$(mj_cur profile)" 2>/dev/null || mj_drift state "$id" "profile '$(mj_cur profile)' has no file"
+    local have_profile=1
+    mj_load_profile "$(mj_cur profile)" 2>/dev/null || { have_profile=0; mj_drift state "$id" "profile '$(mj_cur profile)' has no file"; }
     case "$(mj_cur outcome)" in
       active)
         local f s inside out=0
@@ -47,10 +57,16 @@ mj_cmd_watch() {
           [ "$inside" = 1 ] || { out=$((out+1)); mj_drift scope "$f" "outside claimed scope" "majordomus check"; }
         done
         [ "$out" = 0 ] && mj_ok scope "$id" "touched files within scope"
-        local interval cp_e age; interval="$(mj_duration_secs "$(mj_pro checkpoint_interval 2>/dev/null || echo 15m)")" || interval=900
-        cp_e="$(mj_epoch "$(mj_cur checkpoint_at)")"; age=$(( $(mj_epoch "$(mj_now)") - ${cp_e:-0} ))
-        if [ "$age" -gt "$interval" ]; then mj_drift staleness "$id" "last checkpoint $((age/60))m ago, interval $(mj_pro checkpoint_interval)" "majordomus check --checkpoint"
-        else mj_ok staleness "$id" "checkpoint $((age/60))m ago"; fi ;;
+        local interval iv cp_e age
+        iv=15m; [ "$have_profile" = 1 ] && iv="$(mj_pro checkpoint_interval)"; [ -n "$iv" ] || iv=15m
+        interval="$(mj_duration_secs "$iv")" || interval=900
+        cp_e="$(mj_epoch "$(mj_cur checkpoint_at)")"
+        if [ -z "$cp_e" ]; then mj_drift staleness "$id" "checkpoint_at is missing or unparseable" "grep -n checkpoint_at .majordomus/state/current.yaml"
+        else
+          age=$(( $(mj_epoch "$(mj_now)") - cp_e ))
+          if [ "$age" -gt "$interval" ]; then mj_drift staleness "$id" "last checkpoint $((age/60))m ago, interval $iv" "majordomus check --checkpoint"
+          else mj_ok staleness "$id" "checkpoint $((age/60))m ago"; fi
+        fi ;;
       completed|partial|blocked|no_match|failed)
         if grep -q "\"event\":\"task.finished\".*\"task_id\":\"$id\"" "$MJ_DIR/state/ledger.jsonl" 2>/dev/null; then mj_ok verification "$id" "$(mj_cur outcome) with a finish record"
         else mj_drift verification "$id" "marked $(mj_cur outcome) but no task.finished record in the ledger" "grep task.finished .majordomus/state/ledger.jsonl"; fi ;;
@@ -70,6 +86,7 @@ mj_cmd_watch() {
   cap="$(mj_pol handover.retention_max_files)"; n="$(find "$MJ_DIR/state/handovers" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$n" -le "${cap:-200}" ]; then mj_ok retention "handovers" "$n files"; else mj_drift retention "handovers" "$n files over cap $cap" "ls .majordomus/state/handovers | wc -l"; fi
 
+  rm -f "$owned"
   [ "$MJ_JSON" = 1 ] || printf 'watch: %s drift finding(s)\n' "$MJ_FAILS"
   [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_DRIFT"
 }

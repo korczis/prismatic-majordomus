@@ -55,15 +55,26 @@ mj_cmd_doctor() {
         git-hook)
           hookdir="$(mj_git config core.hooksPath 2>/dev/null || true)"; [ -z "$hookdir" ] && hookdir=".git/hooks"
           case "$hookdir" in /*) hookfile="$hookdir/$target" ;; *) hookfile="$MJ_ROOT/$hookdir/$target" ;; esac
+          # A hook is commonly a dispatcher that runs every executable in <hook>.d/; the
+          # invocation then lives in one of those files, not in the hook git calls.
+          local wirefile="" cand rel
+          if [ -f "$hookfile" ]; then
+            for cand in $(mj_hook_candidates "$hookfile"); do
+              if grep -qE "majordomus[[:space:]]+$arg0([[:space:]]|$)" "$cand"; then wirefile="$cand"; break; fi
+            done
+          fi
+          rel="${wirefile#"$MJ_ROOT"/}"
           if [ ! -f "$hookfile" ]; then mj_fail wiring "$name" "hook $hookdir/$target does not exist" "ls -l $hookdir/$target"
           elif [ ! -x "$hookfile" ]; then mj_fail wiring "$name" "hook $hookdir/$target is not executable" "chmod +x $hookdir/$target"
-          elif ! grep -qE "majordomus[[:space:]]+$arg0([[:space:]]|$)" "$hookfile"; then
-            mj_fail wiring "$name" "$(basename "$path") $arg0 is not invoked by $hookdir/$target" "grep -n 'majordomus $arg0' $hookdir/$target"
-          elif [ -z "$resolved" ] && ! mj_hook_binary_ok "$hookfile" "$arg0"; then
-            mj_fail wiring "$name" "'$path' is not on PATH and $hookdir/$target does not name an executable majordomus" "grep -n 'majordomus $arg0' $hookdir/$target"
-          elif grep -E "majordomus[[:space:]]+$arg0" "$hookfile" | grep -qE '\|\|[[:space:]]*(true|exit[[:space:]]+0)'; then
-            mj_fail wiring "$name" "$hookdir/$target invokes it but swallows the exit code (|| true)" "grep -n 'majordomus $arg0' $hookdir/$target"
-          else mj_ok wiring "$name" "wired via $hookdir/$target"; fi ;;
+          elif [ -z "$wirefile" ]; then
+            mj_fail wiring "$name" "$(basename "$path") $arg0 is not invoked by $hookdir/$target or anything in $hookdir/$target.d/" "grep -rn 'majordomus $arg0' $hookdir/$target $hookdir/$target.d 2>/dev/null"
+          elif [ ! -x "$wirefile" ]; then
+            mj_fail wiring "$name" "$rel invokes it but is not executable, so the dispatcher skips it" "chmod +x $rel"
+          elif [ -z "$resolved" ] && ! mj_hook_binary_ok "$wirefile" "$arg0"; then
+            mj_fail wiring "$name" "'$path' is not on PATH and $rel does not name an executable majordomus" "grep -n 'majordomus $arg0' $rel"
+          elif grep -E "majordomus[[:space:]]+$arg0" "$wirefile" | grep -qE '\|\|[[:space:]]*(true|exit[[:space:]]+0)'; then
+            mj_fail wiring "$name" "$rel invokes it but swallows the exit code (|| true)" "grep -n 'majordomus $arg0' $rel"
+          else mj_ok wiring "$name" "wired via $rel"; fi ;;
         ci)
           if [ ! -f "$MJ_ROOT/$target" ]; then mj_fail wiring "$name" "ci file $target does not exist"
           elif ! grep -qE "majordomus[[:space:]]+$arg0" "$MJ_ROOT/$target"; then mj_fail wiring "$name" "$target does not invoke majordomus $arg0" "grep -n majordomus $target"
@@ -77,40 +88,71 @@ mj_cmd_doctor() {
   [ "$i" = 0 ] && mj_warn wiring "policy" "no enforcement entries declared; nothing is wired to run majordomus"
 
   # 4. projections exist and match fingerprints
-  local fp="$MJ_DIR/generated/fingerprints.yaml" fpflat="" j=0 tgt want have always="" budget
+  local fp="$MJ_DIR/generated/fingerprints.yaml" fpflat="" j=0 tgt want have always="" always_mode="file" budget
+  local mode prov owned rc
+  owned="$(mktemp "${TMPDIR:-/tmp}/mj.own.XXXXXX")"
   if [ -f "$fp" ]; then fpflat="$(mktemp "${TMPDIR:-/tmp}/mj.fp.XXXXXX")"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || { rm -f "$fpflat"; fpflat=""; }; fi
   while [ -n "$(mj_pol "projections.$j.target")" ]; do
-    tgt="$(mj_pol "projections.$j.target")"
-    [ "$(mj_pol "projections.$j.always_loaded")" = true ] && always="$tgt"
+    tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"
+    prov="$(mj_pol "projections.$j.provider")"
+    if [ "$(mj_pol "projections.$j.always_loaded")" = true ]; then always="$tgt"; always_mode="$mode"; fi
+    case "$mode" in
+      file|region) ;;
+      *) mj_fail projection "$tgt" "unknown mode '$mode' (file | region)" "grep -n 'mode:' .majordomus/policy.yaml"; j=$((j+1)); continue ;;
+    esac
+    # update would die on this; doctor is the command that is supposed to say so first
+    [ -f "$MJ_DIR/providers/$prov.tmpl" ] || { mj_fail projection "$tgt" "provider '$prov' has no template .majordomus/providers/$prov.tmpl" "ls .majordomus/providers/"; missing=1; j=$((j+1)); continue; }
     if [ ! -f "$MJ_ROOT/$tgt" ]; then mj_fail projection "$tgt" "missing (run: majordomus update)" "majordomus update"; missing=1
     elif [ -z "$fpflat" ]; then mj_fail projection "$tgt" "no fingerprints recorded (run: majordomus update)" "majordomus update"; missing=1
     else
-      want="$(mj_fp_sha "$fpflat" "$tgt")"; have="$(mj_sha256 "$MJ_ROOT/$tgt")"
-      if [ -z "$want" ]; then mj_fail projection "$tgt" "not in fingerprints (run: majordomus update)" "majordomus update"; missing=1
-      elif [ "$want" != "$have" ]; then mj_fail projection "$tgt" "hash differs from fingerprint (hand-edited?)" "majordomus update --diff $tgt"
-      else mj_ok projection "$tgt" "fingerprint matches"; fi
+      want="$(mj_fp_sha "$fpflat" "$tgt")"; have=""
+      if [ "$mode" = region ]; then
+        rc=0; mj_region_extract "$MJ_ROOT/$tgt" > "$owned" 2>/dev/null || rc=$?
+        case "$rc" in
+          0) have="$(mj_sha256 "$owned")" ;;
+          1) mj_fail projection "$tgt" "region markers are absent (run: majordomus update)" "majordomus update"; missing=1 ;;
+          *) mj_fail projection "$tgt" "region markers are malformed (unclosed, out of order, or repeated)" "grep -n 'majordomus:begin\\|majordomus:end' $tgt" ;;
+        esac
+      else cp "$MJ_ROOT/$tgt" "$owned"; have="$(mj_sha256 "$owned")"; fi
+      if [ -n "$have" ]; then
+        if [ -z "$want" ]; then mj_fail projection "$tgt" "not in fingerprints (run: majordomus update)" "majordomus update"; missing=1
+        elif [ "$want" != "$have" ]; then mj_fail projection "$tgt" "hash differs from fingerprint (hand-edited?)" "majordomus update --diff $tgt"
+        else mj_ok projection "$tgt" "fingerprint matches$([ "$mode" = region ] && printf ' (region)')"; fi
+      fi
     fi
     j=$((j+1))
   done
   [ -n "$fpflat" ] && rm -f "$fpflat"
 
   # 5. budget on always-loaded projection
+  # These three judge the generated content only. For a region projection that is the
+  # region, never the host document: every failure doctor reports must be fixable by
+  # editing the policy, and the text around the markers is not Majordomus's to fix.
   budget="$(mj_pol context.always_loaded_budget_lines)"
+  local subject="$always"
   if [ -n "$always" ] && [ -f "$MJ_ROOT/$always" ]; then
-    local l; l="$(mj_lines "$MJ_ROOT/$always")"
-    if [ "$l" -le "$budget" ]; then mj_ok budget "$always" "$l lines, budget $budget"
-    else mj_fail budget "$always" "$l lines, budget $budget" "wc -l $always"; fi
+    local measured="$MJ_ROOT/$always"
+    if [ "$always_mode" = region ]; then
+      subject="$always (region)"
+      rc=0; mj_region_extract "$MJ_ROOT/$always" > "$owned" 2>/dev/null || rc=$?
+      [ "$rc" = 0 ] && measured="$owned"
+      mj_info context "$always" "host document is $(mj_lines "$MJ_ROOT/$always") lines; the budget below covers the generated region only"
+    fi
+    local l; l="$(mj_lines "$measured")"
+    if [ "$l" -le "$budget" ]; then mj_ok budget "$subject" "$l lines, budget $budget"
+    else mj_fail budget "$subject" "$l lines, budget $budget" "majordomus update --dry-run"; fi
     # 6. links resolve
     local bad=0 l2 dir; dir="$(dirname "$MJ_ROOT/$always")"
-    for l2 in $(grep -oE '\]\(([^)#]+)\)' "$MJ_ROOT/$always" | sed -E 's/\]\(([^)]+)\)/\1/' | grep -vE '^https?://' || true); do
-      [ -e "$dir/$l2" ] || { mj_fail links "$always" "reference $l2 does not resolve" "ls $l2"; bad=1; }
+    for l2 in $(grep -oE '\]\(([^)#]+)\)' "$measured" | sed -E 's/\]\(([^)]+)\)/\1/' | grep -vE '^https?://' || true); do
+      [ -e "$dir/$l2" ] || { mj_fail links "$subject" "reference $l2 does not resolve" "ls $l2"; bad=1; }
     done
-    [ "$bad" = 0 ] && mj_ok links "$always" "all references resolve"
+    [ "$bad" = 0 ] && mj_ok links "$subject" "all references resolve"
     # 7. no hardcoded counts
-    if grep -qE '\b[0-9]+ (agents|files|apps|commands|skills|rules)\b' "$MJ_ROOT/$always"; then
-      mj_fail counts "$always" "hardcoded count in always-loaded context" "grep -nE '[0-9]+ (agents|files|apps|commands|skills|rules)' $always"
-    else mj_ok counts "$always" "no hardcoded counts"; fi
+    if grep -qE '\b[0-9]+ (agents|files|apps|commands|skills|rules)\b' "$measured"; then
+      mj_fail counts "$subject" "hardcoded count in always-loaded context" "grep -nE '[0-9]+ (agents|files|apps|commands|skills|rules)' $always"
+    else mj_ok counts "$subject" "no hardcoded counts"; fi
   elif [ -z "$always" ]; then mj_warn budget "policy" "no projection is marked always_loaded: true"; fi
+  rm -f "$owned"
 
   # 8. retention
   local cap ll hc
@@ -126,6 +168,12 @@ mj_cmd_doctor() {
   mj_info env "-" "$env"
 
   mj_finish_doctor "$missing"
+}
+# a hook file plus every file in its <hook>.d/ dispatch directory, in dispatch order
+mj_hook_candidates() {
+  printf '%s\n' "$1"
+  if [ -d "$1.d" ]; then find "$1.d" -type f 2>/dev/null | sort; fi
+  return 0
 }
 # does the hook line that invokes "majordomus <arg0>" name an executable binary?
 mj_hook_binary_ok() {

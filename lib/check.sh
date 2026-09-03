@@ -83,7 +83,7 @@ mj_run_task_checks() {
     MJ_BLOCKED=1
   else mj_ok blockers "$id" "none open"; MJ_BLOCKED=0; fi
 }
-mj_projection_targets() { local j=0; while [ -n "$(mj_pol "projections.$j.target")" ]; do mj_pol "projections.$j.target"; echo; j=$((j+1)); done; }
+mj_projection_targets() { local j=0; while [ -n "$(mj_pol "projections.$j.target")" ]; do printf '%s\n' "$(mj_pol "projections.$j.target")"; j=$((j+1)); done; }
 mj_report_overlap_from_current() {
   # shellcheck disable=SC2046
   mj_report_overlap "$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ')"
