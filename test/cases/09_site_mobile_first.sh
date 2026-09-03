@@ -14,10 +14,14 @@ for f in $pages; do
   grep -q '<meta name="viewport" content="width=device-width, initial-scale=1' "$f" || { echo "    $rel: no viewport meta"; bad=1; }
   # 2. every <pre> sits directly inside an overflow-x-auto wrapper, so long lines scroll
   #    inside the card instead of widening the page
-  n_pre="$(grep -c '<pre' "$f")"; n_wrapped="$(grep -c 'overflow-x-auto[^>]*>[[:space:]]*<pre' "$f")"
+  #    (compared on the whole file with newlines removed: wrapper and <pre> may sit on different lines)
+  flat="$(tr -d '\n' < "$f")"
+  n_pre="$(printf '%s' "$flat" | grep -o '<pre' | wc -l | tr -d ' ')"
+  n_wrapped="$(printf '%s' "$flat" | grep -oE 'overflow-x-auto[^>]*>[[:space:]]*<pre' | wc -l | tr -d ' ')"
   [ "$n_pre" = "$n_wrapped" ] || { echo "    $rel: $((n_pre - n_wrapped)) of $n_pre <pre> block(s) not wrapped in overflow-x-auto"; bad=1; }
   # 3. every <table> likewise
-  n_tab="$(grep -c '<table' "$f")"; n_tw="$(grep -c 'overflow-x-auto[^>]*>[[:space:]]*<table' "$f")"
+  n_tab="$(printf '%s' "$flat" | grep -o '<table' | wc -l | tr -d ' ')"
+  n_tw="$(printf '%s' "$flat" | grep -oE 'overflow-x-auto[^>]*>[[:space:]]*<table' | wc -l | tr -d ' ')"
   [ "$n_tab" = "$n_tw" ] || { echo "    $rel: $((n_tab - n_tw)) of $n_tab <table>(s) not wrapped in overflow-x-auto"; bad=1; }
   # 4. mobile-first grids: three or more columns only behind a breakpoint prefix
   if grep -oE 'class="[^"]*"' "$f" | grep -qE '(class="|[[:space:]])grid-cols-([3-9]|1[0-2])([[:space:]]|")'; then

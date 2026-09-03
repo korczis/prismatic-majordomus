@@ -390,7 +390,7 @@ build_home() {
   cat <<HTML
 <section class="mx-auto max-w-screen-xl px-4 pb-14 pt-14 sm:pt-20">
   <div class="grid items-start gap-12 lg:grid-cols-2">
-    <div>
+    <div class="min-w-0">
       <span class="mb-5 inline-flex items-center rounded-sm bg-blue-100 px-2.5 py-0.5 font-mono text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">v$VERSION &middot; portable shell, no runtime</span>
       <h1 class="mb-5 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-5xl dark:text-white">A supervisory control layer for AI-assisted work</h1>
       <p class="mb-6 max-w-xl text-lg text-gray-600 dark:text-gray-400">$HERO_LEAD</p>
@@ -408,7 +408,7 @@ build_home() {
         <div><dt class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">Licence</dt><dd class="mt-1 text-sm font-medium text-gray-900 dark:text-white">MIT</dd></div>
       </dl>
     </div>
-    <div class="lg:pt-10">
+    <div class="min-w-0 lg:pt-10">
 HTML
   # The terminal transcript in the README's first fenced block: real output, not a mockup.
   code_panel "majordomus finish" < <(codeblock README.md 1)
@@ -437,9 +437,9 @@ HTML
   # ---- 3. core model
   printf '<section class="mx-auto max-w-screen-xl px-4 py-16 sm:py-20">\n'
   section_head "02 / The core model" "Majordomus supervises how work is executed" "$(c leads.model)"
-  printf '<div class="grid gap-10 lg:grid-cols-2">\n<div>\n'
+  printf '<div class="grid gap-10 lg:grid-cols-2">\n<div class="min-w-0">\n'
   diagram_from README.md 4 "The mental model, verbatim from the repository README."
-  printf '</div>\n<div class="format dark:format-invert max-w-none">\n'
+  printf '</div>\n<div class="min-w-0 format dark:format-invert max-w-none break-words">\n'
   # the diagram is rendered separately above, so the fenced block is dropped here
   section README.md "Mental model" 2 | awk '/^```/ { f = !f; next } !f' | md 0 3
   printf '</div>\n</div>\n</section>\n'
@@ -464,7 +464,7 @@ HTML
   # ---- 5. drop-in installation
   printf '<section class="mx-auto max-w-screen-xl px-4 py-16 sm:py-20">\n'
   section_head "04 / Drop-in installation" "Copy one directory, add one pointer" "$(c leads.install)"
-  printf '<div class="grid gap-8 lg:grid-cols-2">\n<div>\n'
+  printf '<div class="grid gap-8 lg:grid-cols-2">\n<div class="min-w-0">\n'
   code_panel "install into a project" <<'SH'
 git clone https://github.com/korczis/prismatic-majordomus ~/majordomus
 export PATH="$HOME/majordomus/bin:$PATH"
@@ -474,7 +474,7 @@ majordomus init      # writes .majordomus/ — policy, profiles, templates
 majordomus update    # generates the instruction file each AI tool reads
 majordomus doctor    # names the two hook lines you still need to add
 SH
-  printf '</div>\n<div>\n'
+  printf '</div>\n<div class="min-w-0">\n'
   code_panel "or copy the layer alone" <<'SH'
 cp -R /path/to/.majordomus your-project/
 
@@ -495,7 +495,7 @@ HTML
   # ---- 6. how it works
   printf '<section class="border-t border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/40">\n<div class="mx-auto max-w-screen-xl px-4 py-16 sm:py-20">\n'
   section_head "05 / How it works" "Policy in, instructions out, state on disk" "One canonical policy is projected into whatever instruction file each tool reads. A task moves through a lifecycle that ends in a contract, not an opinion."
-  printf '<div class="grid gap-8 lg:grid-cols-2">\n<div>\n'
+  printf '<div class="grid gap-8 lg:grid-cols-2">\n<div class="min-w-0">\n'
   printf '<h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">Projection</h3>\n'
   code_panel "policy.yaml is the only source" <<'TXT'
 .majordomus/policy.yaml
@@ -505,7 +505,7 @@ HTML
 CLAUDE.md   AGENTS.md   GEMINI.md   generic Markdown
 TXT
   printf '<p class="text-sm text-gray-600 dark:text-gray-400">Projections are generated, fingerprinted, and headed with the command that regenerates them. Adapters translate; they never add rules. A rule that exists for one provider and not another is a policy bug.</p>\n'
-  printf '</div>\n<div>\n'
+  printf '</div>\n<div class="min-w-0">\n'
   printf '<h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">Task lifecycle</h3>\n'
   code_panel "start to finish" <<'TXT'
 majordomus start "<task>" --scope <paths> --profile <name>
@@ -743,18 +743,18 @@ build_getting_started() {
   { page_open "/getting-started/" "Getting started — $SITE_NAME" "Install Majordomus, generate the instruction files your AI tools read, wire the two hooks, and run one supervised task from start to finish."
   breadcrumb "Getting started"
   page_header "Getting started" "From nothing to a supervised repository. Every command below is defined in the CLI specification and exercised by a behavioural test."
-  printf '<div class="mx-auto max-w-screen-xl px-4 py-14">\n<div class="grid gap-12 lg:grid-cols-3">\n<div class="lg:col-span-2">\n'
-  printf '<div class="format lg:format-lg dark:format-invert max-w-none">\n'
+  printf '<div class="mx-auto max-w-screen-xl px-4 py-14">\n<div class="grid gap-12 lg:grid-cols-3">\n<div class="min-w-0 lg:col-span-2">\n'
+  printf '<div class="format lg:format-lg dark:format-invert max-w-none break-words">\n'
   section README.md "Quick start" 2 | md 1 2
   printf '</div>\n'
 
   printf '<h2 class="mb-4 mt-12 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">What a supervised task looks like</h2>\n'
-  printf '<div class="format dark:format-invert max-w-none">\n'
+  printf '<div class="format dark:format-invert max-w-none break-words">\n'
   section README.md "Example workflow" 2 | md 0 3
   printf '</div>\n'
 
   printf '<h2 class="mb-4 mt-12 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Adoption beyond day one</h2>\n'
-  printf '<div class="format dark:format-invert max-w-none">\n'
+  printf '<div class="format dark:format-invert max-w-none break-words">\n'
   awk 'NR > 1' "$(src docs/ADOPTION.md)" | md 1 2
   printf '</div>\n'
   printf '</div>\n'
@@ -880,7 +880,7 @@ build_guarantees() {
   done
 
   printf '<h2 class="mb-4 mt-14 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Stated limitations</h2>\n'
-  printf '<div class="format dark:format-invert max-w-none">\n'
+  printf '<div class="format dark:format-invert max-w-none break-words">\n'
   section README.md "Limitations" 2 | md 0 3
   printf '</div>\n'
   printf '</div>\n'
@@ -924,11 +924,11 @@ build_docs() {
     { page_open "/docs/$route/" "$title — $SITE_NAME" "$summary"
       breadcrumb "$title" "Docs|/docs/"
       printf '<div class="mx-auto max-w-screen-xl px-4 py-10">\n<div class="grid gap-10 lg:grid-cols-4">\n'
-      printf '<div class="lg:col-span-3">\n'
+      printf '<div class="min-w-0 lg:col-span-3">\n'
       printf '<div class="mb-6 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 font-mono text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">\n'
       printf '<span>Rendered from</span>%s<span>&middot; the repository is the source of truth</span>\n' "$(repo_link "$file")"
       printf '</div>\n'
-      printf '<article class="format lg:format-lg dark:format-invert max-w-none">\n'
+      printf '<article class="format lg:format-lg dark:format-invert max-w-none break-words">\n'
       md 1 1 < "$(src "$file")"
       printf '</article>\n</div>\n'
       # table of contents from the level-2 headings of the same file
