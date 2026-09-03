@@ -8,8 +8,10 @@ hand-maintained and `CLAUDE.md` is a pointer.
 ## What this repository is
 
 Prismatic Majordomus: a lightweight supervisory control layer for AI-assisted work.
-Design phase. Read `docs/DESIGN.md` before changing anything; read
-`docs/EXTRACTION_REPORT.md` to see why each decision was made.
+Design phase. Read `docs/DESIGN.md` before changing anything. Implement against
+`docs/CLI.md` (commands, exit codes) and `docs/SCHEMAS.md` (files). Read
+`docs/EXTRACTION_REPORT.md` to see why each decision was made before proposing to
+change one.
 
 ## Rules that apply to every change
 
