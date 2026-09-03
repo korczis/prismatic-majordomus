@@ -1,0 +1,603 @@
+# Prismatic Majordomus
+
+A lightweight supervisory control layer for AI-assisted work.
+
+This document is the v0.1 product specification. It was written after studying a
+large body of accumulated engineering practice around AI coding workers: instruction
+files, session-continuity protocols, policy corpora, enforcement hooks, parallel-work
+tooling, audit ledgers, retrospectives, and several abandoned attempts at exactly this
+kind of tool. The source material is private and is not reproduced here. What is
+reproduced is the shape of what failed, the magnitude of the failures, and the small
+number of mechanisms that demonstrably held.
+
+Everything below is a design target. Nothing in this repository runs yet.
+
+---
+
+## Problem
+
+Teams put capable AI workers to work and then operate them with none of the controls
+they would insist on for a human team. The failures are operational, not linguistic,
+and they recur regardless of which model or vendor is involved:
+
+- **Instructions rot silently.** In one workspace of roughly twenty repositories, the
+  instruction file for one AI tool and the instruction file for another tool in the same
+  repository shared between 0 % and 9 % of their content. They were not duplicates. They
+  were disjoint rule sets. Which rules applied depended on which worker was hired.
+- **Always-loaded context has no ceiling.** One repository's always-loaded operating
+  contract oscillated between 0 and about 1,100 lines across roughly 200 hand edits
+  before a hard budget with a failing check pinned it under 50.
+- **Enforcement is declared, not wired.** Across the material studied, at least
+  seventeen independent instances were found of a check that was documented as
+  blocking, existed on disk, was executable, and was invoked by nothing. In one case
+  34 of 39 pre-commit scripts were orphaned while the policy files naming them read
+  "BLOCKING". In another, a catalogue of 546 agents had exactly one entry actually
+  registered with the runtime. In a third, a well-engineered guard hook lost its
+  registration when unrelated tooling rewrote a settings file; the hook, its tests, and
+  the documentation citing it all remained in place.
+- **Isolation without coordination defers the collision.** With one git worktree per
+  worker fully in force, forty worktrees still produced about 3,200 concurrently
+  modified files and 67 clusters of duplicated patches. Only 9 of 80 worktrees ever
+  merged. The scope-claim step that would have prevented this was optional, was matched
+  by exact string equality, and was enforced by hooks that never ran.
+- **Transcripts become the database.** Session notes grew to 10 GB in one repository.
+  Recovery of working state after a session ended required a hand-written fifteen to
+  thirty minute runbook. Notes had filename dates that disagreed with their content
+  dates, and nothing checked either against git.
+- **Nothing measures AI spend on AI-assisted development.** The same team that built a
+  competent cost profiler for its product's own model calls had zero telemetry on what
+  its coding workers consumed. Every "35 % better" and "50 % faster" figure in its
+  routing documentation had no benchmark behind it.
+- **Supervisory tooling is abandoned within days.** Four separate attempts at a
+  control layer were found in one workspace. Each was abandoned not because the idea was
+  wrong but because nothing detected when it stopped working, and nothing made the next
+  session cheaper than ignoring it.
+
+These are control problems. Better prompts do not fix them.
+
+## Product Thesis
+
+**AI workers should not manage themselves.**
+
+Majordomus is the layer that decides what a worker is told, what it may touch, when it
+is done, and whether its claim of being done can be believed. It does not perform the
+work and it does not invoke a model. It supervises.
+
+The single most important property, taken directly from the evidence: **a declaration
+of enforcement that is not mechanically reconciled against what actually runs is worse
+than no declaration.** It produces a policy document, a compliance report, and a false
+sense of coverage, and then it decays. Majordomus therefore treats "is this check
+actually wired?" as its primary deterministic guarantee, applied to itself first.
+
+## Users
+
+- An individual engineer running one or more AI coding tools against a repository,
+  who wants the same rules applied regardless of which tool is open.
+- A small team where several people and several AI workers touch one codebase, who
+  need to know who is working on what and whether two workers are about to collide.
+- An engineering lead who wants to know whether AI work satisfied its contract before
+  accepting it, without reading a transcript.
+
+Majordomus is not for organisations that need a hosted control plane, SSO, or
+cross-repository governance. Those are expansion paths, not v0.1.
+
+## Non-Goals
+
+Majordomus v0.1 does not:
+
+- invoke, proxy, or wrap any model
+- measure actual token spend or cost
+- route requests dynamically
+- run autonomous agents or orchestrate them
+- monitor anything in the background
+- provide a server, database, web UI, daemon, queue, or hosted service
+- compact, summarise, or store conversation transcripts
+- define agents, personas, roles, tiers, or a registry of named AI workers
+
+The last item is deliberate. The material studied showed that a supervisory layer which
+adds nouns becomes the thing it was meant to supervise.
+
+## Core Mental Model
+
+```
+            Human / Organisation
+                    |
+                    v
+               MAJORDOMUS
+        policy · state · verification
+                    |
+      +-------------+-------------+
+      v             v             v
+   Worker A      Worker B      Worker C
+  (Claude Code)  (Codex)       (Gemini, Cursor, local ...)
+      |             |             |
+      +-------------+-------------+
+                    |
+                    v
+          Verified, accepted outcomes
+```
+
+Majordomus sits between the person and the workers. It holds one canonical policy,
+projects it into whatever instruction format each worker reads, keeps durable state
+outside every conversation, and refuses to call work finished until the finish
+contract is satisfied.
+
+Two supporting principles run through every part of the design:
+
+1. **Git is the authority; everything else is an aid.** Identity fields on any record
+   are computed from git, never authored. A worker will hallucinate a branch name.
+   `git rev-parse` will not.
+2. **Numbers in prose are computed or forbidden.** A count written into an
+   always-loaded file is stale within days. Majordomus writes the command that
+   produces the number, never the number.
+
+## Responsibilities
+
+### Policy
+
+Maintain one canonical, versioned operating policy for AI work in the repository.
+Detect when the policy and its projections have diverged. Detect when the policy
+declares an enforcement that does not resolve to something that runs.
+
+### Context
+
+Define the minimum sufficient context for a task as a small set of named toggles,
+not as a corpus. Keep always-loaded material under a hard budget with a failing check.
+Ensure anything not explicitly scoped is counted as always-loaded, because that is
+what it is.
+
+### State
+
+Keep durable task state in a small number of typed files outside any conversation.
+Every record carries the git state it was written at, so that staleness is computed
+at read time rather than trusted at write time.
+
+### Watch
+
+Deterministically inspect state, policy, and projections for drift. Report only what
+can be proven. Every finding carries the command that reproduces it.
+
+### Coordination
+
+Represent who is working on what. Normalise scope claims so that overlap detection is
+about paths, not strings. Compare claims against what was actually touched, because
+every collision in the evidence was invisible to a declaration-only check.
+
+### Budget
+
+Separate reasoning effort, output verbosity, context strategy, and model capability
+as independent axes. Bundle them under named profiles. Record effort as a delta from
+the default, never as an absolute. Do not claim to measure spend until spend is
+measured.
+
+### Verification
+
+Define what "done" means before work starts, as a checklist the finish command
+evaluates. Distinguish evidence a worker produced from evidence Majordomus computed.
+
+### Handover
+
+Transfer durable state, not transcripts. Write handovers append-only, atomically,
+without staging them. Resolve them on the next session by scope, never by recency
+alone.
+
+### Maintenance
+
+Regenerate provider projections deterministically from canonical policy.
+Fingerprint what was generated so that a hand edit or a stale projection is
+detectable in one command.
+
+### Termination
+
+Know when a worker should stop: when the finish contract is met, when the task is
+blocked on a human, or when the session has exceeded its declared scope.
+
+## Canonical Policy Model
+
+One file. Small. Human-readable. Provider-neutral.
+
+```yaml
+# .majordomus/policy.yaml
+version: 1
+
+context:
+  always_loaded_budget_lines: 150
+  strategy: minimum-sufficient
+  transcript_is_state: false
+
+profiles:
+  default: implementation
+
+verification:
+  required_for_changes: true
+  finish_requires:
+    - tests_run
+    - state_updated
+    - no_open_blockers
+
+handover:
+  required_sections: [objective, current_state, next_action]
+
+enforcement:
+  - name: finish-contract
+    kind: command
+    path: bin/majordomus
+    args: [finish, --check]
+    wired_by: git-hook:pre-push
+  - name: instruction-budget
+    kind: command
+    path: bin/majordomus
+    args: [doctor]
+    wired_by: git-hook:pre-commit
+
+projections:
+  - provider: claude-code
+    target: CLAUDE.md
+  - provider: codex
+    target: AGENTS.md
+  - provider: gemini
+    target: GEMINI.md
+```
+
+Design rules for this schema:
+
+- **Every field is both written and read.** The evidence contained schemas with four
+  permanently null fields ported from an earlier system. A field nothing reads is
+  removed.
+- **The `enforcement` block names artifacts by path and names what wires them.** This
+  is the representation the source material got right and never checked. Majordomus
+  checks it: each entry must exist, be executable, and be reachable from the named
+  dispatcher, or `doctor` fails.
+- **Unknown keys are errors.** A typo must fail loudly. Two agents in the source
+  material re-entered a linted catalogue carrying four invented keys; nothing stopped
+  them.
+- **No provider capability lives in the canonical layer.** Model names, tool grants,
+  and vendor flags belong in projections.
+
+## Session Model
+
+```
+majordomus start <task>
+      |
+      v
+  scope declared (paths)  --> claim normalised, overlap reported
+      |
+      v
+  profile selected        --> effort / verbosity / context / verification fixed
+      |
+      v
+  worker executes         (Majordomus is not involved)
+      |
+      v
+majordomus check          --> state consistent? scope respected? blockers?
+      |
+      +-- incomplete --> continue, or majordomus handover
+      |
+      v
+majordomus finish         --> finish contract evaluated; refuses if unmet
+```
+
+A session is bounded by `start` and either `finish` or `handover`. There is no
+"still open from Tuesday" state that Majordomus recognises as healthy. `watch`
+reports any task record whose last update predates its declared checkpoint interval.
+
+Majordomus does not hook the worker's runtime in v0.1. It is invoked by the person, by
+a git hook, or by the worker following its projected instructions. This is a known
+limitation and is stated as such.
+
+## Context Model
+
+Three tiers, each with a declared trigger:
+
+| Tier | What | Loaded when | Budget |
+|---|---|---|---|
+| Always | the projected instruction file | every session | hard line budget, failing check |
+| Scoped | rules bound to path globs | a matching file is in play | short; must declare `paths` |
+| On demand | procedures with a routing description | the description matches the task | none, but must be reachable |
+
+Two rules from the evidence that are non-obvious and load-bearing:
+
+- **An artifact with no declared trigger is always-loaded context** and is counted
+  against the budget. The source linter's sharpest single line was exactly this.
+- **A routing description must discriminate.** "Reviews supervision trees, process
+  ownership and restart semantics" routes. "An elite agent for high-quality missions"
+  does not, and it costs tokens on every decision about whether to load it.
+
+Context composition for a task is a vector of named boolean toggles chosen by the
+profile, not a corpus assembled by hand. Majordomus reports what it excluded and why,
+because an under-filled context is debugged from the exclusion list.
+
+## Durable State Model
+
+```
+.majordomus/
+  policy.yaml
+  profiles/
+    routine.yaml
+    implementation.yaml
+    debugging.yaml
+    deep-work.yaml
+  state/
+    current.yaml          # the one active task, or absent
+    decisions.md          # append-only, dated
+    open-questions.md     # things blocked on a human
+    handovers/            # append-only, one file per handover
+    ledger.jsonl          # append-only events, retention-capped
+  generated/
+    fingerprints.yaml     # sha256 of every projection at generation time
+```
+
+Rules:
+
+- **Identity is computed.** `repository_id`, `branch`, `head`, `working_tree`, and
+  `changed_files` on any record come from git at write time. The projected instructions
+  forbid the worker from authoring them.
+- **State is read with a divergence label.** On read, Majordomus compares the recorded
+  `head` with the current `HEAD` via merge-base and labels the record `exact`,
+  `advanced`, `diverged`, or `different_context`. Stale state is detected and named,
+  never silently trusted.
+- **No status enum in v0.1 unless it is validated.** The source material contained four
+  mutually inconsistent, unenforced status vocabularies. Where a lifecycle state is
+  recorded, its values are closed and checked.
+- **Append-only stores have a retention cap.** One repository accumulated 10 GB of
+  metrics snapshots that nothing ever read. `ledger.jsonl` and `handovers/` declare a
+  cap and `doctor` reports when it is exceeded.
+- **Handovers are never staged or committed by Majordomus.** The writer creates one
+  new file atomically and prints its path. Committing is a human decision.
+- **Transcripts are never stored.** A handover has required sections (`objective`,
+  `current_state`, `next_action`) and is refused at write time if any is empty.
+
+## Parallel Work Model
+
+Scope: **one isolated working tree per concurrent autonomous writer.** With one agent,
+or with agents that run strictly sequentially, plain branches are correct and the
+coordination machinery is overhead. The README says this rather than overselling.
+
+Mechanism:
+
+- `start` takes a scope: a list of paths. Claims are normalised at claim time: trailing
+  slashes stripped, containment tested in both directions. One matching function is
+  used by every consumer.
+- The claim is not optional. If a step can be skipped it will be; the evidence showed
+  10 of 18 active worktrees with empty claims. The claim is part of `start`.
+- Overlap is reported on **touched files**, computed from `git status` and
+  `git log <base>..HEAD --name-only` in each worktree, not on declarations alone.
+- A tiny JSON sidecar records `id`, `path`, `branch`, `base_commit`, `created_at`,
+  `owner`, `status`, `claimed_paths`. Eight fields. Nothing that was null in every live
+  record of the source system.
+- `git worktree list` is the truth. The sidecar is rebuildable from git in one command.
+- Majordomus emits the merge commands. It does not own the merge. The source
+  implementation silently discarded unpushed commits on the target branch.
+- `owner` is a free-form string. A closed enum was already violated in the live
+  registry that defined it.
+
+## Verification Model
+
+"Done" is a contract evaluated by `finish`, not a word a worker types.
+
+```
+done =
+    scope respected            (touched files within claimed paths)
+  + verification command ran   (exit 0, recorded with timestamp and command)
+  + state updated              (current.yaml reflects completion)
+  + no open blockers           (open-questions.md has no unresolved entry for this task)
+  + handover or completion note present with required sections
+```
+
+Distinctions the evidence made necessary:
+
+- **Guaranteed versus observed.** A check is either deterministic and blocking, or it
+  is a report with a reproduce command. There is no advisory tier. Every advisory tier
+  in the source material decayed into decoration within months.
+- **A trailer proves authorship of a string, never that a gate ran.** Majordomus never
+  treats a commit-message marker as evidence. Evidence is a record in `ledger.jsonl`
+  written by the gate itself.
+- **Exit codes are a contract.** `0` pass; distinct non-zero codes for contract unmet,
+  missing artifact, internal error, and refused override. A hook that receives any
+  non-zero code and continues is a contract violation, and `doctor` scans hook scripts
+  for `|| true` and `|| exit 0` around Majordomus invocations.
+- **Fail closed on ambiguity.** If it is unclear whether a check passed, it failed.
+- **Existing dirt is ratcheted, new dirt is blocked.** For any countable metric,
+  a baseline file holds one integer. Increase fails; decrease or flat passes; a missing
+  baseline warns and passes, because failing with no baseline trains a team to bypass.
+  Single-instance catastrophic classes (secrets, remote code execution) are never
+  ratcheted; they are hard-zero.
+
+## Provider Projection Model
+
+```
+.majordomus/policy.yaml
+         |
+         |  majordomus update
+         v
+   +-----+-----+-------------+
+   |           |             |
+CLAUDE.md   AGENTS.md    GEMINI.md   (+ .cursor/rules, generic)
+```
+
+- Projections are generated, not hand-edited. Each carries a header stating that it
+  is generated and naming the command that regenerates it.
+- `generated/fingerprints.yaml` records the hash of each projection at generation
+  time. `doctor` reports any projection whose current hash differs (hand edit) and any
+  whose policy source is newer than its fingerprint (stale).
+- Adapters translate canonical concepts into a provider's format. They do not add
+  rules. A rule that exists for one provider and not another is a policy bug, not an
+  adapter feature.
+- The generic adapter produces a plain Markdown file for providers with no known
+  convention.
+- v0.1 projects a narrow, honest subset: always-loaded budget, profile table, state
+  file locations, the finish contract, and the forbidden-identity-fields rule. What is
+  not projected is listed in the README as not projected.
+
+## CLI Model
+
+One executable, `majordomus`, portable POSIX shell in v0.1, with a small set of
+semantically distinct subcommands:
+
+| Command | Answers | Writes |
+|---|---|---|
+| `init` | set up `.majordomus/` in this repository | yes, refuses to overwrite |
+| `doctor` | is Majordomus itself healthy and actually wired here? | no |
+| `start <task>` | begin a scoped task with a profile | `state/current.yaml`, claim |
+| `check` | is the current task consistent with policy, scope, and state? | no |
+| `watch` | what has drifted: state, policy, projections, retention? | no |
+| `update` | regenerate projections from policy | projections, fingerprints |
+| `handover` | write an append-only continuation record | one new file |
+| `finish` | evaluate the finish contract; refuse if unmet | `state/current.yaml`, ledger |
+
+Rules:
+
+- Every command has documented behaviour, safe defaults, an actionable failure
+  message, and behavioural tests in a disposable repository.
+- `doctor`, `check`, and `watch` are read-only and side-effect free.
+- No command performs recursive deletion, silent overwrite, network access,
+  or evaluation of generated text.
+- `doctor` runs against the Majordomus installation itself before anything else.
+  The 500-line anti-sprawl linter in the source material decayed in nineteen days
+  because nothing ran it against its own surface.
+
+## Watch / Doctor Model
+
+**`doctor`** answers "is the supervisory layer real here?" Deterministic checks, all
+blocking:
+
+1. `policy.yaml` parses; no unknown keys; version supported.
+2. Every `enforcement` entry: path exists, is executable, and is reachable from the
+   named `wired_by` dispatcher (the git hook file exists, is executable, and invokes
+   the path). Declared-but-not-wired is the default end state; this check is the
+   product.
+3. Every `projections` target exists, has a fingerprint, and matches it.
+4. Always-loaded projection is within `always_loaded_budget_lines`.
+5. Every repository-relative path referenced from a projection resolves.
+6. No hardcoded counts in the always-loaded projection.
+7. Retention caps on `ledger.jsonl` and `handovers/` not exceeded.
+8. Environment probes recorded: shell version, availability of `git`, `jq`, `yq` or
+   equivalents; the report says which optional checks were skipped for lack of a tool.
+
+**`watch`** answers "what has drifted in the work?" Deterministic, reported with
+reproduce commands, non-blocking by design because they concern work in progress:
+
+| Drift | Detected how |
+|---|---|
+| Policy drift | policy mtime newer than any fingerprint |
+| Projection drift | projection hash differs from fingerprint |
+| State drift | `current.yaml` status contradicts ledger, or `head` label is `diverged` |
+| Scope drift | touched files outside claimed paths |
+| Handover drift | most recent handover lacks a required section, or is older than `current.yaml` |
+| Verification drift | `current.yaml` marked complete with no ledger record from `finish` |
+| Staleness | `current.yaml` older than the profile's checkpoint interval |
+| Retention | append-only stores over cap |
+
+Every finding is emitted as `<category> <path-or-id> <reproduce-command>`. A finding
+without a reproduce command is a bug in Majordomus.
+
+## Security and Privacy
+
+- Local-first. No network calls. No telemetry. No credential collection.
+- No `eval`, no execution of text that came from a worker or a model.
+- Every write is to a path under `.majordomus/` or to a declared projection target.
+  Path arguments are canonicalised and refused if they escape the repository root.
+- Overwrite requires an explicit flag; the default is refusal with a message naming the
+  existing file.
+- Handover files are created with mode `0600`.
+- Authorisation inputs to any override are derived by Majordomus or corroborated
+  against a real git object. Ambient environment variables never lift a rule. The source
+  material's override validator was defeated by exactly that class of input and its
+  postmortem is the basis for this rule.
+- Bootstrap into an existing repository uses a self-disabling hatch: it is honoured only
+  while the ledger does not yet exist, records the event, and is dead thereafter.
+
+## Clean Extraction Boundary
+
+Prismatic Majordomus carries the Prismatic name. It carries nothing else from the
+Prismatic Platform.
+
+Excluded absolutely: domain intelligence, investigation workflows, OSINT adapters,
+inference machinery, graph semantics, agent societies, internal component names,
+internal paths, hostnames, customer or case material, audit contents, secrets, and the
+pillar and doctrine vocabulary of the source environment.
+
+Direction of dependency is one-way. Prismatic Platform may adopt Majordomus. Majordomus
+never imports from, links to, or requires Prismatic Platform. There is no shared code.
+
+What did cross the boundary, by abstraction and re-derivation only:
+
+- the observation that enforcement declarations are never reconciled
+- git-derived identity and read-time divergence labelling for state records
+- append-only, atomic, never-staged handovers with required sections
+- the always-loaded budget with a failing check and pointer integrity
+- separation of model, effort, verbosity, and context as independent axes
+- claim normalisation and touched-file overlap reporting
+- the count-ratchet with the missing-baseline rule and the hard-zero exception
+- the exit-code contract and the ban on "warn and continue"
+- the self-disabling bootstrap hatch
+- the rule that numbers in prose are computed or forbidden
+
+## MVP
+
+v0.1 ships exactly:
+
+- `policy.yaml` with the schema above and a validator that rejects unknown keys
+- four profiles: `routine`, `implementation`, `debugging`, `deep-work`, each setting
+  effort, verbosity, context toggles, and verification requirements independently
+- state templates: current task, decisions, open questions, handover, completion note
+- the eight subcommands, in portable shell, with behavioural tests
+- `doctor` with all eight checks, including enforcement wiring reconciliation
+- `watch` with the drift table above
+- `update` producing projections for Claude Code, Codex, Gemini, and generic Markdown,
+  with fingerprints
+- a README that lists, in equal prominence, what v0.1 guarantees, what it only
+  observes, and what it refuses to do
+
+Success criterion: a developer who has never seen the project reads the README, runs
+`init`, `start`, `check`, `handover`, and `finish` in a scratch repository, and
+understands where state lives and what "done" means, in about ten minutes.
+
+## Deferred Features
+
+Deferred, with the reason:
+
+- **Runtime hooks into worker tools** (pre-tool and post-tool clamping of read size,
+  output size, subagent count). The mechanism is proven and valuable, but it is
+  provider-specific and the one implementation studied was rolled back within days
+  because its limits were global constants rather than task-derived. v0.2, as opt-in
+  adapters with profile-derived limits.
+- **Token and cost measurement.** Nothing in v0.1 can measure it honestly. Any
+  `estimated_` field is labelled as such and excluded from enforcement.
+- **Routing recommendations.** Require measurement first.
+- **Dependency edges between tasks.** No real use case in the evidence justified a
+  graph. Deferred until one does.
+- **Multi-repository or organisational policy.** Out of scope for a local-first tool.
+- **Any daemon, scheduler, server, MCP surface, or background monitor.**
+
+## Commercial Expansion Paths
+
+Stated for orientation, not commitment:
+
+| Tier | Adds |
+|---|---|
+| Community | everything in this document, open source |
+| Pro | runtime adapters with profile-derived limits; richer projection set |
+| Team | shared policy across repositories; overlap reporting across workers and machines |
+| Enterprise | audit export, approval workflows, budget enforcement once spend is measured |
+| Advisory | workflow audit of an existing AI-assisted engineering practice, before and after |
+
+The durable asset is not the policy files. It is the eventual loop from policy, through
+observed executions and outcomes, back to policy refinement. v0.1 builds the policy and
+state half of that loop honestly and leaves the measurement half explicitly unbuilt.
+
+---
+
+## Intentionally Absent
+
+Published so that readers can see what was refused rather than assume it was forgotten:
+
+- no agents, personas, roles, tiers, or registries of named workers
+- no minimum fan-out or minimum agent count
+- no advisory tier that describes itself as enforcement
+- no counts written into any file a worker loads
+- no unbounded append-only store
+- no status vocabulary that is not validated
+- no rename accepted as a fix
+- no finding without a reproduce command
+- no self-report trusted without an independent check
