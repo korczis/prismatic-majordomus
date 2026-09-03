@@ -44,3 +44,13 @@ sha1="$(sed -n 's/.*"input_sha256": "\([0-9a-f]*\)".*/\1/p' "$OUT/site-manifest.
 expect_exit 0 bash "$ROOT/scripts/generate-pages" --out "$T/out2" --no-css
 sha2="$(sed -n 's/.*"input_sha256": "\([0-9a-f]*\)".*/\1/p' "$T/out2/site-manifest.json")"
 [ "$sha1" = "$sha2" ] || { echo "    manifest hash is not deterministic: $sha1 vs $sha2"; exit 1; }
+
+# Every root-absolute path must carry the deployment prefix. A project GitHub Pages site
+# is served under /<repo>/, so a path that is correct at a domain root 404s once deployed.
+prefix="$(sed -n 's#^  base_url: https\{0,1\}://[^/]*##p' "$ROOT/site/promo/copy.yaml" | sed 's#/$##')"
+[ -n "$prefix" ] || { echo "    cannot derive the deployment prefix from copy.yaml"; exit 1; }
+for f in $(find "$OUT" -name index.html); do
+  bare="$(grep -oE '(href|src)="/[^"#]*"' "$f" | sed -e 's/^[a-z]*="//' -e 's/"$//' \
+          | grep -v "^$prefix/" | grep -v "^$prefix$" || true)"
+  [ -z "$bare" ] || { echo "    $f has paths without the $prefix prefix: $bare"; exit 1; }
+done

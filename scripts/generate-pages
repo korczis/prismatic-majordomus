@@ -136,7 +136,12 @@ SOCIAL_DESC="$(c site.social_description)"
 [ -n "$SOCIAL_DESC" ] || SOCIAL_DESC="$SITE_DESC"
 VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$(src bin/majordomus)" | head -n 1)"
 [ -n "$VERSION" ] || { say "generate-pages: cannot read MJ_VERSION from bin/majordomus"; exit 12; }
-LINKMAP_R="$(printf '%s' "$LINKMAP" | sed "s#REPO#$REPO_URL#g")"
+# A project GitHub Pages site is served under /<repo>/, not at the domain root, so every
+# generated href and src must carry that prefix. It is derived from site.base_url rather
+# than written twice: strip the scheme and host, keep the path, drop any trailing slash.
+BASE_PATH="$(printf '%s' "$BASE_URL" | sed -e 's#^[a-z][a-z0-9+.-]*://[^/]*##' -e 's#/$##')"
+export BASE_PATH
+LINKMAP_R="$(printf '%s' "$LINKMAP" | sed -e "s#REPO#$REPO_URL#g" -e "s#|/#|$BASE_PATH/#g")"
 
 # The homepage lead is the README's first real paragraph: after the bold one-line
 # summary, skipping the badge row, the logo block and the link line, and stopping at the
@@ -182,9 +187,9 @@ pol() { mj_yget "$POLICY" "$1"; }
 # reference them: a link to a file that was never built is a broken link, and the link
 # checker is right to say so.
 if [ "$DO_CSS" = 1 ]; then
-  APP_CSS_LINK='<link rel="stylesheet" href="/assets/app.css">'
-  FLOWBITE_SCRIPT='<script src="/assets/flowbite.min.js"></script>
-'
+  APP_CSS_LINK="<link rel=\"stylesheet\" href=\"$BASE_PATH/assets/app.css\">"
+  FLOWBITE_SCRIPT="<script src=\"$BASE_PATH/assets/flowbite.min.js\"></script>
+"
 else
   APP_CSS_LINK='<!-- stylesheet omitted: generated with --no-css, which skips every Node-derived asset -->'
   FLOWBITE_SCRIPT=''
@@ -201,10 +206,10 @@ nav_links() { # $1 = current route
   printf '%s\n' "$NAVITEMS" | while IFS='|' read -r href label; do
     if [ "$href" = "$cur" ]; then
       cls="block rounded-sm bg-blue-700 px-3 py-2 text-white md:bg-transparent md:p-0 md:text-blue-700 md:dark:text-blue-500"
-      printf '        <li><a href="%s" class="%s" aria-current="page">%s</a></li>\n' "$href" "$cls" "$label"
+      printf '        <li><a href="%s%s" class="%s" aria-current="page">%s</a></li>\n' "$BASE_PATH" "$href" "$cls" "$label"
     else
       cls="block rounded-sm px-3 py-2 text-gray-900 hover:bg-gray-100 md:p-0 md:hover:bg-transparent md:hover:text-blue-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent md:dark:hover:text-blue-500"
-      printf '        <li><a href="%s" class="%s">%s</a></li>\n' "$href" "$cls" "$label"
+      printf '        <li><a href="%s%s" class="%s">%s</a></li>\n' "$BASE_PATH" "$href" "$cls" "$label"
     fi
   done
 }
@@ -234,7 +239,7 @@ page_open() {
 <meta name="twitter:image" content="$BASE_URL/assets/social-card.png">
 <meta name="twitter:title" content="$title">
 <meta name="twitter:description" content="$desc">
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="$BASE_PATH/assets/favicon.svg" type="image/svg+xml">
 $APP_CSS_LINK
 <script>
   // Flowbite dark-mode switcher, from the Flowbite dark mode guide. Inline in <head> to
@@ -253,8 +258,8 @@ $APP_CSS_LINK
 <header>
   <nav class="sticky top-0 z-30 border-b border-gray-200 bg-white/90 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/90">
     <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-2 px-4 py-3">
-      <a href="/" class="flex items-center gap-2.5">
-        <img src="/assets/logo-mark.svg" class="h-7 w-7 text-gray-900 dark:text-white" alt="">
+      <a href="$BASE_PATH/" class="flex items-center gap-2.5">
+        <img src="$BASE_PATH/assets/logo-mark.svg" class="h-7 w-7 text-gray-900 dark:text-white" alt="">
         <span class="self-center whitespace-nowrap text-lg font-semibold tracking-tight dark:text-white">Majordomus</span>
         <span class="hidden rounded-sm bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-600 sm:inline dark:bg-gray-700 dark:text-gray-300">v$VERSION</span>
       </a>
@@ -291,8 +296,8 @@ page_close() {
   <div class="mx-auto w-full max-w-screen-xl px-4 py-10">
     <div class="md:flex md:justify-between md:gap-8">
       <div class="mb-8 max-w-sm md:mb-0">
-        <a href="/" class="mb-3 flex items-center gap-2.5">
-          <img src="/assets/logo-mark.svg" class="h-7 w-7" alt="">
+        <a href="$BASE_PATH/" class="mb-3 flex items-center gap-2.5">
+          <img src="$BASE_PATH/assets/logo-mark.svg" class="h-7 w-7" alt="">
           <span class="self-center whitespace-nowrap text-lg font-semibold tracking-tight dark:text-white">$SITE_NAME</span>
         </a>
         <p class="text-sm text-gray-600 dark:text-gray-400">$SITE_DESC</p>
@@ -301,18 +306,18 @@ page_close() {
         <div>
           <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Start</h2>
           <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-            <li><a href="/getting-started/" class="hover:underline">Getting started</a></li>
-            <li><a href="/profiles/" class="hover:underline">Execution profiles</a></li>
-            <li><a href="/guarantees/" class="hover:underline">Guarantees</a></li>
+            <li><a href="$BASE_PATH/getting-started/" class="hover:underline">Getting started</a></li>
+            <li><a href="$BASE_PATH/profiles/" class="hover:underline">Execution profiles</a></li>
+            <li><a href="$BASE_PATH/guarantees/" class="hover:underline">Guarantees</a></li>
           </ul>
         </div>
         <div>
           <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Reference</h2>
           <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-            <li><a href="/docs/concepts/" class="hover:underline">Concepts</a></li>
-            <li><a href="/docs/cli/" class="hover:underline">CLI</a></li>
-            <li><a href="/docs/schemas/" class="hover:underline">Schemas</a></li>
-            <li><a href="/docs/design/" class="hover:underline">Design</a></li>
+            <li><a href="$BASE_PATH/docs/concepts/" class="hover:underline">Concepts</a></li>
+            <li><a href="$BASE_PATH/docs/cli/" class="hover:underline">CLI</a></li>
+            <li><a href="$BASE_PATH/docs/schemas/" class="hover:underline">Schemas</a></li>
+            <li><a href="$BASE_PATH/docs/design/" class="hover:underline">Design</a></li>
           </ul>
         </div>
         <div>
@@ -329,12 +334,12 @@ page_close() {
     <hr class="my-7 border-gray-200 dark:border-gray-700">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <span class="text-sm text-gray-500 dark:text-gray-400">MIT licensed. Local-first: no server, no database, no telemetry.</span>
-      <span class="font-mono text-xs text-gray-500 dark:text-gray-400">majordomus v$VERSION &middot; <a href="/site-manifest.json" class="hover:underline">generated from source</a></span>
+      <span class="font-mono text-xs text-gray-500 dark:text-gray-400">majordomus v$VERSION &middot; <a href="$BASE_PATH/site-manifest.json" class="hover:underline">generated from source</a></span>
     </div>
   </div>
 </footer>
 
-$FLOWBITE_SCRIPT<script src="/assets/theme.js"></script>
+$FLOWBITE_SCRIPT<script src="$BASE_PATH/assets/theme.js"></script>
 </body>
 </html>
 HTML
@@ -390,7 +395,7 @@ build_home() {
       <h1 class="mb-5 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-5xl dark:text-white">A supervisory control layer for AI-assisted work</h1>
       <p class="mb-6 max-w-xl text-lg text-gray-600 dark:text-gray-400">$HERO_LEAD</p>
       <div class="flex flex-wrap gap-3">
-        <a href="$(c cta.primary_href)" class="inline-flex items-center rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+        <a href="$BASE_PATH$(c cta.primary_href)" class="inline-flex items-center rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
           $(c cta.primary)
           <svg class="ms-2 h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/></svg>
         </a>
@@ -453,7 +458,7 @@ HTML
           "$(printf '%s\n' "$val" | md 0 1 | sed -e 's|^<p>$||' -e 's|^</p>$||' | tr '\n' ' ')"
       done
   printf '</div>\n'
-  printf '<p class="mt-8 text-sm text-gray-500 dark:text-gray-400">Every card above is backed by a case in <a href="%s/tree/master/test/cases/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">test/cases/</a>. See <a href="/guarantees/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">what is guaranteed and what is only advisory</a>.</p>\n' "$REPO_URL"
+  printf '<p class="mt-8 text-sm text-gray-500 dark:text-gray-400">Every card above is backed by a case in <a href="%s/tree/master/test/cases/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">test/cases/</a>. See <a href="%s/guarantees/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">what is guaranteed and what is only advisory</a>.</p>\n' "$REPO_URL" "$BASE_PATH"
   printf '</div>\n</section>\n'
 
   # ---- 5. drop-in installation
@@ -525,7 +530,7 @@ TXT
   printf '<section class="mx-auto max-w-screen-xl px-4 py-16 sm:py-20">\n'
   section_head "06 / Execution profiles" "Five axes, never collapsed into one quality dial" "$(c leads.profiles)"
   emit_profile_tabs
-  printf '<p class="mt-8 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Capability classes are not vendor model names; the projection tells the worker to pick the closest its environment offers. Add a profile by adding a file. Full detail: <a href="/profiles/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">all profiles</a> and <a href="/docs/schemas/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">the schema</a>.</p>\n'
+  printf '<p class="mt-8 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Capability classes are not vendor model names; the projection tells the worker to pick the closest its environment offers. Add a profile by adding a file. Full detail: <a href="%s/profiles/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">all profiles</a> and <a href="%s/docs/schemas/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">the schema</a>.</p>\n' "$BASE_PATH" "$BASE_PATH"
   printf '</section>\n'
 
   # ---- 8. guaranteed vs advisory vs planned
@@ -537,7 +542,7 @@ TXT
   emit_status_column advisory "Advisory" "Projected into the worker's instructions. Nothing outside the worker can observe compliance."
   emit_status_column planned "Planned" "Specified and not implemented. Listed so omissions are visible rather than assumed."
   printf '</div>\n'
-  printf '<p class="mt-8 text-sm text-gray-500 dark:text-gray-400">Full matrix with the source, the implementing file and the test for every row: <a href="/guarantees/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">guarantees</a>.</p>\n'
+  printf '<p class="mt-8 text-sm text-gray-500 dark:text-gray-400">Full matrix with the source, the implementing file and the test for every row: <a href="%s/guarantees/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">guarantees</a>.</p>\n' "$BASE_PATH"
   printf '</div>\n</section>\n'
 
   # ---- 9. design principles
@@ -586,8 +591,8 @@ TXT
   </li>
 </ol>
 <div class="mt-10 flex flex-wrap gap-3">
-  <a href="/getting-started/" class="inline-flex items-center rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Full walkthrough</a>
-  <a href="/docs/cli/" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">CLI reference</a>
+  <a href="$BASE_PATH/getting-started/" class="inline-flex items-center rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Full walkthrough</a>
+  <a href="$BASE_PATH/docs/cli/" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">CLI reference</a>
 </div>
 </section>
 HTML
@@ -722,10 +727,10 @@ page_header() { # title, lead
 
 breadcrumb() { # label, optional parent label|href
   printf '<nav class="mx-auto flex max-w-screen-xl px-4 pt-6" aria-label="Breadcrumb">\n<ol class="inline-flex items-center gap-1 text-sm md:gap-2">\n'
-  printf '<li><a href="/" class="font-medium text-gray-600 hover:text-blue-700 dark:text-gray-400 dark:hover:text-white">Home</a></li>\n'
+  printf '<li><a href="%s/" class="font-medium text-gray-600 hover:text-blue-700 dark:text-gray-400 dark:hover:text-white">Home</a></li>\n' "$BASE_PATH"
   if [ -n "${2:-}" ]; then
     printf '<li aria-hidden="true"><svg class="h-3 w-3 text-gray-400 rtl:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/></svg></li>\n'
-    printf '<li><a href="%s" class="font-medium text-gray-600 hover:text-blue-700 dark:text-gray-400 dark:hover:text-white">%s</a></li>\n' "${2#*|}" "${2%%|*}"
+    printf '<li><a href="%s%s" class="font-medium text-gray-600 hover:text-blue-700 dark:text-gray-400 dark:hover:text-white">%s</a></li>\n' "$BASE_PATH" "${2#*|}" "${2%%|*}"
   fi
   printf '<li aria-hidden="true"><svg class="h-3 w-3 text-gray-400 rtl:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/></svg></li>\n'
   printf '<li aria-current="page"><span class="font-medium text-gray-500 dark:text-gray-500">%s</span></li>\n' "$1"
@@ -770,10 +775,10 @@ build_getting_started() {
     <div class="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
       <h2 class="mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Then read</h2>
       <ul class="space-y-2 text-sm">
-        <li><a href="/docs/concepts/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">Concepts</a> &mdash; the vocabulary</li>
-        <li><a href="/profiles/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">Profiles</a> &mdash; the five axes</li>
-        <li><a href="/docs/cli/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">CLI</a> &mdash; exit codes and output</li>
-        <li><a href="/guarantees/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">Guarantees</a> &mdash; what actually runs</li>
+        <li><a href="$BASE_PATH/docs/concepts/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">Concepts</a> &mdash; the vocabulary</li>
+        <li><a href="$BASE_PATH/profiles/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">Profiles</a> &mdash; the five axes</li>
+        <li><a href="$BASE_PATH/docs/cli/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">CLI</a> &mdash; exit codes and output</li>
+        <li><a href="$BASE_PATH/guarantees/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">Guarantees</a> &mdash; what actually runs</li>
       </ul>
     </div>
   </div>
@@ -828,7 +833,7 @@ build_profiles() {
     printf '</article>\n'
   done
   printf '</div>\n'
-  printf '<p class="mt-10 max-w-2xl text-sm text-gray-500 dark:text-gray-400">A capability class is not a vendor model name. The projection tells a worker to pick the closest its environment offers, and Majordomus never selects or invokes a model. Adding a profile means adding a file; unknown keys in it are errors. Schema: <a href="/docs/schemas/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">docs/SCHEMAS.md</a>.</p>\n'
+  printf '<p class="mt-10 max-w-2xl text-sm text-gray-500 dark:text-gray-400">A capability class is not a vendor model name. The projection tells a worker to pick the closest its environment offers, and Majordomus never selects or invokes a model. Adding a profile means adding a file; unknown keys in it are errors. Schema: <a href="%s/docs/schemas/" class="font-medium text-blue-700 hover:underline dark:text-blue-400">docs/SCHEMAS.md</a>.</p>\n' "$BASE_PATH"
   printf '</div>\n'
   page_close
   } > "$OUT/profiles/index.html"
@@ -902,7 +907,7 @@ build_docs() {
   printf '<div class="mx-auto max-w-screen-xl px-4 py-14">\n<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">\n'
   printf '%s\n' "$DOCPAGES" | while IFS='|' read -r route file title summary; do
     [ -n "$route" ] || continue
-    printf '<a href="/docs/%s/" class="block rounded-lg border border-gray-200 bg-white p-5 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">\n' "$route"
+    printf '<a href="%s/docs/%s/" class="block rounded-lg border border-gray-200 bg-white p-5 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">\n' "$BASE_PATH" "$route"
     printf '<h2 class="mb-2 text-lg font-semibold tracking-tight text-gray-900 dark:text-white">%s</h2>\n' "$title"
     printf '<p class="mb-3 text-sm text-gray-600 dark:text-gray-400">%s</p>\n' "$summary"
     printf '<span class="font-mono text-xs text-gray-400 dark:text-gray-500">%s</span>\n</a>\n' "$file"
@@ -1202,11 +1207,32 @@ check_output() {
   grep -qF "$(pol profiles.checkpoint_interval_default)" "$OUT/profiles/index.html" || bad derived "profiles page does not carry the default checkpoint interval from policy.yaml"
   grep -qF "v$VERSION" "$OUT/index.html" || bad derived "homepage does not carry the version from bin/majordomus"
 
+  # Every root-absolute path must carry the deployment prefix. Without this check a
+  # site that is correct at a domain root 404s on every asset and link once deployed
+  # under /<repo>/, which is exactly what happened on the first deploy.
+  for route in $(routes); do
+    page="$OUT${route}index.html"
+    [ -f "$page" ] || continue
+    if [ -n "$BASE_PATH" ]; then
+      grep -oE '(href|src)="/[^"#]*"' "$page" | sed -e 's/^[a-z]*="//' -e 's/"$//' \
+        | grep -v "^$BASE_PATH/" | grep -v "^$BASE_PATH\$" | sort -u \
+        | while IFS= read -r n; do printf 'NOPREFIX %s -> %s\n' "$route" "$n"; done
+    fi
+  done > "$TMP/noprefix"
+  if [ -s "$TMP/noprefix" ]; then
+    sort -u "$TMP/noprefix" | while IFS= read -r n; do
+      bad prefix "${n#NOPREFIX } (missing the $BASE_PATH deployment prefix; it would 404)"
+    done
+  else
+    good prefix "every root-absolute path carries the ${BASE_PATH:-empty} deployment prefix"
+  fi
+
   # internal links resolve to a generated route or file
   for route in $(routes); do
     page="$OUT${route}index.html"
     [ -f "$page" ] || continue
-    grep -oE 'href="/[^"#]*"' "$page" | sed -e 's/href="//' -e 's/"$//' | sort -u | while IFS= read -r n; do
+    grep -oE '(href|src)="/[^"#]*"' "$page" | sed -e 's/^[a-z]*="//' -e 's/"$//' \
+      | sed "s#^$BASE_PATH##" | sed 's#^$#/#' | sort -u | while IFS= read -r n; do
       case "$n" in
         */) [ -f "$OUT$n/index.html" ] || [ -f "$OUT${n}index.html" ] || printf 'BADLINK %s -> %s\n' "$route" "$n" ;;
         *)  [ -e "$OUT$n" ] || printf 'BADLINK %s -> %s\n' "$route" "$n" ;;
@@ -1286,13 +1312,22 @@ build_css() {
 
 # ---------------------------------------------------------------- serve
 serve() {
-  step "serving $OUT on http://localhost:$PORT"
+  # The site is deployed under a path prefix, so a preview served at the root would
+  # resolve every link differently from production. A scratch directory containing a
+  # symlink named after the prefix reproduces the deployed layout exactly.
+  local root="$OUT"
+  if [ -n "$BASE_PATH" ]; then
+    root="$TMP/serve"
+    mkdir -p "$root"
+    ln -sf "$OUT" "$root$BASE_PATH"
+  fi
+  step "serving on http://localhost:$PORT$BASE_PATH/"
   say "Ctrl-C to stop. Routes are directories with index.html, so a plain static server"
   say "resolves them without configuration, exactly as GitHub Pages does."
   if command -v python3 >/dev/null 2>&1; then
-    ( cd "$OUT" && python3 -m http.server "$PORT" )
+    ( cd "$root" && python3 -m http.server "$PORT" )
   else
-    say "python3 is absent; serve $OUT with any static file server"
+    say "python3 is absent; serve $root with any static file server"
     return 1
   fi
 }
