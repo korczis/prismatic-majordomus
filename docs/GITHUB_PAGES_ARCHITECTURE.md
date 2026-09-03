@@ -81,6 +81,25 @@ committed build going stale against the sources it came from.
 Routes are directories with an `index.html`, so a plain static server resolves them
 exactly as GitHub Pages does, with no configuration.
 
+### The deployment prefix
+
+A **project** Pages site is served under `/<repo>/`, not at the domain root. Every
+generated `href` and `src` therefore carries that prefix, derived from the path component
+of `site.base_url` in `site/promo/copy.yaml` so that it is never written twice.
+
+This is the one mistake that a correct-looking local preview will hide: without the
+prefix every page returns 200 and every stylesheet, script, image and internal link
+returns 404. It happened on the first deploy. Two things now prevent it:
+
+- `--check` fails on any root-absolute path that does not start with the prefix, naming
+  the path and saying it would 404
+- `--serve` builds a scratch directory containing a symlink named after the prefix and
+  serves *that*, so a local preview resolves links the way the deployed site does
+
+If the site ever moves to a user or organisation Pages root, or to a custom domain,
+change `site.base_url` and everything follows; an empty path component disables the
+prefix and its check.
+
 ```
 /                       homepage
 /getting-started/       install, first task, adoption
@@ -132,6 +151,7 @@ Sources, before anything is generated:
 
 Output, after generating:
 
+- every root-absolute path carries the deployment prefix
 - every route exists and carries a title, meta description, canonical link, Open Graph
   and Twitter metadata, a `<main>` landmark, a skip link, and exactly one `<h1>`
 - the Flowbite mobile navbar toggle and its `aria-controls` are present on every page
@@ -151,9 +171,11 @@ Output, after generating:
 
 ## UI stack
 
-Tailwind CSS v4 and Flowbite v3, both pinned in `package.json`. Node is needed **only**
-to compile the stylesheet; the `majordomus` command itself has no runtime dependencies
-and `--no-css` generates the whole site without Node.
+Tailwind CSS v4 and Flowbite v3, both pinned in `package.json`. Node is needed **only** for
+the two assets that come out of `node_modules`: the compiled stylesheet and the Flowbite
+bundle. `--no-css` skips both and needs no Node at all — pages generated that way do not
+reference either asset, since linking a file that was never built is a broken link. The
+`majordomus` command itself has no runtime dependencies of any kind.
 
 **Custom CSS: none.** Presentation is Tailwind utilities and Flowbite component classes.
 `site/tailwind.css` contains only `@import`, `@plugin`, `@source`, and one
