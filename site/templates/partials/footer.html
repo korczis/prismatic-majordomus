@@ -1,0 +1,21 @@
+{%- set project = load_data(path="data/generated/project.json") -%}
+{%- set source = load_data(path="data/generated/source.json") -%}
+<footer class="mt-20 border-t border-gray-200 dark:border-gray-800">
+  <div class="mx-auto max-w-screen-xl px-4 py-10">
+    <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+      <div class="max-w-sm">
+        <p class="font-mono text-sm font-semibold text-gray-900 dark:text-white">{{ project.name }}</p>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ project.tagline }}.</p>
+      </div>
+      <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        <li><a class="text-gray-600 hover:underline dark:text-gray-400" href="{{ config.extra.repo_url }}">GitHub</a></li>
+        <li><a class="text-gray-600 hover:underline dark:text-gray-400" href="{{ config.extra.repo_url }}/blob/master/LICENSE">License</a></li>
+        <li><a class="text-gray-600 hover:underline dark:text-gray-400" href="{{ config.extra.repo_url }}/blob/master/SECURITY.md">Security</a></li>
+        <li><a class="text-gray-600 hover:underline dark:text-gray-400" href="{{ config.extra.repo_url }}/blob/master/CONTRIBUTING.md">Contributing</a></li>
+      </ul>
+    </div>
+    <p class="mt-8 border-t border-gray-100 pt-6 font-mono text-xs text-gray-500 dark:border-gray-800 dark:text-gray-500">
+      Generated from {{ project.name }} v{{ source.source_version }} · commit {{ source.source_commit }} · source hash {{ source.source_hash | truncate(length=12, end="") }}
+    </p>
+  </div>
+</footer>

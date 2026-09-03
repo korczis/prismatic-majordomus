@@ -3,35 +3,65 @@ on:
   push:
   pull_request:
 jobs:
-  test:
+  cli:
+    name: CLI (${{ matrix.os }})
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      # The CLI needs no Node. The derived site's tests and check do (flowbite assets),
-      # so the matrix installs it once; the CLI's own tests would pass without it.
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci --no-audit --no-fund
+
       - name: shell syntax
-        run: for f in bin/majordomus lib/*.sh test/run.sh test/lib.sh test/cases/*.sh; do bash -n "$f"; done
+        run: for f in bin/majordomus lib/*.sh scripts/generate-site-data scripts/site-build scripts/site-check scripts/site-serve test/run.sh test/lib.sh test/cases/*.sh; do bash -n "$f"; done
+
       - name: shellcheck
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y shellcheck >/dev/null
-          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh scripts/generate-pages
+          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh \
+            scripts/generate-site-data scripts/site-build scripts/site-check scripts/site-serve
+
+      # Every subcommand and every profile is exercised here, on both platforms, on every
+      # push. test/cases/17_command_surface.sh and 18_profiles.sh make that per-command
+      # and per-profile rather than only true of the suite as a whole.
       - name: behavioural tests
         run: bash test/run.sh
+
       - name: self-supervision
         run: |
           git config core.hooksPath .githooks
           bin/majordomus doctor
           bin/majordomus watch
-      # The site derives from canonical files; this proves every source, heading, claim
-      # path and route still resolves without installing Node. The CSS half is gated in pages.yml.
-      - name: derived site check (no CSS)
-        run: scripts/generate-pages --check --no-css
+
+  site:
+    name: Site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: zola@0.23.4
+
+      # Validates the canonical data before anything is generated: every responsibility
+      # matches a README row, every claim names a file and a test that exist, every
+      # command has a CLI section and a case that invokes it, every profile has a case.
+      - name: canonical data
+        run: scripts/generate-site-data --check
+
+      - name: build
+        run: scripts/site-build
+
+      - name: check
+        run: scripts/site-check
+
+      - name: manifest
+        run: cat site/data/generated/source.json

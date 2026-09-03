@@ -9,6 +9,10 @@
 | [`ADOPTION.md`](ADOPTION.md) | teams | day one, week one, several workers, removal |
 | [`ECONOMICS.md`](ECONOMICS.md) | leads | what v0.1 controls without measuring, and what measuring would take |
 | [`EXTRACTION_REPORT.md`](EXTRACTION_REPORT.md) | humans | how the design was derived: root cause, pattern ledger, rejected patterns, risks, plan |
+| [`CLAIMS.yaml`](CLAIMS.yaml) | everyone | every capability claim, its status, and the implementation and test behind it |
+| [`RESPONSIBILITIES.yaml`](RESPONSIBILITIES.yaml) | implementers | the machine-readable side of the README's "What it does" table |
+| [`GITHUB_PAGES_ARCHITECTURE.md`](GITHUB_PAGES_ARCHITECTURE.md) | contributors | how the public site is projected from these files, and what must never be hand-edited |
+| [`SITE_CLAIMS.md`](SITE_CLAIMS.md) | everyone | what the site claims about itself, with the check behind each claim and the three that are not automated |
 | [`../AGENTS.md`](../AGENTS.md) | AI workers and contributors | the operating contract for changing this repository, generated from `.majordomus/` |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) · [`../SECURITY.md`](../SECURITY.md) | contributors | process; security commitments and stated limits |
 

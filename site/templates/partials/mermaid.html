@@ -1,0 +1,5 @@
+{# Mermaid is a progressive enhancement: the page is complete without it, and a diagram
+   that fails to render leaves the fenced source visible rather than breaking the page.
+   Loaded only on routes that contain a diagram, deferred, from a pinned local copy. #}
+<script src="{{ get_url(path='js/mermaid.min.js') | safe }}"></script>
+<script src="{{ get_url(path='js/diagrams.js') | safe }}"></script>

@@ -1,0 +1,40 @@
+# Zola configuration for the derived Majordomus site.
+#
+# Zola is the projection engine only. Every product fact on this site comes from
+# site/data/generated/*.json, written by scripts/generate-site-data from canonical
+# repository files. A template may decide how something looks; it may not decide what
+# is true. Marketing copy — and only marketing copy — lives in site/data/marketing.toml.
+base_url = "https://korczis.github.io/prismatic-majordomus"
+title = "Prismatic Majordomus"
+description = "A lightweight supervisory control layer for AI-assisted work."
+default_language = "en"
+output_dir = "public"
+compile_sass = false
+build_search_index = false
+generate_feeds = false
+author = "korczis"
+
+taxonomies = []
+
+[markdown]
+render_emoji = false
+external_links_target_blank = false
+smart_punctuation = false
+bottom_footnotes = true
+# GitHub alert syntax (> [!NOTE]) becomes a styled callout here and still renders as a
+# blockquote on GitHub. That is the whole admonition mechanism: no shortcode, so a
+# canonical Markdown file never has to choose between the two readers.
+github_alerts = true
+insert_anchor_links = "right"
+
+[markdown.highlighting]
+# Static highlighting: no client-side highlighter ships to the reader. "class" emits a
+# light and a dark class on every token plus one stylesheet each; scripts/site-build
+# scopes the dark sheet under .dark so the manual theme toggle drives code blocks too.
+style = "class"
+light_theme = "ayu-light"
+dark_theme = "ayu-dark"
+error_on_missing_language = false
+
+[extra]
+repo_url = "https://github.com/korczis/prismatic-majordomus"

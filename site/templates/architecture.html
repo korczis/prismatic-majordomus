@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+{%- set s = load_data(path="data/generated/source.json") -%}
+{% set header_title = "Architecture" %}{% set header_lede = "This site is a projection of the repository, built the same way Majordomus projects a policy into an instruction file. Nothing on it is a second copy of a product fact." %}{% include "partials/page-header.html" %}
+<div class="mx-auto max-w-screen-xl px-4 py-12">
+  <div class="overflow-x-auto">
+    <pre class="mermaid" data-mermaid>flowchart TD
+  A["canonical repository data
+bin/majordomus · README.md · docs/*.yaml · docs/*.md · .majordomus/**"]
+  B["scripts/generate-site-data
+normalisation and validation"]
+  C["site/data/generated/*.json
+stable site schema"]
+  M["site/data/marketing.toml
+promotional copy, no capability claims"]
+  D["Zola templates
+projection only"]
+  E["Tailwind + Flowbite + Alpine
+presentation and small local state"]
+  F["public/
+static artifact"]
+  G["GitHub Pages"]
+  A --> B --> C --> D
+  M --> D
+  D --> E --> F --> G
+</pre>
+  </div>
+
+  <div class="mt-12 grid gap-6 lg:grid-cols-2">
+    <section>
+      <h2 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Who owns what</h2>
+      <dl class="mt-4 space-y-4 text-sm">
+        {% set layers = [
+          ["Product truth", ".majordomus/**, bin/, lib/", "the tool and the policy it is run with"],
+          ["Public narrative", "README.md, docs/**", "Markdown that still reads correctly on GitHub"],
+          ["Structured claims", "docs/CLAIMS.yaml, docs/RESPONSIBILITIES.yaml", "every capability, with an implementation and a test"],
+          ["Derived site data", "site/data/generated/**", "written by the generator, never edited"],
+          ["Promotional copy", "site/data/marketing.toml", "a tagline is not execution policy"],
+          ["Presentation", "site/templates/**", "may decide how it looks, never what is true"],
+          ["Output", "public/**", "a static artifact, reproducible from the commit"]
+        ] %}
+        {% for l in layers %}
+        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+          <dt class="font-semibold text-gray-900 dark:text-white">{{ l[0] }}</dt>
+          <dd class="mt-1 font-mono text-xs text-gray-500 dark:text-gray-500">{{ l[1] }}</dd>
+          <dd class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ l[2] }}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+    </section>
+    <section>
+      <h2 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">What is guaranteed about this site</h2>
+      <ul class="mt-4 space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <li class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"><strong class="text-gray-900 dark:text-white">Derivation is proven, not asserted.</strong> A behavioural test changes one canonical value in a throwaway copy of the repository, regenerates, and fails if the output did not change.</li>
+        <li class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"><strong class="text-gray-900 dark:text-white">Claims cannot outrun the code.</strong> Every capability sentence names a file and a test, and the build fails if either has gone.</li>
+        <li class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"><strong class="text-gray-900 dark:text-white">Nothing is fetched at runtime.</strong> No page asks the network for content; the site works offline once built.</li>
+        <li class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"><strong class="text-gray-900 dark:text-white">The manifest is public.</strong> The footer carries the version, commit and hash of the canonical inputs this build came from.</li>
+      </ul>
+      <div class="mt-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+        <h3 class="font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">This build</h3>
+        <dl class="mt-3 space-y-1 font-mono text-xs">
+          <div class="flex justify-between gap-4"><dt class="text-gray-500">version</dt><dd class="text-gray-900 dark:text-gray-200">{{ s.source_version }}</dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-gray-500">commit</dt><dd class="text-gray-900 dark:text-gray-200">{{ s.source_commit }}</dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-gray-500">inputs</dt><dd class="text-gray-900 dark:text-gray-200">{{ s.input_files | length }} files</dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-gray-500">source hash</dt><dd class="break-all text-gray-900 dark:text-gray-200">{{ s.source_hash | truncate(length=16, end="") }}</dd></div>
+        </dl>
+      </div>
+    </section>
+  </div>
+
+  <h2 class="mt-14 text-xl font-bold tracking-tight text-gray-900 dark:text-white">Canonical inputs of this build</h2>
+  <div class="mt-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <caption class="sr-only">Every canonical file this build read, with its hash</caption>
+      <thead class="bg-gray-50 font-mono text-xs uppercase tracking-wider text-gray-600 dark:bg-gray-800 dark:text-gray-400"><tr><th scope="col" class="px-4 py-2">path</th><th scope="col" class="px-4 py-2">sha256</th></tr></thead>
+      <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+        {% for f in s.input_files %}
+        <tr class="bg-white dark:bg-gray-900"><th scope="row" class="px-4 py-2 font-mono text-xs font-normal text-gray-700 dark:text-gray-300">{{ f.path }}</th><td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-500">{{ f.sha256 | truncate(length=16, end="") }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="mt-6 text-sm text-gray-500 dark:text-gray-400">The full write-up, including how to add a new canonical input, is in <a class="font-medium text-blue-700 hover:underline dark:text-blue-400" href="{{ get_url(path='/docs/site-architecture/') | safe }}">Site architecture</a>.</p>
+</div>
+{% endblock %}
+{% block scripts %}{% include "partials/mermaid.html" %}{% endblock %}

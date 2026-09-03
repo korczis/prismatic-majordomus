@@ -29,6 +29,7 @@ claims:
     implementation: lib/common.sh
     test: test/cases/00_yaml_flatten.sh
     status: guaranteed
+    responsibility: policy
     note: A restricted YAML subset. Tabs, anchors, flow maps and multi-line scalars are refused rather than guessed at.
 
   - id: profile-validate
@@ -37,6 +38,7 @@ claims:
     implementation: lib/doctor.sh
     test: test/cases/02_doctor_basic.sh
     status: guaranteed
+    responsibility: profiles
 
   - id: wiring-reconciliation
     claim: Every enforcement the policy declares is reconciled against what actually runs
@@ -44,6 +46,7 @@ claims:
     implementation: lib/doctor.sh
     test: test/cases/03_update.sh
     status: guaranteed
+    responsibility: doctor
     note: The path must exist, be executable, and be invoked by the named dispatcher. A hook that invokes it and discards the exit code counts as not wired.
 
   - id: exit-code-contract
@@ -59,6 +62,7 @@ claims:
     implementation: lib/update.sh
     test: test/cases/03_update.sh
     status: guaranteed
+    responsibility: projection
     note: Running update twice leaves the byte-identical file. The test asserts the hash.
 
   - id: projection-fingerprint
@@ -67,6 +71,7 @@ claims:
     implementation: lib/update.sh
     test: test/cases/03_update.sh
     status: guaranteed
+    responsibility: projection
 
   - id: region-projection
     claim: A projection can own only the region between its markers, leaving the rest of the file untouched
@@ -74,6 +79,7 @@ claims:
     implementation: lib/update.sh
     test: test/cases/12_region_projection.sh
     status: guaranteed
+    responsibility: projection
     note: How a repository that already has a hand-written CLAUDE.md adopts Majordomus. An edit outside the markers is never drift; an edit inside them is caught. Malformed markers are refused, not guessed at.
 
   - id: dispatcher-wiring
@@ -82,6 +88,7 @@ claims:
     implementation: lib/doctor.sh
     test: test/cases/13_wiring_dispatcher.sh
     status: guaranteed
+    responsibility: doctor
     note: The finding names the file that actually carries the invocation. A subhook that is not executable is reported as not wired, because the dispatcher skips it.
 
   - id: no-silent-overwrite
@@ -90,6 +97,7 @@ claims:
     implementation: lib/update.sh
     test: test/cases/03_update.sh
     status: guaranteed
+    responsibility: projection
     note: update refuses, offers a diff, and overwrites only under an explicit flag.
 
   - id: context-budget
@@ -98,6 +106,7 @@ claims:
     implementation: lib/update.sh
     test: test/cases/03_update.sh
     status: guaranteed
+    responsibility: projection
     note: Over budget, nothing is written at all.
 
   - id: pointer-integrity
@@ -106,6 +115,7 @@ claims:
     implementation: lib/doctor.sh
     test: test/cases/03_update.sh
     status: guaranteed
+    responsibility: doctor
 
   - id: no-counts-in-context
     claim: A hardcoded count in the always-loaded file is a failure
@@ -113,6 +123,7 @@ claims:
     implementation: lib/doctor.sh
     test: test/cases/03_update.sh
     status: guaranteed
+    responsibility: doctor
 
   - id: retention-caps
     claim: The append-only ledger and handover store have retention caps that are checked
@@ -120,6 +131,7 @@ claims:
     implementation: lib/doctor.sh
     test: test/cases/02_doctor_basic.sh
     status: guaranteed
+    responsibility: doctor
 
   - id: init-refuses
     claim: Installing into a repository that already has an installation is refused
@@ -148,6 +160,7 @@ claims:
     implementation: lib/start.sh
     test: test/cases/04_start_check.sh
     status: guaranteed
+    responsibility: scope
     note: A scope path that escapes the repository root is refused. Starting a second task while one is active is refused.
 
   - id: git-identity
@@ -156,6 +169,7 @@ claims:
     implementation: lib/start.sh
     test: test/cases/04_start_check.sh
     status: guaranteed
+    responsibility: state
     note: A handover body that tries to set one is rejected rather than merged.
 
   - id: consistency-check
@@ -164,6 +178,7 @@ claims:
     implementation: lib/check.sh
     test: test/cases/04_start_check.sh
     status: guaranteed
+    responsibility: scope
 
   - id: scope-enforcement
     claim: A touched file outside the claimed scope is a failure, not a warning
@@ -171,6 +186,7 @@ claims:
     implementation: lib/check.sh
     test: test/cases/04_start_check.sh
     status: guaranteed
+    responsibility: scope
 
   - id: divergence-label
     claim: State read back is labelled exact, advanced, diverged or different_context against git
@@ -178,6 +194,7 @@ claims:
     implementation: lib/common.sh
     test: test/cases/04_start_check.sh
     status: guaranteed
+    responsibility: state
 
   - id: overlap-report
     claim: Overlap between parallel workers is computed on claimed paths in both containment directions
@@ -185,6 +202,7 @@ claims:
     implementation: lib/check.sh
     test: test/cases/04_start_check.sh
     status: guaranteed
+    responsibility: scope
     note: Reported, never blocking. Work in progress is reported and never blocked.
 
   - id: drift-watch
@@ -193,6 +211,7 @@ claims:
     implementation: lib/watch.sh
     test: test/cases/07_watch.sh
     status: guaranteed
+    responsibility: watch
 
   - id: handover-record
     claim: handover writes an append-only record with computed front matter and required sections
@@ -200,6 +219,7 @@ claims:
     implementation: lib/handover.sh
     test: test/cases/05_handover.sh
     status: guaranteed
+    responsibility: handover
     note: A body with a missing or empty required section is refused and names the sections.
 
   - id: no-transcripts
@@ -208,6 +228,7 @@ claims:
     implementation: lib/handover.sh
     test: test/cases/05_handover.sh
     status: guaranteed
+    responsibility: handover
 
   - id: finish-contract
     claim: finish evaluates the finish contract line by line and refuses when any line is unmet
@@ -215,6 +236,7 @@ claims:
     implementation: lib/finish.sh
     test: test/cases/06_finish.sh
     status: guaranteed
+    responsibility: finish
 
   - id: typed-outcome
     claim: An outcome is a value from a closed vocabulary, not free text
@@ -222,6 +244,7 @@ claims:
     implementation: lib/finish.sh
     test: test/cases/06_finish.sh
     status: guaranteed
+    responsibility: finish
     note: no_match means the work was done and the thing sought does not exist. failed means the work could not be done. They are different facts.
 
   - id: profile-axes
@@ -230,6 +253,7 @@ claims:
     implementation: lib/update.sh
     test: test/cases/03_update.sh
     status: advisory
+    responsibility: profiles
     note: The axes are validated and projected into the worker's instructions. Whether a worker honours them is not observable from outside the worker.
 
   - id: capability-class
@@ -238,6 +262,7 @@ claims:
     implementation: lib/update.sh
     test: test/cases/03_update.sh
     status: advisory
+    responsibility: profiles
     note: Mapping a class to a concrete model is left to whoever runs the worker. Majordomus never selects or invokes a model.
 
   - id: minimum-context
@@ -246,6 +271,7 @@ claims:
     implementation: lib/check.sh
     test: test/cases/04_start_check.sh
     status: advisory
+    responsibility: profiles
     note: check --explain prints the context toggles for the active profile. Nothing measures what the worker actually read.
 
   - id: effort-escalation
@@ -254,6 +280,7 @@ claims:
     implementation: lib/update.sh
     test: test/cases/03_update.sh
     status: advisory
+    responsibility: profiles
 
   - id: checkpoint-interval
     claim: A profile sets how often a worker should checkpoint, and a stale task is reported
@@ -261,6 +288,7 @@ claims:
     implementation: lib/check.sh
     test: test/cases/04_start_check.sh
     status: advisory
+    responsibility: profiles
     note: The staleness report is guaranteed. Whether the worker checkpoints is not.
 
   - id: runtime-adapters

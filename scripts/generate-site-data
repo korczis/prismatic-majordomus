@@ -1,0 +1,696 @@
+#!/usr/bin/env bash
+# generate-site-data — normalise canonical Majordomus data into a stable site schema.
+#
+#   canonical repository data  ->  site/data/generated/*.json  ->  Zola templates
+#
+# Nothing here is presentation. The Zola templates render this and hold no product
+# knowledge of their own, so a change to a canonical file changes the site and a change
+# to a template cannot change what the site claims.
+#
+# Reads (canonical, never written):
+#   bin/majordomus                 the version
+#   README.md                      the "What it does" table (responsibility prose)
+#   docs/RESPONSIBILITIES.yaml     the machine-readable side of that table
+#   docs/CLAIMS.yaml               every public capability claim and its evidence
+#   .majordomus/policy.yaml        the policy this repository supervises itself with
+#   .majordomus/profiles/*.yaml    the execution profiles
+#   lib/finish.sh                  the outcome vocabulary, taken from the code enforcing it
+#   docs/*.md                      long-form documentation, copied with front matter
+#
+# Writes (derived, never hand-edited):
+#   site/data/generated/*.json
+#   site/content/docs/*.md
+#
+# --check validates without writing: every path exists, every anchor is a real heading,
+# the README table and RESPONSIBILITIES.yaml agree exactly, and every claim names a
+# responsibility that exists.
+set -eu
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT" || exit 1
+GENERATOR_VERSION=1
+# shellcheck source=../lib/common.sh
+# The site is parsed by the tool's own restricted YAML reader, so it adds no parser and
+# no dependency of its own. common.sh reads MJ_LIB_DIR when it sources siblings.
+# shellcheck disable=SC2034
+MJ_LIB_DIR="$ROOT/lib"
+. "$ROOT/lib/common.sh"
+
+CHECK=0
+for a in "$@"; do case "$a" in
+  --check) CHECK=1 ;;
+  --help|-h) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  *) printf 'generate-site-data: unknown option %s\n' "$a" >&2; exit 2 ;;
+esac; done
+
+OUT="$ROOT/site/data/generated"
+CONTENT="$ROOT/site/content/docs"
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/mj.site.XXXXXX")"
+trap 'rm -rf "$TMP"' EXIT
+
+FAILED=0
+bad()  { printf 'FAIL %-12s %s\n' "$1" "$2" >&2; FAILED=1; }
+good() { printf 'OK   %-12s %s\n' "$1" "$2"; }
+
+# ---------------------------------------------------------------- JSON emission
+# One escaper, used for every string that reaches a template.
+json_str() {
+  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\t/\\t/g' \
+    | awk 'NR>1{printf "\\n"} {printf "%s", $0}'
+}
+jkv()  { printf '"%s": "%s"' "$1" "$(json_str "$2")"; }
+jkvr() { printf '"%s": %s' "$1" "$2"; }   # raw value (number, bool, array, object)
+
+# ---------------------------------------------------------------- canonical reads
+version()    { sed -n 's/^MJ_VERSION="\([^"]*\)"$/\1/p' bin/majordomus | head -n1; }
+git_commit() { git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || printf 'unknown'; }
+
+# rows of the README's "What it does" table: key<TAB>markdown summary
+readme_rows() {
+  awk '
+    /^## What it does$/ { inside = 1; next }
+    inside && /^## / { exit }
+    inside && /^\| \*\*/ {
+      n = split($0, f, "|")
+      k = f[2]; v = f[3]
+      gsub(/^[ \t]+|[ \t]+$/, "", k); gsub(/^[ \t]+|[ \t]+$/, "", v)
+      gsub(/\*\*/, "", k)
+      print k "\t" v
+    }' README.md
+}
+readme_summary() { readme_rows | awk -F'\t' -v k="$1" '$1 == k { print $2 }'; }
+
+# is $2 a level-two heading of file $1? Headings carry backticks and angle brackets.
+has_heading() {
+  awk -v want="$2" '
+    /^## / { h = substr($0, 4); gsub(/`/, "", h); if (h == want) { found = 1; exit } }
+    END { exit !found }' "$1"
+}
+
+# every subcommand bin/majordomus dispatches, in the order usage lists them
+command_ids() {
+  awk '
+    /^  init  *set up/          { print "init" }
+    /^  doctor  */              { print "doctor" }
+    /^  start <task>/           { print "start" }
+    /^  check  */               { print "check" }
+    /^  watch  */               { print "watch" }
+    /^  update  */              { print "update" }
+    /^  handover  */            { print "handover" }
+    /^  finish  */              { print "finish" }
+    /^  version  */             { print "version" }
+  ' bin/majordomus
+}
+# the one-line summary the binary itself prints for a command
+command_summary() {
+  awk -v c="$1" '
+    $0 ~ "^  " c "([ <]|$)" {
+      line = $0
+      sub("^  " c "[^ ]*", "", line)
+      sub(/^[ \t]+/, "", line)
+      sub(/[ \t]+\(read-only\)[ \t]*$/, "", line)
+      sub(/[ \t]+$/, "", line)
+      print line; exit
+    }' bin/majordomus
+}
+# is this command read-only? the usage text says so, and the test suite proves it
+command_readonly() {
+  awk -v c="$1" '$0 ~ "^  " c "([ <]|$)" && /\(read-only\)/ { found = 1 } END { print (found ? "true" : "false") }' bin/majordomus
+}
+# the heading docs/CLI.md uses for a command
+command_anchor() {
+  awk -v c="$1" '
+    /^## `majordomus / { h = substr($0, 4); gsub(/`/, "", h)
+      split(h, p, " ")
+      if (p[2] == c) { print h; exit } }' docs/CLI.md
+}
+# every test case that actually invokes the command
+# Cases that genuinely exercise a profile: one that names it on a --profile flag or by
+# its file, plus any case that declares it loops over every shipped profile. A bare
+# mention of the word elsewhere in a script is not evidence and is not counted.
+profile_tests() {
+  { grep -lE -- "--profile[= ]$1([^a-z-]|$)|profiles/$1\.yaml" test/cases/*.sh 2>/dev/null
+    grep -lF '# covers-all: profiles' test/cases/*.sh 2>/dev/null
+  } | sort -u
+}
+command_tests() {
+  local pat
+  pat='(MJ"|majordomus)[[:space:]]+(--[a-z-]+[[:space:]]+)*'"$1"'([[:space:]]|"|$)'
+  grep -lE "$pat" test/cases/*.sh 2>/dev/null | sort
+}
+
+# rows of the CONCEPTS.md vocabulary table: slug<TAB>term<TAB>meaning<TAB>where
+concept_rows() {
+  awk '
+    /^\| Term \| Meaning \| Where it lives \|$/ { inside = 1; next }
+    inside && /^\|---/ { next }
+    inside && !/^\|/ { exit }
+    inside && /^\| \*\*/ {
+      n = split($0, f, "|")
+      t = f[2]; m = f[3]; w = f[4]
+      gsub(/^[ \t]+|[ \t]+$/, "", t); gsub(/^[ \t]+|[ \t]+$/, "", m); gsub(/^[ \t]+|[ \t]+$/, "", w)
+      gsub(/\*\*/, "", t)
+      slug = t; gsub(/ /, "-", slug)
+      print slug "\t" t "\t" m "\t" w
+    }' docs/CONCEPTS.md
+}
+# body of a level-two section of a Markdown file
+# matched on the heading text with backticks removed, so `## `majordomus doctor`` is
+# addressable as "majordomus doctor"
+md_section() {
+  awk -v want="$2" '
+    /^## / { h = substr($0, 4); gsub(/`/, "", h)
+             if (inside) exit
+             if (h == want) { inside = 1 }
+             next }
+    inside { print }' "$1"
+}
+
+# the outcome vocabulary, read from the line of code that enforces it
+outcomes() {
+  sed -n 's/^  case "\$outcome" in \([a-z|_]*\)).*/\1/p' lib/finish.sh | head -n1 | tr '|' '\n'
+}
+
+FLAT_RESP="$TMP/resp.flat"; mj_yaml_flatten docs/RESPONSIBILITIES.yaml > "$FLAT_RESP"
+FLAT_CLAIMS="$TMP/claims.flat"; mj_yaml_flatten docs/CLAIMS.yaml > "$FLAT_CLAIMS"
+FLAT_POLICY="$TMP/policy.flat"; mj_yaml_flatten .majordomus/policy.yaml > "$FLAT_POLICY"
+
+r() { mj_yget "$FLAT_RESP" "responsibilities.$1.$2"; }
+c() { mj_yget "$FLAT_CLAIMS" "claims.$1.$2"; }
+
+# ---------------------------------------------------------------- validation
+validate() {
+  local i=0 id key files f n=0
+  while [ -n "$(r "$i" id)" ]; do
+    id="$(r "$i" id)"; key="$(r "$i" readme_key)"; n=$((n + 1))
+    [ -n "$(readme_summary "$key")" ] \
+      || bad responsibility "$id: no row '**$key**' in the README's \"What it does\" table"
+    [ -f "$(r "$i" implementation)" ] \
+      || bad responsibility "$id: implementation $(r "$i" implementation) does not exist"
+    has_heading docs/CLI.md "$(r "$i" cli_anchor)" \
+      || bad responsibility "$id: docs/CLI.md has no heading '$(r "$i" cli_anchor)'"
+    has_heading docs/SCHEMAS.md "$(r "$i" schema_anchor)" \
+      || bad responsibility "$id: docs/SCHEMAS.md has no heading '$(r "$i" schema_anchor)'"
+    files="$(mj_ylist "$FLAT_RESP" "responsibilities.$i.files")"
+    for f in $files; do
+      case "$f" in
+        .majordomus/state/*|.majordomus/generated/*) : ;;   # created by use, not by init
+        *) [ -e "$f" ] || bad responsibility "$id: file $f does not exist" ;;
+      esac
+    done
+    i=$((i + 1))
+  done
+  [ "$n" -gt 0 ] || bad responsibility "docs/RESPONSIBILITIES.yaml declares none"
+  # every README row must be claimed by exactly one responsibility
+  local rows; rows="$(readme_rows | wc -l | tr -d ' ')"
+  [ "$rows" = "$n" ] \
+    || bad responsibility "the README table has $rows rows and RESPONSIBILITIES.yaml has $n entries"
+  [ "$FAILED" = 0 ] && good responsibility "$n entries, each matching a README row, a real implementation, and real headings"
+
+  # claims: paths exist, guaranteed claims carry a test, responsibility ids resolve
+  local j=0 cid resp impl tst
+  while [ -n "$(c "$j" id)" ]; do
+    cid="$(c "$j" id)"; impl="$(c "$j" implementation)"; tst="$(c "$j" test)"
+    [ "$impl" = "-" ] || [ -f "$impl" ] || bad claim "$cid: implementation $impl does not exist"
+    [ "$tst" = "-" ]  || [ -f "$tst" ]  || bad claim "$cid: test $tst does not exist"
+    [ -f "$(c "$j" source)" ] || bad claim "$cid: source $(c "$j" source) does not exist"
+    [ "$(c "$j" status)" = guaranteed ] && [ "$tst" = "-" ] \
+      && bad claim "$cid: guaranteed with no test"
+    resp="$(c "$j" responsibility)"
+    if [ -n "$resp" ]; then
+      grep -qx "responsibilities\.[0-9]*\.id=$resp" "$FLAT_RESP" \
+        || bad claim "$cid: responsibility '$resp' is not in docs/RESPONSIBILITIES.yaml"
+    fi
+    j=$((j + 1))
+  done
+  [ "$FAILED" = 0 ] && good claim "$j claims, every source, implementation and test resolving"
+
+  # a command that no case invokes is not "tested in CI" no matter what the site says
+  local cmds; cmds="$(command_ids)"
+  local nc=0 c
+  for c in $cmds; do
+    nc=$((nc + 1))
+    [ -n "$(command_summary "$c")" ] || bad command "$c: bin/majordomus prints no summary for it"
+    [ -n "$(command_anchor "$c")" ]  || bad command "$c: docs/CLI.md has no '## majordomus $c' section"
+    [ -n "$(command_tests "$c")" ]   || bad command "$c: no case in test/cases/ invokes it"
+  done
+  [ "$nc" -ge 8 ] || bad command "only $nc commands found in the bin/majordomus dispatch table"
+  [ "$FAILED" = 0 ] && good command "$nc commands, each documented in docs/CLI.md and invoked by at least one behavioural test"
+
+  # a profile no case exercises is a profile the site must not present as tested
+  local pf np=0 pn
+  for pf in .majordomus/profiles/*.yaml; do
+    [ -f "$pf" ] || continue
+    np=$((np + 1)); pn="$(basename "$pf" .yaml)"
+    [ -n "$(profile_tests "$pn")" ] || bad profile "$pn: no case in test/cases/ exercises it"
+  done
+  [ "$np" -gt 0 ] || bad profile ".majordomus/profiles/ is empty"
+  [ "$FAILED" = 0 ] && good profile "$np profiles, each exercised by at least one behavioural test"
+
+  # the vocabulary table has to be readable, or /concepts/ is a guess
+  local terms; terms="$(concept_rows | wc -l | tr -d ' ')"
+  [ "$terms" -ge 10 ] || bad concepts "could not read the vocabulary table from docs/CONCEPTS.md"
+  md_section docs/CONCEPTS.md "The two outcomes people confuse" | grep -q . \
+    || bad concepts "docs/CONCEPTS.md has no 'The two outcomes people confuse' section"
+  md_section docs/CONCEPTS.md "What is deliberately not a concept" | grep -q . \
+    || bad concepts "docs/CONCEPTS.md has no 'What is deliberately not a concept' section"
+  [ "$FAILED" = 0 ] && good concepts "$terms terms read from the docs/CONCEPTS.md vocabulary table"
+
+  # the outcome vocabulary has to be readable from the code, or lifecycle.json is a guess
+  local o; o="$(outcomes | wc -l | tr -d ' ')"
+  [ "$o" -ge 3 ] || bad lifecycle "could not read the outcome vocabulary from lib/finish.sh"
+  [ "$FAILED" = 0 ] && good lifecycle "$o outcomes read from lib/finish.sh"
+}
+
+validate
+if [ "$CHECK" = 1 ]; then
+  [ "$FAILED" = 0 ] || { printf 'generate-site-data: check failed\n' >&2; exit 1; }
+  printf 'generate-site-data: check ok\n'; exit 0
+fi
+[ "$FAILED" = 0 ] || { printf 'generate-site-data: refusing to generate from invalid canonical data\n' >&2; exit 1; }
+
+# ---------------------------------------------------------------- generate
+rm -rf "$OUT" "$CONTENT"
+mkdir -p "$OUT" "$CONTENT"
+
+# ---- project.json
+{
+  printf '{\n  '; jkv schema "$GENERATOR_VERSION"; printf ',\n  '
+  jkv name "Prismatic Majordomus"; printf ',\n  '
+  jkv version "$(version)"; printf ',\n  '
+  jkv tagline "A lightweight supervisory control layer for AI-assisted work"; printf ',\n  '
+  jkv repo_url "https://github.com/korczis/prismatic-majordomus"; printf '\n}\n'
+} > "$OUT/project.json"
+
+# ---- responsibilities.json
+{
+  printf '{\n  "responsibilities": [\n'
+  i=0; first=1
+  while [ -n "$(r "$i" id)" ]; do
+    [ "$first" = 1 ] || printf ',\n'; first=0
+    id="$(r "$i" id)"
+    printf '    {\n      '; jkv id "$id"; printf ',\n      '
+    jkv title "$(r "$i" title)"; printf ',\n      '
+    jkv summary "$(readme_summary "$(r "$i" readme_key)")"; printf ',\n      '
+    jkv command "$(r "$i" command)"; printf ',\n      '
+    jkv implementation "$(r "$i" implementation)"; printf ',\n      '
+    jkv cli_anchor "$(r "$i" cli_anchor)"; printf ',\n      '
+    jkv schema_anchor "$(r "$i" schema_anchor)"; printf ',\n      '
+    jkvr order "$(r "$i" order)"; printf ',\n      "files": ['
+    fj=1
+    for f in $(mj_ylist "$FLAT_RESP" "responsibilities.$i.files"); do
+      [ "$fj" = 1 ] || printf ', '; fj=0; printf '"%s"' "$(json_str "$f")"
+    done
+    printf '],\n      "claims": ['
+    j=0; cj=1
+    while [ -n "$(c "$j" id)" ]; do
+      if [ "$(c "$j" responsibility)" = "$id" ]; then
+        [ "$cj" = 1 ] || printf ','; cj=0
+        printf '\n        {'
+        jkv id "$(c "$j" id)"; printf ', '
+        jkv claim "$(c "$j" claim)"; printf ', '
+        jkv status "$(c "$j" status)"; printf ', '
+        jkv implementation "$(c "$j" implementation)"; printf ', '
+        jkv test "$(c "$j" test)"; printf ', '
+        jkv note "$(c "$j" note)"; printf '}'
+      fi
+      j=$((j + 1))
+    done
+    [ "$cj" = 1 ] || printf '\n      '
+    printf ']\n    }'
+    i=$((i + 1))
+  done
+  printf '\n  ],\n  "index": {'
+  i=0; first=1
+  while [ -n "$(r "$i" id)" ]; do
+    [ "$first" = 1 ] || printf ', '; first=0
+    printf '"%s": %s' "$(r "$i" id)" "$i"
+    i=$((i + 1))
+  done
+  printf '}\n}\n'
+} > "$OUT/responsibilities.json"
+
+# ---- profiles.json
+{
+  printf '{\n  "profiles": [\n'
+  first=1
+  for pf in .majordomus/profiles/*.yaml; do
+    [ -f "$pf" ] || continue
+    [ "$first" = 1 ] || printf ',\n'; first=0
+    fl="$TMP/pro.flat"; mj_yaml_flatten "$pf" > "$fl"
+    p() { mj_yget "$fl" "$1"; }
+    printf '    {\n      '; jkv slug "$(basename "$pf" .yaml)"; printf ',\n      '
+    jkv name "$(p name)"; printf ',\n      '
+    jkv capability "$(p capability)"; printf ',\n      '
+    jkv effort "$(p effort)"; printf ',\n      '
+    jkv verbosity "$(p verbosity)"; printf ',\n      '
+    jkv checkpoint_interval "$(p checkpoint_interval)"; printf ',\n      '
+    jkv verify_command_required "$(p verification.verify_command_required)"; printf ',\n      '
+    jkv regression_test_required "$(p verification.regression_test_required)"; printf ',\n      '
+    jkv decision_record_required "$(p verification.decision_record_required)"; printf ',\n      "tests": ['
+    tf=1
+    for t in $(profile_tests "$(basename "$pf" .yaml)"); do
+      [ "$tf" = 1 ] || printf ', '; tf=0; printf '"%s"' "$(json_str "$t")"
+    done
+    printf '],\n      "context": ['
+    cf=1
+    for k in $(sed -n 's/^context\.\([a-z_]*\)=true$/\1/p' "$fl"); do
+      [ "$cf" = 1 ] || printf ', '; cf=0; printf '"%s"' "$k"
+    done
+    printf ']\n    }'
+  done
+  printf '\n  ],\n  "index": {'
+  first=1; n=0
+  for pf in .majordomus/profiles/*.yaml; do
+    [ -f "$pf" ] || continue
+    [ "$first" = 1 ] || printf ', '; first=0
+    printf '"%s": %s' "$(basename "$pf" .yaml)" "$n"
+    n=$((n + 1))
+  done
+  printf '}\n}\n'
+} > "$OUT/profiles.json"
+
+# ---- capabilities.json
+{
+  printf '{\n  "capabilities": [\n'
+  j=0; first=1
+  while [ -n "$(c "$j" id)" ]; do
+    [ "$first" = 1 ] || printf ',\n'; first=0
+    printf '    {'
+    jkv id "$(c "$j" id)"; printf ', '
+    jkv claim "$(c "$j" claim)"; printf ', '
+    jkv status "$(c "$j" status)"; printf ', '
+    jkv source "$(c "$j" source)"; printf ', '
+    jkv implementation "$(c "$j" implementation)"; printf ', '
+    jkv test "$(c "$j" test)"; printf ', '
+    jkv responsibility "$(c "$j" responsibility)"; printf ', '
+    jkv note "$(c "$j" note)"; printf '}'
+    j=$((j + 1))
+  done
+  printf '\n  ],\n  "counts": {'
+  first=1
+  for st in guaranteed advisory planned rejected; do
+    [ "$first" = 1 ] || printf ', '; first=0
+    printf '"%s": %s' "$st" "$(grep -c "^    status: $st\$" docs/CLAIMS.yaml || true)"
+  done
+  printf ', "all": %s}\n}\n' "$j"
+} > "$OUT/capabilities.json"
+
+# ---- lifecycle.json — states from the code, transitions from the same vocabulary
+{
+  printf '{\n  "active": "active",\n  "outcomes": ['
+  first=1
+  for o in $(outcomes); do
+    [ "$first" = 1 ] || printf ', '; first=0; printf '"%s"' "$o"
+  done
+  printf '],\n  "intermediate": ["handed_over"]\n}\n'
+} > "$OUT/lifecycle.json"
+
+# ---- policy.json — the policy this repository supervises itself with
+{
+  printf '{\n  '
+  jkvr always_loaded_budget_lines "$(mj_yget "$FLAT_POLICY" context.always_loaded_budget_lines)"; printf ',\n  '
+  jkv strategy "$(mj_yget "$FLAT_POLICY" context.strategy)"; printf ',\n  '
+  jkv default_profile "$(mj_yget "$FLAT_POLICY" profiles.default)"; printf ',\n  '
+  jkv checkpoint_interval_default "$(mj_yget "$FLAT_POLICY" profiles.checkpoint_interval_default)"; printf ',\n  '
+  printf '"finish_requires": ['
+  first=1
+  for k in $(mj_ylist "$FLAT_POLICY" verification.finish_requires); do
+    [ "$first" = 1 ] || printf ', '; first=0; printf '"%s"' "$k"
+  done
+  printf '],\n  "handover_sections": ['
+  first=1
+  for k in $(mj_ylist "$FLAT_POLICY" handover.required_sections); do
+    [ "$first" = 1 ] || printf ', '; first=0; printf '"%s"' "$k"
+  done
+  printf ']\n}\n'
+} > "$OUT/policy.json"
+
+# ---- content: canonical Markdown, copied with front matter, never edited by hand
+# Zola evaluates Tera in page content, so a canonical document that happens to contain
+# {{ ... }} or {% ... %} — every document here that explains templating does — would be
+# executed instead of printed, and Zola 0.23 no longer has an escape form for either.
+# Imported Markdown is therefore wrapped in a raw block. Canonical files stay pure: a
+# document must read correctly on GitHub and must never learn Zola syntax.
+# Relative Markdown links resolve on GitHub and nowhere else. Rewriting them on import
+# is the price of keeping canonical files readable in both places; the alternative is
+# Zola's @/ link syntax in the source file, which breaks the GitHub reading.
+# scripts/site-check fails on any link this map missed, so the map cannot silently rot.
+BASE="$(sed -n 's|^base_url = "\(.*\)"|\1|p' site/config.toml | sed 's|/$||')"
+REPO="https://github.com/korczis/prismatic-majordomus"
+rewrite_links() {
+  sed \
+    -e "s|](\.\./|](|g" \
+    -e "s|](docs/|](|g" \
+    -e "s|](CLI\.md|]($BASE/docs/cli/|g" \
+    -e "s|](SCHEMAS\.md|]($BASE/docs/schemas/|g" \
+    -e "s|](DESIGN\.md|]($BASE/docs/design/|g" \
+    -e "s|](CONCEPTS\.md|]($BASE/concepts/|g" \
+    -e "s|](ADOPTION\.md|]($BASE/docs/adoption/|g" \
+    -e "s|](ECONOMICS\.md|]($BASE/docs/economics/|g" \
+    -e "s|](EXTRACTION_REPORT\.md|]($BASE/docs/extraction-report/|g" \
+    -e "s|](GITHUB_PAGES_ARCHITECTURE\.md|]($BASE/docs/site-architecture/|g" \
+    -e "s|](RESPONSIBILITIES\.yaml|]($BASE/supervises/|g" \
+    -e "s|](CLAIMS\.yaml|]($BASE/guarantees/|g" \
+    -e "s|](AGENTS\.md|]($BASE/docs/contract/|g" \
+    -e "s|](README\.md|]($BASE/|g" \
+    -e "s|](CONTRIBUTING\.md|]($REPO/blob/master/CONTRIBUTING.md|g" \
+    -e "s|](SECURITY\.md|]($REPO/blob/master/SECURITY.md|g" \
+    -e "s|](LICENSE|]($REPO/blob/master/LICENSE|g" \
+    -e "s|](test/cases/|]($REPO/tree/master/test/cases/|g" \
+    -e "s|](share/skeleton/|]($REPO/tree/master/share/skeleton/|g" \
+    -e "s|](examples/|]($REPO/tree/master/examples/|g" \
+    -e "s|](\.majordomus/|]($REPO/tree/master/.majordomus/|g"
+}
+
+raw_open()  { printf '{%% raw %%}\n'; }
+raw_close() { printf '\n{%% endraw %%}\n'; }
+assert_no_endraw() {
+  grep -q '{% endraw %}' "$1" \
+    && { printf 'generate-site-data: %s contains a raw block terminator\n' "$1" >&2; exit 1; }
+  return 0
+}
+
+docpage() { # file, slug, title, weight, description
+  {
+    printf '+++\ntitle = "%s"\nweight = %s\ndescription = "%s"\n' "$3" "$4" "$5"
+    printf '[extra]\nsource = "%s"\n+++\n\n' "$1"
+    assert_no_endraw "$1"
+    raw_open
+    # the H1 becomes the page title; a generated file may carry a comment line first
+    awk '!dropped && /^# / { dropped = 1; next } { print }' "$1" | rewrite_links
+    raw_close
+  } > "$CONTENT/$2.md"
+}
+docpage docs/DESIGN.md design "Design" 20 "The specification: problem, thesis, models, and what is intentionally absent."
+docpage docs/CLI.md cli "CLI reference" 30 "Every command: behaviour, reads and writes, exit codes, output."
+docpage docs/SCHEMAS.md schemas "File schemas" 40 "Every file Majordomus reads or writes, with a concrete example."
+docpage docs/ADOPTION.md adoption "Adoption" 50 "Day one, week one, several workers, and how to remove it."
+docpage docs/ECONOMICS.md economics "Economics" 60 "What v0.1 controls without measuring, and what measuring would take."
+docpage docs/EXTRACTION_REPORT.md extraction-report "Extraction report" 70 "How the design was derived: the evidence, the pattern ledger, what was rejected."
+docpage docs/GITHUB_PAGES_ARCHITECTURE.md site-architecture "Site architecture" 80 "How this site is projected from canonical repository data."
+docpage docs/SITE_CLAIMS.md site-claims "Site claims" 85 "What this site claims about itself, the check behind each claim, and the three that are not automated."
+docpage AGENTS.md contract "Repository contract" 90 "The operating contract for this repository, itself generated by majordomus update."
+
+# ---- commands.json — one entry per subcommand, with its own documentation and evidence
+#
+# summary: printed by the binary itself
+# detail:  the docs/CLI.md section for the command, verbatim
+# tests:   every case that invokes it — this is what "tested in CI" means, since CI runs
+#          test/run.sh; a command with none fails the check above rather than shipping
+{
+  printf '{\n  "commands": [\n'
+  first=1; pos=0
+  for c in $(command_ids); do
+    [ "$first" = 1 ] || printf ',\n'; first=0
+    printf '    {\n      '; jkv id "$c"; printf ',\n      '
+    jkv summary "$(command_summary "$c")"; printf ',\n      '
+    jkv anchor "$(command_anchor "$c")"; printf ',\n      '
+    jkvr read_only "$(command_readonly "$c")"; printf ',\n      '
+    jkv detail "$(md_section docs/CLI.md "$(command_anchor "$c")")"; printf ',\n      '
+    jkvr position "$pos"; printf ',\n      "tests": ['
+    tf=1
+    for t in $(command_tests "$c"); do
+      [ "$tf" = 1 ] || printf ', '; tf=0; printf '"%s"' "$(json_str "$t")"
+    done
+    printf '],\n      "responsibilities": ['
+    rf=1; i=0
+    while [ -n "$(r "$i" id)" ]; do
+      if [ "$(r "$i" command)" = "$c" ]; then
+        [ "$rf" = 1 ] || printf ', '; rf=0
+        printf '{'; jkv id "$(r "$i" id)"; printf ', '; jkv title "$(r "$i" title)"; printf '}'
+      fi
+      i=$((i + 1))
+    done
+    printf ']\n    }'
+    pos=$((pos + 1))
+  done
+  printf '\n  ],\n  "index": {'
+  first=1; pos=0
+  for c in $(command_ids); do
+    [ "$first" = 1 ] || printf ', '; first=0
+    printf '"%s": %s' "$c" "$pos"; pos=$((pos + 1))
+  done
+  printf '},\n  '
+  jkv exit_codes "$(md_section docs/CLI.md 'Exit-code contract')"; printf '\n}\n'
+} > "$OUT/commands.json"
+
+# ---- concepts.json — one entry per vocabulary term, cross-linked by derivation
+#
+# related_responsibilities: a responsibility whose id is this term, or which owns a file
+#   this term's "where it lives" cell names. Both come from data; neither is typed twice.
+# related_terms: other terms of the same table named in this term's own prose.
+{
+  printf '{\n  "concepts": [\n'
+  first=1
+  concept_rows | while IFS="$(printf '\t')" read -r slug term meaning where; do
+    [ "$first" = 1 ] || printf ',\n'; first=0
+    printf '    {\n      '; jkv slug "$slug"; printf ',\n      '
+    jkv term "$term"; printf ',\n      '
+    jkv meaning "$meaning"; printf ',\n      '
+    jkv where "$where"; printf ',\n      "related_responsibilities": ['
+    rf=1; i=0
+    while [ -n "$(r "$i" id)" ]; do
+      hit=0
+      [ "$(r "$i" id)" = "$slug" ] && hit=1
+      for f in $(mj_ylist "$FLAT_RESP" "responsibilities.$i.files"); do
+        case "$where" in *"$f"*) hit=1 ;; esac
+      done
+      if [ "$hit" = 1 ]; then
+        [ "$rf" = 1 ] || printf ', '; rf=0
+        printf '{'; jkv id "$(r "$i" id)"; printf ', '; jkv title "$(r "$i" title)"; printf '}'
+      fi
+      i=$((i + 1))
+    done
+    printf '],\n      "related_terms": ['
+    tf=1
+    concept_rows | while IFS="$(printf '\t')" read -r oslug oterm _om _ow; do
+      [ "$oslug" = "$slug" ] && continue
+      if printf '%s %s' "$meaning" "$where" | grep -qiE "(^|[^a-z-])$oterm([^a-z-]|\$)"; then
+        [ "$tf" = 1 ] || printf ', '; tf=0
+        printf '{'; jkv slug "$oslug"; printf ', '; jkv term "$oterm"; printf '}'
+      fi
+    done
+    printf ']\n    }'
+  done
+  printf '\n  ],\n  "index": {'
+  n=0
+  concept_rows | while IFS="$(printf '\t')" read -r slug _t _m _w; do
+    [ "$n" = 0 ] || printf ', '
+    printf '"%s": %s' "$slug" "$n"
+    n=$((n + 1))
+  done
+  printf '},\n  '
+  jkv two_outcomes "$(md_section docs/CONCEPTS.md 'The two outcomes people confuse')"; printf ',\n  '
+  jkv not_a_concept "$(md_section docs/CONCEPTS.md 'What is deliberately not a concept')"; printf '\n}\n'
+} > "$OUT/concepts.json"
+
+# ---- content stubs: routes whose body is entirely data, so the body is empty
+SECTIONS="$ROOT/site/content"
+stub() { # path, title, weight, template, description, extra lines
+  mkdir -p "$(dirname "$SECTIONS/$1")"
+  { printf '+++\ntitle = "%s"\nweight = %s\ntemplate = "%s"\ndescription = "%s"\n' "$2" "$3" "$4" "$5"
+    [ -n "${6:-}" ] && printf '%s\n' "$6"
+    printf '+++\n'
+  } > "$SECTIONS/$1"
+}
+section() { # path, title, weight, sort, template, page_template, description
+  mkdir -p "$(dirname "$SECTIONS/$1")"
+  { printf '+++\ntitle = "%s"\nweight = %s\nsort_by = "%s"\ntemplate = "%s"\npage_template = "%s"\ndescription = "%s"\n+++\n' \
+      "$2" "$3" "$4" "$5" "$6" "$7"
+  } > "$SECTIONS/$1"
+}
+
+section docs/_index.md "Documentation" 60 weight docs-section.html doc-page.html \
+  "Every canonical document in the repository, rendered from its Markdown source."
+
+section supervises/_index.md "What it supervises" 20 weight supervises-section.html responsibility.html \
+  "Nine responsibilities, one directory. Each is a file, a subcommand that reads it, and a test that proves it."
+i=0
+while [ -n "$(r "$i" id)" ]; do
+  stub "supervises/$(r "$i" id).md" "$(r "$i" title)" "$(r "$i" order)" responsibility.html \
+    "$(readme_summary "$(r "$i" readme_key)" | sed -e 's/`//g' -e 's/"/\\"/g' | cut -c1-155)" \
+    "[extra]
+responsibility = \"$(r "$i" id)\""
+  i=$((i + 1))
+done
+
+section commands/_index.md "Commands" 22 weight commands-section.html command.html \
+  "Every subcommand, what it reads and writes, its exit codes, and the tests that exercise it in CI."
+for c in $(command_ids); do
+  stub "commands/$c.md" "majordomus $c" 10 command.html \
+    "$(printf 'majordomus %s: %s' "$c" "$(command_summary "$c")" | sed -e 's/`//g' -e 's/"/\\"/g' | cut -c1-155)" \
+    "[extra]
+command = \"$c\""
+done
+
+section concepts/_index.md "Concepts" 25 weight concepts-section.html concept.html \
+  "The vocabulary Majordomus prints and writes, one routable page per term."
+concept_rows | while IFS="$(printf '\t')" read -r slug term meaning _where; do
+  stub "concepts/$slug.md" "$term" 10 concept.html \
+    "$(printf '%s: %s' "$term" "$meaning" | sed -e 's/`//g' -e 's/"/\\"/g' | cut -c1-155)" \
+    "[extra]
+concept = \"$slug\""
+done
+
+section profiles/_index.md "Execution profiles" 30 weight profiles-section.html profile.html \
+  "Capability class, reasoning effort, verbosity, context and verification as independent axes."
+for pf in .majordomus/profiles/*.yaml; do
+  [ -f "$pf" ] || continue
+  slug="$(basename "$pf" .yaml)"
+  stub "profiles/$slug.md" "$slug" 10 profile.html \
+    "The $slug execution profile, rendered from .majordomus/profiles/$slug.yaml." \
+    "[extra]
+profile = \"$slug\""
+done
+
+stub guarantees.md "Guarantees" 40 guarantees.html \
+  "What Majordomus guarantees, what is only advisory, and what is merely planned."
+stub policy.md "Policy" 50 policy.html \
+  "The canonical policy this repository supervises itself with, rendered field by field."
+stub architecture.md "Architecture" 70 architecture.html \
+  "How this site is projected from canonical repository data, and what that guarantees."
+
+# the homepage and getting-started keep narrative bodies derived from the README
+{
+  printf '+++\ntitle = "%s"\ntemplate = "index.html"\ndescription = "%s"\n+++\n' \
+    "Prismatic Majordomus" "A lightweight supervisory control layer for AI-assisted work. Policy, state, scope and verification without another runtime."
+} > "$SECTIONS/_index.md"
+{
+  printf '+++\ntitle = "Getting started"\nweight = 10\ntemplate = "getting-started.html"\ndescription = "%s"\n+++\n\n' \
+    "Install Majordomus, generate the instruction files your AI tools read, wire the two hooks, and run one supervised task."
+  assert_no_endraw README.md; assert_no_endraw docs/ADOPTION.md
+  raw_open
+  { awk '/^## Quick start$/{i=1;next} i&&/^## /{exit} i' README.md
+    printf '\n## What a supervised task looks like\n\n'
+    awk '/^## Example workflow$/{i=1;next} i&&/^## /{exit} i' README.md
+    printf '\n'
+    awk 'NR>1' docs/ADOPTION.md
+  } | rewrite_links
+  raw_close
+} > "$SECTIONS/getting-started.md"
+
+# ---- source.json — the manifest that makes derivation checkable
+INPUTS="bin/majordomus README.md docs/RESPONSIBILITIES.yaml docs/CLAIMS.yaml
+.majordomus/policy.yaml lib/finish.sh docs/CONCEPTS.md docs/DESIGN.md docs/CLI.md
+docs/SCHEMAS.md docs/ADOPTION.md docs/ECONOMICS.md docs/EXTRACTION_REPORT.md
+docs/GITHUB_PAGES_ARCHITECTURE.md docs/SITE_CLAIMS.md AGENTS.md"
+{
+  cat_all="$TMP/inputs.cat"; : > "$cat_all"
+  printf '{\n  '; jkvr generator_version "$GENERATOR_VERSION"; printf ',\n  '
+  jkv source_version "$(version)"; printf ',\n  '
+  jkv source_commit "$(git_commit)"; printf ',\n  "input_files": [\n'
+  first=1
+  for f in $INPUTS .majordomus/profiles/*.yaml; do
+    [ -f "$f" ] || continue
+    cat "$f" >> "$cat_all"
+    [ "$first" = 1 ] || printf ',\n'; first=0
+    printf '    {'; jkv path "$f"; printf ', '; jkv sha256 "$(mj_sha256 "$f")"; printf '}'
+  done
+  printf '\n  ],\n  '
+  jkv source_hash "$(mj_sha256 "$cat_all")"; printf '\n}\n'
+} > "$OUT/source.json"
+
+good generated "$(find "$OUT" -name '*.json' | wc -l | tr -d ' ') data files, $(find "$CONTENT" -name '*.md' | wc -l | tr -d ' ') content pages"
+printf 'generate-site-data: ok — version %s, source_hash %s\n' \
+  "$(version)" "$(sed -n 's/.*"source_hash": "\([0-9a-f]\{12\}\).*/\1/p' "$OUT/source.json")"

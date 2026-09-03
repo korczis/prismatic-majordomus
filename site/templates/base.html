@@ -1,0 +1,42 @@
+{%- set project = load_data(path="data/generated/project.json") -%}
+{%- set source = load_data(path="data/generated/source.json") -%}
+{#- Tera 2 evaluates filter arguments eagerly, so `section` cannot be referenced in a
+    default() on a page template. Resolve the title and description once, here. -#}
+{%- set pg = page | default(value=false) -%}
+{%- set sc = section | default(value=false) -%}
+{%- if pg %}{% set_global meta_title = pg.title %}{% set_global meta_desc = pg.description | default(value=config.description) %}
+{%- elif sc %}{% set_global meta_title = sc.title %}{% set_global meta_desc = sc.description | default(value=config.description) %}
+{%- else %}{% set_global meta_title = project.name %}{% set_global meta_desc = config.description %}{% endif -%}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ meta_title }} — {{ project.name }}{% endblock %}</title>
+<meta name="description" content="{% block description %}{{ meta_desc }}{% endblock %}">
+<link rel="canonical" href="{{ current_url | default(value=config.base_url) | safe }}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ meta_title }}">
+<meta property="og:description" content="{{ meta_desc }}">
+<meta property="og:url" content="{{ current_url | default(value=config.base_url) | safe }}">
+<meta property="og:site_name" content="{{ project.name }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{{ meta_title }}">
+<meta name="twitter:description" content="{{ meta_desc }}">
+<link rel="icon" href="{{ get_url(path='favicon.svg') | safe }}" type="image/svg+xml">
+<link rel="stylesheet" href="{{ get_url(path='css/app.css') | safe }}">
+<link rel="stylesheet" href="{{ get_url(path='giallo-light.css') | safe }}">
+<link rel="stylesheet" href="{{ get_url(path='giallo-dark.css') | safe }}">
+<script src="{{ get_url(path='js/theme.js') | safe }}"></script>
+</head>
+<body class="bg-white text-gray-900 antialiased dark:bg-gray-900 dark:text-gray-100">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-blue-700 focus:px-4 focus:py-2 focus:text-white">Skip to content</a>
+{% include "partials/navbar.html" %}
+<main id="main">
+{% block content %}{% endblock %}
+</main>
+{% include "partials/footer.html" %}
+<script src="{{ get_url(path='js/flowbite.min.js') | safe }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

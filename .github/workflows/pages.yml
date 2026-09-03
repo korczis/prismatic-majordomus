@@ -1,9 +1,9 @@
 # Deploys the derived documentation site to GitHub Pages.
 #
-# The site is generated from canonical repository files by scripts/generate-pages; there
-# is no second, hand-maintained content tree. This workflow therefore does two things:
-# it proves the tree it is deploying from is healthy, and it proves the generated output
-# was built from the sources present in that same commit.
+# The site is a projection of canonical repository files by scripts/generate-site-data
+# and Zola; there is no second, hand-maintained content tree. This workflow proves the
+# tree it deploys from is healthy, and that the output was built from the sources in
+# that same commit.
 name: pages
 
 on:
@@ -11,14 +11,11 @@ on:
     branches: [master]
   workflow_dispatch:
 
-# Only what deployment needs. The generator makes no network calls and needs no secrets.
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# One deployment at a time; a newer push supersedes a queued one but never cancels a
-# run that is already publishing.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -34,40 +31,47 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: install site build dependencies
-        run: npm ci --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
 
-      # The site claims the tool's tests pass. Deploying from a tree whose tests fail
-      # would publish a claim the tree does not support.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: zola@0.23.4
+
+      # The site says the tool's tests pass and that each command and profile is exercised
+      # by them. Deploying from a tree whose tests fail would publish a claim the tree
+      # does not support.
       - name: behavioural tests
         run: bash test/run.sh
 
-      # The repository supervises itself with its own tool. If doctor fails here, the
-      # policy and its projections disagree, and the site derives from those files.
-      # A fresh clone has no core.hooksPath, so the shipped hooks in .githooks/ are
-      # inactive and doctor would correctly report the declared enforcement as unwired.
-      # This is the same once-per-clone step CONTRIBUTING.md documents for contributors.
+      # The repository supervises itself with its own tool. A fresh clone has no
+      # core.hooksPath, so the shipped hooks are inactive and doctor would correctly
+      # report the declared enforcement as unwired — this is the once-per-clone step
+      # CONTRIBUTING.md documents for contributors.
       - name: self-supervision
         run: |
           git config core.hooksPath .githooks
           bin/majordomus doctor
 
-      # Generates into _site/ and then validates: every canonical source exists, every
-      # heading and code block the generator reads is present, every claim names an
-      # existing implementation and test, every route carries metadata and landmarks,
-      # no unresolved placeholder, no inline style, no remotely fetched asset, no
-      # credential or private path, and the manifest matches the sources on disk.
-      - name: generate and check the site
-        run: scripts/generate-pages --check
+      - name: canonical data
+        run: scripts/generate-site-data --check
+
+      - name: build the site
+        run: scripts/site-build
+
+      # Metadata and landmarks on every route, no unrendered template delimiter, every
+      # internal link resolving, the deployment path prefix on every reference, no remote
+      # asset, no credential, and the generated data still matching its canonical sources.
+      - name: check the site
+        run: scripts/site-check
 
       - name: manifest
-        run: cat _site/site-manifest.json
+        run: cat site/data/generated/source.json
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: public
 
   deploy:
     needs: build

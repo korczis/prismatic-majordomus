@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+{%- set d = load_data(path="data/generated/commands.json") -%}
+{% set header_title = "Commands" %}{% set header_lede = "Every subcommand the binary dispatches, what it reads and writes, its exit codes, and the behavioural tests that exercise it in CI. Each has its own page." %}{% include "partials/page-header.html" %}
+<div class="mx-auto max-w-screen-xl px-4 py-12">
+  <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+    <table class="w-full min-w-[44rem] text-left text-sm">
+      <caption class="sr-only">Every subcommand, whether it is read-only, and how many tests exercise it</caption>
+      <thead class="bg-gray-50 font-mono text-xs uppercase tracking-wider text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+        <tr><th scope="col" class="px-4 py-3">Command</th><th scope="col" class="px-4 py-3">Does</th><th scope="col" class="px-4 py-3">Read-only</th><th scope="col" class="px-4 py-3">Tests</th></tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+        {% for c in d.commands %}
+        <tr class="bg-white dark:bg-gray-900">
+          <th scope="row" class="whitespace-nowrap px-4 py-3"><a class="font-mono font-semibold text-blue-700 hover:underline dark:text-blue-400" href="{{ get_url(path='/commands/' ~ c.id ~ '/') | safe }}">{{ c.id }}</a></th>
+          <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ c.summary }}</td>
+          <td class="px-4 py-3 font-mono text-xs">{% if c.read_only %}<span class="text-green-700 dark:text-green-400">yes</span>{% else %}<span class="text-gray-500">no</span>{% endif %}</td>
+          <td class="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">{{ c.tests | length }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="mt-14 text-xl font-bold tracking-tight text-gray-900 dark:text-white">Exit codes are a contract</h2>
+  <div data-canonical-source="docs/CLI.md"
+       class="format format-slate dark:format-invert mt-4 max-w-none break-words format-pre:overflow-x-auto format-table:block format-table:overflow-x-auto format-a:text-blue-700 dark:format-a:text-blue-400">
+    {{ d.exit_codes | markdown | safe }}
+  </div>
+
+  <p class="mt-10 text-sm text-gray-500 dark:text-gray-400">
+    The command list comes from the dispatch table in
+    {% set rp_path = "bin/majordomus" %}{% include "partials/repo-path.html" %}, the prose from
+    {% set rp_path = "docs/CLI.md" %}{% include "partials/repo-path.html" %}, and the test
+    column from the cases that actually invoke each one. A command with no section or no
+    test fails the build rather than appearing here unproven.
+  </p>
+</div>
+{% endblock %}

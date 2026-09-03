@@ -308,6 +308,19 @@ $ echo $?
 
 ---
 
+## `majordomus version`
+
+Print the version and exit. `--version` is accepted as a synonym, and `version` works
+without an installation: it never reads `.majordomus/`.
+
+**Reads:** nothing.
+**Writes:** nothing.
+
+**Behaviour:**
+- Prints `majordomus <version>` on stdout and exits `0`.
+- The same string is the single source of the version everywhere else, including the
+  public site's footer.
+
 ## Hook integration (target)
 
 `init` prints these; `doctor` verifies they are present and executable:

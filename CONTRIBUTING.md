@@ -44,3 +44,21 @@ arbitrary. Most of them were paid for.
 ## Language
 
 English throughout: code, comments, commits, documents.
+
+## The site
+
+The public site is a projection of the files above, not a second copy of them. It needs
+[Zola](https://www.getzola.org/) and Node; the CLI needs neither.
+
+```bash
+npm ci
+scripts/site-build      # generate canonical data, build with Zola, compile Tailwind
+scripts/site-check      # the checks CI runs
+scripts/site-serve      # watch mode
+```
+
+`site/data/generated/`, `site/content/` and `public/` are rewritten on every build and are
+gitignored. Change the canonical file instead — a policy field, a profile, a claim in
+`docs/CLAIMS.yaml`, a row of the README table — and the site follows.
+`docs/GITHUB_PAGES_ARCHITECTURE.md` explains the pipeline and what must never be edited
+by hand.

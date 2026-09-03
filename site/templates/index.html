@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block content %}
+{%- set m = load_data(path="data/marketing.toml") -%}
+{%- set resp = load_data(path="data/generated/responsibilities.json") -%}
+{%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{%- set profiles = load_data(path="data/generated/profiles.json") -%}
+{%- set lifecycle = load_data(path="data/generated/lifecycle.json") -%}
+{%- set project = load_data(path="data/generated/project.json") -%}
+{%- set source = load_data(path="data/generated/source.json") -%}
+
+<section class="mx-auto max-w-screen-xl px-4 py-16 sm:py-24">
+  <p class="font-mono text-xs text-gray-500 dark:text-gray-500">v{{ source.source_version }} · {{ source.source_commit }}</p>
+  <h1 class="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">{{ m.headline }}</h1>
+  <p class="mt-4 max-w-2xl text-lg text-gray-600 dark:text-gray-400">{{ m.subheadline }}</p>
+  <p class="mt-6 max-w-2xl text-base text-gray-600 dark:text-gray-400">{{ m.lede }}</p>
+  <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+    {% for cta in m.cta %}
+    <a href="{{ get_url(path=cta.href) | safe }}"
+       class="inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium focus:outline-none focus:ring-4 {% if cta.primary %}bg-blue-700 text-white hover:bg-blue-800 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700{% else %}border border-gray-300 text-gray-900 hover:bg-gray-100 focus:ring-gray-200 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800{% endif %}">{{ cta.label }}</a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="border-t border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+  <div class="mx-auto max-w-screen-xl px-4 py-16">
+    <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">01 / The problem</p>
+    <h2 class="mt-3 max-w-3xl text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">{{ m.problem.title }}</h2>
+    <p class="mt-3 max-w-2xl text-gray-600 dark:text-gray-400">{{ m.problem.lede }}</p>
+    <ul class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {% for item in m.problem.items %}
+      <li class="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="mx-auto max-w-screen-xl px-4 py-16">
+  <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">02 / The core model</p>
+  <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">Majordomus supervises how work is executed</h2>
+  <p class="mt-3 max-w-2xl text-gray-600 dark:text-gray-400">It never runs a model and never picks one. It holds the rules, the scope and the state, and decides whether the contract was met.</p>
+  <ol class="mt-8 grid gap-3 md:grid-cols-4">
+    {% set flow = [
+      ["Human / organisation", "states the task and the paths it may touch"],
+      ["Majordomus", "policy, profile, scope, state, contract"],
+      ["Any worker", "Claude, Codex, Gemini, local — never invoked by Majordomus"],
+      ["Verified outcome", "a typed outcome with the evidence that earned it"]
+    ] %}
+    {% for step in flow %}
+    <li class="relative rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+      <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ loop.index }}</span>
+      <p class="mt-1 font-semibold text-gray-900 dark:text-white">{{ step[0] }}</p>
+      <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ step[1] }}</p>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<section class="border-t border-gray-200 dark:border-gray-800">
+  <div class="mx-auto max-w-screen-xl px-4 py-16">
+    <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">03 / Drop-in installation</p>
+    <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">Copy one directory, add one pointer</h2>
+    <div class="mt-8 grid gap-6 lg:grid-cols-2">
+      {% set cb_id = "install-cmd" %}{% set cb_label = "install" %}{% set cb_body = "git clone " ~ config.extra.repo_url ~ " ~/majordomus
+export PATH=\"$HOME/majordomus/bin:$PATH\"
+
+cd <your project>
+majordomus init
+majordomus update
+majordomus doctor" %}{% include "partials/code-block.html" %}
+      {% set cb_id = "install-hooks" %}{% set cb_label = "the two hook lines doctor verifies" %}{% set cb_body = "# pre-commit
+majordomus doctor || exit $?
+
+# pre-push
+majordomus finish --check || exit $?" %}{% include "partials/code-block.html" %}
+    </div>
+    <p class="mt-6 text-sm text-gray-500 dark:text-gray-400">Already have a hand-written <code class="font-mono">CLAUDE.md</code>? <a class="font-medium text-blue-700 hover:underline dark:text-blue-400" href="{{ get_url(path='/docs/adoption/') | safe }}">Region projections</a> keep it.</p>
+  </div>
+</section>
+
+<section class="border-t border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+  <div class="mx-auto max-w-screen-xl px-4 py-16">
+    <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">04 / What it supervises</p>
+    <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">{{ resp.responsibilities | length }} responsibilities, one directory</h2>
+    <p class="mt-3 max-w-2xl text-gray-600 dark:text-gray-400">Each is a file, a subcommand that reads it, and at least one behavioural test that proves it. Every card links to its own page.</p>
+    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {% for r in resp.responsibilities | sort(attribute="order") %}
+      <a href="{{ get_url(path='/supervises/' ~ r.id ~ '/') | safe }}"
+         class="group rounded-lg border border-gray-200 bg-white p-5 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-500">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-semibold text-gray-900 group-hover:underline dark:text-white">{{ r.title }}</h3>
+          <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ r.command }}</span>
+        </div>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ r.summary | markdown(inline=true) | safe }}</p>
+        <p class="mt-3 font-mono text-xs text-gray-400 dark:text-gray-500">{{ r.claims | length }} claim{{ r.claims | length | pluralize }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="mx-auto max-w-screen-xl px-4 py-16">
+  <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">05 / Execution profiles</p>
+  <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">Five axes, never one quality knob</h2>
+  <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {% for p in profiles.profiles %}
+    <a href="{{ get_url(path='/profiles/' ~ p.slug ~ '/') | safe }}" class="rounded-lg border border-gray-200 bg-white p-5 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-500">
+      <h3 class="font-mono text-sm font-semibold text-gray-900 dark:text-white">{{ p.slug }}</h3>
+      <dl class="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-400">
+        <div class="flex justify-between gap-2"><dt>capability</dt><dd class="font-mono text-gray-900 dark:text-gray-200">{{ p.capability }}</dd></div>
+        <div class="flex justify-between gap-2"><dt>effort</dt><dd class="font-mono text-gray-900 dark:text-gray-200">{{ p.effort }}</dd></div>
+        <div class="flex justify-between gap-2"><dt>verbosity</dt><dd class="font-mono text-gray-900 dark:text-gray-200">{{ p.verbosity }}</dd></div>
+        <div class="flex justify-between gap-2"><dt>checkpoint</dt><dd class="font-mono text-gray-900 dark:text-gray-200">{{ p.checkpoint_interval }}</dd></div>
+      </dl>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="border-t border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
+  <div class="mx-auto max-w-screen-xl px-4 py-16">
+    <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">06 / Capabilities</p>
+    <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">Guaranteed, advisory, planned — never mixed</h2>
+    <div class="mt-8 grid gap-4 sm:grid-cols-3">
+      {% for status in ["guaranteed", "advisory", "planned"] %}
+      <div class="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex items-center justify-between">{% set badge_status = status %}{% include "partials/status-badge.html" %}<span class="font-mono text-2xl font-semibold text-gray-900 dark:text-white">{{ caps.counts[status] }}</span></div>
+        <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+          {%- if status == "guaranteed" %}Implemented, deterministic, and backed by a behavioural test that runs.
+          {%- elif status == "advisory" %}Projected into worker instructions. A worker may ignore it and nothing detects that it did.
+          {%- else %}Specified and not implemented. Named so the omission is visible.{% endif %}
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+    <a class="mt-6 inline-block text-sm font-medium text-blue-700 hover:underline dark:text-blue-400" href="{{ get_url(path='/guarantees/') | safe }}">Every claim, with its implementation and its test →</a>
+  </div>
+</section>
+
+<section class="mx-auto max-w-screen-xl px-4 py-16">
+  <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">07 / Task lifecycle</p>
+  <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">A typed outcome, not free text</h2>
+  <p class="mt-3 max-w-2xl text-gray-600 dark:text-gray-400">The vocabulary below is read out of <code class="font-mono text-sm">lib/finish.sh</code> at build time. Adding an outcome to the code adds it here.</p>
+  <div class="mt-8 overflow-x-auto">
+    <pre class="mermaid" data-mermaid>flowchart LR
+  S(( )) --> A[active]
+  A --> H[handed_over]
+  H --> A
+{%- for o in lifecycle.outcomes %}
+  A --> {{ o | upper }}[{{ o }}]
+{%- endfor %}
+</pre>
+  </div>
+</section>
+
+<section class="border-t border-gray-200 dark:border-gray-800">
+  <div class="mx-auto max-w-screen-xl px-4 py-16">
+    <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">08 / What it is not</p>
+    <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">{{ m.not.title }}</h2>
+    <ul class="mt-8 flex flex-wrap gap-3">
+      {% for item in m.not.items %}
+      <li class="rounded-lg border border-gray-200 px-4 py-2 font-mono text-sm text-gray-700 dark:border-gray-700 dark:text-gray-300">{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}{% include "partials/mermaid.html" %}{% endblock %}

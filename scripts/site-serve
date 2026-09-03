@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# site-serve — build once, then serve with Zola's watcher.
+#
+# Tailwind is rebuilt on every Zola rebuild by the --on-change hook Zola does not have,
+# so this runs Tailwind in watch mode alongside. Ctrl-C stops both.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT" || exit 1
+scripts/generate-site-data
+mkdir -p "$ROOT/public/css" "$ROOT/public/js"
+cp node_modules/flowbite/dist/flowbite.min.js "$ROOT/public/js/flowbite.min.js" 2>/dev/null || true
+node_modules/.bin/tailwindcss -i site/tailwind.css -o site/static/css/app.css --watch &
+TW=$!
+trap 'kill "$TW" 2>/dev/null || true' EXIT INT TERM
+zola --root site serve --open

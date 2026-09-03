@@ -1,0 +1,104 @@
+# The nine responsibilities — canonical index.
+#
+# The README's "What it does" table is the prose. This file is the machine-readable
+# side of the same fact: for each responsibility, which subcommand acts on it, which
+# files hold it, and where it is specified. The site projects one page per entry from
+# this file joined with docs/CLAIMS.yaml (by `responsibility`), and nothing on those
+# pages is written twice.
+#
+# `scripts/generate-site-data --check` proves, for every entry: the key matches a row
+# of the README table exactly, every path exists, and every anchor is a real heading in
+# the document it names. A responsibility here with no README row, or a README row with
+# no entry here, is an error rather than a page that quietly goes stale.
+version: 1
+
+responsibilities:
+  - id: policy
+    title: Policy
+    readme_key: Policy
+    command: update
+    files: [.majordomus/policy.yaml]
+    implementation: lib/common.sh
+    cli_anchor: majordomus update
+    schema_anchor: .majordomus/policy.yaml
+    order: 1
+
+  - id: projection
+    title: Projection
+    readme_key: Projection
+    command: update
+    files: [.majordomus/providers, .majordomus/generated/fingerprints.yaml]
+    implementation: lib/update.sh
+    cli_anchor: majordomus update
+    schema_anchor: .majordomus/generated/fingerprints.yaml
+    order: 2
+
+  - id: state
+    title: State
+    readme_key: State
+    command: start
+    files: [.majordomus/state/current.yaml, .majordomus/state/ledger.jsonl]
+    implementation: lib/start.sh
+    cli_anchor: majordomus start <task>
+    schema_anchor: .majordomus/state/current.yaml
+    order: 3
+
+  - id: scope
+    title: Scope
+    readme_key: Scope
+    command: check
+    files: [.majordomus/state/current.yaml]
+    implementation: lib/check.sh
+    cli_anchor: majordomus check
+    schema_anchor: Worktree coordination
+    order: 4
+
+  - id: profiles
+    title: Profiles
+    readme_key: Profiles
+    command: check
+    files: [.majordomus/profiles]
+    implementation: lib/update.sh
+    cli_anchor: majordomus check
+    schema_anchor: .majordomus/profiles/<name>.yaml
+    order: 5
+
+  - id: handover
+    title: Handover
+    readme_key: Handover
+    command: handover
+    files: [.majordomus/state/handovers]
+    implementation: lib/handover.sh
+    cli_anchor: majordomus handover
+    schema_anchor: .majordomus/state/handovers/<file>.md
+    order: 6
+
+  - id: finish
+    title: Finish
+    readme_key: Finish
+    command: finish
+    files: [.majordomus/state/ledger.jsonl]
+    implementation: lib/finish.sh
+    cli_anchor: majordomus finish
+    schema_anchor: Completion note (when no handover is written)
+    order: 7
+
+  - id: doctor
+    title: Doctor
+    readme_key: Doctor
+    command: doctor
+    files: [.majordomus/generated/fingerprints.yaml]
+    implementation: lib/doctor.sh
+    cli_anchor: majordomus doctor
+    schema_anchor: Projection header
+    order: 8
+
+  - id: watch
+    title: Watch
+    readme_key: Watch
+    command: watch
+    files: [.majordomus/state/ledger.jsonl]
+    implementation: lib/watch.sh
+    cli_anchor: majordomus watch
+    schema_anchor: .majordomus/state/ledger.jsonl
+    order: 9

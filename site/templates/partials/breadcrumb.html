@@ -1,0 +1,11 @@
+{#- expects: crumbs — a list of [label, path]; an empty path marks the current page -#}
+<nav class="mx-auto max-w-screen-xl px-4 pt-6" aria-label="Breadcrumb">
+  <ol class="flex flex-wrap items-center gap-2 font-mono text-xs text-gray-500 dark:text-gray-500">
+    <li><a class="hover:underline" href="{{ get_url(path='/') | safe }}">home</a></li>
+    {% for item in crumbs %}
+    <li aria-hidden="true">/</li>
+    {% if item[1] %}<li><a class="hover:underline" href="{{ get_url(path=item[1]) | safe }}">{{ item[0] }}</a></li>
+    {% else %}<li aria-current="page" class="text-gray-700 dark:text-gray-300">{{ item[0] }}</li>{% endif %}
+    {% endfor %}
+  </ol>
+</nav>
