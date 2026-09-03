@@ -23,8 +23,7 @@ DO_CSS=1; DO_SERVE=0; CHECK_ONLY=0; PORT=8080
 
 MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
 export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
-# shellcheck source=../lib/common.sh
-# shellcheck source=/dev/null
+# shellcheck source=../lib/common.sh disable=SC1091
 . "$ROOT/lib/common.sh"
 
 GEN_VERSION="1"
