@@ -77,15 +77,24 @@ from a pre-commit hook and from CI.
    `PATH`, repository-relative, absolute, or as an executable path on the hook line
    itself) and the artifact named by `wired_by` exists, is executable, invokes
    `majordomus <first arg>`, and does not swallow its exit code with `|| true` or
-   `|| exit 0`. `wired_by: manual` is reported as unverified, never as wired.
-   Declared-but-not-wired is `10`.
-4. Every `projections[].target` exists and has an entry in `generated/fingerprints.yaml`
-   whose hash matches the file. Missing → `12`; mismatch → `10` (hand-edited).
+   `|| exit 0`. When the hook is a dispatcher, the invocation is looked for in the hook
+   file *and* in every file in its `<hook>.d/` directory; the finding names whichever
+   file actually carries it. A subhook that carries the invocation but is not executable
+   is reported as not wired, because the dispatcher skips it. `wired_by: manual` is
+   reported as unverified, never as wired. Declared-but-not-wired is `10`.
+4. Every `projections[].target` exists, its provider has a template, and its entry in
+   `generated/fingerprints.yaml` matches. Missing → `12`; mismatch → `10` (hand-edited).
+   For `mode: region` the hash is taken over the region alone; absent or malformed
+   markers are reported as such.
 5. The projection marked `always_loaded: true` is within
    `context.always_loaded_budget_lines`.
-6. Every repository-relative path referenced from any projection resolves.
+6. Every repository-relative path referenced from the always-loaded projection resolves.
 7. No hardcoded counts in the always-loaded projection (a digit sequence adjacent to
    words like `agents`, `files`, `apps`, `commands`, `skills`, `rules`).
+
+   Checks 5 to 7 judge generated content only. For a region projection that is the
+   region and never the host document, so that every failure `doctor` reports can be
+   fixed by editing the policy.
 8. Retention caps not exceeded on `state/ledger.jsonl` and `state/handovers/`.
 9. Environment probes: bash version, `git`, `jq` and `shellcheck` if present. Reported
    as `INFO`. Nothing in `doctor` needs a tool beyond bash, git, and a checksum command.
@@ -201,15 +210,22 @@ byte for byte.
 `projections.updated` ledger line.
 
 **Behaviour:**
-- `--dry-run` prints what would change; `--diff <target>` shows the diff for one.
-- Refuses (`15`) to overwrite a target whose current hash matches neither its fingerprint
+- `--dry-run` prints what would change; `--diff <target>` shows the diff for one. For a
+  region projection the diff is of the region, not of the host document.
+- Refuses (`15`) to overwrite content whose current hash matches neither its fingerprint
   nor the new output, unless `--force`. A hand edit is never silently lost; the refusal
   names the file and the `--diff` command that shows it.
+- `mode: region` (see `SCHEMAS.md`) generates only the text between the
+  `majordomus:begin` and `majordomus:end` markers. The rest of the target is copied
+  through byte for byte, an absent region is appended once, and malformed markers are
+  refused (`15`). This is how a repository that already has a hand-written `CLAUDE.md`
+  adopts Majordomus without losing it.
 - Appends `projections.updated` to the ledger.
 - Every generated file begins with a header naming this command and the policy hash it
   came from.
 - The always-loaded projection is checked against the budget after generation; over
-  budget is `10` and nothing is written.
+  budget is `10` and nothing is written. For a region projection the budget measures the
+  generated region, and `doctor` reports the host document's own length as `INFO`.
 
 ## `majordomus handover`
 
@@ -304,6 +320,7 @@ majordomus doctor || exit $?
 majordomus finish --check || exit $?
 ```
 
-Bootstrap into a repository that predates Majordomus: `MAJORDOMUS_BOOTSTRAP=1` is
-honoured only while `state/ledger.jsonl` does not exist, records a `bootstrap` ledger
-line, and is dead thereafter.
+Either line may live in a subhook of a dispatching hook instead — `doctor` looks in
+`<hook>.d/` as well and names the file it found. A repository that predates Majordomus
+needs no bootstrap flag: `finish --check` passes while no task is active, so the hooks
+are inert until the first `start`.

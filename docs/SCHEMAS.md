@@ -58,6 +58,7 @@ enforcement:                             # what doctor reconciles; each must be 
 projections:
   - provider: claude-code
     target: CLAUDE.md
+    mode: region                         # file (default) | region
     always_loaded: true                  # exactly one projection may be always_loaded
   - provider: codex
     target: AGENTS.md
@@ -66,6 +67,25 @@ projections:
   - provider: generic
     target: docs/AI_INSTRUCTIONS.md
 ```
+
+`mode: file` generates the whole target and owns every byte of it. `mode: region`
+generates only the text between two markers and owns nothing else in the file:
+
+```markdown
+Whatever the repository already wrote. Majordomus never reads or rewrites this.
+
+<!-- majordomus:begin 7b88abe0f22a -->
+... generated from the policy ...
+<!-- majordomus:end -->
+```
+
+The hash in the begin marker names the policy the region came from; it is not part of
+the hashed content, so re-running `update` after an unrelated policy edit is not a hand
+edit. `update` replaces an existing region in place and appends one to a file that has
+none. Markers that are unclosed, out of order, or repeated are refused (`15`), never
+guessed at. `fingerprints.yaml` records `mode` alongside the hash, and for a region the
+hash covers the region — an edit outside the markers is the repository's business and is
+never reported as drift.
 
 `wired_by` values in v0.1: `git-hook:<name>` (resolved through `core.hooksPath` or
 `.git/hooks/`), `ci:<path>` (a file that must exist and contain the invocation),

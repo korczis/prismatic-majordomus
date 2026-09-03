@@ -68,6 +68,22 @@ claims:
     test: test/cases/03_update.sh
     status: guaranteed
 
+  - id: region-projection
+    claim: A projection can own only the region between its markers, leaving the rest of the file untouched
+    source: docs/SCHEMAS.md
+    implementation: lib/update.sh
+    test: test/cases/12_region_projection.sh
+    status: guaranteed
+    note: How a repository that already has a hand-written CLAUDE.md adopts Majordomus. An edit outside the markers is never drift; an edit inside them is caught. Malformed markers are refused, not guessed at.
+
+  - id: dispatcher-wiring
+    claim: Wiring is found in a hook or in any subhook of the directory that hook dispatches to
+    source: docs/CLI.md
+    implementation: lib/doctor.sh
+    test: test/cases/13_wiring_dispatcher.sh
+    status: guaranteed
+    note: The finding names the file that actually carries the invocation. A subhook that is not executable is reported as not wired, because the dispatcher skips it.
+
   - id: no-silent-overwrite
     claim: A hand-edited instruction file is never silently overwritten
     source: docs/CLI.md

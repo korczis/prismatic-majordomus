@@ -26,6 +26,41 @@ majordomus check
 majordomus finish --outcome completed --verify-command "<your test command>"
 ```
 
+## A repository that already has a CLAUDE.md
+
+Most repositories worth supervising already have hand-written instructions for their AI
+tools. `mode: region` keeps them. Majordomus then owns only the text between two markers
+and copies everything else through byte for byte:
+
+```yaml
+# .majordomus/policy.yaml
+projections:
+  - provider: claude-code
+    target: CLAUDE.md
+    mode: region
+    always_loaded: true
+```
+
+```bash
+majordomus update        # appends the region once; the rest of CLAUDE.md is untouched
+majordomus doctor        # hashes the region, and reports the host document's length
+```
+
+What that buys you: an edit outside the markers is the repository's own business and is
+never reported as drift, while an edit inside them is caught exactly as a whole-file
+projection would be. The budget, the link check and the count check all measure the
+region, so every failure `doctor` reports can be fixed by editing the policy.
+
+Malformed markers — unclosed, out of order, or repeated — are refused rather than
+guessed at, and nothing is written.
+
+## Hooks that are dispatchers
+
+If `pre-commit` runs every executable in `pre-commit.d/`, put the invocation in a subhook
+and leave the dispatcher alone. `doctor` looks in `<hook>.d/` as well and names the file
+that carries it. A subhook that is present but not executable is reported as not wired,
+because that is what the dispatcher does with it.
+
 ## Week one: adjust the policy, not the projections
 
 Every rule the workers see comes from `.majordomus/policy.yaml` and the profiles. Edit
@@ -55,8 +90,9 @@ about the repository's past is judged. Start supervising from the first `start`.
 
 ## Removing Majordomus
 
-Delete `.majordomus/`, the generated projections, and the two hook lines. Nothing else
-was touched.
+Delete `.majordomus/`, the generated projections, and the two hook lines. For a region
+projection, delete the marked block from the host document; everything around it was
+never touched.
 
 ## What adoption does not require
 
