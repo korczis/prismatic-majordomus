@@ -10,6 +10,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      # The CLI needs no Node. The derived site's tests and check do (flowbite assets),
+      # so the matrix installs it once; the CLI's own tests would pass without it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
       - name: shell syntax
         run: for f in bin/majordomus lib/*.sh test/run.sh test/lib.sh test/cases/*.sh; do bash -n "$f"; done
       - name: shellcheck
