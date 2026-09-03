@@ -12,7 +12,7 @@
 #
 #   scripts/generate-pages              generate _site/ and compile the stylesheet
 #   scripts/generate-pages --check      validate sources and the generated output, exit non-zero on a problem
-#   scripts/generate-pages --no-css     HTML only; skip the Node build
+#   scripts/generate-pages --no-css     derived content only; skips everything that needs Node
 #   scripts/generate-pages --serve      generate, then serve _site/ on localhost
 #   scripts/generate-pages --out DIR    write somewhere other than _site/
 set -eu
@@ -178,6 +178,18 @@ pol() { mj_yget "$POLICY" "$1"; }
 # the Flowbite docs. Interactive parts are Flowbite data attributes; the only JavaScript
 # this site adds of its own is the documented theme switcher.
 
+# In --no-css mode the two Node-derived assets do not exist, so the pages must not
+# reference them: a link to a file that was never built is a broken link, and the link
+# checker is right to say so.
+if [ "$DO_CSS" = 1 ]; then
+  APP_CSS_LINK='<link rel="stylesheet" href="/assets/app.css">'
+  FLOWBITE_SCRIPT='<script src="/assets/flowbite.min.js"></script>
+'
+else
+  APP_CSS_LINK='<!-- stylesheet omitted: generated with --no-css, which skips every Node-derived asset -->'
+  FLOWBITE_SCRIPT=''
+fi
+
 NAVITEMS="/|Home
 /getting-started/|Get started
 /profiles/|Profiles
@@ -223,7 +235,7 @@ page_open() {
 <meta name="twitter:title" content="$title">
 <meta name="twitter:description" content="$desc">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/assets/app.css">
+$APP_CSS_LINK
 <script>
   // Flowbite dark-mode switcher, from the Flowbite dark mode guide. Inline in <head> to
   // avoid a flash of the wrong theme. Respects the system preference until the visitor
@@ -322,8 +334,7 @@ page_close() {
   </div>
 </footer>
 
-<script src="/assets/flowbite.min.js"></script>
-<script src="/assets/theme.js"></script>
+$FLOWBITE_SCRIPT<script src="/assets/theme.js"></script>
 </body>
 </html>
 HTML
@@ -936,7 +947,13 @@ build_assets() {
   cp "$(src assets/logo.svg)"      "$OUT/assets/logo.svg"
   cp "$(src assets/social-card.png)" "$OUT/assets/social-card.png"
   cp "$(src assets/logo-mark.svg)" "$OUT/assets/favicon.svg"
-  cp "$ROOT/node_modules/flowbite/dist/flowbite.min.js" "$OUT/assets/flowbite.min.js"
+  # Flowbite's bundle comes out of node_modules, so it is a Node-derived asset like the
+  # stylesheet: --no-css skips both, which is what makes that mode runnable without npm ci.
+  if [ "$DO_CSS" = 1 ]; then
+    [ -f "$ROOT/node_modules/flowbite/dist/flowbite.min.js" ] \
+      || { say "generate-pages: node_modules is absent; run npm ci, or use --no-css"; exit 12; }
+    cp "$ROOT/node_modules/flowbite/dist/flowbite.min.js" "$OUT/assets/flowbite.min.js"
+  fi
   # The one piece of JavaScript this site adds: the theme switcher from the Flowbite
   # dark-mode guide. Everything else interactive is a Flowbite data attribute.
   cat > "$OUT/assets/theme.js" <<'JS'
@@ -1146,6 +1163,10 @@ check_output() {
     n="$(grep -c '<h1' "$page")"
     [ "$n" = 1 ] || bad a11y "$route: $n h1 elements, expected exactly 1"
     grep -q 'data-collapse-toggle="navbar-main"' "$page" || bad flowbite "$route: no Flowbite mobile navbar toggle"
+    if [ "$DO_CSS" = 1 ]; then
+      grep -q '/assets/flowbite.min.js' "$page" || bad flowbite "$route: does not load the Flowbite bundle that initialises its data attributes"
+      grep -q '/assets/app.css' "$page" || bad css "$route: does not link the compiled stylesheet"
+    fi
     grep -q 'aria-controls="navbar-main"' "$page" || bad flowbite "$route: navbar toggle without aria-controls"
     # Placeholder and variable scans run over the page with code blocks removed: a
     # canonical document legitimately shows $HOME and ${TMPDIR} inside a shell example,
@@ -1187,7 +1208,6 @@ check_output() {
     [ -f "$page" ] || continue
     grep -oE 'href="/[^"#]*"' "$page" | sed -e 's/href="//' -e 's/"$//' | sort -u | while IFS= read -r n; do
       case "$n" in
-        /assets/app.css) [ "$DO_CSS" = 1 ] && { [ -e "$OUT$n" ] || printf 'BADLINK %s -> %s\n' "$route" "$n"; } ;;
         */) [ -f "$OUT$n/index.html" ] || [ -f "$OUT${n}index.html" ] || printf 'BADLINK %s -> %s\n' "$route" "$n" ;;
         *)  [ -e "$OUT$n" ] || printf 'BADLINK %s -> %s\n' "$route" "$n" ;;
       esac
