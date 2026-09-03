@@ -28,6 +28,8 @@ arbitrary. Most of them were paid for.
 
 ## Process
 
+0. Once per clone: `git config core.hooksPath .githooks`. The pre-commit hook runs
+   `bin/majordomus doctor`; this repository supervises itself.
 1. Open an issue describing the failure you observed, with the command that shows it.
 2. Branch from `master`. Keep the branch to one concern.
 3. Add or change the test in `test/cases/` first. Tests run in a disposable temporary

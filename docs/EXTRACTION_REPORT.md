@@ -159,23 +159,16 @@ Rejected outright, with the failure that justifies rejection:
 │   ├── handover.sh
 │   └── finish.sh
 │
-├── .majordomus/                 # the template written by `init`
-│   ├── policy.yaml
-│   ├── profiles/
-│   │   ├── routine.yaml
-│   │   ├── implementation.yaml
-│   │   ├── debugging.yaml
-│   │   └── deep-work.yaml
-│   ├── templates/
-│   │   ├── current.yaml
-│   │   ├── handover.md
-│   │   └── completion.md
-│   ├── providers/
-│   │   ├── claude-code.tmpl
-│   │   ├── codex.tmpl
-│   │   ├── gemini.tmpl
-│   │   └── generic.tmpl
-│   └── state/                   # created by `init`, populated by `start`
+├── share/
+│   ├── skeleton/                # what `init` copies into a project's .majordomus/
+│   │   ├── policy.yaml
+│   │   ├── profiles/            # routine · implementation · debugging · deep-work
+│   │   ├── templates/           # handover, completion, decisions, open-questions
+│   │   └── providers/           # body.md + one wrapper template per provider
+│   └── allow/                   # key allowlists: unknown keys are errors
+│
+├── .majordomus/                 # this repository supervising itself
+├── .githooks/                   # pre-commit runs doctor, pre-push runs finish --check
 │
 ├── test/
 │   ├── run.sh
@@ -269,7 +262,7 @@ Five phases, each gated by the reality of the previous one, none started before 
 previous is reviewed.
 
 1. **Design** — this document and `DESIGN.md`. Complete.
-2. **Implement v0.1** — the file tree above; behavioural tests in disposable
+2. **Implement v0.1** — complete; see `CLI.md`, `SCHEMAS.md`, `test/cases/`. Original brief: — the file tree above; behavioural tests in disposable
    repositories for: init happy path, missing policy, invalid YAML, unknown key, missing
    scope, unfinished task, valid completion, handover write and resolve, refusal to
    overwrite, each drift class, and the healthy no-finding case. Every README claim is
@@ -288,4 +281,4 @@ previous is reviewed.
    notes without inflation, remote validation including a fresh template-generated
    repository.
 
-Phase 2 is the next action.
+Phase 3 is the next action.

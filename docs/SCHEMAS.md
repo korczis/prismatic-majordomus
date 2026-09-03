@@ -1,6 +1,6 @@
 # File schemas — every file Majordomus reads or writes
 
-Target for v0.1. Every field listed here is both written by something and read by
+As implemented in v0.1. Every field listed here is both written by something and read by
 something. A field that loses one of those is removed, not kept "for later".
 
 Conventions:
@@ -47,11 +47,11 @@ ledger:
 
 enforcement:                             # what doctor reconciles; each must be wired
   - name: doctor-on-commit
-    path: bin/majordomus
+    path: majordomus                       # on PATH, repo-relative, absolute, or named in the hook line
     args: [doctor]
     wired_by: git-hook:pre-commit
   - name: finish-on-push
-    path: bin/majordomus
+    path: majordomus
     args: [finish, --check]
     wired_by: git-hook:pre-push
 
@@ -70,6 +70,7 @@ projections:
 `wired_by` values in v0.1: `git-hook:<name>` (resolved through `core.hooksPath` or
 `.git/hooks/`), `ci:<path>` (a file that must exist and contain the invocation),
 `manual` (documented, not verified; doctor lists it as unverified, never as wired).
+The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
 
 ---
 
@@ -151,9 +152,9 @@ head: 3f2a9c1e...                     # full SHA
 working_tree: dirty                   # clean | dirty
 ```
 
-`outcome` is the only field a command changes after `start`. `active` and
-`handed_over` are non-terminal for `start --replace` purposes only in the sense that
-`handed_over` permits a new `start`; `active` does not.
+`outcome` and `checkpoint_at` are the only fields a command changes after `start`.
+`active` refuses a new `start`; every other outcome lets `start` archive the record to
+`state/archive/<id>.yaml` and begin a new task.
 
 ---
 
@@ -194,8 +195,9 @@ schema_version: 1
 created_at: 2026-09-03T20:14:55Z
 task_id: t-20260903-193012-a4f1
 profile: debugging
-owner: alice
+owner: "alice"
 repository_id: /abs/path/.git
+worktree: /abs/path
 branch: main
 head: 9b1e2d4f...
 working_tree: clean
@@ -245,23 +247,27 @@ Events and their extra fields:
 | `bootstrap` | `reason` |
 | `task.started` | `profile`, `scope[]`, `owner` |
 | `task.checkpoint` | — |
-| `task.finished` | `outcome`, `contract` (object of line → `pass`/`fail`), `verify` (`command`, `exit`, `seconds`) or null |
-| `task.handed_over` | `handover_path` |
-| `projections.updated` | `policy_sha256`, `targets[]` |
-| `doctor.run` | `failures` (count), `skipped[]` |
+| `task.finished` | `outcome`, `contract` (object of line → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null |
+| `task.handed_over` | `handover_path`, `closed` (true with `--close`) |
+| `projections.updated` | `policy_sha256`, `targets` (count) |
+
+`doctor`, `check` (without `--checkpoint`), and `watch` write nothing, the ledger
+included.
 
 ---
 
 ## `.majordomus/generated/fingerprints.yaml`
 
 ```yaml
-policy_sha256: 8e1d...      # hash of policy.yaml + all profiles, sorted, concatenated
+policy_sha256: 8e1d...      # hash of policy.yaml + all profiles concatenated
 generated_at: 2026-09-03T18:40:00Z
 targets:
-  CLAUDE.md:            {sha256: 4b2f..., lines: 61}
-  AGENTS.md:            {sha256: 9a01..., lines: 118}
-  GEMINI.md:            {sha256: 77c3..., lines: 118}
-  docs/AI_INSTRUCTIONS.md: {sha256: 77c3..., lines: 118}
+  - target: CLAUDE.md
+    sha256: 4b2f...
+    lines: 61
+  - target: AGENTS.md
+    sha256: 9a01...
+    lines: 118
 ```
 
 `doctor` fails on any target whose current hash differs (hand-edited) and `watch`
@@ -281,33 +287,21 @@ The header is part of the fingerprinted content.
 
 ---
 
-## Worktree sidecar (coordination) — `.majordomus/worktrees/<id>.json`
+## Worktree coordination
 
-Only written when a task is started inside a git worktree other than the main one.
-Eight fields. `git worktree list` is the authority; `majordomus doctor --repair-worktrees`
-rebuilds this directory from git.
-
-```json
-{
-  "id": "alice-oauth-refresh-20260903-1930",
-  "path": "/abs/path/../wt-alice-oauth-refresh",
-  "branch": "wt/alice/oauth-refresh/20260903-1930",
-  "base_commit": "3f2a9c1e...",
-  "created_at": "2026-09-03T19:30:12Z",
-  "owner": "alice",
-  "status": "active",
-  "claimed_paths": ["lib/auth/oauth"]
-}
-```
-
-`status`: `active | merged | abandoned`. Nothing else.
+There is no sidecar registry. `start` and `check --overlap` read `git worktree list`
+and each worktree's own `.majordomus/state/current.yaml`. Git is the authority; nothing
+can rot.
 
 ---
 
 ## Completion note (when no handover is written)
 
-`finish` accepts `--note <file>` with the same required sections as a handover plus the
-profile's `output_contract` fields as a YAML block:
+`finish` accepts `--note <file>`. For `completed` it needs the handover's required
+sections; for `partial`/`blocked` a `# Next Action`; for `no_match`/`failed` a
+`# Reason`. The profile's `output_contract` fields may lead as a YAML block; v0.1 records
+the note but does not validate that block. On success the note is copied to
+`state/completed/<id>.md`.
 
 ```markdown
 ---

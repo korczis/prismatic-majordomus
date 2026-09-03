@@ -1,0 +1,26 @@
+name: validate
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: shell syntax
+        run: for f in bin/majordomus lib/*.sh test/run.sh test/lib.sh test/cases/*.sh; do bash -n "$f"; done
+      - name: shellcheck
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y shellcheck >/dev/null
+          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh
+      - name: behavioural tests
+        run: bash test/run.sh
+      - name: self-supervision
+        run: |
+          git config core.hooksPath .githooks
+          bin/majordomus doctor
+          bin/majordomus watch

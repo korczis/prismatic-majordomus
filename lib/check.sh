@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # MJ_LABEL, MJ_TOUCHED_IN, MJ_BLOCKED are read by finish.sh and watch.sh
 # check — is the current task consistent with policy, scope, and state? Read-only,
 # except --checkpoint which updates checkpoint_at (the one documented write).
 mj_cmd_check() {
@@ -40,7 +41,9 @@ H
   [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
 }
 
-# shared by check and finish; expects current, policy, profile loaded
+# shared by check, watch and finish; expects current, policy, profile loaded.
+# Sets MJ_LABEL, MJ_TOUCHED_IN, MJ_BLOCKED for the caller.
+MJ_LABEL=""; MJ_TOUCHED_IN=0; MJ_BLOCKED=0
 mj_run_task_checks() {
   local id label head branch; id="$(mj_cur id)"; head="$(mj_cur head)"; branch="$(mj_cur branch)"
   label="$(mj_git_label "$head" "$branch")"

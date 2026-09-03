@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # update — regenerate provider projections from policy. Deterministic. Refuses to clobber hand edits.
 mj_cmd_update() {
-  local dry=0 force=0 diff_target="" a
+  local dry=0 force=0 diff_target=""
   while [ $# -gt 0 ]; do case "$1" in
     --dry-run) dry=1; shift ;; --force) force=1; shift ;;
     --diff) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--diff needs a target"; diff_target="$2"; shift 2 ;;
@@ -25,7 +25,7 @@ H
   mj_build_fragments "$tmp"
 
   # render every target first; write only if all pass
-  local i=0 tgt prov out fp="$MJ_DIR/generated/fingerprints.yaml" fpflat="" always="" budget
+  local i=0 tgt prov out fp="$MJ_DIR/generated/fingerprints.yaml" fpflat="" budget
   budget="$(mj_pol context.always_loaded_budget_lines)"
   [ -f "$fp" ] && { fpflat="$tmp/fp.flat"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || fpflat=""; }
   local plan="" refuse=0
@@ -35,7 +35,6 @@ H
     out="$tmp/out.$i"
     mj_render "$MJ_DIR/providers/$prov.tmpl" "$tmp" "$psha" > "$out"
     if [ "$(mj_pol "projections.$i.always_loaded")" = true ]; then
-      always="$tgt"
       if [ "$(mj_lines "$out")" -gt "$budget" ]; then
         mj_fail budget "$tgt" "would be $(mj_lines "$out") lines, budget $budget; nothing written" "majordomus update --dry-run"
         rm -rf "$tmp"; exit "$MJ_EX_CONTRACT"

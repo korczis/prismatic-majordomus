@@ -61,7 +61,7 @@ git checkout -q -
 # overlap with another worktree's active task is reported at start
 wt="$T-wt-bob"; rm -rf "$wt"
 git worktree add -q "$wt" -b bob
-( cd "$wt" && "$MJ" init >/dev/null && "$MJ" start "bob task" --scope lib/auth/sub --owner bob >/dev/null )
+( cd "$wt" && "$MJ" start "bob task" --scope lib/auth/sub --owner bob >/dev/null )   # .majordomus/ is tracked, so it is already there
 expect_exit 0 "$MJ" check --overlap
 expect_grep 'INFO overlap +.*wt-bob — claims lib/auth/sub — contained by your lib/auth'
 git worktree remove --force "$wt"

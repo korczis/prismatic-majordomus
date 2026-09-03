@@ -1,0 +1,48 @@
+# Majordomus canonical policy. Provider-neutral. Edit this file, then run
+# `majordomus update` to regenerate the provider instruction files.
+version: 1
+
+context:
+  always_loaded_budget_lines: 150
+  strategy: minimum-sufficient
+  transcript_is_state: false
+
+profiles:
+  default: implementation
+  checkpoint_interval_default: 15m
+
+verification:
+  required_for_changes: true
+  finish_requires:
+    - scope_respected
+    - verification_ran
+    - state_updated
+    - no_open_blockers
+    - note_present
+
+handover:
+  required_sections: [Objective, Current State, Next Action]
+  retention_max_files: 200
+
+ledger:
+  retention_max_lines: 5000
+
+# Every entry here is reconciled by `majordomus doctor`: the path must resolve (on PATH,
+# repo-relative, or absolute in the hook line), be executable, and be invoked by the
+# artifact named in wired_by without its exit code being swallowed.
+enforcement:
+  - name: doctor-on-commit
+    path: bin/majordomus
+    args: [doctor]
+    wired_by: git-hook:pre-commit
+  - name: finish-on-push
+    path: bin/majordomus
+    args: [finish, --check]
+    wired_by: git-hook:pre-push
+
+projections:
+  - provider: claude-code
+    target: CLAUDE.md
+    always_loaded: true
+  - provider: codex
+    target: AGENTS.md

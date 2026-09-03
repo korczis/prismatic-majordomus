@@ -59,7 +59,7 @@ H
 
 # report claims in other worktrees that contain or are contained by our scope
 mj_report_overlap() {
-  local mine="$1" wt other oflat q ol found=0
+  local mine="$1" wt other oflat q ol
   mj_git worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p' | while read -r wt; do
     [ "$wt" = "$MJ_ROOT" ] && continue
     other="$wt/.majordomus/state/current.yaml"; [ -f "$other" ] || continue

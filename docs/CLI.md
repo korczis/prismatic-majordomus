@@ -1,9 +1,9 @@
 # CLI specification — `majordomus`
 
-Target behaviour for v0.1. Implementation in the next phase must match this document;
-where it cannot, this document changes in the same commit.
+Behaviour of v0.1 as implemented and tested in `test/cases/`. Where implementation and this
+document disagree, the document is wrong and changes in the same commit as the fix.
 
-One executable, `bin/majordomus`, portable POSIX shell. Subcommands are dispatched to
+One executable, `bin/majordomus`, portable shell (bash 3.2 and BSD userland are the floor). Subcommands are dispatched to
 sourced modules in `lib/`. Every subcommand accepts `--help` and `--repo <path>`
 (default: the git toplevel of the current directory).
 
@@ -30,6 +30,8 @@ a check passed, it failed.
 
 - Human output on stdout, one finding per line, machine-greppable:
   `<LEVEL> <category> <subject> — <message>  [reproduce: <command>]`
+- Levels: `OK`, `INFO`, `WARN`, `FAIL`, `DRIFT`, `REFUSE`. Only `FAIL` and `DRIFT` affect the
+  exit code. `WARN` is advice about work in progress and never blocks.
 - `--json` on any read-only command emits one JSON object per finding on stdout.
 - Nothing is written to stderr except usage errors and internal errors.
 - A finding without a reproduce command is a bug in Majordomus.
@@ -46,8 +48,8 @@ Set up `.majordomus/` in the repository.
 and `.majordomus/generated/`. Appends `.majordomus/state/` entries to `.gitignore` only
 with `--gitignore`; default is to track state.
 
-**Refuses** (`15`) if `.majordomus/` already exists, unless `--force`, which still never
-touches `state/`.
+**Refuses** (`15`) if `.majordomus/` already exists, unless `--force`, which rewrites
+policy, profiles, templates, and provider templates and still never touches `state/`.
 
 **Does not** install git hooks. It prints the two lines a hook needs and the command
 `majordomus doctor` that will verify they were added.
@@ -71,9 +73,12 @@ from a pre-commit hook and from CI.
 1. `policy.yaml` parses; `version` supported; no unknown keys at any level.
 2. Every `profiles/*.yaml` parses; every profile referenced by policy exists; no unknown
    keys.
-3. **Enforcement wiring.** For every entry in `policy.enforcement`: `path` exists, is
-   executable, and the artifact named by `wired_by` exists, is executable, and contains
-   an invocation of `path`. Declared-but-not-wired is `10`.
+3. **Enforcement wiring.** For every entry in `policy.enforcement`: `path` resolves (on
+   `PATH`, repository-relative, absolute, or as an executable path on the hook line
+   itself) and the artifact named by `wired_by` exists, is executable, invokes
+   `majordomus <first arg>`, and does not swallow its exit code with `|| true` or
+   `|| exit 0`. `wired_by: manual` is reported as unverified, never as wired.
+   Declared-but-not-wired is `10`.
 4. Every `projections[].target` exists and has an entry in `generated/fingerprints.yaml`
    whose hash matches the file. Missing → `12`; mismatch → `10` (hand-edited).
 5. The projection marked `always_loaded: true` is within
@@ -82,8 +87,8 @@ from a pre-commit hook and from CI.
 7. No hardcoded counts in the always-loaded projection (a digit sequence adjacent to
    words like `agents`, `files`, `apps`, `commands`, `skills`, `rules`).
 8. Retention caps not exceeded on `state/ledger.jsonl` and `state/handovers/`.
-9. Environment probes: shell and version, `git`, YAML tool, `jq` if present. Reported,
-   and any check skipped for lack of a tool is listed as skipped, never as passed.
+9. Environment probes: bash version, `git`, `jq` and `shellcheck` if present. Reported
+   as `INFO`. Nothing in `doctor` needs a tool beyond bash, git, and a checksum command.
 
 ```
 $ majordomus doctor
@@ -117,9 +122,10 @@ Begin a scoped task.
   finished first; it never discards state.
 - Normalises each scope path: strips trailing `/`, canonicalises, refuses paths outside
   the repository. Records the normalised form.
-- If other active worktrees have a `.majordomus/state/current.yaml`, reports any claim
-  that contains or is contained by this scope. Reported, not blocked: that is a
-  coordination fact for the person, not a rule.
+- Reads every other worktree from `git worktree list` and, where one has an active
+  task, reports any scope that contains or is contained by this scope. Reported, not
+  blocked: that is a coordination fact for the person, not a rule. Git is the registry;
+  there is no sidecar file.
 - Records `repository_id`, `branch`, `head`, `working_tree` from git. Never from
   arguments.
 
@@ -140,22 +146,25 @@ Is the current task consistent with policy, scope, and state? Read-only.
   `different_context`. `diverged` and `different_context` are findings.
 - Touched files (`git status --porcelain` plus `git diff --name-only <base>..HEAD`) are
   within the claimed scope. Any outside → finding.
-- Checkpoint age against the profile's `checkpoint_interval`.
+- Checkpoint age against the profile's `checkpoint_interval` (`WARN`, never `FAIL`).
+- Files under `.majordomus/` and the projection targets are always in scope.
+- `--checkpoint` updates `checkpoint_at` and appends `task.checkpoint` to the ledger:
+  the one documented write in an otherwise read-only command.
 - `state/open-questions.md` has no unresolved entry for this task.
 - `--explain` prints the effective merged policy and profile for this task and exits
   `0`.
 - `--overlap` prints claim containment against other worktrees.
 
-Exit `0` with no findings, `10` with findings. Intended for a worker to run before
-claiming completion, and for a person to run any time.
+Exit `0` with no `FAIL` findings, `10` with any, `12` with no active task. Intended for
+a worker to run before claiming completion, and for a person to run any time.
 
 ```
 $ majordomus check
 OK   state      t-20260903-193012-a4f1 — exact (head 3f2a9c1)
-WARN scope      lib/auth/../config/secrets.example touched, outside lib/auth  [reproduce: git diff --name-only 3f2a9c1..HEAD | grep -v '^lib/auth/']
+FAIL scope      config/secrets.example — outside claimed scope (lib/auth)  [reproduce: git status --porcelain; git diff --name-only 3f2a9c1 HEAD]
 OK   checkpoint 7m ago, interval 15m
 OK   blockers   none open
-check: 1 finding
+check: 4 finding(s), 1 failing
 ```
 
 ## `majordomus watch`
@@ -169,8 +178,8 @@ scripts can tell "drift" from "healthy" without confusing it with a contract fai
 | projection | projection hash differs from fingerprint |
 | state | `current.yaml` outcome contradicts ledger, or label is `diverged` |
 | scope | touched files outside claim (same check as `check`) |
-| handover | newest handover lacks a required section, or is older than `current.yaml` |
-| verification | `current.yaml` says `completed` with no `task.finished` ledger record |
+| handover | task is `handed_over` but no handover names it, or that handover lacks a required section |
+| verification | `current.yaml` has a terminal outcome with no `task.finished` ledger record for it |
 | staleness | `current.yaml` older than the profile's checkpoint interval |
 | retention | `ledger.jsonl` or `handovers/` over cap |
 
@@ -195,7 +204,8 @@ byte for byte.
 - `--dry-run` prints what would change; `--diff <target>` shows the diff for one.
 - Refuses (`15`) to overwrite a target whose current hash matches neither its fingerprint
   nor the new output, unless `--force`. A hand edit is never silently lost; the refusal
-  names the file and shows the diff.
+  names the file and the `--diff` command that shows it.
+- Appends `projections.updated` to the ledger.
 - Every generated file begins with a header naming this command and the policy hash it
   came from.
 - The always-loaded projection is checked against the budget after generation; over
@@ -205,8 +215,9 @@ byte for byte.
 
 Write an append-only continuation record.
 
-**Input:** the authored body on stdin. Required sections, as level-one headings:
-`# Objective`, `# Current State`, `# Next Action`. Optional: `# Completed`,
+**Input:** the authored body on stdin. Required sections are the policy's
+`handover.required_sections` as level-one headings, each with non-empty content;
+template placeholders in angle brackets count as empty. Optional: `# Completed`,
 `# Decisions`, `# Verification`, `# Risks`, `# Open Work`.
 
 **Writes:** one new file `state/handovers/<utc-ts>--<branch-key>--<short-head>--<rand>.md`,
@@ -214,10 +225,15 @@ mode `0600`, created atomically (temp file, then hard link; retry with a new ran
 suffix on collision). Front matter is computed from git and from `current.yaml`; a body
 that tries to set identity fields is rejected.
 
-**Never** stages, commits, or modifies any other file. Prints the path.
+**Never** stages, commits, or modifies any other file except the task record's
+`checkpoint_at`. Appends `task.handed_over` to the ledger. Prints the path.
 
-**Refuses** (`10`) if a required section is missing or empty. Refuses (`12`) with no
-active task unless `--no-task`.
+`--close` additionally sets the task's outcome to `handed_over`, so that a new task may
+`start` in this checkout; the old record is archived by that `start`. Without
+`--close` the task stays active for the next session to continue.
+
+**Refuses** (`10`) if a required section is missing or empty, or if the body contains
+an identity field. Refuses (`12`) with no active task unless `--no-task`.
 
 **Resolve:** `majordomus handover --resolve` finds the most relevant prior handover for
 the current worktree and branch: same worktree and branch first, then same branch, never
@@ -229,12 +245,22 @@ normal outcome and exits `0` with `No relevant handover.`
 Evaluate the finish contract. Refuse if unmet.
 
 **Reads:** policy, profile, `current.yaml`, git, ledger.
-**Writes:** on success, `current.yaml` outcome set to the given value and one
-`task.finished` ledger line carrying the evaluated checklist.
+**Writes:** on success, `current.yaml` outcome set to the given value, one
+`task.finished` ledger line carrying the evaluated checklist and the verification
+result, and a copy of `--note` under `state/completed/<id>.md` when given.
 
 **Arguments:** `--outcome completed|partial|blocked|no_match|failed` required.
-`--verify-command "<cmd>"` runs the project's own verification and records its exit
-code, duration, and command. `--check` evaluates without writing (for hooks).
+`--verify-command "<cmd>"` runs the project's own verification in the repository root
+and records its exit code, duration, and command. `--note <file>` supplies the
+completion note; otherwise the newest handover naming this task is used. `--check`
+evaluates scope and state without writing and exits `0` when no task is active or the
+task is already finished, so a pre-push hook never blocks a repository with nothing to
+enforce.
+
+Profile requirements are also evaluated for `completed`: `regression_test_required`
+passes when a touched path looks like a test (`test/`, `spec/`, `_test.`, `.spec.`);
+`decision_record_required` passes when `decisions.md` contains `Task: <id>`. The
+regression check is deliberately crude and says so in its message.
 
 **Contract for `completed`:**
 
@@ -247,8 +273,10 @@ note present           newest handover or completion note has required sections
 ```
 
 Every line of the contract is evaluated and printed, pass or fail, so that a refusal
-says exactly what is missing. `partial`, `blocked`, `no_match`, and `failed` require a
-completion note with `# Next Action` or `# Reason`, and skip the verification line.
+says exactly what is missing. `partial` and `blocked` require a note with `# Next
+Action`; `no_match` and `failed` require `# Reason`; all four skip the verification
+line, and `blocked` skips the blockers line. Nothing is written when any line fails.
+Finishing an already finished task is refused (`15`).
 
 ```
 $ majordomus finish --outcome completed --verify-command "make test"

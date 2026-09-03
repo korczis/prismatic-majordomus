@@ -10,7 +10,8 @@ kind of tool. The source material is private and is not reproduced here. What is
 reproduced is the shape of what failed, the magnitude of the failures, and the small
 number of mechanisms that demonstrably held.
 
-Everything below is a design target. Nothing in this repository runs yet.
+This document describes the design; `CLI.md` and `SCHEMAS.md` describe what v0.1
+actually does, and `test/cases/` proves it.
 
 ---
 
