@@ -1,6 +1,16 @@
+<p align="center">
+  <a href="https://korczis.github.io/prismatic-majordomus"><img src="assets/logo.svg" alt="Prismatic Majordomus" width="420"></a>
+</p>
+
 # Prismatic Majordomus
 
 **A lightweight supervisory control layer for AI-assisted work.**
+
+[Website](https://korczis.github.io/prismatic-majordomus) ·
+[CLI reference](docs/CLI.md) ·
+[File schemas](docs/SCHEMAS.md) ·
+[What is guaranteed, advisory, or planned](docs/CLAIMS.yaml) ·
+[Why it exists](docs/EXTRACTION_REPORT.md)
 
 Majordomus holds one canonical policy for how AI workers operate in a repository,
 generates the instruction file each tool reads from it, keeps task state outside every
