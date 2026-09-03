@@ -185,9 +185,11 @@ Rejected outright, with the failure that justifies rejection:
 │   └── minimal/                 # a scratch repo walked through start → finish
 │
 └── docs/
-    ├── DESIGN.md
-    ├── EXTRACTION_REPORT.md
-    └── README.md
+    ├── README.md                # index
+    ├── DESIGN.md                # specification
+    ├── CLI.md                   # commands, exit codes, target output
+    ├── SCHEMAS.md               # every file, with a concrete example
+    └── EXTRACTION_REPORT.md     # this document
 ```
 
 Removed from the initial proposal: `principles/` (folds into `policy.yaml` and README),

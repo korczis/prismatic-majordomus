@@ -448,6 +448,10 @@ CLAUDE.md   AGENTS.md    GEMINI.md   (+ .cursor/rules, generic)
 
 ## CLI Model
 
+Per-command behaviour, the exit-code contract, and target output are specified in
+[`CLI.md`](CLI.md); file formats in [`SCHEMAS.md`](SCHEMAS.md). This section states the
+shape.
+
 One executable, `majordomus`, portable POSIX shell in v0.1, with a small set of
 semantically distinct subcommands:
 
