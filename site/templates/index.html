@@ -9,9 +9,9 @@
   <div class="mx-auto grid max-w-screen-xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8 lg:py-20">
     <div class="min-w-0">
       <span class="mb-5 inline-block rounded bg-brand-softer px-2.5 py-1 font-mono text-xs text-fg-brand-strong">v{{ project.version }} · {{ m.hero.kicker }}</span>
-      <h1 class="text-3xl font-extrabold leading-tight tracking-tight text-heading sm:text-4xl lg:text-5xl">{{ m.hero.headline }}</h1>
-      <p class="mt-5 max-w-xl text-lg leading-relaxed text-body">{{ m.hero.lead }}</p>
-      <p class="mt-3 max-w-xl text-base leading-relaxed text-body">{{ project.tagline }}</p>
+      <h1 class="text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ m.hero.headline }}</h1>
+      <p class="mt-6 max-w-xl text-lg leading-relaxed text-body sm:text-xl">{{ m.hero.lead }}</p>
+      <p class="mt-3 max-w-xl text-sm text-body-subtle">{{ project.tagline }}</p>
       <div class="mt-8 flex flex-col gap-3 sm:flex-row">
         <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5M6 12h12"/></svg></a>
         <a href="{{ project.repository_url }}" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_secondary }}</a>
@@ -28,8 +28,19 @@
         <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
         <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
       </figure>
-      <p class="mt-3 text-sm text-body-subtle">Output from the repository's own README. "Done" is a contract evaluated line by line, not a word a worker types.</p>
+      <p class="mt-3 text-sm text-body-subtle">{{ m.hero.transcript_caption }}</p>
     </div>
+  </div>
+</section>
+
+{# 1b. recognition — marketing.toml; situations, not claims #}
+<section class="border-b border-default bg-brand-softer">
+  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
+    <h2 class="text-2xl font-bold tracking-tight text-fg-brand-strong sm:text-3xl">{{ m.recognise.title }}</h2>
+    <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {%- for it in m.recognise.items -%}<li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary p-4 text-base text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>{{ it }}</span></li>{%- endfor -%}
+    </ul>
+    <p class="mt-6 max-w-3xl text-base font-medium text-fg-brand-strong">{{ m.recognise.closing }}</p>
   </div>
 </section>
 
@@ -46,6 +57,23 @@
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="02" kicker="the core model" title="Majordomus supervises how work is executed" lead={m.leads.model} /> }}
     <div class="mx-auto max-w-3xl">{{ <diagram key="supervision" /> }}</div>
+  </div>
+</section>
+
+{# 3b. before / with — marketing.toml; structural, no numbers #}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="02b" kicker="before / after" title={m.compare.title} /> }}
+    <div class="grid gap-6 lg:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-6">
+        <h3 class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.compare.before_title }}</h3>
+        <ul class="mt-4 space-y-3">{%- for it in m.compare.before -%}<li class="flex gap-3 text-base text-body"><span aria-hidden="true" class="font-mono text-body-subtle">✕</span><span>{{ it }}</span></li>{%- endfor -%}</ul>
+      </div>
+      <div class="min-w-0 rounded-base border border-brand-subtle bg-brand-softer p-6">
+        <h3 class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ m.compare.after_title }}</h3>
+        <ul class="mt-4 space-y-3">{%- for it in m.compare.after -%}<li class="flex gap-3 text-base text-heading"><span aria-hidden="true" class="font-mono text-fg-brand-strong">✓</span><span>{{ it }}</span></li>{%- endfor -%}</ul>
+      </div>
+    </div>
   </div>
 </section>
 
