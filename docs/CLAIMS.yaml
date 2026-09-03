@@ -93,7 +93,7 @@ claims:
 
   - id: no-counts-in-context
     claim: A hardcoded count in the always-loaded file is a failure
-    source: AGENTS.md
+    source: docs/DESIGN.md
     implementation: lib/doctor.sh
     test: test/cases/03_update.sh
     status: guaranteed
@@ -114,7 +114,7 @@ claims:
 
   - id: reproduce-command
     claim: Every finding carries the command that reproduces it
-    source: AGENTS.md
+    source: docs/DESIGN.md
     implementation: lib/common.sh
     test: test/cases/02_doctor_basic.sh
     status: guaranteed
@@ -188,7 +188,7 @@ claims:
 
   - id: no-transcripts
     claim: Handovers carry durable facts, never conversation transcripts
-    source: AGENTS.md
+    source: docs/DESIGN.md
     implementation: lib/handover.sh
     test: test/cases/05_handover.sh
     status: guaranteed

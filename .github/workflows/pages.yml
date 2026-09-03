@@ -44,8 +44,13 @@ jobs:
 
       # The repository supervises itself with its own tool. If doctor fails here, the
       # policy and its projections disagree, and the site derives from those files.
+      # A fresh clone has no core.hooksPath, so the shipped hooks in .githooks/ are
+      # inactive and doctor would correctly report the declared enforcement as unwired.
+      # This is the same once-per-clone step CONTRIBUTING.md documents for contributors.
       - name: self-supervision
-        run: bin/majordomus doctor
+        run: |
+          git config core.hooksPath .githooks
+          bin/majordomus doctor
 
       # Generates into _site/ and then validates: every canonical source exists, every
       # heading and code block the generator reads is present, every claim names an
