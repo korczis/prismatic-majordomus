@@ -176,6 +176,18 @@
       "test_case": "24_prompt_search"
     },
     {
+      "id": "catalogue-resolves",
+      "claim": "A use case or application cannot name a command, doctrine or claim that does not exist, and the two catalogues cannot disagree about which applies to which",
+      "source": "docs/DOCTRINE.md",
+      "implementation": "lib/doctor.sh",
+      "test": "test/cases/28_catalogue.sh",
+      "status": "guaranteed",
+      "note": "Prose describing the tool is checked the same way the tool checks itself. Cross-references are verified in both directions, so a use case naming an application that does not name it back is a failure rather than a silent asymmetry. An application declaring no does_not_fit_when is refused, because a catalogue that only lists fits is marketing.",
+      "source_route": "/docs/doctrine/",
+      "command": "doctor",
+      "test_case": "28_catalogue"
+    },
+    {
       "id": "no-silent-overwrite",
       "claim": "A hand-edited instruction file is never silently overwritten",
       "source": "docs/CLI.md",

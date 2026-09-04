@@ -1,0 +1,46 @@
+{% extends "page.html" %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+{%- set cat = load_data(path="data/generated/catalogue.json") -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  {#- Filter by the command a use case actually runs, and by the context it applies to.
+      Both option lists come from the data, so a new use case adds its own filters. -#}
+  <div x-data="{ q: '', app: 'all' }">
+    <div class="flex flex-wrap items-center gap-3">
+      <label class="sr-only" for="uc-filter">Filter use cases</label>
+      <input id="uc-filter" type="search" x-model="q" placeholder="Filter by task, command or rule" class="w-full max-w-sm rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm text-heading placeholder:text-body-subtle focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+      <div class="flex flex-wrap gap-1" role="group" aria-label="Filter by application">
+        <button type="button" x-on:click="app = 'all'" :aria-pressed="app === 'all' ? 'true' : 'false'" aria-pressed="true" :class="app === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">All contexts</button>
+        {%- for a in cat.applications -%}
+        <button type="button" x-on:click="app = '{{ a.id }}'" :aria-pressed="app === '{{ a.id }}' ? 'true' : 'false'" aria-pressed="false" :class="app === '{{ a.id }}' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">{{ a.title }}</button>
+        {%- endfor -%}
+      </div>
+    </div>
+    <p class="mt-2 text-xs text-body-subtle">Filtering runs in the browser. Without JavaScript every use case below is still listed.</p>
+
+    <ul class="mt-6 grid gap-4 md:grid-cols-2" role="list" aria-live="polite">
+      {%- for u in cat.use_cases -%}
+      <li x-show="(app === 'all' || '{{ u.applications | join(sep=" ") }}'.includes(app)) && ('{{ u.id }} {{ u.title | lower }} {{ u.commands | join(sep=" ") }} {{ u.doctrines | join(sep=" ") }}'.includes(q.toLowerCase()))">
+        <a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ u.title }}</h2>
+          <p class="text-sm leading-relaxed text-body">{{ u.summary }}</p>
+          <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">{% for s in u.steps %}{{ s.command }}{% if not loop.last %} → {% endif %}{% endfor %}</span>
+        </a>
+      </li>
+      {%- endfor -%}
+    </ul>
+  </div>
+
+  <div class="mt-12 max-w-3xl">
+    <h2 class="text-xl font-semibold tracking-tight text-heading">How this differs from the other lists</h2>
+    <p class="mt-3 text-body">A <a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="text-fg-brand hover:underline">why page</a> is a moment you recognise. A use case is a task you perform. An <a href="{{ get_url(path='/applications/', trailing_slash=true) }}" class="text-fg-brand hover:underline">application</a> is a context it suits. A <a href="{{ get_url(path='/commands/', trailing_slash=true) }}" class="text-fg-brand hover:underline">command page</a> is one command's surface.</p>
+    <p class="mt-3 text-body">All four are generated from data, and every reference between them is checked: a use case naming a command, rule or promise that does not exist refuses the build and fails <code class="font-mono text-heading">majordomus doctor</code>.</p>
+  </div>
+</div>
+{% endblock content %}

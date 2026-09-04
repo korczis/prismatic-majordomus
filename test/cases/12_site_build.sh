@@ -22,7 +22,11 @@ expect_grep 'role="note"' "$P/render-test/index.html"
 expect_grep 'footnote' "$P/render-test/index.html"
 expect_grep '<pre class="mermaid">' "$P/render-test/index.html"
 # navigation: five groups, dropdown menus present with Flowbite hooks; render-test is noindex
-[ "$(grep -o 'data-dropdown-toggle="nav-menu-' "$P/index.html" | wc -l | tr -d ' ')" = 4 ]
+# One dropdown per navigation group that has items; a group without items is a plain
+# link. Counted from nav.toml rather than written down, so adding a group does not make
+# this case fail for a reason that has nothing to do with the site being wrong.
+nav_groups="$(awk '/^\[\[groups\]\]/{g++} /^items = \[/{withitems++} END{print withitems+0}' "$ROOT/site/data/nav.toml")"
+[ "$(grep -o 'data-dropdown-toggle="nav-menu-' "$P/index.html" | wc -l | tr -d ' ')" = "$nav_groups" ]
 expect_grep '<meta name="robots" content="noindex">' "$P/render-test/index.html"
 expect_no_grep '<meta name="robots" content="noindex">' "$P/index.html"
 # homepage: one primary CTA in the final block, boundary statement present

@@ -86,6 +86,17 @@ for st in guaranteed advisory planned rejected; do [ -f "$PUB/guarantees/$st/ind
 for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do [ -f "$PUB/supervises/$slug/index.html" ] || bad tiles "no page for responsibility $slug"; done
 for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do [ -f "$PUB/commands/$n/index.html" ] || bad tiles "no page for command $n"; done
 for id in $(jq -r '.doctrines[].slug' "$SITE/data/generated/doctrines.json"); do [ -f "$PUB/doctrines/$id/index.html" ] || bad tiles "no page for doctrine $id"; done
+for id in $(jq -r '.use_cases[].id' "$SITE/data/generated/catalogue.json"); do [ -f "$PUB/use-cases/$id/index.html" ] || bad tiles "no page for use case $id"; done
+for id in $(jq -r '.applications[].id' "$SITE/data/generated/catalogue.json"); do [ -f "$PUB/applications/$id/index.html" ] || bad tiles "no page for application $id"; done
+# the catalogue's cross-references must survive into the rendered pages, both ways
+jq -r '.use_cases[] | .id as $u | .applications[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" | while read -r u a; do
+  grep -q "/applications/$a/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to application $a"
+  grep -q "/use-cases/$u/" "$PUB/applications/$a/index.html" || bad catalogue "application $a does not link back to use case $u"
+done
+jq -r '.use_cases[] | .id as $u | .steps[] | "\($u) \(.command)"' "$SITE/data/generated/catalogue.json" | while read -r u c; do
+  grep -q "/commands/$c/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to the command page for $c"
+done
+ok catalogue "$(jq -r '.counts.use_cases' "$SITE/data/generated/catalogue.json") use case(s) and $(jq -r '.counts.applications' "$SITE/data/generated/catalogue.json") application(s): every step, rule and cross-reference is a link that resolves"
 for f in "$SITE"/content-src/why/*.md; do slug="$(basename "$f" .md)"; [ "$slug" = _index ] && continue; [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
 for r in limitations roadmap why supervises commands plan plan/dag; do [ -f "$PUB/$r/index.html" ] || bad tiles "no page for /$r/"; done
 # the plan: every milestone and every issue is a page, and the DAG the page draws is the DAG
@@ -101,7 +112,7 @@ done
 for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
   grep -qF "plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/" "$PUB/plan/index.html" || bad tiles "READY issue $id is not linked from /plan/"
 done
-ok tiles "every profile, claim, status, responsibility, command, doctrine and why-moment has its own page"
+ok tiles "every profile, claim, status, responsibility, command, doctrine, use case, application and why-moment has its own page"
 # 13d. every navigation target resolves
 for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g" | grep -E '^/' | sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
 ok nav "every navigation link on the homepage resolves"

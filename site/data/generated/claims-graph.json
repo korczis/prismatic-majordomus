@@ -141,6 +141,15 @@
       "note": "Covers name and filename mismatch, an empty description, an unknown front-matter key, missing front matter, and a block token used inline."
     },
     {
+      "id": "claim:catalogue-resolves",
+      "kind": "claim",
+      "label": "A use case or application cannot name a command, doctrine or claim that does not exist, and the two catalogues cannot disagree about which applies to which",
+      "status": "guaranteed",
+      "route": "/guarantees/catalogue-resolves/",
+      "external": false,
+      "note": "Prose describing the tool is checked the same way the tool checks itself. Cross-references are verified in both directions, so a use case naming an application that does not name it back is a failure rather than a silent asymmetry. An application declaring no does_not_fit_when is refused, because a catalogue that only lists fits is marketing."
+    },
+    {
       "id": "claim:no-silent-overwrite",
       "kind": "claim",
       "label": "A hand-edited instruction file is never silently overwritten",
@@ -962,6 +971,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/27_foreign_task.sh"
     },
     {
+      "id": "test:test/cases/28_catalogue.sh",
+      "kind": "test",
+      "label": "test/cases/28_catalogue.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_catalogue.sh"
+    },
+    {
       "id": "test:test/cases/40_project_model.sh",
       "kind": "test",
       "label": "test/cases/40_project_model.sh",
@@ -1058,6 +1074,11 @@
     },
     {
       "source": "claim:prompt-assets",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:catalogue-resolves",
       "target": "source:docs/DOCTRINE.md",
       "kind": "specified_by"
     },
@@ -1382,6 +1403,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:catalogue-resolves",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:no-silent-overwrite",
       "target": "impl:lib/update.sh",
       "kind": "implemented_by"
@@ -1659,6 +1685,11 @@
     {
       "source": "claim:prompt-assets",
       "target": "test:test/cases/24_prompt_search.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:catalogue-resolves",
+      "target": "test:test/cases/28_catalogue.sh",
       "kind": "proved_by"
     },
     {

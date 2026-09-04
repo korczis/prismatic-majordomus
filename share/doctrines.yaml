@@ -253,6 +253,18 @@ doctrines:
     claims: [retention-caps]
     test: test/cases/02_doctor_basic.sh
 
+  - id: catalogue_integrity
+    title: Catalogue integrity
+    class: blocking
+    principle: 2
+    summary: Every use case and application describes the tool in terms the tool has — each command, doctrine and claim it names exists, and the two catalogues reference each other in both directions.
+    validator: catalogue
+    category: catalogue
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [catalogue-resolves]
+    test: test/cases/28_catalogue.sh
+
   - id: doctrine_wiring_integrity
     title: Doctrine wiring integrity
     class: blocking

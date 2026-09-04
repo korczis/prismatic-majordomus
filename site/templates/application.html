@@ -1,0 +1,49 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set cat = load_data(path="data/generated/catalogue.json") -%}
+{%- set doc = load_data(path="data/generated/doctrines.json") -%}
+{%- set readme = load_data(path="data/generated/readme.json") -%}
+{%- set a = cat.applications[cat.ap_index[page.extra.id]] -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="text-base leading-relaxed text-body">{{ a.context }}</p>
+
+    <div class="mt-8 grid gap-4 md:grid-cols-2">
+      <div class="rounded-base border border-success-subtle bg-success-soft p-5">
+        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-fg-success-strong">Fits when</h2>
+        <ul class="space-y-2 text-sm text-heading">{% for f in a.fits_when %}<li class="flex gap-2"><span aria-hidden="true">·</span><span>{{ f }}</span></li>{% endfor %}</ul>
+      </div>
+      <div class="rounded-base border border-danger-subtle bg-danger-soft p-5">
+        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-fg-danger-strong">Does not fit when</h2>
+        <ul class="space-y-2 text-sm text-heading">{% for f in a.does_not_fit_when %}<li class="flex gap-2"><span aria-hidden="true">·</span><span>{{ f }}</span></li>{% endfor %}</ul>
+      </div>
+    </div>
+    <p class="mt-3 text-xs text-body-subtle">Both lists are required. An entry declaring only what it fits is refused by the generator and by <code class="font-mono">majordomus doctor</code>.</p>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What you would do here</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+      {%- for u in a.use_cases -%}{%- set uu = cat.use_cases[cat.uc_index[u]] -%}
+      <li><a href="{{ get_url(path='/use-cases/' ~ u ~ '/', trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">{{ uu.title }}</span><span class="text-sm text-body">{{ uu.summary }}</span><span class="mt-auto pt-2 font-mono text-xs text-body-subtle">{% for s in uu.steps %}{{ s.command }}{% if not loop.last %} → {% endif %}{% endfor %}</span></a></li>
+      {%- endfor -%}
+    </ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The rules that matter here</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+      {%- for d in a.doctrines -%}{%- set dd = doc.doctrines[doc.index[d]] -%}
+      <li><a href="{{ get_url(path='/doctrines/' ~ dd.slug ~ '/', trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <doctrine_class class={dd.class} /> }}</span><span class="text-sm font-medium text-heading">{{ dd.title }}</span></a></li>
+      {%- endfor -%}
+    </ul>
+  </div>
+
+  <aside class="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">applications</h2>
+      <ul class="space-y-1 text-sm">{% for q in cat.applications %}<li><a href="{{ get_url(path='/applications/' ~ q.id ~ '/', trailing_slash=true) }}" class="block rounded px-2 py-1 {% if q.id == a.id %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.id == a.id %} aria-current="page"{% endif %}>{{ q.title }}</a></li>{% endfor %}</ul>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">responsibilities</h2>
+      <ul class="space-y-1 text-sm">{% for r in a.responsibilities %}{% set rr = [x for x in readme.does if x.slug == r] %}<li><a href="{{ get_url(path='/supervises/' ~ r ~ '/', trailing_slash=true) }}" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">{% if rr | length > 0 %}{{ rr[0].title }}{% else %}{{ r }}{% endif %}</a></li>{% endfor %}</ul>
+    </div>
+  </aside>
+</div>
+{% endblock body %}
