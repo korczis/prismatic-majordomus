@@ -454,6 +454,28 @@
       "test": "test/cases/02_doctor_basic.sh"
     },
     {
+      "id": "catalogue_integrity",
+      "slug": "catalogue-integrity",
+      "title": "Catalogue integrity",
+      "class": "blocking",
+      "principle": 2,
+      "summary": "Every use case and application describes the tool in terms the tool has — each command, doctrine and claim it names exists, and the two catalogues reference each other in both directions.",
+      "validator": "catalogue",
+      "validator_function": "mj_validate_catalogue",
+      "defined_in": "lib/doctor.sh",
+      "category": "catalogue",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "catalogue-resolves"
+      ],
+      "test": "test/cases/28_catalogue.sh"
+    },
+    {
       "id": "doctrine_wiring_integrity",
       "slug": "doctrine-wiring-integrity",
       "title": "Doctrine wiring integrity",
@@ -546,8 +568,8 @@
     }
   ],
   "counts": {
-    "declared": 24,
-    "blocking": 20,
+    "declared": 25,
+    "blocking": 21,
     "advisory": 4
   },
   "index": {
@@ -571,9 +593,10 @@
     "enforcement_wiring": 17,
     "context_budget": 18,
     "retention_caps": 19,
-    "doctrine_wiring_integrity": 20,
-    "project_integrity": 21,
-    "dag_integrity": 22,
-    "roadmap_integrity": 23
+    "catalogue_integrity": 20,
+    "doctrine_wiring_integrity": 21,
+    "project_integrity": 22,
+    "dag_integrity": 23,
+    "roadmap_integrity": 24
   }
 }
