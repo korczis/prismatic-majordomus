@@ -5,7 +5,7 @@
     "repository": "korczis/prismatic-majordomus",
     "default_branch": "master"
   },
-  "active_milestone": "M001",
+  "active_milestone": "runtime-adapters",
   "next_ready": "",
   "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "milestones": [
@@ -135,7 +135,7 @@
     {
       "id": "M001",
       "slug": "blocker-survives-handover",
-      "status": "VERIFY",
+      "status": "DONE",
       "order": 1,
       "priority": "p1",
       "title": "A blocking question survives a handover",
@@ -177,7 +177,35 @@
       "risks": [
         "Transferring a question with a handover makes it a property of the work rather than of the task, which is right in the common case and wrong when the handover is to a different piece of work. Widening the gate to every unresolved question blocks tasks that never opened one. The decision has to name the case it is choosing to be wrong in."
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "gap_reproduced",
+          "type": "test",
+          "command": "bash test/run.sh 50_blocker_across_handover",
+          "result": "the case runs the documented sequence and the mutation section reproduces the escape from a probe that narrows the gate back to the active task, so the gap is executable rather than described",
+          "artifact": "",
+          "commit": "5ea2fa7ec6c9c038d97f658ac4ed1545bfbe311b",
+          "recorded_at": "2026-09-04T13:00:15Z"
+        },
+        {
+          "covers": "decision_recorded",
+          "type": "manual",
+          "command": "bin/majordomus decision list",
+          "result": "the choice, both rejected alternatives with the case each gets wrong, and the two conditions the choice imposed on the implementation",
+          "artifact": "",
+          "commit": "5ea2fa7ec6c9c038d97f658ac4ed1545bfbe311b",
+          "recorded_at": "2026-09-04T13:00:15Z"
+        },
+        {
+          "covers": "behaviour_tested",
+          "type": "test",
+          "command": "bash test/run.sh 50_blocker_across_handover && bash test/run.sh 25_continuity_lifecycle && bin/majordomus doctor",
+          "result": "exit 0, 85s — recorded as this task's verification; an inherited blocker refuses a completed finish, any task can clear it, and the shipped template is not an entry",
+          "artifact": "",
+          "commit": "5ea2fa7ec6c9c038d97f658ac4ed1545bfbe311b",
+          "recorded_at": "2026-09-04T13:00:16Z"
+        }
+      ],
       "issues": [
         "I0101",
         "I0102",
@@ -1744,12 +1772,6 @@
     }
   ],
   "findings": [
-    {
-      "level": "WARN",
-      "code": "milestone_evidence_missing",
-      "subject": "M001",
-      "message": "every issue is DONE but milestone evidence is missing for gap_reproduced,decision_recorded,behaviour_tested; status stays VERIFY"
-    },
     {
       "level": "WARN",
       "code": "empty_milestone",
