@@ -102,3 +102,13 @@ responsibilities:
     cli_anchor: majordomus watch
     schema_anchor: .majordomus/state/ledger.jsonl
     order: 9
+
+  - id: plan
+    title: Plan
+    readme_key: Plan
+    command: plan
+    files: [.majordomus/project/milestones, .majordomus/project/issues]
+    implementation: lib/project.awk
+    cli_anchor: majordomus plan
+    schema_anchor: .majordomus/project/issues/<ID>.yaml
+    order: 10

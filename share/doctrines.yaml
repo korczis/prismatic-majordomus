@@ -264,3 +264,27 @@ doctrines:
     exit_code: 10
     claims: [wiring-reconciliation, doctrine-registry, doctrine-class-decides]
     test: test/cases/18_doctrine_wiring.sh
+
+  - id: project_integrity
+    title: Project model integrity
+    class: blocking
+    principle: 1
+    summary: Every milestone and issue file parses, carries the id its filename claims, and contains no key nobody reads.
+    validator: project
+    category: project
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [project-schema, project-status-derived]
+    test: test/cases/44_model_doctrine.sh
+
+  - id: dag_integrity
+    title: Dependency graph integrity
+    class: blocking
+    principle: 4
+    summary: The issue dependency graph is acyclic, every edge names an issue that exists, and no issue is executing ahead of a dependency that is not done.
+    validator: dag
+    category: dag
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [dag-validation, execution-waves]
+    test: test/cases/44_model_doctrine.sh

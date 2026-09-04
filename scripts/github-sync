@@ -1,0 +1,246 @@
+#!/usr/bin/env bash
+# github-sync — project the canonical project model onto GitHub milestones and issues.
+#
+# GitHub is a projection, never the source. The canonical files under .majordomus/project/
+# decide what exists, what it says and whether it is open; GitHub carries the collaboration
+# around it. Nothing here ever writes a GitHub value back into a canonical file.
+#
+# This is an adapter, and it lives in scripts/ for one reason: the tool itself (bin/, lib/,
+# share/, test/) makes no network calls, and test/cases/08_no_forbidden_constructs.sh proves
+# it. The model comes from lib/project.sh; only this file talks to the network.
+#
+#   scripts/github-sync            what would change, computed offline; no token needed
+#   scripts/github-sync --plan     the same, explicitly
+#   scripts/github-sync --render <id>   the exact body that would be posted for one record
+#   scripts/github-sync --check    compare against the live repository; exit 11 on drift
+#   scripts/github-sync --apply    create what is missing, update what canonically changed
+#
+# Field ownership. Canonical owns the title, the body region, the milestone assignment, the
+# labels and whether the issue is open. Humans own everything else: comments, assignees,
+# reactions, and any text they write outside the generated region. An issue body is spliced,
+# not replaced, so a human note below the region survives every sync.
+#
+# The begin marker carries the hash of the canonical record it was generated from. That is
+# what separates "the plan moved" from "a person edited the generated text": if the remote
+# hash matches the canonical hash and the region text still differs, a human changed it, and
+# --apply refuses to overwrite that without --force.
+set -eu
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+MJ_VERSION="github-sync"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
+export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# shellcheck source=../lib/common.sh
+. "$ROOT/lib/common.sh"
+# shellcheck source=../lib/project.sh
+. "$ROOT/lib/project.sh"
+
+MODE=plan; ONLY=""; FORCE=0; RENDER=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --plan) MODE=plan; shift ;;
+    --check) MODE=check; shift ;;
+    --apply) MODE=apply; shift ;;
+    --render) [ $# -ge 2 ] || { echo "github-sync: --render needs an id" >&2; exit 2; }; MODE=render; RENDER="$2"; shift 2 ;;
+    --milestone) [ $# -ge 2 ] || { echo "github-sync: --milestone needs an id" >&2; exit 2; }; ONLY="$2"; shift 2 ;;
+    --force) FORCE=1; shift ;;
+    -h|--help) sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "github-sync: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+mj_require_installed
+mj_project_load || { echo "github-sync: no canonical project model in $MJ_ROOT" >&2; exit 12; }
+REPO="$(mj_pj_repository)"
+[ -n "$REPO" ] || { echo "github-sync: project.yaml names no repository" >&2; exit 12; }
+
+# ---------------------------------------------------------------- projection
+# One rendering, from majordomus plan body. The CLI, the website and this adapter all
+# show the same text because they all call the same generator.
+render_body() {
+  local id="$1" tmp sha
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.gh.XXXXXX")"
+  if [ "${id#M}" != "$id" ]; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
+  sha="$(mj_sha256 "$tmp" | cut -c1-16)"
+  printf -- '<!-- majordomus:begin %s -->\n' "$sha"
+  cat "$tmp"
+  printf -- '<!-- majordomus:end -->\n'
+  rm -f "$tmp"
+}
+canonical_hash() {
+  local id="$1" tmp sha
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.gh.XXXXXX")"
+  if [ "${id#M}" != "$id" ]; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
+  sha="$(mj_sha256 "$tmp" | cut -c1-16)"; rm -f "$tmp"; printf '%s' "$sha"
+}
+title_of()  { if [ "${1#M}" != "$1" ]; then printf '%s — %s' "$1" "$(mj_pj_m_title "$1")"; else printf '%s — %s' "$1" "$(mj_pj_i_title "$1")"; fi; }
+state_of()  { case "$(mj_pj_i_status "$1")" in DONE|CANCELLED) printf 'closed' ;; *) printf 'open' ;; esac; }
+labels_of() {
+  local id="$1" st; st="$(mj_pj_i_status "$id")"
+  printf 'majordomus'
+  printf ',priority:%s' "$(mj_pj_get "$id" priority)"
+  case "$st" in BLOCKED) printf ',status:blocked' ;; VERIFY) printf ',status:verify' ;; esac
+  [ "$(mj_pj_col I "$id" 8)" = true ] && printf ',execution:parallel-safe'
+  printf '\n'
+}
+selected_issues() { if [ -n "$ONLY" ]; then mj_pj_of_milestone "$ONLY"; else mj_pj_issue_ids; fi; }
+selected_milestones() { if [ -n "$ONLY" ]; then printf '%s\n' "$ONLY"; else mj_pj_milestone_ids; fi; }
+
+# lib/plan.sh holds the body generator; sourcing it here is what keeps the projection and
+# `majordomus plan body` from being two renderings that can disagree.
+# shellcheck source=../lib/plan.sh
+. "$ROOT/lib/plan.sh"
+
+if [ "$MODE" = render ]; then
+  [ -f "$(mj_pj_flat "$RENDER")" ] || { echo "github-sync: no record '$RENDER'" >&2; exit 12; }
+  render_body "$RENDER"
+  exit 0
+fi
+
+# ---------------------------------------------------------------- plan (offline)
+if [ "$MODE" = plan ]; then
+  printf 'repository: %s\n\n' "$REPO"
+  printf 'milestones\n'
+  selected_milestones | while read -r id; do
+    printf '  %-6s %-9s %s\n' "$id" "$(mj_pj_m_status "$id")" "$(title_of "$id")"
+  done
+  printf '\nissues\n'
+  selected_issues | while read -r id; do
+    printf '  %-7s %-6s %-9s %s\n    labels: %s\n' "$id" "$(state_of "$id")" \
+      "$(mj_pj_i_status "$id")" "$(title_of "$id")" "$(labels_of "$id")"
+  done
+  printf '\nbody hashes (what --check compares against)\n'
+  { selected_milestones; selected_issues; } | while read -r id; do
+    printf '  %-7s %s\n' "$id" "$(canonical_hash "$id")"
+  done
+  exit 0
+fi
+
+# ---------------------------------------------------------------- live surface
+command -v gh >/dev/null 2>&1 || { echo "github-sync: gh is required for --$MODE" >&2; exit 12; }
+gh auth status >/dev/null 2>&1 || { echo "github-sync: gh is not authenticated; --$MODE needs it" >&2; exit 12; }
+
+DRIFT=0
+note() { printf '%-6s %-7s %s\n' "$1" "$2" "$3"; [ "$1" = DRIFT ] && DRIFT=$((DRIFT + 1)); return 0; }
+
+REMOTE_MS="$(mktemp "${TMPDIR:-/tmp}/mj.ms.XXXXXX")"
+REMOTE_IS="$(mktemp "${TMPDIR:-/tmp}/mj.is.XXXXXX")"
+trap 'rm -f "$REMOTE_MS" "$REMOTE_IS"; mj_cleanup' EXIT
+gh api --paginate "repos/$REPO/milestones?state=all" \
+  --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
+gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
+  --jq '.[] | select(has("pull_request")|not) | [(.number|tostring), .title, .state, (.body // "" | @base64)] | @tsv' \
+  > "$REMOTE_IS" 2>/dev/null || true
+
+remote_milestone_number() { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $1; exit }' "$REMOTE_MS"; }
+remote_issue_number()     { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $1; exit }' "$REMOTE_IS"; }
+remote_issue_state()      { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $3; exit }' "$REMOTE_IS"; }
+remote_issue_body()       { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $4; exit }' "$REMOTE_IS" | base64 --decode 2>/dev/null || true; }
+
+# region hash recorded in a remote body, empty when the body carries no generated region
+remote_region_hash() { printf '%s\n' "$1" | sed -n 's/^<!-- majordomus:begin \([0-9a-f]*\) -->$/\1/p' | head -1; }
+
+# Has a person edited the generated region? The remote body still claims the hash it was
+# generated from, but its content no longer matches what that hash generates.
+region_edited() {
+  local id="$1" body="$2" rh cur tmp_r tmp_c
+  rh="$(remote_region_hash "$body")"
+  [ -n "$rh" ] || return 1
+  cur="$(canonical_hash "$id")"
+  [ "$rh" = "$cur" ] || return 1
+  tmp_r="$(mktemp "${TMPDIR:-/tmp}/mj.rr.XXXXXX")"; tmp_c="$(mktemp "${TMPDIR:-/tmp}/mj.rc.XXXXXX")"
+  printf '%s\n' "$body" > "$tmp_r"
+  mj_region_extract "$tmp_r" > "$tmp_c" 2>/dev/null || { rm -f "$tmp_r" "$tmp_c"; return 1; }
+  local h; h="$(mj_sha256 "$tmp_c" | cut -c1-16)"
+  rm -f "$tmp_r" "$tmp_c"
+  # the region content hashes differently from the body the recorded hash was taken over
+  [ "$h" != "$(canonical_region_hash "$id")" ]
+}
+canonical_region_hash() {
+  local id="$1" tmp h
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.cr.XXXXXX")"
+  if [ "${id#M}" != "$id" ]; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
+  h="$(mj_sha256 "$tmp" | cut -c1-16)"; rm -f "$tmp"; printf '%s' "$h"
+}
+
+# ---------------------------------------------------------------- milestones
+for id in $(selected_milestones); do
+  num="$(remote_milestone_number "$id")"
+  desc="$(printf '%s — %s. Canonical: .majordomus/project/milestones/%s.yaml' \
+    "$(mj_pj_m_status "$id")" "$(mj_pj_get "$id" outcome)" "$id" | cut -c1-980)"
+  if [ -z "$num" ]; then
+    note DRIFT missing "milestone $id is not on GitHub"
+    if [ "$MODE" = apply ]; then
+      gh api -X POST "repos/$REPO/milestones" -f title="$(title_of "$id")" -f description="$desc" >/dev/null
+      note OK created "milestone $id"
+    fi
+  else
+    have="$(awk -F'\t' -v n="$num" '$1==n { print $3 }' "$REMOTE_MS")"
+    want=open; case "$(mj_pj_m_status "$id")" in DONE|CANCELLED) want=closed ;; esac
+    if [ "$have" != "$want" ]; then
+      note DRIFT state "milestone $id is $have on GitHub, canonically $want"
+      [ "$MODE" = apply ] && { gh api -X PATCH "repos/$REPO/milestones/$num" -f state="$want" -f description="$desc" >/dev/null; note OK updated "milestone $id"; }
+    else
+      [ "$MODE" = apply ] && gh api -X PATCH "repos/$REPO/milestones/$num" -f description="$desc" >/dev/null
+      note OK insync "milestone $id (#$num)"
+    fi
+  fi
+done
+
+# ---------------------------------------------------------------- issues
+for id in $(selected_issues); do
+  num="$(remote_issue_number "$id")"
+  body="$(render_body "$id")"
+  want_state="$(state_of "$id")"
+  ms="$(mj_pj_col I "$id" 3)"
+  if [ -z "$num" ]; then
+    note DRIFT missing "issue $id is not on GitHub"
+    if [ "$MODE" = apply ]; then
+      msnum="$(remote_milestone_number "$ms")"
+      tmp="$(mktemp "${TMPDIR:-/tmp}/mj.body.XXXXXX")"; printf '%s\n' "$body" > "$tmp"
+      args=""
+      [ -n "$msnum" ] && args="--milestone $(awk -F'\t' -v n="$msnum" '$1==n{print $2}' "$REMOTE_MS")"
+      # shellcheck disable=SC2086  # args is a deliberately word-split option pair
+      gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
+        --label "$(labels_of "$id")" $args >/dev/null
+      rm -f "$tmp"
+      note OK created "issue $id"
+    fi
+    continue
+  fi
+  remote="$(remote_issue_body "$id")"
+  have_state="$(remote_issue_state "$id")"
+  if region_edited "$id" "$remote"; then
+    note DRIFT edited "issue $id (#$num) has a hand-edited generated region; not overwriting"
+    [ "$FORCE" = 1 ] || continue
+  fi
+  changed=0
+  [ "$(remote_region_hash "$remote")" = "$(canonical_hash "$id")" ] || { changed=1; note DRIFT body "issue $id (#$num) body is behind the canonical record"; }
+  [ "$have_state" = "$want_state" ] || { changed=1; note DRIFT state "issue $id (#$num) is $have_state on GitHub, canonically $want_state"; }
+  if [ "$have_state" = closed ] && [ "$(mj_pj_i_status "$id")" != DONE ] && [ "$(mj_pj_i_status "$id")" != CANCELLED ]; then
+    note DRIFT closed "issue $id (#$num) is closed on GitHub but is $(mj_pj_i_status "$id") canonically"
+  fi
+  if [ "$MODE" = apply ] && [ "$changed" = 1 ]; then
+    tmp="$(mktemp "${TMPDIR:-/tmp}/mj.body.XXXXXX")"
+    hostf="$(mktemp "${TMPDIR:-/tmp}/mj.host.XXXXXX")"; printf '%s\n' "$remote" > "$hostf"
+    bodyf="$(mktemp "${TMPDIR:-/tmp}/mj.reg.XXXXXX")"
+    if [ "${id#M}" != "$id" ]; then mj_plan_body_milestone "$id" > "$bodyf"; else mj_plan_body_issue "$id" > "$bodyf"; fi
+    mj_region_splice "$hostf" "$bodyf" "$(canonical_hash "$id")" > "$tmp"
+    gh issue edit "$num" --repo "$REPO" --body-file "$tmp" >/dev/null
+    [ "$want_state" = closed ] && gh issue close "$num" --repo "$REPO" >/dev/null 2>&1 || true
+    [ "$want_state" = open ] && [ "$have_state" = closed ] && gh issue reopen "$num" --repo "$REPO" >/dev/null 2>&1 || true
+    rm -f "$tmp" "$hostf" "$bodyf"
+    note OK updated "issue $id (#$num)"
+  fi
+  [ "$changed" = 0 ] && note OK insync "issue $id (#$num)"
+done
+
+# ---------------------------------------------------------------- extra managed issues
+awk -F'\t' '{ print $1 "\t" $2 }' "$REMOTE_IS" | while IFS="$(printf '\t')" read -r n t; do
+  cid="$(printf '%s' "$t" | sed -n 's/^\([MI][0-9][0-9]*\) — .*/\1/p')"
+  [ -n "$cid" ] || continue
+  [ -f "$(mj_pj_flat "$cid")" ] || printf '%-6s %-7s %s\n' DRIFT extra "issue #$n claims to be $cid, which is not in the canonical model"
+done
+
+printf '\ngithub-sync %s: %s drift finding(s)\n' "$MODE" "$DRIFT"
+[ "$MODE" = check ] && [ "$DRIFT" -gt 0 ] && exit 11
+exit 0

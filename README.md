@@ -64,6 +64,7 @@ Better prompts do not fix any of this.
 | **Finish** | a typed outcome and a contract evaluated line by line; nothing written when any line fails |
 | **Doctor** | proves the installation is real: policy parses, every declared enforcement is actually invoked by the hook it names without a swallowed exit code, projections match fingerprints, the always-loaded file is under budget |
 | **Watch** | reports drift between policy, projections, state, scope, and git, each finding with the command that reproduces it |
+| **Plan** | milestones are outcome specifications and issues are execution contracts; status, execution waves and the next ready issue are derived from the dependency graph, never stored |
 
 Every row above is backed by a case in [`test/cases/`](test/cases/). The README is not
 allowed to say more than the tests do.
@@ -284,7 +285,7 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 
 | version | adds |
 |---|---|
-| **0.1** | one policy, four profiles, durable state, the eight commands, doctor with wiring reconciliation, projections for four providers, behavioural tests |
+| **0.1** | one policy, four profiles, durable state, the command surface `majordomus --help` lists, milestone and issue execution contracts with a validated dependency graph, doctor with wiring reconciliation, projections for four providers, behavioural tests |
 | 0.2 | opt-in runtime adapters: read-size clamp, output condensation, subagent budget, with limits derived from the profile |
 | 0.3 | execution telemetry, only from providers that expose it honestly |
 | 0.4 | cost per accepted outcome, only on measured data |

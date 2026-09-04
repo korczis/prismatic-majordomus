@@ -230,6 +230,16 @@
       "external": false
     },
     {
+      "id": "lib/project.sh",
+      "kind": "module",
+      "label": "project",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".majordomus/generated/fingerprints.yaml",
       "kind": "artifact",
       "label": "generated/fingerprints.yaml",
@@ -273,6 +283,36 @@
       "id": ".majordomus/templates",
       "kind": "artifact",
       "label": "templates",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/plan.sh",
+      "kind": "module",
+      "label": "plan",
+      "command": "plan",
+      "summary": "the milestone and issue model: validate, read, and move an issue",
+      "read_only": null,
+      "route": "/commands/plan/",
+      "external": false
+    },
+    {
+      "id": ".majordomus/project/issues",
+      "kind": "artifact",
+      "label": "project/issues",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".majordomus/project/project.yaml",
+      "kind": "artifact",
+      "label": "project/project.yaml",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -412,6 +452,11 @@
       "kind": "reads"
     },
     {
+      "source": "lib/project.sh",
+      "target": ".majordomus/project/project.yaml",
+      "kind": "reads"
+    },
+    {
       "source": "lib/prompt.sh",
       "target": ".majordomus/state/decisions.md",
       "kind": "reads"
@@ -484,6 +529,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/init.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/plan.sh",
       "kind": "sources"
     },
     {
@@ -583,6 +633,11 @@
     },
     {
       "source": "lib/doctor.sh",
+      "target": "lib/project.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
       "target": "lib/prompt.sh",
       "kind": "sources"
     },
@@ -599,6 +654,11 @@
     {
       "source": "lib/finish.sh",
       "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/plan.sh",
+      "target": "lib/project.sh",
       "kind": "sources"
     },
     {
@@ -864,6 +924,16 @@
     {
       "source": "lib/init.sh",
       "target": ".majordomus/profiles",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/plan.sh",
+      "target": ".majordomus/project/issues",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/project.sh",
+      "target": ".majordomus/project/issues",
       "kind": "writes"
     },
     {

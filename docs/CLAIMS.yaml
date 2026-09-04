@@ -518,3 +518,57 @@ claims:
     test: '-'
     status: rejected
     note: No use case in the evidence justified a dependency graph. Listed so that the omission is visible rather than assumed to be an oversight. Revisited only when a real case appears.
+
+  - id: project-schema
+    claim: Milestones and issues are canonical repository files, and a key nobody reads is an error
+    source: docs/SCHEMAS.md
+    implementation: lib/project.sh
+    test: test/cases/40_project_model.sh
+    status: guaranteed
+    responsibility: plan
+    note: The same allowlist rule the policy and the profiles live under. The filename is the id; a record that disagrees with its own filename is refused rather than reconciled.
+
+  - id: project-status-derived
+    claim: Issue and milestone status is derived from recorded facts and is stored nowhere
+    source: docs/PLANNING.md
+    implementation: lib/project.awk
+    test: test/cases/41_project_status.sh
+    status: guaranteed
+    responsibility: plan
+    note: An issue records started_at, verified_at, completed_at, cancelled and its evidence. BLOCKED, READY, ACTIVE, VERIFY, DONE and CANCELLED follow from those and from the state of its dependencies. `status` is not a field, so writing one is an unknown key.
+
+  - id: dag-validation
+    claim: A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name
+    source: docs/PLANNING.md
+    implementation: lib/project.awk
+    test: test/cases/42_dag_waves.sh
+    status: guaranteed
+    responsibility: plan
+    note: Kahn layering; the issues that never leave the graph are the ones reported. A malformed graph fails doctor and is reported by watch as drift.
+
+  - id: execution-waves
+    claim: Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised
+    source: docs/PLANNING.md
+    implementation: lib/project.awk
+    test: test/cases/42_dag_waves.sh
+    status: guaranteed
+    responsibility: plan
+    note: Sharing a wave is necessary for concurrency, not sufficient. Overlapping declared scope serialises conservatively, because a false serialisation costs time and a false parallel costs a conflict.
+
+  - id: evidence-gates-done
+    claim: An issue cannot be completed while a required piece of evidence is missing
+    source: docs/PLANNING.md
+    implementation: lib/plan.sh
+    test: test/cases/41_project_status.sh
+    status: guaranteed
+    responsibility: plan
+    note: Evidence is a command and its result, or an artifact. Narrative is refused. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE.
+
+  - id: github-projection
+    claim: GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten
+    source: docs/PLANNING.md
+    implementation: scripts/github-sync
+    test: test/cases/45_github_projection.sh
+    status: guaranteed
+    responsibility: plan
+    note: The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit.

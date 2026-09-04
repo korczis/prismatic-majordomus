@@ -1,0 +1,38 @@
+id: I0006
+milestone: M000
+title: Generate the Mermaid DAG from the graph
+slug: mermaid-from-graph
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Render the dependency graph as Mermaid from the same edges the engine derives, so that no diagram anywhere is drawn by hand."
+why: "A hand-drawn dependency diagram is a second source of truth that is wrong the first time an edge changes."
+current_state: "The site rendered Mermaid for architecture diagrams written by hand in Markdown."
+desired_state: "majordomus plan graph emits the DAG, and the docs, the site and the GitHub milestone body all use that output."
+scope:
+  - lib/project.sh
+non_scope:
+  - Layout tuning beyond what Mermaid decides
+depends_on:
+  - I0004
+acceptance_criteria:
+  - Every node in the diagram is an issue in the model and every edge is a dependency in the model
+  - Node styling reflects derived status
+  - Restricting to one milestone emits only that milestone's subgraph
+validation:
+  - bash test/run.sh 42_dag_waves
+evidence_required:
+  - mermaid_test
+risk: Low
+created_at: 2026-09-04
+updated_at: 2026-09-04T03:12:55Z
+started_at: 2026-09-04T03:12:53Z
+verified_at: 2026-09-04T03:12:54Z
+completed_at: 2026-09-04T03:12:55Z
+evidence:
+  - covers: mermaid_test
+    type: test
+    command: "bash test/run.sh 42_dag_waves"
+    result: "1 passed, 0 failed"
+    commit: 2dd5915d62182c8c35f609391a23c355fad1134a
+    recorded_at: 2026-09-04T03:12:55Z

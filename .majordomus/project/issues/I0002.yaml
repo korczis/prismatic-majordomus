@@ -1,0 +1,42 @@
+id: I0002
+milestone: M000
+title: Define the canonical milestone and issue schema
+slug: canonical-schema
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Define the smallest repository-native representation of a milestone outcome specification and an issue execution contract, and enforce it the way every other configuration file here is enforced: a key nobody reads is an error."
+why: "Every surface downstream reads these files. A field that is written and never read, or read and never written, becomes a lie that the website eventually publishes."
+current_state: "Policy, profiles and prompts each have an allowlist under share/allow. Milestones and issues had none because they did not exist."
+desired_state: "share/allow/project.txt, share/allow/milestone.txt and share/allow/issue.txt exist and every key in a canonical file matches one of them."
+scope:
+  - .majordomus/project
+  - share/allow
+  - docs/SCHEMAS.md
+non_scope:
+  - JSON Schema; this repository validates with allowlists and its own YAML subset
+  - A separate evidence directory; evidence lives inside the record it proves
+depends_on:
+  - I0001
+acceptance_criteria:
+  - An unknown key in a milestone or issue file is a reported failure
+  - No status field exists in either schema
+  - Evidence is part of the record whose completion it gates
+validation:
+  - bin/majordomus plan validate
+  - bash test/run.sh 40_project_model
+evidence_required:
+  - schema_test
+risk: "A schema too small forces a later migration; a schema too large invites fields nobody reads."
+created_at: 2026-09-04
+updated_at: 2026-09-04T03:12:44Z
+started_at: 2026-09-04T03:12:42Z
+verified_at: 2026-09-04T03:12:43Z
+completed_at: 2026-09-04T03:12:44Z
+evidence:
+  - covers: schema_test
+    type: test
+    command: "bash test/run.sh 40_project_model"
+    result: "1 passed, 0 failed"
+    commit: 2dd5915d62182c8c35f609391a23c355fad1134a
+    recorded_at: 2026-09-04T03:12:44Z

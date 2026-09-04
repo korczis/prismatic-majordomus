@@ -1,0 +1,42 @@
+id: I0005
+milestone: M000
+title: Implement the plan command surface
+slug: plan-command
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Give a worker one command that answers what is ready, why something is blocked, what the graph looks like, and that moves an issue through its lifecycle while refusing illegal transitions."
+why: "A model nobody can query is a filing cabinet. The command is how a fresh session with no conversation history finds its work."
+current_state: "The engine existed with no interface."
+desired_state: "majordomus plan validate, status, list, show, ready, blocked, waves, graph, next, body, start, verify, evidence and done all read the one model."
+scope:
+  - lib/plan.sh
+  - bin/majordomus
+  - docs/CLI.md
+non_scope:
+  - Any network call; the CLI never leaves the machine
+depends_on:
+  - I0004
+acceptance_criteria:
+  - plan start refuses an issue that is not READY
+  - plan done refuses while a required evidence token has no evidence
+  - plan evidence refuses a token the issue does not require
+  - plan evidence refuses without a command or an artifact
+  - every subcommand answers --help and an unknown one exits 2
+validation:
+  - bash test/run.sh 43_plan_command
+evidence_required:
+  - command_test
+risk: Low
+created_at: 2026-09-04
+updated_at: 2026-09-04T03:12:53Z
+started_at: 2026-09-04T03:12:50Z
+verified_at: 2026-09-04T03:12:51Z
+completed_at: 2026-09-04T03:12:53Z
+evidence:
+  - covers: command_test
+    type: test
+    command: "bash test/run.sh 43_plan_command"
+    result: "1 passed, 0 failed"
+    commit: 2dd5915d62182c8c35f609391a23c355fad1134a
+    recorded_at: 2026-09-04T03:12:52Z

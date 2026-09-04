@@ -21,7 +21,7 @@
 ```bash
 majordomus doctrine status
 majordomus doctrine show scope_integrity
-majordomus doctor        # OK doctrine  13 doctrines — validator, dispatch, propagation, test and CI resolve for every one
+majordomus doctor        # OK doctrine  <n> doctrines — validator, dispatch, propagation, test and CI resolve for every one
 ```
 
 ## What it does not cover

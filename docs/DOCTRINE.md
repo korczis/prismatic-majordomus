@@ -61,8 +61,8 @@ Each entry carries:
 The class is not a label on a diagram. `mj_doctrine_fail` reads it and routes the finding
 accordingly, so changing `advisory` to `blocking` in the registry changes whether
 `majordomus check` exits 0 — and `test/cases/17_doctrine_enforcement.sh` flips exactly
-that value and asserts the exit code moves. Four doctrines are advisory today — checkpoint freshness, decision records, task
-continuity and layout integrity. Everything else blocks.
+that value and asserts the exit code moves. Which doctrines are advisory today is derived, not written here: `majordomus doctrine list`
+prints the class of each. Everything that is not advisory blocks.
 
 `watch` asks the same doctrines a different question — not *is this wrong* but *has this
 moved* — so under `watch` a violation is reported as `DRIFT` and the exit code is 11,

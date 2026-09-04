@@ -564,8 +564,8 @@ v0.1 ships exactly:
   effort, verbosity, context toggles, verification requirements, and the output
   contract (which fields a completion note must carry) independently
 - state templates: current task, decisions, open questions, handover, completion note
-- the eight subcommands, in portable shell, with behavioural tests
-- `doctor` with all eight checks, including enforcement wiring reconciliation
+- the subcommands `majordomus --help` lists, in portable shell, with behavioural tests
+- `doctor` dispatching every doctrine the registry declares, including enforcement wiring reconciliation
 - `watch` with the drift table above
 - `update` producing projections for Claude Code, Codex, Gemini, and generic Markdown,
   with fingerprints
