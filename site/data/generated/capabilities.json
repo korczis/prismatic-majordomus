@@ -665,7 +665,7 @@
       "test": "test/cases/01_init.sh",
       "status": "guaranteed",
       "note": "init seeds .ai/ from the skeleton and nothing else; no hook, no shell file, no tool installation. doctor fails on a section the manifest names that is absent, and on a manifest key nothing reads.",
-      "responsibility": "policy",
+      "responsibility": "layer",
       "source_route": "/docs/schemas/",
       "command": "init",
       "test_case": "01_init"
@@ -730,7 +730,7 @@
       "test": "test/cases/66_migrate_legacy.sh",
       "status": "guaranteed",
       "note": "Every other command refuses the legacy layout and names migrate. --dry-run prints the plan and writes nothing. A file the version does not know is reported, never deleted; a destination that already exists refuses the whole run.",
-      "responsibility": "policy",
+      "responsibility": "layer",
       "source_route": "/docs/cli/",
       "command": null,
       "test_case": "66_migrate_legacy"
