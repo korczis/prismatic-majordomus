@@ -280,6 +280,77 @@ jq '. + {counts: {declared: (.doctrines|length),
          index: (reduce (.doctrines|to_entries[]) as $e ({}; . + {($e.value.id): $e.key}))}' \
   "$OUT/doctrines.json" > "$OUT/doctrines.json.tmp" && mv "$OUT/doctrines.json.tmp" "$OUT/doctrines.json"
 
+# ---------------------------------------------------------------- why.json (the five moments, as data)
+# The moments are hand-written prose in site/content-src/why/, but the links out of them are
+# not prose: each page names the commands, responsibilities and claims it rests on. Those are
+# read here, checked against the things they name, and published as data so the index, the
+# graph and the backlinks on claim and responsibility pages are all the same list. A moment
+# that names a claim, command or responsibility that does not exist fails the build; before
+# this, a typo produced a 404 nobody would notice.
+WHY_JSON="$(
+  printf '['
+  first=1
+  for f in $(cd "$ROOT/site/content-src/why" && ls ./*.md | sed 's#^\./##' | grep -v '^_index\.md$' | sort); do
+    p="$ROOT/site/content-src/why/$f"; slug="${f%.md}"
+    [ "$first" = 1 ] || printf ','; first=0
+    fm="$(awk 'BEGIN{n=0} /^\+\+\+$/{n++; next} n==1' "$p")"
+    tget() { printf '%s' "$fm" | sed -n "s/^$1 = \"\(.*\)\"$/\1/p" | head -1; }
+    tnum() { printf '%s' "$fm" | sed -n "s/^$1 = \([0-9]*\)$/\1/p" | head -1; }
+    tarr() { printf '%s' "$fm" | sed -n "s/^$1 = \[\(.*\)\]$/\1/p" | head -1 \
+             | tr ',' '\n' | sed 's/^ *"//; s/" *$//; s/^ *//; s/ *$//' | grep -v '^$' | jq -R . | jq -sc .; }
+    jq -cn --arg slug "$slug" --arg title "$(tget title | sed 's/\\"/"/g')" \
+      --arg desc "$(tget description | sed 's/\\"/"/g')" --arg hook "$(tget hook | sed 's/\\"/"/g')" \
+      --argjson weight "$(tnum weight)" --argjson cmds "$(tarr commands)" \
+      --argjson resp "$(tarr responsibilities)" --argjson claims "$(tarr claims)" \
+      '{slug:$slug, title:$title, description:$desc, hook:$hook, weight:$weight,
+        route:("/why/" + $slug + "/"), commands:$cmds, responsibilities:$resp, claims:$claims}'
+  done
+  printf ']'
+)"
+printf '%s' "$WHY_JSON" | jq --slurpfile caps "$OUT/capabilities.json" --slurpfile rd "$OUT/readme.json" \
+  --slurpfile pr "$OUT/project.json" '
+  ($caps[0].claims | map(.id)) as $claim_ids
+  | ($rd[0].does | map(.slug)) as $resp_slugs
+  | ($pr[0].commands | map(.name)) as $cmd_names
+  | {schema: 1,
+     source: "site/content-src/why/",
+     moments: [ sort_by(.weight)[] | . + {
+       claim_detail: [ .claims[] as $c | $caps[0].claims[] | select(.id == $c) | {id, claim, status} ],
+       command_detail: [ .commands[] as $n | $pr[0].commands[] | select(.name == $n) | {name, summary, read_only} ],
+       responsibility_detail: [ .responsibilities[] as $s | $rd[0].does[] | select(.slug == $s) | {slug, title} ] } ],
+     unknown: { claims: [ .[].claims[] | select(IN($claim_ids[]) | not) ] | unique,
+                responsibilities: [ .[].responsibilities[] | select(IN($resp_slugs[]) | not) ] | unique,
+                commands: [ .[].commands[] | select(IN($cmd_names[]) | not) ] | unique }}' > "$OUT/why.json"
+for k in claims responsibilities commands; do
+  bad="$(jq -r --arg k "$k" '.unknown[$k] | join(", ")' "$OUT/why.json")"
+  [ -z "$bad" ] || { echo "generate-site-data: a why page names $k that do not exist: $bad" >&2; exit 10; }
+done
+jq 'del(.unknown)' "$OUT/why.json" > "$OUT/why.json.tmp" && mv "$OUT/why.json.tmp" "$OUT/why.json"
+[ "$(jq '.moments | length' "$OUT/why.json")" -ge 3 ] || { echo "generate-site-data: site/content-src/why/ produced almost no moments" >&2; exit 10; }
+# the reverse index the claim and responsibility pages need: which moments name this thing
+jq '{schema: .schema, source: .source, moments: .moments,
+     by_claim: (reduce (.moments[] | . as $m | $m.claims[] | {k:., v:$m.slug}) as $e ({}; .[$e.k] += [$e.v])),
+     by_responsibility: (reduce (.moments[] | . as $m | $m.responsibilities[] | {k:., v:$m.slug}) as $e ({}; .[$e.k] += [$e.v])),
+     by_command: (reduce (.moments[] | . as $m | $m.commands[] | {k:., v:$m.slug}) as $e ({}; .[$e.k] += [$e.v]))}' \
+  "$OUT/why.json" > "$OUT/why.json.tmp" && mv "$OUT/why.json.tmp" "$OUT/why.json"
+
+# the moments and the tool, as a graph: moment -> command -> claim, drawn by the same runtime
+# as /map/ and /evidence/ rather than a third picture of the same relationships
+jq '{schema: 1,
+     source: "site/content-src/why/ front matter",
+     edge_kinds: {addressed_by: "the command this moment is answered by",
+                  backed_by: "the claim that says what the tool guarantees here",
+                  supervises: "the responsibility this moment falls under"},
+     nodes: ([.moments[] | {id: ("moment:" + .slug), kind: "moment", label: .hook, route: .route, external: false, summary: .description}]
+             + ([.moments[] | .command_detail[] | {id: ("command:" + .name), kind: "command", label: ("majordomus " + .name), route: ("/commands/" + .name + "/"), external: false, summary: .summary}]
+                + [.moments[] | .claim_detail[] | {id: ("claim:" + .id), kind: "claim", label: .id, status: .status, route: ("/guarantees/" + .id + "/"), external: false, summary: .claim}]
+                + [.moments[] | .responsibility_detail[] | {id: ("responsibility:" + .slug), kind: "responsibility", label: .title, route: ("/supervises/" + .slug + "/"), external: false}]
+                | unique_by(.id))),
+     edges: ([.moments[] | . as $m | $m.commands[] | {source: ("moment:" + $m.slug), target: ("command:" + .), kind: "addressed_by"}]
+             + [.moments[] | . as $m | $m.claims[] | {source: ("moment:" + $m.slug), target: ("claim:" + .), kind: "backed_by"}]
+             + [.moments[] | . as $m | $m.responsibilities[] | {source: ("moment:" + $m.slug), target: ("responsibility:" + .), kind: "supervises"}]
+             | unique)}' "$OUT/why.json" > "$OUT/why-graph.json"
+
 # ---------------------------------------------------------------- diagrams.json (Mermaid source from data, never hand-drawn)
 LIFECYCLE_MMD="$(printf 'stateDiagram-v2\n    [*] --> active: start\n    active --> active: check --checkpoint\n    active --> handed_over: handover --close\n    handed_over --> [*]: next start archives the record\n'; for o in $(printf '%s' "$OUTCOMES" | jq -r '.[]'); do printf '    active --> %s: finish --outcome %s\n    %s --> [*]\n' "$o" "$o" "$o"; done)"
 PIPELINE_MMD="$(printf 'flowchart LR\n    subgraph canonical\n        A[share/skeleton]\n        B[docs + README]\n        C[docs/CLAIMS.yaml]\n    end\n    G[scripts/generate-site-data]\n    D[(site/data/generated)]\n    Z[Zola]\n    F[Tailwind + Flowbite + Alpine]\n    P[GitHub Pages]\n    A --> G\n    B --> G\n    C --> G\n    G --> D --> Z --> F --> P\n')"

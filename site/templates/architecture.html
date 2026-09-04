@@ -1,7 +1,7 @@
 {% extends "page.html" %}
 {% block body %}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
-  <div class="min-w-0"><article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>{{ <diagram key="pipeline" /> }}{{ <diagram key="projection" /> }}
+  <div class="min-w-0"><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>{{ <diagram key="pipeline" /> }}{{ <diagram key="projection" /> }}
     <p class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5 text-body">This page is about the website. For the program the website is about &mdash; every module of the CLI and every file it reads and writes, scanned out of the shell sources on each build &mdash; see the <a href="{{ get_url(path="/map/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">program map</a>.</p></div>
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">this build</h2>

@@ -36,7 +36,19 @@ fails=0; ok() { printf 'OK   %-10s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-10
 title_of() { "$CHROME" --headless=new --disable-gpu --window-size=1400,1000 --virtual-time-budget=9000 --dump-dom "$1" 2>/dev/null | grep -oE '<title>[^<]*' | sed 's/<title>//' | head -1; }
 
 routes="$(cd "$WORK/out" && find . -name index.html | sed 's#^\.##; s#index.html$##' | sort)"
-if [ "$QUICK" = 1 ]; then routes="$(printf '%s\n' "$routes" | awk -F/ '!seen[$2]++')"; fi
+if [ "$QUICK" = 1 ]; then
+  # Sample one route per template, not one per section. Pages that share a template share
+  # their layout, which is what makes a sample sound; section names are a proxy that stops
+  # being true the day a section grows a second template, and stops silently.
+  MAP="$(find "$SITE/content" -name '*.md' | sort | xargs awk -f "$ROOT/scripts/lib/route-template.awk")"
+  missing=""
+  for r in $routes; do
+    printf '%s\n' "$MAP" | cut -f1 | grep -qxF "$r" || missing="$missing $r"
+  done
+  [ -z "$missing" ] || { echo "site-probe: no template resolves for:$missing — the sample would not cover them" >&2; exit 12; }
+  routes="$(printf '%s\n' "$MAP" | awk -F'\t' '!seen[$2]++ { print $1 }' | sort)"
+  echo "site-probe: --quick, one route per template ($(printf '%s\n' "$routes" | wc -l | tr -d ' ') of $(printf '%s\n' "$MAP" | wc -l | tr -d ' '))"
+fi
 n=0
 for r in $routes; do
   for w in 320 390 1280; do

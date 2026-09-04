@@ -5,9 +5,68 @@
 {% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
 {% block content %}
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+{%- set why = load_data(path="data/generated/why.json") -%}
+{%- set graph = load_data(path="data/generated/why-graph.json") -%}
+{%- set graph_id = "why" -%}
+{%- set graph_rings = "moment,command,claim" -%}
+{%- set graph_label = "Each moment, the commands that answer it, the responsibility it falls under, and the claims that say what is guaranteed. Generated from the pages themselves — a moment that named something that did not exist would fail the build." -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
 <div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
-  {% include "partials/why-cards.html" %}
-  <div class="format mt-8 max-w-3xl dark:format-invert">{{ section.content | safe }}</div>
+
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"
+     x-data="{ cmd: '' }">
+  {#- Filtering is a progressive enhancement: without Alpine every moment is shown, which is
+      the correct default. x-cloak hides the control until Alpine can drive it. -#}
+  <div class="mb-6 flex flex-wrap items-center gap-2" x-cloak>
+    <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">show moments answered by</span>
+    <button type="button" x-on:click="cmd = ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any command</button>
+    {%- for name, slugs in why.by_command %}
+    <button type="button" x-on:click="cmd = (cmd === '{{ name }}' ? '' : '{{ name }}')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === '{{ name }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ name }} <span class="text-body-subtle">{{ slugs | length }}</span></button>
+    {%- endfor %}
+  </div>
+
+  <ol class="grid gap-5 lg:grid-cols-2">
+    {%- for m in why.moments %}
+    <li class="min-w-0" x-show="cmd === '' || {{ m.commands | json_encode() }}.includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="{{ base }}{{ m.route }}" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">{{ m.hook }}</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">{{ m.description }}</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            {%- for c in m.command_detail %}
+            <dd><a href="{{ get_url(path='/commands/' ~ c.name ~ '/', trailing_slash=true) }}" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">{{ c.name }}</a></dd>
+            {%- endfor %}
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            {%- for r in m.responsibility_detail %}
+            <dd><a href="{{ get_url(path='/supervises/' ~ r.slug ~ '/', trailing_slash=true) }}" class="text-xs text-fg-brand hover:underline">{{ r.title }}</a></dd>
+            {%- endfor %}
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by {{ m.claim_detail | length }} claims</dt>
+            <dd><ul class="space-y-1">
+              {%- for c in m.claim_detail %}
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0">{{ <badge status={c.status} /> }}</span><a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>
+              {%- endfor %}
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="{{ base }}{{ m.route }}" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+    {%- endfor %}
+  </ol>
+
+  <p class="mt-8 max-w-3xl text-base font-medium text-heading">{{ section.content | striptags | trim }}</p>
+
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">How the five connect to the tool</h2>
+  <p class="mt-2 max-w-3xl text-body">Every arrow below is read out of the pages themselves. Nothing on this page is a second list.</p>
+  {% include "partials/graph.html" %}
 </div>
 {% endblock content %}
+{% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}

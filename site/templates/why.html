@@ -7,7 +7,7 @@
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
     <p class="mb-6 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base font-medium text-fg-brand-strong">→ {{ page.extra.hook }}</p>
-    <article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this lives in the tool</h2>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div><h3 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">responsibilities</h3><ul class="space-y-1 text-sm">{% for slug in page.extra.responsibilities %}{% set r = [x for x in readme.does if x.slug == slug][0] %}<li><a href="{{ get_url(path="/supervises/" ~ slug ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">{{ r.title }}</a></li>{% endfor %}</ul></div>

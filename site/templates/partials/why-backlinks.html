@@ -1,0 +1,18 @@
+{#- "Which of the five moments does this thing show up in?" — the reverse of the links on the
+    why pages, read from the same generated index so the two directions cannot disagree. The
+    caller sets `why_key` (a claim id, responsibility slug or command name) and `why_field`
+    (claims, responsibilities or commands). Renders nothing when unused,
+    which is a fact worth seeing: nothing on this page answers a moment a reader recognises. -#}
+{%- set why_all = load_data(path="data/generated/why.json") -%}
+{%- set slugs = [m.slug for m in why_all.moments if why_key in m[why_field]] -%}
+{%- if slugs | length > 0 %}
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The moments this answers</h2>
+<ul class="mt-4 space-y-3">
+  {%- for s in slugs %}{% set m = [x for x in why_all.moments if x.slug == s][0] %}
+  <li><a href="{{ get_url(path='/why/' ~ s ~ '/', trailing_slash=true) }}" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">{{ m.hook }}</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">{{ m.description }}</span></span></a></li>
+  {%- endfor %}
+</ul>
+{%- endif %}

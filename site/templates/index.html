@@ -190,7 +190,7 @@ majordomus finish --outcome completed --verify-command "make test"
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="07" kicker="what it is not" title="Not another runtime" /> }}
-    <div class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ readme.not_md | markdown | safe }}</div>
+    <div class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ readme.not_md | markdown | safe }}</div>
   </div>
 </section>
 
