@@ -1,0 +1,64 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set roadmap = load_data(path="data/generated/roadmap.json") -%}
+{%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{%- set graph = load_data(path="data/generated/roadmap-graph.json") -%}
+{%- set graph_id = "roadmap" -%}
+{%- set graph_rings = "" -%}
+{%- set graph_label = "The milestone graph. An arrow means the target cannot begin until the source is accepted — not a preference, a gate the engine enforces." -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+{%- set versioned = [m for m in roadmap.milestones if m.version != ""] -%}
+
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
+
+<ol class="mt-8 space-y-4">
+  {%- for m in versioned %}
+  <li class="min-w-0 rounded-base border p-5 {% if m.status == 'DONE' %}border-success-subtle bg-success-soft{% elif m.status == 'ACTIVE' or m.status == 'VERIFY' %}border-brand-subtle bg-brand-softer{% else %}border-default bg-neutral-primary-soft{% endif %}">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <span class="font-mono text-lg font-semibold text-heading">{{ m.version }}</span>
+      <span class="text-base font-medium text-heading">{{ m.title }}</span>
+      <span class="ms-auto rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ m.status }}</span>
+    </div>
+
+    {%- if m.blocked_by | length > 0 %}
+    <p class="mt-3 text-sm text-body">Blocked by
+      {%- for b in m.blocked_by %} <span class="font-mono text-heading">{{ b }}</span>{% if not loop.last %},{% endif %}{% endfor %}.
+      Finishing every issue inside this milestone would not release it; the gate is the dependency, not the workload.</p>
+    {%- elif m.status == "PLANNED" %}
+    <p class="mt-3 text-sm text-body">Nothing blocks it. Its dependencies are accepted, so it can begin.</p>
+    {%- endif %}
+
+    {%- if m.issues.total > 0 %}
+    <dl class="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-body-subtle">
+      {%- for k, v in m.issues %}{% if v > 0 %}<div class="flex gap-1"><dt>{{ k }}</dt><dd class="text-heading">{{ v }}</dd></div>{% endif %}{% endfor %}
+    </dl>
+    {%- else %}
+    <p class="mt-3 font-mono text-xs text-body-subtle">no issues written yet — the outcome is specified, the work is not</p>
+    {%- endif %}
+
+    {%- if m.claims | length > 0 %}
+    <div class="mt-4 border-t border-default pt-3">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">what this would make guaranteed</p>
+      <ul class="mt-2 space-y-1.5">
+        {%- for cid in m.claims %}{% set matches = [c for c in caps.claims if c.id == cid] %}{% if matches | length > 0 %}{% set c = matches[0] %}
+        <li class="flex min-w-0 items-start gap-2"><span class="shrink-0">{{ <badge status={c.status} /> }}</span>
+          <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-sm text-body hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>
+        {%- endif %}{% endfor %}
+      </ul>
+    </div>
+    {%- endif %}
+  </li>
+  {%- endfor %}
+</ol>
+
+<h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The order, and why it is not a preference</h2>
+<p class="mt-2 max-w-3xl text-body">Each version depends on the one before it, and the dependency is enforced rather than intended: a milestone whose dependencies are not accepted is <span class="font-mono">BLOCKED</span> whatever its own issues say. That is why there is no percentage anywhere on this page — a bar at 100% inside a blocked milestone would be a lie the graph can already tell you is one.</p>
+{% include "partials/graph.html" %}
+
+<p class="mt-8 text-sm text-body-subtle">
+  Generated from <code class="font-mono">.majordomus/project/milestones/</code> through the same projection
+  <code class="font-mono">majordomus plan roadmap</code> prints. The current state as a document is
+  <a class="underline" href="{{ get_url(path='/docs/plan-status/', trailing_slash=true) }}">docs/PLAN_STATUS.md</a>.
+</p>
+{% endblock body %}
+{% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}
