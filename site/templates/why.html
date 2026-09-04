@@ -8,17 +8,56 @@
   <div class="min-w-0">
     <p class="mb-6 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base font-medium text-fg-brand-strong">→ {{ page.extra.hook }}</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+    {%- set why = load_data(path="data/generated/why.json") -%}
+    {%- set m = [x for x in why.moments if x.slug == page.slug][0] -%}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this lives in the tool</h2>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      <div><h3 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">responsibilities</h3><ul class="space-y-1 text-sm">{% for slug in page.extra.responsibilities %}{% set r = [x for x in readme.does if x.slug == slug][0] %}<li><a href="{{ get_url(path="/supervises/" ~ slug ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">{{ r.title }}</a></li>{% endfor %}</ul></div>
-      <div><h3 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</h3><ul class="space-y-1 text-sm">{% for n in page.extra.commands %}<li><a href="{{ get_url(path="/commands/" ~ n ~ "/", trailing_slash=true) }}" class="font-mono text-fg-brand hover:underline">majordomus {{ n }}</a></li>{% endfor %}</ul></div>
-    </div>
-    <h3 class="mb-2 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">claims that back this page</h3>
+    <p class="mt-2 text-body">Everything below is read out of this page's own front matter and resolved against the repository. A name here that did not exist would fail the build.</p>
+
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the commands that answer it</h3>
     <ul class="grid gap-3 sm:grid-cols-2">
-      {%- for id in page.extra.claims -%}{%- set c = [x for x in caps.claims if x.id == id][0] -%}
-      <li><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={c.status} /> }}</span><span class="text-sm text-heading">{{ c.claim }}</span></a></li>
-      {%- endfor -%}
+      {%- for c in m.command_detail %}
+      <li><a href="{{ get_url(path='/commands/' ~ c.name ~ '/', trailing_slash=true) }}" class="flex h-full min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="flex flex-wrap items-center gap-2"><span class="font-mono text-sm font-medium text-fg-brand">majordomus {{ c.name }}</span>{% if c.read_only %}<span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span>{% endif %}</span>
+        <span class="min-w-0 break-words text-sm text-body">{{ c.summary }}</span></a></li>
+      {%- endfor %}
     </ul>
+
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">what it supervises</h3>
+    <ul class="flex flex-wrap gap-2">
+      {%- for r in m.responsibility_detail %}
+      <li><a href="{{ get_url(path='/supervises/' ~ r.slug ~ '/', trailing_slash=true) }}" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">{{ r.title }}</a></li>
+      {%- endfor %}
+    </ul>
+
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the claims that back this page, and the evidence behind each</h3>
+    <ul class="space-y-3">
+      {%- for id in m.claims %}{% set c = [x for x in caps.claims if x.id == id][0] %}
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-start gap-2">{{ <badge status={c.status} /> }}
+          <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a></p>
+        <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs">
+          <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">defined in</dt>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.source }}">{{ c.source }}</a></dd></div>
+          {%- if c.implementation %}<div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">implemented in</dt>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.implementation }}">{{ c.implementation }}</a></dd></div>{% endif %}
+          {%- if c.test %}<div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">proved by</dt>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.test }}">{{ c.test }}</a></dd></div>
+          {%- else %}<div class="flex gap-1.5"><dt class="text-body-subtle">proved by</dt><dd class="text-body-subtle">no test — this is a target, not a guarantee</dd></div>{% endif %}
+        </dl>
+      </li>
+      {%- endfor %}
+    </ul>
+
+    {%- set others = [x for x in why.moments if x.slug != page.slug] %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">If this one is familiar, so is the next</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+      {%- for o in others %}
+      <li><a href="{{ get_url(path='/why/' ~ o.slug ~ '/', trailing_slash=true) }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">{{ o.hook }}</span></a></li>
+      {%- endfor %}
+    </ul>
+    <p class="mt-4 text-sm"><a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">All five, and how they connect to the tool &rarr;</a></p>
   </div>
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the five moments</h2><ol class="space-y-2 text-sm">{% for p in sec.pages %}<li><a href="{{ p.permalink }}" class="block rounded px-2 py-1 {% if p.permalink == page.permalink %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if p.permalink == page.permalink %} aria-current="page"{% endif %}>{{ p.extra.hook }}</a></li>{% endfor %}</ol></div></aside>
 </div>

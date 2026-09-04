@@ -77,5 +77,13 @@ jobs:
       # still matching its canonical sources.
       - name: check the site
         run: scripts/site-check
+      # Every route measured at every supported width, in a real browser. The deploy
+      # workflow samples one route per template; this one is the complete measurement, and
+      # the branch is not green until it passes. It runs here rather than in front of the
+      # artifact so that a slow check does not sit between a green build and a published
+      # page — the deploy queue was reaching seventeen minutes with it there, long enough
+      # that pushes began superseding each other's deploys.
+      - name: probe the site in a browser
+        run: CHROME_BIN=google-chrome scripts/site-probe
       - name: manifest
         run: cat site/data/generated/source.json
