@@ -146,6 +146,19 @@ for f in "$SITE"/content-src/*.md; do
   git -C "$ROOT" check-ignore -q "$rel" 2>/dev/null || bad ignored "$rel is projected from content-src but not in .gitignore"
 done; ok ignored "every projection of site/content-src/ is ignored, not committed"
 
+# 13g. every claim a milestone names carries the link back. The edge is declared once, in
+# milestone.claims, and the claim page derives the reverse — so this asserts the direction
+# nobody writes, which is the one that goes missing. A link check that only walks forward can
+# find links that are wrong and never links that are absent.
+for mid in $(jq -r '.milestones[] | select((.claims | length) > 0) | .id' "$SITE/data/generated/roadmap.json"); do
+  for cid in $(jq -r --arg m "$mid" '.milestones[] | select(.id==$m) | .claims[]' "$SITE/data/generated/roadmap.json"); do
+    p="$PUB/guarantees/$cid/index.html"
+    [ -f "$p" ] || { bad roadmap "milestone $mid names claim $cid, which has no page"; continue; }
+    grep -qF "roadmap/" "$p" || bad roadmap "claim $cid is named by milestone $mid but does not link back to the roadmap"
+  done
+done
+ok roadmap "every claim a milestone names links back to it"
+
 # 13f. the contract demonstration is the policy's own list. The page pairs each key in
 # policy.verification.finish_requires with the check name the transcript prints, by position,
 # and a positional pairing that nobody checks is a pairing that will silently rotate. Asserted
