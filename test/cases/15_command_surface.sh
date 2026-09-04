@@ -1,26 +1,27 @@
 . "$ROOT/test/lib.sh"
 # Every subcommand the binary dispatches is reachable, self-documenting, and exercised
 # here — so "tested in CI" is true of each one individually, not only of the suite.
-COMMANDS="init doctor start check watch update handover finish version"
-
-# the binary's own dispatch table is the list this case is allowed to check
-for c in $COMMANDS; do
-  grep -qE "^  (init\|doctor\|start\|check\|watch\|update\|handover\|finish\)|  version\|--version\))" "$ROOT/bin/majordomus" \
-    || true
-done
-grep -q 'init|doctor|start|check|watch|update|handover|finish)' "$ROOT/bin/majordomus" \
+#
+# The list is read from the dispatch table rather than written here, so adding a command
+# to bin/majordomus adds it to every check below instead of quietly escaping them.
+COMMANDS="$(grep -oE '^  [a-z|]+\)$' "$ROOT/bin/majordomus" | tr -d ' )' | tr '|' '\n' | sort -u)"
+[ "$(printf '%s\n' "$COMMANDS" | wc -w | tr -d ' ')" -ge 8 ] \
   || { echo "    the dispatch table in bin/majordomus changed shape; update this case"; exit 1; }
+# the commands that must exist whatever else is added
+for c in init doctor start check watch update handover finish; do
+  printf '%s\n' "$COMMANDS" | grep -qx "$c" || { echo "    dispatch table lost $c"; exit 1; }
+done
 
-# usage lists every command
+# usage lists every dispatched command, and version, under some heading
 expect_exit 0 "$MJ" --help
-for c in $COMMANDS; do
+for c in $COMMANDS version; do
   expect_grep "^  $c" || { echo "    usage does not list $c"; exit 1; }
 done
 expect_grep 'exit codes: 0 ok'
 
-# every command answers --help without an installation, and says what it is
+# every command answers --help and says what it is
 "$MJ" init >/dev/null
-for c in doctor start check watch update handover finish; do
+for c in $COMMANDS; do
   expect_exit 0 "$MJ" "$c" --help
   expect_grep "usage: majordomus $c" || { echo "    $c --help does not print its usage"; exit 1; }
 done
@@ -37,16 +38,20 @@ expect_grep "^majordomus $ver$"
 expect_exit 2 "$MJ" nonsense
 expect_grep 'unknown command: nonsense'
 
-# every command refuses an option it does not know rather than ignoring it
-for c in doctor update check watch handover finish; do
+# every command refuses an argument it does not know rather than ignoring it. Commands with
+# subcommands report an unknown subcommand; the rest report an unknown option. Either way
+# the exit code is 2 and the reason is named.
+for c in $COMMANDS; do
+  case "$c" in init|start|search) continue ;; esac   # these take positional arguments
   expect_exit 2 "$MJ" "$c" --no-such-option
-  expect_grep "unknown option"
+  expect_grep 'unknown (option|subcommand)' || { echo "    $c accepted --no-such-option"; exit 1; }
 done
 
 # the read-only commands stay read-only: nothing under state/ changes when they run
 "$MJ" update >/dev/null
 before="$(find .majordomus/state -type f -exec shasum -a 256 {} \; | sort)"
-"$MJ" doctor >/dev/null 2>&1 || true
-"$MJ" watch  >/dev/null 2>&1 || true
+for c in doctor watch context history search; do
+  "$MJ" "$c" x >/dev/null 2>&1 || true
+done
 after="$(find .majordomus/state -type f -exec shasum -a 256 {} \; | sort)"
-[ "$before" = "$after" ] || { echo "    doctor or watch wrote to .majordomus/state"; exit 1; }
+[ "$before" = "$after" ] || { echo "    a read-only command wrote to .majordomus/state"; exit 1; }
