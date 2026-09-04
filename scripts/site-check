@@ -82,7 +82,7 @@ for d in $(jq -r '.docs[].path' "$SITE/data/generated/docs.json" | sed 's/\.md$/
 # 13b. every tile has a page: profiles, claims, statuses, responsibilities, commands
 for slug in $(jq -r '.profiles[].slug' "$SITE/data/generated/profiles.json"); do [ -f "$PUB/profiles/$slug/index.html" ] || bad tiles "no page for profile $slug"; done
 for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do [ -f "$PUB/guarantees/$id/index.html" ] || bad tiles "no page for claim $id"; done
-for st in guaranteed advisory planned rejected; do [ -f "$PUB/guarantees/$st/index.html" ] || bad tiles "no page for status $st"; done
+for st in $(jq -r '.statuses | keys_unsorted[]' "$SITE/data/generated/capabilities.json"); do [ -f "$PUB/guarantees/$st/index.html" ] || bad tiles "no page for status $st"; done
 for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do [ -f "$PUB/supervises/$slug/index.html" ] || bad tiles "no page for responsibility $slug"; done
 for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do [ -f "$PUB/commands/$n/index.html" ] || bad tiles "no page for command $n"; done
 for id in $(jq -r '.doctrines[].slug' "$SITE/data/generated/doctrines.json"); do [ -f "$PUB/doctrines/$id/index.html" ] || bad tiles "no page for doctrine $id"; done
@@ -116,8 +116,14 @@ done
 # commits and the following generate deletes again. Derived by scanning for $CONTENT_ROOT
 # uses rather than by listing the sections, so the next one is covered the day it is written.
 for d in $(grep -oE '\$CONTENT_ROOT/[a-z-]+' "$ROOT/scripts/generate-site-data" | sed 's#.*/##' | sort -u); do
-  git -C "$ROOT" check-ignore -q "site/content/$d/" 2>/dev/null \
-    || bad ignored "generate-site-data writes site/content/$d/ but .gitignore does not cover it"
+  # a tracked file is never "ignored", so check both: a generated section that is committed
+  # is a different fault from one .gitignore forgot, and saying which saves the reader a
+  # detour through `git check-ignore` on a path that is in .gitignore already
+  if [ -n "$(git -C "$ROOT" ls-files "site/content/$d" 2>/dev/null)" ]; then
+    bad ignored "generate-site-data writes site/content/$d/ but $(git -C "$ROOT" ls-files "site/content/$d" | wc -l | tr -d ' ') file(s) there are committed"
+  elif ! git -C "$ROOT" check-ignore -q "site/content/$d/" 2>/dev/null; then
+    bad ignored "generate-site-data writes site/content/$d/ but .gitignore does not cover it"
+  fi
 done
 
 # 13a. derived content is ignored: site/content-src/*.md is projected into site/content/, and

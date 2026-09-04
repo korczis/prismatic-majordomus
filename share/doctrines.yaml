@@ -181,6 +181,18 @@ doctrines:
     claims: [handover-record]
     test: test/cases/25_continuity_lifecycle.sh
 
+  - id: policy_completeness
+    title: Policy completeness
+    class: blocking
+    principle: 1
+    summary: Every policy value the code reads is declared in the skeleton policy, and no reader carries its own default for one.
+    validator: policy_defaults
+    category: policy
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [policy-parse]
+    test: test/cases/28_no_hardcoded_values.sh
+
   - id: layout_integrity
     title: Layout integrity
     class: advisory

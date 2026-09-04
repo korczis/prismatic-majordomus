@@ -4,13 +4,8 @@
 # else on the site may state a capability. The rule from AGENTS.md applies here:
 # no claim without an executable behind it.
 #
-# status:
-#   guaranteed  implemented, deterministic, and backed by a behavioural test that runs
-#   advisory    projected into worker instructions; a worker may ignore it and nothing
-#               detects that it did. Documentation, not enforcement.
-#   planned     specified and not implemented. Named so that omissions are visible.
-#   rejected    considered and deliberately refused, with the reason in note. Published so
-#               that a reader can see what was refused rather than assume it was forgotten.
+# The statuses a claim may carry are declared below as data, not listed in this comment
+# and again in the generator. Their order is the order the website presents them in.
 #
 # fields:
 #   claim           one sentence, present tense for guaranteed, plain future for planned
@@ -21,6 +16,16 @@
 # `scripts/generate-site-data --check` verifies that every source, implementation and test
 # path in this file exists. A guaranteed claim with no test path is an error.
 version: 1
+
+statuses:
+  - id: guaranteed
+    meaning: Deterministic and blocking. Implemented, and a behavioural test proves it.
+  - id: advisory
+    meaning: Projected into the worker's instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.
+  - id: planned
+    meaning: Specified and not implemented. Named so the omission is visible.
+  - id: rejected
+    meaning: Considered and deliberately refused, with the reason recorded.
 
 claims:
   - id: policy-parse
@@ -443,6 +448,24 @@ claims:
     status: guaranteed
     responsibility: doctor
     note: doctor runs the resolver, renders every prompt asset, validates both parsed stores and builds the context. A directory of records that no command reads is the failure this tool exists to catch.
+
+  - id: task-commit-attribution
+    claim: A task will know which commits it produced, rather than inferring them from a range
+    source: docs/CONTINUITY.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: scope
+    note: Today scope is checked with git diff base..HEAD, and a commit range has no author, so another session committing to the same branch in the same checkout has its files counted as this task's work. Recording each commit as it happens turns the question from a heuristic about ranges into an enumeration. The list would be a lookup that git overrules, never authority, and a rewritten commit would be reported as unrecognised rather than resolved to a guess.
+
+  - id: derived-not-declared
+    claim: What the tool knows about itself is written once and derived everywhere else, and a second copy is a test failure
+    source: docs/CONCEPTS.md
+    implementation: lib/doctor.sh
+    test: test/cases/28_no_hardcoded_values.sh
+    status: guaranteed
+    responsibility: policy
+    note: Policy values have no reader-side defaults, claim statuses are declared in the matrix, the site fixtures derive their inputs from the generator, and every command, doctrine and claim is checked against a list read from the dispatch table or the registry rather than written into the test.
 
   - id: semantic-retrieval
     claim: Ranked or semantic retrieval over durable records is deliberately not implemented

@@ -295,6 +295,28 @@
       "test": "test/cases/25_continuity_lifecycle.sh"
     },
     {
+      "id": "policy_completeness",
+      "slug": "policy-completeness",
+      "title": "Policy completeness",
+      "class": "blocking",
+      "principle": 1,
+      "summary": "Every policy value the code reads is declared in the skeleton policy, and no reader carries its own default for one.",
+      "validator": "policy_defaults",
+      "validator_function": "mj_validate_policy_defaults",
+      "defined_in": "lib/doctor.sh",
+      "category": "policy",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "policy-parse"
+      ],
+      "test": "test/cases/28_no_hardcoded_values.sh"
+    },
+    {
       "id": "layout_integrity",
       "slug": "layout-integrity",
       "title": "Layout integrity",
@@ -502,8 +524,8 @@
     }
   ],
   "counts": {
-    "declared": 22,
-    "blocking": 18,
+    "declared": 23,
+    "blocking": 19,
     "advisory": 4
   },
   "index": {
@@ -520,14 +542,15 @@
     "prompt_integrity": 10,
     "handover_integrity": 11,
     "task_continuity": 12,
-    "layout_integrity": 13,
-    "policy_integrity": 14,
-    "projection_integrity": 15,
-    "enforcement_wiring": 16,
-    "context_budget": 17,
-    "retention_caps": 18,
-    "doctrine_wiring_integrity": 19,
-    "project_integrity": 20,
-    "dag_integrity": 21
+    "policy_completeness": 13,
+    "layout_integrity": 14,
+    "policy_integrity": 15,
+    "projection_integrity": 16,
+    "enforcement_wiring": 17,
+    "context_budget": 18,
+    "retention_caps": 19,
+    "doctrine_wiring_integrity": 20,
+    "project_integrity": 21,
+    "dag_integrity": 22
   }
 }

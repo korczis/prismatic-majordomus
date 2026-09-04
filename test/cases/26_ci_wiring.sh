@@ -39,6 +39,13 @@ printf '# probe, created and removed by 26_ci_wiring\nexit 0\n' > "$tmpcase"
   echo "    test/run.sh reported failure while a case passed"; exit 1; }
 cleanup; trap - EXIT
 
+# 4b. a filter that matches nothing is a usage error, not an empty success. `run.sh <name>`
+#     on a case that does not exist printed "0 passed, 0 failed" and exited 0, and that zero
+#     was read as "it passed" — the same shape as a green CI that never ran the suite.
+if ( cd "$ROOT" && bash test/run.sh zz_no_such_case_exists >/dev/null 2>&1 ); then
+  echo "    test/run.sh reported success for a case that does not exist"; exit 1
+fi
+
 # 5. every command the CLI dispatches has a behavioural case somewhere in the suite, so a
 #    new command cannot ship with no coverage at all. The command list is read from the
 #    dispatcher itself, so adding a command to bin/majordomus adds it to this check.

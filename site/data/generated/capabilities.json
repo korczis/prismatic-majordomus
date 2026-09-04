@@ -596,6 +596,30 @@
       "test_case": "25_continuity_lifecycle"
     },
     {
+      "id": "task-commit-attribution",
+      "claim": "A task will know which commits it produced, rather than inferring them from a range",
+      "source": "docs/CONTINUITY.md",
+      "implementation": null,
+      "test": null,
+      "status": "planned",
+      "note": "Today scope is checked with git diff base..HEAD, and a commit range has no author, so another session committing to the same branch in the same checkout has its files counted as this task's work. Recording each commit as it happens turns the question from a heuristic about ranges into an enumeration. The list would be a lookup that git overrules, never authority, and a rewritten commit would be reported as unrecognised rather than resolved to a guess.",
+      "source_route": "/docs/continuity/",
+      "command": null,
+      "test_case": null
+    },
+    {
+      "id": "derived-not-declared",
+      "claim": "What the tool knows about itself is written once and derived everywhere else, and a second copy is a test failure",
+      "source": "docs/CONCEPTS.md",
+      "implementation": "lib/doctor.sh",
+      "test": "test/cases/28_no_hardcoded_values.sh",
+      "status": "guaranteed",
+      "note": "Policy values have no reader-side defaults, claim statuses are declared in the matrix, the site fixtures derive their inputs from the generator, and every command, doctrine and claim is checked against a list read from the dispatch table or the registry rather than written into the test.",
+      "source_route": "/docs/concepts/",
+      "command": "doctor",
+      "test_case": "28_no_hardcoded_values"
+    },
+    {
       "id": "semantic-retrieval",
       "claim": "Ranked or semantic retrieval over durable records is deliberately not implemented",
       "source": "docs/CONTINUITY.md",

@@ -122,7 +122,7 @@ mj_prompt_render() {
     [ -s "$tmp/OPEN_QUESTIONS" ] || printf -- '- none\n' > "$tmp/OPEN_QUESTIONS"
   fi
   if grep -q '{{DECISIONS}}' "$body"; then
-    local dmax; dmax="$(mj_pol context.recent_decisions)"; [ -n "$dmax" ] || dmax=5
+    local dmax; dmax="$(mj_pol_req context.recent_decisions)"
     if [ -f "$MJ_DIR/state/decisions.md" ]; then mj_decision_entries "$MJ_DIR/state/decisions.md" "$([ "$have_task" = 1 ] && printf '%s' "$id")" "$dmax" > "$tmp/DECISIONS"
     else printf '(none)\n' > "$tmp/DECISIONS"; fi
   fi

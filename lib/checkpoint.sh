@@ -54,7 +54,7 @@ H
     if mj_reject_identity "$body"; then
       rm -f "$body"; mj_die "$MJ_EX_CONTRACT" "checkpoint: body must not contain identity fields; they are computed"
     fi
-    local cap lines; cap="$(mj_pol checkpoint.max_body_lines)"; [ -n "$cap" ] || cap=40
+    local cap lines; cap="$(mj_pol_req checkpoint.max_body_lines)"
     lines="$(mj_lines "$body")"
     if [ "$lines" -gt "$cap" ]; then
       rm -f "$body"

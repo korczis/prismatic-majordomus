@@ -1,7 +1,7 @@
 # The critical regeneration test: change one canonical value; the derived data and content change with it.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
-cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/scripts" "$ROOT/docs" "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/AGENTS.md" "$T/"; mkdir -p "$T/site/data" "$T/test"; cp "$ROOT/site/data/marketing.toml" "$T/site/data/"; cp -R "$ROOT/site/content-src" "$T/site/"; cp -R "$ROOT/test/cases" "$T/test/"; mkdir -p "$T/.majordomus"; cp -R "$ROOT/.majordomus/project" "$T/.majordomus/"
+fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 "$T/scripts/generate-site-data" >/dev/null; cp -R "$T/site/data/generated" "$T/before"
 # 1. version
