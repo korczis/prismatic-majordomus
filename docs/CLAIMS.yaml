@@ -464,7 +464,7 @@ claims:
     implementation: lib/init.sh
     test: test/cases/01_init.sh
     status: guaranteed
-    responsibility: policy
+    responsibility: layer
     note: init seeds .ai/ from the skeleton and nothing else; no hook, no shell file, no tool installation. doctor fails on a section the manifest names that is absent, and on a manifest key nothing reads.
 
   - id: local-state-ignored
@@ -509,7 +509,7 @@ claims:
     implementation: lib/migrate.sh
     test: test/cases/66_migrate_legacy.sh
     status: guaranteed
-    responsibility: policy
+    responsibility: layer
     note: Every other command refuses the legacy layout and names migrate. --dry-run prints the plan and writes nothing. A file the version does not know is reported, never deleted; a destination that already exists refuses the whole run.
 
   - id: tool-location-independent
