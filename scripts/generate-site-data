@@ -225,6 +225,89 @@ jq -n --arg l "$LIFECYCLE_MMD" --arg p "$PIPELINE_MMD" --arg j "$PROJECTION_MMD"
                           projection: {title: "Policy to instruction files", source: "share/skeleton/policy.yaml projections", mermaid: $j},
                           supervision: {title: "The core model", source: "README.md mental model", mermaid: $s}}}' > "$OUT/diagrams.json"
 
+# ---------------------------------------------------------------- architecture.json (static scan, never hand-drawn)
+# The interactive architecture graph is what scripts/lib/architecture-scan.awk can prove by
+# reading the shell sources: module A sources module B, module A names artifact C. Nothing is
+# asserted here that the scanner did not find, and a module that stops touching a file loses
+# its edge on the next run. Command labels, summaries and routes come from project.json, so
+# the graph and the command pages cannot disagree.
+SCAN="$ROOT/scripts/lib/architecture-scan.awk"
+[ -f "$SCAN" ] || { echo "generate-site-data: missing $SCAN" >&2; exit 12; }
+# two collecting passes, so a path accessor defined in a later file still resolves
+ARCH_TSV="$(cd "$ROOT" && awk -f "$SCAN" vars=1 bin/majordomus lib/*.sh vars=1 bin/majordomus lib/*.sh vars=0 bin/majordomus lib/*.sh)"
+printf '%s\n' "$ARCH_TSV" | jq -Rn --slurpfile proj "$OUT/project.json" '
+  [inputs | split("\t")] as $rows
+  | ($proj[0].commands | map({key: .name, value: .})) as $cmds
+  | ($rows | map(select(.[0]=="node") | {id: .[1], kind: .[2]})) as $raw_nodes
+  | ($raw_nodes | map(select(.kind=="artifact") | .id)) as $arts
+  # a bare directory whose children are also referenced adds nothing but a hub
+  | ($arts | map(select(. as $a | ($arts | any(startswith($a + "/")))))) as $drop
+  | ($raw_nodes | map(select((.kind != "artifact") or ((.id | IN($drop[])) | not)))) as $nodes
+  | ($nodes | map(.id)) as $keep
+  | {schema: 1,
+     source: "static reference scan of bin/majordomus and lib/*.sh",
+     generator: "scripts/lib/architecture-scan.awk",
+     edge_kinds: {sources: "the first module sources the second",
+                  reads: "named behind a reading command or a redirection from the file",
+                  writes: "named behind a redirection into the file, or a command that creates or replaces it",
+                  uses: "named, but handed to a helper — the scan does not claim a direction"},
+     nodes: [$nodes[]
+       | .id as $id
+       | ($id | ltrimstr("lib/") | rtrimstr(".sh")) as $cmd
+       | ($cmds | map(select(.key == $cmd)) | first | .value) as $c
+       | {id: $id, kind: .kind,
+          label: (if .kind == "entry" then "majordomus"
+                  elif .kind == "module" then $cmd
+                  else ($id | ltrimstr(".majordomus/")) end),
+          command: (if .kind == "module" and $c then $cmd else null end),
+          summary: ($c.summary // null),
+          read_only: ($c.read_only // null),
+          route: (if .kind == "module" and $c then "/commands/" + $cmd + "/" else null end),
+          external: false}],
+     edges: [$rows[] | select(.[0]=="edge") | {source: .[1], target: .[2], kind: .[3]}
+       | select((.source | IN($keep[])) and (.target | IN($keep[])))]
+     # the dispatcher sources lib/<command>.sh by name; that edge is dynamic in the shell
+     | . + [$cmds[] | select(("lib/" + .key) as $m | ($keep | any(. == $m + ".sh")))
+            | {source: "bin/majordomus", target: ("lib/" + .key + ".sh"), kind: "sources"}]
+     | unique}' > "$OUT/architecture.json"
+[ "$(jq '.nodes | length' "$OUT/architecture.json")" -ge 20 ] || { echo "generate-site-data: architecture scan found almost nothing; the scanner or the sources moved" >&2; exit 10; }
+# every command that has a module on disk must appear as one in the scan; a command the
+# dispatcher answers itself (version) has no module and is not expected to have a node
+MODULE_CMDS="$(for f in "$ROOT"/lib/*.sh; do b="$(basename "$f" .sh)"; [ "$b" = common ] || printf '%s\n' "$b"; done | jq -R . | jq -sc .)"
+jq -e --argjson mods "$MODULE_CMDS" --slurpfile proj "$OUT/project.json" '
+  (($proj[0].commands | map(.name)) - ($proj[0].commands | map(.name) - $mods))
+  - ([.nodes[] | select(.kind=="module") | .command] | map(select(. != null))) | length == 0' \
+  "$OUT/architecture.json" >/dev/null || { echo "generate-site-data: a command with a lib/ module is missing from the architecture scan" >&2; exit 10; }
+
+# ---------------------------------------------------------------- claims-graph.json (evidence, as a graph)
+# The same claims as capabilities.json, projected into the bipartite shape the evidence graph
+# draws: a claim on one side, the documents, implementations and tests that back it on the
+# other. A claim with no evidence node is visible as an isolated dot, which is the point.
+jq '{schema: 1,
+     source: "docs/CLAIMS.yaml",
+     generator: "scripts/generate-site-data",
+     statuses: .statuses,
+     edge_kinds: {specified_by: "the document that defines the claim",
+                  implemented_by: "the file that implements it",
+                  proved_by: "the behavioural test that proves it"},
+     nodes: ([.claims[] | {id: ("claim:" + .id), kind: "claim", label: .claim, status: .status,
+                           route: ("/guarantees/" + .id + "/"), external: false, note: .note}]
+             + ([.claims[] | {id: ("source:" + .source), kind: "source", label: .source, route: .source_route, external: false}]
+                + [.claims[] | select(.implementation) | {id: ("impl:" + .implementation), kind: "implementation", label: .implementation, route: null, external: false}]
+                + [.claims[] | select(.test) | {id: ("test:" + .test), kind: "test", label: .test, external: true,
+                                                route: ("https://github.com/korczis/prismatic-majordomus/blob/master/" + .test)}]
+                | unique_by(.id))),
+     edges: ([.claims[] | {source: ("claim:" + .id), target: ("source:" + .source), kind: "specified_by"}]
+             + [.claims[] | select(.implementation) | {source: ("claim:" + .id), target: ("impl:" + .implementation), kind: "implemented_by"}]
+             + [.claims[] | select(.test) | {source: ("claim:" + .id), target: ("test:" + .test), kind: "proved_by"}])}' \
+  "$OUT/capabilities.json" > "$OUT/claims-graph.json"
+# a guaranteed claim reaches a test; the generator already refuses one that does not, and this
+# asserts the projection did not lose the edge on the way into the graph
+jq -e '[.nodes[] | select(.kind=="claim" and .status=="guaranteed") | .id] as $g
+       | ([.edges[] | select(.kind=="proved_by") | .source] | unique) as $p
+       | ($g - $p) | length == 0' "$OUT/claims-graph.json" >/dev/null \
+  || { echo "generate-site-data: a guaranteed claim lost its test edge in claims-graph.json" >&2; exit 10; }
+
 # ---------------------------------------------------------------- docs index (from docs/README.md table)
 # Only the first table becomes site routes. The "## Reference files" table below it lists
 # repository-only files whose content the site presents through other routes, so it is cut

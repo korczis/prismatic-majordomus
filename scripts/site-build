@@ -20,9 +20,12 @@ if [ "$NOCSS" = 0 ]; then
   cp "$ROOT/node_modules/flowbite/dist/flowbite.min.js" "$SITE/static/js/flowbite.min.js"
   cp "$ROOT/node_modules/alpinejs/dist/cdn.min.js" "$SITE/static/js/alpine.min.js"
   cp "$ROOT/node_modules/mermaid/dist/mermaid.min.js" "$SITE/static/js/mermaid.min.js"
+  # loaded on demand by graph.js, never by the base layout: it is the largest asset on the site
+  cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$SITE/static/js/cytoscape.min.js"
 fi
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"
 cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
+cp "$SITE/graph.js" "$SITE/static/js/graph.js"
 if [ "$NOCSS" = 0 ]; then
   echo "== css"
   ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/tailwind.css" -o "$SITE/static/app.css" --minify )

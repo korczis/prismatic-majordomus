@@ -1,0 +1,1482 @@
+{
+  "schema": 1,
+  "source": "docs/CLAIMS.yaml",
+  "generator": "scripts/generate-site-data",
+  "statuses": {
+    "guaranteed": "Deterministic and blocking. Implemented, and a behavioural test proves it.",
+    "advisory": "Projected into the worker's instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.",
+    "planned": "Specified and not implemented. Named so the omission is visible.",
+    "rejected": "Considered and deliberately refused, with the reason recorded."
+  },
+  "edge_kinds": {
+    "specified_by": "the document that defines the claim",
+    "implemented_by": "the file that implements it",
+    "proved_by": "the behavioural test that proves it"
+  },
+  "nodes": [
+    {
+      "id": "claim:policy-parse",
+      "kind": "claim",
+      "label": "The canonical policy is parsed and rejected if it contains an unknown key",
+      "status": "guaranteed",
+      "route": "/guarantees/policy-parse/",
+      "external": false,
+      "note": "A restricted YAML subset. Tabs, anchors, flow maps and multi-line scalars are refused rather than guessed at."
+    },
+    {
+      "id": "claim:profile-validate",
+      "kind": "claim",
+      "label": "Every profile is parsed, its unknown keys rejected, and the default profile proven to exist",
+      "status": "guaranteed",
+      "route": "/guarantees/profile-validate/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:wiring-reconciliation",
+      "kind": "claim",
+      "label": "Every enforcement the policy declares is reconciled against what actually runs",
+      "status": "guaranteed",
+      "route": "/guarantees/wiring-reconciliation/",
+      "external": false,
+      "note": "The path must exist, be executable, and be invoked by the named dispatcher. A hook that invokes it and discards the exit code counts as not wired."
+    },
+    {
+      "id": "claim:exit-code-contract",
+      "kind": "claim",
+      "label": "Exit codes are a contract, and no code means \"warn and continue\"",
+      "status": "guaranteed",
+      "route": "/guarantees/exit-code-contract/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:projection-generation",
+      "kind": "claim",
+      "label": "Provider instruction files are generated from the one policy, deterministically",
+      "status": "guaranteed",
+      "route": "/guarantees/projection-generation/",
+      "external": false,
+      "note": "Running update twice leaves the byte-identical file. The test asserts the hash."
+    },
+    {
+      "id": "claim:projection-fingerprint",
+      "kind": "claim",
+      "label": "Every generated instruction file is fingerprinted, and a hand edit is detected",
+      "status": "guaranteed",
+      "route": "/guarantees/projection-fingerprint/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:region-projection",
+      "kind": "claim",
+      "label": "A projection can own only the region between its markers, leaving the rest of the file untouched",
+      "status": "guaranteed",
+      "route": "/guarantees/region-projection/",
+      "external": false,
+      "note": "How a repository that already has a hand-written CLAUDE.md adopts Majordomus. An edit outside the markers is never drift; an edit inside them is caught. Malformed markers are refused, not guessed at."
+    },
+    {
+      "id": "claim:dispatcher-wiring",
+      "kind": "claim",
+      "label": "Wiring is found in a hook or in any subhook of the directory that hook dispatches to",
+      "status": "guaranteed",
+      "route": "/guarantees/dispatcher-wiring/",
+      "external": false,
+      "note": "The finding names the file that actually carries the invocation. A subhook that is not executable is reported as not wired, because the dispatcher skips it."
+    },
+    {
+      "id": "claim:no-silent-overwrite",
+      "kind": "claim",
+      "label": "A hand-edited instruction file is never silently overwritten",
+      "status": "guaranteed",
+      "route": "/guarantees/no-silent-overwrite/",
+      "external": false,
+      "note": "update refuses, offers a diff, and overwrites only under an explicit flag."
+    },
+    {
+      "id": "claim:context-budget",
+      "kind": "claim",
+      "label": "The always-loaded instruction file has a line budget with a failing check",
+      "status": "guaranteed",
+      "route": "/guarantees/context-budget/",
+      "external": false,
+      "note": "Over budget, nothing is written at all."
+    },
+    {
+      "id": "claim:pointer-integrity",
+      "kind": "claim",
+      "label": "Every repository-relative reference in the always-loaded file is proven to resolve",
+      "status": "guaranteed",
+      "route": "/guarantees/pointer-integrity/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:no-counts-in-context",
+      "kind": "claim",
+      "label": "A hardcoded count in the always-loaded file is a failure",
+      "status": "guaranteed",
+      "route": "/guarantees/no-counts-in-context/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:retention-caps",
+      "kind": "claim",
+      "label": "The append-only ledger and handover store have retention caps that are checked",
+      "status": "guaranteed",
+      "route": "/guarantees/retention-caps/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:init-refuses",
+      "kind": "claim",
+      "label": "Installing into a repository that already has an installation is refused",
+      "status": "guaranteed",
+      "route": "/guarantees/init-refuses/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:reproduce-command",
+      "kind": "claim",
+      "label": "Every finding carries the command that reproduces it",
+      "status": "guaranteed",
+      "route": "/guarantees/reproduce-command/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:no-network",
+      "kind": "claim",
+      "label": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+      "status": "guaranteed",
+      "route": "/guarantees/no-network/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:scoped-task",
+      "kind": "claim",
+      "label": "A task is started with a declared file scope and a profile, and only one task is active per checkout",
+      "status": "guaranteed",
+      "route": "/guarantees/scoped-task/",
+      "external": false,
+      "note": "A scope path that escapes the repository root is refused. Starting a second task while one is active is refused."
+    },
+    {
+      "id": "claim:git-identity",
+      "kind": "claim",
+      "label": "Identity fields on every state record are computed from git and never authored",
+      "status": "guaranteed",
+      "route": "/guarantees/git-identity/",
+      "external": false,
+      "note": "A handover body that tries to set one is rejected rather than merged."
+    },
+    {
+      "id": "claim:consistency-check",
+      "kind": "claim",
+      "label": "check reports whether state, scope, blockers and checkpoint age are consistent right now",
+      "status": "guaranteed",
+      "route": "/guarantees/consistency-check/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:scope-enforcement",
+      "kind": "claim",
+      "label": "A touched file outside the claimed scope is a failure, not a warning",
+      "status": "guaranteed",
+      "route": "/guarantees/scope-enforcement/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:divergence-label",
+      "kind": "claim",
+      "label": "State read back is labelled exact, advanced, diverged or different_context against git",
+      "status": "guaranteed",
+      "route": "/guarantees/divergence-label/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:overlap-report",
+      "kind": "claim",
+      "label": "Overlap between parallel workers is computed on claimed paths in both containment directions",
+      "status": "guaranteed",
+      "route": "/guarantees/overlap-report/",
+      "external": false,
+      "note": "Reported, never blocking. Work in progress is reported and never blocked."
+    },
+    {
+      "id": "claim:drift-watch",
+      "kind": "claim",
+      "label": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift",
+      "status": "guaranteed",
+      "route": "/guarantees/drift-watch/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:handover-record",
+      "kind": "claim",
+      "label": "handover writes an append-only record with computed front matter and required sections",
+      "status": "guaranteed",
+      "route": "/guarantees/handover-record/",
+      "external": false,
+      "note": "A body with a missing or empty required section is refused and names the sections."
+    },
+    {
+      "id": "claim:no-transcripts",
+      "kind": "claim",
+      "label": "Handovers carry durable facts, never conversation transcripts",
+      "status": "guaranteed",
+      "route": "/guarantees/no-transcripts/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:finish-contract",
+      "kind": "claim",
+      "label": "finish evaluates the finish contract line by line and refuses when any line is unmet",
+      "status": "guaranteed",
+      "route": "/guarantees/finish-contract/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:typed-outcome",
+      "kind": "claim",
+      "label": "An outcome is a value from a closed vocabulary, not free text",
+      "status": "guaranteed",
+      "route": "/guarantees/typed-outcome/",
+      "external": false,
+      "note": "no_match means the work was done and the thing sought does not exist. failed means the work could not be done. They are different facts."
+    },
+    {
+      "id": "claim:profile-axes",
+      "kind": "claim",
+      "label": "Capability class, reasoning effort, output verbosity, context and verification are five independent axes",
+      "status": "advisory",
+      "route": "/guarantees/profile-axes/",
+      "external": false,
+      "note": "The axes are validated and projected into the worker's instructions. Whether a worker honours them is not observable from outside the worker."
+    },
+    {
+      "id": "claim:capability-class",
+      "kind": "claim",
+      "label": "A profile names a capability class rather than a vendor model",
+      "status": "advisory",
+      "route": "/guarantees/capability-class/",
+      "external": false,
+      "note": "Mapping a class to a concrete model is left to whoever runs the worker. Majordomus never selects or invokes a model."
+    },
+    {
+      "id": "claim:minimum-context",
+      "kind": "claim",
+      "label": "A profile declares which context a worker should load and no more",
+      "status": "advisory",
+      "route": "/guarantees/minimum-context/",
+      "external": false,
+      "note": "majordomus context now assembles a briefing from those toggles, and that selection is guaranteed (see context-assembly). This claim stays advisory because nothing measures what the worker actually read once it has been handed the briefing."
+    },
+    {
+      "id": "claim:effort-escalation",
+      "kind": "claim",
+      "label": "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed",
+      "status": "advisory",
+      "route": "/guarantees/effort-escalation/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:checkpoint-interval",
+      "kind": "claim",
+      "label": "A profile sets how often a worker should checkpoint, and a stale task is reported",
+      "status": "advisory",
+      "route": "/guarantees/checkpoint-interval/",
+      "external": false,
+      "note": "The staleness report is guaranteed. Whether the worker checkpoints is not."
+    },
+    {
+      "id": "claim:context-assembly",
+      "kind": "claim",
+      "label": "The context a worker is given is assembled from durable state in authority order, and what a profile excludes is excluded",
+      "status": "guaranteed",
+      "route": "/guarantees/context-assembly/",
+      "external": false,
+      "note": "Git first, then task and profile, then blockers, then authored records, then history. The profile's context block decides what is offered; it is the only code that reads those fields."
+    },
+    {
+      "id": "claim:context-selection-budget",
+      "kind": "claim",
+      "label": "The assembled context obeys a line budget, and every section it drops is named with its reason",
+      "status": "guaranteed",
+      "route": "/guarantees/context-selection-budget/",
+      "external": false,
+      "note": "The count is of the printed document, not of its sections. Git, task, profile and open blockers are never dropped; record bodies degrade to a pointer before they disappear."
+    },
+    {
+      "id": "claim:checkpoint-record",
+      "kind": "claim",
+      "label": "A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated",
+      "status": "guaranteed",
+      "route": "/guarantees/checkpoint-record/",
+      "external": false,
+      "note": "The cap is what keeps a checkpoint distinct from a handover. Mode 0600, created atomically, never staged."
+    },
+    {
+      "id": "claim:record-resolution",
+      "kind": "claim",
+      "label": "The right prior record is resolved by worktree and branch, and an unrelated one is never offered",
+      "status": "guaranteed",
+      "route": "/guarantees/record-resolution/",
+      "external": false,
+      "note": "Same worktree and branch, else same branch, else nothing. Ties within one second are broken by ledger order. Absence is reported as absence."
+    },
+    {
+      "id": "claim:history-ledger-read",
+      "kind": "claim",
+      "label": "The ledger is readable back as operational history, filtered by task, event and time",
+      "status": "guaranteed",
+      "route": "/guarantees/history-ledger-read/",
+      "external": false,
+      "note": "What happened, when, for which task, at which head, and what outcome was accepted. Never what anyone said."
+    },
+    {
+      "id": "claim:record-retention",
+      "kind": "claim",
+      "label": "Rotating the ledger archives the oldest lines and never deletes them",
+      "status": "guaranteed",
+      "route": "/guarantees/record-retention/",
+      "external": false,
+      "note": "Refuses to overwrite an existing archive, and does nothing when the ledger is under its cap."
+    },
+    {
+      "id": "claim:decision-record",
+      "kind": "claim",
+      "label": "A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited",
+      "status": "guaranteed",
+      "route": "/guarantees/decision-record/",
+      "external": false,
+      "note": "--why is required. --supersedes refuses text matching no recorded decision. Task and head are computed."
+    },
+    {
+      "id": "claim:open-question-gate",
+      "kind": "claim",
+      "label": "An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass",
+      "status": "guaranteed",
+      "route": "/guarantees/open-question-gate/",
+      "external": false,
+      "note": "A gate that cannot read an entry can be bypassed by mistyping one, so check, doctor and watch all fail on a malformed entry."
+    },
+    {
+      "id": "claim:prompt-asset",
+      "kind": "claim",
+      "label": "A repository-local prompt renders against a closed set of state tokens, and an unknown token is an error",
+      "status": "guaranteed",
+      "route": "/guarantees/prompt-asset/",
+      "external": false,
+      "note": "No conditionals, loops, includes or shell. A prompt that silently renders a misspelled token as literal text is worse than one that refuses."
+    },
+    {
+      "id": "claim:record-search",
+      "kind": "claim",
+      "label": "Durable records are searchable literally, across kinds, without an index",
+      "status": "guaranteed",
+      "route": "/guarantees/record-search/",
+      "external": false,
+      "note": "A fixed-string grep in authority order. No ranking, no embedding, no index that could fall out of step with the records it describes."
+    },
+    {
+      "id": "claim:continuity-reachable",
+      "kind": "claim",
+      "label": "Every continuity store is proven reachable through its own command, not merely present on disk",
+      "status": "guaranteed",
+      "route": "/guarantees/continuity-reachable/",
+      "external": false,
+      "note": "doctor runs the resolver, renders every prompt asset, validates both parsed stores and builds the context. A directory of records that no command reads is the failure this tool exists to catch."
+    },
+    {
+      "id": "claim:semantic-retrieval",
+      "kind": "claim",
+      "label": "Ranked or semantic retrieval over durable records is deliberately not implemented",
+      "status": "rejected",
+      "route": "/guarantees/semantic-retrieval/",
+      "external": false,
+      "note": "The corpus is a handful of Markdown files and one JSONL. An index or an embedding store would be a second source of truth that has to be kept in step with the first, and a scan is faster than that problem. Revisited only if a repository appears where the scan is measurably too slow."
+    },
+    {
+      "id": "claim:worktree-ownership",
+      "kind": "claim",
+      "label": "A task record names the checkout it belongs to, and another checkout is never held to its scope",
+      "status": "guaranteed",
+      "route": "/guarantees/worktree-ownership/",
+      "external": false,
+      "note": "The record is tracked, so it travels with the branch. check, finish --check and watch report a foreign record and enforce nothing from it; finish refuses to write to it. A record from before the field existed is treated as local, so upgrading does not turn an installation red."
+    },
+    {
+      "id": "claim:runtime-adapters",
+      "kind": "claim",
+      "label": "Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits",
+      "status": "planned",
+      "route": "/guarantees/runtime-adapters/",
+      "external": false,
+      "note": "v0.2. The one implementation studied was rolled back within days because its limits were global constants rather than task-derived."
+    },
+    {
+      "id": "claim:telemetry",
+      "kind": "claim",
+      "label": "Execution telemetry will be recorded once a provider exposes it honestly",
+      "status": "planned",
+      "route": "/guarantees/telemetry/",
+      "external": false,
+      "note": "v0.3. Nothing in v0.1 measures token spend. Any estimated_ field is labelled and excluded from enforcement."
+    },
+    {
+      "id": "claim:cost-per-outcome",
+      "kind": "claim",
+      "label": "Cost per accepted outcome will be reported from measured data only",
+      "status": "planned",
+      "route": "/guarantees/cost-per-outcome/",
+      "external": false,
+      "note": "v0.4."
+    },
+    {
+      "id": "claim:routing",
+      "kind": "claim",
+      "label": "Routing recommendations will be derived from measured cost and outcome data",
+      "status": "planned",
+      "route": "/guarantees/routing/",
+      "external": false,
+      "note": "v0.5. Recommendations only. Majordomus does not invoke a model."
+    },
+    {
+      "id": "claim:shared-policy",
+      "kind": "claim",
+      "label": "One policy will be shared across repositories and workers",
+      "status": "planned",
+      "route": "/guarantees/shared-policy/",
+      "external": false,
+      "note": "v1.0."
+    },
+    {
+      "id": "claim:task-dependencies",
+      "kind": "claim",
+      "label": "Dependencies between tasks are deliberately not represented",
+      "status": "rejected",
+      "route": "/guarantees/task-dependencies/",
+      "external": false,
+      "note": "No use case in the evidence justified a dependency graph. Listed so that the omission is visible rather than assumed to be an oversight. Revisited only when a real case appears."
+    },
+    {
+      "id": "impl:bin/majordomus",
+      "kind": "implementation",
+      "label": "bin/majordomus",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/check.sh",
+      "kind": "implementation",
+      "label": "lib/check.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/checkpoint.sh",
+      "kind": "implementation",
+      "label": "lib/checkpoint.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/common.sh",
+      "kind": "implementation",
+      "label": "lib/common.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/context.sh",
+      "kind": "implementation",
+      "label": "lib/context.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/decision.sh",
+      "kind": "implementation",
+      "label": "lib/decision.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/doctor.sh",
+      "kind": "implementation",
+      "label": "lib/doctor.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/finish.sh",
+      "kind": "implementation",
+      "label": "lib/finish.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/handover.sh",
+      "kind": "implementation",
+      "label": "lib/handover.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/history.sh",
+      "kind": "implementation",
+      "label": "lib/history.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/init.sh",
+      "kind": "implementation",
+      "label": "lib/init.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/prompt.sh",
+      "kind": "implementation",
+      "label": "lib/prompt.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/question.sh",
+      "kind": "implementation",
+      "label": "lib/question.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/search.sh",
+      "kind": "implementation",
+      "label": "lib/search.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/start.sh",
+      "kind": "implementation",
+      "label": "lib/start.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/update.sh",
+      "kind": "implementation",
+      "label": "lib/update.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/watch.sh",
+      "kind": "implementation",
+      "label": "lib/watch.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "source:docs/CLI.md",
+      "kind": "source",
+      "label": "docs/CLI.md",
+      "route": "/docs/cli/",
+      "external": false
+    },
+    {
+      "id": "source:docs/CONTINUITY.md",
+      "kind": "source",
+      "label": "docs/CONTINUITY.md",
+      "route": "/docs/continuity/",
+      "external": false
+    },
+    {
+      "id": "source:docs/DESIGN.md",
+      "kind": "source",
+      "label": "docs/DESIGN.md",
+      "route": "/docs/design/",
+      "external": false
+    },
+    {
+      "id": "source:docs/SCHEMAS.md",
+      "kind": "source",
+      "label": "docs/SCHEMAS.md",
+      "route": "/docs/schemas/",
+      "external": false
+    },
+    {
+      "id": "source:share/skeleton/policy.yaml",
+      "kind": "source",
+      "label": "share/skeleton/policy.yaml",
+      "route": "/policy/",
+      "external": false
+    },
+    {
+      "id": "source:share/skeleton/profiles/debugging.yaml",
+      "kind": "source",
+      "label": "share/skeleton/profiles/debugging.yaml",
+      "route": "/profiles/debugging/",
+      "external": false
+    },
+    {
+      "id": "source:share/skeleton/profiles/deep-work.yaml",
+      "kind": "source",
+      "label": "share/skeleton/profiles/deep-work.yaml",
+      "route": "/profiles/deep-work/",
+      "external": false
+    },
+    {
+      "id": "source:share/skeleton/profiles/implementation.yaml",
+      "kind": "source",
+      "label": "share/skeleton/profiles/implementation.yaml",
+      "route": "/profiles/implementation/",
+      "external": false
+    },
+    {
+      "id": "source:share/skeleton/profiles/routine.yaml",
+      "kind": "source",
+      "label": "share/skeleton/profiles/routine.yaml",
+      "route": "/profiles/routine/",
+      "external": false
+    },
+    {
+      "id": "test:test/cases/00_yaml_flatten.sh",
+      "kind": "test",
+      "label": "test/cases/00_yaml_flatten.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/00_yaml_flatten.sh"
+    },
+    {
+      "id": "test:test/cases/01_init.sh",
+      "kind": "test",
+      "label": "test/cases/01_init.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/01_init.sh"
+    },
+    {
+      "id": "test:test/cases/02_doctor_basic.sh",
+      "kind": "test",
+      "label": "test/cases/02_doctor_basic.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/02_doctor_basic.sh"
+    },
+    {
+      "id": "test:test/cases/03_update.sh",
+      "kind": "test",
+      "label": "test/cases/03_update.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/03_update.sh"
+    },
+    {
+      "id": "test:test/cases/04_start_check.sh",
+      "kind": "test",
+      "label": "test/cases/04_start_check.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/04_start_check.sh"
+    },
+    {
+      "id": "test:test/cases/05_handover.sh",
+      "kind": "test",
+      "label": "test/cases/05_handover.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/05_handover.sh"
+    },
+    {
+      "id": "test:test/cases/06_finish.sh",
+      "kind": "test",
+      "label": "test/cases/06_finish.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/06_finish.sh"
+    },
+    {
+      "id": "test:test/cases/07_watch.sh",
+      "kind": "test",
+      "label": "test/cases/07_watch.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/07_watch.sh"
+    },
+    {
+      "id": "test:test/cases/08_no_forbidden_constructs.sh",
+      "kind": "test",
+      "label": "test/cases/08_no_forbidden_constructs.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/08_no_forbidden_constructs.sh"
+    },
+    {
+      "id": "test:test/cases/13_region_projection.sh",
+      "kind": "test",
+      "label": "test/cases/13_region_projection.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/13_region_projection.sh"
+    },
+    {
+      "id": "test:test/cases/14_wiring_dispatcher.sh",
+      "kind": "test",
+      "label": "test/cases/14_wiring_dispatcher.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/14_wiring_dispatcher.sh"
+    },
+    {
+      "id": "test:test/cases/20_checkpoint.sh",
+      "kind": "test",
+      "label": "test/cases/20_checkpoint.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/20_checkpoint.sh"
+    },
+    {
+      "id": "test:test/cases/21_decision_question.sh",
+      "kind": "test",
+      "label": "test/cases/21_decision_question.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/21_decision_question.sh"
+    },
+    {
+      "id": "test:test/cases/22_history.sh",
+      "kind": "test",
+      "label": "test/cases/22_history.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/22_history.sh"
+    },
+    {
+      "id": "test:test/cases/23_context.sh",
+      "kind": "test",
+      "label": "test/cases/23_context.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/23_context.sh"
+    },
+    {
+      "id": "test:test/cases/24_prompt_search.sh",
+      "kind": "test",
+      "label": "test/cases/24_prompt_search.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/24_prompt_search.sh"
+    },
+    {
+      "id": "test:test/cases/25_continuity_lifecycle.sh",
+      "kind": "test",
+      "label": "test/cases/25_continuity_lifecycle.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/25_continuity_lifecycle.sh"
+    },
+    {
+      "id": "test:test/cases/27_foreign_task.sh",
+      "kind": "test",
+      "label": "test/cases/27_foreign_task.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/27_foreign_task.sh"
+    }
+  ],
+  "edges": [
+    {
+      "source": "claim:policy-parse",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:profile-validate",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:wiring-reconciliation",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:exit-code-contract",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:projection-generation",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:projection-fingerprint",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:region-projection",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:dispatcher-wiring",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:no-silent-overwrite",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:context-budget",
+      "target": "source:share/skeleton/policy.yaml",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:pointer-integrity",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:no-counts-in-context",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:retention-caps",
+      "target": "source:share/skeleton/policy.yaml",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:init-refuses",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:reproduce-command",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:no-network",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:scoped-task",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:git-identity",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:consistency-check",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:scope-enforcement",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:divergence-label",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:overlap-report",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:drift-watch",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:handover-record",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:no-transcripts",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:finish-contract",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:typed-outcome",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:profile-axes",
+      "target": "source:share/skeleton/profiles/implementation.yaml",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:capability-class",
+      "target": "source:share/skeleton/profiles/deep-work.yaml",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:minimum-context",
+      "target": "source:share/skeleton/profiles/routine.yaml",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:effort-escalation",
+      "target": "source:share/skeleton/profiles/debugging.yaml",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:checkpoint-interval",
+      "target": "source:share/skeleton/policy.yaml",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:context-assembly",
+      "target": "source:docs/CONTINUITY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:context-selection-budget",
+      "target": "source:share/skeleton/policy.yaml",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:checkpoint-record",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:record-resolution",
+      "target": "source:docs/CONTINUITY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:history-ledger-read",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:record-retention",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:decision-record",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:open-question-gate",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:prompt-asset",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:record-search",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:continuity-reachable",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:semantic-retrieval",
+      "target": "source:docs/CONTINUITY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:worktree-ownership",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:runtime-adapters",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:telemetry",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:cost-per-outcome",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:routing",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:shared-policy",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:task-dependencies",
+      "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:policy-parse",
+      "target": "impl:lib/common.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:profile-validate",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:wiring-reconciliation",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:exit-code-contract",
+      "target": "impl:lib/common.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:projection-generation",
+      "target": "impl:lib/update.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:projection-fingerprint",
+      "target": "impl:lib/update.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:region-projection",
+      "target": "impl:lib/update.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:dispatcher-wiring",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:no-silent-overwrite",
+      "target": "impl:lib/update.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:context-budget",
+      "target": "impl:lib/update.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:pointer-integrity",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:no-counts-in-context",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:retention-caps",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:init-refuses",
+      "target": "impl:lib/init.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:reproduce-command",
+      "target": "impl:lib/common.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:no-network",
+      "target": "impl:bin/majordomus",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:scoped-task",
+      "target": "impl:lib/start.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:git-identity",
+      "target": "impl:lib/start.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:consistency-check",
+      "target": "impl:lib/check.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:scope-enforcement",
+      "target": "impl:lib/check.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:divergence-label",
+      "target": "impl:lib/common.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:overlap-report",
+      "target": "impl:lib/check.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:drift-watch",
+      "target": "impl:lib/watch.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:handover-record",
+      "target": "impl:lib/handover.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:no-transcripts",
+      "target": "impl:lib/handover.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:finish-contract",
+      "target": "impl:lib/finish.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:typed-outcome",
+      "target": "impl:lib/finish.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:profile-axes",
+      "target": "impl:lib/update.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:capability-class",
+      "target": "impl:lib/update.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:minimum-context",
+      "target": "impl:lib/check.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:effort-escalation",
+      "target": "impl:lib/update.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:checkpoint-interval",
+      "target": "impl:lib/check.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:context-assembly",
+      "target": "impl:lib/context.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:context-selection-budget",
+      "target": "impl:lib/context.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:checkpoint-record",
+      "target": "impl:lib/checkpoint.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:record-resolution",
+      "target": "impl:lib/common.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:history-ledger-read",
+      "target": "impl:lib/history.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:record-retention",
+      "target": "impl:lib/history.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:decision-record",
+      "target": "impl:lib/decision.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:open-question-gate",
+      "target": "impl:lib/question.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:prompt-asset",
+      "target": "impl:lib/prompt.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:record-search",
+      "target": "impl:lib/search.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:continuity-reachable",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:worktree-ownership",
+      "target": "impl:lib/check.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:policy-parse",
+      "target": "test:test/cases/00_yaml_flatten.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:profile-validate",
+      "target": "test:test/cases/02_doctor_basic.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:wiring-reconciliation",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:exit-code-contract",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:projection-generation",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:projection-fingerprint",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:region-projection",
+      "target": "test:test/cases/13_region_projection.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:dispatcher-wiring",
+      "target": "test:test/cases/14_wiring_dispatcher.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:no-silent-overwrite",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:context-budget",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:pointer-integrity",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:no-counts-in-context",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:retention-caps",
+      "target": "test:test/cases/02_doctor_basic.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:init-refuses",
+      "target": "test:test/cases/01_init.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:reproduce-command",
+      "target": "test:test/cases/02_doctor_basic.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:no-network",
+      "target": "test:test/cases/08_no_forbidden_constructs.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:scoped-task",
+      "target": "test:test/cases/04_start_check.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:git-identity",
+      "target": "test:test/cases/04_start_check.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:consistency-check",
+      "target": "test:test/cases/04_start_check.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:scope-enforcement",
+      "target": "test:test/cases/04_start_check.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:divergence-label",
+      "target": "test:test/cases/04_start_check.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:overlap-report",
+      "target": "test:test/cases/04_start_check.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:drift-watch",
+      "target": "test:test/cases/07_watch.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:handover-record",
+      "target": "test:test/cases/05_handover.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:no-transcripts",
+      "target": "test:test/cases/05_handover.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:finish-contract",
+      "target": "test:test/cases/06_finish.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:typed-outcome",
+      "target": "test:test/cases/06_finish.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:profile-axes",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:capability-class",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:minimum-context",
+      "target": "test:test/cases/04_start_check.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:effort-escalation",
+      "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:checkpoint-interval",
+      "target": "test:test/cases/04_start_check.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:context-assembly",
+      "target": "test:test/cases/23_context.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:context-selection-budget",
+      "target": "test:test/cases/23_context.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:checkpoint-record",
+      "target": "test:test/cases/20_checkpoint.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:record-resolution",
+      "target": "test:test/cases/23_context.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:history-ledger-read",
+      "target": "test:test/cases/22_history.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:record-retention",
+      "target": "test:test/cases/22_history.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:decision-record",
+      "target": "test:test/cases/21_decision_question.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:open-question-gate",
+      "target": "test:test/cases/21_decision_question.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:prompt-asset",
+      "target": "test:test/cases/24_prompt_search.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:record-search",
+      "target": "test:test/cases/24_prompt_search.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:continuity-reachable",
+      "target": "test:test/cases/25_continuity_lifecycle.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:worktree-ownership",
+      "target": "test:test/cases/27_foreign_task.sh",
+      "kind": "proved_by"
+    }
+  ]
+}

@@ -14,7 +14,8 @@ pages="$(find "$PUB" -name '*.html')"
 # 1. data in sync with canonical sources
 if "$ROOT/scripts/generate-site-data" --check >/dev/null 2>&1; then ok sync "site/data/generated matches canonical inputs"; else bad sync "site/data/generated is stale; run scripts/generate-site-data"; fi
 # 2. generated data schema: every file parses and carries schema 1
-gen_files="project profiles policy capabilities lifecycle docs diagrams readme commands source"
+# derived from the directory, not listed here: a new generated file is checked the day it appears
+gen_files="$(find "$SITE/data/generated" -name '*.json' | sed 's#.*/##; s#\.json$##' | sort)"
 for f in $gen_files; do
   [ "$(jq -r '.schema' "$SITE/data/generated/$f.json" 2>/dev/null)" = 1 ] || bad schema "$f.json missing or schema != 1"
 done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -d ' ')) carries schema 1"
@@ -47,9 +48,9 @@ for l in $(grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PR
   t="$PUB$l"; [ -f "$t" ] || [ -f "$t/index.html" ] || [ -f "${t%/}/index.html" ] || { bad link "$l does not resolve"; missing=1; }
 done; [ "$missing" = 0 ] && ok link "every internal link resolves"
 # 7. assets present
-for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js images/logo-mark.svg images/social-card.png giallo-light.css giallo-dark.css; do
+for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/social-card.png giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
-done; ok asset "css, flowbite, alpine, mermaid, theme, diagrams, images, highlighting present"
+done; ok asset "css, flowbite, alpine, mermaid, cytoscape, theme, diagrams, graph, images, highlighting present"
 grep -qE '^[[:space:]]*\.dark ' "$PUB/giallo-dark.css" && ok darkcss "giallo-dark.css scoped under .dark" || bad darkcss "giallo-dark.css not scoped under .dark (site-build post-step)"
 # 8. no external runtime dependency: every script/stylesheet is served from this site's own origin
 BASE_URL="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')"
@@ -95,6 +96,28 @@ for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do
   claim="$(jq -r --arg i "$id" '.claims[] | select(.id==$i) | .claim' "$SITE/data/generated/capabilities.json")"
   if grep -qF "$claim" "$PUB/index.html" && ! grep -F "$claim" "$PUB/index.html" | grep -qF "guarantees/$id/"; then bad claims "homepage mentions claim $id without linking its page"; fi
 done
+# 13a. derived content is ignored: site/content-src/*.md is projected into site/content/, and
+# .gitignore names those projections one by one. A new page whose projection is not ignored
+# would be committed as if someone had written it by hand, and would then rot.
+for f in "$SITE"/content-src/*.md; do
+  [ -e "$f" ] || continue
+  rel="site/content/$(basename "$f")"
+  git -C "$ROOT" check-ignore -q "$rel" 2>/dev/null || bad ignored "$rel is projected from content-src but not in .gitignore"
+done; ok ignored "every projection of site/content-src/ is ignored, not committed"
+
+# 13b. graphs: every edge endpoint resolves to a node, and no graph is empty
+for g in architecture claims-graph; do
+  gf="$SITE/data/generated/$g.json"
+  dangling="$(jq -r '[.nodes[].id] as $n | [.edges[] | select((.source | IN($n[]) | not) or (.target | IN($n[]) | not)) | .source + " -> " + .target] | .[]' "$gf")"
+  [ -z "$dangling" ] || bad graphs "$g.json has an edge to a node that does not exist: $(printf '%s' "$dangling" | head -1)"
+  [ "$(jq '.nodes | length' "$gf")" -gt 0 ] || bad graphs "$g.json has no nodes"
+done
+# every claim node's route is a page that exists; the graph links into the site, not into space
+for r in $(jq -r '.nodes[] | select(.kind=="claim") | .route' "$SITE/data/generated/claims-graph.json"); do
+  [ -f "$PUB${r}index.html" ] || bad graphs "claims-graph node route $r has no page"
+done
+ok graphs "architecture and claims graphs are connected and their routes resolve"
+
 # 14. claims: the guarantees page carries every claim id count
 n="$(jq '.claims | length' "$SITE/data/generated/capabilities.json")"; m="$(grep -o '<tr class="align-top">' "$PUB/guarantees/index.html" | wc -l | tr -d ' ')"
 [ "$n" = "$m" ] && ok claims "$n claims rendered on /guarantees/" || bad claims "capabilities.json has $n claims, /guarantees/ renders $m"
