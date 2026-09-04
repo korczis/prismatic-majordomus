@@ -67,7 +67,7 @@ mj_ctxd_index_at() {
 mj_ctxd_files() {
   local tree local_rel vendor_rel
   tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"; vendor_rel="$(mj_rel "$MJ_RULES_DIR")/vendor"
-  ( cd "$MJ_ROOT" && find "$tree" -name '*.md' \( -type f -o -type l \) -print 2>/dev/null ) \
+  ( cd "$MJ_ROOT" && find "$tree" -name '*.md' -type f -print 2>/dev/null ) \
     | LC_ALL=C sort | while IFS= read -r f; do
         case "$f" in "$local_rel"/*|"$vendor_rel"/*) continue ;; esac
         printf '%s\n' "$f"
@@ -80,9 +80,6 @@ mj_ctxd_files() {
 mj_ctxd_scan() {
   local rel="$1" n="$2" f="$MJ_ROOT/$1" conv="$3" providers="$4" base dir depth st tmp
   base="${rel##*/}"
-  if [ -L "$f" ]; then
-    mj_ctxd_problem refused-path "$rel" "is a symbolic link; the tree is read literally and links are not followed" "ls -l $rel"; return 1
-  fi
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ctxd.XXXXXX")"
   # stage 1: the front matter, or exit 2 (none) / 4 (never closes)
   awk 'NR == 1 && $0 != "---" { exit 2 }
@@ -91,21 +88,23 @@ mj_ctxd_scan() {
        END { if (!c) exit (n ? 4 : 2); if (!n) exit 2 }' "$f" > "$tmp.fm"; st=$?
   case "$st" in
     0) ;;
-    4) rm -f "$tmp" "$tmp.fm"; mj_ctxd_problem invalid-front-matter "$rel" "front matter never closes (no second ---)" "head -n 20 $rel"; return 1 ;;
+    4) rm -f "$tmp" "$tmp.fm"; mj_ctxd_problem invalid-front-matter "$rel" "front matter never closes (no second ---)" "head -n 20 '$rel'"; return 1 ;;
     *) rm -f "$tmp" "$tmp.fm"
-       case " $conv " in *" $base "*) mj_ctxd_problem invalid-front-matter "$rel" "carries no front matter, and the manifest names $base as a context document (context.documents)" "head -n 5 $rel"; return 1 ;; esac
+       case " $conv " in *" $base "*) mj_ctxd_problem invalid-front-matter "$rel" "carries no front matter, and the manifest names $base as a context document (context.documents)" "head -n 5 '$rel'"; return 1 ;; esac
        return 2 ;;
   esac
   if ! mj_yaml_flatten "$tmp.fm" > "$tmp" 2>/dev/null; then
+    local declares=0; grep -qE '^(schema: context/|kind: context$)' "$tmp.fm" && declares=1
     rm -f "$tmp" "$tmp.fm"
-    case " $conv " in *" $base "*) mj_ctxd_problem invalid-front-matter "$rel" "front matter does not parse" "head -n 20 $rel"; return 1 ;; esac
+    case " $conv " in *" $base "*) declares=1 ;; esac
+    [ "$declares" = 1 ] && { mj_ctxd_problem invalid-front-matter "$rel" "front matter does not parse: $(mj_yaml_flatten "$f" 2>&1 >/dev/null | sed 's/^ERROR://' | head -n 1)" "head -n 20 '$rel'"; return 1; }
     return 2
   fi
   rm -f "$tmp.fm"
   local kind schema; kind="$(mj_yget "$tmp" kind)"; schema="$(mj_yget "$tmp" schema)"
   if [ "$kind" != context ] && [ "${schema%%/*}" != context ]; then
     rm -f "$tmp"
-    case " $conv " in *" $base "*) mj_ctxd_problem invalid-front-matter "$rel" "front matter is not the context contract (kind '${kind:-absent}'), and the manifest names $base as a context document" "head -n 20 $rel"; return 1 ;; esac
+    case " $conv " in *" $base "*) mj_ctxd_problem invalid-front-matter "$rel" "front matter is not the context contract (kind '${kind:-absent}'), and the manifest names $base as a context document" "head -n 20 '$rel'"; return 1 ;; esac
     return 2
   fi
   if [ "$schema" != "$MJ_CTXD_SCHEMA" ]; then
@@ -161,7 +160,7 @@ mj_ctxd_scan() {
   st=$?
   rm -f "$tmp"
   if [ "$st" != 0 ]; then
-    mj_ctxd_problem "${reason%%:*}" "$rel" "${reason#*: }" "head -n 20 $rel"; return 1
+    mj_ctxd_problem "${reason%%:*}" "$rel" "${reason#*: }" "head -n 20 '$rel'"; return 1
   fi
   return 0
 }
@@ -176,9 +175,18 @@ mj_ctxd_load() {
   MJ_CTXD_COUNT=0; MJ_CTXD_LOADED=1
   local conv providers f
   conv="$(mj_ctxd_conventions | tr '\n' ' ')"; providers="$(mj_ctxd_providers)"
-  for f in $(mj_ctxd_files); do
+  # (7) a symbolic link anywhere under the tree, file or directory, whatever its name: the
+  # tree is read literally, and a link would let a document live outside what the manifest
+  # names or appear under two paths
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    case "$f" in "$(mj_rel "$MJ_AI_LOCAL_DIR")"/*) continue ;; esac
+    mj_ctxd_problem refused-path "$f" "is a symbolic link; the tree is read literally and links are not followed" "ls -l '$f'"
+  done < <(cd "$MJ_ROOT" && find "$(mj_ctxd_tree)" -type l -print 2>/dev/null | LC_ALL=C sort)
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
     if mj_ctxd_scan "$f" "$MJ_CTXD_COUNT" "$conv" "$providers"; then MJ_CTXD_COUNT=$((MJ_CTXD_COUNT + 1)); fi
-  done
+  done < <(mj_ctxd_files)
   mj_ctxd_cross_check
   return 0
 }
@@ -190,7 +198,7 @@ mj_ctxd_cross_check() {
   # one id, one file
   awk -F= '/^docs\.[0-9]+\.id=/ { print $2 }' "$MJ_CTXD_FLAT" | LC_ALL=C sort | uniq -d | while IFS= read -r id; do
     p="$(awk -F= -v id="$id" '/^docs\.[0-9]+\.id=/ && $2 == id { split($1, a, "."); n = a[2]; print n }' "$MJ_CTXD_FLAT" \
-         | while IFS= read -r j; do mj_ctxd "$j" path; printf ' '; done)"
+         | while IFS= read -r j; do printf '%s ' "$(mj_ctxd "$j" path)"; done)"
     mj_ctxd_problem duplicate-id "$id" "claimed by two files: ${p% }" "grep -rln '^id: $id$' $tree"
   done
   i=0
@@ -198,9 +206,9 @@ mj_ctxd_cross_check() {
     rel="$(mj_ctxd "$i" path)"
     # explicit paths exist, are directories, and lie inside the tree
     for p in $(mj_ctxd_list "$i" paths); do
-      if ! other="$(mj_norm_path "$p")"; then mj_ctxd_problem broken-reference "$rel" "paths entry '$p' is not a repository-relative path" "head -n 20 $rel"; continue; fi
-      mj_path_contains "$tree" "$other" || { mj_ctxd_problem broken-reference "$rel" "paths entry '$p' lies outside the tree $tree/" "head -n 20 $rel"; continue; }
-      [ -d "$MJ_ROOT/$other" ] || mj_ctxd_problem broken-reference "$rel" "paths entry '$p' is not a directory in this repository" "ls -d $p"
+      if ! other="$(mj_norm_path "$p")"; then mj_ctxd_problem broken-reference "$rel" "paths entry '$p' is not a repository-relative path" "head -n 20 '$rel'"; continue; fi
+      mj_path_contains "$tree" "$other" || { mj_ctxd_problem broken-reference "$rel" "paths entry '$p' lies outside the tree $tree/" "head -n 20 '$rel'"; continue; }
+      [ -d "$MJ_ROOT/$other" ] || mj_ctxd_problem broken-reference "$rel" "paths entry '$p' is not a directory in this repository" "ls -d '$p'"
     done
     # every tracked pathspec covers at least one file the index knows
     for p in $(mj_ctxd_list "$i" tracks); do
@@ -210,7 +218,7 @@ mj_ctxd_cross_check() {
     # supersedes: the target exists, is a proper ancestor-scope document, and is not final
     for id in $(mj_ctxd_list "$i" supersedes); do
       if ! j="$(mj_ctxd_index "$id")"; then mj_ctxd_problem broken-reference "$rel" "supersedes '$id', which no document declares" "majordomus context list"; continue; fi
-      [ "$j" = "$i" ] && { mj_ctxd_problem cycle "$rel" "supersedes itself" "head -n 20 $rel"; continue; }
+      [ "$j" = "$i" ] && { mj_ctxd_problem cycle "$rel" "supersedes itself" "head -n 20 '$rel'"; continue; }
       if ! mj_path_contains "$(mj_ctxd "$j" dir)" "$(mj_ctxd "$i" dir)"; then
         mj_ctxd_problem broken-reference "$rel" "supersedes '$id' at $(mj_ctxd "$j" path), which is not in its ancestor chain; a document may only supersede what applies above it" "majordomus context explain $(mj_ctxd "$i" dir)"; continue
       fi
@@ -291,7 +299,10 @@ mj_ctxd_resolve() {
         subtree)
           if [ "$dir" = "$t" ]; then reason="the target directory (scope subtree)"
           elif mj_path_contains "$dir" "$t"; then reason="ancestor at depth $depth (scope subtree)"; fi ;;
-        explicit) for p in $(mj_ctxd_list "$i" paths); do mj_path_contains "$p" "$t" && { reason="declared path $p (scope explicit)"; break; }; done ;;
+        # an explicit document is as specific as the path it names, not as its own directory
+        explicit) for p in $(mj_ctxd_list "$i" paths); do
+                    mj_path_contains "$p" "$t" && { reason="declared path $p (scope explicit)"; depth="$(printf 'x%s\n' "${p#"$tree"}" | awk -F/ '{ print NF - 1 }')"; break; }
+                  done ;;
       esac
     else
       [ "$dir" = "$tree" ] && [ "$scope" = subtree ] && reason="the tree root; the target is outside $tree/"
@@ -364,11 +375,11 @@ mj_ctxd_json_doc() {
   printf '{"index":%s,"id":"%s","path":"%s","dir":"%s","depth":%s,"scope":"%s","composition":"%s","order":%s,"status":"%s","title":"%s","providers":[' \
     "$idx" "$(mj_ctxd "$i" id)" "$(mj_json_esc "$(mj_ctxd "$i" path)")" "$(mj_json_esc "$(mj_ctxd "$i" dir)")" "$(mj_ctxd "$i" depth)" \
     "$(mj_ctxd "$i" scope)" "$(mj_ctxd "$i" composition)" "$(mj_ctxd "$i" order)" "$(mj_ctxd "$i" status)" "$(mj_json_esc "$(mj_ctxd "$i" title)")"
-  first=1; for v in $(mj_ctxd_list "$i" providers); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$v"; first=0; done
+  first=1; for v in $(mj_ctxd_list "$i" providers); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$(mj_json_esc "$v")"; first=0; done
   printf '],"audience":['
-  first=1; for v in $(mj_ctxd_list "$i" audience); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$v"; first=0; done
+  first=1; for v in $(mj_ctxd_list "$i" audience); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$(mj_json_esc "$v")"; first=0; done
   printf '],"supersedes":['
-  first=1; for v in $(mj_ctxd_list "$i" supersedes); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$v"; first=0; done
+  first=1; for v in $(mj_ctxd_list "$i" supersedes); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$(mj_json_esc "$v")"; first=0; done
   printf '],"tracks":['
   first=1; for v in $(mj_ctxd_list "$i" tracks); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$(mj_json_esc "$v")"; first=0; done
   printf '],"paths":['
@@ -387,14 +398,18 @@ mj_ctxd_json_doc() {
 #   base REF   REF against the working tree, plus untracked files
 mj_ctxd_changes() {
   local mode="$1" base="${2:-}"
+  [ "$mode" != base ] || mj_ctxd_require_ref "$base"
   case "$mode" in
     staged) mj_git diff --name-status -M --cached 2>/dev/null ;;
-    base)   mj_git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1 || mj_die "$MJ_EX_USAGE" "context: --base '$base' is not a commit in this repository"
-            mj_git diff --name-status -M "$base" 2>/dev/null
+    base)   mj_git diff --name-status -M "$base" 2>/dev/null
             mj_git ls-files --others --exclude-standard 2>/dev/null | sed 's/^/A\t/' ;;
     *)      mj_git diff --name-status -M HEAD 2>/dev/null
             mj_git ls-files --others --exclude-standard 2>/dev/null | sed 's/^/A\t/' ;;
   esac | awk -F'\t' '{ s = substr($1, 1, 1); if (s == "R" || s == "C") print s "\t" $2 "\t" $3; else print s "\t" $2 "\t" }' | LC_ALL=C sort -t "$MJ_CTXD_TAB" -k2,2
+}
+
+mj_ctxd_require_ref() {
+  mj_git rev-parse --verify --quiet "$1^{commit}" >/dev/null 2>&1 || mj_die "$MJ_EX_USAGE" "context: --base '$1' is not a commit in this repository"
 }
 
 # mj_ctxd_affected MODE [BASE]: what a change set touches, as findings. Sets MJ_CTXD_AFFECTED
@@ -416,13 +431,14 @@ mj_ctxd_affected() {
       MJ_CTXD_AFFECTED=$((MJ_CTXD_AFFECTED + MJ_CTXD_COUNT)); continue
     fi
     if [ "$p" = "$pol" ]; then
-      mj_info context "$p" "$(mj_ctxd_status_word "$st"); the projections it names are re-checked against their stamps (majordomus doctor)" "$rep -- $p"; continue
+      mj_info context "$p" "$(mj_ctxd_status_word "$st"); a projection rendered from the previous policy is stale-projection under check-sync and drift under watch" "$rep -- $p"; continue
     fi
     case "$p" in
-      "$tree"/*.md|"$old")
-        case "$p" in *.md) ;; *) continue ;; esac
-        case "$p" in "$tree"/*) ;; *) continue ;; esac
+      "$tree"/*.md)
         if [ "$st" = D ]; then
+          local from="HEAD"; [ "$mode" = base ] && from="$base"
+          mj_git show "$from:$old" 2>/dev/null | awk 'NR == 1 && $0 != "---" { exit 1 } NR > 1 && $0 == "---" { exit 1 } NR > 1' \
+            | grep -qE '^(schema: context/|kind: context$)' || continue
           mj_info context "$old" "deleted; a document that superseded it is a broken-reference under validate, and its scope now inherits from above" "majordomus context validate"
           MJ_CTXD_AFFECTED=$((MJ_CTXD_AFFECTED + 1)); continue
         fi
@@ -430,11 +446,13 @@ mj_ctxd_affected() {
         dir="$(mj_ctxd "$i" dir)"
         # the documents below its scope: every one resolved under it changes with it
         n=0; ids=""; j=0
-        while [ "$j" -lt "$MJ_CTXD_COUNT" ]; do
-          if [ "$j" != "$i" ] && mj_path_contains "$dir" "$(mj_ctxd "$j" dir)"; then n=$((n + 1)); ids="$ids $(mj_ctxd "$j" id)"; fi
-          j=$((j + 1))
-        done
-        line="$(mj_ctxd_status_word "$st") $(mj_ctxd "$i" id); scope $dir/ ($(mj_ctxd "$i" scope))"
+        if [ "$(mj_ctxd "$i" status)" = active ]; then
+          while [ "$j" -lt "$MJ_CTXD_COUNT" ]; do
+            if [ "$j" != "$i" ] && mj_ctxd_reaches "$i" "$(mj_ctxd "$j" dir)"; then n=$((n + 1)); ids="$ids $(mj_ctxd "$j" id)"; fi
+            j=$((j + 1))
+          done
+        fi
+        line="$(mj_ctxd_status_word "$st") $(mj_ctxd "$i" id); scope $dir/ ($(mj_ctxd "$i" scope)$([ "$(mj_ctxd "$i" status)" = deprecated ] && printf ', deprecated: applied nowhere'))"
         [ "$n" -gt 0 ] && line="$line and $n document(s) resolved below it:${ids}"
         if [ "$st" = R ]; then
           k="${old%/*}"; [ "$k" = "$old" ] && k="."
@@ -463,6 +481,16 @@ mj_ctxd_affected() {
   [ "$noglob" = 1 ] || set +f
   return 0
 }
+# does document $1 apply to directory $2, by its own scope? (directory: only its own; subtree:
+# everything below; explicit: what it names)
+mj_ctxd_reaches() {
+  local i="$1" d="$2" p
+  case "$(mj_ctxd "$i" scope)" in
+    directory) [ "$(mj_ctxd "$i" dir)" = "$d" ] ;;
+    subtree) mj_path_contains "$(mj_ctxd "$i" dir)" "$d" ;;
+    explicit) for p in $(mj_ctxd_list "$i" paths); do mj_path_contains "$p" "$d" && return 0; done; return 1 ;;
+  esac
+}
 mj_ctxd_status_word() { case "$1" in A) printf 'added' ;; M) printf 'modified' ;; D) printf 'deleted' ;; R) printf 'moved' ;; C) printf 'copied' ;; *) printf 'changed' ;; esac; }
 # the changed paths under one pathspec, as "status path" lines, through git's own matching
 mj_ctxd_track_hits() {
@@ -474,4 +502,18 @@ mj_ctxd_track_hits() {
       *)      mj_git diff --name-status HEAD -- "$spec" 2>/dev/null; mj_git ls-files --others --exclude-standard -- "$spec" 2>/dev/null | sed 's/^/A\t/' ;;
     esac
   } | awk -F'\t' '{ print substr($1, 1, 1) " " $NF }' | LC_ALL=C sort -u
+}
+
+# ---------------------------------------------------------------- the doctrine
+# majordomus.context-integrity: every document under the tree carries the contract and the
+# tree composes. Under doctor a problem is a failure; under watch the same problem is drift.
+mj_validate_context() {
+  local cls subj msg rep
+  mj_ctxd_load
+  if mj_ctxd_problems; then
+    while IFS="$MJ_CTXD_TAB" read -r cls subj msg rep; do mj_doctrine_fail context "$subj" "$cls: $msg" "$rep"; done < "$MJ_CTXD_PROBLEMS"
+  else
+    mj_doctrine_ok context "$(mj_ctxd_tree)/" "$MJ_CTXD_COUNT context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle" "majordomus context validate"
+  fi
+  return 0
 }

@@ -465,6 +465,24 @@
       "note": "doctor runs the resolver, renders every prompt asset, validates both parsed stores and builds the context. A directory of records that no command reads is the failure this tool exists to catch."
     },
     {
+      "id": "claim:context-documents",
+      "kind": "claim",
+      "label": "The context that applies to a path is composed from the layer's scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing",
+      "status": "guaranteed",
+      "route": "/guarantees/context-documents/",
+      "external": false,
+      "note": "A document is a Markdown file under .ai/ whose front matter carries schema context/v1; the file name is a convention and the id is the identity. Ordering is depth, then declared order, then path. Providers and audience filter; extend, replace and final compose; a duplicate id, a dangling reference, a superseded final document or a cycle is refused by name."
+    },
+    {
+      "id": "claim:context-impact",
+      "kind": "claim",
+      "label": "The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing",
+      "status": "guaranteed",
+      "route": "/guarantees/context-impact/",
+      "external": false,
+      "note": "context affected reads the working tree, the index, or a base ref, with renames detected; a tracked source change is a WARN to review and never an exit code, because the tool cannot decide whether prose still describes code. context check-sync is validate, then every projection against its stamp, then affected; test/cases/71_context_sync.sh proves the exit codes."
+    },
+    {
       "id": "claim:ai-layer-manifest",
       "kind": "claim",
       "label": "The repository's AI layer is one directory whose manifest names every section, readable without the tool",
@@ -721,6 +739,13 @@
       "id": "impl:lib/context.sh",
       "kind": "implementation",
       "label": "lib/context.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/context_docs.sh",
+      "kind": "implementation",
+      "label": "lib/context_docs.sh",
       "route": null,
       "external": false
     },
@@ -1164,6 +1189,20 @@
       "label": "test/cases/67_rule_dag.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/67_rule_dag.sh"
+    },
+    {
+      "id": "test:test/cases/69_context_documents.sh",
+      "kind": "test",
+      "label": "test/cases/69_context_documents.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/69_context_documents.sh"
+    },
+    {
+      "id": "test:test/cases/70_context_impact.sh",
+      "kind": "test",
+      "label": "test/cases/70_context_impact.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/70_context_impact.sh"
     }
   ],
   "edges": [
@@ -1414,6 +1453,16 @@
     },
     {
       "source": "claim:continuity-reachable",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:context-documents",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:context-impact",
       "target": "source:docs/CLI.md",
       "kind": "specified_by"
     },
@@ -1793,6 +1842,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:context-documents",
+      "target": "impl:lib/context_docs.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:context-impact",
+      "target": "impl:lib/context_docs.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:ai-layer-manifest",
       "target": "impl:lib/init.sh",
       "kind": "implemented_by"
@@ -2125,6 +2184,16 @@
     {
       "source": "claim:continuity-reachable",
       "target": "test:test/cases/25_continuity_lifecycle.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:context-documents",
+      "target": "test:test/cases/69_context_documents.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:context-impact",
+      "target": "test:test/cases/70_context_impact.sh",
       "kind": "proved_by"
     },
     {

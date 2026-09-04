@@ -658,6 +658,32 @@
       "test_case": "25_continuity_lifecycle"
     },
     {
+      "id": "context-documents",
+      "claim": "The context that applies to a path is composed from the layer's scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing",
+      "source": "docs/CLI.md",
+      "implementation": "lib/context_docs.sh",
+      "test": "test/cases/69_context_documents.sh",
+      "status": "guaranteed",
+      "note": "A document is a Markdown file under .ai/ whose front matter carries schema context/v1; the file name is a convention and the id is the identity. Ordering is depth, then declared order, then path. Providers and audience filter; extend, replace and final compose; a duplicate id, a dangling reference, a superseded final document or a cycle is refused by name.",
+      "responsibility": "layer",
+      "source_route": "/docs/cli/",
+      "command": null,
+      "test_case": "69_context_documents"
+    },
+    {
+      "id": "context-impact",
+      "claim": "The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing",
+      "source": "docs/CLI.md",
+      "implementation": "lib/context_docs.sh",
+      "test": "test/cases/70_context_impact.sh",
+      "status": "guaranteed",
+      "note": "context affected reads the working tree, the index, or a base ref, with renames detected; a tracked source change is a WARN to review and never an exit code, because the tool cannot decide whether prose still describes code. context check-sync is validate, then every projection against its stamp, then affected; test/cases/71_context_sync.sh proves the exit codes.",
+      "responsibility": "layer",
+      "source_route": "/docs/cli/",
+      "command": null,
+      "test_case": "70_context_impact"
+    },
+    {
       "id": "ai-layer-manifest",
       "claim": "The repository's AI layer is one directory whose manifest names every section, readable without the tool",
       "source": "docs/SCHEMAS.md",

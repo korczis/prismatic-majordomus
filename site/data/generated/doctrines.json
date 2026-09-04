@@ -197,6 +197,35 @@
       "source": "share/standard/majordomus/rules/catalogue-integrity.v1.md"
     },
     {
+      "id": "majordomus.context-integrity",
+      "slug": "context-integrity",
+      "title": "Context integrity",
+      "class": "blocking",
+      "principle": "Load minimum sufficient context",
+      "statement": "Every context document under the layer carries the context contract with a unique identity, every reference in it resolves within its ancestor chain, no final document is superseded, and the effective context for any path is computed from the tree root down in one deterministic order.",
+      "summary": "The scoped context documents under the AI layer carry the context contract, compose into one deterministic chain for every path, and a tree that does not validate resolves nothing.",
+      "validator": "context",
+      "validator_function": "mj_validate_context",
+      "defined_in": "lib/context_docs.sh",
+      "category": "context",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "context-documents",
+        "context-impact"
+      ],
+      "test": "test/cases/69_context_documents.sh",
+      "depends_on": [
+        "majordomus.ai-layout-integrity@1",
+        "majordomus.minimum-sufficient-context@1"
+      ],
+      "source": "share/standard/majordomus/rules/context-integrity.v1.md"
+    },
+    {
       "id": "majordomus.policy-integrity",
       "slug": "policy-integrity",
       "title": "Policy integrity",
@@ -783,8 +812,8 @@
     }
   ],
   "counts": {
-    "declared": 28,
-    "blocking": 24,
+    "declared": 29,
+    "blocking": 25,
     "advisory": 4
   },
   "index": {
@@ -795,26 +824,27 @@
     "majordomus.policy-completeness": 4,
     "majordomus.bootstrap-integrity": 5,
     "majordomus.catalogue-integrity": 6,
-    "majordomus.policy-integrity": 7,
-    "majordomus.blocker-resolution": 8,
-    "majordomus.decision-records": 9,
-    "majordomus.dag-integrity": 10,
-    "majordomus.doctrine-wiring-integrity": 11,
-    "majordomus.enforcement-wiring": 12,
-    "majordomus.handover-integrity": 13,
-    "majordomus.note-integrity": 14,
-    "majordomus.profile-requirements": 15,
-    "majordomus.project-integrity": 16,
-    "majordomus.projection-integrity": 17,
-    "majordomus.context-budget": 18,
-    "majordomus.prompt-integrity": 19,
-    "majordomus.questions-store-integrity": 20,
-    "majordomus.retention-caps": 21,
-    "majordomus.roadmap-integrity": 22,
-    "majordomus.rule-package-integrity": 23,
-    "majordomus.scope-integrity": 24,
-    "majordomus.state-consistency": 25,
-    "majordomus.task-continuity": 26,
-    "majordomus.verification-integrity": 27
+    "majordomus.context-integrity": 7,
+    "majordomus.policy-integrity": 8,
+    "majordomus.blocker-resolution": 9,
+    "majordomus.decision-records": 10,
+    "majordomus.dag-integrity": 11,
+    "majordomus.doctrine-wiring-integrity": 12,
+    "majordomus.enforcement-wiring": 13,
+    "majordomus.handover-integrity": 14,
+    "majordomus.note-integrity": 15,
+    "majordomus.profile-requirements": 16,
+    "majordomus.project-integrity": 17,
+    "majordomus.projection-integrity": 18,
+    "majordomus.context-budget": 19,
+    "majordomus.prompt-integrity": 20,
+    "majordomus.questions-store-integrity": 21,
+    "majordomus.retention-caps": 22,
+    "majordomus.roadmap-integrity": 23,
+    "majordomus.rule-package-integrity": 24,
+    "majordomus.scope-integrity": 25,
+    "majordomus.state-consistency": 26,
+    "majordomus.task-continuity": 27,
+    "majordomus.verification-integrity": 28
   }
 }

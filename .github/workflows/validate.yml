@@ -35,6 +35,12 @@ jobs:
           git config core.hooksPath .githooks
           bin/majordomus doctor
           bin/majordomus watch
+      # The scoped context documents: the tree validates, every projection matches its
+      # stamp, and this repository resolves its own context from the root down.
+      - name: context documents in sync
+        run: |
+          bin/majordomus context check-sync
+          bin/majordomus context resolve lib | grep -q '^01  ai.layer'
       # The continuity subsystem reached through the real CLI, in this checkout rather than
       # in a disposable one: the commands a worker actually runs must work where the tool
       # supervises itself, not only in a fixture.

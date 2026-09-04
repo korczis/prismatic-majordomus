@@ -220,6 +220,16 @@
       "external": false
     },
     {
+      "id": "lib/context_docs.sh",
+      "kind": "module",
+      "label": "context_docs",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/handovers",
       "kind": "artifact",
       "label": "local/state/handovers",
@@ -833,6 +843,11 @@
     },
     {
       "source": "lib/context.sh",
+      "target": "lib/context_docs.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/context.sh",
       "target": "lib/decision.sh",
       "kind": "sources"
     },
@@ -1014,6 +1029,11 @@
     {
       "source": "lib/context.sh",
       "target": ".ai/local/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/context_docs.sh",
+      "target": ".ai/repo/policy.yaml",
       "kind": "uses"
     },
     {

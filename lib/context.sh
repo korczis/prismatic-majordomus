@@ -151,6 +151,27 @@ mj_context_sections() {
     } > "$MJ_CTX_TMP/30.profile"
   fi
 
+  # 3b. the context documents that apply to the task's scope: the chain for each claimed
+  #     path, ids only; the documents themselves are read where they live
+  if [ "$have_task" = 1 ]; then
+    mj_ctxd_load
+    if mj_ctxd_problems; then
+      mj_ctx_excl "context documents" "the tree does not validate (majordomus context validate)"
+    else
+      local sp seen="" chain
+      { printf '## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain <path>)\n'
+        for sp in $(mj_ylist "$MJ_CUR_FLAT" scope); do
+          case " $seen " in *" $sp "*) continue ;; esac; seen="$seen $sp"
+          [ -e "$MJ_ROOT/$sp" ] || { printf '%s  (absent)\n' "$sp"; continue; }
+          mj_ctxd_target "$sp"; mj_ctxd_resolve "" ""
+          chain="$(while IFS="$MJ_CTXD_TAB" read -r i _; do mj_ctxd "$i" id; done < "$MJ_CTXD_CHAIN" | paste -sd, - | sed 's/,/, /g')"
+          rm -f "$MJ_CTXD_CHAIN" "$MJ_CTXD_EXCLUDED"
+          printf '%s  %s\n' "$sp" "${chain:-(none)}"
+        done
+      } > "$MJ_CTX_TMP/35.documents"
+    fi
+  else mj_ctx_excl "context documents" "no active task names a scope; run: majordomus context resolve <path>"; fi
+
   # 4. open questions — blockers are never dropped for budget
   local qf="$MJ_STATE_DIR/open-questions.md" maxi
   maxi="$(mj_pol_req context.max_list_items)"
@@ -270,7 +291,7 @@ mj_ctx_verification() {
 # Sections are dropped in a fixed order, least reliable evidence first, and every drop is
 # named in EXCLUDED. Bodies of authored records degrade to a pointer rather than vanish.
 MJ_CTX_DROP_ORDER="90.history 80.files 50.decisions 60.checkpoint 70.handover"
-MJ_CTX_ORDER="10.git 20.task 30.profile 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt"
+MJ_CTX_ORDER="10.git 20.task 30.profile 35.documents 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt"
 
 # Render the whole document, including its own header and trailer, into $1. The budget
 # governs what a worker actually receives, so the count must be of this file and not of
@@ -342,7 +363,7 @@ mj_context_json() {
   else printf ',"task":null'; fi
   printf ',"sections":['
   first=1
-  for d in 30.profile 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt; do
+  for d in 30.profile 35.documents 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt; do
     [ -f "$MJ_CTX_TMP/$d" ] || continue
     [ "$first" = 1 ] || printf ','
     printf '{"id":"%s","lines":%s,"text":"%s"}' "${d#*.}" "$(mj_lines "$MJ_CTX_TMP/$d")" "$(mj_json_file "$MJ_CTX_TMP/$d")"
@@ -416,6 +437,7 @@ usage: majordomus context $1 <path> [--provider <name>] [--audience human|agent]
   specific first: the tree root, each ancestor, the target; outside .ai/ the tree root plus
   every document whose tracks cover the path. --provider and --audience filter; a document
   superseded by one below it leaves the chain. Refuses (10) when the tree does not validate.
+  a document with no audience line addresses both human and agent
 $([ "$1" = explain ] && printf '  explain adds why each document applies and lists every candidate left out, with the reason\n')
 H
 ;;
@@ -433,7 +455,7 @@ usage: majordomus context affected [--base <ref> | --staged | --worktree] [--jso
   what a change set touches: a changed document and every document resolved below it, a
   move with its ancestry change, a deletion, the manifest (everything), the policy (the
   projections), and every document whose tracks cover a changed path (WARN: review it).
-  An unrelated change prints nothing. Read-only; exit 0.
+  An unrelated change prints nothing. Read-only; exit 0, or 10 when the tree does not validate.
 H
 ;;
     check-sync) cat <<H
@@ -534,11 +556,14 @@ mj_context_docs_check_sync() {
   else mj_ok context "$(mj_ctxd_tree)/" "$MJ_CTXD_COUNT document(s) validate"; fi
   # the projections: absent is doctor's finding (missing, not stale); a hand edit or a
   # stamp that no longer matches is the projection saying something the policy does not
+  local psha tmp; tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ctxd.pol.XXXXXX")"; mj_policy_cat > "$tmp"; psha="$(mj_sha256 "$tmp")"; rm -f "$tmp"
   while [ -n "$(mj_pol "projections.$j.target")" ]; do
     tgt="$(mj_pol "projections.$j.target")"; prov="$(mj_pol "projections.$j.provider")"
-    st="$(mj_projection_status "$tgt" "$(mj_projection_mode "$j")" "$prov")"; st="${st%% *}"
+    st="$(mj_projection_status "$tgt" "$(mj_projection_mode "$j")" "$prov")"
+    local stamped="${st#* }"; st="${st%% *}"
     case "$st" in
-      ok) mj_ok context "$tgt" "projection for $prov matches its stamp" ;;
+      ok) if [ "$stamped" = "${psha:0:12}" ]; then mj_ok context "$tgt" "projection for $prov matches its stamp and the policy as it is"
+          else mj_drift context "$tgt" "stale-projection: rendered from policy $stamped, and the policy is now ${psha:0:12}" "majordomus update --dry-run"; [ "$rc" = 0 ] && rc="$MJ_EX_DRIFT"; fi ;;
       absent|region_absent|no_template) mj_info context "$tgt" "projection for $prov is $st (majordomus doctor reports it; majordomus update writes it)" "majordomus update" ;;
       *) mj_drift context "$tgt" "stale-projection: $st; the projection for $prov no longer matches its stamp" "majordomus update --diff $tgt"; [ "$rc" = 0 ] && rc="$MJ_EX_DRIFT" ;;
     esac
