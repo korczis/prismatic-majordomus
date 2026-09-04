@@ -22,6 +22,9 @@ version: 1                               # schema version; only 1 is valid in v0
 
 context:
   always_loaded_budget_lines: 150        # hard cap on the always-loaded projection
+  builder_budget_lines: 300              # hard cap on what `majordomus context` prints
+  recent_decisions: 5                    # decisions offered to a worker, newest first
+  max_list_items: 20                     # cap on any list inside the assembled context
   strategy: minimum-sufficient           # documentation of intent; projected into instructions
   transcript_is_state: false             # projected as a rule; never true in v0.1
 
@@ -37,6 +40,10 @@ verification:
     - state_updated
     - no_open_blockers
     - note_present
+
+checkpoint:
+  max_body_lines: 40                     # a body over this is refused, not truncated
+  retention_max_files: 500               # doctor reports when exceeded
 
 handover:
   required_sections: [Objective, Current State, Next Action]
@@ -183,23 +190,54 @@ working_tree: dirty                   # clean | dirty
 Append-only, dated, one entry per decision. Human-authored. Read by `check --explain`
 (printed as context) and by projections (referenced by path, never inlined).
 
+Append-only. `decision add` writes one entry with `Task` and `Head` computed; the
+remaining fields come from its options. `--why` is required, because a decision with no
+recorded reason cannot be reviewed later, only re-argued. Absent optional fields are
+written as `-` rather than omitted, so every entry has the same shape.
+
+An entry is never edited or deleted. `--supersedes` records that a later decision replaced
+an earlier one, and refuses text that matches no recorded decision.
+
 ```markdown
 ## 2026-09-03 — token refresh uses the existing session store
-Task: t-20260903-193012-a4f1
-Decided: reuse SessionStore rather than a new cache; one source of truth for expiry.
-Rejected: separate refresh cache (two expiry clocks).
+Task: t-20260903193012-a4f1
+Head: 9b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b
+Why: one source of truth for expiry; a second cache would mean two expiry clocks
+Rejected: a separate refresh cache
 Evidence: lib/auth/session_store.rb#expiry
+Supersedes: -
 ```
+
+`check`, `doctor` and `watch` report an entry missing `Task`, `Head` or `Why` as a
+warning: the file is hand-editable by design, and an entry nothing can attribute is a
+decision that no gate will ever find. Text inside an HTML comment is the file's own
+template and is not an entry.
 
 ## `.majordomus/state/open-questions.md`
 
 Things blocked on a human. `finish --outcome completed` refuses while any entry for the
 current task is `unresolved`.
 
+Written by `question add` and rewritten in place by `question resolve`. Resolving edits the
+line because an index of what is still open must not accumulate; the append-only record of
+every opening and resolution, with its answer, is the ledger.
+
 ```markdown
-- [unresolved] t-20260903-193012-a4f1 — token refresh window: 15 min or 60? needs product decision (2026-09-03)
-- [resolved 2026-09-02] t-20260902-... — keep legacy callback path — yes, until Q4
+- [unresolved] t-20260903193012-a4f1 — token refresh window: 15 or 60 minutes? (2026-09-03)
+- [resolved 2026-09-02] t-20260902120000-b3d1 — keep the legacy callback path — yes, until Q4
 ```
+
+Exactly two line shapes are valid:
+
+```
+- [unresolved] <task id> — <question> (<YYYY-MM-DD>)
+- [resolved <YYYY-MM-DD>] <task id> — <question> — <answer>
+```
+
+` — ` separates the fields, so a question may not contain it. Any other `- [` line is a
+**failure** in `check`, `doctor` and `watch`, not a warning: this file is a gate on
+acceptance, and a gate that cannot read an entry is a gate that can be bypassed by
+mistyping one.
 
 ---
 
@@ -248,6 +286,87 @@ front-matter key is rejected. Mode `0600`. Created atomically. Never staged.
 
 ---
 
+## `.majordomus/state/checkpoints/<file>.md`
+
+Filename and front matter are exactly a handover's; only the directory and the body rules
+differ. Written by `checkpoint`, mode `0600`, created atomically, never staged.
+
+```markdown
+---
+schema_version: 1
+created_at: 2026-09-03T19:45:00Z
+task_id: t-20260903193012-a4f1
+profile: debugging
+owner: "alice"
+repository_id: /abs/path/.git
+worktree: /abs/path
+branch: main
+head: 9b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b
+working_tree: dirty
+changed_files:
+  - lib/auth/oauth.rb
+---
+
+OAuth state mismatch reproduced with test/fixtures/callback.json.
+The cause is in callback normalisation, not in the comparison.
+Next: regression test before touching the implementation.
+```
+
+The body is free text, not sections, and is capped at `checkpoint.max_body_lines` lines. A
+body over the cap is **refused**, not truncated, with the suggestion to write a handover
+instead: the cap is what keeps a checkpoint short enough to quote whole into the next
+briefing rather than becoming a second kind of report.
+
+A body containing any identity field is refused, as for a handover. An empty body is
+allowed and writes no file — it updates `checkpoint_at` only, which is what
+`check --checkpoint` does.
+
+Read by `checkpoint --show` and `--list`, and by `context`, all through the same resolver
+as handovers: same worktree and branch, else same branch, else nothing.
+
+---
+
+## `.majordomus/prompts/<name>.md`
+
+A reusable framing, versioned with the repository. Front matter is authored, not computed —
+these are not records of work.
+
+```markdown
+---
+name: debug
+description: frame a defect so that the fix is proven, not asserted
+profile: debugging
+---
+Task {{TASK_ID}} on branch {{BRANCH}} at {{HEAD}}: {{TASK}}
+
+Open questions that block acceptance:
+{{OPEN_QUESTIONS}}
+```
+
+| Key | Required | Meaning |
+|---|---|---|
+| `name` | yes | must equal the filename without `.md` |
+| `description` | yes | non-empty; shown by `prompt list` |
+| `profile` | no | the profile this framing suits; documentation only, nothing selects on it |
+
+Unknown keys are errors, as everywhere else.
+
+**Tokens are a closed set.** Inline, substituted anywhere in a line: `{{TASK}}`,
+`{{TASK_ID}}`, `{{PROFILE}}`, `{{SCOPE}}`, `{{OWNER}}`, `{{BRANCH}}`, `{{HEAD}}`,
+`{{WORKING_TREE}}`, `{{REPOSITORY}}`, `{{NOW}}`. Block, valid only alone on a line:
+`{{OPEN_QUESTIONS}}`, `{{DECISIONS}}`, `{{CHECKPOINT}}`, `{{HANDOVER}}`, `{{CONTEXT}}`.
+
+Any other `{{...}}`, or a block token used inline, is an **error**. There is no templating
+language: no conditionals, no loops, no includes, no shell. A prompt that silently renders
+`{{TSAK}}` as literal text is worse than one that refuses. `doctor` and `watch` validate
+every asset for the same reason.
+
+An asset whose body contains `{{CONTEXT}}` is excluded from `context --prompt` rather than
+rendered, and the exclusion is named: the result would be the same context nested inside
+itself, which the budget then pays for twice.
+
+---
+
 ## `.majordomus/state/ledger.jsonl`
 
 Append-only. Written only by Majordomus. One JSON object per line. Retention-capped;
@@ -266,13 +385,31 @@ Events and their extra fields:
 |---|---|
 | `bootstrap` | `reason` |
 | `task.started` | `profile`, `scope[]`, `owner` |
-| `task.checkpoint` | — |
-| `task.finished` | `outcome`, `contract` (object of line → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null |
+| `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved |
+| `task.finished` | `outcome`, `contract` (object of line → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null, `checkpoints` (count) |
 | `task.handed_over` | `handover_path`, `closed` (true with `--close`) |
+| `decision.recorded` | `decision` (the entry's title) |
+| `question.opened` | `question` |
+| `question.resolved` | `question`, `answer` |
+| `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
 
-`doctor`, `check` (without `--checkpoint`), and `watch` write nothing, the ledger
-included.
+`doctor`, `check` (without `--checkpoint`), `watch`, `context`, `history`, `search`, and
+`prompt` write nothing, the ledger included.
+
+Every line must be a JSON object carrying `ts` and `event`. A line that is not is a
+**failure** in `history --validate`, `check`, `doctor` and `watch`: a ledger the tool
+cannot parse is a ledger that cannot be used as evidence. The reader skips such a line
+rather than crashing, so a corrupted ledger is still readable while it is being reported.
+
+Because `created_at` has second resolution, two records written inside one second would
+resolve in an order decided by their random filename suffixes. The ledger is append-only
+and written in the order the commands ran, which makes it the tiebreak the resolver uses —
+the one portable monotonic ordering available without sub-second timestamps.
+
+`history --rotate` moves all but the newest `ledger.retention_max_lines` lines into
+`ledger.<utc-compact>.jsonl.archived` and appends a `ledger.rotated` event. It never
+deletes and refuses to overwrite an existing archive.
 
 ---
 

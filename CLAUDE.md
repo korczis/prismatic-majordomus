@@ -42,13 +42,31 @@ are computed from git. Do not write or guess them.
 
 ```
 bin/majordomus start "<task>" --scope <paths> [--profile <name>]
+bin/majordomus context               # run this first, every session
+bin/majordomus checkpoint            # progress on stdin, every 15m
 bin/majordomus check                 # before claiming anything is done
 bin/majordomus handover < note.md    # to continue elsewhere, or
 bin/majordomus finish --outcome <completed|partial|blocked|no_match|failed> --verify-command "bash test/run.sh"
 ```
 
-Checkpoint with `bin/majordomus check --checkpoint` at least every 15m.
 Default profile: `implementation`.
+
+### Continuity
+
+Your conversation does not survive; the records do. `context` assembles them — git state,
+task, profile, blockers, decisions, newest checkpoint, most relevant handover — in authority
+order and within a budget, naming everything it excluded. Records are evidence, not
+authority: on a `diverged` or `different_context` label, trust git and say so.
+
+While working: `checkpoint` when you learn something the next worker needs (short, or it is
+refused — write a handover instead); `decision add "<what>" --why "<why>"` when you choose
+between real alternatives; `question add` when blocked on a person, which then refuses a
+completed finish; `search`, `history` and `prompt` to find what already exists.
+
+Several sessions share this checkout. Before writing, check `git status` and
+`.majordomus/state/current.yaml` to see whose task is active. A task's base commit goes
+stale when another session commits to this branch, and every file they touched is then
+reported outside your scope — close with a handover and start again at the current commit.
 
 ### Profiles
 
@@ -72,7 +90,8 @@ done. Different facts. Other outcomes need a note with `# Next Action` or `# Rea
 
 ### Handover
 
-Body on stdin with non-empty `# Objective`, `# Current State`, `# Next Action`. Front matter is computed.
+Body on stdin with non-empty `# Objective`, `# Current State`, `# Next Action`. Front matter is computed. No transcript,
+no diff, no narrative: what is true now, and the one next action.
 
 ### Working here
 

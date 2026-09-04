@@ -34,14 +34,39 @@ are computed by Majordomus from git. Do not write them, guess them, or "fix" the
 
 ```
 majordomus start "<task>" --scope <paths> [--profile <name>]
+majordomus context            # what you need to know now; run this first, every session
    ... work ...
+majordomus checkpoint         # progress, on stdin, every {{CHECKPOINT_DEFAULT}}
 majordomus check              # before claiming anything is done
 majordomus handover < note.md # to continue in another session, or
 majordomus finish --outcome <completed|partial|blocked|no_match|failed> --verify-command "<cmd>"
 ```
 
-Checkpoint by running `majordomus check --checkpoint` at least every
-{{CHECKPOINT_DEFAULT}}. Default profile: `{{DEFAULT_PROFILE}}`.
+Default profile: `{{DEFAULT_PROFILE}}`.
+
+### Start every session with `majordomus context`
+
+Your conversation does not survive. The repository's records do. `context` assembles them —
+git state, the task, the profile, open blockers, recent decisions, the newest checkpoint,
+the most relevant handover — in authority order and within a line budget. Do not reconstruct
+state from a transcript, and do not ask a human to re-explain what a record already says.
+
+Everything it prints is evidence, not authority. It labels how far git has moved since each
+record was written: `exact`, `advanced`, `diverged`, `different_context`. On `diverged` or
+`different_context`, trust git and say so.
+
+### While you work
+
+| When | Run |
+|---|---|
+| you learned something the next worker needs | `majordomus checkpoint` (body on stdin, short) |
+| you chose between real alternatives | `majordomus decision add "<what>" --why "<why>"` |
+| you are blocked on a person | `majordomus question add "<question>"` |
+| you need a record you cannot name | `majordomus search "<text>"` |
+| you want a reusable framing | `majordomus prompt list`, `prompt render <name>` |
+
+A checkpoint is short by policy and refused if it is long — write a handover instead. An
+unresolved question refuses `finish --outcome completed`, which is the point of recording it.
 
 ### Profiles
 
@@ -60,7 +85,9 @@ exist; `failed` means the work could not be done. They are different facts.
 ### Handover
 
 Body on stdin with these level-one headings, each non-empty:
-{{REQUIRED_SECTIONS}}. Front matter is computed; do not write it.
+{{REQUIRED_SECTIONS}}. Front matter is computed; do not write it. Write a handover when you
+stop with work left, not at every pause — that is what a checkpoint is for. No transcript,
+no diff, no narrative of the session: what is true now, and the one next action.
 
 ### Where things are
 
@@ -70,6 +97,8 @@ Body on stdin with these level-one headings, each non-empty:
 | profiles | `.majordomus/profiles/` |
 | active task | `.majordomus/state/current.yaml` |
 | decisions, open questions | `.majordomus/state/decisions.md`, `open-questions.md` |
-| handovers | `.majordomus/state/handovers/` |
+| handovers, checkpoints | `.majordomus/state/handovers/`, `state/checkpoints/` |
+| history | `.majordomus/state/ledger.jsonl` — read it with `majordomus history` |
+| prompt assets | `.majordomus/prompts/` |
 
 This file is generated from the policy. Edit the policy; run `majordomus update`.

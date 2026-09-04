@@ -37,6 +37,17 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [Handovers carry durable facts, never conversation transcripts](https://korczis.github.io/prismatic-majordomus/guarantees/no-transcripts/) | `docs/DESIGN.md` | `lib/handover.sh` | `test/cases/05_handover.sh` |
 | [finish evaluates the finish contract line by line and refuses when any line is unmet](https://korczis.github.io/prismatic-majordomus/guarantees/finish-contract/) | `docs/CLI.md` | `lib/finish.sh` | `test/cases/06_finish.sh` |
 | [An outcome is a value from a closed vocabulary, not free text](https://korczis.github.io/prismatic-majordomus/guarantees/typed-outcome/) | `docs/SCHEMAS.md` | `lib/finish.sh` | `test/cases/06_finish.sh` |
+| [The context a worker is given is assembled from durable state in authority order, and what a profile excludes is excluded](https://korczis.github.io/prismatic-majordomus/guarantees/context-assembly/) | `docs/CONTINUITY.md` | `lib/context.sh` | `test/cases/23_context.sh` |
+| [The assembled context obeys a line budget, and every section it drops is named with its reason](https://korczis.github.io/prismatic-majordomus/guarantees/context-selection-budget/) | `share/skeleton/policy.yaml` | `lib/context.sh` | `test/cases/23_context.sh` |
+| [A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated](https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-record/) | `docs/SCHEMAS.md` | `lib/checkpoint.sh` | `test/cases/20_checkpoint.sh` |
+| [The right prior record is resolved by worktree and branch, and an unrelated one is never offered](https://korczis.github.io/prismatic-majordomus/guarantees/record-resolution/) | `docs/CONTINUITY.md` | `lib/common.sh` | `test/cases/23_context.sh` |
+| [The ledger is readable back as operational history, filtered by task, event and time](https://korczis.github.io/prismatic-majordomus/guarantees/history-ledger-read/) | `docs/CLI.md` | `lib/history.sh` | `test/cases/22_history.sh` |
+| [Rotating the ledger archives the oldest lines and never deletes them](https://korczis.github.io/prismatic-majordomus/guarantees/record-retention/) | `docs/SCHEMAS.md` | `lib/history.sh` | `test/cases/22_history.sh` |
+| [A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited](https://korczis.github.io/prismatic-majordomus/guarantees/decision-record/) | `docs/SCHEMAS.md` | `lib/decision.sh` | `test/cases/21_decision_question.sh` |
+| [An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass](https://korczis.github.io/prismatic-majordomus/guarantees/open-question-gate/) | `docs/SCHEMAS.md` | `lib/question.sh` | `test/cases/21_decision_question.sh` |
+| [A repository-local prompt renders against a closed set of state tokens, and an unknown token is an error](https://korczis.github.io/prismatic-majordomus/guarantees/prompt-asset/) | `docs/SCHEMAS.md` | `lib/prompt.sh` | `test/cases/24_prompt_search.sh` |
+| [Durable records are searchable literally, across kinds, without an index](https://korczis.github.io/prismatic-majordomus/guarantees/record-search/) | `docs/CLI.md` | `lib/search.sh` | `test/cases/24_prompt_search.sh` |
+| [Every continuity store is proven reachable through its own command, not merely present on disk](https://korczis.github.io/prismatic-majordomus/guarantees/continuity-reachable/) | `docs/CLI.md` | `lib/doctor.sh` | `test/cases/25_continuity_lifecycle.sh` |
 
 ## advisory
 
@@ -68,5 +79,6 @@ Considered and deliberately refused, with the reason recorded.
 
 | claim | source | implementation | test |
 |---|---|---|---|
+| [Ranked or semantic retrieval over durable records is deliberately not implemented](https://korczis.github.io/prismatic-majordomus/guarantees/semantic-retrieval/) | `docs/CONTINUITY.md` | — | — |
 | [Dependencies between tasks are deliberately not represented](https://korczis.github.io/prismatic-majordomus/guarantees/task-dependencies/) | `docs/DESIGN.md` | — | — |
 
