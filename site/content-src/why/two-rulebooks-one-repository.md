@@ -1,6 +1,6 @@
 +++
 title = "Two different rulebooks for one repository"
-description = "Why CLAUDE.md and AGENTS.md drift apart, and how one policy generates every instruction file with a fingerprint."
+description = "Why CLAUDE.md and AGENTS.md drift apart, and how one policy generates every instruction file with its own stamp."
 weight = 5
 [extra]
 hook = "opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository"
@@ -27,7 +27,7 @@ and is dispatched by nothing. Seventeen such cases were found before this tool w
 
 There is one canonical policy, `.majordomus/policy.yaml`. `majordomus update` generates
 every instruction file the policy names — `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any
-target you add — from the same body, deterministically, and records a fingerprint of each.
+target you add — from the same body, deterministically, and stamps each with the policy hash and the hash of its own content.
 A hand edit is detected by `doctor` and `watch`; `update` refuses to overwrite it until you
 have seen the diff. The always-loaded file has a line budget with a failing check.
 

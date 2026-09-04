@@ -28,8 +28,8 @@ use_cases:
       - command: update
         note: renders the projection into the region between the markers, leaving the rest of the file alone
       - command: doctor
-        note: proves the projection matches its fingerprint and the declared enforcement is actually invoked
-    outcome: The authored text stays authoritative and the generated section sits inside it, fingerprinted like any other projection. An edit outside the markers is never drift; an edit inside them is caught.
+        note: proves the projection matches its own stamp and the declared enforcement is actually invoked
+    outcome: The authored text stays authoritative and the generated section sits inside it, stamped like any other projection. An edit outside the markers is never drift; an edit inside them is caught.
     commands: [init, update, doctor]
     doctrines: [projection_integrity, enforcement_wiring, policy_integrity]
     claims: [region-projection, no-silent-overwrite, projection-fingerprint, dispatcher-wiring]

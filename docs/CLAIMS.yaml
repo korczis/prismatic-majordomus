@@ -71,7 +71,7 @@ claims:
     note: Running update twice leaves the byte-identical file. The test asserts the hash.
 
   - id: projection-fingerprint
-    claim: Every generated instruction file is fingerprinted, and a hand edit is detected
+    claim: Every generated instruction file carries its own stamp, and a hand edit is detected
     source: docs/SCHEMAS.md
     implementation: lib/update.sh
     test: test/cases/03_update.sh

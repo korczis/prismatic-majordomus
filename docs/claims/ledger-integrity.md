@@ -23,4 +23,4 @@ Well-formed is not the same as true. The check proves each line is an event with
 
 ## Why it exists
 
-Every other durable record here can be rebuilt: projections regenerate from the policy, fingerprints regenerate from the projections, the task record is written fresh by `start`. The ledger cannot. A single corrupt line quietly truncating the history a reader will act on is the failure worth spending a check on.
+Every other durable record here can be rebuilt: projections regenerate from the policy and carry their own stamps, the task record is written fresh by `start`. The ledger cannot. A single corrupt line quietly truncating the history a reader will act on is the failure worth spending a check on.

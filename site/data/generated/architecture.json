@@ -250,16 +250,6 @@
       "external": false
     },
     {
-      "id": ".majordomus/generated/fingerprints.yaml",
-      "kind": "artifact",
-      "label": "generated/fingerprints.yaml",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": "lib/finish.sh",
       "kind": "module",
       "label": "finish",
@@ -449,11 +439,6 @@
     {
       "source": "lib/context.sh",
       "target": ".majordomus/state/open-questions.md",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/doctor.sh",
-      "target": ".majordomus/generated/fingerprints.yaml",
       "kind": "reads"
     },
     {
@@ -1014,11 +999,6 @@
     {
       "source": "lib/start.sh",
       "target": ".majordomus/state/current.yaml",
-      "kind": "writes"
-    },
-    {
-      "source": "lib/update.sh",
-      "target": ".majordomus/generated/fingerprints.yaml",
       "kind": "writes"
     }
   ]

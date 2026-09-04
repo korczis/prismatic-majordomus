@@ -130,12 +130,30 @@ mj_validate_wiring() {
 }
 
 MJ_DOCTOR_ALWAYS=""; MJ_DOCTOR_ALWAYS_MODE="file"
+# The state of one projection target against its own stamp. Prints one word:
+#   absent · no_template · region_absent · malformed · unstamped · hand_edited · ok
+# followed, when the target carries a stamp, by the policy hash the stamp names.
+# mj_projection_status TARGET MODE PROVIDER
+mj_projection_status() {
+  local tgt="$1" mode="$2" prov="$3" owned rc stamp
+  mj_provider_template "$prov" >/dev/null || { printf 'no_template'; return 0; }
+  [ -f "$MJ_ROOT/$tgt" ] || { printf 'absent'; return 0; }
+  owned="$(mktemp "${TMPDIR:-/tmp}/mj.own.XXXXXX")"
+  rc=0; mj_owned_content "$MJ_ROOT/$tgt" "$mode" > "$owned" 2>/dev/null || rc=$?
+  case "$rc" in
+    0) ;;
+    1) rm -f "$owned"; printf 'region_absent'; return 0 ;;
+    *) rm -f "$owned"; printf 'malformed'; return 0 ;;
+  esac
+  if ! stamp="$(mj_stamp_read "$MJ_ROOT/$tgt" "$mode")"; then rm -f "$owned"; printf 'unstamped'; return 0; fi
+  if [ "$(mj_sha256 "$owned" | cut -c1-16)" = "$(printf '%s' "${stamp#* }" | cut -c1-16)" ]; then printf 'ok %s' "${stamp%% *}"; else printf 'hand_edited %s' "${stamp%% *}"; fi
+  rm -f "$owned"
+  return 0
+}
+
 mj_validate_projection() {
   [ "$MJ_DOCTRINE_CMD" = watch ] && { mj_watch_projection; return 0; }
-  local fp="$MJ_GENERATED_DIR/fingerprints.yaml" fpflat="" j=0 tgt want have always="" always_mode="file" budget
-  local mode prov owned rc
-  owned="$(mktemp "${TMPDIR:-/tmp}/mj.own.XXXXXX")"
-  if [ -f "$fp" ]; then fpflat="$(mktemp "${TMPDIR:-/tmp}/mj.fp.XXXXXX")"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || { rm -f "$fpflat"; fpflat=""; }; fi
+  local j=0 tgt mode prov st always="" always_mode="file"
   while [ -n "$(mj_pol "projections.$j.target")" ]; do
     tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"
     prov="$(mj_pol "projections.$j.provider")"
@@ -144,29 +162,19 @@ mj_validate_projection() {
       file|region) ;;
       *) mj_doctrine_fail projection "$tgt" "unknown mode '$mode' (file | region)" "grep -n 'mode:' $(mj_rel "$MJ_POLICY_FILE")"; j=$((j+1)); continue ;;
     esac
-    # update would die on this; doctor is the command that is supposed to say so first
-    mj_provider_template "$prov" >/dev/null || { mj_doctrine_fail projection "$tgt" "provider '$prov' has no template $(mj_rel "$MJ_PROVIDERS_DIR")/$prov.tmpl, and the distribution ships none" "ls $(mj_rel "$MJ_PROVIDERS_DIR")/ $MJ_PROVIDERS_DEFAULT_DIR/"; MJ_DOCTOR_MISSING=1; j=$((j+1)); continue; }
-    if [ ! -f "$MJ_ROOT/$tgt" ]; then mj_doctrine_fail projection "$tgt" "missing (run: majordomus update)" "majordomus update"; MJ_DOCTOR_MISSING=1
-    elif [ -z "$fpflat" ]; then mj_doctrine_fail projection "$tgt" "no fingerprints recorded (run: majordomus update)" "majordomus update"; MJ_DOCTOR_MISSING=1
-    else
-      want="$(mj_fp_sha "$fpflat" "$tgt")"; have=""
-      if [ "$mode" = region ]; then
-        rc=0; mj_region_extract "$MJ_ROOT/$tgt" > "$owned" 2>/dev/null || rc=$?
-        case "$rc" in
-          0) have="$(mj_sha256 "$owned")" ;;
-          1) mj_doctrine_fail projection "$tgt" "region markers are absent (run: majordomus update)" "majordomus update"; MJ_DOCTOR_MISSING=1 ;;
-          *) mj_doctrine_fail projection "$tgt" "region markers are malformed (unclosed, out of order, or repeated)" "grep -n 'majordomus:begin\\|majordomus:end' $tgt" ;;
-        esac
-      else cp "$MJ_ROOT/$tgt" "$owned"; have="$(mj_sha256 "$owned")"; fi
-      if [ -n "$have" ]; then
-        if [ -z "$want" ]; then mj_doctrine_fail projection "$tgt" "not in fingerprints (run: majordomus update)" "majordomus update"; MJ_DOCTOR_MISSING=1
-        elif [ "$want" != "$have" ]; then mj_doctrine_fail projection "$tgt" "hash differs from fingerprint (hand-edited?)" "majordomus update --diff $tgt"
-        else mj_doctrine_ok projection "$tgt" "fingerprint matches$([ "$mode" = region ] && printf ' (region)')"; fi
-      fi
-    fi
+    st="$(mj_projection_status "$tgt" "$mode" "$prov")"; st="${st%% *}"
+    case "$st" in
+      # update would die on this; doctor is the command that is supposed to say so first
+      no_template) mj_doctrine_fail projection "$tgt" "provider '$prov' has no template $(mj_rel "$MJ_PROVIDERS_DIR")/$prov.tmpl, and the distribution ships none" "ls $(mj_rel "$MJ_PROVIDERS_DIR")/ $MJ_PROVIDERS_DEFAULT_DIR/"; MJ_DOCTOR_MISSING=1 ;;
+      absent) mj_doctrine_fail projection "$tgt" "missing (run: majordomus update)" "majordomus update"; MJ_DOCTOR_MISSING=1 ;;
+      region_absent) mj_doctrine_fail projection "$tgt" "region markers are absent (run: majordomus update)" "majordomus update"; MJ_DOCTOR_MISSING=1 ;;
+      malformed) mj_doctrine_fail projection "$tgt" "region markers are malformed (unclosed, out of order, or repeated)" "grep -n 'majordomus:begin\\|majordomus:end' $tgt" ;;
+      unstamped) mj_doctrine_fail projection "$tgt" "carries no generation stamp; not written by update (run: majordomus update)" "majordomus update --diff $tgt"; MJ_DOCTOR_MISSING=1 ;;
+      hand_edited) mj_doctrine_fail projection "$tgt" "content differs from its own stamp (hand-edited?)" "majordomus update --diff $tgt" ;;
+      ok) mj_doctrine_ok projection "$tgt" "content matches its stamp$([ "$mode" = region ] && printf ' (region)')" ;;
+    esac
     j=$((j+1))
   done
-  [ -n "$fpflat" ] && rm -f "$fpflat"
 
   MJ_DOCTOR_ALWAYS="$always"; MJ_DOCTOR_ALWAYS_MODE="$always_mode"
   return 0
@@ -257,13 +265,6 @@ mj_hook_binary_ok() {
     esac
   done
   return 1
-}
-mj_fp_sha() { # fingerprints flat file, target -> sha
-  local f="$1" t="$2" k=0
-  while [ -n "$(mj_yget "$f" "targets.$k.target")" ]; do
-    [ "$(mj_yget "$f" "targets.$k.target")" = "$t" ] && { mj_yget "$f" "targets.$k.sha256"; return; }
-    k=$((k+1))
-  done
 }
 mj_finish_doctor() {
   [ "$MJ_JSON" = 1 ] || printf 'doctor: %s failure(s)\n' "$MJ_FAILS"
@@ -439,41 +440,44 @@ mj_validate_doctrine_wiring() {
   [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n doctrines" "validator, dispatch, propagation, test and CI resolve for every one"
   return 0
 }
-# watch's view of the same doctrine: the fingerprints are the record of what Majordomus
-# last generated, so drift is measured against them rather than against the policy.
+# watch's view of the same doctrine: every target against the stamp it carries.
 mj_watch_projection() {
-  local fp="$MJ_GENERATED_DIR/fingerprints.yaml" fpflat="" owned k=0 tgt mode rc
-  [ -f "$fp" ] || return 0   # policy validator already reported "no projections generated yet"
-  fpflat="$(mktemp "${TMPDIR:-/tmp}/mj.wf.XXXXXX")"
-  mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || { rm -f "$fpflat"; return 0; }
-  owned="$(mktemp "${TMPDIR:-/tmp}/mj.wo.XXXXXX")"
-  while [ -n "$(mj_yget "$fpflat" "targets.$k.target")" ]; do
-    tgt="$(mj_yget "$fpflat" "targets.$k.target")"
-    mode="$(mj_yget "$fpflat" "targets.$k.mode")"; [ -n "$mode" ] || mode="file"
-    if [ ! -f "$MJ_ROOT/$tgt" ]; then mj_doctrine_fail projection "$tgt" "missing" "majordomus update"
-    elif [ "$mode" = region ]; then
-      rc=0; mj_region_extract "$MJ_ROOT/$tgt" > "$owned" 2>/dev/null || rc=$?
-      if [ "$rc" = 1 ]; then mj_doctrine_fail projection "$tgt" "region markers are absent" "majordomus update"
-      elif [ "$rc" != 0 ]; then mj_doctrine_fail projection "$tgt" "region markers are malformed" "grep -n 'majordomus:begin' $tgt"
-      elif [ "$(mj_sha256 "$owned")" != "$(mj_yget "$fpflat" "targets.$k.sha256")" ]; then mj_doctrine_fail projection "$tgt" "region differs from fingerprint (hand-edited?)" "majordomus update --diff $tgt"
-      else mj_doctrine_ok projection "$tgt" "region matches fingerprint"; fi
-    elif [ "$(mj_sha256 "$MJ_ROOT/$tgt")" != "$(mj_yget "$fpflat" "targets.$k.sha256")" ]; then mj_doctrine_fail projection "$tgt" "hash differs from fingerprint (hand-edited?)" "majordomus update --diff $tgt"
-    else mj_doctrine_ok projection "$tgt" "matches fingerprint"; fi
-    k=$((k+1))
+  local j=0 tgt mode prov st
+  while [ -n "$(mj_pol "projections.$j.target")" ]; do
+    tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; prov="$(mj_pol "projections.$j.provider")"
+    case "$mode" in file|region) ;; *) j=$((j+1)); continue ;; esac   # the policy validator reports it
+    st="$(mj_projection_status "$tgt" "$mode" "$prov")"; st="${st%% *}"
+    case "$st" in
+      no_template) mj_doctrine_fail projection "$tgt" "provider '$prov' has no template" "majordomus doctor" ;;
+      absent) mj_doctrine_fail projection "$tgt" "missing" "majordomus update" ;;
+      region_absent) mj_doctrine_fail projection "$tgt" "region markers are absent" "majordomus update" ;;
+      malformed) mj_doctrine_fail projection "$tgt" "region markers are malformed" "grep -n 'majordomus:begin' $tgt" ;;
+      unstamped) mj_doctrine_fail projection "$tgt" "carries no generation stamp" "majordomus update --diff $tgt" ;;
+      hand_edited) mj_doctrine_fail projection "$tgt" "$([ "$mode" = region ] && printf 'region' || printf 'content') differs from its stamp (hand-edited?)" "majordomus update --diff $tgt" ;;
+      ok) mj_doctrine_ok projection "$tgt" "$([ "$mode" = region ] && printf 'region' || printf 'content') matches its stamp" ;;
+    esac
+    j=$((j+1))
   done
-  rm -f "$fpflat" "$owned"
 }
 
 # watch asks whether the policy has moved since the projections were generated; doctor
-# asks whether it is valid at all. Same doctrine, two questions.
+# asks whether it is valid at all. Same doctrine, two questions. The evidence is the
+# policy hash each target's stamp names.
 mj_watch_policy() {
-  local tmp psha fp="$MJ_GENERATED_DIR/fingerprints.yaml" fpflat=""
+  local tmp psha j=0 tgt mode prov st stamped=0 stale=""
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.w.XXXXXX")"; mj_policy_cat > "$tmp"; psha="$(mj_sha256 "$tmp")"; rm -f "$tmp"
-  if [ -f "$fp" ]; then fpflat="$(mktemp "${TMPDIR:-/tmp}/mj.wf.XXXXXX")"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || { rm -f "$fpflat"; fpflat=""; }; fi
-  if [ -z "$fpflat" ]; then mj_doctrine_fail policy "fingerprints" "no projections generated yet" "majordomus update"
-  elif [ "$(mj_yget "$fpflat" policy_sha256)" = "$psha" ]; then mj_doctrine_ok policy "policy+profiles" "match last update (${psha:0:12})"
-  else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "policy or profiles changed after the last update" "majordomus update --dry-run"; fi
-  [ -n "$fpflat" ] && rm -f "$fpflat"
+  while [ -n "$(mj_pol "projections.$j.target")" ]; do
+    tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; prov="$(mj_pol "projections.$j.provider")"
+    case "$mode" in file|region) ;; *) j=$((j+1)); continue ;; esac
+    st="$(mj_projection_status "$tgt" "$mode" "$prov")"
+    case "${st%% *}" in
+      ok|hand_edited) stamped=$((stamped+1)); [ "${st#* }" = "${psha:0:12}" ] || stale="$stale $tgt" ;;
+    esac
+    j=$((j+1))
+  done
+  if [ "$stamped" = 0 ]; then mj_doctrine_fail policy "projections" "no projections generated yet" "majordomus update"
+  elif [ -z "$stale" ]; then mj_doctrine_ok policy "policy+profiles" "match the last update (${psha:0:12})"
+  else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "policy or profiles changed after the last update of${stale}" "majordomus update --dry-run"; fi
   return 0
 }
 

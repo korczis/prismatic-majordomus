@@ -23,7 +23,7 @@ Everything an embedding would give you: synonyms, paraphrase, ranking by relevan
 
 Three reasons, in order of weight.
 
-An index is a second source of truth about what exists, and it can disagree with the records. Everything else in Majordomus is derived on read precisely so that this cannot happen; a stale index that quietly omits a handover is the same class of bug as a stale projection, with none of the fingerprinting that catches one.
+An index is a second source of truth about what exists, and it can disagree with the records. Everything else in Majordomus is derived on read precisely so that this cannot happen; a stale index that quietly omits a handover is the same class of bug as a stale projection, with none of the stamping that catches one.
 
 An embedding adds a dependency, a model call and a similarity threshold. The tool makes no network call and invokes no model anywhere, and a retrieval feature is a poor reason to breach that.
 

@@ -13,7 +13,6 @@ Hand-written governance that predates Majordomus. Nothing here is generated.
 
 Keep it.
 MD
-before_sha="$(shasum -a 256 CLAUDE.md | cut -d' ' -f1)"
 
 # one projection, region mode
 awk '/^projections:/{exit} {print}' .majordomus/policy.yaml > policy.new
@@ -36,13 +35,13 @@ sed 's/    mode: nonsense/    mode: region/' .majordomus/policy.yaml > p.tmp && 
 # first update appends the region and leaves the rest of the document alone
 expect_exit 0 "$MJ" update
 expect_grep '^create CLAUDE.md$'
-expect_grep '^<!-- majordomus:begin [0-9a-f]{12} -->$' CLAUDE.md
+expect_grep '^<!-- majordomus:begin [0-9a-f]{12} [0-9a-f]{16} -->$' CLAUDE.md
 expect_grep '^<!-- majordomus:end -->$' CLAUDE.md
 expect_grep 'Hand-written governance that predates Majordomus' CLAUDE.md
 expect_grep 'A rule the repository already had' CLAUDE.md
-# the fingerprint records the region, not the file
-expect_no_grep "sha256: $before_sha" .majordomus/generated/fingerprints.yaml
-expect_grep 'mode: region' .majordomus/generated/fingerprints.yaml
+# the begin marker carries the stamp: the policy hash and the hash of the region body
+expect_grep '^<!-- majordomus:begin [0-9a-f]{12} [0-9a-f]{16} -->$' CLAUDE.md
+[ ! -e .majordomus/generated ] || { echo "    a fingerprint file was written"; exit 1; }
 
 # deterministic: a second update changes nothing
 after="$(shasum -a 256 CLAUDE.md | cut -d' ' -f1)"
@@ -50,12 +49,12 @@ expect_exit 0 "$MJ" update
 expect_grep '^unchanged CLAUDE.md$'
 [ "$(shasum -a 256 CLAUDE.md | cut -d' ' -f1)" = "$after" ] || { echo "    update was not idempotent"; exit 1; }
 expect_exit 0 "$MJ" watch
-expect_grep 'OK   projection +CLAUDE.md — region matches fingerprint'
+expect_grep 'OK   projection +CLAUDE.md — region matches its stamp'
 
 # THE POINT: editing outside the region is the repository's business, not drift
 printf '\n## A rule added after adoption\n\nAlso keep it.\n' >> CLAUDE.md
 expect_exit 0 "$MJ" watch
-expect_grep 'region matches fingerprint'
+expect_grep 'region matches its stamp'
 expect_exit 0 "$MJ" update
 expect_grep '^unchanged CLAUDE.md$'
 expect_grep 'A rule added after adoption' CLAUDE.md
@@ -66,7 +65,7 @@ expect_grep 'A rule added after adoption' CLAUDE.md
 awk '/^<!-- majordomus:begin/{print; getline; print "EDITED " $0; next} {print}' CLAUDE.md > c.tmp && mv c.tmp CLAUDE.md
 expect_grep 'EDITED' CLAUDE.md
 expect_exit 11 "$MJ" watch
-expect_grep 'DRIFT projection +CLAUDE.md — region differs from fingerprint'
+expect_grep 'DRIFT projection +CLAUDE.md — region differs from its stamp'
 expect_exit 15 "$MJ" update
 expect_grep 'REFUSE projection +CLAUDE.md'
 expect_grep 'EDITED' CLAUDE.md

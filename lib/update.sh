@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 # update — regenerate provider projections from policy. Deterministic. Refuses to clobber hand edits.
+#
+# Every target it writes is self-describing: a file-mode target starts with a stamp naming
+# the policy hash and the hash of the content under it, and a region-mode target carries
+# both in its begin marker. doctor and watch compare a target with its own stamp, so a hand
+# edit is detected on a fresh clone with nothing else tracked, and there is no fingerprint
+# file that could disagree with the targets it describes.
 mj_cmd_update() {
   local dry=0 force=0 diff_target=""
   while [ $# -gt 0 ]; do case "$1" in
@@ -7,14 +13,15 @@ mj_cmd_update() {
     --diff) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--diff needs a target"; diff_target="$2"; shift 2 ;;
     --help|-h) cat <<H
 usage: majordomus update [--dry-run] [--diff <target>] [--force]
-  regenerates every projections[].target from .majordomus/policy.yaml and providers/*.tmpl
-  mode: file    the whole target is generated (the default)
+  regenerates every projections[].target from the policy and the provider templates
+  mode: file    the whole target is generated (the default); its first line is a stamp
+                naming the policy hash and the hash of the content below it
   mode: region  only the text between the majordomus:begin and majordomus:end markers is
-                generated; the rest of the target is left byte for byte alone, and an
-                absent region is appended once
+                generated and the begin marker carries the two hashes; the rest of the
+                target is left byte for byte alone, and an absent region is appended once
   --dry-run   print what would change, write nothing
   --diff T    show the diff between the current file T and its regenerated form
-  --force     overwrite a target whose content matches neither its fingerprint nor the new output
+  --force     overwrite a target whose content matches neither its own stamp nor the new output
 H
       return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "update: unknown option $1" ;;
@@ -30,21 +37,23 @@ H
   mj_build_fragments "$tmp"
 
   # render every target first; write only if all pass
-  local i=0 tgt prov out gen mode rc fp="$MJ_GENERATED_DIR/fingerprints.yaml" fpflat="" budget
+  local i=0 tgt prov tpl body gen out mode rc budget plan="" refuse=0
   budget="$(mj_pol context.always_loaded_budget_lines)"
-  [ -f "$fp" ] && { fpflat="$tmp/fp.flat"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || fpflat=""; }
-  local plan="" refuse=0
   while [ -n "$(mj_pol "projections.$i.target")" ]; do
     tgt="$(mj_pol "projections.$i.target")"; prov="$(mj_pol "projections.$i.provider")"
     mode="$(mj_projection_mode "$i")"
     case "$mode" in file|region) ;;
       *) rm -rf "$tmp"; mj_die "$MJ_EX_CONTRACT" "projection $tgt: unknown mode '$mode' (file | region)" ;;
     esac
-    local tpl
     tpl="$(mj_provider_template "$prov")" || { rm -rf "$tmp"; mj_die "$MJ_EX_MISSING" "no template for provider '$prov' ($(mj_rel "$MJ_PROVIDERS_DIR")/$prov.tmpl, or one shipped in $MJ_PROVIDERS_DEFAULT_DIR/)"; }
-    # gen is the generated content this projection owns; out is the whole file to write
-    gen="$tmp/gen.$i"; out="$tmp/out.$i"
-    mj_render "$tpl" "$tmp" "$psha" > "$gen"
+    # body is the rendered content the stamp covers; gen is the generated content this
+    # projection owns (the stamp plus the body in file mode, the body alone in region
+    # mode); out is the whole file that would be written
+    body="$tmp/body.$i"; gen="$tmp/gen.$i"; out="$tmp/out.$i"
+    mj_render "$tpl" "$tmp" "$psha" > "$body"
+    local new_c; new_c="$(mj_sha256 "$body")"
+    if [ "$mode" = region ]; then gen="$body"
+    else { mj_stamp_line "$psha" "$new_c"; cat "$body"; } > "$gen"; out="$gen"; fi
 
     # the budget measures what Majordomus generates, which for a region is the region
     # and not the host document it was appended to
@@ -55,42 +64,44 @@ H
       fi
     fi
 
-    # current content of what this projection owns, and the whole file that would replace it
-    local have="" cur="$tmp/cur.$i"
+    # what is on disk: the content this projection owns, and the hash its own stamp claims
+    local have_c="" want_c="" present=0 cur="$tmp/cur.$i"
+    : > "$cur"
     if [ "$mode" = region ]; then
-      : > "$cur"
       if [ -f "$MJ_ROOT/$tgt" ]; then
         rc=0; mj_region_extract "$MJ_ROOT/$tgt" > "$cur" 2>/dev/null || rc=$?
         case "$rc" in
-          0) have="$(mj_sha256 "$cur")" ;;
-          1) have="" ;;   # no region yet; update appends one
+          0) present=1; have_c="$(mj_sha256 "$cur")"; want_c="$(mj_stamp_read "$MJ_ROOT/$tgt" region | cut -d' ' -f2)" ;;
+          1) ;;   # no region yet; update appends one
           *) mj_finding REFUSE projection "$tgt" "region markers are malformed (unclosed, out of order, or repeated); nothing written" "grep -n 'majordomus:begin\|majordomus:end' $tgt"
              refuse=1; i=$((i+1)); continue ;;
         esac
       fi
-      mj_region_splice "$MJ_ROOT/$tgt" "$gen" "${psha:0:12}" > "$out"
-    else
-      out="$gen"
-      [ -f "$MJ_ROOT/$tgt" ] && have="$(mj_sha256 "$MJ_ROOT/$tgt")"
+      mj_region_splice "$MJ_ROOT/$tgt" "$body" "${psha:0:12} ${new_c:0:16}" > "$out"
+    elif [ -f "$MJ_ROOT/$tgt" ]; then
+      present=1; mj_owned_content "$MJ_ROOT/$tgt" file > "$cur"; have_c="$(mj_sha256 "$cur")"
+      want_c="$(mj_stamp_read "$MJ_ROOT/$tgt" file | cut -d' ' -f2)"
     fi
 
     if [ -n "$diff_target" ] && [ "$diff_target" = "$tgt" ]; then
-      if [ "$mode" = region ]; then diff -u "$cur" "$gen" 2>/dev/null || true
+      if [ "$mode" = region ]; then diff -u "$cur" "$body" 2>/dev/null || true
       else diff -u "$MJ_ROOT/$tgt" "$out" 2>/dev/null || true; fi
       rm -rf "$tmp"; return 0
     fi
 
-    # hand-edit protection, on the content this projection owns
-    if [ -z "$have" ]; then plan="$plan create:$tgt"
+    # hand-edit protection, on the content this projection owns: content that matches its
+    # own stamp was generated and may be replaced; content that does not was edited by
+    # somebody, and is never replaced without --force
+    if [ "$present" = 0 ]; then plan="$plan create:$tgt"
+    elif [ -f "$MJ_ROOT/$tgt" ] && [ "$(mj_sha256 "$MJ_ROOT/$tgt")" = "$(mj_sha256 "$out")" ]; then plan="$plan unchanged:$tgt"
+    elif [ -n "$want_c" ] && [ "${have_c:0:16}" = "${want_c:0:16}" ]; then plan="$plan update:$tgt"
+    elif [ "$force" = 1 ]; then plan="$plan update:$tgt"
+    elif [ -z "$want_c" ]; then
+      mj_finding REFUSE projection "$tgt" "carries no generation stamp; it was not written by update (hand-written?); use --diff $tgt, then --force" "majordomus update --diff $tgt"
+      refuse=1
     else
-      local want new; new="$(mj_sha256 "$gen")"; want=""
-      [ -n "$fpflat" ] && want="$(mj_fp_sha_u "$fpflat" "$tgt")"
-      if [ "$have" = "$new" ] && { [ "$mode" = file ] || [ "$(mj_sha256 "$MJ_ROOT/$tgt")" = "$(mj_sha256 "$out")" ]; }; then plan="$plan unchanged:$tgt"
-      elif [ "$have" = "$new" ] || [ "$have" = "$want" ] || [ "$force" = 1 ]; then plan="$plan update:$tgt"
-      else
-        mj_finding REFUSE projection "$tgt" "current content matches neither its fingerprint nor the new output (hand-edited?); use --diff $tgt, then --force" "majordomus update --diff $tgt"
-        refuse=1
-      fi
+      mj_finding REFUSE projection "$tgt" "current content matches neither its own stamp nor the new output (hand-edited?); use --diff $tgt, then --force" "majordomus update --diff $tgt"
+      refuse=1
     fi
     i=$((i+1))
   done
@@ -102,31 +113,20 @@ H
   for p in $plan; do printf '%s %s\n' "${p%%:*}" "${p#*:}"; done
   if [ "$dry" = 1 ]; then rm -rf "$tmp"; return 0; fi
 
-  # write atomically, then fingerprints
-  {
-    printf 'policy_sha256: %s\ngenerated_at: %s\ntargets:\n' "$psha" "$(mj_now)"
-    i=0
-    while [ -n "$(mj_pol "projections.$i.target")" ]; do
-      tgt="$(mj_pol "projections.$i.target")"; mode="$(mj_projection_mode "$i")"
-      gen="$tmp/gen.$i"; out="$tmp/out.$i"; [ "$mode" = region ] || out="$gen"
-      mkdir -p "$(dirname "$MJ_ROOT/$tgt")"
-      cp "$out" "$MJ_ROOT/$tgt.mj-tmp" && mv "$MJ_ROOT/$tgt.mj-tmp" "$MJ_ROOT/$tgt"
-      # the fingerprint covers the generated content, so for a region an edit outside
-      # the markers is the host document's business and never reported as drift
-      printf '  - target: %s\n    mode: %s\n    sha256: %s\n    lines: %s\n' \
-        "$tgt" "$mode" "$(mj_sha256 "$gen")" "$(mj_lines "$gen")"
-      i=$((i+1))
-    done
-  } > "$fp.mj-tmp" && mv "$fp.mj-tmp" "$fp"
+  # write atomically, every target
+  i=0
+  while [ -n "$(mj_pol "projections.$i.target")" ]; do
+    tgt="$(mj_pol "projections.$i.target")"; mode="$(mj_projection_mode "$i")"
+    out="$tmp/out.$i"; [ "$mode" = region ] || out="$tmp/gen.$i"
+    mkdir -p "$(dirname "$MJ_ROOT/$tgt")"
+    cp "$out" "$MJ_ROOT/$tgt.mj-tmp" && mv "$MJ_ROOT/$tgt.mj-tmp" "$MJ_ROOT/$tgt"
+    i=$((i+1))
+  done
   mkdir -p "$MJ_STATE_DIR"
   mj_ledger_append projections.updated "\"policy_sha256\":\"$psha\",\"targets\":$i"
   rm -rf "$tmp"
-  printf 'fingerprints: %s/fingerprints.yaml (policy %s)\n' "$(mj_rel "$MJ_GENERATED_DIR")" "${psha:0:12}"
+  printf 'generated %s target(s) from policy %s; each carries its own stamp\n' "$i" "${psha:0:12}"
 }
-
-mj_fp_sha_u() { local f="$1" t="$2" k=0
-  while [ -n "$(mj_yget "$f" "targets.$k.target")" ]; do
-    [ "$(mj_yget "$f" "targets.$k.target")" = "$t" ] && { mj_yget "$f" "targets.$k.sha256"; return; }; k=$((k+1)); done; }
 
 # builds multi-line fragment files in $1: PROFILE_TABLE, FINISH_CONTRACT, REQUIRED_SECTIONS
 mj_build_fragments() {

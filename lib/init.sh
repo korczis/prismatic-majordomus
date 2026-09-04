@@ -21,7 +21,7 @@ H
     mj_die "$MJ_EX_REFUSED" ".majordomus/ already exists in $MJ_ROOT (use --force to rewrite everything except state/)"
   fi
   mkdir -p "$MJ_DIR/profiles" "$MJ_DIR/templates" "$MJ_DIR/providers" "$MJ_DIR/prompts" \
-           "$MJ_DIR/state/handovers" "$MJ_DIR/state/checkpoints" "$MJ_DIR/generated"
+           "$MJ_DIR/state/handovers" "$MJ_DIR/state/checkpoints"
   cp "$skel/policy.yaml" "$MJ_DIR/policy.yaml"
   cp "$skel"/profiles/*.yaml "$MJ_DIR/profiles/"
   cp "$skel"/templates/*.md "$MJ_DIR/templates/"
@@ -34,9 +34,9 @@ H
   fi
   local rel; rel="$(cd "$MJ_BIN_DIR" && pwd)"
   cat <<OUT
-created $(mj_rel "$MJ_POLICY_FILE")
+created .majordomus/policy.yaml
 created .majordomus/profiles/ (routine, implementation, debugging, deep-work)
-created .majordomus/templates/, .majordomus/providers/, .majordomus/prompts/, .majordomus/state/, .majordomus/generated/
+created .majordomus/templates/, .majordomus/providers/, .majordomus/prompts/, .majordomus/state/
 next: majordomus update      # generate the provider instruction files named in the policy
 next: majordomus doctor      # verify nothing is declared that is not wired
 hooks are not installed by init; add these two lines yourself, doctor verifies them:

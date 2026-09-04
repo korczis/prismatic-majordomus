@@ -28,7 +28,7 @@
     },
     {
       "title": "Projection",
-      "text": "`update` generates `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any target you name, deterministically, and fingerprints them; a hand edit is detected and never silently overwritten",
+      "text": "`update` generates `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any target you name, deterministically, and stamps each with the policy hash and the hash of its own content; a hand edit is detected and never silently overwritten",
       "slug": "projection",
       "command": "update",
       "claim_ids": [
@@ -110,7 +110,7 @@
     },
     {
       "title": "Doctor",
-      "text": "proves the installation is real: policy parses, every declared enforcement is actually invoked by the hook it names without a swallowed exit code, projections match fingerprints, the always-loaded file is under budget",
+      "text": "proves the installation is real: policy parses, every declared enforcement is actually invoked by the hook it names without a swallowed exit code, every projection matches its own stamp, the always-loaded file is under budget",
       "slug": "doctor",
       "command": "doctor",
       "claim_ids": [

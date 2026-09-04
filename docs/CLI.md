@@ -83,7 +83,7 @@ from a pre-commit hook and from CI.
    is reported as not wired, because the dispatcher skips it. `wired_by: manual` is
    reported as unverified, never as wired. Declared-but-not-wired is `10`.
 4. Every `projections[].target` exists, its provider has a template, and its entry in
-   `generated/fingerprints.yaml` matches. Missing → `12`; mismatch → `10` (hand-edited).
+   the content matches the stamp it carries. Missing or unstamped → `12`; mismatch → `10` (hand-edited).
    For `mode: region` the hash is taken over the region alone; absent or malformed
    markers are reported as such.
 5. The projection marked `always_loaded: true` is within
@@ -104,7 +104,7 @@ $ majordomus doctor
 OK   policy      .majordomus/policy.yaml — parsed, version 1
 OK   profiles    4 files — parsed
 FAIL wiring      finish-contract — bin/majordomus is not invoked by .git/hooks/pre-push  [reproduce: grep -n 'majordomus finish' .git/hooks/pre-push]
-OK   projection  CLAUDE.md — fingerprint matches
+OK   projection  CLAUDE.md — content matches its stamp
 FAIL budget      CLAUDE.md — 212 lines, budget 150  [reproduce: wc -l CLAUDE.md]
 OK   links       3 projections — all references resolve
 OK   retention   ledger 412 lines, cap 5000
@@ -183,8 +183,8 @@ scripts can tell "drift" from "healthy" without confusing it with a contract fai
 
 | Drift | Detected how |
 |---|---|
-| policy | `policy.yaml` newer than any fingerprint |
-| projection | projection hash differs from fingerprint |
+| policy | the policy hash a projection's stamp names is not the policy on disk |
+| projection | a projection's content differs from the hash its own stamp names |
 | state | `current.yaml` outcome contradicts ledger, or label is `diverged` |
 | scope | touched files outside claim (same check as `check`) |
 | handover | task is `handed_over` but no handover names it, or that handover lacks a required section |
@@ -195,7 +195,7 @@ scripts can tell "drift" from "healthy" without confusing it with a contract fai
 ```
 $ majordomus watch
 DRIFT policy      .majordomus/policy.yaml modified after last update  [reproduce: majordomus update --dry-run]
-DRIFT projection  AGENTS.md — hash differs from fingerprint (hand-edited?)  [reproduce: majordomus update --diff AGENTS.md]
+DRIFT projection  AGENTS.md — content differs from its stamp (hand-edited?)  [reproduce: majordomus update --diff AGENTS.md]
 DRIFT checkpoint  t-20260903-193012-a4f1 — last checkpoint 48m ago, interval 15m
 watch: 3 findings
 ```
@@ -206,14 +206,15 @@ Regenerate provider projections from policy. Deterministic: same policy, same ou
 byte for byte.
 
 **Reads:** policy, profiles, `providers/*.tmpl`.
-**Writes:** every `projections[].target`, `generated/fingerprints.yaml`, one
-`projections.updated` ledger line.
+**Writes:** every `projections[].target`, one `projections.updated` ledger line. Nothing
+else: each target carries its own provenance.
 
 **Behaviour:**
 - `--dry-run` prints what would change; `--diff <target>` shows the diff for one. For a
   region projection the diff is of the region, not of the host document.
-- Refuses (`15`) to overwrite content whose current hash matches neither its fingerprint
-  nor the new output, unless `--force`. A hand edit is never silently lost; the refusal
+- Refuses (`15`) to overwrite content whose current hash matches neither the stamp it
+  carries nor the new output, unless `--force`. A target with no stamp at all was not
+  written by `update` and is refused the same way. A hand edit is never silently lost; the refusal
   names the file and the `--diff` command that shows it.
 - `mode: region` (see `SCHEMAS.md`) generates only the text between the
   `majordomus:begin` and `majordomus:end` markers. The rest of the target is copied
@@ -221,8 +222,10 @@ byte for byte.
   refused (`15`). This is how a repository that already has a hand-written `CLAUDE.md`
   adopts Majordomus without losing it.
 - Appends `projections.updated` to the ledger.
-- Every generated file begins with a header naming this command and the policy hash it
-  came from.
+- Every file-mode target begins with a stamp naming this command, the policy hash it
+  came from and the hash of the content below it; a region-mode target carries the same
+  two hashes in its begin marker. That stamp is the provenance `doctor` and `watch`
+  compare against, on a fresh clone as much as here.
 - The always-loaded projection is checked against the budget after generation; over
   budget is `10` and nothing is written. For a region projection the budget measures the
   generated region, and `doctor` reports the host document's own length as `INFO`.

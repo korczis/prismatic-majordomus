@@ -27,10 +27,10 @@ responsibilities:
     title: Projection
     readme_key: Projection
     command: update
-    files: [.majordomus/providers, .majordomus/generated/fingerprints.yaml]
+    files: [.majordomus/providers]
     implementation: lib/update.sh
     cli_anchor: majordomus update
-    schema_anchor: .majordomus/generated/fingerprints.yaml
+    schema_anchor: Projection stamp
     order: 2
 
   - id: state
@@ -87,10 +87,10 @@ responsibilities:
     title: Doctor
     readme_key: Doctor
     command: doctor
-    files: [.majordomus/generated/fingerprints.yaml]
+    files: [.majordomus/policy.yaml]
     implementation: lib/doctor.sh
     cli_anchor: majordomus doctor
-    schema_anchor: Projection header
+    schema_anchor: Projection stamp
     order: 8
 
   - id: watch

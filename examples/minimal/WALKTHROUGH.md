@@ -7,9 +7,9 @@ repository. Everything below is captured output; regenerate it rather than editi
 
 ```
 $ majordomus init
-created .majordomus/policy.yaml
+created .ai/repo/policy.yaml
 created .majordomus/profiles/ (routine, implementation, debugging, deep-work)
-created .majordomus/templates/, .majordomus/providers/, .majordomus/state/, .majordomus/generated/
+created .majordomus/templates/, .majordomus/providers/, .majordomus/prompts/, .majordomus/state/, .majordomus/generated/
 next: majordomus update      # generate the provider instruction files named in the policy
 next: majordomus doctor      # verify nothing is declared that is not wired
 hooks are not installed by init; add these two lines yourself, doctor verifies them:
@@ -22,25 +22,41 @@ $ majordomus update
 create CLAUDE.md
 create AGENTS.md
 create GEMINI.md
-fingerprints: .majordomus/generated/fingerprints.yaml (policy eac037882b9d)
+generated 3 target(s) from policy f96527debc24; each carries its own stamp
 ```
 
 `doctor` says exactly what is still missing:
 
 ```
 $ majordomus doctor
+OK   records     ledger.jsonl — every line is a well-formed event
+OK   records     decisions.md — every entry is attributable
+OK   records     open-questions.md — every entry parses
+OK   prompt      4 asset(s) — front matter valid, every token known
+OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
+OK   policy      11 key(s) — every policy value the code reads is declared, with no reader-side default
+OK   layout      .majordomus/state/handovers — present
+OK   layout      .majordomus/state/checkpoints — present
+OK   layout      .majordomus/prompts — present
 OK   policy      .majordomus/policy.yaml — parsed, version 1
 OK   profiles    4 files — parsed; default 'implementation' exists
+OK   projection  CLAUDE.md — content matches its stamp
+OK   projection  AGENTS.md — content matches its stamp
+OK   projection  GEMINI.md — content matches its stamp
 FAIL wiring      doctor-on-commit — hook .git/hooks/pre-commit does not exist  [reproduce: ls -l .git/hooks/pre-commit]
 FAIL wiring      finish-on-push — hook .git/hooks/pre-push does not exist  [reproduce: ls -l .git/hooks/pre-push]
-OK   projection  CLAUDE.md — fingerprint matches
-OK   projection  AGENTS.md — fingerprint matches
-OK   projection  GEMINI.md — fingerprint matches
-OK   budget      CLAUDE.md — 87 lines, budget 150
+OK   budget      CLAUDE.md — 146 lines, budget 150
 OK   links       CLAUDE.md — all references resolve
 OK   counts      CLAUDE.md — no hardcoded counts
+OK   context     builder — 17 lines, budget 300  [reproduce: majordomus context]
 OK   retention   ledger — 1 lines, cap 5000
 OK   retention   handovers — 0 files, cap 200
+OK   retention   checkpoints — 0 files, cap 500
+OK   catalogue   6 use case(s), 4 application(s) — every command, doctrine, claim and cross-reference resolves, both directions
+OK   doctrine    25 doctrines — validator, dispatch, propagation, test and CI resolve for every one
+INFO project     .majordomus/project — no canonical project model here; nothing to validate
+INFO project     .majordomus/project — no canonical project model here; nothing to validate
+INFO project     .majordomus/project — no canonical project model here; nothing to validate
 INFO env         - — bash 5.3.15, git 2.55.0, jq 1.8.2, shellcheck present
 doctor: 2 failure(s)
 ```
@@ -49,18 +65,34 @@ doctor: 2 failure(s)
 
 ```
 $ majordomus doctor
+OK   records     ledger.jsonl — every line is a well-formed event
+OK   records     decisions.md — every entry is attributable
+OK   records     open-questions.md — every entry parses
+OK   prompt      4 asset(s) — front matter valid, every token known
+OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
+OK   policy      11 key(s) — every policy value the code reads is declared, with no reader-side default
+OK   layout      .majordomus/state/handovers — present
+OK   layout      .majordomus/state/checkpoints — present
+OK   layout      .majordomus/prompts — present
 OK   policy      .majordomus/policy.yaml — parsed, version 1
 OK   profiles    4 files — parsed; default 'implementation' exists
+OK   projection  CLAUDE.md — content matches its stamp
+OK   projection  AGENTS.md — content matches its stamp
+OK   projection  GEMINI.md — content matches its stamp
 OK   wiring      doctor-on-commit — wired via .git/hooks/pre-commit
 OK   wiring      finish-on-push — wired via .git/hooks/pre-push
-OK   projection  CLAUDE.md — fingerprint matches
-OK   projection  AGENTS.md — fingerprint matches
-OK   projection  GEMINI.md — fingerprint matches
-OK   budget      CLAUDE.md — 87 lines, budget 150
+OK   budget      CLAUDE.md — 146 lines, budget 150
 OK   links       CLAUDE.md — all references resolve
 OK   counts      CLAUDE.md — no hardcoded counts
+OK   context     builder — 17 lines, budget 300  [reproduce: majordomus context]
 OK   retention   ledger — 1 lines, cap 5000
 OK   retention   handovers — 0 files, cap 200
+OK   retention   checkpoints — 0 files, cap 500
+OK   catalogue   6 use case(s), 4 application(s) — every command, doctrine, claim and cross-reference resolves, both directions
+OK   doctrine    25 doctrines — validator, dispatch, propagation, test and CI resolve for every one
+INFO project     .majordomus/project — no canonical project model here; nothing to validate
+INFO project     .majordomus/project — no canonical project model here; nothing to validate
+INFO project     .majordomus/project — no canonical project model here; nothing to validate
 INFO env         - — bash 5.3.15, git 2.55.0, jq 1.8.2, shellcheck present
 doctor: 0 failure(s)
 ```
@@ -69,8 +101,8 @@ doctor: 0 failure(s)
 
 ```
 $ majordomus start fix OAuth callback dropping state --scope lib/auth,test/oauth_test.rb --profile debugging --owner alice
-started t-20260903211918-025d  profile=debugging  scope=lib/auth,test/oauth_test.rb
-next: worker reads the projected instructions; checkpoint every 15m; majordomus check
+started t-20260904195115-9d54  profile=debugging  scope=lib/auth,test/oauth_test.rb
+next: majordomus context; checkpoint every 15m; majordomus check before claiming anything
 ```
 
 ## 4. Work, then check
@@ -79,49 +111,58 @@ The worker edits `lib/auth/oauth.rb` and also, by mistake, `test/other.rb`, whic
 
 ```
 $ majordomus check
-OK   state       t-20260903211918-025d — exact (head c716c92)
-FAIL scope       test/other.rb — outside claimed scope (lib/auth,test/oauth_test.rb)  [reproduce: git status --porcelain; git diff --name-only c716c92841903f364eed403d8b3ab7608a36f126 HEAD]
-OK   checkpoint  t-20260903211918-025d — 0m ago, interval 15m
-OK   blockers    t-20260903211918-025d — none open
-check: 4 finding(s), 1 failing
+FAIL scope       test/other.rb — outside claimed scope (lib/auth,test/oauth_test.rb)  [reproduce: git status --porcelain; git diff --name-only 92f2ebb3dac9c073089d9e8aa244467b48cb5283 HEAD]
+OK   state       t-20260904195115-9d54 — exact (head 92f2ebb)
+OK   blockers    t-20260904195115-9d54 — none open
+OK   checkpoint  t-20260904195115-9d54 — 0m ago, interval 15m
+OK   records     ledger.jsonl — every line is a well-formed event
+OK   records     decisions.md — every entry is attributable
+check: 6 finding(s), 1 failing
 ```
 
 After removing the out-of-scope file:
 
 ```
 $ majordomus check
-OK   state       t-20260903211918-025d — exact (head c716c92)
-OK   scope       t-20260903211918-025d — 1 touched file(s), all within scope
-OK   checkpoint  t-20260903211918-025d — 0m ago, interval 15m
-OK   blockers    t-20260903211918-025d — none open
-check: 4 finding(s), 0 failing
+OK   scope       t-20260904195115-9d54 — 1 touched file(s), all within scope
+OK   state       t-20260904195115-9d54 — exact (head 92f2ebb)
+OK   blockers    t-20260904195115-9d54 — none open
+OK   checkpoint  t-20260904195115-9d54 — 0m ago, interval 15m
+OK   records     ledger.jsonl — every line is a well-formed event
+OK   records     decisions.md — every entry is attributable
+check: 6 finding(s), 0 failing
 ```
 
 ## 5. Try to finish too early
 
 ```
 $ majordomus finish --outcome completed --verify-command true
-OK   scope       t-20260903211918-025d — 1 touched file(s), all within scope
-OK   verification t-20260903211918-025d — true — exit 0, 0s
-OK   state       t-20260903211918-025d — exact (head c716c92)
-OK   blockers    t-20260903211918-025d — none open
-FAIL note        t-20260903211918-025d — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]
-FAIL regression  t-20260903211918-025d — profile debugging requires a regression test; no test path among touched files  [reproduce: git diff --name-only c716c92841903f364eed403d8b3ab7608a36f126 HEAD; git status --porcelain]
+OK   scope       t-20260904195115-9d54 — 1 touched file(s), all within scope
+OK   state       t-20260904195115-9d54 — exact (head 92f2ebb)
+OK   blockers    t-20260904195115-9d54 — none open
+OK   verification t-20260904195115-9d54 — true — exit 0, 0s
+FAIL note        t-20260904195115-9d54 — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]
+FAIL regression  t-20260904195115-9d54 — profile debugging requires a regression test; no test path among touched files  [reproduce: git diff --name-only 92f2ebb3dac9c073089d9e8aa244467b48cb5283 HEAD; git status --porcelain]
+INFO continuity  t-20260904195115-9d54 — applies to partial and blocked
 finish: refused, 2 unmet
+blocking doctrines:
+- note_integrity- profile_requirements
 ```
 
 ## 6. Hand over, resolve, finish
 
 ```
 $ printf "# Objective\n...\n# Current State\n...\n# Next Action\n...\n" | majordomus handover
-.majordomus/state/handovers/20260903T211919Z--main--c716c92--ac5eb9ccef068615.md
+.majordomus/state/handovers/20260904T195118Z--main--92f2ebb--dc645058dfed6f2e.md
 ```
 
 ```
 $ majordomus handover --resolve
-Handover: .majordomus/state/handovers/20260903T211919Z--main--c716c92--ac5eb9ccef068615.md
+Handover: .majordomus/state/handovers/20260904T195118Z--main--92f2ebb--dc645058dfed6f2e.md
 Match: same_worktree_same_branch
 Git state: exact
+Created: 2026-09-04T19:51:18Z (0m ago)
+Task: t-20260904195115-9d54
 ---
 
 # Objective
@@ -134,39 +175,41 @@ Add the regression test and finish.
 
 ```
 $ majordomus finish --outcome completed --verify-command true
-OK   scope       t-20260903211918-025d — 2 touched file(s), all within scope
-OK   verification t-20260903211918-025d — true — exit 0, 0s
-OK   state       t-20260903211918-025d — exact (head c716c92)
-OK   blockers    t-20260903211918-025d — none open
-OK   note        t-20260903211918-025d — 20260903T211919Z--main--c716c92--ac5eb9ccef068615.md
-OK   regression  t-20260903211918-025d — a test path was touched
-finish: t-20260903211918-025d completed
+OK   scope       t-20260904195115-9d54 — 2 touched file(s), all within scope
+OK   state       t-20260904195115-9d54 — exact (head 92f2ebb)
+OK   blockers    t-20260904195115-9d54 — none open
+OK   verification t-20260904195115-9d54 — true — exit 0, 0s
+OK   note        t-20260904195115-9d54 — 20260904T195118Z--main--92f2ebb--dc645058dfed6f2e.md
+OK   regression  t-20260904195115-9d54 — a test path was touched
+INFO continuity  t-20260904195115-9d54 — applies to partial and blocked
+finish: t-20260904195115-9d54 completed
 ```
 
 ## 7. What was recorded
 
 ```
 $ cat .majordomus/state/current.yaml
-id: t-20260903211918-025d
+id: t-20260904195115-9d54
 task: "fix OAuth callback dropping state"
 profile: debugging
 owner: "alice"
 scope:
   - lib/auth
   - test/oauth_test.rb
-started_at: 2026-09-03T21:19:18Z
-checkpoint_at: 2026-09-03T21:19:19Z
+started_at: 2026-09-04T19:51:15Z
+checkpoint_at: 2026-09-04T19:51:19Z
 outcome: completed
 # computed from git; never authored
-repository_id: /private/var/folders/kf/wdy_qjjd66707gpgsl7m1d6r0000gn/T/mj-example.yhiwfC/.git
+repository_id: /private/var/folders/kf/wdy_qjjd66707gpgsl7m1d6r0000gn/T/mj-example.6G4izl/.git
+worktree: /private/var/folders/kf/wdy_qjjd66707gpgsl7m1d6r0000gn/T/mj-example.6G4izl
 branch: main
-head: c716c92841903f364eed403d8b3ab7608a36f126
+head: 92f2ebb3dac9c073089d9e8aa244467b48cb5283
 working_tree: dirty
 ```
 
 ```
 $ tail -n 1 .majordomus/state/ledger.jsonl
-{"ts":"2026-09-03T21:19:19Z","event":"task.finished","head":"c716c92841903f364eed403d8b3ab7608a36f126","branch":"main","by":"majordomus/0.1.0","task_id":"t-20260903211918-025d","outcome":"completed","contract":{"scope_respected":"pass","verification_ran":"pass","state_updated":"pass","no_open_blockers":"pass","note_present":"pass","regression_test":"pass"},"verify":{"command":"true","exit":0,"seconds":0}}
+{"ts":"2026-09-04T19:51:19Z","event":"task.finished","head":"92f2ebb3dac9c073089d9e8aa244467b48cb5283","branch":"main","by":"majordomus/0.1.0","task_id":"t-20260904195115-9d54","outcome":"completed","contract":{"scope_integrity":"pass","state_consistency":"pass","blocker_resolution":"pass","verification_integrity":"pass","note_integrity":"pass","profile_requirements":"pass","task_continuity":"skipped"},"verify":{"command":"true","exit":0,"seconds":0},"checkpoints":0}
 ```
 
 ## 8. Drift is visible
@@ -175,18 +218,32 @@ Someone edits the generated file by hand and changes the policy without regenera
 
 ```
 $ majordomus watch
-DRIFT policy      .majordomus/policy.yaml — policy or profiles changed after the last update  [reproduce: majordomus update --dry-run]
-OK   projection  CLAUDE.md — matches fingerprint
-DRIFT projection  AGENTS.md — hash differs from fingerprint (hand-edited?)  [reproduce: majordomus update --diff AGENTS.md]
-OK   projection  GEMINI.md — matches fingerprint
-OK   state       t-20260903211918-025d — exact
-OK   verification t-20260903211918-025d — completed with a finish record
-OK   retention   ledger — 4 lines
-OK   retention   handovers — 1 files
+OK   scope       t-20260904195115-9d54 — 2 touched file(s), all within scope
+OK   state       t-20260904195115-9d54 — exact (head 92f2ebb)
+INFO checkpoint  t-20260904195115-9d54 — outcome is completed; freshness applies while a task is active
+OK   records     ledger.jsonl — every line is a well-formed event
+OK   records     decisions.md — every entry is attributable
+OK   records     open-questions.md — every entry parses
+OK   prompt      4 asset(s) — front matter valid, every token known
+OK   handover    20260904T195118Z--main--92f2ebb--dc645058dfed6f2e.md — exact, 0m ago
+OK   policy      11 key(s) — every policy value the code reads is declared, with no reader-side default
+DRIFT policy      .majordomus/policy.yaml — policy or profiles changed after the last update of CLAUDE.md AGENTS.md GEMINI.md  [reproduce: majordomus update --dry-run]
+OK   projection  CLAUDE.md — content matches its stamp
+DRIFT projection  AGENTS.md — content differs from its stamp (hand-edited?)  [reproduce: majordomus update --diff AGENTS.md]
+OK   projection  GEMINI.md — content matches its stamp
+OK   context     builder — 58 lines, budget 300  [reproduce: majordomus context]
+OK   retention   ledger — 4 lines, cap 5000
+OK   retention   handovers — 1 files, cap 200
+OK   retention   checkpoints — 0 files, cap 500
+OK   catalogue   6 use case(s), 4 application(s) — every command, doctrine, claim and cross-reference resolves, both directions
+INFO project     .majordomus/project — no canonical project model here; nothing to validate
+INFO project     .majordomus/project — no canonical project model here; nothing to validate
+INFO project     .majordomus/project — no canonical project model here; nothing to validate
+OK   verification t-20260904195115-9d54 — completed with a finish record
 watch: 2 drift finding(s)
 ```
 
 ```
 $ majordomus update
-REFUSE projection  AGENTS.md — current content matches neither its fingerprint nor the new output (hand-edited?); use --diff AGENTS.md, then --force  [reproduce: majordomus update --diff AGENTS.md]
+REFUSE projection  AGENTS.md — current content matches neither its own stamp nor the new output (hand-edited?); use --diff AGENTS.md, then --force  [reproduce: majordomus update --diff AGENTS.md]
 ```

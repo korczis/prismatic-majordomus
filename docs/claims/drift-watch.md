@@ -2,11 +2,11 @@
 
 ## What it means
 
-`majordomus watch` is the read-only inspection of everything that can silently disagree: the policy changed after the last `update` (policy drift); a generated file no longer matches its fingerprint (projection drift); the task record no longer describes the checkout (state drift); touched files outside scope (scope drift); a task marked handed over with no handover file, or one missing a required section (handover drift); a task marked complete with no `task.finished` in the ledger (verification drift); a checkpoint older than the profile interval (staleness); a store over its cap (retention). Each finding names the command that reproduces it; exit 11 when anything drifted.
+`majordomus watch` is the read-only inspection of everything that can silently disagree: the policy changed after the last `update` (policy drift); a generated file no longer matches its own stamp (projection drift); the task record no longer describes the checkout (state drift); touched files outside scope (scope drift); a task marked handed over with no handover file, or one missing a required section (handover drift); a task marked complete with no `task.finished` in the ledger (verification drift); a checkpoint older than the profile interval (staleness); a store over its cap (retention). Each finding names the command that reproduces it; exit 11 when anything drifted.
 
 ## How it works
 
-`lib/watch.sh` recomputes the policy hash and compares it with `fingerprints.yaml`, hashes each projection, loads the task record and profile, reuses the scope and divergence logic from `check`, greps the ledger and the handover store, and counts against the retention caps. It writes nothing.
+`lib/watch.sh` recomputes the policy hash and compares it with the one each projection's stamp names, hashes each projection's content against its stamp, loads the task record and profile, reuses the scope and divergence logic from `check`, greps the ledger and the handover store, and counts against the retention caps. It writes nothing.
 
 ## How to see it
 

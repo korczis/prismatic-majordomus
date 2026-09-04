@@ -186,7 +186,7 @@ alone.
 ### Maintenance
 
 Regenerate provider projections deterministically from canonical policy.
-Fingerprint what was generated so that a hand edit or a stale projection is
+Stamp what was generated so that a hand edit or a stale projection is
 detectable in one command.
 
 ### Termination
@@ -325,8 +325,6 @@ because an under-filled context is debugged from the exclusion list.
     open-questions.md     # things blocked on a human
     handovers/            # append-only, one file per handover
     ledger.jsonl          # append-only events, retention-capped
-  generated/
-    fingerprints.yaml     # sha256 of every projection at generation time
 ```
 
 Rules:
@@ -435,9 +433,10 @@ CLAUDE.md   AGENTS.md    GEMINI.md   (+ .cursor/rules, generic)
 
 - Projections are generated, not hand-edited. Each carries a header stating that it
   is generated and naming the command that regenerates it.
-- `generated/fingerprints.yaml` records the hash of each projection at generation
-  time. `doctor` reports any projection whose current hash differs (hand edit) and any
-  whose policy source is newer than its fingerprint (stale).
+- every projection carries a stamp: the policy hash it was rendered from and the hash
+  of its own content, in its first line or its region's begin marker; `doctor` fails on
+  a projection whose content differs from its stamp and `watch` reports a projection
+  whose stamped policy hash is not the policy on disk (stale).
 - Adapters translate canonical concepts into a provider's format. They do not add
   rules. A rule that exists for one provider and not another is a policy bug, not an
   adapter feature.
@@ -463,7 +462,7 @@ semantically distinct subcommands:
 | `start <task>` | begin a scoped task with a profile | `state/current.yaml`, claim |
 | `check` | is the current task consistent with policy, scope, and state? `--explain` prints the effective merged policy and profile | no |
 | `watch` | what has drifted: state, policy, projections, retention? | no |
-| `update` | regenerate projections from policy | projections, fingerprints |
+| `update` | regenerate projections from policy | projections |
 | `handover` | write an append-only continuation record | one new file |
 | `finish` | evaluate the finish contract; refuse if unmet | `state/current.yaml`, ledger |
 
@@ -488,7 +487,7 @@ blocking:
    named `wired_by` dispatcher (the git hook file exists, is executable, and invokes
    the path). Declared-but-not-wired is the default end state; this check is the
    product.
-3. Every `projections` target exists, has a fingerprint, and matches it.
+3. Every `projections` target exists, carries a stamp, and matches it.
 4. Always-loaded projection is within `always_loaded_budget_lines`.
 5. Every repository-relative path referenced from a projection resolves.
 6. No hardcoded counts in the always-loaded projection.
@@ -501,8 +500,8 @@ reproduce commands, non-blocking by design because they concern work in progress
 
 | Drift | Detected how |
 |---|---|
-| Policy drift | policy mtime newer than any fingerprint |
-| Projection drift | projection hash differs from fingerprint |
+| Policy drift | a projection's stamp names a policy hash that is not the policy on disk |
+| Projection drift | a projection's content differs from the hash its stamp names |
 | State drift | `current.yaml` status contradicts ledger, or `head` label is `diverged` |
 | Scope drift | touched files outside claimed paths |
 | Handover drift | most recent handover lacks a required section, or is older than `current.yaml` |
@@ -606,7 +605,7 @@ v0.1 ships exactly:
 - `doctor` dispatching every doctrine the registry declares, including enforcement wiring reconciliation
 - `watch` with the drift table above
 - `update` producing projections for Claude Code, Codex, Gemini, and generic Markdown,
-  with fingerprints
+  each stamped with its provenance
 - a README that lists, in equal prominence, what v0.1 guarantees, what it only
   observes, and what it refuses to do
 
