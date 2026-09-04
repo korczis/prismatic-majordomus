@@ -461,49 +461,56 @@ mj_validate_rule_package() {
 # is an orphan validator, which is how a check quietly stops being governed.
 mj_validate_doctrine_wiring() {
   local lib="$MJ_LIB_DIR" root="$MJ_HOME"
-  local i=0 id val cls fn cmd t bad=0 n=0
+  local i=0 id val cls fn cmd t c bad=0 n=0
+  # the source, read once: which validator functions exist, which modules dispatch, which
+  # modules turn a failing finding into a non-zero exit, and which claim ids are declared
+  local fns dispatching propagating claims
+  fns=" $(grep -rhoE '^mj_validate_[A-Za-z0-9_-]+\(\)' "$lib" | sed 's/()$//' | paste -sd' ' -) "
+  dispatching=" $(grep -l 'mj_doctrine_dispatch' "$lib"/*.sh 2>/dev/null | paste -sd' ' -) "
+  propagating=" $(grep -lE 'MJ_FAILS.*exit|exit .*MJ_EX_CONTRACT|MJ_DOCTOR_MISSING' "$lib"/*.sh 2>/dev/null | paste -sd' ' -) "
+  claims=" $(sed -n 's/^  - id: //p' "$root/docs/CLAIMS.yaml" 2>/dev/null | paste -sd' ' -) "
 
   # 1. every declared doctrine resolves, end to end
-  while [ -n "$(mj_doc "$i" id)" ]; do
-    n=$((n+1)); id="$(mj_doc "$i" id)"; val="$(mj_doc "$i" validator)"; cls="$(mj_doc "$i" class)"; fn="mj_validate_$val"
-    case "$cls" in blocking|advisory) ;; *) mj_doctrine_fail doctrine "$id" "class '$cls' is neither blocking nor advisory" "grep -n '^class:' $(mj_doc "$i" file)"; bad=1 ;; esac
-    if ! grep -rqE "^$fn\(\)" "$lib"; then
-      mj_doctrine_fail doctrine "$id" "validator function $fn is defined nowhere in lib/" "grep -rn '$fn' lib/"; bad=1
-    fi
+  while mj_doc_row "$i"; do
+    n=$((n+1)); id="$MJ_DR_ID"; val="$MJ_DR_VAL"; cls="$MJ_DR_CLASS"; fn="mj_validate_$val"
+    case "$cls" in blocking|advisory) ;; *) mj_doctrine_fail doctrine "$id" "class '$cls' is neither blocking nor advisory" "grep -n '^class:' $MJ_DR_FILE"; bad=1 ;; esac
+    case "$fns" in *" $fn "*) ;; *)
+      mj_doctrine_fail doctrine "$id" "validator function $fn is defined nowhere in lib/" "grep -rn '$fn' lib/"; bad=1 ;;
+    esac
     # the commands it claims to run under must actually dispatch
-    for cmd in $(mj_doc_list "$i" enforced_by); do
+    for cmd in ${MJ_DR_EB//,/ }; do
       if [ ! -f "$lib/$cmd.sh" ]; then
         mj_doctrine_fail doctrine "$id" "enforced_by names '$cmd', which is not a command (lib/$cmd.sh)" "ls lib/"; bad=1
-      elif ! grep -q 'mj_doctrine_dispatch' "$lib/$cmd.sh"; then
-        mj_doctrine_fail doctrine "$id" "declared for $cmd but lib/$cmd.sh never calls mj_doctrine_dispatch" "grep -n mj_doctrine_dispatch lib/$cmd.sh"; bad=1
-      fi
+      else case "$dispatching" in *" $lib/$cmd.sh "*) ;; *)
+        mj_doctrine_fail doctrine "$id" "declared for $cmd but lib/$cmd.sh never calls mj_doctrine_dispatch" "grep -n mj_doctrine_dispatch lib/$cmd.sh"; bad=1 ;;
+      esac; fi
     done
     # a blocking doctrine must be able to stop its command
     if [ "$cls" = blocking ]; then
-      for cmd in $(mj_doc_list "$i" enforced_by); do
+      for cmd in ${MJ_DR_EB//,/ }; do
         [ -f "$lib/$cmd.sh" ] || continue
-        grep -qE 'MJ_FAILS.*exit|exit .*MJ_EX_CONTRACT|MJ_DOCTOR_MISSING' "$lib/$cmd.sh" \
-          || { mj_doctrine_fail doctrine "$id" "blocking, but lib/$cmd.sh never turns a failing finding into a non-zero exit" "grep -n 'MJ_FAILS' lib/$cmd.sh"; bad=1; }
+        case "$propagating" in *" $lib/$cmd.sh "*) ;; *)
+          mj_doctrine_fail doctrine "$id" "blocking, but lib/$cmd.sh never turns a failing finding into a non-zero exit" "grep -n 'MJ_FAILS' lib/$cmd.sh"; bad=1 ;;
+        esac
       done
     fi
     # the tests that prove it must exist
-    t="$(mj_doc "$i" test)"
-    if [ -z "$t" ]; then mj_doctrine_fail doctrine "$id" "declares no test" "grep -n 'tests:' $(mj_doc "$i" file)"; bad=1; fi
-    for t in $(mj_doc_list "$i" tests); do
+    if [ -z "$MJ_DR_TEST" ]; then mj_doctrine_fail doctrine "$id" "declares no test" "grep -n 'tests:' $MJ_DR_FILE"; bad=1; fi
+    for t in ${MJ_DR_TESTS//,/ }; do
       [ -f "$root/$t" ] || { mj_doctrine_fail doctrine "$id" "test $t does not exist" "ls $t"; bad=1; }
     done
     # every claim it carries must be a real claim
-    local c
-    for c in $(mj_doc_list "$i" claims); do
-      grep -q "^  - id: $c$" "$root/docs/CLAIMS.yaml" 2>/dev/null \
-        || { mj_doctrine_fail doctrine "$id" "names claim '$c', which is not in docs/CLAIMS.yaml" "grep -n 'id: $c' docs/CLAIMS.yaml"; bad=1; }
+    for c in ${MJ_DR_CLAIMS//,/ }; do
+      case "$claims" in *" $c "*) ;; *)
+        mj_doctrine_fail doctrine "$id" "names claim '$c', which is not in docs/CLAIMS.yaml" "grep -n 'id: $c' docs/CLAIMS.yaml"; bad=1 ;;
+      esac
     done
     i=$((i+1))
   done
 
   # 2. the other direction — a validator no doctrine declares
   local f declared=" "
-  i=0; while [ -n "$(mj_doc "$i" id)" ]; do declared="$declared$(mj_doc "$i" validator) "; i=$((i+1)); done
+  i=0; while mj_doc_row "$i"; do declared="$declared$MJ_DR_VAL "; i=$((i+1)); done
   for f in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
     case "$declared" in *" $f "*) ;; *) mj_doctrine_fail doctrine "mj_validate_$f" "validator exists but no rule declares it; it runs under no rule" "grep -rn 'validator: $f' $(mj_rel "$MJ_RULES_DIR")"; bad=1 ;; esac
   done
