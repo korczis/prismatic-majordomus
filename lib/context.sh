@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # MJ_CTX_HAVE_TASK and MJ_CTX_LABEL are read by mj_context_json
 # sourced by several commands; guard against re-sourcing
 [ -n "${MJ_LIB_context:-}" ] && return 0 || MJ_LIB_context=1
 # context — assemble the minimum sufficient context for whoever works next.
@@ -84,7 +85,7 @@ mj_context_sections() {
     mj_ctx_excl "profile $profile" "the task names a profile with no file; context toggles unknown"
     profile=""
   fi
-  MJ_CTX_ID="$id"; MJ_CTX_PROFILE="$profile"; MJ_CTX_HAVE_TASK="$have_task"
+  MJ_CTX_HAVE_TASK="$have_task"
 
   # 1. git — the highest authority, always present
   {
@@ -228,12 +229,17 @@ mj_context_sections() {
     fi
   fi
 
-  # 10. prompt asset
-  if [ -n "$prompt_name" ] && [ "$no_prompt" != 1 ]; then
-    { printf '## PROMPT %s\n' "$prompt_name"; MJ_NO_PROMPT=1 mj_prompt_render "$prompt_name"; } > "$MJ_CTX_TMP/95.prompt" \
-      || { rm -f "$MJ_CTX_TMP/95.prompt"; mj_die "$MJ_EX_MISSING" "context: prompt '$prompt_name' could not be rendered"; }
-  elif [ -n "$prompt_name" ]; then
-    mj_ctx_excl "prompt $prompt_name" "a prompt asset cannot include the context it is being rendered into"
+  # 10. prompt asset. An asset whose body asks for {{CONTEXT}} is excluded rather than
+  #     rendered: the result would be this same context nested inside itself, which is
+  #     duplication the budget then has to pay for twice.
+  if [ -n "$prompt_name" ]; then
+    local pfile; pfile="$MJ_DIR/prompts/$prompt_name.md"
+    if [ "$no_prompt" = 1 ] || { [ -f "$pfile" ] && grep -q '^{{CONTEXT}}$' "$pfile"; }; then
+      mj_ctx_excl "prompt $prompt_name" "a prompt asset cannot include the context it is being rendered into"
+    else
+      { printf '## PROMPT %s\n' "$prompt_name"; MJ_NO_PROMPT=1 mj_prompt_render "$prompt_name"; } > "$MJ_CTX_TMP/95.prompt" \
+        || { rm -f "$MJ_CTX_TMP/95.prompt"; mj_die "$MJ_EX_MISSING" "context: prompt '$prompt_name' could not be rendered"; }
+    fi
   fi
 }
 
@@ -250,16 +256,33 @@ mj_ctx_verification() {
 # Sections are dropped in a fixed order, least reliable evidence first, and every drop is
 # named in EXCLUDED. Bodies of authored records degrade to a pointer rather than vanish.
 MJ_CTX_DROP_ORDER="90.history 80.files 50.decisions 60.checkpoint 70.handover"
+MJ_CTX_ORDER="10.git 20.task 30.profile 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt"
 
-mj_ctx_lines() { local n=0 f; for f in "$@"; do [ -f "$f" ] && n=$((n + $(mj_lines "$f") + 1)); done; printf '%s' "$n"; }
+# Render the whole document, including its own header and trailer, into $1. The budget
+# governs what a worker actually receives, so the count must be of this file and not of
+# the sections alone — a "40 of 40 lines" printed on a 50-line page is the kind of number
+# this tool exists to catch.
+mj_ctx_render() {
+  local out="$1" budget="$2" provider="$3" target="$4" dropped="$5" f
+  {
+    printf '# Majordomus context — %s\n' "$(mj_now)"
+    printf '# a projection of durable state, not a source of truth: validate every line against git\n'
+    [ -n "$provider" ] && printf '# provider %s — its always-loaded instructions are %s\n' "$provider" "$target"
+    for f in $MJ_CTX_ORDER; do [ -f "$MJ_CTX_TMP/$f" ] || continue; printf '\n'; cat "$MJ_CTX_TMP/$f"; done
+    printf '\n## EXCLUDED\n'
+    if [ -s "$MJ_CTX_TMP/excluded" ]; then sed 's/^/- /' "$MJ_CTX_TMP/excluded"; else printf -- '- nothing\n'; fi
+    printf '\n## BUDGET\n'
+  } > "$out"
+  # the count includes the budget line about to be appended
+  printf '%s of %s lines%s\n' "$(( $(mj_lines "$out") + 1 ))" "$budget" "${dropped:+ (dropped:$dropped)}" >> "$out"
+}
 
 mj_context_emit() {
-  local budget="$1" provider="$2" target="$3" dropped="" f id
-  local keep="10.git 20.task 30.profile 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt"
-  local total; total="$(mj_ctx_lines $(mj_ctx_paths "$keep"))"
-  local d
+  local budget="$1" provider="$2" target="$3" dropped="" d
+  local doc; doc="$MJ_CTX_TMP/doc"
+  mj_ctx_render "$doc" "$budget" "$provider" "$target" "$dropped"
   for d in $MJ_CTX_DROP_ORDER; do
-    [ "$total" -le "$budget" ] && break
+    [ "$(mj_lines "$doc")" -le "$budget" ] && break
     [ -f "$MJ_CTX_TMP/$d" ] || continue
     case "$d" in
       60.checkpoint|70.handover)
@@ -267,32 +290,22 @@ mj_context_emit() {
           { head -n 1 "$MJ_CTX_TMP/$d"; printf 'body omitted for budget — read %s\n' "$(cat "$MJ_CTX_TMP/$d.path")"; } > "$MJ_CTX_TMP/$d.short"
           mv "$MJ_CTX_TMP/$d.short" "$MJ_CTX_TMP/$d"
         else rm -f "$MJ_CTX_TMP/$d"; fi
-        dropped="$dropped ${d#*.}-body"
-        mj_ctx_excl "${d#*.} body" "context budget $budget lines" ;;
+        dropped="$dropped ${d#*.}-body"; mj_ctx_excl "${d#*.} body" "context budget $budget lines" ;;
       *)
-        rm -f "$MJ_CTX_TMP/$d"; dropped="$dropped ${d#*.}"
-        mj_ctx_excl "${d#*.}" "context budget $budget lines" ;;
+        rm -f "$MJ_CTX_TMP/$d"; dropped="$dropped ${d#*.}"; mj_ctx_excl "${d#*.}" "context budget $budget lines" ;;
     esac
-    total="$(mj_ctx_lines $(mj_ctx_paths "$keep"))"
+    mj_ctx_render "$doc" "$budget" "$provider" "$target" "$dropped"
   done
 
+  local total; total="$(mj_lines "$doc")"
   if [ "$MJ_JSON" = 1 ]; then mj_context_json "$budget" "$total" "$dropped" "$provider" "$target"; return 0; fi
-
-  printf '# Majordomus context — %s\n' "$(mj_now)"
-  printf '# a projection of durable state, not a source of truth: validate every line against git\n'
-  [ -n "$provider" ] && printf '# provider %s — its always-loaded instructions are %s\n' "$provider" "$target"
-  for f in $(mj_ctx_paths "$keep"); do [ -f "$f" ] || continue; printf '\n'; cat "$f"; done
-  printf '\n## EXCLUDED\n'
-  if [ -s "$MJ_CTX_TMP/excluded" ]; then sed 's/^/- /' "$MJ_CTX_TMP/excluded"; else printf -- '- nothing\n'; fi
-  printf '\n## BUDGET\n%s of %s lines%s\n' "$total" "$budget" "${dropped:+ (dropped:$dropped)}"
-
+  cat "$doc"
   if [ "$total" -gt "$budget" ]; then
     mj_err "context: $total lines over the budget of $budget with nothing left to drop"
     return "$MJ_EX_CONTRACT"
   fi
   return 0
 }
-mj_ctx_paths() { local k p out=""; for k in $1; do p="$MJ_CTX_TMP/$k"; [ -f "$p" ] && out="$out $p"; done; printf '%s' "$out"; }
 
 # escape a whole file into one JSON string body
 mj_json_file() {

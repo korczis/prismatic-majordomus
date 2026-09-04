@@ -259,7 +259,7 @@ mj_doctor_continuity() {
   local budget out lines
   budget="$(mj_pol context.builder_budget_lines)"; [ -n "$budget" ] || budget=300
   out="$(mktemp "${TMPDIR:-/tmp}/mj.dc.XXXXXX")"
-  if ( MJ_JSON=0; mj_cmd_context ) > "$out" 2>/dev/null; then
+  if ( export MJ_JSON=0; mj_cmd_context ) > "$out" 2>/dev/null; then
     lines="$(mj_lines "$out")"
     if [ "$lines" -le "$budget" ]; then mj_ok context "builder" "$lines lines, budget $budget" "majordomus context"
     else mj_fail context "builder" "$lines lines over budget $budget" "majordomus context"; fi

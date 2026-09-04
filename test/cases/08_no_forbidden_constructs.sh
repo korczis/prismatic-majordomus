@@ -17,6 +17,7 @@ chk 'rm[[:space:]]+-rf[[:space:]]+/[^t]'                    'recursive delete of
 # every rm -rf that does exist targets a mktemp path
 grep -nE 'rm -rf' $files | grep -vE 'mktemp|\$tmp\b|\$TMP\b|"\$tmp"|"\$T"|\$MJ_CTX_TMP\b' | grep -vE '^[^:]+:[0-9]+:\s*#' && exit 1
 # ... and every variable the scan trusts by name is only ever assigned from mktemp
+# shellcheck disable=SC2043  # one name today; the list is what makes adding another cheap
 for v in MJ_CTX_TMP; do
   if grep -nE "^[[:space:]]*(local )?$v=" $files | grep -vE 'mktemp'; then
     printf '    %s is assigned from something other than mktemp\n' "$v"; exit 1

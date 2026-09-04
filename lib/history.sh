@@ -40,7 +40,10 @@ H
     return 0
   fi
   if [ "$validate" = 1 ]; then mj_history_validate "$led"; return; fi
-  if [ "$rotate" = 1 ]; then mj_history_rotate "$led"; return; fi
+  if [ "$rotate" = 1 ]; then
+    [ -n "${MJ_POL_FLAT:-}" ] || mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
+    mj_history_rotate "$led"; return
+  fi
 
   local cutoff=""
   if [ -n "$since" ]; then

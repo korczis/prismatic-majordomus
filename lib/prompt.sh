@@ -136,7 +136,11 @@ mj_prompt_render() {
     else printf '(none)\n' > "$tmp/HANDOVER"; fi
   fi
   if grep -q '{{CONTEXT}}' "$body"; then
-    ( MJ_NO_PROMPT=1 MJ_JSON=0; mj_cmd_context ) > "$tmp/CONTEXT" 2>/dev/null || true
+    # a subshell so the exit in mj_cmd_context ends only the nested render, and so the
+    # two settings that make it a plain nested body do not leak back to the caller
+    # a subshell so the exit in mj_cmd_context ends only the nested render, and so the
+    # two settings that make it a plain nested body do not leak back to the caller
+    ( export MJ_NO_PROMPT=1 MJ_JSON=0; mj_cmd_context ) > "$tmp/CONTEXT" 2>/dev/null || true
     [ -s "$tmp/CONTEXT" ] || printf '(context unavailable)\n' > "$tmp/CONTEXT"
   fi
 

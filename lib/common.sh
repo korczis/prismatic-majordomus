@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # the MJ_RES_* resolution outputs are read by the commands that
+# source this file: handover, checkpoint, context, prompt, start, doctor and watch.
 # common.sh — shared helpers for majordomus. Sourced, never executed.
 # Targets bash 3.2 and BSD userland: no associative arrays, no mapfile, no GNU-only flags.
 
@@ -379,7 +381,7 @@ mj_resolve_latest() {
       elif [ "$my_branch" != DETACHED ] && [ "$(mj_yget "$flat" branch)" = "$my_branch" ]; then tier=1; fi
     fi
     if [ -n "$tier" ]; then
-      key="$tier|$(mj_yget "$flat" created_at)"
+      key="$tier|$(mj_yget "$flat" created_at)|$(mj_record_rank "$f")"
       if [ -z "$best" ] || [ "${key%%|*}" -lt "${best_key%%|*}" ] || { [ "${key%%|*}" = "${best_key%%|*}" ] && [ "${key#*|}" \> "${best_key#*|}" ]; }; then
         best="$f"; best_key="$key"
         MJ_RES_HEAD="$(mj_yget "$flat" head)"; MJ_RES_BRANCH="$(mj_yget "$flat" branch)"
@@ -393,6 +395,18 @@ mj_resolve_latest() {
   MJ_RES_PATH="$best"; MJ_RES_TIER="${best_key%%|*}"
   [ "$MJ_RES_TIER" = 0 ] && MJ_RES_MATCH=same_worktree_same_branch || MJ_RES_MATCH=same_branch
   return 0
+}
+
+# Position of a record in the ledger, zero-padded, or 000000 when nothing recorded it.
+# created_at has second resolution, so two records written inside one second would
+# otherwise resolve in an order decided by a random filename suffix. The ledger is
+# append-only and written in the order the commands ran, which makes it the one portable
+# monotonic tiebreak available without sub-second timestamps.
+mj_record_rank() {
+  local base n
+  base="$(basename "$1")"
+  n="$(grep -n -F -- "$base" "$MJ_DIR/state/ledger.jsonl" 2>/dev/null | tail -n 1 | cut -d: -f1)"
+  printf '%06d' "${n:-0}"
 }
 
 # age of an ISO timestamp in whole minutes; empty when unparseable

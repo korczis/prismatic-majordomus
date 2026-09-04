@@ -13,16 +13,6 @@
   ],
   "commands": [
     {
-      "name": "init",
-      "summary": "set up .majordomus/ in this repository (refuses to overwrite)",
-      "read_only": false
-    },
-    {
-      "name": "doctor",
-      "summary": "is Majordomus itself healthy and actually wired here?",
-      "read_only": true
-    },
-    {
       "name": "start",
       "summary": "begin a scoped task under a profile",
       "read_only": false
@@ -33,13 +23,18 @@
       "read_only": true
     },
     {
-      "name": "watch",
-      "summary": "what has drifted: state, policy, projections, retention",
+      "name": "finish",
+      "summary": "evaluate the finish contract; refuse if unmet",
+      "read_only": false
+    },
+    {
+      "name": "context",
+      "summary": "what the next worker needs to know now, within budget",
       "read_only": true
     },
     {
-      "name": "update",
-      "summary": "regenerate provider projections from policy",
+      "name": "checkpoint",
+      "summary": "record compact progress inside the active task",
       "read_only": false
     },
     {
@@ -48,9 +43,49 @@
       "read_only": false
     },
     {
-      "name": "finish",
-      "summary": "evaluate the finish contract; refuse if unmet",
+      "name": "history",
+      "summary": "read the append-only ledger back",
+      "read_only": true
+    },
+    {
+      "name": "decision",
+      "summary": "record or read durable decisions",
       "read_only": false
+    },
+    {
+      "name": "question",
+      "summary": "open, resolve and list questions that block acceptance",
+      "read_only": false
+    },
+    {
+      "name": "prompt",
+      "summary": "list, show and render repository-local prompt assets",
+      "read_only": true
+    },
+    {
+      "name": "search",
+      "summary": "find durable records without reading all of them",
+      "read_only": true
+    },
+    {
+      "name": "init",
+      "summary": "set up .majordomus/ in this repository (refuses to overwrite)",
+      "read_only": false
+    },
+    {
+      "name": "update",
+      "summary": "regenerate provider projections from policy",
+      "read_only": false
+    },
+    {
+      "name": "doctor",
+      "summary": "is Majordomus itself healthy and actually wired here?",
+      "read_only": true
+    },
+    {
+      "name": "watch",
+      "summary": "what has drifted: state, policy, projections, retention",
+      "read_only": true
     },
     {
       "name": "version",

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # MJ_LABEL, MJ_TOUCHED_IN, MJ_BLOCKED are read by finish.sh and watch.sh
 # sourced by several commands; guard against re-sourcing
 [ -n "${MJ_LIB_check:-}" ] && return 0 || MJ_LIB_check=1
-# shellcheck disable=SC2034  # MJ_LABEL, MJ_TOUCHED_IN, MJ_BLOCKED are read by finish.sh and watch.sh
 # check — is the current task consistent with policy, scope, and state? Read-only,
 # except --checkpoint which updates checkpoint_at (the one documented write).
 mj_cmd_check() {

@@ -79,17 +79,87 @@ mj_cmd_watch() {
     esac
   else mj_info state "-" "no active task"; fi
 
+  # continuity drift: records that no longer describe this checkout, and stores that stopped
+  # parsing. Every finding names the command that reproduces it.
+  mj_watch_continuity
+
   # retention
   local cap n
   cap="$(mj_pol ledger.retention_max_lines)"; n=0; [ -f "$MJ_DIR/state/ledger.jsonl" ] && n="$(mj_lines "$MJ_DIR/state/ledger.jsonl")"
   if [ "$n" -le "${cap:-5000}" ]; then mj_ok retention "ledger" "$n lines"; else mj_drift retention "ledger" "$n lines over cap $cap" "wc -l .majordomus/state/ledger.jsonl"; fi
   cap="$(mj_pol handover.retention_max_files)"; n="$(find "$MJ_DIR/state/handovers" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
-  if [ "$n" -le "${cap:-200}" ]; then mj_ok retention "handovers" "$n files"; else mj_drift retention "handovers" "$n files over cap $cap" "ls .majordomus/state/handovers | wc -l"; fi
+  if [ "$n" -le "${cap:-200}" ]; then mj_ok retention "handovers" "$n files"; else mj_drift retention "handovers" "$n files over cap $cap" "majordomus handover --list | wc -l"; fi
+  cap="$(mj_pol checkpoint.retention_max_files)"; n="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$n" -le "${cap:-500}" ]; then mj_ok retention "checkpoints" "$n files"; else mj_drift retention "checkpoints" "$n files over cap $cap" "majordomus checkpoint --list | wc -l"; fi
 
   rm -f "$owned"
   [ "$MJ_JSON" = 1 ] || printf 'watch: %s drift finding(s)\n' "$MJ_FAILS"
   [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_DRIFT"
 }
-# handover.sh provides mj_check_sections
+# handover.sh provides mj_check_sections; the rest provide the store validators and builder
 # shellcheck source=handover.sh
 . "$MJ_LIB_DIR/handover.sh"
+# shellcheck source=question.sh
+. "$MJ_LIB_DIR/question.sh"
+# shellcheck source=decision.sh
+. "$MJ_LIB_DIR/decision.sh"
+# shellcheck source=prompt.sh
+. "$MJ_LIB_DIR/prompt.sh"
+# shellcheck source=context.sh
+. "$MJ_LIB_DIR/context.sh"
+
+mj_watch_continuity() {
+  local bad
+
+  # stores the gates read must keep parsing; a gate that cannot read an entry is bypassed
+  bad="$(mj_question_malformed "$MJ_DIR/state/open-questions.md")"
+  if [ -n "$bad" ]; then mj_drift records "open-questions.md" "line(s) $(printf '%s' "$bad" | sed 's/ $//') do not parse" "majordomus question list --all"
+  else mj_ok records "open-questions.md" "parses"; fi
+  bad="$(mj_ledger_bad_lines "$MJ_DIR/state/ledger.jsonl")"
+  if [ -n "$bad" ]; then mj_drift records "ledger.jsonl" "line(s) $(printf '%s' "$bad" | sed 's/ $//') are not well-formed events" "majordomus history --validate"
+  else mj_ok records "ledger.jsonl" "parses"; fi
+  bad="$(mj_decision_malformed "$MJ_DIR/state/decisions.md")"
+  [ -n "$bad" ] && mj_drift records "decisions.md" "entry at line(s) $(printf '%s' "$bad" | sed 's/ $//') lacks Task, Head or Why" "majordomus decision list"
+
+  # a prompt asset that no longer renders is a broken reference, not a cosmetic problem
+  local f n=0 reason
+  if [ -d "$MJ_DIR/prompts" ]; then
+    for f in "$MJ_DIR"/prompts/*.md; do
+      [ -f "$f" ] || continue; n=$((n + 1))
+      reason="$(mj_prompt_validate "$f")" || mj_drift prompt "$(basename "$f" .md)" "$(printf '%s' "$reason" | tr '\n' ';' | sed 's/;$//')" "majordomus prompt show $(basename "$f" .md)"
+    done
+    [ "$n" = 0 ] && mj_drift prompt ".majordomus/prompts" "no assets; the projected instructions point workers at prompt list" "majordomus update"
+  fi
+
+  # the newest handover this checkout resolves to, against the git state it recorded
+  if mj_resolve_latest "$MJ_DIR/state/handovers" ""; then
+    local label; label="$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")"
+    case "$label" in
+      diverged|different_context)
+        mj_drift handover "$(basename "$MJ_RES_PATH")" "$label — the newest record for this branch describes a history this checkout no longer has" "majordomus handover --resolve" ;;
+      *) mj_ok handover "$(basename "$MJ_RES_PATH")" "$label, $(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")" ;;
+    esac
+  fi
+  [ "${MJ_RES_SKIPPED:-0}" -gt 0 ] && mj_drift handover "handovers" "$MJ_RES_SKIPPED record(s) skipped as malformed" "majordomus handover --list"
+
+  # a checkpoint older than the active task's interval, when one exists at all
+  if mj_load_current 2>/dev/null && [ "$(mj_cur outcome)" = active ]; then
+    local id; id="$(mj_cur id)"
+    if mj_resolve_latest "$MJ_DIR/state/checkpoints" "$id"; then
+      mj_ok checkpoint "$(basename "$MJ_RES_PATH")" "$(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")"
+    else
+      mj_info checkpoint "$id" "no checkpoint record; only checkpoint_at is set" "majordomus checkpoint"
+    fi
+  fi
+
+  # the assembled context must fit its own budget, through the real command path
+  local budget out lines
+  budget="$(mj_pol context.builder_budget_lines)"; [ -n "$budget" ] || budget=300
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.wc.XXXXXX")"
+  if ( export MJ_JSON=0; mj_cmd_context ) > "$out" 2>/dev/null; then
+    lines="$(mj_lines "$out")"
+    if [ "$lines" -le "$budget" ]; then mj_ok context "builder" "$lines lines, budget $budget"
+    else mj_drift context "builder" "$lines lines over budget $budget" "majordomus context"; fi
+  else mj_drift context "builder" "majordomus context failed" "majordomus context"; fi
+  rm -f "$out"
+}

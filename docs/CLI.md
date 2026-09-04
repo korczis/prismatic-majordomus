@@ -257,6 +257,246 @@ a repository-wide fallback. Prints its git-state label and its body. No candidat
 normal outcome and exits `0` with `No relevant handover.` `--path` prints the path
 alone, for scripting; `--no-task` resolves without an active task.
 
+## `majordomus context`
+
+What does whoever works next need to know? Read-only. Assembles durable state into one
+briefing and prints it. Nothing is persisted, no model is called, and the output is a
+projection: every line is recomputed from the records and git each time it runs.
+
+**Section order is authority order.** Git first, because it is the only thing that cannot
+be stale; then the task and the profile that constrains it; then blockers, which change
+what may be accepted; then authored records; then event history last, because it is the
+weakest evidence about the present.
+
+| Section | Source | Included when |
+|---|---|---|
+| `GIT` | git | always |
+| `TASK` | `state/current.yaml` | a task is active and the profile's `context.task` is not `false` |
+| `PROFILE` | `profiles/<name>.yaml` | the task names a profile that exists |
+| `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |
+| `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |
+| `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |
+| `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |
+| `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |
+| `RECENT HISTORY` | `state/ledger.jsonl` | `context.recent_history_depth` is above zero |
+| `PROMPT` | `prompts/<name>.md` | `--prompt <name>` was given |
+
+This is the only code that reads a profile's `context` block, which is what makes those
+fields state rather than documentation.
+
+**Budget.** `context.builder_budget_lines` in the policy, or `--budget-lines`. When the
+assembled text exceeds it, sections are dropped in a fixed order — history, files,
+decisions, then the bodies of the checkpoint and the handover, which degrade to a pointer
+rather than disappearing. Git, task, profile and blockers are never dropped. Every drop is
+named under `EXCLUDED` with its reason, so an under-filled context is debugged from the
+exclusion list instead of guessed at. Exit `10` if what cannot be dropped is already over
+budget.
+
+**`--for <provider>`** wraps the same body with a header naming the provider and its
+always-loaded file. The body does not change: the canonical context is provider-neutral,
+and a provider that needed different facts would be a different policy, not a different
+rendering.
+
+**`--json`** emits one object: `git`, `task`, `sections[]` (each with `id`, `lines` and
+`text`), `excluded[]` (each with `item` and `reason`), and `budget`. The same selection as
+the text form, because both are assembled once and rendered twice.
+
+```
+$ majordomus context
+# Majordomus context — 2026-09-03T19:41:02Z
+# a projection of durable state, not a source of truth: validate every line against git
+
+## GIT
+repository   /home/dev/app
+branch       main
+head         3f2a9c1e4b7d8a05c1119f2b6e0d7a3c8e5f1b42
+working_tree dirty
+task_record  advanced (recorded head 3f2a9c1)
+
+## TASK
+id           t-20260903193012-a4f1
+task         fix the OAuth callback
+profile      debugging
+scope        lib/auth
+
+## OPEN QUESTIONS (1 unresolved — every one refuses finish --outcome completed)
+- Does the legacy mobile callback still require the old URI form? (2026-09-03)
+
+## EXCLUDED
+- history — profile debugging sets context.recent_history_depth: 50
+
+## BUDGET
+41 of 300 lines
+```
+
+## `majordomus checkpoint`
+
+Record compact progress inside an active task. Append-only; the body arrives on stdin.
+
+A checkpoint is not a small handover. A handover is a deliberate continuation package
+written when a worker stops; a checkpoint is what was true a moment ago, short enough that
+the next worker's context can quote it whole. `checkpoint.max_body_lines` in the policy
+enforces that difference — a body over the cap is refused with the suggestion to write a
+handover instead, rather than truncated.
+
+**Writes:** `state/checkpoints/<ts>--<branch>--<head>--<rand>.md`, mode `0600`, created
+atomically with `link`, never staged. Front matter is computed exactly as for a handover; a
+body containing identity fields is refused. Also updates `checkpoint_at` on the task record
+and appends `task.checkpoint` to the ledger.
+
+An empty body is allowed and writes no file: it updates `checkpoint_at` only, which is what
+`check --checkpoint` has always done. The two are the same operation; `checkpoint` is the
+one that can also say what was true.
+
+- `--show` prints the newest checkpoint for the active task in this worktree and branch.
+- `--list` lists this worktree's checkpoints, newest first, with each one's git label.
+
+Exit `12` with no active task, `15` when the task is no longer active, `10` when the body
+carries identity fields or exceeds the cap.
+
+```
+$ majordomus checkpoint <<'EOF'
+OAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.
+Cause is in callback normalisation, not in the comparison.
+Next: regression test before touching the implementation.
+EOF
+.majordomus/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md
+```
+
+## `majordomus history`
+
+Read the append-only ledger back. Read-only.
+
+Operational reconstruction, not a transcript. It answers what happened, when, for which
+task, at which git head, and what was accepted — and nothing about what anyone said.
+
+**Filters:** `--task <id>`, `--event <name>`, `--since <n>m|h|d` or an ISO timestamp,
+`--limit <n>` (default 20, newest), `--all`. Output is oldest line first, so a filtered run
+reads as a narrative. `--json` emits the matching ledger lines verbatim.
+
+`--validate` reports every line that is not a well-formed event and exits `10` if any is;
+`doctor`, `check` and `watch` run the same test, because a ledger the tool cannot parse is
+a ledger that cannot be used as evidence.
+
+`--rotate` moves all but the newest `ledger.retention_max_lines` lines into
+`ledger.<utc>.jsonl.archived` and appends a `ledger.rotated` event recording how many moved.
+It never deletes, refuses to overwrite an existing archive, and does nothing when the ledger
+is under the cap.
+
+```
+$ majordomus history --task t-20260903193012-a4f1
+2026-09-03T19:30:12Z  task.started         t-20260903193012-a4f1  3f2a9c1  profile=debugging scope=lib/auth
+2026-09-03T19:45:00Z  task.checkpoint      t-20260903193012-a4f1  3f2a9c1  20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md
+2026-09-03T19:52:31Z  decision.recorded    t-20260903193012-a4f1  3f2a9c1  Normalise the callback URI before comparing state
+2026-09-03T20:14:08Z  task.finished        t-20260903193012-a4f1  b71e0c9  outcome=completed verify_exit=0
+```
+
+## `majordomus decision`
+
+Record or read durable decisions. One append-only file: `state/decisions.md`.
+
+`decision add "<what>" --why "<why>"` appends an entry with the task id and git head
+computed. `--why` is required: a decision with no recorded reason cannot be reviewed later,
+only re-argued. `--rejected` and `--evidence` are optional and default to `-`.
+
+An entry is never edited or deleted. `--supersedes "<text>"` records that a later decision
+replaced an earlier one and refuses text that matches no recorded decision, so a
+supersession always points at something real.
+
+`decision list [--task <id>] [--limit <n>]` prints entries newest first; `decision show
+"<text>"` prints the first entry whose title contains that text, or exits `12`.
+
+The `deep-work` profile sets `verification.decision_record_required: true`; `finish` then
+refuses `completed` unless an entry names the task.
+
+```
+$ majordomus decision add "Normalise the callback URI before comparing state" \
+    --why "the mismatch is a trailing-slash difference, not a forged state parameter" \
+    --rejected "relaxing the comparison, which would accept genuinely forged states" \
+    --evidence "test/auth/callback_test.exs:41"
+recorded: Normalise the callback URI before comparing state
+```
+
+## `majordomus question`
+
+Open, resolve and list the questions that block acceptance. One mutable index:
+`state/open-questions.md`.
+
+Unresolved questions are explicit state, not prose inside a handover, because
+`finish --outcome completed` refuses while any entry names the active task. That gate is
+the reason the file has a machine-written line format, and the reason `check`, `doctor` and
+`watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate
+that can be bypassed by mistyping one.
+
+- `question add "<question>"` appends `- [unresolved] <task id> — <question> (<date>)`.
+- `question resolve <n|"<text>"> --answer "<answer>"` rewrites that one line to
+  `[resolved <date>]` and appends the answer. `n` is the number `question list` printed.
+  `--answer` is required, and an ambiguous selector is refused rather than guessed.
+- `question list [--all] [--task <id>]` shows the active task's unresolved entries;
+  `--all` includes resolved ones and other tasks.
+
+Resolving edits the index because an index of what is still open must not accumulate. The
+append-only record of every opening and resolution, with its answer, is the ledger.
+
+```
+$ majordomus question add "Does the legacy mobile callback still require the old URI form?"
+opened for t-20260903193012-a4f1: Does the legacy mobile callback still require the old URI form?
+$ majordomus finish --outcome completed --verify-command "mix test"
+FAIL blockers   t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: majordomus question list]
+finish: refused, 1 unmet
+```
+
+## `majordomus prompt`
+
+List, show and render repository-local prompt assets. Read-only.
+
+An asset is `.majordomus/prompts/<name>.md`: YAML front matter with `name` (matching the
+filename) and a non-empty `description`, then a body. They are small, versioned with the
+repository, and provider-neutral — a prompt library is not the goal, and nothing here
+invokes a model.
+
+**Rendering substitutes a closed set of tokens and no others.** Inline: `{{TASK}}`,
+`{{TASK_ID}}`, `{{PROFILE}}`, `{{SCOPE}}`, `{{OWNER}}`, `{{BRANCH}}`, `{{HEAD}}`,
+`{{WORKING_TREE}}`, `{{REPOSITORY}}`, `{{NOW}}`. Alone on a line: `{{OPEN_QUESTIONS}}`,
+`{{DECISIONS}}`, `{{CHECKPOINT}}`, `{{HANDOVER}}`, `{{CONTEXT}}`.
+
+There is no templating language: no conditionals, no loops, no includes, no shell. An
+unknown token is an error, exactly as an unknown configuration key is, because a prompt
+that silently renders `{{TSAK}}` as literal text is worse than one that refuses. `doctor`
+and `watch` validate every asset for the same reason.
+
+```
+$ majordomus prompt list
+continue               resume a task from durable state instead of from someone's memory
+debug                  frame a defect so that the fix is proven, not asserted
+handover               produce a continuation record body for the current task
+review                 review the working diff against the claimed scope and the finish contract
+$ majordomus prompt render debug | head -3
+Task t-20260903193012-a4f1 on branch main at 3f2a9c1e...: fix the OAuth callback
+
+Scope: lib/auth
+```
+
+## `majordomus search`
+
+Find durable records without reading all of them. Read-only.
+
+A literal, case-insensitive, fixed-string search across handovers, checkpoints, decisions,
+questions, prompt assets and the ledger, in that order — authority order, so the most
+reliable evidence appears first. `--kind` restricts it and is repeatable; `--task` narrows
+to one task; `--limit` caps each kind.
+
+Deliberately not an index and not an embedding. The corpus is a handful of Markdown files
+and one JSONL; a scan is faster than the staleness problem an index would introduce, and
+"transparent" is worth more here than "clever". Exit `0` with matches, `12` with none.
+
+```
+$ majordomus search "callback" --kind decision --kind checkpoint
+checkpoint  .majordomus/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a.md:12  Cause is in callback normalisation, not in the comparison.
+decision    .majordomus/state/decisions.md:31  ## 2026-09-03 — Normalise the callback URI before comparing state
+search: 2 match(es)
+```
+
 ## `majordomus finish`
 
 Evaluate the finish contract. Refuse if unmet.

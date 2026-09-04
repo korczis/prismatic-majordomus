@@ -24,6 +24,10 @@ jobs:
         run: |
           sudo apt-get install -y shellcheck >/dev/null
           shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/site-build scripts/site-check scripts/site-serve
+          shellcheck -x -s bash -S warning test/cases/*.sh
+      # The one canonical validation surface. Every behavioural, negative and integration
+      # case runs here; nothing is skipped, and no failure is swallowed. test/run.sh exits
+      # non-zero when any case fails, and this step has no `|| true` to hide it.
       - name: behavioural tests
         run: bash test/run.sh
       - name: self-supervision
@@ -31,6 +35,23 @@ jobs:
           git config core.hooksPath .githooks
           bin/majordomus doctor
           bin/majordomus watch
+      # The continuity subsystem reached through the real CLI, in this checkout rather than
+      # in a disposable one: the commands a worker actually runs must work where the tool
+      # supervises itself, not only in a fixture.
+      - name: continuity subsystem is reachable
+        run: |
+          bin/majordomus context --budget-lines 400 > /dev/null
+          bin/majordomus context --json | head -c 1 | grep -q '{'
+          bin/majordomus history --validate
+          bin/majordomus handover --resolve > /dev/null
+          bin/majordomus checkpoint --list > /dev/null
+          bin/majordomus decision list > /dev/null
+          bin/majordomus question list --all > /dev/null
+          bin/majordomus prompt list | grep -q .
+          for p in $(ls .majordomus/prompts/*.md | xargs -n1 basename | sed 's/\.md$//'); do
+            bin/majordomus prompt render "$p" | grep -q '{{' && { echo "unrendered token in $p"; exit 1; }
+            true
+          done
       # The committed derived site data must match the canonical files it is generated from.
       - name: derived site data in sync
         run: scripts/generate-site-data --check
