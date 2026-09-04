@@ -551,6 +551,65 @@ decision    .majordomus/state/decisions.md:31  ## 2026-09-03 — Normalise the c
 search: 2 match(es)
 ```
 
+## `majordomus knowledge`
+
+A compiler over what this repository already states. Read-only in every subcommand
+documented here.
+
+It is not a wiki, not a database, not a memory service, and not a second place to write
+things down. Every source it reads is a file somebody already maintains, everything it
+produces is derived and regenerable, and none of it outranks the file it came from. A
+result is a pointer to canonical knowledge, never a rewritten answer.
+
+**`knowledge` is not `search`.** `search` is a literal scan over the durable operational
+records — handovers, checkpoints, decisions, questions, prompts, the ledger — with no
+index, because that corpus is a handful of files. `knowledge` covers the repository's
+canonical artifacts: the policy, the profiles, the prompts, the milestone and issue
+contracts, the claims matrix and the documents. Two corpora, two contracts, and neither
+changes the other.
+
+- `sources [--scope shared|operational|all]` lists the curated source classes and the
+  files each one discovers, with the class, the scope, the kind, a content hash and the
+  repository-relative path.
+
+**Discovery is driven by the repository index, not by a filesystem walk.** A walk returns
+build output, vendored trees and editor droppings; it returns them in an order that
+differs between two machines; and it can return a file nobody meant to publish. Listing
+tracked files instead gives repository truth in a stable order, and an untracked file is
+never a source. Operational records are discovered from the state directories Majordomus
+itself owns, because a repository may keep them out of version control — and from nowhere
+else. No hidden directory is scanned because it happens to exist.
+
+The source classes are declared in `share/knowledge-sources.yaml`, shipped with the tool.
+Each carries its scope:
+
+| scope | meaning |
+|---|---|
+| `shared` | repository knowledge; may be projected to a public surface |
+| `operational` | this checkout's own working records; never part of a shared projection |
+
+The scope is a property of the class, so the publication boundary is decided in one place
+rather than at each producer. Every tracked pathspec carries the `:(glob)` prefix, under
+which `*` does not cross a directory separator. That is not tidiness: without it, `*.md`
+also matches `.majordomus/state/handovers/*.md`, and every handover in the checkout is
+discovered as shared repository knowledge. `test/cases/64_knowledge_discovery.sh` fails on
+that mutation.
+
+A class marked `required` that discovers nothing is reported as a `WARN`. The cost of a
+curated list is that a path can be forgotten, and a forgotten path is indistinguishable
+from a repository that does not have that file unless something says so.
+
+```
+$ majordomus knowledge sources --scope shared
+policy      shared      policy     4f2a9c1d8b30  .majordomus/policy.yaml
+profile     shared      profile    a1b2c3d4e5f6  .majordomus/profiles/debugging.yaml
+...
+issue       shared      issue      0e5a7b9c3f51  .majordomus/project/issues/I0801.yaml
+claims      shared      claim      7c9e1b3d5f70  docs/CLAIMS.yaml
+document    shared      document   9b1e2d4f8c3a  docs/CONTINUITY.md
+knowledge sources: 169 file(s) in scope shared
+```
+
 ## `majordomus finish`
 
 Evaluate the finish contract. Refuse if unmet.

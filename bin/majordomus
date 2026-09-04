@@ -34,6 +34,7 @@ MEMORY
   question             open, resolve and list questions that block acceptance
   prompt               list, show and render repository-local prompt assets      (read-only)
   search <text>        find durable records without reading all of them          (read-only)
+  knowledge            the compiled index over what this repository states       (read-only)
 
 PLAN
   plan                 the milestone and issue model: validate, read, and move an issue
@@ -70,7 +71,7 @@ set -- "${pre[@]+"${pre[@]}"}" "$@"
 case "$cmd" in
   -h|--help|help) usage; exit 0 ;;
   version|--version) echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session)
+  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session|knowledge)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"

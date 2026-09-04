@@ -290,6 +290,16 @@
       "external": false
     },
     {
+      "id": "lib/knowledge.sh",
+      "kind": "module",
+      "label": "knowledge",
+      "command": "knowledge",
+      "summary": "the compiled index over what this repository states",
+      "read_only": true,
+      "route": "/commands/knowledge/",
+      "external": false
+    },
+    {
       "id": "lib/plan.sh",
       "kind": "module",
       "label": "plan",
@@ -569,6 +579,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/init.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/knowledge.sh",
       "kind": "sources"
     },
     {

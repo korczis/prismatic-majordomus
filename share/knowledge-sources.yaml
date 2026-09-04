@@ -1,0 +1,129 @@
+# The curated source list for the knowledge compiler. Shipped with the tool, not with the
+# repository: a repository configures Majordomus in .majordomus/policy.yaml, it does not
+# invent source classes.
+#
+# Nothing here is a recursive walk. Everything a repository tracks is discovered through
+# the version-control index, which answers with repository truth in a stable order and
+# never returns build output, a vendored tree, an editor droppings file or an untracked
+# secret. The operational records are discovered from the state directories Majordomus
+# itself owns, because a repository may keep them out of version control, and from nowhere
+# else — no hidden directory is scanned because it happens to exist.
+#
+# fields:
+#   id          the class, unique; also the order sources are reported in
+#   kind        the node kind every source in this class produces
+#   scope       shared      — repository knowledge; may be projected to a public surface
+#               operational — this checkout's working record; never leaves the machine
+#               The scope is on the class, so the projection boundary is decided in one
+#               place rather than at each producer.
+#   discovery   vcs   — the tracked files matching a pathspec, listed from the index
+#               state — a listing of one directory or file Majordomus owns
+#   pathspec    one pathspec or path. One per entry: a list of two would need the reader
+#               to decide what a partially-missing class means, and there is no answer
+#               that is right in both directions. Every vcs pathspec carries the `:(glob)`
+#               prefix, under which `*` does not cross a directory separator — without it
+#               `docs/*.md` also matches `docs/claims/*.md` and `*.md` matches every
+#               tracked Markdown file anywhere, so two classes would silently overlap and
+#               one file would become two nodes.
+#   required    true when a repository that has Majordomus installed must have it, so
+#               that a class discovering nothing is a finding rather than a silence
+version: 1
+
+sources:
+  - id: policy
+    kind: policy
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob).majordomus/policy.yaml'
+    required: true
+
+  - id: profile
+    kind: profile
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob).majordomus/profiles/*.yaml'
+    required: true
+
+  - id: prompt
+    kind: prompt
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob).majordomus/prompts/*.md'
+    required: false
+
+  - id: milestone
+    kind: milestone
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob).majordomus/project/milestones/*.yaml'
+    required: false
+
+  - id: issue
+    kind: issue
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob).majordomus/project/issues/*.yaml'
+    required: false
+
+  - id: claims
+    kind: claim
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob)docs/CLAIMS.yaml'
+    required: false
+
+  - id: document
+    kind: document
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob)docs/*.md'
+    required: false
+
+  - id: claim_page
+    kind: document
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob)docs/claims/*.md'
+    required: false
+
+  - id: readme
+    kind: document
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob)*.md'
+    required: false
+
+  - id: session
+    kind: session
+    scope: operational
+    discovery: state
+    pathspec: .majordomus/state/sessions
+    required: false
+
+  - id: handover
+    kind: handover
+    scope: operational
+    discovery: state
+    pathspec: .majordomus/state/handovers
+    required: false
+
+  - id: checkpoint
+    kind: checkpoint
+    scope: operational
+    discovery: state
+    pathspec: .majordomus/state/checkpoints
+    required: false
+
+  - id: decisions
+    kind: decision
+    scope: operational
+    discovery: state
+    pathspec: .majordomus/state/decisions.md
+    required: false
+
+  - id: questions
+    kind: question
+    scope: operational
+    discovery: state
+    pathspec: .majordomus/state/open-questions.md
+    required: false
