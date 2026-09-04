@@ -145,7 +145,10 @@ for f in "$ROOT"/test/cases/*.sh; do
   # the top-level directory of each canonical input, minus the runtime a fixture always copies
   for p in $("$ROOT/scripts/generate-site-data" --inputs | grep '/' | cut -d/ -f1 | sort -u); do
     case "$p" in bin|lib|share|scripts|docs) continue ;; esac
-    if grep -qF "\$ROOT/$p" "$f" && ! grep -q 'fixture_repo' "$f"; then
+    # a copy, not any mention: every case sources "$ROOT/test/lib.sh", and sourcing a file
+    # is not copying a tree. Matching a bare reference made the rule fire on all of them the
+    # moment test/ became a canonical input.
+    if grep -qE "cp[^|]*\\\$ROOT/$p\\b" "$f" && ! grep -q 'fixture_repo' "$f"; then
       echo "    $(basename "$f") copies canonical input tree $p by hand; use fixture_repo"; exit 1
     fi
   done

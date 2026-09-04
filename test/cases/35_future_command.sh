@@ -10,7 +10,7 @@
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 
 C="$T/copy"
-mj_copy_repo "$C"
+fixture_repo "$C" AGENTS.md docs site/data/marketing.toml site/data/nav.toml site/content-src test/cases test/lib.sh
 
 # Each case is run against the copy, in a disposable repository of its own — the same shape
 # test/run.sh gives a case, so what runs here is what runs in CI.

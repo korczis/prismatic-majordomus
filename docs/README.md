@@ -38,7 +38,7 @@ these carry no site route of their own.
 | File | Audience | Purpose |
 |---|---|---|
 | [`CLAIMS.yaml`](CLAIMS.yaml) | everyone | the canonical claims matrix: every capability with its status, source, implementation, and test. Hand-edited. Rendered on the website's guarantees page |
-| [`RESPONSIBILITIES.yaml`](RESPONSIBILITIES.yaml) | implementers | the responsibilities as data, one entry each: title, README key, owning command, files, implementation, and the CLI and schema anchors each one documents. Hand-edited. Read by the site generator and by the doctrine registry |
+| [`RESPONSIBILITIES.yaml`](RESPONSIBILITIES.yaml) | implementers | the responsibilities as data, one entry each: title, README key, owning command, files, implementation, and the CLI and schema anchors each one documents. Hand-edited. Read by `scripts/generate-site-data`, which builds each responsibility page from it and refuses to publish when an entry names a path, an anchor, a command or a README row that does not exist |
 | [`HARDCODING_LEDGER.yaml`](HARDCODING_LEDGER.yaml) | maintainers | every place a fact is written down twice: authority, copies, risk, and the reproduce command for each. Hand-edited, read alongside `DYNAMICITY.md` |
 | [`SITE_CLAIMS.md`](SITE_CLAIMS.md) | everyone | the same matrix as a Markdown table, generated from `CLAIMS.yaml` by `scripts/generate-site-data`. Never edited |
 | [`PLAN_STATUS.md`](PLAN_STATUS.md) | everyone | where the plan stands right now — milestones, issues, waves and what is ready — generated from `.majordomus/project/` by `scripts/generate-site-data`. Never edited; the semantics are in `PLANNING.md` |

@@ -14,7 +14,7 @@
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 
 C="$T/copy"
-mj_copy_repo "$C"
+fixture_repo "$C" AGENTS.md docs site/data/marketing.toml site/data/nav.toml site/content-src test/cases test/lib.sh
 ( cd "$C" && git init -q . && git config user.email t@example.com && git config user.name t && git add -A && git commit -qm fixture ) >/dev/null
 
 took() { grep -q "$1" "$2" || { echo "    the probe did not take: expected /$1/ in $2"; exit 1; }; }

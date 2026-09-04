@@ -51,6 +51,7 @@ share/applications.yaml
 share/skeleton/policy.yaml
 share/skeleton/providers/body.md
 docs/CLAIMS.yaml
+docs/RESPONSIBILITIES.yaml
 README.md
 LICENSE"
 # LC_ALL=C so the globs below expand in byte order rather than in the collation order of
@@ -67,6 +68,8 @@ LC_ALL=C; export LC_ALL
 # metadata is the evidence the command pages render
 for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
          "$ROOT"/test/cases/*.sh \
+         "$ROOT"/test/fixtures/commands/*.json "$ROOT"/test/fixtures/commands/setup/*.sh \
+         "$ROOT"/test/fixtures/commands/stdin/* \
          "$ROOT"/.majordomus/project/project.yaml "$ROOT"/.majordomus/project/milestones/*.yaml \
          "$ROOT"/.majordomus/project/issues/*.yaml; do
   case "$f" in */docs/SITE_CLAIMS.md|*/docs/PLAN_STATUS.md) continue ;; esac   # written by this script; never its own input
@@ -160,6 +163,14 @@ rm -f "$P"
 
 # ---------------------------------------------------------------- capabilities.json (from docs/CLAIMS.yaml)
 Cf="$(flat "$ROOT/docs/CLAIMS.yaml")"
+# A claim's owning command is its implementation file, matched against the commands the
+# binary actually dispatches. The literal list this replaced predated every continuity
+# command, so their claims published with nothing to link to. An empty join would silently
+# produce `^lib/()\.sh$`, which matches nothing and would set every command to null, so the
+# emptiness is a refusal rather than a quiet no-op.
+COMMAND_NAMES="$(printf '%s' "$COMMANDS" | jq -r '[.[].name] | join("|")')"
+[ -n "$COMMAND_NAMES" ] || { echo "generate-site-data: the dispatch table in bin/majordomus yielded no commands" >&2; exit 10; }
+COMMAND_RE="^lib/($COMMAND_NAMES)\\.sh$"
 {
   i=0; first=1; printf '{"schema":1,"statuses":{'; k=0; sfirst=1
   while [ -n "$(yv "$Cf" "statuses.$k.id")" ]; do
@@ -175,12 +186,13 @@ Cf="$(flat "$ROOT/docs/CLAIMS.yaml")"
       --arg impl "$(yv "$Cf" "claims.$i.implementation")" --arg test "$(yv "$Cf" "claims.$i.test")" --arg status "$(yv "$Cf" "claims.$i.status")" \
       --arg note "$(yv "$Cf" "claims.$i.note")" \
       --arg responsibility "$(yv "$Cf" "claims.$i.responsibility")" \
+      --arg cmdre "$COMMAND_RE" \
       '{id:$id, claim:$claim, source:$source, responsibility:(if $responsibility=="" then null else $responsibility end), implementation:(if $impl=="-" then null else $impl end), test:(if $test=="-" then null else $test end), status:$status, note:(if $note=="" then null else $note end),
         source_route: ($source | if test("^docs/[A-Z_]+\\.md$") then "/docs/" + (ltrimstr("docs/") | rtrimstr(".md") | ascii_downcase | gsub("_";"-")) + "/"
                                 elif . == "AGENTS.md" then "/docs/contract/"
                                 elif startswith("share/skeleton/profiles/") then "/profiles/" + (ltrimstr("share/skeleton/profiles/") | rtrimstr(".yaml")) + "/"
                                 elif startswith("share/skeleton/policy") then "/policy/" else null end),
-        command: (if $impl | test("^lib/(init|doctor|start|check|watch|update|handover|finish)\\.sh$") then ($impl | ltrimstr("lib/") | rtrimstr(".sh")) else null end),
+        command: (if $impl | test($cmdre) then ($impl | ltrimstr("lib/") | rtrimstr(".sh")) else null end),
         test_case: (if $test == "-" then null else ($test | ltrimstr("test/cases/") | rtrimstr(".sh")) end)}'
     i=$((i+1))
   done; printf ']}'

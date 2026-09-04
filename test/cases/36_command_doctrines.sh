@@ -9,7 +9,7 @@
 . "$ROOT/test/lib.sh"
 
 W="$T/copy"
-mj_copy_repo "$W"
+fixture_repo "$W" AGENTS.md docs site/data/marketing.toml site/data/nav.toml site/content-src test/cases test/lib.sh
 MJC="$W/bin/majordomus"
 "$MJC" init >/dev/null
 "$MJC" update >/dev/null
