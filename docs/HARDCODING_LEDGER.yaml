@@ -1,0 +1,288 @@
+# The de-hardcoding ledger: every place where a fact is written down twice.
+#
+# One row per finding. A finding is not "a constant exists" — see docs/DYNAMICITY.md for
+# the distinction this repository draws between a contract and a mirror. A row records
+# where the fact is authoritative today, where it is copied, and what the copy costs.
+#
+# category:
+#   KEEP_LITERAL               a fixed product contract or protocol constant; not a defect
+#   MOVE_TO_CANONICAL_DATA     the fact has no machine-readable owner and needs one
+#   DISCOVER_FROM_IMPLEMENTATION  the implementation is authority; the copy should be derived from it
+#   REGISTRY                   several facts of one kind need one declared table
+#   EVENT                      a durable state change that is unregistered or unemitted
+#   DERIVE                     a list that mirrors filesystem or registry contents
+#   GENERATE                   a hand-written artifact that should be produced by a generator
+#   POLICY_RULE                belongs in policy or doctrine applicability, not in code
+#   REMOVE_DUPLICATE           a copy with no remaining reason to exist
+#
+# risk:
+#   high    the copy can silently disagree with the authority and nothing detects it
+#   medium  a check exists but is indirect, or the drift is visible only on the website
+#   low     drift is cosmetic or already caught by a test
+#
+# Every row's `reproduce` command shows the finding without trusting this file.
+version: 1
+
+findings:
+  - id: command-surface-has-no-owner
+    path: bin/majordomus
+    lines: "15-45, 68"
+    concept: the public command surface
+    authority: "the dispatch table, bin/majordomus:68"
+    duplicated_in:
+      - "bin/majordomus usage(), one hand-written line per command with its category and summary"
+      - "docs/CLI.md, one `## majordomus <name>` section per command"
+      - "scripts/generate-site-data:59, which parses the usage TEXT rather than the dispatch table"
+      - "site/data/generated/commands.json, derived from that parse"
+    risk: high
+    detail: >-
+      No file states what a command is. Category, summary, whether it mutates state, whether
+      it needs an active task, what it reads and writes, and which exit codes it can produce
+      exist only as prose in three documents and as behaviour in one shell file. The site
+      derives its command pages from the usage text, so the rendered reference is a parse of
+      a help message.
+    recommended: REGISTRY
+    target: share/commands.yaml, validated against the dispatch table
+    priority: 1
+    reproduce: "grep -n 'init|doctor|start' bin/majordomus; grep -n 'COMMANDS=' scripts/generate-site-data"
+
+  - id: event-vocabulary-unregistered
+    path: lib/common.sh
+    lines: "274-275"
+    concept: the ledger event vocabulary
+    authority: none
+    duplicated_in:
+      - "lib/start.sh:60, checkpoint.sh:72,75, check.sh:39, decision.sh:60, question.sh:52,90, handover.sh:58, finish.sh:137, update.sh:121, history.sh:97 — ten call sites writing nine distinct names"
+      - "lib/history.sh:126-135, an if/else chain mapping each name to its human rendering"
+      - "docs/SCHEMAS.md, which documents a `bootstrap` event that nothing writes"
+    risk: high
+    detail: >-
+      mj_ledger_append accepts any string as an event name. Nothing validates it. Validation
+      of a ledger line checks only that it is a JSON object carrying ts and event, so a typo
+      produces a durable record that every reader silently ignores. `history --event <name>`
+      answers "no matching events" for a name nothing writes, which is indistinguishable
+      from a registered name that has not occurred yet. This is the repository's own rule —
+      unknown configuration keys are errors — not applied to its own durable records.
+    recommended: EVENT
+    target: share/events.yaml, a validator on append, and history refusing an unregistered name
+    priority: 1
+    reproduce: "grep -rn 'mj_ledger_append' lib/ | sed 's/(.*//'"
+
+  - id: finish-refusal-leaves-no-trace
+    path: lib/finish.sh
+    lines: "62-137"
+    concept: refused completion
+    authority: "the ledger"
+    duplicated_in: []
+    risk: high
+    detail: >-
+      finish writes task.finished when it accepts and writes nothing when it refuses. Every
+      unmet contract line is printed and the command exits 10. A task refused four times
+      before passing is indistinguishable in the ledger from one that passed first try, so
+      the record cannot answer the question the ledger exists to answer. This is an absent
+      event rather than a duplicated one, and it is the highest-value addition to the
+      vocabulary.
+    recommended: EVENT
+    target: "a finish.refused event carrying the doctrines that refused"
+    priority: 1
+    reproduce: "grep -n 'mj_ledger_append' lib/finish.sh"
+
+  - id: context-provider-lists
+    path: lib/context.sh
+    lines: "258, 259, 288, 331"
+    concept: the sections a context is assembled from
+    authority: "MJ_CTX_ORDER, lib/context.sh:259"
+    duplicated_in:
+      - "MJ_CTX_DROP_ORDER:258, the order in which sections are dropped under budget"
+      - "the case at :288, naming the two sections that shrink rather than disappear"
+      - "the loop at :331, re-listing the sections for the JSON projection"
+    risk: medium
+    detail: >-
+      Four parallel lists of the same nine sections, each ordered differently for a different
+      reason. Adding a context source means editing all four, and omitting one of them
+      produces a section that is assembled and never dropped, or dropped and never rendered
+      in JSON. The numeric filename prefixes carry the ordering, so the lists agree today
+      only because one person wrote all four at once.
+    recommended: REGISTRY
+    target: "one table of context providers: id, order, budget behaviour, JSON key"
+    priority: 2
+    reproduce: "grep -n 'MJ_CTX_ORDER\\|MJ_CTX_DROP_ORDER\\|for d in 30.profile' lib/context.sh"
+
+  - id: search-kind-vocabulary
+    path: lib/search.sh
+    lines: "21, 35, 37, 38, 45-49"
+    concept: the kinds of durable record search can read
+    authority: "the dispatch case at :45-49"
+    duplicated_in:
+      - "the usage string at :21"
+      - "the default list at :35"
+      - "the validation case at :37"
+      - "the error message at :38"
+    risk: medium
+    detail: >-
+      The same six kinds are written four times in one file. A fifth kind added to the
+      dispatch and forgotten in the validation case is rejected as unknown; added to the
+      validation case and forgotten in the default list, it is never searched unless named.
+    recommended: MOVE_TO_CANONICAL_DATA
+    target: "one list, with usage text and validation derived from it"
+    priority: 3
+    reproduce: "grep -n 'handover|checkpoint|decision' lib/search.sh"
+
+  - id: generated-json-inventory
+    path: scripts/generate-site-data
+    lines: "328"
+    concept: which generated files the freshness check compares
+    authority: "the generator's own writes"
+    duplicated_in:
+      - "the hand-written list in --check mode"
+    risk: high
+    detail: >-
+      The generator writes twelve JSON files and then, in --check mode, compares a
+      hand-written list of nine names plus source.json against the committed copies.
+      concepts.json and responsibilities.json are compared by nothing, so either can be stale
+      in the repository indefinitely while the check reports "site data: in sync". Both
+      happen to be current today; the guarantee is exactly as complete as someone's memory.
+    recommended: DERIVE
+    target: "iterate the files the generator actually produced"
+    priority: 1
+    reproduce: "ls site/data/generated/ | sed 's/\\.json$//' | while read -r b; do grep -q \"\\b$b\\b\" <(sed -n '328p;332,334p' scripts/generate-site-data) || echo \"never compared: $b\"; done"
+
+  - id: site-tile-route-list
+    path: scripts/site-check
+    lines: "88"
+    concept: which generated collections must have an index route
+    authority: "the collections generate-site-data creates"
+    duplicated_in:
+      - "the literal list `limitations roadmap why supervises commands`"
+    risk: medium
+    detail: >-
+      A new generated collection gets no route check until someone adds its name here. The
+      neighbouring lines do this correctly — they iterate the profiles, claims and why-moments
+      that exist — so the pattern to follow is already in the same file three lines above.
+    recommended: DERIVE
+    target: "iterate the generated content collections"
+    priority: 2
+    reproduce: "sed -n '86,89p' scripts/site-check"
+
+  - id: orphan-provider-templates
+    path: .majordomus/providers
+    lines: "-"
+    concept: provider templates
+    authority: "policy projections[].provider"
+    duplicated_in: []
+    risk: medium
+    detail: >-
+      Four provider templates ship and two are declared in projections. gemini.tmpl and
+      generic.tmpl are rendered by nothing, validated by nothing, and covered by no test, so
+      whether they still work is unknown. They are orphans rather than duplicates: the defect
+      is an entity the registry does not reach, not a fact written twice.
+    recommended: REGISTRY
+    target: "provider discovery with an explicit answer for an undeclared template"
+    priority: 3
+    reproduce: "ls .majordomus/providers/*.tmpl; grep -n 'provider:' .majordomus/policy.yaml"
+
+  - id: derivable-counts-in-prose
+    path: README.md
+    lines: "248"
+    concept: counts of commands, cases and providers
+    authority: "the dispatch table, test/cases/, the policy"
+    duplicated_in:
+      - "README.md:248 — \"the eight commands\""
+      - "docs/DESIGN.md:567 — \"the eight subcommands\""
+      - "docs/SITE_REVIEW.md:65 — \"13 cases\""
+    risk: medium
+    detail: >-
+      All three are already wrong: the dispatcher carries fifteen commands and the suite runs
+      more cases than the number written. doctor enforces the no-counts rule on the
+      always-loaded projection only, so prose elsewhere in the repository is unguarded. This
+      is the failure mode the rule was written to prevent, occurring in the documents that
+      state the rule.
+    recommended: REMOVE_DUPLICATE
+    target: "phrase without the number, or generate the sentence"
+    priority: 2
+    reproduce: "grep -rnE '\\b(eight|[0-9]+) (commands|subcommands|cases)\\b' README.md docs/"
+
+  - id: exit-code-table-in-prose
+    path: docs/CLI.md
+    lines: "20-27"
+    concept: the exit-code contract
+    authority: "lib/common.sh:7"
+    duplicated_in:
+      - "bin/majordomus usage footer, which generate-site-data:62 parses (derived, correct)"
+      - "docs/CLI.md's table, hand-written"
+    risk: low
+    detail: >-
+      The constants themselves are a protocol contract and stay literal. The website derives
+      its table from the usage footer, which is the right shape. Only the docs/CLI.md table
+      is a hand-maintained third copy.
+    recommended: DERIVE
+    target: "generate the table, or assert it matches lib/common.sh in a test"
+    priority: 3
+    reproduce: "sed -n '7p' lib/common.sh; sed -n '20,27p' docs/CLI.md"
+
+  - id: reference-navigation-hand-written
+    path: site/data/nav.toml
+    lines: "-"
+    concept: navigation entries for generated reference collections
+    authority: "the generated collections"
+    duplicated_in:
+      - "nav.toml's Commands, Execution profiles, Guarantees and What it supervises entries"
+    risk: low
+    detail: >-
+      The five intent groups are a product decision and stay curated. The entries inside them
+      that point at generated collections are the mirror: a new reference collection appears
+      as a route and never in navigation. site-check verifies that every href resolves, which
+      catches a deleted route but not a missing one.
+    recommended: DERIVE
+    target: "curated groups, generated members for reference collections"
+    priority: 3
+    reproduce: "cat site/data/nav.toml"
+
+  - id: ci-platform-matrix
+    path: .github/workflows/validate.yml
+    lines: "8-10"
+    concept: supported operating systems
+    authority: "the support contract"
+    duplicated_in: []
+    risk: low
+    detail: >-
+      ubuntu-latest and macos-latest are a deliberate product decision about which
+      environments are supported, not a fact discoverable from the repository. Listed here so
+      that it is recorded as intentional rather than missed.
+    recommended: KEEP_LITERAL
+    target: "-"
+    priority: 4
+    reproduce: "sed -n '5,12p' .github/workflows/validate.yml"
+
+  - id: schema-allowlists
+    path: share/allow
+    lines: "-"
+    concept: the permitted keys of each canonical file
+    authority: "these files"
+    duplicated_in: []
+    risk: low
+    detail: >-
+      share/allow/*.txt are not mirrors of anything. They are the schema, in the only form
+      the parser can enforce, and an unknown key is an error because of them. Recorded as
+      intentional so that a later sweep does not mistake a list of names for a duplicate.
+    recommended: KEEP_LITERAL
+    target: "-"
+    priority: 4
+    reproduce: "ls share/allow/"
+
+  - id: docs-index-tables
+    path: docs/README.md
+    lines: "7-40"
+    concept: which documents exist and who they are for
+    authority: "these tables"
+    duplicated_in: []
+    risk: low
+    detail: >-
+      A hand-written list of files, which looks like a mirror of the directory and is not:
+      audience and purpose are editorial judgements that cannot be derived. It is the model
+      the rest of this ledger should follow, because generate-site-data:227 fails when a file
+      in docs/ appears in neither table. Curated content, enforced completeness.
+    recommended: KEEP_LITERAL
+    target: "-"
+    priority: 4
+    reproduce: "sed -n '227,233p' scripts/generate-site-data"
