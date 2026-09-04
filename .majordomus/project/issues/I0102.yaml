@@ -1,0 +1,29 @@
+id: I0102
+milestone: M001
+title: Decide whether a question transfers or the gate widens
+slug: decide-blocker-scope
+priority: p1
+profile: deep-work
+parallel_safe: false
+objective: "Choose between the two alternatives the claim names, record the decision with what was rejected and why, and state which case the chosen behaviour is deliberately wrong in."
+why: "The claim was published as unfixed precisely because both answers are wrong somewhere. Implementing one without recording why is how a repository acquires behaviour nobody can defend."
+current_state: "The claim note names the two alternatives and stops there. No decision record exists."
+desired_state: "A dated entry in .majordomus/state/decisions.md names the choice, the rejected alternative, the case each is wrong in, and the evidence it rests on."
+scope:
+  - .majordomus/state/decisions.md
+non_scope:
+  - Implementing the decision
+depends_on:
+  - I0101
+acceptance_criteria:
+  - The decision names both alternatives and the case each one gets wrong
+  - It cites the case from I0101 as its evidence
+  - It is attributable to a task, which majordomus check verifies
+validation:
+  - bin/majordomus decision list
+  - bin/majordomus check
+evidence_required:
+  - decision_recorded
+risk: "A decision recorded without the failing case behind it is an opinion."
+created_at: 2026-09-04
+updated_at: 2026-09-04

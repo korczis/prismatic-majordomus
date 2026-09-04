@@ -128,13 +128,14 @@ trap 'rm -f "$REMOTE_MS" "$REMOTE_IS"; mj_cleanup' EXIT
 gh api --paginate "repos/$REPO/milestones?state=all" \
   --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
 gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
-  --jq '.[] | select(has("pull_request")|not) | [(.number|tostring), .title, .state, (.body // "" | @base64)] | @tsv' \
+  --jq '.[] | select(has("pull_request")|not) | [(.number|tostring), .title, .state, (.body // "" | @base64), (.milestone.title // "")] | @tsv' \
   > "$REMOTE_IS" 2>/dev/null || true
 
 remote_milestone_number() { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $1; exit }' "$REMOTE_MS"; }
 remote_issue_number()     { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $1; exit }' "$REMOTE_IS"; }
 remote_issue_state()      { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $3; exit }' "$REMOTE_IS"; }
 remote_issue_body()       { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $4; exit }' "$REMOTE_IS" | base64 --decode 2>/dev/null || true; }
+remote_issue_milestone()  { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $5; exit }' "$REMOTE_IS"; }
 
 # region hash recorded in a remote body, empty when the body carries no generated region
 remote_region_hash() { printf '%s\n' "$1" | sed -n 's/^<!-- majordomus:begin \([0-9a-f]*\) -->$/\1/p' | head -1; }
@@ -162,6 +163,28 @@ canonical_region_hash() {
   h="$(mj_sha256 "$tmp" | cut -c1-16)"; rm -f "$tmp"; printf '%s' "$h"
 }
 
+# ---------------------------------------------------------------- labels
+# The label vocabulary is derived from the model, not written down twice: whatever
+# labels_of() can emit is what has to exist. A label that is already there is left alone,
+# including its colour and description, because those are somebody's choice and not ours.
+if [ "$MODE" = apply ]; then
+  have_labels="$(gh label list --repo "$REPO" --limit 200 --json name --jq '.[].name' 2>/dev/null || true)"
+  for id in $(selected_issues); do labels_of "$id"; done | tr ',' '\n' | sort -u | while read -r l; do
+    [ -n "$l" ] || continue
+    printf '%s\n' "$have_labels" | grep -qxF "$l" && continue
+    case "$l" in
+      majordomus)              d="Managed by the canonical project model in .majordomus/project" ;;
+      priority:*)              d="Priority ${l#priority:}, from the canonical record" ;;
+      status:blocked)          d="Derived: a dependency is not done" ;;
+      status:verify)           d="Derived: implementation complete, required evidence missing" ;;
+      execution:parallel-safe) d="Derived: declares no scope overlap with its wave" ;;
+      *)                       d="Derived from the canonical project model" ;;
+    esac
+    gh label create "$l" --repo "$REPO" --description "$d" --force >/dev/null 2>&1 \
+      && note OK created "label $l" || note OK exists "label $l"
+  done
+fi
+
 # ---------------------------------------------------------------- milestones
 for id in $(selected_milestones); do
   num="$(remote_milestone_number "$id")"
@@ -186,6 +209,13 @@ for id in $(selected_milestones); do
   fi
 done
 
+# A milestone created a moment ago is not in the listing this run started with, and an issue
+# cannot be assigned to a milestone the adapter does not know the title of. Re-read.
+if [ "$MODE" = apply ]; then
+  gh api --paginate "repos/$REPO/milestones?state=all" \
+    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
+fi
+
 # ---------------------------------------------------------------- issues
 for id in $(selected_issues); do
   num="$(remote_issue_number "$id")"
@@ -195,25 +225,42 @@ for id in $(selected_issues); do
   if [ -z "$num" ]; then
     note DRIFT missing "issue $id is not on GitHub"
     if [ "$MODE" = apply ]; then
-      msnum="$(remote_milestone_number "$ms")"
       tmp="$(mktemp "${TMPDIR:-/tmp}/mj.body.XXXXXX")"; printf '%s\n' "$body" > "$tmp"
-      args=""
-      [ -n "$msnum" ] && args="--milestone $(awk -F'\t' -v n="$msnum" '$1==n{print $2}' "$REMOTE_MS")"
-      # shellcheck disable=SC2086  # args is a deliberately word-split option pair
-      gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
-        --label "$(labels_of "$id")" $args >/dev/null
+      if [ -n "$(remote_milestone_number "$ms")" ]; then
+        gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
+          --label "$(labels_of "$id")" --milestone "$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")" >/dev/null
+      else
+        gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
+          --label "$(labels_of "$id")" >/dev/null
+        note DRIFT milestone "issue $id has no GitHub milestone; $ms does not exist there"
+      fi
       rm -f "$tmp"
+      # a created issue starts open; canonical status decides whether it stays that way
+      if [ "$want_state" = closed ]; then
+        num="$(gh issue list --repo "$REPO" --state all --limit 200 --search "$id in:title" --json number,title \
+          --jq "map(select(.title | startswith(\"$id — \"))) | .[0].number" 2>/dev/null || true)"
+        [ -n "$num" ] && [ "$num" != null ] && gh issue close "$num" --repo "$REPO" >/dev/null 2>&1
+      fi
       note OK created "issue $id"
     fi
     continue
   fi
   remote="$(remote_issue_body "$id")"
   have_state="$(remote_issue_state "$id")"
+  edited=0
   if region_edited "$id" "$remote"; then
     note DRIFT edited "issue $id (#$num) has a hand-edited generated region; not overwriting"
     [ "$FORCE" = 1 ] || continue
+    # --force means the canonical text wins. The marker hash still matches, so nothing else
+    # below would call this changed; say so explicitly rather than silently doing nothing.
+    edited=1
   fi
-  changed=0
+  changed=$edited
+  want_ms="$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")"
+  if [ -n "$want_ms" ] && [ "$(remote_issue_milestone "$id")" != "$want_ms" ]; then
+    note DRIFT milestone "issue $id (#$num) is not on GitHub milestone $ms"
+    [ "$MODE" = apply ] && gh issue edit "$num" --repo "$REPO" --milestone "$want_ms" >/dev/null && note OK updated "issue $id milestone"
+  fi
   [ "$(remote_region_hash "$remote")" = "$(canonical_hash "$id")" ] || { changed=1; note DRIFT body "issue $id (#$num) body is behind the canonical record"; }
   [ "$have_state" = "$want_state" ] || { changed=1; note DRIFT state "issue $id (#$num) is $have_state on GitHub, canonically $want_state"; }
   if [ "$have_state" = closed ] && [ "$(mj_pj_i_status "$id")" != DONE ] && [ "$(mj_pj_i_status "$id")" != CANCELLED ]; then
