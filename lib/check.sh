@@ -158,6 +158,15 @@ mj_validate_scope() {
 
 mj_validate_checkpoint() {
   mj_task_gate checkpoint || return 0
+  # Freshness is a statement about work in progress. A finished task has no next checkpoint
+  # due, so reporting one as overdue is a finding nobody can act on — the reproduce command
+  # would record progress on work that is done — and under watch it is drift that never
+  # clears, which trains a reader to skip the drift report.
+  case "$(mj_cur outcome)" in
+    active) ;;
+    *) mj_doctrine_skip checkpoint "$(mj_cur id)" "outcome is $(mj_cur outcome); freshness applies while a task is active"
+       MJ_DOCTRINE_SKIPPED=1; return 0 ;;
+  esac
   local id cp interval now_e cp_e age; id="$(mj_cur id)"
   cp="$(mj_cur checkpoint_at)"; interval="$(mj_duration_secs "$(mj_pro checkpoint_interval)")" || interval=900
   now_e="$(mj_epoch "$(mj_now)")"; cp_e="$(mj_epoch "$cp")"

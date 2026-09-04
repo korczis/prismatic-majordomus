@@ -76,3 +76,29 @@ git worktree add -q "$wt" -b bob
 expect_exit 0 "$MJ" check --overlap
 expect_grep 'INFO overlap +.*wt-bob — claims lib/auth/sub — contained by your lib/auth'
 git worktree remove --force "$wt"
+
+# --- checkpoint freshness is a statement about work in progress, not about a finished task.
+# A stale checkpoint on an active task is reported; the same record once the task is
+# finished is not, because the reproduce command would record progress on work that is
+# done, and under watch it would be drift that never clears.
+stale() { sed 's/^checkpoint_at: .*/checkpoint_at: 2026-01-01T00:00:00Z/' .majordomus/state/current.yaml > "$T/.cur" && mv "$T/.cur" .majordomus/state/current.yaml; }
+note() { printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n'; }
+note | "$MJ" handover >/dev/null            # close the task the checks above left active
+"$MJ" finish --outcome partial >/dev/null
+"$MJ" start "checkpoint freshness" --scope lib/auth >/dev/null
+stale
+expect_exit 0 "$MJ" check
+expect_grep 'WARN +checkpoint .* interval'
+expect_exit 11 "$MJ" watch
+expect_grep 'DRIFT checkpoint'
+note | "$MJ" handover >/dev/null
+"$MJ" finish --outcome completed --verify-command "true" >/dev/null
+stale
+expect_exit 0 "$MJ" check
+expect_grep 'INFO +checkpoint .* freshness applies while a task is active'
+expect_no_grep 'WARN +checkpoint'
+# watch still exits 11 here, from the malformed decision this case planted earlier on
+# purpose; what matters is that the checkpoint is no longer among its findings
+expect_exit 11 "$MJ" watch
+expect_no_grep 'DRIFT checkpoint'
+expect_grep 'DRIFT records +decisions.md'
