@@ -1,167 +1,208 @@
 {% extends "base.html" %}
 {% block content %}
-{%- set m = load_data(path="data/marketing.toml") -%}
-{%- set resp = load_data(path="data/generated/responsibilities.json") -%}
-{%- set caps = load_data(path="data/generated/capabilities.json") -%}
-{%- set profiles = load_data(path="data/generated/profiles.json") -%}
 {%- set lifecycle = load_data(path="data/generated/lifecycle.json") -%}
-{%- set project = load_data(path="data/generated/project.json") -%}
-{%- set source = load_data(path="data/generated/source.json") -%}
+{%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{%- set readme = load_data(path="data/generated/readme.json") -%}
 
-<section class="mx-auto max-w-screen-xl px-4 py-16 sm:py-24">
-  <p class="font-mono text-xs text-gray-500 dark:text-gray-500">v{{ source.source_version }} · {{ source.source_commit }}</p>
-  <h1 class="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">{{ m.headline }}</h1>
-  <p class="mt-4 max-w-2xl text-lg text-gray-600 dark:text-gray-400">{{ m.subheadline }}</p>
-  <p class="mt-6 max-w-2xl text-base text-gray-600 dark:text-gray-400">{{ m.lede }}</p>
-  <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-    {% for cta in m.cta %}
-    <a href="{{ get_url(path=cta.href) | safe }}"
-       class="inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium focus:outline-none focus:ring-4 {% if cta.primary %}bg-blue-700 text-white hover:bg-blue-800 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700{% else %}border border-gray-300 text-gray-900 hover:bg-gray-100 focus:ring-gray-200 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800{% endif %}">{{ cta.label }}</a>
-    {% endfor %}
-  </div>
-</section>
-
-<section class="border-t border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
-  <div class="mx-auto max-w-screen-xl px-4 py-16">
-    <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">01 / The problem</p>
-    <h2 class="mt-3 max-w-3xl text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">{{ m.problem.title }}</h2>
-    <p class="mt-3 max-w-2xl text-gray-600 dark:text-gray-400">{{ m.problem.lede }}</p>
-    <ul class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {% for item in m.problem.items %}
-      <li class="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
-
-<section class="mx-auto max-w-screen-xl px-4 py-16">
-  <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">02 / The core model</p>
-  <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">Majordomus supervises how work is executed</h2>
-  <p class="mt-3 max-w-2xl text-gray-600 dark:text-gray-400">It never runs a model and never picks one. It holds the rules, the scope and the state, and decides whether the contract was met.</p>
-  <ol class="mt-8 grid gap-3 md:grid-cols-4">
-    {% set flow = [
-      ["Human / organisation", "states the task and the paths it may touch"],
-      ["Majordomus", "policy, profile, scope, state, contract"],
-      ["Any worker", "Claude, Codex, Gemini, local — never invoked by Majordomus"],
-      ["Verified outcome", "a typed outcome with the evidence that earned it"]
-    ] %}
-    {% for step in flow %}
-    <li class="relative rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-      <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ loop.index }}</span>
-      <p class="mt-1 font-semibold text-gray-900 dark:text-white">{{ step[0] }}</p>
-      <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ step[1] }}</p>
-    </li>
-    {% endfor %}
-  </ol>
-</section>
-
-<section class="border-t border-gray-200 dark:border-gray-800">
-  <div class="mx-auto max-w-screen-xl px-4 py-16">
-    <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">03 / Drop-in installation</p>
-    <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">Copy one directory, add one pointer</h2>
-    <div class="mt-8 grid gap-6 lg:grid-cols-2">
-      {% set cb_id = "install-cmd" %}{% set cb_label = "install" %}{% set cb_body = "git clone " ~ config.extra.repo_url ~ " ~/majordomus
-export PATH=\"$HOME/majordomus/bin:$PATH\"
-
-cd <your project>
-majordomus init
-majordomus update
-majordomus doctor" %}{% include "partials/code-block.html" %}
-      {% set cb_id = "install-hooks" %}{% set cb_label = "the two hook lines doctor verifies" %}{% set cb_body = "# pre-commit
-majordomus doctor || exit $?
-
-# pre-push
-majordomus finish --check || exit $?" %}{% include "partials/code-block.html" %}
-    </div>
-    <p class="mt-6 text-sm text-gray-500 dark:text-gray-400">Already have a hand-written <code class="font-mono">CLAUDE.md</code>? <a class="font-medium text-blue-700 hover:underline dark:text-blue-400" href="{{ get_url(path='/docs/adoption/') | safe }}">Region projections</a> keep it.</p>
-  </div>
-</section>
-
-<section class="border-t border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
-  <div class="mx-auto max-w-screen-xl px-4 py-16">
-    <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">04 / What it supervises</p>
-    <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">{{ resp.responsibilities | length }} responsibilities, one directory</h2>
-    <p class="mt-3 max-w-2xl text-gray-600 dark:text-gray-400">Each is a file, a subcommand that reads it, and at least one behavioural test that proves it. Every card links to its own page.</p>
-    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {% for r in resp.responsibilities | sort(attribute="order") %}
-      <a href="{{ get_url(path='/supervises/' ~ r.id ~ '/') | safe }}"
-         class="group rounded-lg border border-gray-200 bg-white p-5 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-500">
-        <div class="flex items-center justify-between">
-          <h3 class="text-base font-semibold text-gray-900 group-hover:underline dark:text-white">{{ r.title }}</h3>
-          <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ r.command }}</span>
-        </div>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ r.summary | markdown(inline=true) | safe }}</p>
-        <p class="mt-3 font-mono text-xs text-gray-400 dark:text-gray-500">{{ r.claims | length }} claim{{ r.claims | length | pluralize }}</p>
-      </a>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-
-<section class="mx-auto max-w-screen-xl px-4 py-16">
-  <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">05 / Execution profiles</p>
-  <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">Five axes, never one quality knob</h2>
-  <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    {% for p in profiles.profiles %}
-    <a href="{{ get_url(path='/profiles/' ~ p.slug ~ '/') | safe }}" class="rounded-lg border border-gray-200 bg-white p-5 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-500">
-      <h3 class="font-mono text-sm font-semibold text-gray-900 dark:text-white">{{ p.slug }}</h3>
-      <dl class="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-400">
-        <div class="flex justify-between gap-2"><dt>capability</dt><dd class="font-mono text-gray-900 dark:text-gray-200">{{ p.capability }}</dd></div>
-        <div class="flex justify-between gap-2"><dt>effort</dt><dd class="font-mono text-gray-900 dark:text-gray-200">{{ p.effort }}</dd></div>
-        <div class="flex justify-between gap-2"><dt>verbosity</dt><dd class="font-mono text-gray-900 dark:text-gray-200">{{ p.verbosity }}</dd></div>
-        <div class="flex justify-between gap-2"><dt>checkpoint</dt><dd class="font-mono text-gray-900 dark:text-gray-200">{{ p.checkpoint_interval }}</dd></div>
-      </dl>
-    </a>
-    {% endfor %}
-  </div>
-</section>
-
-<section class="border-t border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40">
-  <div class="mx-auto max-w-screen-xl px-4 py-16">
-    <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">06 / Capabilities</p>
-    <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">Guaranteed, advisory, planned — never mixed</h2>
-    <div class="mt-8 grid gap-4 sm:grid-cols-3">
-      {% for status in ["guaranteed", "advisory", "planned"] %}
-      <div class="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
-        <div class="flex items-center justify-between">{% set badge_status = status %}{% include "partials/status-badge.html" %}<span class="font-mono text-2xl font-semibold text-gray-900 dark:text-white">{{ caps.counts[status] }}</span></div>
-        <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
-          {%- if status == "guaranteed" %}Implemented, deterministic, and backed by a behavioural test that runs.
-          {%- elif status == "advisory" %}Projected into worker instructions. A worker may ignore it and nothing detects that it did.
-          {%- else %}Specified and not implemented. Named so the omission is visible.{% endif %}
-        </p>
+{# 1. hero — project.json, marketing.toml; the transcript is README fenced block 1: real output, not a mockup #}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto grid max-w-screen-xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8 lg:py-20">
+    <div class="min-w-0">
+      <span class="mb-5 inline-block rounded bg-brand-softer px-2.5 py-1 font-mono text-xs text-fg-brand-strong">v{{ project.version }} · {{ m.hero.kicker }}</span>
+      <h1 class="text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ m.hero.headline }}</h1>
+      <p class="mt-6 max-w-xl text-lg leading-relaxed text-body sm:text-xl">{{ m.hero.lead }}</p>
+      <p class="mt-3 max-w-xl text-sm text-body-subtle">{{ project.tagline }}</p>
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+        <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5M6 12h12"/></svg></a>
+        <a href="{{ project.repository_url }}" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_secondary }}</a>
       </div>
-      {% endfor %}
+      <dl class="mt-10 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-default pt-8 sm:grid-cols-4">
+        <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">runtime</dt><dd class="mt-1 text-sm text-heading">{{ project.requirements | join(sep=", ") | replace(from=" or newer", to="") }}</dd></div>
+        <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">server</dt><dd class="mt-1 text-sm text-heading">none</dd></div>
+        <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">network calls</dt><dd class="mt-1 text-sm text-heading">none</dd></div>
+        <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">licence</dt><dd class="mt-1 text-sm text-heading">{{ project.license }}</dd></div>
+      </dl>
     </div>
-    <a class="mt-6 inline-block text-sm font-medium text-blue-700 hover:underline dark:text-blue-400" href="{{ get_url(path='/guarantees/') | safe }}">Every claim, with its implementation and its test →</a>
+    <div class="min-w-0">
+      <figure class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
+        <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
+        <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
+      </figure>
+      <p class="mt-3 text-sm text-body-subtle">{{ m.hero.transcript_caption }}</p>
+    </div>
   </div>
 </section>
 
-<section class="mx-auto max-w-screen-xl px-4 py-16">
-  <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">07 / Task lifecycle</p>
-  <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">A typed outcome, not free text</h2>
-  <p class="mt-3 max-w-2xl text-gray-600 dark:text-gray-400">The vocabulary below is read out of <code class="font-mono text-sm">lib/finish.sh</code> at build time. Adding an outcome to the code adds it here.</p>
-  <div class="mt-8 overflow-x-auto">
-    <pre class="mermaid" data-mermaid>flowchart LR
-  S(( )) --> A[active]
-  A --> H[handed_over]
-  H --> A
-{%- for o in lifecycle.outcomes %}
-  A --> {{ o | upper }}[{{ o }}]
-{%- endfor %}
-</pre>
+{# 1b. recognition — marketing.toml; situations, not claims #}
+<section class="border-b border-default bg-brand-softer">
+  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
+    <h2 class="text-2xl font-bold tracking-tight text-fg-brand-strong sm:text-3xl"><a href="{{ get_url(path="/why/", trailing_slash=true) }}" class="hover:underline">{{ m.recognise.title }}</a></h2>
+    <div class="mt-6">{% include "partials/why-cards.html" %}</div>
+    <p class="mt-6 max-w-3xl text-base font-medium text-fg-brand-strong">{{ m.recognise.closing }}</p>
   </div>
 </section>
 
-<section class="border-t border-gray-200 dark:border-gray-800">
-  <div class="mx-auto max-w-screen-xl px-4 py-16">
-    <p class="font-mono text-xs uppercase tracking-wider text-gray-500 dark:text-gray-500">08 / What it is not</p>
-    <h2 class="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">{{ m.not.title }}</h2>
-    <ul class="mt-8 flex flex-wrap gap-3">
-      {% for item in m.not.items %}
-      <li class="rounded-lg border border-gray-200 px-4 py-2 font-mono text-sm text-gray-700 dark:border-gray-700 dark:text-gray-300">{{ item }}</li>
-      {% endfor %}
-    </ul>
+{# 2. problem — README "The problem" #}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="01" kicker="the problem" title="Most AI-assisted work fails for boring reasons" lead={m.leads.problem} /> }}
+    <div class="format break-words max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ readme.problem_md | markdown | safe }}</div>
   </div>
 </section>
-{% endblock %}
-{% block scripts %}{% include "partials/mermaid.html" %}{% endblock %}
+
+{# 3. core model — diagrams.json (from README mental model) #}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="02" kicker="the core model" title="Majordomus supervises how work is executed" lead={m.leads.model} /> }}
+    <div class="mx-auto max-w-3xl">{{ <diagram key="supervision" /> }}</div>
+  </div>
+</section>
+
+{# 3b. before / with — marketing.toml; structural, no numbers #}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="02b" kicker="before / after" title={m.compare.title} /> }}
+    <div class="grid gap-6 lg:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-6">
+        <h3 class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.compare.before_title }}</h3>
+        <ul class="mt-4 space-y-3">{%- for it in m.compare.before -%}<li class="flex gap-3 text-base text-body"><span aria-hidden="true" class="font-mono text-body-subtle">✕</span><span>{{ it }}</span></li>{%- endfor -%}</ul>
+      </div>
+      <div class="min-w-0 rounded-base border border-brand-subtle bg-brand-softer p-6">
+        <h3 class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ m.compare.after_title }}</h3>
+        <ul class="mt-4 space-y-3">{%- for it in m.compare.after -%}<li class="flex gap-3 text-base text-heading"><span aria-hidden="true" class="font-mono text-fg-brand-strong">✓</span><span>{{ it }}</span></li>{%- endfor -%}</ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# 4. drop-in installation — the real commands #}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="03" kicker="drop-in" title="One directory, one pointer" lead={m.leads.install} /> }}
+    <div class="grid gap-6 lg:grid-cols-2">
+      <div class="min-w-0">{% <code label="install once"> %}
+git clone {{ project.repository_url }} ~/majordomus
+export PATH="$HOME/majordomus/bin:$PATH"
+
+cd your-project
+majordomus init      # .majordomus/ with policy, profiles, templates
+majordomus update    # CLAUDE.md, AGENTS.md, GEMINI.md from the policy
+majordomus doctor    # names the two hook lines still missing
+{% </code> %}</div>
+      <div class="min-w-0">{% <code label="per task"> %}
+majordomus start "fix OAuth callback" --scope lib/auth --profile debugging
+# … the worker reads the generated instructions and works …
+majordomus check
+majordomus finish --outcome completed --verify-command "make test"
+{% </code> %}</div>
+    </div>
+    <p class="mt-6 max-w-3xl text-sm text-body">Requirements: {{ project.requirements | join(sep=", ") }}. Nothing is installed into your project except <code class="font-mono text-heading">.majordomus/</code> and the instruction files the policy names.</p>
+  </div>
+</section>
+
+{# 5. what it supervises — README "What it does" table rows #}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="04" kicker="what it supervises" title="Nine responsibilities, one directory" lead={m.leads.supervises} /> }}
+    {% include "partials/responsibility-cards.html" %}
+  </div>
+</section>
+
+{# 6. how it works — lifecycle.json #}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="05" kicker="how it works" title="A task is bounded by start and by finish or handover" /> }}
+    <ol class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {%- for step in lifecycle.steps -%}
+      <li><a href="{{ get_url(path="/commands/" ~ step.command ~ "/", trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium">
+        <span class="font-mono text-xs uppercase tracking-wide text-fg-brand">step {{ loop.index }}</span>
+        <code class="mt-2 font-mono text-lg font-semibold text-heading">majordomus {{ step.command }}</code>
+        <p class="mt-2 text-sm text-body">{{ step.what }}</p>
+      </a></li>
+      {%- endfor -%}
+    </ol>
+    <p class="mt-6 text-sm text-body">Outcomes are a closed vocabulary: {% for o in lifecycle.outcomes %}<code class="font-mono text-heading">{{ o }}</code>{% if not loop.last %}, {% endif %}{% endfor %}. State read back is labelled {% for l in lifecycle.divergence_labels %}<code class="font-mono text-heading">{{ l }}</code>{% if not loop.last %}, {% endif %}{% endfor %} against git.</p>
+  </div>
+</section>
+
+{# 7. profiles — profiles.json #}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="06" kicker="execution profiles" title="Five axes, never collapsed into one" lead={m.leads.profiles} /> }}
+    {% include "partials/profile-cards.html" %}
+    <p class="mt-6"><a href="{{ get_url(path="/profiles/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand hover:underline">Every field of every profile →</a></p>
+  </div>
+</section>
+
+{# 8. capabilities — capabilities.json #}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="07" kicker="guaranteed · advisory · planned" title="What is real, what is projected, what is not built" lead={m.leads.capabilities} /> }}
+    <div class="grid gap-4 md:grid-cols-3">
+      {%- for status in ["guaranteed", "advisory", "planned"] -%}
+      {%- set rows = [c for c in caps.claims if c.status == status] -%}
+      <div class="flex h-full flex-col rounded-base border border-default bg-neutral-primary p-5">
+        <div class="mb-3 flex items-center justify-between"><a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="hover:underline">{{ <badge status={status} /> }}</a><span class="font-mono text-sm text-body-subtle">{{ rows | length }}</span></div>
+        <p class="mb-4 text-sm text-body">{{ caps.statuses[status] }}</p>
+        <ul class="space-y-2 text-sm text-heading">
+          {%- for c in rows[:4] -%}<li class="flex gap-2"><span aria-hidden="true" class="text-body-subtle">·</span><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>{%- endfor -%}
+        </ul>
+        <a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="mt-auto inline-block pt-4 text-sm font-medium text-fg-brand hover:underline">All {{ status }} claims →</a>
+      </div>
+      {%- endfor -%}
+    </div>
+    <p class="mt-6"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand hover:underline">The full matrix with source, implementation and test for every row →</a></p>
+  </div>
+</section>
+
+{# 9. principles — lifecycle.json (from the generated worker instructions) #}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="08" kicker="core principles" title="The ten sentences every worker reads" /> }}
+    <ol class="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+      {%- for p in lifecycle.principles -%}<li class="flex gap-3 text-base text-heading"><span class="font-mono text-sm text-body-subtle">{{ loop.index }}</span><span>{{ p }}</span></li>{%- endfor -%}
+    </ol>
+  </div>
+</section>
+
+{# 10. what it is not — README #}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="09" kicker="what it is not" title="Not another runtime" /> }}
+    <div class="format break-words max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ readme.not_md | markdown | safe }}</div>
+  </div>
+</section>
+
+{# 11. this site — diagrams.json pipeline #}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="10" kicker="this site" title="Built the way it tells you to build" lead={m.leads.architecture} /> }}
+    {{ <diagram key="pipeline" /> }}
+    <p class="mt-6 text-sm text-body">Inputs hashed at <span class="font-mono">{{ source.source_hash | truncate(length=12, end="") }}</span>; <code class="font-mono text-heading">scripts/generate-site-data --check</code> fails the build when the committed data no longer matches the repository. <a href="{{ get_url(path="/architecture/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">How the site is derived →</a></p>
+  </div>
+</section>
+
+{# 11b. who it is for — marketing.toml audiences; no claims, no numbers #}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="11" kicker="who it is for" title="The same discipline, three vantage points" /> }}
+    <div class="grid gap-4 md:grid-cols-3">
+      {{ <linkcard href={get_url(path="/getting-started/", trailing_slash=true)} kicker="a developer" title="Copy one directory" text={m.audiences.developer} /> }}
+      {{ <linkcard href={get_url(path="/guarantees/", trailing_slash=true)} kicker="an engineering lead" title="One policy, one contract" text={m.audiences.lead} /> }}
+      {{ <linkcard href={get_url(path="/docs/economics/", trailing_slash=true)} kicker="an organisation" title="Measured, not estimated" text={m.audiences.organisation} /> }}
+    </div>
+  </div>
+</section>
+
+{# 12. final cta #}
+<section class="bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 text-center sm:px-6 lg:px-8 lg:py-20">
+    <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ m.leads.final }}</h2>
+    <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+      <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }}</a>
+      <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">What is guaranteed</a>
+    </div>
+  </div>
+</section>
+{% endblock content %}
+{% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}

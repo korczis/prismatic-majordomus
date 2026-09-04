@@ -9,7 +9,7 @@
 [Website](https://korczis.github.io/prismatic-majordomus) ·
 [CLI reference](docs/CLI.md) ·
 [File schemas](docs/SCHEMAS.md) ·
-[What is guaranteed, advisory, or planned](docs/CLAIMS.yaml) ·
+[What is guaranteed, advisory, planned, or refused](docs/SITE_CLAIMS.md) ·
 [Why it exists](docs/EXTRACTION_REPORT.md)
 
 Majordomus holds one canonical policy for how AI workers operate in a repository,
@@ -260,6 +260,12 @@ Read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the generated [`AGENTS.md`](AGENTS
 The best contribution is often a deletion. Run `bash test/run.sh`; every behaviour has
 a success and a failure case. This repository supervises itself: `bin/majordomus doctor`
 runs in its own pre-commit hook and in CI.
+
+The website is a projection of this repository rather than a second copy of it: every
+page is generated from `README.md`, `docs/`, the policy skeleton and `docs/CLAIMS.yaml`,
+and CI refuses to deploy a tree whose derived files are stale. Editing a generated file
+is never the fix. See
+[`docs/GITHUB_PAGES_ARCHITECTURE.md`](docs/GITHUB_PAGES_ARCHITECTURE.md).
 
 ## Origin and licence
 

@@ -127,8 +127,8 @@ Begin a scoped task.
 
 **Behaviour:**
 - Refuses (`15`) if `state/current.yaml` exists and its outcome is not terminal. One
-  active task per checkout. `--replace` requires the existing task to be handed over or
-  finished first; it never discards state.
+  active task per checkout: hand the existing task over (`handover --close`) or finish
+  it first. No flag discards an active task.
 - Normalises each scope path: strips trailing `/`, canonicalises, refuses paths outside
   the repository. Records the normalised form.
 - Reads every other worktree from `git worktree list` and, where one has an active
@@ -254,7 +254,8 @@ an identity field. Refuses (`12`) with no active task unless `--no-task`.
 **Resolve:** `majordomus handover --resolve` finds the most relevant prior handover for
 the current worktree and branch: same worktree and branch first, then same branch, never
 a repository-wide fallback. Prints its git-state label and its body. No candidate is a
-normal outcome and exits `0` with `No relevant handover.`
+normal outcome and exits `0` with `No relevant handover.` `--path` prints the path
+alone, for scripting; `--no-task` resolves without an active task.
 
 ## `majordomus finish`
 

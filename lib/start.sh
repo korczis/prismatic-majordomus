@@ -3,8 +3,8 @@
 mj_cmd_start() {
   local task="" scope="" profile="" owner="${USER:-unknown}"
   while [ $# -gt 0 ]; do case "$1" in
-    --scope) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--scope needs paths"; scope="$2"; shift 2 ;;
-    --scope=*) scope="${1#--scope=}"; shift ;;
+    --scope) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--scope needs paths"; scope="$scope,$2"; shift 2 ;;
+    --scope=*) scope="$scope,${1#--scope=}"; shift ;;
     --profile) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--profile needs a name"; profile="$2"; shift 2 ;;
     --profile=*) profile="${1#--profile=}"; shift ;;
     --owner) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--owner needs a value"; owner="$2"; shift 2 ;;
@@ -18,7 +18,8 @@ H
     *) [ -z "$task" ] || mj_die "$MJ_EX_USAGE" "start: task must be one argument (quote it)"; task="$1"; shift ;;
   esac; done
   [ -n "$task" ]  || mj_die "$MJ_EX_USAGE" "start: a task description is required"
-  [ -n "$scope" ] || mj_die "$MJ_EX_USAGE" "start: --scope is required (comma-separated repository paths)"
+  scope="${scope#,}"
+  [ -n "$(printf '%s' "$scope" | tr -d ', ')" ] || mj_die "$MJ_EX_USAGE" "start: --scope is required (comma-separated repository paths)"
   mj_require_installed
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
   [ -n "$profile" ] || profile="$(mj_pol profiles.default)"
@@ -37,6 +38,8 @@ H
   local raw p norm="" IFS_save="$IFS"; IFS=','
   for raw in $scope; do
     IFS="$IFS_save"
+    raw="$(printf '%s' "$raw" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+    [ -n "$raw" ] || { IFS=','; continue; }
     p="$(mj_norm_path "$raw")" || mj_die "$MJ_EX_USAGE" "start: scope path '$raw' is empty, absolute, or escapes the repository"
     norm="$norm $p"; IFS=','
   done; IFS="$IFS_save"

@@ -1,21 +1,17 @@
-{%- set project = load_data(path="data/generated/project.json") -%}
-{%- set source = load_data(path="data/generated/source.json") -%}
-<footer class="mt-20 border-t border-gray-200 dark:border-gray-800">
-  <div class="mx-auto max-w-screen-xl px-4 py-10">
-    <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-      <div class="max-w-sm">
-        <p class="font-mono text-sm font-semibold text-gray-900 dark:text-white">{{ project.name }}</p>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ project.tagline }}.</p>
-      </div>
-      <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        <li><a class="text-gray-600 hover:underline dark:text-gray-400" href="{{ config.extra.repo_url }}">GitHub</a></li>
-        <li><a class="text-gray-600 hover:underline dark:text-gray-400" href="{{ config.extra.repo_url }}/blob/master/LICENSE">License</a></li>
-        <li><a class="text-gray-600 hover:underline dark:text-gray-400" href="{{ config.extra.repo_url }}/blob/master/SECURITY.md">Security</a></li>
-        <li><a class="text-gray-600 hover:underline dark:text-gray-400" href="{{ config.extra.repo_url }}/blob/master/CONTRIBUTING.md">Contributing</a></li>
+{#- Flowbite footer with links (flowbite.com/docs/components/footer/). -#}
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="{{ get_url(path="/", trailing_slash=true) }}" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">{{ project.name }}</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="{{ project.repository_url }}" class="hover:underline">GitHub</a></li>
+        <li><a href="{{ project.repository_url }}/blob/master/LICENSE" class="hover:underline">{{ project.license }} licence</a></li>
+        <li><a href="{{ project.repository_url }}/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="{{ project.repository_url }}/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="{{ get_url(path="/docs/", trailing_slash=true) }}" class="hover:underline">Docs</a></li>
       </ul>
     </div>
-    <p class="mt-8 border-t border-gray-100 pt-6 font-mono text-xs text-gray-500 dark:border-gray-800 dark:text-gray-500">
-      Generated from {{ project.name }} v{{ source.source_version }} · commit {{ source.source_commit }} · source hash {{ source.source_hash | truncate(length=12, end="") }}
-    </p>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from {{ project.name }} v{{ source.source_version }} · commit <a href="{{ project.repository_url }}/commit/{{ source.source_commit }}" class="font-mono hover:underline">{{ source.source_commit | truncate(length=7, end="") }}</a> · inputs <span class="font-mono">{{ source.source_hash | truncate(length=12, end="") }}</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>

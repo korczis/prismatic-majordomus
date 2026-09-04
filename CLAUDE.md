@@ -29,6 +29,9 @@ then run `bin/majordomus update`.
   recursive deletion** in `bin/`, `lib/`, `share/`, or `test/`.
 - **Clean-room:** the Prismatic name is the only thing carried from anywhere else. No
   internal paths, hostnames, component names, doctrine vocabulary, or quotations.
+- **Derived files are regenerated, never edited:** this file's projections, and
+  everything `docs/GITHUB_PAGES_ARCHITECTURE.md` lists as generated. Change the
+  canonical source, rerun the generator, commit both.
 
 ### Never author identity fields
 

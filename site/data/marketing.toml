@@ -1,43 +1,50 @@
-# Promotional copy — and nothing else.
-#
-# A tagline is not execution policy. Every technical statement on the site comes from
-# site/data/generated/, which comes from canonical repository files. If a sentence here
-# ever states a capability, it is in the wrong file: move it to docs/CLAIMS.yaml, where
-# it must name an implementation and a test.
-headline = "Supervision for AI-assisted work"
-subheadline = "Policy, context, state and verification. Without another runtime."
-lede = "Majordomus is a directory and nine subcommands. It does not run your model, hold your context, or ask for a server. It holds the rules, the scope and the state that the model forgets between sessions, and it refuses to call work done until the contract is met."
+# The only hand-written prose on the site. No capability claims (those come from
+# docs/CLAIMS.yaml via capabilities.json), no numbers (the generator computes them).
+# Budget: scripts/site-check fails when this file exceeds 60 lines.
 
-[[cta]]
-label = "Get started"
-href = "/getting-started/"
-primary = true
+[hero]
+kicker = "portable shell · no runtime · no model calls"
+headline = "Your AI workers are brilliant. Nobody is managing them."
+lead = "Every fresh session re-reads the repository, reasons at maximum, works on whatever it likes, and says \"done\" when it feels like it. Majordomus is the layer that decides what a worker is told, what it may touch, and whether \"done\" is true."
+cta_primary = "Get started"
+cta_secondary = "View on GitHub"
+transcript_caption = "This is what \"done\" looks like when it has to be earned. Real output from the repository's own README."
 
-[[cta]]
-label = "What it supervises"
-href = "/supervises/"
-primary = false
+[recognise]
+# the five items are pages under site/content-src/why/; each carries its own hook
+title = "You need this if, this week, you have…"
+closing = "None of these are model problems. They are operations problems, and operations is what Majordomus does."
 
-[problem]
-title = "AI workers are capable. They are still operated badly."
-lede = "None of the following is a model problem, and none of it is fixed by a better prompt."
-items = [
-  "too much context, loaded every session, mostly irrelevant",
-  "stale context that contradicts the working tree",
-  "reasoning effort set once and never matched to the task",
-  "narration mistaken for progress",
-  "the same work done twice in two checkouts",
-  "handovers that are transcripts instead of state",
-  "verification described rather than run",
-  "no agreed definition of done",
+[compare]
+title = "The same team, before and after one directory"
+before_title = "Without"
+before = [
+  "developer A: own prompts, own workflow, own habits",
+  "developer B: a different model, a different session discipline",
+  "developer C: everything on max, always",
+  "state lives in chat transcripts; the next session starts from zero",
+  "\"done\" is a sentence",
+]
+after_title = "With Majordomus"
+after = [
+  "one policy, projected into every tool's instruction file",
+  "four named profiles instead of vibes: effort, verbosity, context, verification",
+  "one active task per checkout, scope declared before the first edit",
+  "durable state and handovers the next session can trust against git",
+  "\"done\" is a contract, evaluated line by line, refused when unmet",
 ]
 
-[not]
-title = "What it is not"
-items = [
-  "not another model",
-  "not an agent runtime",
-  "not a prompt marketplace",
-  "not a SaaS dependency",
-  "not a background daemon",
-]
+[leads]
+problem = "Every failure listed was observed in a working environment before it was designed against. The evidence, with magnitudes, is in the extraction report."
+model = "Majordomus does not replace a worker and never invokes a model. It decides what a worker is told, what it may touch, and whether its claim of being done can be believed."
+install = "One directory in your repository holds the policy, the profiles, and the durable state. Nothing is compiled, served, or running in the background."
+supervises = "Every responsibility is a file in one directory and a subcommand that reads it."
+profiles = "Rendered from the profile files a fresh install writes. Change the YAML; this page changes."
+capabilities = "A supervisory tool that overstates itself is the thing it was built to prevent. Every row names its source, implementation and test, and the build fails if a path does not exist."
+architecture = "The website is a projection of the repository, built the way the tool asks projects to build their own instructions: one canonical source, generated outputs, a check that fails on drift."
+final = "One directory. One pointer in your AI instructions. Stop rebuilding your AI workflow in every new session."
+
+[audiences]
+developer = "Copy one directory, run one command, and every AI tool you open reads the same rules. Handovers carry state, not transcripts."
+lead = "One policy for every tool the team runs, a finish contract before anything is called done, and a matrix that says what is guaranteed and what is only advisory."
+organisation = "The ledger already records sessions, handovers, workers and verification per task. When token telemetry lands, cost per accepted outcome is one query away — measured, not estimated."

@@ -1,0 +1,52 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{%- set readme = load_data(path="data/generated/readme.json") -%}
+{%- set c = [x for x in caps.claims if x.id == page.extra.claim_id][0] -%}
+{%- set why = get_section(path="why/_index.md") -%}
+{%- set covers = [r for r in readme.does if c.id in r.claim_ids] -%}
+{%- set explained = [p for p in why.pages if c.id in p.extra.claims] -%}
+{%- set related = [x for x in caps.claims if x.id != c.id and x.implementation and x.implementation == c.implementation] -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="flex flex-wrap items-center gap-3">{{ <badge status={c.status} /> }}<span class="text-sm text-body">{{ caps.statuses[c.status] }}</span></p>
+    {% if c.note %}<p class="mt-6 max-w-3xl text-base leading-relaxed text-heading">{{ c.note }}</p>{% endif %}
+    <article class="format break-words mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
+    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono hover:underline">{{ page.extra.source }}</a>.</p>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provenance</h2>
+    <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
+      <dt class="text-body-subtle">defined in</dt><dd class="min-w-0 break-all">{% if c.source_route %}<a href="{{ get_url(path=c.source_route, trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">read it on this site</a> · {% endif %}<a href="{{ project.repository_url }}/blob/master/{{ c.source }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></dd>
+      <dt class="text-body-subtle">implemented in</dt><dd class="min-w-0 break-all">{% if c.implementation %}<a href="{{ project.repository_url }}/blob/master/{{ c.implementation }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% if c.command %} · <a href="{{ get_url(path="/commands/" ~ c.command ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">majordomus {{ c.command }}</a>{% endif %}{% else %}<span class="font-mono text-body-subtle">nothing yet</span>{% endif %}</dd>
+      <dt class="text-body-subtle">proved by</dt><dd class="min-w-0 break-all">{% if c.test %}<a href="{{ project.repository_url }}/blob/master/{{ c.test }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a>{% else %}<span class="font-mono text-body-subtle">no test — which is why this is not marked guaranteed</span>{% endif %}</dd>
+      <dt class="text-body-subtle">claim id</dt><dd class="font-mono text-heading">{{ c.id }}</dd>
+    </dl>
+
+    {% if c.test %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Verify it yourself</h2>
+    <p class="mt-2 text-sm text-body">The test runs in a disposable temporary repository and asserts the behaviour, not a string in the source.</p>
+    <div class="mt-3 max-w-2xl">{% <code label="from a clone of the repository"> %}
+bash test/run.sh {{ c.test_case }}
+{% </code> %}</div>
+    {% endif %}
+
+    {% if covers | length > 0 or explained | length > 0 %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this claim is used</h2>
+    <div class="mt-4 grid gap-6 sm:grid-cols-2">
+      {% if covers | length > 0 %}<div><h3 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">responsibilities it covers</h3><ul class="space-y-1 text-sm">{% for r in covers %}<li><a href="{{ get_url(path="/supervises/" ~ r.slug ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">{{ r.title }}</a></li>{% endfor %}</ul></div>{% endif %}
+      {% if explained | length > 0 %}<div><h3 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">explained in</h3><ul class="space-y-1 text-sm">{% for p in explained %}<li><a href="{{ p.permalink }}" class="font-medium text-fg-brand hover:underline">{{ p.title }}</a></li>{% endfor %}</ul></div>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if related | length > 0 %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related claims <span class="font-mono text-sm font-normal text-body-subtle">same implementation</span></h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in related %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={x.status} /> }}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+    <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">{{ c.status }} claims</h2>
+    <ul class="space-y-1 text-sm">{% for x in [y for y in caps.claims if y.status == c.status] %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 {% if x.id == c.id %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if x.id == c.id %} aria-current="page"{% endif %}>{{ x.claim }}</a></li>{% endfor %}</ul>
+    <p class="mt-4 text-xs"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The full matrix →</a></p>
+  </div></aside>
+</div>
+{% endblock body %}

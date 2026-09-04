@@ -18,7 +18,7 @@
 #   implementation  the file that implements it, or "-" when nothing does
 #   test            the behavioural test that proves it, or "-" when none does
 #
-# `scripts/generate-pages --check` verifies that every source, implementation and test
+# `scripts/generate-site-data --check` verifies that every source, implementation and test
 # path in this file exists. A guaranteed claim with no test path is an error.
 version: 1
 
@@ -77,7 +77,7 @@ claims:
     claim: A projection can own only the region between its markers, leaving the rest of the file untouched
     source: docs/SCHEMAS.md
     implementation: lib/update.sh
-    test: test/cases/12_region_projection.sh
+    test: test/cases/13_region_projection.sh
     status: guaranteed
     responsibility: projection
     note: How a repository that already has a hand-written CLAUDE.md adopts Majordomus. An edit outside the markers is never drift; an edit inside them is caught. Malformed markers are refused, not guessed at.
@@ -86,7 +86,7 @@ claims:
     claim: Wiring is found in a hook or in any subhook of the directory that hook dispatches to
     source: docs/CLI.md
     implementation: lib/doctor.sh
-    test: test/cases/13_wiring_dispatcher.sh
+    test: test/cases/14_wiring_dispatcher.sh
     status: guaranteed
     responsibility: doctor
     note: The finding names the file that actually carries the invocation. A subhook that is not executable is reported as not wired, because the dispatcher skips it.

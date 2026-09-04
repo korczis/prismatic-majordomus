@@ -1,169 +1,94 @@
 #!/usr/bin/env bash
-# site-check — prove the built site is what it claims to be. Read-only.
-#
-# Runs against public/ after scripts/site-build. Every check either passes or names the
-# file and the reason. Nothing here reformats, rewrites, or regenerates anything.
-set -u
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$ROOT" || exit 1
-OUT="$ROOT/public"
-FAILED=0
-bad()  { printf 'FAIL %-10s %s\n' "$1" "$2" >&2; FAILED=1; }
-good() { printf 'OK   %-10s %s\n' "$1" "$2"; }
-step() { printf '\n== %s\n' "$1"; }
+# site-check — validates the derived site after scripts/site-build. Exit 0 clean, 10 findings, 12 missing.
+# Every check names what it proves. Nothing here needs Node or a browser.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"
+MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# shellcheck source=../lib/common.sh
+. "$ROOT/lib/common.sh"
+fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
+[ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
+PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
+pages="$(find "$PUB" -name '*.html')"
 
-[ -d "$OUT" ] || { printf 'site-check: no public/ — run scripts/site-build first\n' >&2; exit 1; }
-PAGES="$(find "$OUT" -name 'index.html' | sort)"
-NPAGES="$(printf '%s\n' "$PAGES" | wc -l | tr -d ' ')"
-BASE_URL="$(sed -n 's|^base_url = "\(.*\)"|\1|p' site/config.toml)"
-BASE_URL="${BASE_URL%/}"
-
-# A page with every <pre> block and <code> span removed. A shell example that mentions
-# $HOME, or a documentation page that prints a template delimiter, is content — not a
-# build failure — and only the surrounding markup is scanned for those.
-strip_code() {
-  awk '{ line = $0
-         if (line ~ /<pre/) { inpre = 1 }
-         if (inpre) { if (line ~ /<\/pre>/) inpre = 0; next }
-         gsub(/<code[^>]*>[^<]*<\/code>/, "", line)
-         print line }' "$1"
-}
-# the path component of base_url, e.g. /prismatic-majordomus — every root-absolute path
-# the site emits has to carry it or it 404s once deployed
-PREFIX="$(printf '%s' "$BASE_URL" | sed -e 's|^https\?://[^/]*||' -e 's|/$||')"
-
-SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/mj.sc.XXXXXX")"
-trap 'rm -rf "$SCRATCH"' EXIT
-
-step "canonical data"
-scripts/generate-site-data --check | sed 's/^/  /' || FAILED=1
-
-step "derivation is current"
-# The site must be built from the working tree it is being checked against. Regenerate
-# into a scratch directory and compare: a stale public/ is a site that quietly disagrees
-# with the repository it was produced from.
-TMP="$SCRATCH/derivation"; mkdir -p "$TMP"
-cp -R site/data/generated "$TMP/before"
-scripts/generate-site-data >/dev/null 2>&1
-if diff -r "$TMP/before" site/data/generated >/dev/null 2>&1; then
-  good derivation "site/data/generated matches the canonical sources"
-else
-  bad derivation "site/data/generated is stale; run scripts/site-build"
-  diff -r "$TMP/before" site/data/generated | head -20 >&2
-fi
-
-step "every route"
-for page in $PAGES; do
-  route="${page#"$OUT"}"; route="${route%index.html}"
-  grep -q '<title>'                        "$page" || bad meta "$route: no title"
-  grep -q 'name="description"'             "$page" || bad meta "$route: no meta description"
-  grep -q 'rel="canonical"'                "$page" || bad meta "$route: no canonical link"
-  grep -q 'property="og:title"'            "$page" || bad meta "$route: no Open Graph title"
-  grep -q 'name="twitter:card"'            "$page" || bad meta "$route: no Twitter card"
-  grep -q '<main id="main"'                "$page" || bad a11y "$route: no main landmark"
-  grep -q 'Skip to content'                "$page" || bad a11y "$route: no skip link"
-  n="$(grep -o '<h1' "$page" | wc -l | tr -d ' ')"
-  [ "$n" = 1 ] || bad a11y "$route: $n h1 elements, expected exactly 1"
-  grep -q 'data-collapse-toggle="navbar-main"' "$page" || bad flowbite "$route: no Flowbite mobile navbar toggle"
-  grep -q 'aria-controls="navbar-main"'        "$page" || bad flowbite "$route: navbar toggle without aria-controls"
-  grep -q 'js/flowbite.min.js'                 "$page" || bad flowbite "$route: does not load the Flowbite bundle"
-  grep -q 'css/app.css'                        "$page" || bad css "$route: does not link the compiled stylesheet"
-  grep -qE '<[^>]+ style="'                    "$page" && bad style "$route: inline style attribute"
-  strip_code "$page" > "$SCRATCH/prose.html"
-  grep -qE '\{\{|\{%'                "$SCRATCH/prose.html" && bad template "$route: unrendered template delimiter"
-  grep -qE '\$\{?[A-Z][A-Z_]{2,}\}?' "$SCRATCH/prose.html" && bad template "$route: unexpanded shell variable"
-  grep -qE '(href|src)=""'                     "$page" && bad template "$route: empty attribute value"
-  # A remote asset is any src=/href= to a host that is not this site and not a documented
-  # outbound link. Assets are all local: the site works offline once built.
-  remote="$(grep -oE 'src="https?://[^"]+' "$page" | grep -vF "$BASE_URL" | head -n1)"
-  [ -n "$remote" ] && bad network "$route: fetches a remote asset ($remote)"
-done
-[ "$FAILED" = 0 ] && good route "$NPAGES routes with metadata, landmarks, Flowbite assets and no placeholders"
-
-step "deployment prefix"
-# GitHub Pages serves this project under a path prefix. Every internal reference must
-# carry it, whether it is emitted absolute (get_url) or root-absolute (hand-written).
+# 1. data in sync with canonical sources
+if "$ROOT/scripts/generate-site-data" --check >/dev/null 2>&1; then ok sync "site/data/generated matches canonical inputs"; else bad sync "site/data/generated is stale; run scripts/generate-site-data"; fi
+# 2. generated data schema: every file parses and carries schema 1
+gen_files="project profiles policy capabilities lifecycle docs diagrams readme commands source"
+for f in $gen_files; do
+  [ "$(jq -r '.schema' "$SITE/data/generated/$f.json" 2>/dev/null)" = 1 ] || bad schema "$f.json missing or schema != 1"
+done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -d ' ')) carries schema 1"
+# 3. marketing copy: line budget, no numbers, no claim words
+ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 60 ] && ok promo "marketing.toml is $ml lines, budget 60" || bad promo "marketing.toml is $ml lines, budget 60"
+if grep -vE '^\s*#' "$SITE/data/marketing.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "marketing.toml contains a number; numbers are computed, never written"; fi
+# 4. routes: metadata, landmarks, no unresolved placeholders, one h1, viewport
+for f in $pages; do
+  rel="${f#"$PUB"/}"
+  grep -q '<meta name="viewport"' "$f" || bad route "$rel: no viewport meta"
+  grep -q '<meta name="description"' "$f" || bad route "$rel: no description"
+  grep -q '<main' "$f" || bad route "$rel: no <main> landmark"
+  [ "$(grep -o '<h1' "$f" | wc -l | tr -d ' ')" = 1 ] || bad route "$rel: expected exactly one <h1>"
+  grep -qE '\{\{|\{%|\[\[[A-Z_]+\]\]' "$f" && bad route "$rel: unresolved template placeholder"
+  grep -qE ' style="' "$f" && bad route "$rel: inline style attribute (forbidden by the custom CSS policy)"
+done; ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, description, main, one h1, no placeholders, no inline styles"
+# 5. prefix: every root-absolute href/src carries the deployment path
 if [ -n "$PREFIX" ]; then
-  miss=0
-  for page in $PAGES; do
-    n="$(grep -oE '(href|src)="/[^"]*' "$page" | grep -vE "\"$PREFIX(/|\"|\$)" | head -n1)"
-    [ -n "$n" ] && { bad prefix "${page#"$OUT"}: root-absolute path without $PREFIX: $n"; miss=1; }
-  done
-  [ "$miss" = 0 ] && good prefix "every internal reference carries $PREFIX"
-else
-  good prefix "base_url has no path prefix; nothing to check"
+  if grep -rhoE '(href|src|content)="/[^"]*"' $pages | grep -vE "=\"$PREFIX(/|\")" | grep -vE '="/\)' | head -1 | grep -q .; then
+    bad prefix "root-absolute path without $PREFIX: $(grep -rhoE '(href|src|content)="/[^"]*"' $pages | grep -vE "=\"$PREFIX(/|\")" | head -1)"
+  else ok prefix "every root-absolute path carries $PREFIX"; fi
 fi
-
-step "internal links"
-broken=0
-for page in $PAGES; do
-  for href in $(grep -oE 'href="[^"#]+' "$page" | sed 's/^href="//' | grep -v '^mailto:'); do
-    case "$href" in
-      "$BASE_URL"*) target="${href#"$BASE_URL"}" ;;
-      https://*|http://*) continue ;;              # a deliberate outbound link
-      /*) target="${href#"$PREFIX"}" ;;
-      *) continue ;;
-    esac
-    [ -z "$target" ] && target=/
-    if [ -f "$OUT$target" ] || [ -f "$OUT${target%/}/index.html" ]; then continue; fi
-    bad link "${page#"$OUT"}: $href does not resolve"; broken=1
-  done
+# 6. internal links resolve to a generated file
+missing=0
+for l in $(grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PREFIX##" | sort -u); do
+  t="$PUB$l"; [ -f "$t" ] || [ -f "$t/index.html" ] || [ -f "${t%/}/index.html" ] || { bad link "$l does not resolve"; missing=1; }
+done; [ "$missing" = 0 ] && ok link "every internal link resolves"
+# 7. assets present
+for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js images/logo-mark.svg images/social-card.png giallo-light.css giallo-dark.css; do
+  [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
+done; ok asset "css, flowbite, alpine, mermaid, theme, diagrams, images, highlighting present"
+grep -qE '^[[:space:]]*\.dark ' "$PUB/giallo-dark.css" && ok darkcss "giallo-dark.css scoped under .dark" || bad darkcss "giallo-dark.css not scoped under .dark (site-build post-step)"
+# 8. no external runtime dependency: every script/stylesheet is served from this site's own origin
+BASE_URL="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')"
+remote="$(grep -rhoE '<(script|link)[^>]+(src|href)="https?://[^"]+"' $pages | grep -v 'rel="canonical"' | grep -vF "\"$BASE_URL/" | head -1 || true)"
+if [ -n "$remote" ]; then bad offline "remote script or stylesheet: $remote"; else ok offline "every script and stylesheet is same-origin; the site works offline after build"; fi
+# 9. flowbite + alpine hooks are used, and initFlowbite is called once per page
+for f in $pages; do
+  [ "$(grep -o 'initFlowbite()' "$f" | wc -l | tr -d ' ')" = 1 ] || bad js "${f#"$PUB"/}: initFlowbite() must appear exactly once"
+done; grep -q 'data-collapse-toggle="navbar-main"' "$PUB/index.html" && grep -q 'x-data=' "$PUB/index.html" && ok js "flowbite collapse and alpine x-data present; initFlowbite called once per page" || bad js "flowbite/alpine hooks missing on the homepage"
+# 10. mermaid: every diagram page has the runtime and at least one source block
+for f in $pages; do
+  if grep -q 'class="mermaid' "$f"; then grep -q 'js/mermaid.min.js' "$f" || bad mermaid "${f#"$PUB"/}: has diagrams but no mermaid runtime"; fi
+done; ok mermaid "every page with <pre class=\"mermaid\"> loads the runtime"
+# 11. responsive lint (structural causes of horizontal overflow)
+for f in $pages; do
+  rel="${f#"$PUB"/}"; flat="$(tr -d '\n' < "$f")"
+  npre="$(printf '%s' "$flat" | grep -o '<pre' | wc -l | tr -d ' ')"
+  nwrap="$(printf '%s' "$flat" | grep -oE '(overflow-x-auto[^>]*>[[:space:]]*<pre|class="format[^"]*"[^>]*>.*<pre)' | wc -l | tr -d ' ')"
+  # pres inside a Typography container scroll by the plugin's own rule; others need the wrapper
+  if [ "$npre" -gt 0 ] && [ "$nwrap" = 0 ]; then bad mobile "$rel: <pre> without overflow container"; fi
+  grep -oE 'class="[^"]*"' "$f" | grep -qE '(class="|[[:space:]])grid-cols-([3-9]|1[0-2])([[:space:]]|")' && bad mobile "$rel: grid-cols-3+ without a breakpoint prefix"
+  grep -oE '\b(min-)?w-\[[0-9]{3,}px\]' "$f" | awk -F'[][]' '{gsub(/px/,"",$2); if ($2+0 > 360) found=1} END{exit !found}' && bad mobile "$rel: fixed width over 360px"
+done; ok mobile "no unwrapped <pre>, no unprefixed grid-cols-3+, no fixed width over 360px"
+# 12. secrets and private paths in output
+grep -rhoaE '/Users/[a-z]+/|/home/[a-z]+/dev/|\.internal\b|\.corp\b' "$PUB" | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
+grep -rhoaE '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}' "$PUB" | grep -viE 'id-token|GITHUB_TOKEN' | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
+# 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
+for d in $(jq -r '.docs[].path' "$SITE/data/generated/docs.json" | sed 's/\.md$//' | tr 'A-Z_' 'a-z-' | grep -v '^agents$'); do [ -f "$PUB/docs/$d/index.html" ] || bad docs "docs.json lists $d but no route was generated"; done; ok docs "every document in docs.json has a route"
+# 13b. every tile has a page: profiles, claims, statuses, responsibilities, commands
+for slug in $(jq -r '.profiles[].slug' "$SITE/data/generated/profiles.json"); do [ -f "$PUB/profiles/$slug/index.html" ] || bad tiles "no page for profile $slug"; done
+for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do [ -f "$PUB/guarantees/$id/index.html" ] || bad tiles "no page for claim $id"; done
+for st in guaranteed advisory planned rejected; do [ -f "$PUB/guarantees/$st/index.html" ] || bad tiles "no page for status $st"; done
+for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do [ -f "$PUB/supervises/$slug/index.html" ] || bad tiles "no page for responsibility $slug"; done
+for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do [ -f "$PUB/commands/$n/index.html" ] || bad tiles "no page for command $n"; done
+for f in "$SITE"/content-src/why/*.md; do slug="$(basename "$f" .md)"; [ "$slug" = _index ] && continue; [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
+ok tiles "every profile, claim, status, responsibility, command and why-moment has its own page"
+# 13c. every claim mention on the homepage is a link to its page
+for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do
+  claim="$(jq -r --arg i "$id" '.claims[] | select(.id==$i) | .claim' "$SITE/data/generated/capabilities.json")"
+  if grep -qF "$claim" "$PUB/index.html" && ! grep -F "$claim" "$PUB/index.html" | grep -qF "guarantees/$id/"; then bad claims "homepage mentions claim $id without linking its page"; fi
 done
-[ "$broken" = 0 ] && good link "every internal link resolves to a generated route or asset"
+# 14. claims: the guarantees page carries every claim id count
+n="$(jq '.claims | length' "$SITE/data/generated/capabilities.json")"; m="$(grep -o '<tr class="align-top">' "$PUB/guarantees/index.html" | wc -l | tr -d ' ')"
+[ "$n" = "$m" ] && ok claims "$n claims rendered on /guarantees/" || bad claims "capabilities.json has $n claims, /guarantees/ renders $m"
 
-step "assets"
-for f in css/app.css js/flowbite.min.js js/theme.js js/diagrams.js js/alpine.min.js js/mermaid.min.js giallo-light.css giallo-dark.css favicon.svg; do
-  [ -f "$OUT/$f" ] || bad asset "$f is missing from the build"
-done
-n="$(wc -c < "$OUT/css/app.css" | tr -d ' ')"
-if [ "$n" -lt 20000 ]; then bad css "css/app.css is only $n bytes; the Tailwind build looks empty"
-elif [ "$n" -gt 900000 ]; then bad css "css/app.css is $n bytes; this looks like an unpurged development build"
-else good css "css/app.css is $n bytes, minified and scoped to the generated HTML"; fi
-grep -q '^\.dark ' "$OUT/giallo-dark.css" \
-  || bad css "giallo-dark.css was not scoped under .dark; code blocks will use the dark palette in light mode"
-[ "$FAILED" = 0 ] && good asset "every vendored and generated asset is present"
-
-step "wide content is contained"
-# A table, a code block or a diagram that cannot scroll inside its own box makes the whole
-# page scroll sideways on a phone. Both are checked structurally rather than visually.
-uncontained=0
-for page in $PAGES; do
-  if grep -q '<table' "$page" && ! grep -qE 'overflow-x-auto|format-table:overflow-x-auto' "$page"; then
-    bad responsive "${page#"$OUT"}: a table with no horizontally scrollable container"; uncontained=1
-  fi
-  if grep -q 'class="mermaid"' "$page" && ! grep -q 'overflow-x-auto' "$page"; then
-    bad responsive "${page#"$OUT"}: a Mermaid diagram with no horizontally scrollable container"; uncontained=1
-  fi
-done
-[ "$uncontained" = 0 ] && good responsive "every table and diagram sits in a scrollable container"
-
-step "javascript is a progressive enhancement"
-for page in $(grep -l 'x-data' $PAGES); do
-  grep -q 'needs JavaScript' "$page" \
-    || bad a11y "${page#"$OUT"}: uses Alpine without telling the reader what needs JavaScript"
-done
-[ "$FAILED" = 0 ] && good a11y "every Alpine-driven filter says so on the page"
-
-step "tables are labelled"
-# Markdown has no caption syntax, so this applies to tables a template authored. A page
-# rendering canonical Markdown is marked with data-canonical-source and is exempt.
-labelled=0
-for page in $(grep -l '<table' $PAGES); do
-  grep -q 'data-canonical-source' "$page" && continue
-  grep -q '<caption' "$page" || { bad a11y "${page#"$OUT"}: a table with no caption"; labelled=1; }
-done
-[ "$labelled" = 0 ] && good a11y "every template-authored table has a caption"
-
-step "no secrets or private paths"
-if grep -rlE '(AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[baprs]-)' "$OUT" >/dev/null 2>&1; then
-  bad secrets "a credential pattern appears in the generated output"
-else good secrets "no credential pattern in the generated output"; fi
-if grep -rlE '/Users/[a-z]+/|/home/[a-z]+/|192\.168\.[0-9]' "$OUT" --include='*.html' >/dev/null 2>&1; then
-  bad private "a local path or private address appears in the generated output"
-else good private "no local paths or private addresses"; fi
-
-printf '\n'
-if [ "$FAILED" = 0 ]; then
-  printf 'site-check: ok — %s routes\n' "$NPAGES"; exit 0
-fi
-printf 'site-check: failed\n' >&2; exit 1
+printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

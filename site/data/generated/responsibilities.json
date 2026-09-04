@@ -1,0 +1,150 @@
+{
+  "responsibilities": [
+    {
+      "id": "policy",
+      "title": "Policy",
+      "summary": "one provider-neutral `policy.yaml`; unknown keys are errors",
+      "command": "update",
+      "implementation": "lib/common.sh",
+      "cli_anchor": "majordomus update",
+      "schema_anchor": ".majordomus/policy.yaml",
+      "order": 1,
+      "files": [".majordomus/policy.yaml"],
+      "claims": [
+        {"id": "policy-parse", "claim": "The canonical policy is parsed and rejected if it contains an unknown key", "status": "guaranteed", "implementation": "lib/common.sh", "test": "test/cases/00_yaml_flatten.sh", "note": "A restricted YAML subset. Tabs, anchors, flow maps and multi-line scalars are refused rather than guessed at."}
+      ]
+    },
+    {
+      "id": "projection",
+      "title": "Projection",
+      "summary": "`update` generates `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any target you name, deterministically, and fingerprints them; a hand edit is detected and never silently overwritten",
+      "command": "update",
+      "implementation": "lib/update.sh",
+      "cli_anchor": "majordomus update",
+      "schema_anchor": ".majordomus/generated/fingerprints.yaml",
+      "order": 2,
+      "files": [".majordomus/providers", ".majordomus/generated/fingerprints.yaml"],
+      "claims": [
+        {"id": "projection-generation", "claim": "Provider instruction files are generated from the one policy, deterministically", "status": "guaranteed", "implementation": "lib/update.sh", "test": "test/cases/03_update.sh", "note": "Running update twice leaves the byte-identical file. The test asserts the hash."},
+        {"id": "projection-fingerprint", "claim": "Every generated instruction file is fingerprinted, and a hand edit is detected", "status": "guaranteed", "implementation": "lib/update.sh", "test": "test/cases/03_update.sh", "note": ""},
+        {"id": "region-projection", "claim": "A projection can own only the region between its markers, leaving the rest of the file untouched", "status": "guaranteed", "implementation": "lib/update.sh", "test": "test/cases/12_region_projection.sh", "note": "How a repository that already has a hand-written CLAUDE.md adopts Majordomus. An edit outside the markers is never drift; an edit inside them is caught. Malformed markers are refused, not guessed at."},
+        {"id": "no-silent-overwrite", "claim": "A hand-edited instruction file is never silently overwritten", "status": "guaranteed", "implementation": "lib/update.sh", "test": "test/cases/03_update.sh", "note": "update refuses, offers a diff, and overwrites only under an explicit flag."},
+        {"id": "context-budget", "claim": "The always-loaded instruction file has a line budget with a failing check", "status": "guaranteed", "implementation": "lib/update.sh", "test": "test/cases/03_update.sh", "note": "Over budget, nothing is written at all."}
+      ]
+    },
+    {
+      "id": "state",
+      "title": "State",
+      "summary": "one active task per checkout in `current.yaml`, with `branch`, `head`, and `working_tree` computed from git, never authored",
+      "command": "start",
+      "implementation": "lib/start.sh",
+      "cli_anchor": "majordomus start <task>",
+      "schema_anchor": ".majordomus/state/current.yaml",
+      "order": 3,
+      "files": [".majordomus/state/current.yaml", ".majordomus/state/ledger.jsonl"],
+      "claims": [
+        {"id": "git-identity", "claim": "Identity fields on every state record are computed from git and never authored", "status": "guaranteed", "implementation": "lib/start.sh", "test": "test/cases/04_start_check.sh", "note": "A handover body that tries to set one is rejected rather than merged."},
+        {"id": "divergence-label", "claim": "State read back is labelled exact, advanced, diverged or different_context against git", "status": "guaranteed", "implementation": "lib/common.sh", "test": "test/cases/04_start_check.sh", "note": ""}
+      ]
+    },
+    {
+      "id": "scope",
+      "title": "Scope",
+      "summary": "`start` takes the paths a task may touch; `check` and `finish` fail on files outside them; other worktrees' overlapping claims are reported",
+      "command": "check",
+      "implementation": "lib/check.sh",
+      "cli_anchor": "majordomus check",
+      "schema_anchor": "Worktree coordination",
+      "order": 4,
+      "files": [".majordomus/state/current.yaml"],
+      "claims": [
+        {"id": "scoped-task", "claim": "A task is started with a declared file scope and a profile, and only one task is active per checkout", "status": "guaranteed", "implementation": "lib/start.sh", "test": "test/cases/04_start_check.sh", "note": "A scope path that escapes the repository root is refused. Starting a second task while one is active is refused."},
+        {"id": "consistency-check", "claim": "check reports whether state, scope, blockers and checkpoint age are consistent right now", "status": "guaranteed", "implementation": "lib/check.sh", "test": "test/cases/04_start_check.sh", "note": ""},
+        {"id": "scope-enforcement", "claim": "A touched file outside the claimed scope is a failure, not a warning", "status": "guaranteed", "implementation": "lib/check.sh", "test": "test/cases/04_start_check.sh", "note": ""},
+        {"id": "overlap-report", "claim": "Overlap between parallel workers is computed on claimed paths in both containment directions", "status": "guaranteed", "implementation": "lib/check.sh", "test": "test/cases/04_start_check.sh", "note": "Reported, never blocking. Work in progress is reported and never blocked."}
+      ]
+    },
+    {
+      "id": "profiles",
+      "title": "Profiles",
+      "summary": "four bundles that set capability class, reasoning effort, verbosity, presentation, context toggles, verification, and checkpoint interval independently",
+      "command": "check",
+      "implementation": "lib/update.sh",
+      "cli_anchor": "majordomus check",
+      "schema_anchor": ".majordomus/profiles/<name>.yaml",
+      "order": 5,
+      "files": [".majordomus/profiles"],
+      "claims": [
+        {"id": "profile-validate", "claim": "Every profile is parsed, its unknown keys rejected, and the default profile proven to exist", "status": "guaranteed", "implementation": "lib/doctor.sh", "test": "test/cases/02_doctor_basic.sh", "note": ""},
+        {"id": "profile-axes", "claim": "Capability class, reasoning effort, output verbosity, context and verification are five independent axes", "status": "advisory", "implementation": "lib/update.sh", "test": "test/cases/03_update.sh", "note": "The axes are validated and projected into the worker's instructions. Whether a worker honours them is not observable from outside the worker."},
+        {"id": "capability-class", "claim": "A profile names a capability class rather than a vendor model", "status": "advisory", "implementation": "lib/update.sh", "test": "test/cases/03_update.sh", "note": "Mapping a class to a concrete model is left to whoever runs the worker. Majordomus never selects or invokes a model."},
+        {"id": "minimum-context", "claim": "A profile declares which context a worker should load and no more", "status": "advisory", "implementation": "lib/check.sh", "test": "test/cases/04_start_check.sh", "note": "check --explain prints the context toggles for the active profile. Nothing measures what the worker actually read."},
+        {"id": "effort-escalation", "claim": "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed", "status": "advisory", "implementation": "lib/update.sh", "test": "test/cases/03_update.sh", "note": ""},
+        {"id": "checkpoint-interval", "claim": "A profile sets how often a worker should checkpoint, and a stale task is reported", "status": "advisory", "implementation": "lib/check.sh", "test": "test/cases/04_start_check.sh", "note": "The staleness report is guaranteed. Whether the worker checkpoints is not."}
+      ]
+    },
+    {
+      "id": "handover",
+      "title": "Handover",
+      "summary": "append-only records with computed front matter and required sections, created atomically, never staged; `--resolve` finds the right one for this worktree and branch and labels how far git has moved since",
+      "command": "handover",
+      "implementation": "lib/handover.sh",
+      "cli_anchor": "majordomus handover",
+      "schema_anchor": ".majordomus/state/handovers/<file>.md",
+      "order": 6,
+      "files": [".majordomus/state/handovers"],
+      "claims": [
+        {"id": "handover-record", "claim": "handover writes an append-only record with computed front matter and required sections", "status": "guaranteed", "implementation": "lib/handover.sh", "test": "test/cases/05_handover.sh", "note": "A body with a missing or empty required section is refused and names the sections."},
+        {"id": "no-transcripts", "claim": "Handovers carry durable facts, never conversation transcripts", "status": "guaranteed", "implementation": "lib/handover.sh", "test": "test/cases/05_handover.sh", "note": ""}
+      ]
+    },
+    {
+      "id": "finish",
+      "title": "Finish",
+      "summary": "a typed outcome and a contract evaluated line by line; nothing written when any line fails",
+      "command": "finish",
+      "implementation": "lib/finish.sh",
+      "cli_anchor": "majordomus finish",
+      "schema_anchor": "Completion note (when no handover is written)",
+      "order": 7,
+      "files": [".majordomus/state/ledger.jsonl"],
+      "claims": [
+        {"id": "finish-contract", "claim": "finish evaluates the finish contract line by line and refuses when any line is unmet", "status": "guaranteed", "implementation": "lib/finish.sh", "test": "test/cases/06_finish.sh", "note": ""},
+        {"id": "typed-outcome", "claim": "An outcome is a value from a closed vocabulary, not free text", "status": "guaranteed", "implementation": "lib/finish.sh", "test": "test/cases/06_finish.sh", "note": "no_match means the work was done and the thing sought does not exist. failed means the work could not be done. They are different facts."}
+      ]
+    },
+    {
+      "id": "doctor",
+      "title": "Doctor",
+      "summary": "proves the installation is real: policy parses, every declared enforcement is actually invoked by the hook it names without a swallowed exit code, projections match fingerprints, the always-loaded file is under budget",
+      "command": "doctor",
+      "implementation": "lib/doctor.sh",
+      "cli_anchor": "majordomus doctor",
+      "schema_anchor": "Projection header",
+      "order": 8,
+      "files": [".majordomus/generated/fingerprints.yaml"],
+      "claims": [
+        {"id": "wiring-reconciliation", "claim": "Every enforcement the policy declares is reconciled against what actually runs", "status": "guaranteed", "implementation": "lib/doctor.sh", "test": "test/cases/03_update.sh", "note": "The path must exist, be executable, and be invoked by the named dispatcher. A hook that invokes it and discards the exit code counts as not wired."},
+        {"id": "dispatcher-wiring", "claim": "Wiring is found in a hook or in any subhook of the directory that hook dispatches to", "status": "guaranteed", "implementation": "lib/doctor.sh", "test": "test/cases/13_wiring_dispatcher.sh", "note": "The finding names the file that actually carries the invocation. A subhook that is not executable is reported as not wired, because the dispatcher skips it."},
+        {"id": "pointer-integrity", "claim": "Every repository-relative reference in the always-loaded file is proven to resolve", "status": "guaranteed", "implementation": "lib/doctor.sh", "test": "test/cases/03_update.sh", "note": ""},
+        {"id": "no-counts-in-context", "claim": "A hardcoded count in the always-loaded file is a failure", "status": "guaranteed", "implementation": "lib/doctor.sh", "test": "test/cases/03_update.sh", "note": ""},
+        {"id": "retention-caps", "claim": "The append-only ledger and handover store have retention caps that are checked", "status": "guaranteed", "implementation": "lib/doctor.sh", "test": "test/cases/02_doctor_basic.sh", "note": ""}
+      ]
+    },
+    {
+      "id": "watch",
+      "title": "Watch",
+      "summary": "reports drift between policy, projections, state, scope, and git, each finding with the command that reproduces it",
+      "command": "watch",
+      "implementation": "lib/watch.sh",
+      "cli_anchor": "majordomus watch",
+      "schema_anchor": ".majordomus/state/ledger.jsonl",
+      "order": 9,
+      "files": [".majordomus/state/ledger.jsonl"],
+      "claims": [
+        {"id": "drift-watch", "claim": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift", "status": "guaranteed", "implementation": "lib/watch.sh", "test": "test/cases/07_watch.sh", "note": ""}
+      ]
+    }
+  ],
+  "index": {"policy": 0, "projection": 1, "state": 2, "scope": 3, "profiles": 4, "handover": 5, "finish": 6, "doctor": 7, "watch": 8}
+}

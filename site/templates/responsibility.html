@@ -1,113 +1,26 @@
-{% extends "base.html" %}
-{% block content %}
-{%- set data = load_data(path="data/generated/responsibilities.json") -%}
-{%- set all = data.responsibilities | sort(attribute="order") -%}
-{#- Tera 2 has no `filter`; the generator emits a positional index so the template only looks up. -#}
-{%- set r = data.responsibilities | nth(n=data.index[page.extra.responsibility]) -%}
-
-{% set crumbs = [["what it supervises", "/supervises/"], [r.title | lower, ""]] %}{% include "partials/breadcrumb.html" %}
-
-<div class="mx-auto max-w-screen-xl px-4 py-8 sm:py-10">
-  <div class="flex flex-wrap items-baseline gap-3">
-    <h1 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">{{ r.title }}</h1>
-    <code class="rounded border border-gray-300 px-2 py-0.5 font-mono text-sm text-gray-700 dark:border-gray-700 dark:text-gray-300">majordomus {{ r.command }}</code>
+{% extends "page.html" %}
+{% block body %}
+{%- set readme = load_data(path="data/generated/readme.json") -%}
+{%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{%- set cmds = load_data(path="data/generated/commands.json") -%}
+{%- set r = [x for x in readme.does if x.slug == page.extra.slug][0] -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <div class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ r.text | markdown | safe }}</div>
+    {%- set matching = [x for x in cmds.commands if x.name == (r.command or "")] -%}
+    {%- if matching | length > 0 -%}
+    {%- set cmd = matching[0] -%}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The command: <a href="{{ get_url(path="/commands/" ~ cmd.name ~ "/", trailing_slash=true) }}" class="font-mono text-fg-brand hover:underline">majordomus {{ cmd.name }}</a></h2>
+    <p class="mt-2 text-body">{{ cmd.summary }}{% if cmd.read_only %} <span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span>{% endif %}</p>
+    {%- endif -%}
+    {%- set related = [c for c in caps.claims if c.id in r.claim_ids] -%}
+    {%- if related | length > 0 -%}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Claims that cover it</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+      {%- for c in related -%}<li><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={c.status} /> }}</span><span class="text-sm text-heading">{{ c.claim }}</span></a></li>{%- endfor -%}
+    </ul>
+    {%- endif -%}
   </div>
-  <p class="mt-4 max-w-3xl text-lg text-gray-600 dark:text-gray-400">{{ r.summary | markdown(inline=true) | safe }}</p>
-  <p class="mt-2 font-mono text-xs text-gray-500 dark:text-gray-500">
-    This sentence is row <strong>{{ r.title }}</strong> of the README's “What it does” table. It is read at build time, not retyped.
-  </p>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">responsibilities</h2><ul class="space-y-1 text-sm">{% for q in readme.does %}<li><a href="{{ get_url(path="/supervises/" ~ q.slug ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 {% if q.slug == r.slug %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.slug == r.slug %} aria-current="page"{% endif %}>{{ q.title }}</a></li>{% endfor %}</ul></div></aside>
 </div>
-
-<div class="mx-auto max-w-screen-xl px-4 pb-16">
-  <div class="grid gap-10 lg:grid-cols-3">
-    <div class="min-w-0 lg:col-span-2">
-
-      <h2 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">What is guaranteed here</h2>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-        {{ r.claims | length }} claim{{ r.claims | length | pluralize }} in
-        {% set rp_path = "docs/CLAIMS.yaml" %}{% include "partials/repo-path.html" %} name this responsibility. Each links to the
-        code that implements it and the behavioural test that proves it.
-      </p>
-
-      {% if r.claims | length > 0 %}
-      <div x-data="{ status: 'all' }" class="mt-6">
-        <div class="flex flex-wrap gap-2" role="group" aria-label="Filter claims by status">
-          {% for s in ["all", "guaranteed", "advisory", "planned"] %}
-          <button type="button" x-on:click="status = '{{ s }}'"
-                  x-bind:class="status === '{{ s }}' ? 'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900' : 'border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'"
-                  x-bind:aria-pressed="status === '{{ s }}'"
-                  class="rounded-lg border px-3 py-1.5 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-300">{{ s }}</button>
-          {% endfor %}
-        </div>
-        <p class="mt-2 font-mono text-xs text-gray-400 dark:text-gray-500">Filtering needs JavaScript. Every claim is on this page either way.</p>
-        <ul class="mt-4 space-y-3">
-          {% for c in r.claims %}
-          <li x-show="status === 'all' || status === '{{ c.status }}'"
-              class="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
-            <div class="flex flex-wrap items-start justify-between gap-2">
-              <p class="max-w-2xl font-medium text-gray-900 dark:text-white">{{ c.claim }}</p>
-              {% set badge_status = c.status %}{% include "partials/status-badge.html" %}
-            </div>
-            {% if c.note %}<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ c.note }}</p>{% endif %}
-            <dl class="mt-3 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
-              <div class="flex gap-2"><dt class="text-gray-500 dark:text-gray-500">implements</dt>
-                <dd>{% if c.implementation == "-" %}<span class="font-mono text-gray-400">nothing yet</span>{% else %}{% set rp_path = c.implementation %}{% include "partials/repo-path.html" %}{% endif %}</dd></div>
-              <div class="flex gap-2"><dt class="text-gray-500 dark:text-gray-500">proven by</dt>
-                <dd>{% if c.test == "-" %}<span class="font-mono text-gray-400">no test</span>{% else %}{% set rp_path = c.test %}{% include "partials/repo-path.html" %}{% endif %}</dd></div>
-            </dl>
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% else %}
-      <p class="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
-        No claim in <code class="font-mono">docs/CLAIMS.yaml</code> names this responsibility yet.
-      </p>
-      {% endif %}
-
-      <h2 class="mt-12 text-xl font-bold tracking-tight text-gray-900 dark:text-white">Where it lives</h2>
-      <div class="mt-4 overflow-x-auto">
-        <pre class="mermaid" data-mermaid>flowchart LR
-  CMD["majordomus {{ r.command }}"]
-{%- for f in r.files %}
-  F{{ loop.index }}["{{ f }}"]
-  CMD --> F{{ loop.index }}
-{%- endfor %}
-  IMPL["{{ r.implementation }}"]
-  IMPL -.implements.-> CMD
-</pre>
-      </div>
-
-      <h2 class="mt-12 text-xl font-bold tracking-tight text-gray-900 dark:text-white">Specified in</h2>
-      <ul class="mt-4 space-y-2 text-sm">
-        <li><a class="font-medium text-blue-700 hover:underline dark:text-blue-400" href="{{ get_url(path='/docs/cli/') | safe }}">CLI reference</a> — <code class="font-mono text-xs">{{ r.cli_anchor }}</code>: behaviour, reads and writes, exit codes.</li>
-        <li><a class="font-medium text-blue-700 hover:underline dark:text-blue-400" href="{{ get_url(path='/docs/schemas/') | safe }}">File schemas</a> — <code class="font-mono text-xs">{{ r.schema_anchor }}</code>: the file itself, with a concrete example.</li>
-        <li><a class="font-medium text-blue-700 hover:underline dark:text-blue-400" href="{{ get_url(path='/docs/design/') | safe }}">Design</a> — why this responsibility exists at all, and what was refused.</li>
-      </ul>
-    </div>
-
-    <aside class="lg:col-span-1">
-      <div class="sticky top-24 space-y-6">
-        <div class="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-          <h2 class="font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Canonical files</h2>
-          <ul class="mt-3 space-y-2">
-            {% for f in r.files %}<li><code class="break-all font-mono text-xs text-gray-800 dark:text-gray-200">{{ f }}</code></li>{% endfor %}
-          </ul>
-          <h2 class="mt-5 font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Implementation</h2>
-          <p class="mt-2">{% set rp_path = r.implementation %}{% include "partials/repo-path.html" %}</p>
-        </div>
-        <div class="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-          <h2 class="font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">The other {{ all | length - 1 }}</h2>
-          <ul class="mt-3 space-y-1 text-sm">
-            {% for o in all %}{% if o.id != r.id %}
-            <li><a class="text-gray-700 hover:underline dark:text-gray-300" href="{{ get_url(path='/supervises/' ~ o.id ~ '/') | safe }}">{{ o.title }}</a>
-              <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ o.command }}</span></li>
-            {% endif %}{% endfor %}
-          </ul>
-        </div>
-      </div>
-    </aside>
-  </div>
-</div>
-{% endblock %}
-{% block scripts %}{% include "partials/mermaid.html" %}{% include "partials/alpine.html" %}{% endblock %}
+{% endblock body %}

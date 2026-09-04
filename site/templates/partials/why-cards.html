@@ -1,0 +1,6 @@
+{%- set why = get_section(path="why/_index.md") -%}
+<ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+  {%- for p in why.pages -%}
+  <li><a href="{{ p.permalink }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary p-4 text-base text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="flex flex-col gap-2"><span>{{ p.extra.hook }}</span><span class="text-sm font-medium text-fg-brand">Why, and what to do →</span></span></a></li>
+  {%- endfor -%}
+</ol>

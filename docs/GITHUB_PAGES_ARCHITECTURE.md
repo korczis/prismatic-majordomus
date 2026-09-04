@@ -1,233 +1,225 @@
-# Site architecture
+# GitHub Pages architecture
+
+The website at `https://korczis.github.io/prismatic-majordomus/` is a projection of this
+repository. It is built the way Majordomus asks projects to build their own instruction
+files: one canonical source, generated outputs, and a check that fails when the two drift.
 
 ## Purpose
 
-The public site is not documentation about Majordomus. It is a projection of the
-repository, built the same way Majordomus projects a policy into an instruction file:
-canonical data in, deterministic output out, with a manifest saying exactly which inputs
-produced it.
-
-The rule from `AGENTS.md` applies here without exception. No capability sentence appears
-on the site unless `docs/CLAIMS.yaml` names the file that implements it and the test that
-proves it, and the build fails if either has gone.
+Let a visitor understand in about two minutes what Majordomus is, what it guarantees, what
+is only advisory, what is not built, and how to start, without any sentence on the site
+being maintained separately from the repository that backs it.
 
 ## Canonical sources
 
-Ownership is explicit. Each layer has exactly one writer.
-
-| Layer | Path | Written by |
-|---|---|---|
-| Product truth | `bin/`, `lib/`, `share/`, `.majordomus/**` | humans and `majordomus update` |
-| Public narrative | `README.md`, `docs/**.md` | humans; still reads correctly on GitHub |
-| Structured claims | `docs/CLAIMS.yaml`, `docs/RESPONSIBILITIES.yaml` | humans |
-| Promotional copy | `site/data/marketing.toml` | humans; no capability claims allowed |
-| Derived site data | `site/data/generated/**` | `scripts/generate-site-data` only |
-| Derived content | `site/content/**` | `scripts/generate-site-data` only |
-| Presentation | `site/templates/**`, `site/tailwind.css` | humans |
-| Output | `public/**` | `scripts/site-build` only |
-
-Everything under `site/data/generated/` and `site/content/` is deleted and rewritten on
-every build. Editing a file there loses the edit and, worse, hides a missing canonical
-source. Both directories are gitignored for that reason.
+| layer | owns | lives in | edited by hand |
+|---|---|---|---|
+| product truth | policy schema, profiles, the worker instructions, the CLI | `share/skeleton/**`, `bin/majordomus`, `lib/**` | yes |
+| public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
+| claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
+| marketing copy | headline, section leads, button labels; no claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
+| rendering reference | representative Markdown for visual validation | `site/content-src/render-test.md` | yes |
+| derived data | stable JSON the templates read | `site/data/generated/*.json` | never |
+| derived release artifact | the claims matrix as Markdown | `docs/SITE_CLAIMS.md` | never |
+| derived content | canonical Markdown with generated front matter | `site/content/docs/*.md`, `site/content/render-test.md` | never |
+| presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
+| styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
+| behaviour | theme toggle, Mermaid init | `site/theme.js`, `site/diagrams.js` | yes |
+| output | the static site | `site/public/**` | never |
 
 ## Projection pipeline
 
 ```mermaid
-flowchart TD
-  A["canonical repository data"]
-  B["scripts/generate-site-data"]
-  C["site/data/generated/*.json"]
-  M["site/data/marketing.toml"]
-  D["Zola templates"]
-  E["Tailwind + Flowbite + Alpine"]
-  F["public/"]
-  G["GitHub Pages"]
-  A --> B --> C --> D
-  M --> D
-  D --> E --> F --> G
+flowchart LR
+    subgraph canonical
+        A[share/skeleton]
+        B[README + docs]
+        C[docs/CLAIMS.yaml]
+    end
+    G[scripts/generate-site-data]
+    D[(site/data/generated/*.json)]
+    K[site/content/docs/*.md]
+    Z[zola build]
+    T[Tailwind + Flowbite CSS]
+    P[site/public]
+    A --> G
+    B --> G
+    C --> G
+    G --> D
+    G --> K
+    D --> Z
+    K --> Z
+    T --> Z
+    Z --> P
 ```
 
-`scripts/generate-site-data` parses YAML with `lib/common.sh`, the tool's own restricted
-YAML reader. The site therefore adds no parser and no dependency of its own, and is read
-by exactly the code that reads a policy in production.
+`scripts/generate-site-data` reads every canonical input, normalises it once, and writes:
 
-## Generated data model
-
-| File | Derived from | Used by |
+| file | from | what |
 |---|---|---|
-| `project.json` | `MJ_VERSION` in `bin/majordomus` | every page footer |
-| `responsibilities.json` | `docs/RESPONSIBILITIES.yaml` joined with the README table and `docs/CLAIMS.yaml` | `/supervises/` and its nine pages |
-| `commands.json` | the dispatch table in `bin/majordomus`, the `docs/CLI.md` section for each, and the cases that invoke it | `/commands/` and one page per subcommand |
-| `concepts.json` | the vocabulary table in `docs/CONCEPTS.md` | `/concepts/` and one page per term |
-| `profiles.json` | `.majordomus/profiles/*.yaml` | `/profiles/` and one page per profile |
-| `policy.json` | `.majordomus/policy.yaml` | `/policy/` |
-| `capabilities.json` | `docs/CLAIMS.yaml` | `/guarantees/`, homepage counts |
-| `lifecycle.json` | the outcome `case` statement in `lib/finish.sh` | the homepage lifecycle diagram |
-| `source.json` | every input above, hashed | `/architecture/`, the footer |
+| `project.json` | `bin/majordomus`, `README.md`, `LICENSE` | name, version, tagline, licence, commands, exit codes |
+| `profiles.json` | `share/skeleton/profiles/*.yaml` | every profile, every field |
+| `policy.json` | `share/skeleton/policy.yaml` | the policy as structure, plus the raw text |
+| `capabilities.json` | `docs/CLAIMS.yaml` | every claim; the generator fails on a missing path or an untested guaranteed claim |
+| `lifecycle.json` | `lib/finish.sh`, `share/skeleton/providers/body.md` | outcome vocabulary, divergence labels, lifecycle steps, the ten principles |
+| `diagrams.json` | the files above | Mermaid source projected from data |
+| `readme.json` | `README.md` | the sections the homepage renders, by heading; a renamed heading fails the build |
+| `docs.json` | `docs/README.md` | the documentation index |
+| `source.json` | git and the inputs | version, commit, input hash, generator version, input list |
 
-Each data file carries a positional `index` map (id to array position). Zola 0.23 removed
-the `filter` template filter, and a lookup map keeps the templates doing lookups rather
-than searches. It also keeps the normalisation in one place, which was the point.
+`site/content/docs/*.md` is written from `docs/*.md` with a generated front matter, links
+rewritten to site routes, and the whole body wrapped in `{% raw %}` so Tera never templates
+canonical Markdown.
 
-## Cross-links are derived, never typed
+## Markdown rendering
 
-Two relationships on the site are computed rather than maintained:
+Canonical Markdown must stay readable on GitHub, so the site uses only syntax GitHub renders
+natively. `scripts/lib/project-markdown.awk` projects three GitHub-native constructs into site
+components, on the derived copy only:
 
-- a concept's **related responsibilities** — a responsibility whose id equals the term,
-  or which owns a file the term's "where it lives" cell names;
-- a concept's **related terms** — other entries of the same vocabulary named in this
-  entry's own prose.
+| in the canonical file | on the site |
+|---|---|
+| ` ```mermaid ` fence | `<pre class="mermaid">`, rendered client-side; the source stays visible without JavaScript |
+| `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]` | Flowbite alert |
+| a pipe table | wrapped in `overflow-x-auto` so wide tables scroll inside their container |
 
-Adding a row to the vocabulary table adds a page, its links, and its back-links.
+Everything else is Zola's Markdown renderer inside a Flowbite Typography container
+(`format dark:format-invert`): headings with anchors, lists, task lists, footnotes,
+blockquotes, and class-based syntax highlighting (`[markdown.highlighting] style = "class"`,
+themes `ayu-light` and `ayu-dark`). Zola writes the two theme stylesheets into `site/public/`;
+`scripts/site-build` scopes the dark one under `.dark` so class-based dark mode selects it.
+`site/content-src/render-test.md` exercises every construct and is linked from nowhere.
+
+## Mermaid
+
+Client-side, from the pinned npm package, vendored to `static/js/mermaid.min.js` at build.
+Chosen over build-time SVG because the Mermaid CLI needs a headless browser in CI and the
+site must stay reproducible from bash, Node and Zola alone. `site/diagrams.js` initialises
+with `securityLevel: 'strict'`, a restrained palette for light and dark, and re-renders on
+the theme toggle. Four diagrams are projected from data, never drawn by hand: the task
+lifecycle from the outcome vocabulary, the policy-to-instruction-file graph from the policy's
+projections, the site pipeline from the generator's input list, and the core model from the
+README. A failed diagram leaves its source visible and never breaks the page.
 
 ## Zola structure
 
 ```
 site/
-├── config.toml            base_url, markdown and highlighting configuration
-├── content/               generated; front matter only, except getting-started
-├── data/
-│   ├── marketing.toml     hand-written promotional copy
-│   └── generated/         generated JSON
-├── static/                favicon and the three small scripts
-├── templates/
-│   ├── base.html          head, landmarks, navbar, footer
-│   ├── partials/          navbar, footer, breadcrumb, badges, code block, script tags
-│   └── *.html             one template per route family
-└── tailwind.css           the only stylesheet source
+  config.toml          base_url, class-based highlighting, heading anchors, footnotes
+  content/             _index and one stub per page; docs/ and render-test.md are generated
+  content-src/         hand-written pages that get the same projection as docs
+  templates/
+    base.html          head, theme-before-paint, navbar, footer, Flowbite init, Alpine
+    components.html    Tera 2 components: badge, code, card, section_head, diagram
+    index.html         homepage, twelve sections, all from generated data
+    page.html          standalone page with breadcrumb and Typography body
+    docs-section.html  /docs/ index from the section's pages
+    docs-page.html     document with sidebar navigation
+    profiles.html policy.html guarantees.html getting-started.html architecture.html
+    404.html
+    partials/          navbar, footer, theme-toggle, breadcrumb, profile-cards, mermaid
+  data/marketing.toml  the only hand-written prose
+  data/generated/      written by generate-site-data, committed, checked
+  tailwind.css theme.js diagrams.js
+  static/              images copied from assets/; app.css and js/ written at build
+  public/              output
 ```
 
-Zola 0.23 uses Tera 2, which **removed macros** (`{% macro %}` and `{% import %}` are
-unknown tags) along with the `filter`, `map`, `slice` and `concat` filters. Reusable
-markup is therefore an `{% include %}` partial that reads variables set by its caller;
-`site/templates/partials/status-badge.html` is the pattern to copy.
+Zola 0.23 runs Tera 2: components replace macros, `import` no longer exists, array indexing
+is `x[1]`, undefined variables are errors, `filter` and `slice` are gone in favour of list
+comprehensions and Python-style slicing.
 
-## Tailwind and Flowbite integration
+## Tailwind, Flowbite, Alpine
 
-`site/tailwind.css` is the single entry point and holds no bespoke rules. It follows the
-Flowbite v3 / Tailwind v4 quickstart, verified against the installed `node_modules/flowbite`
-package. `@source` declares `node_modules/flowbite`, `site/templates` and `public`, so a
-class reachable only from a template that this build did not render still survives
-minification. Dark mode is class-based via `@custom-variant dark`, which is what the
-Flowbite theme switcher toggles.
+`site/tailwind.css` follows the Flowbite quickstart for Tailwind v4: `@import "tailwindcss"`,
+`@import "flowbite/src/themes/default"`, `@plugin "flowbite/plugin"`,
+`@plugin "flowbite-typography"`, `@source` for `node_modules/flowbite` and the templates, and
+`@custom-variant dark (&:where(.dark, .dark *))` from the dark-mode guide. Flowbite v4's
+semantic tokens (`bg-neutral-primary-soft`, `text-heading`, `border-default`, `rounded-base`)
+are used throughout. The theme names Inter first; it is not loaded, so the stack falls to the
+system font on purpose.
 
-**Flowbite LLM guidance.** There is none in this repository, and `flowbite.com/llms.txt`
-returns 404. An earlier comment in `site/tailwind.css` referenced
-`.claude/flowbite/llms-full.txt`; that path does not exist here and the reference has been
-removed. Component markup is grounded in the installed package's own data attributes
-(`data-collapse-toggle`, `data-copy-to-clipboard-target`, `data-dropdown-toggle`,
-`data-accordion`, `data-tabs-toggle`) and the official quickstart page.
+Flowbite JS is vendored from the pinned package. Its bundle exposes `window.initFlowbite` and
+does not call it (verified in `node_modules/flowbite/dist/flowbite.js`), so `base.html` calls
+it once on `DOMContentLoaded`. The navbar uses `data-collapse-toggle`; nothing else needs
+Flowbite JS yet.
 
-## Syntax highlighting
+Alpine.js is vendored and used for two things: the copy button on code snippets (`x-data`,
+`x-on:click`, `x-text`) and the raw-policy disclosure on `/policy/`. Both degrade: the code
+and the policy are in the HTML; only the control disappears without JavaScript.
 
-Highlighting is static: no highlighter ships to the reader. `[markdown.highlighting]` uses
-`style = "class"` with `light_theme` and `dark_theme`, which puts both a light and a dark
-class on every token and emits `giallo-light.css` and `giallo-dark.css`. Both are loaded
-on every page, so `scripts/site-build` rewrites the dark sheet to scope every selector
-under `.dark`. Without that step the dark palette would also apply in light mode, and code
-blocks would disagree with the rest of the page the moment a reader overrides their system
-preference.
+Custom CSS: one rule, `[x-cloak]{display:none!important}`, inline in `base.html`, required by
+Alpine's documentation. Inline `style=""` attributes are forbidden and `scripts/site-check`
+fails on one.
 
-## Alpine.js responsibilities
+## Flowbite guidance consulted
 
-Alpine is loaded on three routes and does one thing on each: a status filter on
-`/guarantees/` and on a responsibility page, and a text filter on `/concepts/`. Every item
-those filters hide is present in the HTML, so the pages are complete without JavaScript
-and each says so on the page itself.
-
-Copy-to-clipboard is **not** Alpine. Flowbite ships `data-copy-to-clipboard-target`, and
-Flowbite comes first.
-
-## Mermaid
-
-Client-side, from a pinned local copy of `mermaid`, loaded only on routes that contain a
-diagram, and never blocking. The alternative — rendering to SVG at build time with
-`@mermaid-js/mermaid-cli` — was rejected because it pulls a headless browser into the
-build for output that is a progressive enhancement anyway. A diagram that fails to render
-leaves its source visible; no page depends on Mermaid to navigate.
-
-Diagrams arrive two ways: a `<pre class="mermaid">` written by a template, or a
-` ```mermaid ` fence in canonical Markdown, which Zola marks as `<code data-lang="mermaid">`
-and `site/static/js/diagrams.js` converts. That is what lets a canonical Markdown file keep
-rendering on GitHub and still draw a diagram here. Mermaid runs at `securityLevel: 'strict'`,
-and re-renders on a theme change.
-
-## Callouts
-
-`github_alerts = true`. A `> [!NOTE]` block is a styled callout here and an ordinary
-blockquote on GitHub. There is no shortcode, so no canonical Markdown file has to choose
-between its two readers.
+The Flowbite LLM entry point (`flowbite.com/docs/getting-started/llm/`) points at `llms.txt`,
+which is an index. The pages read and followed, on 2026-09-04: getting-started/quickstart
+(Tailwind v4 directives), getting-started/javascript (`initFlowbite`), customize/dark-mode
+(`@custom-variant`, toggle markup and script, reproduced in `theme.js`), components/navbar,
+components/card, components/badge, components/footer, components/typography. The repository's
+installed `flowbite` is 4.0.2, matching the documented token vocabulary.
 
 ## Responsive strategy
 
-Mobile-first, Tailwind responsive utilities only, no custom media queries. The recurring
-patterns are `grid-cols-1` widening at `sm:` and `lg:`, `flex-col` becoming `flex-row`,
-and every wide element — tables, code blocks, Mermaid diagrams — inside its own
-`overflow-x-auto` container so the page itself never scrolls sideways.
+Mobile-first: base classes describe the phone layout, `sm:`/`md:`/`lg:`/`xl:` add columns.
+Every `<pre>` and `<table>` sits in a scroll container, either an explicit `overflow-x-auto`
+wrapper or a Typography container carrying `[&_pre]:overflow-x-auto` and
+`[&_table]:overflow-x-auto`. Grid items that hold code carry `min-w-0`. Validation is
+measured, not eyeballed: an iframe probe loads each route at 320, 375, 390, 768, 1024 and
+1280 px and asserts `document.scrollWidth == clientWidth`; `test/cases/09_site_mobile_first.sh`
+lints the built HTML for the structural causes of overflow.
 
 ## Accessibility
 
-A skip link, one `h1` per route, `<main id="main">`, a labelled `<nav>`, `aria-current` on
-the active navigation item, `aria-pressed` on filter buttons, `aria-controls` and
-`aria-expanded` on the mobile menu toggle, visible focus rings that are never removed, and
-a `<caption class="sr-only">` on every table. `scripts/site-check` fails the build if any
-of the structural ones go missing.
+One `h1` per page, `<main>`, `<nav aria-label>`, a skip link, `aria-current` on active
+navigation, `aria-expanded`/`aria-controls` on the menu toggle, `aria-label` on icon-only
+controls, `role="note"` on callouts, visible focus rings (`focus:ring-*`, never removed),
+Flowbite's contrast tokens in both themes. Everything except the copy button and the
+disclosure works without JavaScript.
 
 ## GitHub Pages deployment
 
-`.github/workflows/pages.yml` runs on `master`: install, `bash test/run.sh`,
-`bin/majordomus doctor`, `scripts/site-build`, `scripts/site-check`, then the official
-`upload-pages-artifact` and `deploy-pages` actions. Nothing is pushed to a `gh-pages`
-branch by hand. `validate.yml` runs the same build and check on every branch, so a pull
-request cannot merge a site that does not build.
+`.github/workflows/pages.yml`: checkout → Node 22 → pinned Zola → `npm ci` →
+`bash test/run.sh` → `bin/majordomus doctor` → `scripts/generate-site-data --check` →
+`scripts/site-build` → `scripts/site-check` → upload `site/public` → deploy. The site never
+deploys from a tree whose tests fail or whose derived data is stale.
 
 ## Sync guarantee
 
-`scripts/site-check` proves the output matches the inputs it claims. `scripts/generate-site-data --check`
-proves the canonical data is internally consistent before anything is generated:
-every responsibility matches a README row, every claim's source, implementation and test
-exist, every guaranteed claim has a test, every doc anchor is a real heading.
-
-`test/cases/16_site_derivation.sh` proves derivation itself: it copies the repository into
-a throwaway directory, changes one canonical value, regenerates, and fails if the derived
-output did not change. A generator that exits zero without reading its inputs would pass
-every other check and fail this one.
-
-Two of the generator's checks exist to keep the site's own evidence honest rather than to
-validate data: a subcommand with no case in `test/cases/` that invokes it, and a profile no
-case exercises, both fail the build. CI runs `bash test/run.sh` on Linux and macOS, so
-"tested in CI" on a command or profile page is a statement the build refuses to print
-unless it is true. `docs/SITE_CLAIMS.md` lists every claim the site makes about itself,
-with the check that backs it and the three that are not yet automated.
+`scripts/generate-site-data --check` regenerates into a temporary directory and diffs every
+generated file and `docs/SITE_CLAIMS.md` against the committed ones; the input hash in
+`source.json` covers every canonical file the generator reads and is printed in the footer of
+every page. `test/cases/11_site_derivation.sh` changes the version, a profile description and
+effort, a principle, a policy value, a claim and a document heading in a scratch copy, and
+asserts each change appears in the derived data. `test/cases/10_site_data.sh` proves a missing
+path or an untested guaranteed claim fails the generator.
 
 ## Local development
 
-```bash
-npm ci
-scripts/site-build      # generate, build, vendor, compile CSS
-scripts/site-check      # the checks CI runs
-scripts/site-serve      # Zola's watcher plus Tailwind in watch mode
 ```
-
-Zola must be installed; the CLI itself needs none of this.
+npm ci                      # Tailwind, Flowbite, Alpine, Mermaid — pinned
+brew install zola           # or the release binary; CI pins 0.23.4
+scripts/site-serve          # generate, build, serve at http://127.0.0.1:1111/prismatic-majordomus/
+scripts/site-build          # production build into site/public/
+scripts/site-check          # the checks CI runs
+```
 
 ## Adding new canonical data
 
-1. Put the fact in a canonical file — a policy field, a profile, a claim, a README row.
-2. Teach `scripts/generate-site-data` to read it, and to fail loudly if it disappears.
-3. Render it in a template. If the template needs a search, add an index map instead.
-4. Add a check to `scripts/site-check` if the output could silently go missing.
+Add the field to the file that owns it, read it in `scripts/generate-site-data`, render it in
+a template, and extend `test/cases/11_site_derivation.sh` with the change-and-assert pair.
+Commit the regenerated `site/data/generated/`. Do not add a field to the JSON by hand.
 
 ## Adding new site components
 
-Reusable markup is an `{% include %}` partial in `site/templates/partials/`, documented
-with the variables it expects at the top. Use a Flowbite component before writing one;
-use Alpine only for local UI state; write custom JavaScript last, and only for something
-neither provides.
+Define a Tera 2 component in `site/templates/components.html`, using Flowbite markup from the
+component's documentation page, with mobile classes first. Call it as `{{ <name attr="…" /> }}`.
+If it needs a class Tailwind cannot see in the templates, it does not belong here.
 
 ## What must never be edited manually
 
-- `site/data/generated/**` — rewritten on every build
-- `site/content/**` — rewritten on every build
-- `public/**` — build output
-- `giallo-light.css`, `giallo-dark.css` — emitted by Zola
+`site/data/generated/**`, `site/content/docs/**`, `site/content/render-test.md`,
+`docs/SITE_CLAIMS.md`, `site/static/app.css`, `site/static/js/**`, `site/static/images/**`,
+`site/public/**`, `CLAUDE.md`, `AGENTS.md`. Change the canonical file; rebuild.

@@ -1,77 +1,18 @@
-{% extends "base.html" %}
-{% block content %}
-{%- set d = load_data(path="data/generated/commands.json") -%}
-{%- set c = d.commands | nth(n=d.index[page.extra.command]) -%}
-{% set crumbs = [["commands", "/commands/"], [c.id, ""]] %}{% include "partials/breadcrumb.html" %}
-
-<div class="mx-auto max-w-screen-xl px-4 py-8 sm:py-10">
-  <div class="flex flex-wrap items-baseline gap-3">
-    <h1 class="font-mono text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">majordomus {{ c.id }}</h1>
-    {% if c.read_only %}<span class="rounded border border-green-300 bg-green-50 px-2 py-0.5 font-mono text-xs text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">read-only</span>{% endif %}
+{% extends "page.html" %}
+{% block body %}
+{%- set cmds = load_data(path="data/generated/commands.json") -%}
+{%- set c = [x for x in cmds.commands if x.name == page.extra.name][0] -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">{% if c.read_only %}<span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span> {% endif %}Rendered from <a href="{{ project.repository_url }}/blob/master/docs/CLI.md" class="font-mono hover:underline">docs/CLI.md</a>.</p>
+    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ c.doc_md | markdown | safe }}</article>
+    {%- set caps = load_data(path="data/generated/capabilities.json") -%}
+    {%- set mine = [x for x in caps.claims if x.command == c.name] -%}
+    {%- if mine | length > 0 -%}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Claims this command implements</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in mine %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={x.status} /> }}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
+    {%- endif -%}
   </div>
-  <p class="mt-4 max-w-3xl text-lg text-gray-600 dark:text-gray-400">{{ c.summary }}</p>
-  <p class="mt-2 font-mono text-xs text-gray-500 dark:text-gray-500">This line is what <code>majordomus --help</code> prints. It is read from the binary, not retyped.</p>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</h2><ul class="space-y-1 text-sm">{% for q in cmds.commands %}<li><a href="{{ get_url(path="/commands/" ~ q.name ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 font-mono {% if q.name == c.name %}bg-brand-softer text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.name == c.name %} aria-current="page"{% endif %}>{{ q.name }}</a></li>{% endfor %}</ul><p class="mt-4 text-xs text-body-subtle"><a href="{{ get_url(path="/docs/cli/", trailing_slash=true) }}" class="hover:underline">Full CLI reference →</a></p></div></aside>
 </div>
-
-<div class="mx-auto max-w-screen-xl px-4 pb-16">
-  <div class="grid gap-10 lg:grid-cols-3">
-    <div class="min-w-0 lg:col-span-2">
-      <h2 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Specification</h2>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">The <code class="font-mono">{{ c.anchor }}</code> section of the CLI reference, verbatim.</p>
-      <div data-canonical-source="docs/CLI.md"
-           class="format format-slate dark:format-invert mt-4 max-w-none break-words
-                  format-pre:overflow-x-auto format-pre:rounded-lg format-pre:border format-pre:border-gray-200 dark:format-pre:border-gray-700
-                  format-table:block format-table:overflow-x-auto format-table:text-sm
-                  format-a:text-blue-700 dark:format-a:text-blue-400">
-        {{ c.detail | markdown | safe }}
-      </div>
-
-      <h2 class="mt-12 text-xl font-bold tracking-tight text-gray-900 dark:text-white">Tested in CI</h2>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-        Continuous integration runs <code class="font-mono">bash test/run.sh</code> on Linux and macOS for every push and
-        pull request. These are the cases that invoke <code class="font-mono">majordomus {{ c.id }}</code>, so this command
-        is exercised on both platforms on every commit. A command no case invokes fails the site build.
-      </p>
-      <ul class="mt-4 space-y-2">
-        {% for t in c.tests %}
-        <li class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
-          {% set rp_path = t %}{% include "partials/repo-path.html" %}
-        </li>
-        {% endfor %}
-      </ul>
-
-      {% if c.responsibilities | length > 0 %}
-      <h2 class="mt-12 text-xl font-bold tracking-tight text-gray-900 dark:text-white">Responsibilities it acts on</h2>
-      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
-        {% for r in c.responsibilities %}
-        <li><a class="block rounded-lg border border-gray-200 bg-white p-4 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-500"
-               href="{{ get_url(path='/supervises/' ~ r.id ~ '/') | safe }}"><span class="font-semibold text-gray-900 dark:text-white">{{ r.title }}</span></a></li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-    </div>
-
-    <aside class="lg:col-span-1">
-      <div class="sticky top-24 space-y-6">
-        <div class="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-          <h2 class="font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Evidence</h2>
-          <dl class="mt-3 space-y-2 font-mono text-xs">
-            <div class="flex justify-between gap-3"><dt class="text-gray-500">test cases</dt><dd class="text-gray-900 dark:text-gray-200">{{ c.tests | length }}</dd></div>
-            <div class="flex justify-between gap-3"><dt class="text-gray-500">read-only</dt><dd class="text-gray-900 dark:text-gray-200">{{ c.read_only }}</dd></div>
-            <div class="flex justify-between gap-3"><dt class="text-gray-500">documented</dt><dd class="text-gray-900 dark:text-gray-200">docs/CLI.md</dd></div>
-          </dl>
-        </div>
-        <div class="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-          <h2 class="font-mono text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">All commands</h2>
-          <ul class="mt-3 space-y-1">
-            {% for o in d.commands %}
-            <li><a class="block rounded px-2 py-1 font-mono text-xs {% if o.id == c.id %}bg-gray-100 font-semibold text-gray-900 dark:bg-gray-700 dark:text-white{% else %}text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700{% endif %}"
-                   href="{{ get_url(path='/commands/' ~ o.id ~ '/') | safe }}">{{ o.id }}</a></li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-    </aside>
-  </div>
-</div>
-{% endblock %}
+{% endblock body %}

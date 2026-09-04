@@ -1,0 +1,15 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{%- set st = page.extra.status -%}
+{%- set rows = [c for c in caps.claims if c.status == st] -%}
+<p class="mb-6 flex items-center gap-3">{{ <badge status={st} /> }}<span class="font-mono text-sm text-body-subtle">{{ rows | length }} claims</span></p>
+<ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {%- for c in rows -%}
+  <li><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+    <h2 class="text-base font-semibold tracking-tight text-heading">{{ c.claim }}</h2>
+    <p class="mt-2 break-all font-mono text-xs text-body-subtle">{{ c.implementation or "—" }}{% if c.test %} · {{ c.test }}{% endif %}</p></a></li>
+  {%- endfor -%}
+</ul>
+<p class="mt-8 text-sm"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">← The full matrix</a></p>
+{% endblock body %}

@@ -3,65 +3,58 @@ on:
   push:
   pull_request:
 jobs:
-  cli:
-    name: CLI (${{ matrix.os }})
+  test:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
+      # The CLI needs no Node. The derived site's tests and check do (flowbite assets),
+      # so the matrix installs it once; the CLI's own tests would pass without it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
       - name: shell syntax
-        run: for f in bin/majordomus lib/*.sh scripts/generate-site-data scripts/site-build scripts/site-check scripts/site-serve test/run.sh test/lib.sh test/cases/*.sh; do bash -n "$f"; done
-
+        run: for f in bin/majordomus lib/*.sh test/run.sh test/lib.sh test/cases/*.sh; do bash -n "$f"; done
       - name: shellcheck
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y shellcheck >/dev/null
-          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh \
-            scripts/generate-site-data scripts/site-build scripts/site-check scripts/site-serve
-
-      # Every subcommand and every profile is exercised here, on both platforms, on every
-      # push. test/cases/17_command_surface.sh and 18_profiles.sh make that per-command
-      # and per-profile rather than only true of the suite as a whole.
+          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/site-build scripts/site-check scripts/site-serve
       - name: behavioural tests
         run: bash test/run.sh
-
       - name: self-supervision
         run: |
           git config core.hooksPath .githooks
           bin/majordomus doctor
           bin/majordomus watch
+      # The committed derived site data must match the canonical files it is generated from.
+      - name: derived site data in sync
+        run: scripts/generate-site-data --check
 
   site:
-    name: Site
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
       - run: npm ci --no-audit --no-fund
-
       - uses: taiki-e/install-action@v2
         with:
           tool: zola@0.23.4
-
-      # Validates the canonical data before anything is generated: every responsibility
-      # matches a README row, every claim names a file and a test that exist, every
-      # command has a CLI section and a case that invokes it, every profile has a case.
-      - name: canonical data
+      - name: derived site data in sync
         run: scripts/generate-site-data --check
-
-      - name: build
+      - name: build the site
         run: scripts/site-build
-
-      - name: check
+      # Metadata and landmarks on every route, no unrendered template delimiter, every
+      # internal link resolving, no remote asset, no credential, and the generated data
+      # still matching its canonical sources.
+      - name: check the site
         run: scripts/site-check
-
       - name: manifest
         run: cat site/data/generated/source.json

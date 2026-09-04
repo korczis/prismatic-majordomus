@@ -1,27 +1,14 @@
-/* Tailwind + Flowbite entry point. Compiled by scripts/site-build into public/css/app.css.
-   Structure follows the Flowbite v3 / Tailwind v4 quickstart, verified against the
-   installed node_modules/flowbite package:
-   https://flowbite.com/docs/getting-started/quickstart/
-
-   This project holds no custom CSS. Everything on the site is a Tailwind utility or a
-   Flowbite component class. If a rule ever has to live here, it needs a justification
-   in docs/GITHUB_PAGES_ARCHITECTURE.md. */
-
+/* Tailwind v4 + Flowbite v4 entry point, compiled by scripts/site-build into static/app.css.
+   Directives follow the Flowbite quickstart (flowbite.com/docs/getting-started/quickstart/)
+   and dark-mode guide (flowbite.com/docs/customize/dark-mode/). No custom CSS lives here:
+   everything on the site is a Tailwind utility, a Flowbite class or a Flowbite Typography
+   class. The theme names Inter first; it is not loaded, so the stack falls to system-ui,
+   which is deliberate: no remote font, no blocking asset. */
 @import "tailwindcss";
 @import "flowbite/src/themes/default";
-
 @plugin "flowbite/plugin";
 @plugin "flowbite-typography";
-
-/* Tailwind ignores node_modules and the generated output directory by default, so both
-   are declared explicitly. public/ is scanned AFTER Zola writes the HTML, which is why
-   scripts/site-build runs the Zola step before the CSS step. The templates are scanned
-   too, so a class only reachable on a page this build did not produce still survives. */
 @source "../node_modules/flowbite";
 @source "./templates";
-@source "../public";
-
-/* Class-based dark mode, per the Flowbite dark-mode guide. Without this the compiled
-   output falls back to Tailwind's default `prefers-color-scheme` media query, and the
-   documented Flowbite theme switcher (which toggles `.dark` on <html>) has no effect. */
+@source "./content";
 @custom-variant dark (&:where(.dark, .dark *));

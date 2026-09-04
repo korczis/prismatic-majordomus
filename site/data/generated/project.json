@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "name": "Prismatic Majordomus",
+  "short_name": "Majordomus",
+  "version": "0.1.0",
+  "tagline": "A lightweight supervisory control layer for AI-assisted work.",
+  "license": "MIT",
+  "repository_url": "https://github.com/korczis/prismatic-majordomus",
+  "requirements": [
+    "bash 3.2 or newer",
+    "git",
+    "sha256sum or shasum"
+  ],
+  "commands": [
+    {
+      "name": "init",
+      "summary": "set up .majordomus/ in this repository (refuses to overwrite)",
+      "read_only": false
+    },
+    {
+      "name": "doctor",
+      "summary": "is Majordomus itself healthy and actually wired here?",
+      "read_only": true
+    },
+    {
+      "name": "start",
+      "summary": "begin a scoped task under a profile",
+      "read_only": false
+    },
+    {
+      "name": "check",
+      "summary": "is the current task consistent with policy, scope, state?",
+      "read_only": true
+    },
+    {
+      "name": "watch",
+      "summary": "what has drifted: state, policy, projections, retention",
+      "read_only": true
+    },
+    {
+      "name": "update",
+      "summary": "regenerate provider projections from policy",
+      "read_only": false
+    },
+    {
+      "name": "handover",
+      "summary": "write an append-only continuation record (body on stdin)",
+      "read_only": false
+    },
+    {
+      "name": "finish",
+      "summary": "evaluate the finish contract; refuse if unmet",
+      "read_only": false
+    },
+    {
+      "name": "version",
+      "summary": "print the version",
+      "read_only": false
+    }
+  ],
+  "exit_codes": [
+    {
+      "code": 0,
+      "meaning": "ok"
+    },
+    {
+      "code": 2,
+      "meaning": "usage"
+    },
+    {
+      "code": 10,
+      "meaning": "contract unmet"
+    },
+    {
+      "code": 11,
+      "meaning": "drift found"
+    },
+    {
+      "code": 12,
+      "meaning": "missing artifact"
+    },
+    {
+      "code": 13,
+      "meaning": "internal error"
+    },
+    {
+      "code": 15,
+      "meaning": "refused"
+    }
+  ]
+}

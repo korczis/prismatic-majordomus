@@ -1,54 +1,37 @@
 #!/usr/bin/env bash
-# site-build — build the derived site into public/.
-#
-#   generate-site-data  ->  zola  ->  vendor assets  ->  tailwind  ->  syntax theme fix
-#
-# The order is load-bearing. Zola must write the HTML before Tailwind scans it, and the
-# vendored JavaScript must be in place before the check step looks for it.
+# site-build — data → derived content → assets → Tailwind/Flowbite CSS → Zola. Deterministic.
+#   scripts/site-build            build into site/public/
+#   scripts/site-build --no-css   skip the Node steps (CSS and vendored JS are then absent)
+#   scripts/site-build --base-url URL   build for another origin (local previews); get_url is absolute in Zola
 set -eu
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$ROOT" || exit 1
-OUT="$ROOT/public"
-
-step() { printf '\n== %s\n' "$1"; }
-
-step "canonical data"
-scripts/generate-site-data
-
-step "zola"
-command -v zola >/dev/null 2>&1 || { printf 'site-build: zola is not installed (https://www.getzola.org/documentation/getting-started/installation/)\n' >&2; exit 1; }
-rm -rf "$OUT"
-zola --root site build --output-dir "$OUT" --force
-
-step "vendor javascript"
-[ -d node_modules/flowbite ] || { printf 'site-build: run npm ci first\n' >&2; exit 1; }
-mkdir -p "$OUT/js"
-# Pinned local copies. Nothing on the site is fetched from a CDN at runtime.
-cp node_modules/flowbite/dist/flowbite.min.js "$OUT/js/flowbite.min.js"
-cp node_modules/alpinejs/dist/cdn.min.js      "$OUT/js/alpine.min.js"
-cp node_modules/mermaid/dist/mermaid.min.js   "$OUT/js/mermaid.min.js"
-
-step "tailwind + flowbite"
-node_modules/.bin/tailwindcss -i site/tailwind.css -o "$OUT/css/app.css" --minify 2>&1 | sed 's/^/  /'
-
-step "syntax theme"
-# Zola emits two static highlighting themes. The dark one is scoped under .dark so the
-# manual theme toggle drives code blocks as well as the page chrome; without this the
-# two disagree the moment a reader overrides their system preference.
-# Zola names these after the highlighter, at the output root. Both sheets are loaded on
-# every page; the token classes are disjoint (z-l-* and z-d-*), so without this scoping
-# the dark palette would win in light mode too.
-if [ -f "$OUT/giallo-dark.css" ]; then
-  awk '
-    /^[^ \t{}][^{}]*\{/ && !/^@/ { sub(/^/, ".dark "); gsub(/,[ \t]*/, ", .dark ") }
-    { print }' "$OUT/giallo-dark.css" > "$OUT/giallo-dark.css.tmp"
-  mv "$OUT/giallo-dark.css.tmp" "$OUT/giallo-dark.css"
-  printf '  scoped %s selectors under .dark\n' "$(grep -c '^\.dark ' "$OUT/giallo-dark.css")"
-else
-  printf '  giallo-dark.css not emitted — check [markdown.highlighting] in site/config.toml\n' >&2
-  exit 1
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; NOCSS=0; BASE=""
+while [ $# -gt 0 ]; do case "$1" in
+  --no-css) NOCSS=1; shift ;;
+  --base-url) BASE="$2"; shift 2 ;;
+  *) echo "site-build: unknown option $1" >&2; exit 2 ;;
+esac; done
+command -v zola >/dev/null || { echo "site-build: zola is required (brew install zola / see docs/GITHUB_PAGES_ARCHITECTURE.md)" >&2; exit 12; }
+echo "== data";    "$ROOT/scripts/generate-site-data"
+echo "== assets"
+mkdir -p "$SITE/static/images" "$SITE/static/js"
+cp "$ROOT/assets/logo.svg" "$ROOT/assets/logo-mark.svg" "$ROOT/assets/social-card.png" "$SITE/static/images/"
+if [ "$NOCSS" = 0 ]; then
+  [ -d "$ROOT/node_modules/tailwindcss" ] || { echo "site-build: node_modules absent; run: npm ci" >&2; exit 12; }
+  cp "$ROOT/node_modules/flowbite/dist/flowbite.min.js" "$SITE/static/js/flowbite.min.js"
+  cp "$ROOT/node_modules/alpinejs/dist/cdn.min.js" "$SITE/static/js/alpine.min.js"
+  cp "$ROOT/node_modules/mermaid/dist/mermaid.min.js" "$SITE/static/js/mermaid.min.js"
 fi
-
-printf '\nsite-build: ok — %s pages, %s bytes of CSS\n' \
-  "$(find "$OUT" -name 'index.html' | wc -l | tr -d ' ')" \
-  "$(wc -c < "$OUT/css/app.css" | tr -d ' ')"
+cp "$SITE/theme.js" "$SITE/static/js/theme.js"
+cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
+if [ "$NOCSS" = 0 ]; then
+  echo "== css"
+  ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/tailwind.css" -o "$SITE/static/app.css" --minify )
+fi
+echo "== zola"
+( cd "$SITE" && if [ -n "$BASE" ]; then zola build --force --base-url "$BASE"; else zola build --force; fi )
+# Zola wrote the two highlighting themes into static/ and public/; scope the dark one under .dark
+# (generated CSS, not hand-written) so class-based dark mode picks the right palette.
+if [ -f "$SITE/public/giallo-dark.css" ]; then
+  sed -E 's/(^|,|\})[[:space:]]*(\.[a-z])/\1 .dark \2/g; s/^\.([a-z])/.dark .\1/' "$SITE/public/giallo-dark.css" > "$SITE/public/giallo-dark.css.tmp" && mv "$SITE/public/giallo-dark.css.tmp" "$SITE/public/giallo-dark.css"
+fi
+echo "site-build: ok — $(find "$SITE/public" -name 'index.html' | wc -l | tr -d ' ') routes in site/public/"
