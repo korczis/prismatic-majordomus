@@ -9,9 +9,7 @@
 . "$ROOT/test/lib.sh"
 
 W="$T/copy"
-mkdir -p "$W/test"
-cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$W/"
-cp -R "$ROOT/test/cases" "$W/test/"
+mj_copy_repo "$W"
 MJC="$W/bin/majordomus"
 "$MJC" init >/dev/null
 "$MJC" update >/dev/null

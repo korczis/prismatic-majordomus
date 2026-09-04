@@ -10,13 +10,7 @@
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 
 C="$T/copy"
-mkdir -p "$C"
-cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/scripts" "$ROOT/docs" "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/AGENTS.md" "$C/"
-mkdir -p "$C/site/data" "$C/test"
-cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$C/site/data/"
-cp -R "$ROOT/site/content-src" "$C/site/"
-cp -R "$ROOT/test/cases" "$ROOT/test/fixtures" "$C/test/"
-cp "$ROOT/test/lib.sh" "$C/test/"
+mj_copy_repo "$C"
 
 # Each case is run against the copy, in a disposable repository of its own — the same shape
 # test/run.sh gives a case, so what runs here is what runs in CI.

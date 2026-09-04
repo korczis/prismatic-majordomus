@@ -14,11 +14,7 @@
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 
 C="$T/copy"
-mkdir -p "$C/site/data" "$C/test"
-cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/scripts" "$ROOT/docs" "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/AGENTS.md" "$C/"
-cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$C/site/data/"
-cp -R "$ROOT/site/content-src" "$C/site/"
-cp -R "$ROOT/test/cases" "$ROOT/test/fixtures" "$C/test/"
+mj_copy_repo "$C"
 ( cd "$C" && git init -q . && git config user.email t@example.com && git config user.name t && git add -A && git commit -qm fixture ) >/dev/null
 
 took() { grep -q "$1" "$2" || { echo "    the probe did not take: expected /$1/ in $2"; exit 1; }; }
@@ -94,5 +90,36 @@ rc=0; out="$("$C/scripts/generate-site-data" 2>&1)" || rc=$?
 [ "$rc" = 10 ] || { echo "    an implementation path that does not exist was accepted (exit $rc)"; exit 1; }
 printf '%s\n' "$out" | grep -q 'nosuch' || {
   echo "    the refusal does not name the missing path"; printf '%s\n' "$out" | sed 's/^/      | /'; exit 1; }
+cp "$ROOT/docs/RESPONSIBILITIES.yaml" "$C/docs/RESPONSIBILITIES.yaml"
+gone 'lib/nosuch.sh' "$C/docs/RESPONSIBILITIES.yaml"
+expect_exit 0 "$C/scripts/generate-site-data"
+
+# 6. a claim that declares no responsibility is refused. Under the keyword matching this
+#    join replaced, such a claim landed somewhere by accident; under a field join it lands
+#    nowhere and would say nothing about it, which is the same silence one level down.
+#    `none` is a declared answer; an absent field is not an answer at all.
+# `0,/pat/` is a GNU address form; BSD sed has no equivalent, and bash 3.2 with BSD
+# userland is this repository's floor. awk drops the first match portably.
+awk '!d && /^    responsibility: doctor$/ { d=1; next } { print }' \
+  "$C/docs/CLAIMS.yaml" > "$T/claims.probe" && mv "$T/claims.probe" "$C/docs/CLAIMS.yaml"
+before="$(grep -c '^    responsibility:' "$ROOT/docs/CLAIMS.yaml")"
+after="$(grep -c '^    responsibility:' "$C/docs/CLAIMS.yaml")"
+[ "$after" -lt "$before" ] || { echo "    the probe did not take: no responsibility field was removed"; exit 1; }
+rc=0; out="$("$C/scripts/generate-site-data" 2>&1)" || rc=$?
+[ "$rc" = 10 ] || { echo "    a claim with no responsibility was accepted (exit $rc)"; exit 1; }
+printf '%s\n' "$out" | grep -q 'no responsibility field' || {
+  echo "    the refusal does not say what is missing"; printf '%s\n' "$out" | sed 's/^/      | /'; exit 1; }
+cp "$ROOT/docs/CLAIMS.yaml" "$C/docs/CLAIMS.yaml"
+
+# 7. and a claim naming a responsibility that does not exist is refused, in the other
+#    direction — a join is only as good as both of its sides
+awk '!d && /^    responsibility: doctor$/ { print "    responsibility: nosuchthing"; d=1; next } { print }' \
+  "$C/docs/CLAIMS.yaml" > "$T/claims.probe" && mv "$T/claims.probe" "$C/docs/CLAIMS.yaml"
+took 'responsibility: nosuchthing' "$C/docs/CLAIMS.yaml"
+rc=0; out="$("$C/scripts/generate-site-data" 2>&1)" || rc=$?
+[ "$rc" = 10 ] || { echo "    a claim naming an unknown responsibility was accepted (exit $rc)"; exit 1; }
+printf '%s\n' "$out" | grep -q 'does not exist' || {
+  echo "    the refusal does not name the problem"; printf '%s\n' "$out" | sed 's/^/      | /'; exit 1; }
+cp "$ROOT/docs/CLAIMS.yaml" "$C/docs/CLAIMS.yaml"
 
 printf '    %s responsibilities, each with its files, command, anchors and claims derived\n' "$n_yaml"

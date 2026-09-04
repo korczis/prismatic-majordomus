@@ -483,6 +483,33 @@
       "note": "Policy values have no reader-side defaults, claim statuses are declared in the matrix, the site fixtures derive their inputs from the generator, and every command, doctrine and claim is checked against a list read from the dispatch table or the registry rather than written into the test."
     },
     {
+      "id": "claim:command-surface",
+      "kind": "claim",
+      "label": "The public command surface is declared, and reconciled against the dispatcher",
+      "status": "guaranteed",
+      "route": "/guarantees/command-surface/",
+      "external": false,
+      "note": "The registry is authority for what a command means; bin/majordomus stays authority for what runs. A command dispatched with no entry, and an entry nothing dispatches, both fail. A command is public exactly when the usage text lists it, checked in both directions."
+    },
+    {
+      "id": "claim:command-coverage",
+      "kind": "claim",
+      "label": "Every public command has a behavioural test and a negative test, computed rather than remembered",
+      "status": "guaranteed",
+      "route": "/guarantees/command-coverage/",
+      "external": false,
+      "note": "The requirement is derived from the registry, so a command added tomorrow is owed coverage from that moment. Coverage is declared in per-case headers rather than inferred, because the negative assertions that use stdin and the surface case's loop are invisible to any scan."
+    },
+    {
+      "id": "claim:event-vocabulary",
+      "kind": "claim",
+      "label": "The ledger's event vocabulary is closed, on the way in and on the way out",
+      "status": "guaranteed",
+      "route": "/guarantees/event-vocabulary/",
+      "external": false,
+      "note": "share/events.yaml declares every name, its emitting command and its required payload keys. An unregistered name is refused on write, refused as a history filter, and reported by history --validate when already stored."
+    },
+    {
       "id": "claim:semantic-retrieval",
       "kind": "claim",
       "label": "Ranked or semantic retrieval over durable records is deliberately not implemented",
@@ -781,6 +808,20 @@
       "external": false
     },
     {
+      "id": "impl:share/commands.yaml",
+      "kind": "implementation",
+      "label": "share/commands.yaml",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:test/cases/31_command_coverage.sh",
+      "kind": "implementation",
+      "label": "test/cases/31_command_coverage.sh",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:docs/CLI.md",
       "kind": "source",
       "label": "docs/CLI.md",
@@ -813,6 +854,13 @@
       "kind": "source",
       "label": "docs/DOCTRINE.md",
       "route": "/docs/doctrine/",
+      "external": false
+    },
+    {
+      "id": "source:docs/DYNAMICITY.md",
+      "kind": "source",
+      "label": "docs/DYNAMICITY.md",
+      "route": "/docs/dynamicity/",
       "external": false
     },
     {
@@ -1024,6 +1072,27 @@
       "label": "test/cases/28_no_hardcoded_values.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_no_hardcoded_values.sh"
+    },
+    {
+      "id": "test:test/cases/30_command_registry.sh",
+      "kind": "test",
+      "label": "test/cases/30_command_registry.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/30_command_registry.sh"
+    },
+    {
+      "id": "test:test/cases/31_command_coverage.sh",
+      "kind": "test",
+      "label": "test/cases/31_command_coverage.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/31_command_coverage.sh"
+    },
+    {
+      "id": "test:test/cases/33_event_registry.sh",
+      "kind": "test",
+      "label": "test/cases/33_event_registry.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/33_event_registry.sh"
     },
     {
       "id": "test:test/cases/40_project_model.sh",
@@ -1327,6 +1396,21 @@
     {
       "source": "claim:derived-not-declared",
       "target": "source:docs/CONCEPTS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:command-surface",
+      "target": "source:docs/DYNAMICITY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:command-coverage",
+      "target": "source:docs/DYNAMICITY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:event-vocabulary",
+      "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
     },
     {
@@ -1665,6 +1749,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:command-surface",
+      "target": "impl:share/commands.yaml",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:command-coverage",
+      "target": "impl:test/cases/31_command_coverage.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:event-vocabulary",
+      "target": "impl:lib/common.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:worktree-ownership",
       "target": "impl:lib/check.sh",
       "kind": "implemented_by"
@@ -1962,6 +2061,21 @@
     {
       "source": "claim:derived-not-declared",
       "target": "test:test/cases/28_no_hardcoded_values.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:command-surface",
+      "target": "test:test/cases/30_command_registry.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:command-coverage",
+      "target": "test:test/cases/31_command_coverage.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:event-vocabulary",
+      "target": "test:test/cases/33_event_registry.sh",
       "kind": "proved_by"
     },
     {

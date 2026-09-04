@@ -407,6 +407,22 @@ RESP_JSON="$(
   printf ']'
 )"
 rm -f "$Rf"
+# Every claim declares which responsibility it belongs to, or declares `none` and says why.
+# An absent field would put the claim on no page and report nothing — the same silence the
+# keyword matching this join replaced, one level down.
+claim_resp_bad="$(jq -r --argjson r "$RESP_JSON" '
+  ([$r[].id] + ["none"]) as $known
+  | [ .claims[] | select(.responsibility == null) | .id ] as $absent
+  | [ .claims[] | select(.responsibility != null and ((.responsibility | IN($known[])) | not)) | .id ] as $unknown
+  | (if ($absent | length) > 0 then
+       "claims with no responsibility field: " + ($absent | join(", ")) + " — declare one, or `responsibility: none` with the reason"
+     else "" end)
+  + (if ($unknown | length) > 0 then
+       (if ($absent | length) > 0 then "; " else "" end)
+       + "claims naming a responsibility that does not exist: " + ($unknown | join(", "))
+     else "" end)' "$OUT/capabilities.json")"
+[ -z "$claim_resp_bad" ] || { echo "generate-site-data: $claim_resp_bad" >&2; exit 10; }
+
 # The README table and the canonical index must describe the same set, in both directions.
 jq -e --argjson r "$RESP_JSON" '
   ([.does[].title] | sort) as $rows | ([$r[].readme_key] | sort) as $keys

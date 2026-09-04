@@ -16,148 +16,308 @@
     {
       "title": "Policy",
       "text": "one provider-neutral `policy.yaml`; unknown keys are errors",
+      "id": "policy",
+      "readme_key": "Policy",
+      "command": "update",
+      "implementation": "lib/common.sh",
+      "files": [
+        ".majordomus/policy.yaml"
+      ],
+      "order": 1,
+      "cli_anchor": "majordomus update",
+      "cli_route": "/docs/cli/#majordomus-update",
+      "schema_anchor": ".majordomus/policy.yaml",
+      "schema_route": "/docs/schemas/#majordomus-policy-yaml",
       "slug": "policy",
-      "command": null,
       "claim_ids": [
         "policy-parse",
-        "profile-validate",
-        "wiring-reconciliation",
-        "projection-generation",
-        "drift-watch",
-        "shared-policy"
+        "doctrine-class-decides",
+        "prompt-assets",
+        "prompt-asset",
+        "derived-not-declared"
+      ],
+      "doctrine_ids": [
+        "prompt_integrity",
+        "policy_completeness",
+        "policy_integrity",
+        "doctrine_wiring_integrity"
       ]
     },
     {
       "title": "Projection",
       "text": "`update` generates `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any target you name, deterministically, and fingerprints them; a hand edit is detected and never silently overwritten",
-      "slug": "projection",
+      "id": "projection",
+      "readme_key": "Projection",
       "command": "update",
+      "implementation": "lib/update.sh",
+      "files": [
+        ".majordomus/providers",
+        ".majordomus/generated/fingerprints.yaml"
+      ],
+      "order": 2,
+      "cli_anchor": "majordomus update",
+      "cli_route": "/docs/cli/#majordomus-update",
+      "schema_anchor": ".majordomus/generated/fingerprints.yaml",
+      "schema_route": "/docs/schemas/#majordomus-generated-fingerprints-yaml",
+      "slug": "projection",
       "claim_ids": [
         "projection-generation",
         "projection-fingerprint",
         "region-projection",
         "no-silent-overwrite",
-        "context-budget",
-        "drift-watch",
-        "github-projection"
+        "context-budget"
+      ],
+      "doctrine_ids": [
+        "projection_integrity",
+        "context_budget"
       ]
     },
     {
       "title": "State",
       "text": "one active task per checkout in `current.yaml`, with `branch`, `head`, and `working_tree` computed from git, never authored",
-      "slug": "state",
+      "id": "state",
+      "readme_key": "State",
       "command": "start",
+      "implementation": "lib/start.sh",
+      "files": [
+        ".majordomus/state/current.yaml",
+        ".majordomus/state/ledger.jsonl"
+      ],
+      "order": 3,
+      "cli_anchor": "majordomus start <task>",
+      "cli_route": "/docs/cli/#majordomus-start-task",
+      "schema_anchor": ".majordomus/state/current.yaml",
+      "schema_route": "/docs/schemas/#majordomus-state-current-yaml",
+      "slug": "state",
       "claim_ids": [
+        "ledger-integrity",
+        "decision-attribution",
         "git-identity",
-        "consistency-check",
         "divergence-label",
-        "drift-watch",
-        "context-assembly",
         "checkpoint-record",
-        "prompt-asset",
-        "roadmap-derived"
+        "decision-record",
+        "event-vocabulary",
+        "task-dependencies"
+      ],
+      "doctrine_ids": [
+        "state_consistency",
+        "ledger_integrity",
+        "decision_records",
+        "handover_integrity"
       ]
     },
     {
       "title": "Scope",
       "text": "`start` takes the paths a task may touch; `check` and `finish` fail on files outside them; other worktrees' overlapping claims are reported",
-      "slug": "scope",
+      "id": "scope",
+      "readme_key": "Scope",
       "command": "check",
+      "implementation": "lib/check.sh",
+      "files": [
+        ".majordomus/state/current.yaml"
+      ],
+      "order": 4,
+      "cli_anchor": "majordomus check",
+      "cli_route": "/docs/cli/#majordomus-check",
+      "schema_anchor": "Worktree coordination",
+      "schema_route": "/docs/schemas/#worktree-coordination",
+      "slug": "scope",
       "claim_ids": [
+        "blocker-store",
         "scoped-task",
         "consistency-check",
         "scope-enforcement",
         "overlap-report",
-        "drift-watch",
+        "task-commit-attribution",
         "worktree-ownership"
+      ],
+      "doctrine_ids": [
+        "scope_integrity",
+        "state_consistency",
+        "questions_store_integrity"
       ]
     },
     {
       "title": "Profiles",
       "text": "four bundles that set capability class, reasoning effort, verbosity, presentation, context toggles, verification, and checkpoint interval independently",
+      "id": "profiles",
+      "readme_key": "Profiles",
+      "command": "check",
+      "implementation": "lib/update.sh",
+      "files": [
+        ".majordomus/profiles"
+      ],
+      "order": 5,
+      "cli_anchor": "majordomus check",
+      "cli_route": "/docs/cli/#majordomus-check",
+      "schema_anchor": ".majordomus/profiles/<name>.yaml",
+      "schema_route": "/docs/schemas/#majordomus-profiles-name-yaml",
       "slug": "profiles",
-      "command": "start",
       "claim_ids": [
         "profile-validate",
-        "scoped-task",
-        "consistency-check",
         "profile-axes",
         "capability-class",
         "minimum-context",
         "effort-escalation",
         "checkpoint-interval",
         "context-assembly",
-        "checkpoint-record",
-        "runtime-adapters"
+        "context-selection-budget"
+      ],
+      "doctrine_ids": [
+        "checkpoint_freshness",
+        "profile_requirements",
+        "policy_integrity"
       ]
     },
     {
       "title": "Handover",
       "text": "append-only records with computed front matter and required sections, created atomically, never staged; `--resolve` finds the right one for this worktree and branch and labels how far git has moved since",
-      "slug": "handover",
+      "id": "handover",
+      "readme_key": "Handover",
       "command": "handover",
+      "implementation": "lib/handover.sh",
+      "files": [
+        ".majordomus/state/handovers"
+      ],
+      "order": 6,
+      "cli_anchor": "majordomus handover",
+      "cli_route": "/docs/cli/#majordomus-handover",
+      "schema_anchor": ".majordomus/state/handovers/<file>.md",
+      "schema_route": "/docs/schemas/#majordomus-state-handovers-file-md",
+      "slug": "handover",
       "claim_ids": [
-        "retention-caps",
-        "drift-watch",
         "handover-record",
-        "no-transcripts"
+        "no-transcripts",
+        "record-resolution"
+      ],
+      "doctrine_ids": [
+        "note_integrity",
+        "handover_integrity",
+        "task_continuity"
       ]
     },
     {
       "title": "Finish",
       "text": "a typed outcome and a contract evaluated line by line; nothing written when any line fails",
-      "slug": "finish",
+      "id": "finish",
+      "readme_key": "Finish",
       "command": "finish",
+      "implementation": "lib/finish.sh",
+      "files": [
+        ".majordomus/state/ledger.jsonl"
+      ],
+      "order": 7,
+      "cli_anchor": "majordomus finish",
+      "cli_route": "/docs/cli/#majordomus-finish",
+      "schema_anchor": "Completion note (when no handover is written)",
+      "schema_route": "/docs/schemas/#completion-note-when-no-handover-is-written",
+      "slug": "finish",
       "claim_ids": [
         "finish-contract",
         "typed-outcome",
-        "cost-per-outcome",
-        "routing"
+        "open-question-gate",
+        "blocker-survives-handover"
+      ],
+      "doctrine_ids": [
+        "blocker_resolution",
+        "verification_integrity"
       ]
     },
     {
       "title": "Doctor",
       "text": "proves the installation is real: policy parses, every declared enforcement is actually invoked by the hook it names without a swallowed exit code, projections match fingerprints, the always-loaded file is under budget",
-      "slug": "doctor",
+      "id": "doctor",
+      "readme_key": "Doctor",
       "command": "doctor",
+      "implementation": "lib/doctor.sh",
+      "files": [
+        ".majordomus/generated/fingerprints.yaml"
+      ],
+      "order": 8,
+      "cli_anchor": "majordomus doctor",
+      "cli_route": "/docs/cli/#majordomus-doctor",
+      "schema_anchor": "Projection header",
+      "schema_route": "/docs/schemas/#projection-header",
+      "slug": "doctor",
       "claim_ids": [
-        "policy-parse",
-        "profile-validate",
         "wiring-reconciliation",
-        "exit-code-contract",
         "dispatcher-wiring",
-        "blocker-store",
-        "context-budget",
+        "doctrine-registry",
+        "catalogue-resolves",
         "pointer-integrity",
         "no-counts-in-context",
         "retention-caps",
-        "init-refuses",
-        "reproduce-command",
-        "no-network",
-        "drift-watch",
-        "context-selection-budget",
-        "checkpoint-record",
-        "record-resolution",
-        "open-question-gate",
+        "continuity-reachable",
         "command-surface",
-        "dag-validation"
+        "command-coverage"
+      ],
+      "doctrine_ids": [
+        "layout_integrity",
+        "enforcement_wiring",
+        "context_budget",
+        "retention_caps",
+        "catalogue_integrity",
+        "doctrine_wiring_integrity",
+        "command_surface_complete",
+        "command_coverage_complete"
       ]
     },
     {
       "title": "Watch",
       "text": "reports drift between policy, projections, state, scope, and git, each finding with the command that reproduces it",
-      "slug": "watch",
+      "id": "watch",
+      "readme_key": "Watch",
       "command": "watch",
+      "implementation": "lib/watch.sh",
+      "files": [
+        ".majordomus/state/ledger.jsonl"
+      ],
+      "order": 9,
+      "cli_anchor": "majordomus watch",
+      "cli_route": "/docs/cli/#majordomus-watch",
+      "schema_anchor": ".majordomus/state/ledger.jsonl",
+      "schema_route": "/docs/schemas/#majordomus-state-ledger-jsonl",
+      "slug": "watch",
       "claim_ids": [
-        "drift-watch"
-      ]
+        "drift-watch",
+        "history-ledger-read",
+        "record-retention",
+        "record-search",
+        "semantic-retrieval"
+      ],
+      "doctrine_ids": []
     },
     {
       "title": "Plan",
       "text": "milestones are outcome specifications and issues are execution contracts; status, execution waves and the next ready issue are derived from the dependency graph, never stored",
+      "id": "plan",
+      "readme_key": "Plan",
+      "command": "plan",
+      "implementation": "lib/project.awk",
+      "files": [
+        ".majordomus/project/milestones",
+        ".majordomus/project/issues"
+      ],
+      "order": 10,
+      "cli_anchor": "majordomus plan",
+      "cli_route": "/docs/cli/#majordomus-plan",
+      "schema_anchor": ".majordomus/project/issues/<ID>.yaml",
+      "schema_route": "/docs/schemas/#majordomus-project-issues-id-yaml",
       "slug": "plan",
-      "command": null,
-      "claim_ids": []
+      "claim_ids": [
+        "project-schema",
+        "project-status-derived",
+        "dag-validation",
+        "execution-waves",
+        "evidence-gates-done",
+        "roadmap-derived",
+        "github-projection"
+      ],
+      "doctrine_ids": [
+        "project_integrity",
+        "dag_integrity",
+        "roadmap_integrity"
+      ]
     }
   ]
 }

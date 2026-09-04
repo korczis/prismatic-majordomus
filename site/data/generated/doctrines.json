@@ -565,11 +565,55 @@
         "roadmap-derived"
       ],
       "test": "test/cases/49_roadmap_doctrine.sh"
+    },
+    {
+      "id": "command_surface_complete",
+      "slug": "command-surface-complete",
+      "title": "Command surface complete",
+      "class": "blocking",
+      "principle": 7,
+      "summary": "Every command the binary dispatches is described by the registry, every command the registry declares public is dispatched, and a command is public exactly when the usage text lists it.",
+      "validator": "command_surface",
+      "validator_function": "mj_validate_command_surface",
+      "defined_in": "lib/commands.sh",
+      "category": "command",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "command-surface"
+      ],
+      "test": "test/cases/30_command_registry.sh"
+    },
+    {
+      "id": "command_coverage_complete",
+      "slug": "command-coverage-complete",
+      "title": "Command coverage complete",
+      "class": "blocking",
+      "principle": 8,
+      "summary": "Every public command is exercised by a test that declares it and refuted by one that declares a failure mode of it, computed from the registry rather than from a list.",
+      "validator": "command_coverage",
+      "validator_function": "mj_validate_command_coverage",
+      "defined_in": "lib/commands.sh",
+      "category": "command",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "command-coverage"
+      ],
+      "test": "test/cases/31_command_coverage.sh"
     }
   ],
   "counts": {
-    "declared": 25,
-    "blocking": 21,
+    "declared": 27,
+    "blocking": 23,
     "advisory": 4
   },
   "index": {
@@ -597,6 +641,8 @@
     "doctrine_wiring_integrity": 21,
     "project_integrity": 22,
     "dag_integrity": 23,
-    "roadmap_integrity": 24
+    "roadmap_integrity": 24,
+    "command_surface_complete": 25,
+    "command_coverage_complete": 26
   }
 }

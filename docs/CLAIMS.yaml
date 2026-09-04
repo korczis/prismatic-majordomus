@@ -60,6 +60,7 @@ claims:
     implementation: lib/common.sh
     test: test/cases/03_update.sh
     status: guaranteed
+    responsibility: none      # a property of every command, not of one responsibility
 
   - id: projection-generation
     claim: Provider instruction files are generated from the one policy, deterministically
@@ -207,6 +208,7 @@ claims:
     implementation: lib/init.sh
     test: test/cases/01_init.sh
     status: guaranteed
+    responsibility: none      # installation, which precedes every responsibility
 
   - id: reproduce-command
     claim: Every finding carries the command that reproduces it
@@ -214,6 +216,7 @@ claims:
     implementation: lib/common.sh
     test: test/cases/02_doctor_basic.sh
     status: guaranteed
+    responsibility: none      # a property of every finding, not of one responsibility
 
   - id: no-network
     claim: Nothing performs a network call, evaluates generated text, or deletes recursively
@@ -221,6 +224,7 @@ claims:
     implementation: bin/majordomus
     test: test/cases/08_no_forbidden_constructs.sh
     status: guaranteed
+    responsibility: none      # a boundary of the whole tool
 
   - id: scoped-task
     claim: A task is started with a declared file scope and a profile, and only one task is active per checkout
@@ -536,6 +540,7 @@ claims:
     implementation: '-'
     test: '-'
     status: planned
+    responsibility: none      # planned; no responsibility implements it yet
     note: The one implementation studied was rolled back within days because its limits were global constants rather than task-derived.
 
   - id: telemetry
@@ -544,6 +549,7 @@ claims:
     implementation: '-'
     test: '-'
     status: planned
+    responsibility: none      # planned; no responsibility implements it yet
     note: Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement.
 
   - id: cost-per-outcome
@@ -552,6 +558,7 @@ claims:
     implementation: '-'
     test: '-'
     status: planned
+    responsibility: none      # planned; no responsibility implements it yet
 
   - id: routing
     claim: Routing recommendations will be derived from measured cost and outcome data
@@ -559,6 +566,7 @@ claims:
     implementation: '-'
     test: '-'
     status: planned
+    responsibility: none      # planned; no responsibility implements it yet
     note: Recommendations only. Majordomus does not invoke a model.
 
   - id: shared-policy
@@ -567,6 +575,7 @@ claims:
     implementation: '-'
     test: '-'
     status: planned
+    responsibility: none      # planned; no responsibility implements it yet
 
   - id: task-dependencies
     claim: A task record has no dependencies; sequencing between sessions is not represented
