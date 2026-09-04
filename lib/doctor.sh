@@ -519,6 +519,13 @@ mj_validate_roadmap() {
   canon="$(awk -F'\t' '$1=="M" && $15!="" { print $15 }' "$MJ_PJ/model.tsv" | sort -u)"
   doc="$(awk '/^## Roadmap/{f=1;next} /^## /{f=0} f' "$readme" \
          | sed -n 's/^| *\**\([0-9][0-9.]*\)\** *|.*/\1/p' | sort -u)"
+  # A section that lists no versions is prose pointing at the projection, not a second
+  # authority. The rule is about an authored version list, not about the heading: a partial
+  # list is the dangerous case, and no list at all is the intended end state.
+  if [ -z "$doc" ]; then
+    mj_doctrine_ok roadmap "README.md" "the roadmap section lists no versions; it points at the projection rather than restating it"
+    return 0
+  fi
   missing="$(comm -23 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   extra="$(comm -13 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   missing="${missing% }"; extra="${extra% }"

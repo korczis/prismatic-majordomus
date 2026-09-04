@@ -521,11 +521,33 @@
         "execution-waves"
       ],
       "test": "test/cases/44_model_doctrine.sh"
+    },
+    {
+      "id": "roadmap_integrity",
+      "slug": "roadmap-integrity",
+      "title": "The roadmap is a projection, never a document",
+      "class": "blocking",
+      "principle": 4,
+      "summary": "No document is a second authority for the roadmap. While a hand-written roadmap table exists, it can neither list a version no milestone declares nor hide one the model does.",
+      "validator": "roadmap",
+      "validator_function": "mj_validate_roadmap",
+      "defined_in": "lib/doctor.sh",
+      "category": "roadmap",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "roadmap-derived"
+      ],
+      "test": "test/cases/49_roadmap_doctrine.sh"
     }
   ],
   "counts": {
-    "declared": 23,
-    "blocking": 19,
+    "declared": 24,
+    "blocking": 20,
     "advisory": 4
   },
   "index": {
@@ -551,6 +573,7 @@
     "retention_caps": 19,
     "doctrine_wiring_integrity": 20,
     "project_integrity": 21,
-    "dag_integrity": 22
+    "dag_integrity": 22,
+    "roadmap_integrity": 23
   }
 }

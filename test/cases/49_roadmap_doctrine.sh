@@ -73,6 +73,13 @@ rm_milestone gamma 0.3 30 beta
 expect_exit 10 "$MJ" doctor
 expect_grep 'omits milestone version\(s\) the model declares: 0.3'
 
+# --- a roadmap section that lists no versions is prose pointing at the projection, not a
+#     second authority. This is the intended end state once the table is replaced by a link.
+{ printf '# Fixture\n\n## Roadmap\n\nThe roadmap is not written here; run `majordomus plan roadmap`.\n\n'
+  printf '## Contributing\n\nRead it.\n'; } > README.md
+expect_exit 0 "$MJ" doctor
+expect_grep 'lists no versions'
+
 # --- with no roadmap section the check holds trivially: the doctrine refuses the
 #     regression, it does not require the table
 printf '# Fixture\n\nNo roadmap here.\n' > README.md
