@@ -22,14 +22,14 @@
       <label class="sr-only" for="doctrine-filter">Filter doctrines</label>
       <input id="doctrine-filter" type="search" x-model="q" placeholder="Filter by name, validator or command" class="w-full max-w-sm rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm text-heading placeholder:text-body-subtle focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
       <div class="flex gap-1" role="group" aria-label="Filter by class">
-        <button type="button" x-on:click="cls = 'all'" :class="cls === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium">All</button>
-        <button type="button" x-on:click="cls = 'blocking'" :class="cls === 'blocking' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium">Blocking</button>
-        <button type="button" x-on:click="cls = 'advisory'" :class="cls === 'advisory' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium">Advisory</button>
+        <button type="button" x-on:click="cls = 'all'" :aria-pressed="cls === 'all' ? 'true' : 'false'" aria-pressed="true" :class="cls === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">All</button>
+        <button type="button" x-on:click="cls = 'blocking'" :aria-pressed="cls === 'blocking' ? 'true' : 'false'" aria-pressed="false" :class="cls === 'blocking' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Blocking</button>
+        <button type="button" x-on:click="cls = 'advisory'" :aria-pressed="cls === 'advisory' ? 'true' : 'false'" aria-pressed="false" :class="cls === 'advisory' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Advisory</button>
       </div>
     </div>
     <p class="mt-2 text-xs text-body-subtle">Filtering runs in the browser. Without JavaScript every doctrine below is still listed.</p>
 
-    <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="list" aria-live="polite">
       {%- for d in doc.doctrines -%}
       <li x-show="(cls === 'all' || cls === '{{ d.class }}') && ('{{ d.id }} {{ d.title | lower }} {{ d.validator }} {{ d.enforced_by | join(sep=" ") }}'.includes(q.toLowerCase()))">
         <a href="{{ get_url(path="/doctrines/" ~ d.slug ~ "/", trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
