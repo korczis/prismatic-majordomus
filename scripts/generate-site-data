@@ -177,14 +177,18 @@ section_of() { # file, heading, next-heading -> body between them; fails if the 
 }
 FINISH_BLOCK="$(awk '/^```/{c++; if(c==1){f=1;next} if(c==2){exit}} f' "$ROOT/README.md")"
 [ -n "$FINISH_BLOCK" ] || { echo "generate-site-data: README.md has no first fenced block (the hero renders it)" >&2; exit 10; }
+# the five lines of the finish contract, read out of the transcript itself rather than listed
+# again here: the hero animation and the transcript below it are then the same five checks
+FINISH_CHECKS="$(printf '%s\n' "$FINISH_BLOCK" | awk '/^(OK|FAIL)[[:space:]]/{print $2}' | awk '!seen[$0]++' | jq -R . | jq -sc .)"
+[ "$(printf '%s' "$FINISH_CHECKS" | jq length)" -ge 4 ] || { echo "generate-site-data: the README finish transcript no longer lists its checks" >&2; exit 10; }
 DOES_ROWS="$(section_of "$ROOT/README.md" "What it does" "Quick start" | grep -E '^\| \*\*' | sed -E 's/^\| \*\*([^*]+)\*\* \| (.*) \|$/\1|\2/' | jq -Rn '[inputs | split("|") | {title: .[0], text: .[1]}]')"
 PROBLEM_MD="$(section_of "$ROOT/README.md" "The problem" "What it does")"
-jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" \
+jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" --argjson checks "$FINISH_CHECKS" \
   --arg problem_bullets "$(printf '%s' "$PROBLEM_MD" | awk '/^- /{f=1} f&&/^$/{exit} f')" \
   --arg notwhat "$(section_of "$ROOT/README.md" "What this is not" "Limitations")" --argjson does "$DOES_ROWS" \
   --arg limits "$(section_of "$ROOT/README.md" "Limitations" "Roadmap")" \
   --arg roadmap "$(section_of "$ROOT/README.md" "Roadmap" "Contributing")" \
-  '{schema:1, finish_transcript:$finish, problem_md:$problem, problem_bullets_md:$problem_bullets, not_md:$notwhat, limitations_md:$limits, roadmap_md:$roadmap, does:$does}' > "$OUT/readme.json"
+  '{schema:1, finish_transcript:$finish, finish_checks:$checks, problem_md:$problem, problem_bullets_md:$problem_bullets, not_md:$notwhat, limitations_md:$limits, roadmap_md:$roadmap, does:$does}' > "$OUT/readme.json"
 
 # ---------------------------------------------------------------- commands.json (CLI reference sections per command)
 # docs/CLI.md has one `## `majordomus <name>`` section per command; each becomes a page.

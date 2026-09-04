@@ -26,6 +26,7 @@ fi
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"
 cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
 cp "$SITE/graph.js" "$SITE/static/js/graph.js"
+cp "$SITE/hero.js" "$SITE/static/js/hero.js"
 if [ "$NOCSS" = 0 ]; then
   echo "== css"
   ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/tailwind.css" -o "$SITE/static/app.css" --minify )

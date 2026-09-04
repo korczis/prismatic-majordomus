@@ -2,6 +2,7 @@
 {% block body %}
 {%- set graph = load_data(path="data/generated/claims-graph.json") -%}
 {%- set graph_id = "claims" -%}
+{%- set graph_rings = "" -%}
 {%- set graph_label = "Every claim and the evidence attached to it. Evidence nodes are shared, so a file carrying several claims appears once." -%}
 <article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
 {% include "partials/graph.html" %}
