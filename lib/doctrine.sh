@@ -32,23 +32,31 @@ mj_doctrine_load() {
   [ -n "$MJ_DOC_FLAT" ] && [ -f "$MJ_DOC_FLAT" ] && return 0
   mj_rules_load || mj_die "$MJ_EX_CONTRACT" "the rules do not resolve, so nothing can be enforced: $MJ_RULES_ERROR (see: majordomus rules list)"
   MJ_DOC_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.doc.XXXXXX")"
-  local i=0 n=0 k
-  printf 'version=1\n' > "$MJ_DOC_FLAT"
-  while [ -n "$(mj_rule "$i" id)" ]; do
-    if [ "$(mj_rule "$i" enforced)" = 1 ]; then
-      {
-        for k in id title class validator category policy_key exit_code file provenance; do
-          [ -n "$(mj_rule "$i" "$k")" ] && printf 'doctrines.%s.%s=%s\n' "$n" "$k" "$(mj_rule "$i" "$k")"
-        done
-        printf 'doctrines.%s.summary=%s\n' "$n" "$(mj_rule "$i" description)"
-        printf 'doctrines.%s.statement=%s\n' "$n" "$(mj_rule "$i" statement)"
-        sed -n "s/^rules\.$i\.enforced_by\./doctrines.$n.enforced_by./p; s/^rules\.$i\.claims\./doctrines.$n.claims./p; s/^rules\.$i\.tests\./doctrines.$n.tests./p; s/^rules\.$i\.depends_on\./doctrines.$n.depends_on./p" "$MJ_RULES_FLAT"
-        printf 'doctrines.%s.test=%s\n' "$n" "$(mj_rule_list "$i" tests | head -n 1)"
-      } >> "$MJ_DOC_FLAT"
-      n=$((n+1))
-    fi
-    i=$((i+1))
-  done
+  # one pass over the effective set: every enforced rule becomes doctrines.N.*, with the
+  # scalar fields first, the description and statement as summary and statement, the
+  # list fields in the order the rule declared them, and the first test as test
+  awk '
+    function flush(  j, nk, ks) {
+      if (cur == "" || s["enforced"] != 1) return
+      nk = split("id title class validator category policy_key exit_code file provenance", ks, " ")
+      for (j = 1; j <= nk; j++) if (s[ks[j]] != "") print "doctrines." n "." ks[j] "=" s[ks[j]]
+      print "doctrines." n ".summary=" s["description"]
+      print "doctrines." n ".statement=" s["statement"]
+      for (j = 1; j <= nl; j++) print "doctrines." n "." L[j]
+      print "doctrines." n ".test=" t
+      n++
+    }
+    BEGIN { print "version=1"; n = 0; cur = "" }
+    {
+      eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
+      if (split(k, p, ".") < 3 || p[1] != "rules") next
+      i = p[2]; f = substr(k, length("rules." i ".") + 1)
+      if (i != cur) { flush(); for (kk in s) delete s[kk]; nl = 0; t = ""; tset = 0; cur = i }
+      if (!(f in s)) s[f] = v
+      if (f ~ /^(enforced_by|claims|tests|depends_on)\./) L[++nl] = f "=" v
+      if (!tset && f ~ /^tests\.[0-9]+$/) { t = v; tset = 1 }
+    }
+    END { flush() }' "$MJ_RULES_FLAT" > "$MJ_DOC_FLAT"
   return 0
 }
 
