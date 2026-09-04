@@ -18,7 +18,7 @@
       <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft p-4">
         <span class="w-6 shrink-0 font-mono text-xs text-body-subtle">{{ loop.index }}</span>
         <a href="{{ get_url(path='/commands/' ~ s.command ~ '/', trailing_slash=true) }}" class="shrink-0 font-mono text-sm font-medium text-fg-brand hover:underline">majordomus {{ s.command }}</a>
-        <span class="min-w-0 flex-1 text-sm text-body">{{ s.note }}</span>
+        <span class="min-w-0 basis-full text-sm text-body sm:basis-0 sm:flex-1">{{ s.note }}</span>
         {%- if m | length > 0 and m[0].read_only %}<span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span>{% endif -%}
       </li>
       {%- endfor -%}
