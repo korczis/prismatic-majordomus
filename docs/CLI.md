@@ -79,8 +79,9 @@ from it), the tool's templates (to tell an unchanged template from a customised 
 `.ai/local/state/` and taken out of the index; the rest of the layer seeded from the
 skeleton without overwriting anything that moved; one `.ai/local/` line in `.gitignore`;
 a byte-for-byte copy of the state under `tmp/majordomus-migrate-backup/<utc>/state/`,
-verified and printed, before the state moves; a `layout.migrated` ledger line; then
-`update --force` re-stamps the projections and `doctor` judges the result, each exit
+and of the legacy `providers/` under `.../providers/`, verified and printed, before
+either is touched; a `layout.migrated` ledger line; then `update --force` renders the
+projections from the tool's thin bootstraps and `doctor` judges the result, each exit
 reported on its own line.
 
 **Behaviour:**
@@ -88,6 +89,13 @@ reported on its own line.
   and writes nothing. The same table drives the real run.
 - `templates/*.md` identical to the tool's own are dropped; a customised one moves to
   `.ai/repo/templates/`. `generated/` is dropped: every projection now carries its own stamp.
+- `providers/` — the provider body and the monolithic templates that asked for it — is not
+  carried into `.ai/`. The body no longer exists anywhere and `update` renders none, so an
+  old template would leave a literal token in a generated file. The directory is copied
+  to the backup, removed from the index, and reported in one line: the bootstraps are now
+  the tool's thin adapters, a repository override goes under `.ai/repo/providers/<provider>.tmpl`
+  in the new format, and the body's rules belong under `.ai/repo/rules/project/` as rule
+  objects (`DOCTRINE.md` describes the format).
 - A file under `.majordomus/` this version does not know is never deleted. It is reported,
   and `.majordomus/` is removed only when it is empty.
 - Refuses (`15`) a `.majordomus/` that holds both `policy.yaml` and `bin/majordomus`,

@@ -97,6 +97,9 @@ mj_mig_dest() { printf '%s/.ai/%s' "$MJ_ROOT" "$(mj_yget "$MJ_MIG_MANIFEST" "$1"
 # table; the same table drives the dry run and the move, so what is printed is what runs.
 #   move     canonical, to a tracked section        drop      derived, or a byte-identical template
 #   state    local state, backed up then moved       keep      unknown, preserved and reported
+#   saved    the provider body and templates: copied to the backup, then removed. The body
+#            no longer exists anywhere, update renders none, and an old template still asks
+#            for it; carrying either into .ai would leave a literal token in a generated file
 mj_migrate_inventory() {
   local f rel top rest dest action tmpl
   local repo; repo="$MJ_ROOT/.ai/$(mj_yget "$MJ_MIG_MANIFEST" repo.path)"
@@ -110,7 +113,7 @@ mj_migrate_inventory() {
       profiles)    action=move; dest="$(mj_mig_dest sections.profiles)/$rest" ;;
       prompts)     action=move; dest="$(mj_mig_dest sections.prompts)/$rest" ;;
       project)     action=move; dest="$(mj_mig_dest sections.project)/$rest" ;;
-      providers)   action=move; dest="$repo/providers/$rest" ;;
+      providers)   action=saved; dest="not carried into .ai; copied to the backup, then removed" ;;
       templates)
         tmpl="$MJ_SKELETON_DIR/templates/$rest"
         if [ -f "$tmpl" ] && cmp -s "$f" "$tmpl"; then action=drop; dest="identical to the tool's template"
@@ -137,23 +140,29 @@ mj_migrate_print_plan() {
   done <<<"$MJ_MIG_PLAN"
   printf '  seed  the rest of .ai/ from the skeleton: protocol, manifest, vendored rules, knowledge, workflows\n'
   printf '  state backup first: tmp/majordomus-migrate-backup/<utc>/state/, byte for byte; then moved, and taken out of the index\n'
+  case "$MJ_MIG_PLAN" in *"saved"$'\t'*) printf '  saved backup first: tmp/majordomus-migrate-backup/<utc>/providers/, byte for byte; then removed, and the bootstraps become the tool'"'"'s thin adapters\n' ;; esac
   printf '  then  .ai/local/ appended to .gitignore once; majordomus update --force; majordomus doctor\n'
   [ -z "$MJ_MIG_UNKNOWN" ] || printf 'WARN  unknown     .majordomus/ — %s file(s) this version does not know are preserved, and .majordomus/ stays until they are moved by hand  [reproduce: find .majordomus -type f]\n' "$(printf '%s\n' "$MJ_MIG_UNKNOWN" | wc -l | tr -d ' ')"
 }
 
 # ---------------------------------------------------------------- apply
 mj_migrate_apply() {
-  local action rel dest src stamp backup n_moved=0 n_state=0 n_dropped=0
+  local action rel dest src stamp backup="" n_moved=0 n_state=0 n_dropped=0 n_saved=0 d
   local state_src="$MJ_MIG_SRC/state"
   local state_dst; state_dst="$MJ_ROOT/.ai/$(mj_yget "$MJ_MIG_MANIFEST" local.path)/state"
 
-  # 1. the recovery copy, before anything under state/ is touched
-  if [ -d "$state_src" ]; then
-    stamp="$(mj_now_compact)"; backup="$MJ_ROOT/tmp/majordomus-migrate-backup/$stamp"
-    mkdir -p "$backup"
-    cp -R "$state_src" "$backup/state"
-    mj_migrate_verify_copy "$state_src" "$backup/state" || mj_die "$MJ_EX_INTERNAL" "the backup under $(mj_rel "$backup") does not match .majordomus/state byte for byte; nothing was moved"
-    printf 'backup .majordomus/state/ -> %s/state/ (byte for byte; verified)\n' "$(mj_rel "$backup")"
+  # 1. the recovery copy, before anything under state/ or providers/ is touched
+  for d in state providers; do
+    [ -d "$MJ_MIG_SRC/$d" ] || continue
+    if [ -z "$backup" ]; then
+      stamp="$(mj_now_compact)"; backup="$MJ_ROOT/tmp/majordomus-migrate-backup/$stamp"
+      mkdir -p "$backup"
+    fi
+    cp -R "$MJ_MIG_SRC/$d" "$backup/$d"
+    mj_migrate_verify_copy "$MJ_MIG_SRC/$d" "$backup/$d" || mj_die "$MJ_EX_INTERNAL" "the backup under $(mj_rel "$backup") does not match .majordomus/$d byte for byte; nothing was moved"
+    printf 'backup .majordomus/%s/ -> %s/%s/ (byte for byte; verified)\n' "$d" "$(mj_rel "$backup")" "$d"
+  done
+  if [ -n "$backup" ]; then
     mj_git check-ignore -q "$(mj_rel "$backup")/state" 2>/dev/null \
       || printf 'WARN  backup      %s — is not ignored by git; do not commit it  [reproduce: git check-ignore -v %s]\n' "$(mj_rel "$backup")" "$(mj_rel "$backup")"
   fi
@@ -176,12 +185,14 @@ mj_migrate_apply() {
         if mj_git ls-files --error-unmatch -- ".majordomus/$rel" >/dev/null 2>&1; then mj_git mv -- ".majordomus/$rel" "$(mj_rel "$dest")"
         else mv "$src" "$dest"; fi
         n_moved=$((n_moved+1)) ;;
-      drop)
+      drop|saved)
         if mj_git ls-files --error-unmatch -- ".majordomus/$rel" >/dev/null 2>&1; then mj_git rm -q -- ".majordomus/$rel"
         else rm -f "$src"; fi
-        n_dropped=$((n_dropped+1)) ;;
+        [ "$action" = saved ] && n_saved=$((n_saved+1)) || n_dropped=$((n_dropped+1)) ;;
     esac
   done <<<"$MJ_MIG_PLAN"
+  [ "$n_saved" = 0 ] || printf 'INFO  providers   .majordomus/providers/ — %s file(s) copied to %s/providers/ and removed, not carried into .ai: the bootstraps are now the tool'"'"'s thin adapters, a repository override goes under %s/<provider>.tmpl in the new format, and the body'"'"'s rules belong under %s/project/ as rule objects (docs/DOCTRINE.md)  [reproduce: ls %s/providers]\n' \
+    "$n_saved" "$(mj_rel "$backup")" "$(mj_rel "$MJ_PROVIDERS_DIR")" "$(mj_rel "$MJ_RULES_DIR")" "$(mj_rel "$backup")"
 
   # 4. the state: out of the index (it is local from now on), then one rename
   if [ -d "$state_src" ]; then
@@ -197,8 +208,8 @@ mj_migrate_apply() {
   mj_init_gitignore
   # one rmdir per directory, deepest first: a parent is empty only once its children went
   find "$MJ_MIG_SRC" -depth -type d -empty -exec rmdir {} \; 2>/dev/null
-  printf 'moved %s canonical file(s) into %s/, %s state file(s) into %s/, dropped %s derived file(s)\n' \
-    "$n_moved" "$(mj_rel "$MJ_AI_REPO_DIR")" "$n_state" "$(mj_rel "$MJ_STATE_DIR")" "$n_dropped"
+  printf 'moved %s canonical file(s) into %s/, %s state file(s) into %s/, dropped %s derived file(s), backed up and removed %s provider file(s)\n' \
+    "$n_moved" "$(mj_rel "$MJ_AI_REPO_DIR")" "$n_state" "$(mj_rel "$MJ_STATE_DIR")" "$n_dropped" "$n_saved"
   if [ -d "$MJ_MIG_SRC" ]; then
     printf 'WARN  unknown     .majordomus/ — remains; these files are not project data this version knows and were not touched:  [reproduce: find .majordomus -type f]\n'
     printf '%s\n' "$MJ_MIG_UNKNOWN" | sed 's/^/  .majordomus\//'
@@ -238,7 +249,6 @@ mj_migrate_seed() {
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/skills" "$MJ_SKILLS_DIR" '*.md'
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/adrs" "$MJ_ADRS_DIR" '*.md'
   mkdir -p "$MJ_PROJECT_DIR"
-  mj_init_tree "$MJ_SKELETON_DIR/providers" "$MJ_PROVIDERS_DIR" '*'
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \
            "$MJ_AI_LOCAL_DIR/cache" "$MJ_AI_LOCAL_DIR/session-contexts"
   [ -f "$MJ_STATE_DIR/decisions.md" ]      || cp "$MJ_SKELETON_DIR/templates/decisions.md" "$MJ_STATE_DIR/decisions.md"

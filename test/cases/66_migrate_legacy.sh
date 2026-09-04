@@ -13,9 +13,14 @@ make_legacy() {
   echo b >> lib/a
   printf '# Objective\nold\n# Current State\nhalf\n# Next Action\nrest\n' | "$MJ" handover >/dev/null
   mkdir -p .majordomus
-  for s in policy.yaml profiles prompts providers project; do mv ".ai/repo/$s" ".majordomus/$s"; done
+  for s in policy.yaml profiles prompts project; do mv ".ai/repo/$s" ".majordomus/$s"; done
   mv .ai/local/state .majordomus/state
   cp -R "$ROOT/share/skeleton/templates" .majordomus/templates
+  # the old layout carried a provider body and monolithic templates that asked for it;
+  # neither exists in the tool any more, and the body is what the old projections were
+  mkdir -p .majordomus/providers
+  printf '## How AI work runs here\n\nTen rules, once monolithic.\n' > .majordomus/providers/body.md
+  for p in claude-code codex gemini generic; do printf '# %s\n\n{{BODY}}\n' "$p" > ".majordomus/providers/$p.tmpl"; done
   mkdir -p .majordomus/generated && printf 'stale\n' > .majordomus/generated/fingerprints.yaml
   rm -rf .ai
   sed -i.bak '/^\.ai\/local\/$/d' .gitignore; rm -f .gitignore.bak
@@ -54,7 +59,9 @@ h0="$(tree_hash)"
 expect_exit 0 "$MJ" migrate --dry-run
 expect_grep '^  move  \.majordomus/policy\.yaml -> \.ai/repo/policy\.yaml$'
 expect_grep '^  move  \.majordomus/profiles/debugging\.yaml -> \.ai/repo/profiles/debugging\.yaml$'
-expect_grep '^  move  \.majordomus/providers/body\.md -> \.ai/repo/providers/body\.md$'
+expect_grep '^  saved \.majordomus/providers/body\.md +\(not carried into \.ai'
+expect_grep '^  saved \.majordomus/providers/claude-code\.tmpl +\(not carried into \.ai'
+expect_grep '^  saved backup first: tmp/majordomus-migrate-backup/<utc>/providers/'
 expect_grep '^  move  \.majordomus/templates/handover\.md -> \.ai/repo/templates/handover\.md$'
 expect_grep '^  drop  \.majordomus/templates/decisions\.md +\(identical'
 expect_grep '^  drop  \.majordomus/generated/fingerprints\.yaml +\(derived'
@@ -67,7 +74,9 @@ expect_grep '^dry run: nothing written$'
 # the migration itself
 expect_exit 0 "$MJ" migrate
 expect_grep '^backup \.majordomus/state/ -> tmp/majordomus-migrate-backup/[0-9TZ]+/state/ \(byte for byte; verified\)$'
-expect_grep '^moved [0-9]+ canonical file\(s\) into \.ai/repo/, [0-9]+ state file\(s\) into \.ai/local/state/, dropped [0-9]+ derived file\(s\)$'
+expect_grep '^backup \.majordomus/providers/ -> tmp/majordomus-migrate-backup/[0-9TZ]+/providers/ \(byte for byte; verified\)$'
+expect_grep '^INFO  providers +\.majordomus/providers/ — 5 file\(s\) copied to tmp/majordomus-migrate-backup/[0-9TZ]+/providers/ and removed, not carried into \.ai: .*\.ai/repo/rules/project/ as rule objects \(docs/DOCTRINE\.md\)  \[reproduce: ls '
+expect_grep '^moved [0-9]+ canonical file\(s\) into \.ai/repo/, [0-9]+ state file\(s\) into \.ai/local/state/, dropped [0-9]+ derived file\(s\), backed up and removed 5 provider file\(s\)$'
 expect_grep '^removed \.majordomus/ \(empty\)$'
 expect_grep '^update: exit 0$'
 expect_grep '^doctor: exit 10$'
@@ -103,13 +112,24 @@ git check-ignore -q "$backup/state/ledger.jsonl" || expect_grep 'WARN  backup'
 # --- the rest of the layer was seeded, and nothing that moved was overwritten
 for f in .ai/README.md .ai/manifest.yaml .ai/repo/README.md .ai/repo/rules/README.md \
          .ai/repo/rules/vendor/majordomus/manifest.yaml .ai/repo/knowledge/sources.yaml \
-         .ai/repo/workflows/task-lifecycle.md .ai/repo/providers/body.md .ai/repo/profiles/deep-work.yaml; do
+         .ai/repo/workflows/task-lifecycle.md .ai/repo/profiles/deep-work.yaml; do
   [ -f "$f" ] || { echo "    $f is absent after migration"; exit 1; }
 done
 expect_grep '^seeded' || true
 diff -r "$ROOT/share/standard/majordomus" .ai/repo/rules/vendor/majordomus >/dev/null
 # the projections were re-stamped from the new policy path
 grep -q 'from \.ai/repo/policy\.yaml' CLAUDE.md
+# --- the provider body and its monolithic templates are in the backup, byte for byte, and
+# nowhere under .ai; update rendered the tool's thin bootstraps, with no token left behind
+for p in body.md claude-code.tmpl codex.tmpl gemini.tmpl generic.tmpl; do
+  [ -f "$backup/providers/$p" ] || { echo "    $p is missing from the backup"; exit 1; }
+done
+[ "$(cat "$backup/providers/body.md")" = "$(printf '## How AI work runs here\n\nTen rules, once monolithic.\n')" ]
+[ ! -e .ai/repo/providers ] || { echo "    legacy providers were carried into .ai/repo/providers"; exit 1; }
+[ -z "$(git ls-files .majordomus/providers)" ]
+expect_no_grep '{{BODY}}' CLAUDE.md
+expect_no_grep 'once monolithic' CLAUDE.md
+grep -q 'Claude Code bootstrap' CLAUDE.md || { echo "    CLAUDE.md is not the thin bootstrap after migration"; exit 1; }
 
 # --- doctor afterwards fails on hook wiring alone; everything else is real
 expect_exit 10 "$MJ" doctor
