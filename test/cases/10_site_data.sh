@@ -1,14 +1,15 @@
 # The site data normaliser: canonical files in, stable JSON out, and --check detects drift.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
-cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/scripts" "$ROOT/docs" "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/AGENTS.md" "$T/"; mkdir -p "$T/site/data" "$T/test"; cp -R "$ROOT/site/data/marketing.toml" "$T/site/data/"; cp -R "$ROOT/site/content-src" "$T/site/"; cp -R "$ROOT/test/cases" "$T/test/"; mkdir -p "$T/.majordomus"; cp -R "$ROOT/.majordomus/project" "$T/.majordomus/"
+fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 expect_exit 0 "$T/scripts/generate-site-data"
 for f in project profiles policy capabilities lifecycle docs diagrams source; do [ -f "$T/site/data/generated/$f.json" ]; jq -e '.schema == 1' "$T/site/data/generated/$f.json" >/dev/null; done
 # version comes from the CLI, profiles from the skeleton, claims from CLAIMS.yaml
 [ "$(jq -r .version "$T/site/data/generated/project.json")" = "$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus")" ]
 [ "$(jq '.profiles | length' "$T/site/data/generated/profiles.json")" = "$(ls "$ROOT"/share/skeleton/profiles/*.yaml | wc -l | tr -d ' ')" ]
-[ "$(jq '.claims | length' "$T/site/data/generated/capabilities.json")" = "$(grep -c '^  - id:' "$ROOT/docs/CLAIMS.yaml")" ]
+# count the claims section only: docs/CLAIMS.yaml also declares its statuses as `- id:` entries
+[ "$(jq '.claims | length' "$T/site/data/generated/capabilities.json")" = "$(awk '/^claims:/{c=1;next} c&&/^  - id: /{n++} END{print n+0}' "$ROOT/docs/CLAIMS.yaml")" ]
 jq -e '.claims | all(.status == "guaranteed" and .test == null | not)' "$T/site/data/generated/capabilities.json" >/dev/null
 jq -e '.principles | length >= 8' "$T/site/data/generated/lifecycle.json" >/dev/null
 jq -e '.diagrams.lifecycle.mermaid | contains("no_match")' "$T/site/data/generated/diagrams.json" >/dev/null

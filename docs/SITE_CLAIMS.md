@@ -53,12 +53,14 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [A repository-local prompt renders against a closed set of state tokens, and an unknown token is an error](https://korczis.github.io/prismatic-majordomus/guarantees/prompt-asset/) | `docs/SCHEMAS.md` | `lib/prompt.sh` | `test/cases/24_prompt_search.sh` |
 | [Durable records are searchable literally, across kinds, without an index](https://korczis.github.io/prismatic-majordomus/guarantees/record-search/) | `docs/CLI.md` | `lib/search.sh` | `test/cases/24_prompt_search.sh` |
 | [Every continuity store is proven reachable through its own command, not merely present on disk](https://korczis.github.io/prismatic-majordomus/guarantees/continuity-reachable/) | `docs/CLI.md` | `lib/doctor.sh` | `test/cases/25_continuity_lifecycle.sh` |
+| [What the tool knows about itself is written once and derived everywhere else, and a second copy is a test failure](https://korczis.github.io/prismatic-majordomus/guarantees/derived-not-declared/) | `docs/CONCEPTS.md` | `lib/doctor.sh` | `test/cases/28_no_hardcoded_values.sh` |
 | [A task record names the checkout it belongs to, and another checkout is never held to its scope](https://korczis.github.io/prismatic-majordomus/guarantees/worktree-ownership/) | `docs/SCHEMAS.md` | `lib/check.sh` | `test/cases/27_foreign_task.sh` |
 | [Milestones and issues are canonical repository files, and a key nobody reads is an error](https://korczis.github.io/prismatic-majordomus/guarantees/project-schema/) | `docs/SCHEMAS.md` | `lib/project.sh` | `test/cases/40_project_model.sh` |
 | [Issue and milestone status is derived from recorded facts and is stored nowhere](https://korczis.github.io/prismatic-majordomus/guarantees/project-status-derived/) | `docs/PLANNING.md` | `lib/project.awk` | `test/cases/41_project_status.sh` |
 | [A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name](https://korczis.github.io/prismatic-majordomus/guarantees/dag-validation/) | `docs/PLANNING.md` | `lib/project.awk` | `test/cases/42_dag_waves.sh` |
 | [Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised](https://korczis.github.io/prismatic-majordomus/guarantees/execution-waves/) | `docs/PLANNING.md` | `lib/project.awk` | `test/cases/42_dag_waves.sh` |
 | [An issue cannot be completed while a required piece of evidence is missing](https://korczis.github.io/prismatic-majordomus/guarantees/evidence-gates-done/) | `docs/PLANNING.md` | `lib/plan.sh` | `test/cases/41_project_status.sh` |
+| [The roadmap is derived from milestone state, and no document may be a second authority for it](https://korczis.github.io/prismatic-majordomus/guarantees/roadmap-derived/) | `docs/ROADMAP.md` | `lib/doctor.sh` | `test/cases/49_roadmap_doctrine.sh` |
 | [GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten](https://korczis.github.io/prismatic-majordomus/guarantees/github-projection/) | `docs/PLANNING.md` | `scripts/github-sync` | `test/cases/45_github_projection.sh` |
 
 ## advisory
@@ -80,6 +82,7 @@ Specified and not implemented. Named so the omission is visible.
 
 | claim | source | implementation | test |
 |---|---|---|---|
+| [A task will know which commits it produced, rather than inferring them from a range](https://korczis.github.io/prismatic-majordomus/guarantees/task-commit-attribution/) | `docs/CONTINUITY.md` | — | — |
 | [A blocking question will keep blocking after the work is handed to a new task](https://korczis.github.io/prismatic-majordomus/guarantees/blocker-survives-handover/) | `docs/CONTINUITY.md` | — | — |
 | [Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits](https://korczis.github.io/prismatic-majordomus/guarantees/runtime-adapters/) | `docs/DESIGN.md` | — | — |
 | [Execution telemetry will be recorded once a provider exposes it honestly](https://korczis.github.io/prismatic-majordomus/guarantees/telemetry/) | `docs/DESIGN.md` | — | — |

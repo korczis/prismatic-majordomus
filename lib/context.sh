@@ -58,8 +58,7 @@ H
     done
     [ -n "$target" ] || mj_die "$MJ_EX_USAGE" "context: no provider '$for_provider' in the policy (have:${known})"
   fi
-  [ -n "$budget" ] || budget="$(mj_pol context.builder_budget_lines)"
-  [ -n "$budget" ] || budget=300
+  [ -n "$budget" ] || budget="$(mj_pol_req context.builder_budget_lines)"
 
   MJ_CTX_TMP="$(mktemp -d "${TMPDIR:-/tmp}/mj.ctx.XXXXXX")"
   mj_context_sections "$prompt_name" "$no_prompt"
@@ -139,7 +138,7 @@ mj_context_sections() {
 
   # 4. open questions — blockers are never dropped for budget
   local qf="$MJ_DIR/state/open-questions.md" maxi
-  maxi="$(mj_pol context.max_list_items)"; [ -n "$maxi" ] || maxi=20
+  maxi="$(mj_pol_req context.max_list_items)"
   if [ -f "$qf" ] && [ "$have_task" = 1 ]; then
     local qn; qn="$(grep -cE "^- \[unresolved\] $id " "$qf" 2>/dev/null || true)"
     if [ "${qn:-0}" -gt 0 ]; then
@@ -153,7 +152,7 @@ mj_context_sections() {
 
   # 5. decisions
   local dfile="$MJ_DIR/state/decisions.md" dmax
-  dmax="$(mj_pol context.recent_decisions)"; [ -n "$dmax" ] || dmax=5
+  dmax="$(mj_pol_req context.recent_decisions)"
   if [ -z "$profile" ]; then :
   elif [ "$(mj_pro context.architecture_notes)" = true ]; then
     if [ -f "$dfile" ]; then
@@ -223,7 +222,7 @@ mj_context_sections() {
     local depth; depth="$(mj_pro context.recent_history_depth)"; [ -n "$depth" ] || depth=0
     if [ "$depth" -gt 0 ] && [ -f "$MJ_DIR/state/ledger.jsonl" ]; then
       { printf '## RECENT HISTORY (last %s events)\n' "$depth"
-        ( MJ_JSON=0; mj_cmd_history --limit "$depth" 2>/dev/null | sed '/^(/d' ); } > "$MJ_CTX_TMP/90.history"
+        ( export MJ_JSON=0; mj_cmd_history --limit "$depth" 2>/dev/null | sed '/^(/d' ); } > "$MJ_CTX_TMP/90.history"
     else
       mj_ctx_excl "history" "profile $profile sets context.recent_history_depth: $depth"
     fi

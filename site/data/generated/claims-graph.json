@@ -456,6 +456,24 @@
       "note": "doctor runs the resolver, renders every prompt asset, validates both parsed stores and builds the context. A directory of records that no command reads is the failure this tool exists to catch."
     },
     {
+      "id": "claim:task-commit-attribution",
+      "kind": "claim",
+      "label": "A task will know which commits it produced, rather than inferring them from a range",
+      "status": "planned",
+      "route": "/guarantees/task-commit-attribution/",
+      "external": false,
+      "note": "Today scope is checked with git diff base..HEAD, and a commit range has no author, so another session committing to the same branch in the same checkout has its files counted as this task's work. Recording each commit as it happens turns the question from a heuristic about ranges into an enumeration. The list would be a lookup that git overrules, never authority, and a rewritten commit would be reported as unrecognised rather than resolved to a guess."
+    },
+    {
+      "id": "claim:derived-not-declared",
+      "kind": "claim",
+      "label": "What the tool knows about itself is written once and derived everywhere else, and a second copy is a test failure",
+      "status": "guaranteed",
+      "route": "/guarantees/derived-not-declared/",
+      "external": false,
+      "note": "Policy values have no reader-side defaults, claim statuses are declared in the matrix, the site fixtures derive their inputs from the generator, and every command, doctrine and claim is checked against a list read from the dispatch table or the registry rather than written into the test."
+    },
+    {
       "id": "claim:semantic-retrieval",
       "kind": "claim",
       "label": "Ranked or semantic retrieval over durable records is deliberately not implemented",
@@ -580,6 +598,15 @@
       "route": "/guarantees/evidence-gates-done/",
       "external": false,
       "note": "Evidence is a command and its result, or an artifact. Narrative is refused. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE."
+    },
+    {
+      "id": "claim:roadmap-derived",
+      "kind": "claim",
+      "label": "The roadmap is derived from milestone state, and no document may be a second authority for it",
+      "status": "guaranteed",
+      "route": "/guarantees/roadmap-derived/",
+      "external": false,
+      "note": "The sequence is the topological rank of the milestone graph, so no list of versions exists anywhere. While a hand-written roadmap table survives, the doctrine holds it to the model in both directions; once it is gone the check holds trivially, which is the regression it exists to refuse."
     },
     {
       "id": "claim:github-projection",
@@ -752,6 +779,13 @@
       "external": false
     },
     {
+      "id": "source:docs/CONCEPTS.md",
+      "kind": "source",
+      "label": "docs/CONCEPTS.md",
+      "route": "/docs/concepts/",
+      "external": false
+    },
+    {
       "id": "source:docs/CONTINUITY.md",
       "kind": "source",
       "label": "docs/CONTINUITY.md",
@@ -777,6 +811,13 @@
       "kind": "source",
       "label": "docs/PLANNING.md",
       "route": "/docs/planning/",
+      "external": false
+    },
+    {
+      "id": "source:docs/ROADMAP.md",
+      "kind": "source",
+      "label": "docs/ROADMAP.md",
+      "route": "/docs/roadmap/",
       "external": false
     },
     {
@@ -962,6 +1003,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/27_foreign_task.sh"
     },
     {
+      "id": "test:test/cases/28_no_hardcoded_values.sh",
+      "kind": "test",
+      "label": "test/cases/28_no_hardcoded_values.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_no_hardcoded_values.sh"
+    },
+    {
       "id": "test:test/cases/40_project_model.sh",
       "kind": "test",
       "label": "test/cases/40_project_model.sh",
@@ -988,6 +1036,13 @@
       "label": "test/cases/45_github_projection.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/45_github_projection.sh"
+    },
+    {
+      "id": "test:test/cases/49_roadmap_doctrine.sh",
+      "kind": "test",
+      "label": "test/cases/49_roadmap_doctrine.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/49_roadmap_doctrine.sh"
     }
   ],
   "edges": [
@@ -1237,6 +1292,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:task-commit-attribution",
+      "target": "source:docs/CONTINUITY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:derived-not-declared",
+      "target": "source:docs/CONCEPTS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:semantic-retrieval",
       "target": "source:docs/CONTINUITY.md",
       "kind": "specified_by"
@@ -1304,6 +1369,11 @@
     {
       "source": "claim:evidence-gates-done",
       "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:roadmap-derived",
+      "target": "source:docs/ROADMAP.md",
       "kind": "specified_by"
     },
     {
@@ -1557,6 +1627,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:derived-not-declared",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:worktree-ownership",
       "target": "impl:lib/check.sh",
       "kind": "implemented_by"
@@ -1584,6 +1659,11 @@
     {
       "source": "claim:evidence-gates-done",
       "target": "impl:lib/plan.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:roadmap-derived",
+      "target": "impl:lib/doctor.sh",
       "kind": "implemented_by"
     },
     {
@@ -1837,6 +1917,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:derived-not-declared",
+      "target": "test:test/cases/28_no_hardcoded_values.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:worktree-ownership",
       "target": "test:test/cases/27_foreign_task.sh",
       "kind": "proved_by"
@@ -1864,6 +1949,11 @@
     {
       "source": "claim:evidence-gates-done",
       "target": "test:test/cases/41_project_status.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:roadmap-derived",
+      "target": "test:test/cases/49_roadmap_doctrine.sh",
       "kind": "proved_by"
     },
     {

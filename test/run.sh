@@ -19,4 +19,13 @@ for case in "$ROOT"/test/cases/*.sh; do
   rm -rf "$T"
 done
 echo "tests: $pass passed, $fail failed"
+# A filter that matched nothing is not a pass. `run.sh 51_something` on a repository
+# without that case printed "0 passed, 0 failed" and exited 0, and that zero was read as
+# success — the same shape as a green CI that never ran the suite. Selecting a case that
+# does not exist is a usage error, not an empty success.
+if [ -n "$only" ] && [ "$pass" = 0 ] && [ "$fail" = 0 ]; then
+  echo "run.sh: no case matches '$only' (test/cases/$only.sh does not exist)" >&2
+  exit 2
+fi
+[ "$pass" = 0 ] && [ "$fail" = 0 ] && { echo "run.sh: no cases found in $ROOT/test/cases" >&2; exit 2; }
 [ "$fail" = 0 ]

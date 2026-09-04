@@ -283,16 +283,22 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 
 ## Roadmap
 
-| version | adds |
-|---|---|
-| **0.1** | one policy, four profiles, durable state, the command surface `majordomus --help` lists, milestone and issue execution contracts with a validated dependency graph, doctor with wiring reconciliation, projections for four providers, behavioural tests |
-| 0.2 | opt-in runtime adapters: read-size clamp, output condensation, subagent budget, with limits derived from the profile |
-| 0.3 | execution telemetry, only from providers that expose it honestly |
-| 0.4 | cost per accepted outcome, only on measured data |
-| 0.5 | routing recommendations derived from 0.4 |
-| 1.0 | shared policy across repositories and workers |
+The roadmap is not written here. Milestones are canonical records under
+`.majordomus/project/milestones/`, ordered by the dependency graph between them, and every
+view of them is derived from that graph:
 
-Each step is gated by the previous one being real.
+```
+majordomus plan roadmap        # the sequence, with what is current and what is next
+majordomus plan rgraph         # the same graph, as a diagram
+```
+
+Rendered at [the roadmap](https://korczis.github.io/prismatic-majordomus/roadmap/), with the
+current state as a document in [`docs/PLAN_STATUS.md`](docs/PLAN_STATUS.md).
+
+Each step is gated by the previous one being real, and that is an invariant rather than a
+promise: a milestone whose dependencies are not accepted is blocked, and finishing every
+issue inside it does not release it. [`docs/ROADMAP.md`](docs/ROADMAP.md) explains how the
+ordering, the gate and the claim linkage are derived.
 
 ## Contributing
 
