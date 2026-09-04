@@ -60,8 +60,10 @@ expect_exit 0 "$MJ" update
 expect_grep '^unchanged CLAUDE.md$'
 expect_grep 'A rule added after adoption' CLAUDE.md
 
-# editing inside the region is detected, and update refuses to overwrite it silently
-sed 's/^Checkpoint/EDITED Checkpoint/' CLAUDE.md > c.tmp && mv c.tmp CLAUDE.md
+# editing inside the region is detected, and update refuses to overwrite it silently.
+# The edit targets the region's own first body line rather than a phrase from the projected
+# prose, so rewording the provider body cannot silently turn this case into a no-op.
+awk '/^<!-- majordomus:begin/{print; getline; print "EDITED " $0; next} {print}' CLAUDE.md > c.tmp && mv c.tmp CLAUDE.md
 expect_grep 'EDITED' CLAUDE.md
 expect_exit 11 "$MJ" watch
 expect_grep 'DRIFT projection +CLAUDE.md — region differs from fingerprint'

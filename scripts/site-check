@@ -28,8 +28,11 @@ for f in $pages; do
   grep -q '<meta name="description"' "$f" || bad route "$rel: no description"
   grep -q '<main' "$f" || bad route "$rel: no <main> landmark"
   [ "$(grep -o '<h1' "$f" | wc -l | tr -d ' ')" = 1 ] || bad route "$rel: expected exactly one <h1>"
-  # a {{...}} inside a code span is rendered output (documented prompt tokens), not an unrendered template
-  sed -e 's|<code[^>]*>[^<]*</code>||g' "$f" | grep -qE '\{\{|\{%|\[\[[A-Z_]+\]\]' && bad route "$rel: unresolved template placeholder"
+  # a {{...}} inside a code span or a code block is rendered output (docs/SCHEMAS.md and
+  # docs/CLI.md document the prompt renderer's own {{TOKEN}} syntax), not an unrendered
+  # template: Zola produced it, so it cannot be a template Zola failed to expand
+  awk '/<pre/{p=1} !p{print} /<\/pre>/{p=0}' "$f" | sed -e 's|<code[^>]*>[^<]*</code>||g' \
+    | grep -qE '\{\{|\{%|\[\[[A-Z_]+\]\]' && bad route "$rel: unresolved template placeholder"
   grep -qE ' style="' "$f" && bad route "$rel: inline style attribute (forbidden by the custom CSS policy)"
 done; ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, description, main, one h1, no placeholders, no inline styles"
 # 5. prefix: every root-absolute href/src carries the deployment path

@@ -21,7 +21,9 @@ mj_cmd_watch() {
   # The task-scoped doctrines need the task loaded before they run; the rest do not care.
   # A checkout with no active task still watches its policy, projections and stores.
   local have_task=0
-  if mj_load_current; then
+  if mj_load_current && mj_task_is_foreign; then
+    mj_info state "$(mj_cur id)" "task belongs to $(mj_cur worktree), not this checkout" "cat .majordomus/state/current.yaml"
+  elif mj_load_current; then
     have_task=1
     mj_load_profile "$(mj_cur profile)" 2>/dev/null || mj_drift state "$(mj_cur id)" "profile '$(mj_cur profile)' has no file"
   fi

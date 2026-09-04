@@ -41,6 +41,12 @@ H
     mj_die "$MJ_EX_MISSING" "no active task (.majordomus/state/current.yaml); run: majordomus start"
   fi
   local id profile; id="$(mj_cur id)"; profile="$(mj_cur profile)"
+  # another checkout's record: report it, enforce nothing, and never write to it
+  if mj_task_is_foreign; then
+    mj_info finish "$id" "belongs to $(mj_cur worktree), not this checkout; nothing enforced here" "cat .majordomus/state/current.yaml"
+    [ "$check" = 1 ] && return 0
+    mj_die "$MJ_EX_REFUSED" "task $id belongs to $(mj_cur worktree); finish it there"
+  fi
   mj_load_profile "$profile" || mj_die "$MJ_EX_MISSING" "task references profile '$profile' which has no file"
   case "$(mj_cur outcome)" in
     active) ;;

@@ -51,7 +51,7 @@ expect_grep 'FAIL doctrine .* validator function mj_validate_nothing_implements_
 restore
 
 # 2. validator exists but its command never dispatches
-sed 's/^mj_run_task_checks() { mj_doctrine_dispatch check; }$/mj_run_task_checks() { :; }/' "$ROOT/lib/check.sh" > "$LIBD/check.sh"
+sed '/mj_doctrine_dispatch check/d' "$ROOT/lib/check.sh" > "$LIBD/check.sh"
 expect_exit 10 "$MJ" doctor
 expect_grep 'FAIL doctrine .* lib/check.sh never calls mj_doctrine_dispatch'
 restore
