@@ -98,5 +98,5 @@ Considered and deliberately refused, with the reason recorded.
 | claim | source | implementation | test |
 |---|---|---|---|
 | [Ranked or semantic retrieval over durable records is deliberately not implemented](https://korczis.github.io/prismatic-majordomus/guarantees/semantic-retrieval/) | `docs/CONTINUITY.md` | — | — |
-| [Dependencies between tasks are deliberately not represented](https://korczis.github.io/prismatic-majordomus/guarantees/task-dependencies/) | `docs/DESIGN.md` | — | — |
+| [A task record has no dependencies; sequencing between sessions is not represented](https://korczis.github.io/prismatic-majordomus/guarantees/task-dependencies/) | `docs/DESIGN.md` | — | — |
 
