@@ -6,7 +6,7 @@
 
 ## How it works
 
-`lib/update.sh` hashes the policy and profiles, builds the fragments every projection shares (the profile table, the finish contract, the required handover sections), expands the shared body `providers/body.md`, wraps it in the provider template, and writes each target atomically. Every generated file begins with a header naming the command that produced it and the policy hash it came from. Adapters translate; they do not add rules — a rule that exists for one provider and not another is a policy bug by definition.
+`lib/update.sh` hashes the policy and profiles, renders each target from its adapter — the templates under the distribution's `share/providers/`, or the repository's own override under its providers section — and writes each target atomically. Every generated file is a bootstrap: it names `README.md`, points at `.ai/README.md`, names the default profile and the lifecycle workflow, and carries no rule of its own. Its first line is a stamp naming the command that produced it, the policy hash it came from and the hash of its own content. Adapters translate; they do not add rules — a rule that exists for one provider and not another is a policy bug by definition, and `doctor` fails a generated file that has grown a rule corpus.
 
 ## How to see it
 

@@ -11,9 +11,10 @@ The always-loaded instruction file may point workers at other files (`docs/DESIG
 ## How to see it
 
 ```bash
-sed -i.bak 's#docs/DESIGN.md#docs/MISSING.md#' .ai/repo/providers/body.md && majordomus update --force
+printf '\nSee [design](docs/MISSING.md).\n' >> AGENTS.md
 majordomus doctor
-# FAIL links       CLAUDE.md — reference docs/MISSING.md does not resolve
+# FAIL projection  AGENTS.md — content differs from its own stamp (hand-edited?)
+# FAIL links       AGENTS.md — reference docs/MISSING.md does not resolve  [reproduce: ls docs/MISSING.md]
 ```
 
 ## What it does not cover

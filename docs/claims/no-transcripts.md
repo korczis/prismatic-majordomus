@@ -2,7 +2,7 @@
 
 ## What it means
 
-A handover is a short structured record of what is true — objective, current state, next action, optionally decisions, verification, risks — not a dump of what was said. Majordomus never stores, summarises or reads a conversation. The generated worker instructions say so in one of the ten rules: handovers transfer state, not transcripts.
+A handover is a short structured record of what is true — objective, current state, next action, optionally decisions, verification, risks — not a dump of what was said. Majordomus never stores, summarises or reads a conversation. One of the ten principles in the vendored rule set says so: handovers transfer state, not transcripts, and every worker reads it through the layer its bootstrap points at.
 
 ## How it works
 
@@ -13,7 +13,7 @@ Structurally: the required sections force durable statements; the identity-field
 ```bash
 majordomus handover --help
 # body needs these non-empty level-one headings: the policy's handover.required_sections
-grep -rn transcript share/skeleton/providers/body.md
+majordomus rules show majordomus.handovers-carry-state   # the rule: state and next action, never a transcript, a diff or a narrative
 ```
 
 ## What it does not cover
