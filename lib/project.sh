@@ -80,12 +80,33 @@ mj_pj_default_branch() { mj_pj_rows P | cut -f4; }
 mj_pj_active()         { mj_pj_rows P | cut -f5; }
 
 mj_pj_milestone_ids()  { mj_pj_rows M | cut -f2; }
+# Is this id a milestone? Answered from the record the loader wrote, never from the shape
+# of the id. A milestone id is a stable slug; the version lives in a field, so nothing may
+# infer a record's kind from how its id is spelled.
+mj_pj_is_milestone()   { case " $MJ_PJ_MILESTONES " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 mj_pj_issue_ids()      { mj_pj_rows I | cut -f2; }
 
 # milestone columns: 2 id · 3 status · 4 order · 5 priority · 6 title · 7 slug
 #                    8 total · 9 done · 10 ready · 11 blocked · 12 active · 13 verify · 14 cancelled
-mj_pj_m_status() { mj_pj_col M "$1" 3; }
-mj_pj_m_title()  { mj_pj_col M "$1" 6; }
+#                    15 version · 16 rank · 17 depends · 18 blocked_by · 19 dependents · 20 claims
+mj_pj_m_status()  { mj_pj_col M "$1" 3; }
+mj_pj_m_title()   { mj_pj_col M "$1" 6; }
+mj_pj_m_version() { mj_pj_col M "$1" 15; }
+mj_pj_m_rank()    { mj_pj_col M "$1" 16; }
+mj_pj_m_deps()    { mj_pj_col M "$1" 17; }
+mj_pj_m_blocked() { mj_pj_col M "$1" 18; }
+mj_pj_m_claims()  { mj_pj_col M "$1" 20; }
+
+# milestone ids in roadmap order: rank, then order, then id. This is the roadmap sequence,
+# derived from the graph; no list of versions is maintained anywhere.
+mj_pj_roadmap() {
+  awk -F'\t' '$1=="M" { printf "%s\t%s\t%s\n", $16+0, $4+0, $2 }' "$MJ_PJ/model.tsv" \
+    | sort -k1,1n -k2,2n -k3,3 | cut -f3
+}
+# milestone ids in one derived state
+mj_pj_m_in_state() { awk -F'\t' -v s="$1" '$1=="M" && $3==s { print $2 }' "$MJ_PJ/model.tsv"; }
+# milestone dependency edges, one "from to" per line
+mj_pj_m_edges()    { awk -F'\t' '$1=="R" { print $2, $3 }' "$MJ_PJ/model.tsv"; }
 
 # issue columns: 2 id · 3 milestone · 4 status · 5 wave · 6 priority · 7 profile
 #                8 parallel_safe · 9 title · 10 slug · 11 deps · 12 blocked_by
@@ -130,11 +151,9 @@ mj_project_unknown_keys() {
   for f in "$MJ_PJ/flat"/*; do
     [ -f "$f" ] || continue
     id="$(basename "$f")"
-    case "$id" in
-      PROJECT) allow="project" ;;
-      M*)      allow="milestone" ;;
-      *)       allow="issue" ;;
-    esac
+    if [ "$id" = PROJECT ]; then allow="project"
+    elif mj_pj_is_milestone "$id"; then allow="milestone"
+    else allow="issue"; fi
     out="$(mj_yaml_unknown_keys "$f" "$MJ_BIN_DIR/../share/allow/$allow.txt" || true)"
     if [ -n "$out" ]; then
       printf '%s %s\n' "$id" "$(printf '%s' "$out" | tr '\n' ' ')"
@@ -147,6 +166,33 @@ mj_project_unknown_keys() {
 # ---------------------------------------------------------------- Mermaid
 # The one place a dependency diagram is drawn. Every diagram on the site, in the docs and
 # in a GitHub body comes from here, so a hand-drawn DAG cannot drift from the real one.
+# The roadmap graph, drawn from the same R records the CLI and the site read. The milestone
+# graph and the issue graph are separate diagrams on purpose: one says which outcomes are
+# reachable, the other says what a worker may execute inside one of them.
+mj_project_roadmap_mermaid() {
+  local id st ver cls
+  printf 'flowchart LR\n'
+  mj_pj_roadmap | while read -r id; do
+    st="$(mj_pj_m_status "$id")"
+    ver="$(mj_pj_m_version "$id")"
+    printf '    %s["%s%s<br/>%s"]:::%s\n' \
+      "$(printf '%s' "$id" | tr -c 'A-Za-z0-9' '_')" \
+      "$([ -n "$ver" ] && printf '%s — ' "$ver")" "$id" \
+      "$(mj_pj_m_title "$id" | sed 's/"/\&quot;/g')" \
+      "$(printf '%s' "$st" | tr 'A-Z' 'a-z')"
+  done
+  mj_pj_m_edges | while read -r from to; do
+    printf '    %s --> %s\n' \
+      "$(printf '%s' "$from" | tr -c 'A-Za-z0-9' '_')" \
+      "$(printf '%s' "$to" | tr -c 'A-Za-z0-9' '_')"
+  done
+  for cls in "done:#16a34a:#052e16" "active:#2563eb:#eff6ff" "verify:#7c3aed:#f5f3ff" \
+             "planned:#0891b2:#ecfeff" "blocked:#b45309:#fffbeb" \
+             "cancelled:#6b7280:#f9fafb" "superseded:#6b7280:#f9fafb"; do
+    printf '    classDef %s stroke:%s,fill:%s,stroke-width:2px\n' "${cls%%:*}" "$(printf '%s' "$cls" | cut -d: -f2)" "$(printf '%s' "$cls" | cut -d: -f3)"
+  done
+}
+
 mj_project_mermaid() {
   local m="${1:-}" id st cls
   printf 'flowchart LR\n'

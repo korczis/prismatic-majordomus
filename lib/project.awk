@@ -12,7 +12,9 @@
 #
 # output (tab separated, first field is the record type):
 #   P  name  repository  default_branch  active_milestone
-#   M  id  status  order  priority  title  slug  total  done  ready  blocked  active  verify  cancelled
+#   M  id  status  order  priority  title  slug  total  done  ready  blocked  active  verify  cancelled \
+#      version  rank  depends  blocked_by  dependents  claims
+#   R  from  to                          one record per milestone dependency edge, sorted
 #   I  id  milestone  status  wave  priority  profile  parallel_safe  title  slug \
 #      deps  blocked_by  dependents  scope  evidence_have  evidence_need
 #   W  wave  id...                      one record per wave, ids space separated
@@ -20,7 +22,12 @@
 #   V  level  code  subject  message     validation findings
 #
 # Statuses. Issue: BLOCKED READY ACTIVE VERIFY DONE CANCELLED. Milestone: PLANNED
-# BLOCKED ACTIVE VERIFY DONE. Both are derived here and stored nowhere.
+# BLOCKED ACTIVE VERIFY DONE CANCELLED SUPERSEDED. Both are derived here and stored nowhere.
+#
+# Two graphs, deliberately not one. The issue graph inside a milestone decides what a worker
+# may execute next; the milestone graph above it decides which outcomes are reachable at all.
+# A milestone is gated by its dependencies being DONE, which is what makes "each step is gated
+# by the previous one being real" an invariant rather than a sentence.
 
 BEGIN { FS = "\t"; OFS = "\t" }
 
@@ -35,6 +42,8 @@ $1 == "M" {
   m[id, key] = val
   if (key ~ /^evidence\.[0-9]+\.covers$/) { mev[id, val] = 1 }
   if (key ~ /^evidence_required\.[0-9]+$/) { mneed[id, ++mneedn[id]] = val }
+  if (key ~ /^depends_on\.[0-9]+$/)        { mdep[id, ++mdepn[id]] = val }
+  if (key ~ /^claims\.[0-9]+$/)            { mclaim[id, ++mclaimn[id]] = val }
   next
 }
 
@@ -146,6 +155,47 @@ END {
       }
   }
 
+  # --- the milestone graph: validate it before anything derives from it. Same rules the
+  #     issue graph lives under, applied one level up: an edge to a milestone that does not
+  #     exist, an edge to itself, and a cycle are each refused by name.
+  for (i = 1; i <= mn; i++) {
+    id = mids[i]
+    for (k = 1; k <= mdepn[id]; k++) {
+      d = mdep[id, k]
+      if (d == id)          { finding("FAIL", "milestone_self_dependency", id, "requires itself"); continue }
+      if (!(d in mseen))    { finding("FAIL", "milestone_unknown_dependency", id, "requires " d ", which is not a milestone here"); continue }
+      if ((id SUBSEP d) in medge) { finding("WARN", "milestone_duplicate_dependency", id, "requires " d " more than once"); continue }
+      medge[id, d] = 1
+      mindeg[id]++; mout[d, ++moutn[d]] = id
+      men++; medges[men] = d "\t" id
+    }
+  }
+
+  # --- roadmap rank: Kahn layering over the milestone graph. Rank is what orders the
+  #     roadmap; `order` only breaks ties inside one rank. A milestone that never leaves
+  #     the graph is in or downstream of a cycle and is reported, never ranked.
+  for (i = 1; i <= mn; i++) { mleft[mids[i]] = 1 }
+  mnleft = mn; mlayer = 0
+  while (mnleft > 0) {
+    fn = 0
+    for (i = 1; i <= mn; i++) {
+      id = mids[i]
+      if (!mleft[id]) continue
+      ok = 1
+      for (k = 1; k <= mdepn[id]; k++) { d = mdep[id, k]; if ((id SUBSEP d) in medge && mleft[d]) { ok = 0; break } }
+      if (ok) mfront[++fn] = id
+    }
+    if (fn == 0) break
+    for (k = 1; k <= fn; k++) { id = mfront[k]; mrank[id] = mlayer; mleft[id] = 0; mnleft-- }
+    mlayer++
+  }
+  if (mnleft > 0) {
+    cyc = ""
+    for (i = 1; i <= mn; i++) if (mleft[mids[i]]) cyc = cyc (cyc == "" ? "" : " ") mids[i]
+    finding("FAIL", "milestone_cycle", cyc, "milestone dependencies form a cycle; no roadmap order exists")
+    for (i = 1; i <= mn; i++) if (mleft[mids[i]]) mrank[mids[i]] = 0
+  }
+
   # --- milestone status
   for (i = 1; i <= mn; i++) {
     id = mids[i]
@@ -162,6 +212,8 @@ END {
     for (k = 1; k <= mneedn[id]; k++) if (!((id, mneed[id, k]) in mev)) mcov = 0
     req = tot - nc
     if (m[id, "cancelled"] == "true")                       ms = "CANCELLED"
+    else if (m[id, "superseded_by"] != "")                  ms = "SUPERSEDED"
+    else if (tot == 0 && mneedn[id] > 0 && mcov)             ms = "DONE"
     else if (tot == 0)                                      ms = "PLANNED"
     else if (req > 0 && nd == req && mcov)                  ms = "DONE"
     else if (req > 0 && nd == req)                          ms = "VERIFY"
@@ -170,7 +222,7 @@ END {
     else                                                    ms = "PLANNED"
     mstatus[id] = ms
     mrow[id] = tot "\t" nd "\t" nr "\t" nb "\t" na "\t" nv "\t" nc
-    if (tot == 0) finding("WARN", "empty_milestone", id, "has no issues; it is an outcome nobody is executing")
+    mempty[id] = (tot == 0)
     if (req > 0 && nd == req && !mcov) {
       miss = ""
       for (k = 1; k <= mneedn[id]; k++) if (!((id, mneed[id, k]) in mev)) miss = miss (miss == "" ? "" : ",") mneed[id, k]
@@ -178,15 +230,49 @@ END {
     }
   }
 
-  # --- the active milestone: lowest order that is ACTIVE, else lowest order not finished.
-  #     Derived, so it can never contradict the issues underneath it.
+  # --- the gate. A milestone whose required outcomes are not yet real cannot be executable,
+  #     whatever its own issues say. This is "each step is gated by the previous one being
+  #     real" as an invariant rather than a sentence. It runs in rank order, so a dependency
+  #     is always decided before the milestone requiring it and the block cascades.
+  for (r = 0; r <= mlayer; r++) {
+    for (i = 1; i <= mn; i++) {
+      id = mids[i]
+      if (mrank[id] != r) continue
+      mblock = ""
+      for (k = 1; k <= mdepn[id]; k++) {
+        d = mdep[id, k]
+        if (!((id SUBSEP d) in medge)) continue
+        if (mstatus[d] != "DONE") mblock = mblock (mblock == "" ? "" : ",") d
+      }
+      mblockedby[id] = mblock
+      if (mblock == "") continue
+      if (mstatus[id] == "CANCELLED" || mstatus[id] == "SUPERSEDED") continue
+      if (mstatus[id] == "DONE" || mstatus[id] == "VERIFY" || mstatus[id] == "ACTIVE")
+        finding("FAIL", "milestone_premature", id, "is " mstatus[id] " while " mblock " is not DONE")
+      mstatus[id] = "BLOCKED"
+    }
+  }
+
+  for (i = 1; i <= mn; i++) {
+    id = mids[i]
+    if (!mempty[id]) continue
+    if (mstatus[id] == "DONE" || mstatus[id] == "CANCELLED" || mstatus[id] == "SUPERSEDED") continue
+    if (mblockedby[id] != "") continue
+    finding("WARN", "empty_milestone", id, "is reachable and has no issues; it is an outcome nobody is executing")
+  }
+
+  # --- the active milestone: the lowest-ranked unblocked milestone that is ACTIVE, else the
+  #     lowest-ranked unblocked one not finished. Rank comes from the milestone graph and
+  #     `order` only breaks ties inside a rank, so the roadmap can never nominate a milestone
+  #     whose prerequisites are not real. Derived; it can never contradict what is underneath.
   best = ""; bestord = ""
   for (pass = 1; pass <= 2; pass++) {
     for (i = 1; i <= mn; i++) {
       id = mids[i]
       if (mstatus[id] == "DONE" || mstatus[id] == "CANCELLED") continue
       if (pass == 1 && mstatus[id] != "ACTIVE") continue
-      o = m[id, "order"] + 0
+      if (mblockedby[id] != "") continue
+      o = (mrank[id] + 0) * 1000000 + (m[id, "order"] + 0)
       if (best == "" || o < bestord) { best = id; bestord = o }
     }
     if (best != "") break
@@ -196,7 +282,11 @@ END {
   print "P", clean(pkey["name"]), clean(pkey["repository"]), clean(pkey["default_branch"]), best
   for (i = 1; i <= mn; i++) {
     id = mids[i]
-    print "M", id, mstatus[id], m[id, "order"], m[id, "priority"], clean(m[id, "title"]), m[id, "slug"], mrow[id]
+    mdl = ""; for (k = 1; k <= mdepn[id]; k++) if ((id SUBSEP mdep[id, k]) in medge) mdl = mdl (mdl == "" ? "" : ",") mdep[id, k]
+    mcl = ""; for (k = 1; k <= mclaimn[id]; k++) mcl = mcl (mcl == "" ? "" : ",") mclaim[id, k]
+    mrd = ""; for (k = 1; k <= moutn[id]; k++) mrd = mrd (mrd == "" ? "" : ",") mout[id, k]
+    print "M", id, mstatus[id], m[id, "order"], m[id, "priority"], clean(m[id, "title"]), m[id, "slug"], mrow[id], \
+          m[id, "version"], mrank[id] + 0, mdl, mblockedby[id], mrd, mcl
   }
   for (i = 1; i <= inum; i++) {
     id = iids[i]
@@ -209,6 +299,8 @@ END {
   for (w = 0; w < waves; w++) if (waveline[w] != "") print "W", w, waveline[w]
   n = asortish(edges, en)
   for (k = 1; k <= n; k++) { split(edges[k], p, "\t"); print "G", p[1], p[2] }
+  n = asortish(medges, men)
+  for (k = 1; k <= n; k++) { split(medges[k], p, "\t"); print "R", p[1], p[2] }
   for (k = 1; k <= vn; k++) print vrec[k]
 }
 

@@ -1,0 +1,30 @@
+id: routing-recommendations
+title: Routing recommendations derived from measured cost
+slug: routing-recommendations
+version: "0.5"
+order: 50
+priority: p3
+problem: "Choosing which capability to send a task to is currently a judgement nobody can check. A recommendation not derived from measured outcomes is an opinion with a command around it."
+outcome: "The profile a task should run under is recommended from measured cost per accepted outcome, and the recommendation names the data it came from."
+current_state: "Not started, and gated on cost per accepted outcome existing at all."
+desired_state: "A worker can ask which profile a class of task should use and get an answer traceable to measurements."
+scope:
+  - lib
+non_scope:
+  - Automatic routing without a person's decision
+acceptance_criteria:
+  - Every recommendation names the measurements it was derived from
+  - Insufficient data produces no recommendation rather than a weak one
+  - The recommendation is advisory and never silently changes a profile
+validation:
+  - bash test/run.sh
+evidence_required:
+  - suite
+depends_on:
+  - cost-per-accepted-outcome
+claims:
+  - routing
+risks:
+  - "A recommendation that is followed becomes a cause of the data that justifies it."
+created_at: 2026-09-04
+updated_at: 2026-09-04

@@ -59,7 +59,7 @@ REPO="$(mj_pj_repository)"
 render_body() {
   local id="$1" tmp sha
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.gh.XXXXXX")"
-  if [ "${id#M}" != "$id" ]; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
+  if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
   sha="$(mj_sha256 "$tmp" | cut -c1-16)"
   printf -- '<!-- majordomus:begin %s -->\n' "$sha"
   cat "$tmp"
@@ -69,10 +69,10 @@ render_body() {
 canonical_hash() {
   local id="$1" tmp sha
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.gh.XXXXXX")"
-  if [ "${id#M}" != "$id" ]; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
+  if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
   sha="$(mj_sha256 "$tmp" | cut -c1-16)"; rm -f "$tmp"; printf '%s' "$sha"
 }
-title_of()  { if [ "${1#M}" != "$1" ]; then printf '%s — %s' "$1" "$(mj_pj_m_title "$1")"; else printf '%s — %s' "$1" "$(mj_pj_i_title "$1")"; fi; }
+title_of()  { if mj_pj_is_milestone "$1"; then printf '%s — %s' "$1" "$(mj_pj_m_title "$1")"; else printf '%s — %s' "$1" "$(mj_pj_i_title "$1")"; fi; }
 state_of()  { case "$(mj_pj_i_status "$1")" in DONE|CANCELLED) printf 'closed' ;; *) printf 'open' ;; esac; }
 labels_of() {
   local id="$1" st; st="$(mj_pj_i_status "$id")"
@@ -158,7 +158,7 @@ region_edited() {
 canonical_region_hash() {
   local id="$1" tmp h
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.cr.XXXXXX")"
-  if [ "${id#M}" != "$id" ]; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
+  if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
   h="$(mj_sha256 "$tmp" | cut -c1-16)"; rm -f "$tmp"; printf '%s' "$h"
 }
 
@@ -223,7 +223,7 @@ for id in $(selected_issues); do
     tmp="$(mktemp "${TMPDIR:-/tmp}/mj.body.XXXXXX")"
     hostf="$(mktemp "${TMPDIR:-/tmp}/mj.host.XXXXXX")"; printf '%s\n' "$remote" > "$hostf"
     bodyf="$(mktemp "${TMPDIR:-/tmp}/mj.reg.XXXXXX")"
-    if [ "${id#M}" != "$id" ]; then mj_plan_body_milestone "$id" > "$bodyf"; else mj_plan_body_issue "$id" > "$bodyf"; fi
+    if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" > "$bodyf"; else mj_plan_body_issue "$id" > "$bodyf"; fi
     mj_region_splice "$hostf" "$bodyf" "$(canonical_hash "$id")" > "$tmp"
     gh issue edit "$num" --repo "$REPO" --body-file "$tmp" >/dev/null
     [ "$want_state" = closed ] && gh issue close "$num" --repo "$REPO" >/dev/null 2>&1 || true
