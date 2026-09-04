@@ -83,4 +83,13 @@ HTML
 t="$(title_of "http://127.0.0.1:$PORT/d.html")"
 printf '%s' "$t" | grep -q 'dropdown=true' && ok dropdown "navigation dropdown opens via Flowbite" || bad dropdown "dropdown did not open ($t)"
 
-printf 'site-probe: %s failure(s) with %s\n' "$fails" "$CHROME"; [ "$fails" = 0 ] && exit 0 || exit 10
+# A sample that passes is not a verdict about the site. Saying which question was answered
+# costs one line and stops "ok" from being read as a claim about every route: a --quick run
+# passed once and the full run then found an overflow on a page the sample never opened.
+if [ "$QUICK" = 1 ]; then
+  printf 'site-probe: %s failure(s) with %s — sampled %s of %s routes; a clean --quick is not a clean site, run without --quick before claiming one\n' \
+    "$fails" "$CHROME" "$(printf '%s\n' "$routes" | wc -l | tr -d ' ')" "$(cd "$WORK/out" && find . -name index.html | wc -l | tr -d ' ')"
+else
+  printf 'site-probe: %s failure(s) with %s — every route\n' "$fails" "$CHROME"
+fi
+[ "$fails" = 0 ] && exit 0 || exit 10
