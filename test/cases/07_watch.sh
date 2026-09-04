@@ -1,3 +1,5 @@
+# majordomus-covers: watch
+# majordomus-negative: watch
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 expect_exit 11 "$MJ" watch

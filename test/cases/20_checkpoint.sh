@@ -1,3 +1,5 @@
+# majordomus-covers: checkpoint
+# majordomus-negative: checkpoint
 # Checkpoints: creation, the cap that distinguishes them from handovers, computed identity,
 # task association, resolution, and the ledger record that makes them visible to history.
 . "$ROOT/test/lib.sh"

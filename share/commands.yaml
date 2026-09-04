@@ -1,0 +1,354 @@
+# The command registry: what the public command surface is, and what each command does to
+# the repository. Shipped with the tool, beside share/doctrines.yaml — a command is a
+# statement about how Majordomus behaves, and a repository configures the tool without
+# redefining it.
+#
+# This file is authority for reference semantics: category, class, what a command reads and
+# writes, which exit codes it can produce, and which page and demonstration represent it.
+# bin/majordomus remains authority for what actually executes. Neither derives from the
+# other; `majordomus doctor` proves they agree and reports the difference.
+#
+# visibility:
+#   public    listed in `majordomus --help`; owed a page, a demonstration and test coverage
+#   internal  dispatched but absent from the help text, with the reason recorded below
+# A command is public exactly when the usage text lists it. There is no third state and no
+# way to be dispatched, undocumented and unmeasured at the same time.
+#
+# class:
+#   read-only                    writes nothing under .majordomus/ and nothing in the worktree
+#   state-mutating               writes durable records under .majordomus/state/
+#   generated-output-mutating    rewrites generated artifacts outside .majordomus/state/
+#
+# requires_task:
+#   required  refuses without an active task
+#   optional  behaves differently with and without one, and says which
+#   none      never reads the task record
+#
+# Fields are read, not decorative. `reads` and `writes` drive the page's Reads and Writes
+# sections; `exit_codes` is reconciled against the MJ_EX_* constants each lib file
+# references; `demo` names the component that must exist; `stage` places the command on the
+# lifecycle the pages draw. Tests are not listed here — they declare which command they
+# cover, and coverage is computed rather than written down.
+version: 1
+
+# The lifecycle a task moves through. Commands name a stage; the stage list is written once.
+stages:
+  - id: setup
+    title: Set up
+  - id: begin
+    title: Begin
+  - id: work
+    title: Work
+  - id: verify
+    title: Verify
+  - id: conclude
+    title: Conclude
+  - id: inspect
+    title: Inspect
+
+commands:
+  - id: init
+    title: init
+    summary: Set up .majordomus/ in this repository, and refuse to overwrite an existing one.
+    category: system
+    stage: setup
+    visibility: public
+    class: generated-output-mutating
+    requires_repository: true
+    requires_installed: false
+    requires_task: none
+    json: false
+    syntax: majordomus init [--force] [--gitignore]
+    reads: [share/skeleton]
+    writes: [.majordomus/policy.yaml, .majordomus/profiles/, .majordomus/templates/, .majordomus/providers/, .majordomus/prompts/, .majordomus/state/, .majordomus/generated/, .gitignore]
+    exit_codes: [0, 2, 13, 15]
+    demo: init-refusal
+    note: The only command that runs before .majordomus/ exists. It never touches state/, including under --force.
+
+  - id: update
+    title: update
+    summary: Regenerate every provider instruction file from the one policy, deterministically.
+    category: system
+    stage: setup
+    visibility: public
+    class: generated-output-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: false
+    syntax: majordomus update [--dry-run] [--diff <target>] [--force]
+    reads: [.majordomus/policy.yaml, .majordomus/profiles/, .majordomus/providers/, .majordomus/generated/fingerprints.yaml]
+    writes: [projections[].target, .majordomus/generated/fingerprints.yaml, .majordomus/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12, 15]
+    demo: projection-fingerprint
+    note: Running it twice leaves the byte-identical file. A target whose hash matches neither its fingerprint nor the new output is a hand edit, and is refused rather than overwritten.
+
+  - id: doctor
+    title: doctor
+    summary: Is Majordomus itself healthy, and is every enforcement it declares actually wired here?
+    category: system
+    stage: inspect
+    visibility: public
+    class: read-only
+    requires_repository: true
+    requires_installed: true
+    requires_task: optional
+    json: true
+    syntax: majordomus doctor [--json]
+    reads: [.majordomus/policy.yaml, .majordomus/profiles/, .majordomus/generated/fingerprints.yaml, git hooks, .majordomus/state/, share/doctrines.yaml]
+    writes: []
+    exit_codes: [0, 2, 10, 12]
+    demo: doctor-findings
+    note: The primary guarantee is wiring reconciliation — a declared enforcement that no hook invokes, or whose exit code a hook swallows, is a failure rather than a passing line.
+
+  - id: watch
+    title: watch
+    summary: What has drifted since the last update — policy, projections, state, retention.
+    category: system
+    stage: inspect
+    visibility: public
+    class: read-only
+    requires_repository: true
+    requires_installed: true
+    requires_task: optional
+    json: true
+    syntax: majordomus watch [--json]
+    reads: [.majordomus/policy.yaml, .majordomus/generated/fingerprints.yaml, .majordomus/state/current.yaml, .majordomus/state/]
+    writes: []
+    exit_codes: [0, 2, 10, 11]
+    demo: drift-timeline
+    note: Exits 11 for drift, never 10. Drift is information, and no hook blocks on it.
+
+  - id: start
+    title: start
+    summary: Begin one scoped task under a profile, and refuse while another is active.
+    category: task
+    stage: begin
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: false
+    syntax: majordomus start "<task>" --scope <path>[,<path>...] [--profile <name>] [--owner <who>]
+    reads: [.majordomus/policy.yaml, .majordomus/profiles/, .majordomus/state/current.yaml, git worktree list]
+    writes: [.majordomus/state/current.yaml, .majordomus/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12, 15]
+    demo: start-scope
+    note: One active task per checkout. Scope paths are normalised, and overlap with other worktrees' active tasks is reported rather than refused.
+
+  - id: context
+    title: context
+    summary: What the next worker needs to know now, in authority order and within a budget.
+    category: continuity
+    stage: work
+    visibility: public
+    class: read-only
+    requires_repository: true
+    requires_installed: true
+    requires_task: optional
+    json: true
+    syntax: majordomus context [--for <provider>] [--prompt <name>] [--budget-lines <n>] [--json]
+    reads: [git identity, .majordomus/state/current.yaml, .majordomus/profiles/, .majordomus/state/open-questions.md, .majordomus/state/decisions.md, .majordomus/state/checkpoints/, .majordomus/state/handovers/, .majordomus/state/ledger.jsonl, .majordomus/prompts/]
+    writes: []
+    exit_codes: [0, 2, 10, 12]
+    demo: context-selection
+    note: Names everything it excluded and why. Exits 10 only when the sections that cannot be dropped already exceed the budget.
+
+  - id: checkpoint
+    title: checkpoint
+    summary: Record compact progress inside the active task, so the next worker does not start over.
+    category: continuity
+    stage: work
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: required
+    json: false
+    syntax: majordomus checkpoint < body.md
+    reads: [.majordomus/policy.yaml, .majordomus/state/current.yaml]
+    writes: [.majordomus/state/checkpoints/, .majordomus/state/current.yaml, .majordomus/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12, 13, 15]
+    demo: checkpoint-record
+    note: A progress note, not a report. A body over the policy's line cap is refused with the advice to write a handover instead, and identity fields in the body are rejected because they are computed from git.
+
+  - id: handover
+    title: handover
+    summary: Write an append-only continuation record, and resolve the most relevant prior one.
+    category: continuity
+    stage: conclude
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: optional
+    json: false
+    syntax: majordomus handover [--close] [--no-task] < body.md
+    reads: [.majordomus/policy.yaml, .majordomus/state/current.yaml, .majordomus/state/handovers/, .majordomus/state/ledger.jsonl]
+    writes: [.majordomus/state/handovers/, .majordomus/state/current.yaml, .majordomus/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12, 13]
+    demo: handover-transfer
+    note: Resolution is scoped to this worktree and branch and reports absence rather than returning a stale match from elsewhere. The body carries the sections the policy requires and no transcript.
+
+  - id: check
+    title: check
+    summary: Is the current task still consistent with its policy, its scope and this checkout?
+    category: task
+    stage: verify
+    visibility: public
+    class: read-only
+    requires_repository: true
+    requires_installed: true
+    requires_task: required
+    json: true
+    syntax: majordomus check [--explain] [--overlap] [--checkpoint] [--json]
+    reads: [.majordomus/policy.yaml, .majordomus/profiles/, .majordomus/state/current.yaml, .majordomus/state/open-questions.md, git status, git diff]
+    writes: []
+    exit_codes: [0, 2, 10, 12]
+    demo: check-findings
+    note: Read-only unless --checkpoint is given, which records a checkpoint after the checks run.
+
+  - id: finish
+    title: finish
+    summary: Evaluate the finish contract and refuse the outcome if any line of it is unmet.
+    category: task
+    stage: conclude
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: optional
+    json: true
+    syntax: majordomus finish --outcome <completed|partial|blocked|no_match|failed> [--verify-command "<cmd>"] [--note <file>]
+    reads: [.majordomus/policy.yaml, .majordomus/profiles/, .majordomus/state/current.yaml, .majordomus/state/open-questions.md, .majordomus/state/handovers/, git status, git diff]
+    writes: [.majordomus/state/current.yaml, .majordomus/state/archive/, .majordomus/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12, 15]
+    demo: finish-contract
+    note: --check evaluates without writing and exits 0 when no task is active, so a pre-push hook never blocks a repository with nothing to enforce.
+
+  - id: history
+    title: history
+    summary: Read the append-only ledger back, filtered by task, event or time.
+    category: memory
+    stage: inspect
+    visibility: public
+    class: read-only
+    requires_repository: true
+    requires_installed: true
+    requires_task: optional
+    json: true
+    syntax: majordomus history [--task <id>] [--event <name>] [--since <n>m|h|d] [--limit <n>|--all] [--json]
+    reads: [.majordomus/state/ledger.jsonl]
+    writes: []
+    exit_codes: [0, 2, 10, 13, 15]
+    demo: history-filter
+    note: --validate reports malformed lines and exits 10. --rotate archives old lines and is the one subcommand that writes; it never deletes and refuses while under the cap.
+
+  - id: decision
+    title: decision
+    summary: Record a decision that was made between real alternatives, with its reason, and read them back.
+    category: memory
+    stage: work
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: optional
+    json: false
+    syntax: majordomus decision add "<what was decided>" --why "<rationale>"
+    reads: [.majordomus/state/current.yaml, .majordomus/state/decisions.md]
+    writes: [.majordomus/state/decisions.md, .majordomus/state/ledger.jsonl]
+    exit_codes: [0, 2, 12]
+    demo: decision-record
+    note: An entry is never edited or deleted. --supersedes records that a later decision replaced an earlier one, leaving both readable.
+
+  - id: question
+    title: question
+    summary: Open a question that blocks acceptance, resolve it, and list what is still open.
+    category: memory
+    stage: work
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: required
+    json: false
+    syntax: majordomus question add "<question>"
+    reads: [.majordomus/state/current.yaml, .majordomus/state/open-questions.md]
+    writes: [.majordomus/state/open-questions.md, .majordomus/state/ledger.jsonl]
+    exit_codes: [0, 2, 12]
+    demo: question-gate
+    note: Every unresolved entry for the active task refuses finish --outcome completed. That is the whole point of the command; it is a gate, not a notebook.
+
+  - id: prompt
+    title: prompt
+    summary: List, show and render the repository's own prompt assets, substituting known tokens only.
+    category: memory
+    stage: work
+    visibility: public
+    class: read-only
+    requires_repository: true
+    requires_installed: true
+    requires_task: optional
+    json: true
+    syntax: majordomus prompt list
+    reads: [.majordomus/prompts/, .majordomus/state/current.yaml, .majordomus/state/decisions.md, .majordomus/state/handovers/]
+    writes: []
+    exit_codes: [0, 2, 10, 12]
+    demo: prompt-render
+    note: An unknown token, or a block token used inline, is an error rather than a literal left in the output.
+
+  - id: search
+    title: search
+    summary: Find a durable record without reading all of them, in authority order.
+    category: memory
+    stage: inspect
+    visibility: public
+    class: read-only
+    requires_repository: true
+    requires_installed: true
+    requires_task: optional
+    json: true
+    syntax: majordomus search "<text>" [--kind <kind>] [--task <id>] [--limit <n>] [--json]
+    reads: [.majordomus/state/handovers/, .majordomus/state/checkpoints/, .majordomus/state/decisions.md, .majordomus/state/open-questions.md, .majordomus/prompts/, .majordomus/state/ledger.jsonl]
+    writes: []
+    exit_codes: [0, 2, 12]
+    demo: search-kinds
+    note: Literal search, not a regular expression. Exits 12 when nothing matches, so a caller can distinguish absence from failure.
+
+  - id: version
+    title: version
+    summary: Print the version, without needing a repository or an installation.
+    category: system
+    stage: inspect
+    visibility: public
+    class: read-only
+    requires_repository: false
+    requires_installed: false
+    requires_task: none
+    json: false
+    syntax: majordomus version
+    reads: []
+    writes: []
+    exit_codes: [0]
+    demo: version-string
+    note: The string every other surface derives its version from. It runs before anything is installed, which is why it is dispatched ahead of the option parser.
+
+  - id: help
+    title: help
+    summary: Print the usage text, which is the list of every public command.
+    category: system
+    stage: inspect
+    visibility: internal
+    class: read-only
+    requires_repository: false
+    requires_installed: false
+    requires_task: none
+    json: false
+    syntax: majordomus --help
+    reads: []
+    writes: []
+    exit_codes: [0]
+    demo: none
+    note: Internal because the usage text does not list it, and a command is public exactly when the usage text lists it. It has no behaviour of its own — it prints the surface every other page documents — so it is owed no page of its own.

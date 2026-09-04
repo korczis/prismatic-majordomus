@@ -1,3 +1,5 @@
+# majordomus-covers: doctor
+# majordomus-negative: doctor
 . "$ROOT/test/lib.sh"
 # A git hook is commonly a dispatcher that runs every executable in <hook>.d/. The
 # invocation then lives in one of those files, and doctor has to follow it there.

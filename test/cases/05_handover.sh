@@ -1,3 +1,5 @@
+# majordomus-covers: handover
+# majordomus-negative: handover start
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base

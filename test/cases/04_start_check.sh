@@ -1,3 +1,5 @@
+# majordomus-covers: start check
+# majordomus-negative: start check
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib/auth lib/other && echo x > lib/auth/a.txt && echo y > lib/other/b.txt && git add . && git commit -qm base

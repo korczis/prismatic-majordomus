@@ -1,3 +1,5 @@
+# majordomus-covers: prompt search
+# majordomus-negative: prompt search context doctor watch
 # Prompt assets and search: discovery, safe rendering with a closed token set, refusal of
 # anything outside it, and literal retrieval across the record kinds in authority order.
 . "$ROOT/test/lib.sh"

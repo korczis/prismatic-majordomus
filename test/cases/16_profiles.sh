@@ -1,3 +1,5 @@
+# majordomus-covers: start finish
+# majordomus-negative: start finish
 . "$ROOT/test/lib.sh"
 # Every profile a fresh install ships is runnable, its axes reach the worker's view of
 # the task, and the verification it declares is actually enforced by finish. A loop

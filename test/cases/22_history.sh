@@ -1,3 +1,5 @@
+# majordomus-covers: history
+# majordomus-negative: history doctor watch
 # History: the ledger read back. Ordering, filters, the JSON form, validation of malformed
 # lines, and rotation that archives without deleting.
 . "$ROOT/test/lib.sh"

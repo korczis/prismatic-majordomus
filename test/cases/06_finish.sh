@@ -1,3 +1,5 @@
+# majordomus-covers: finish
+# majordomus-negative: finish
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib test && echo a > lib/a && echo t > test/a_test && git add . && git commit -qm base

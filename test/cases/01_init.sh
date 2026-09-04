@@ -1,3 +1,5 @@
+# majordomus-covers: init
+# majordomus-negative: init
 . "$ROOT/test/lib.sh"
 expect_exit 0 "$MJ" init
 [ -f .majordomus/policy.yaml ]; [ -f .majordomus/profiles/debugging.yaml ]
