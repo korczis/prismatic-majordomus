@@ -6,7 +6,7 @@
 
 SUBS="$(grep -oE '^    [a-z|]+\) sub="\$1"' "$ROOT/lib/plan.sh" | sed -E 's/^ *//; s/\).*//' | tr '|' '\n' | sed '/^$/d')"
 [ -n "$SUBS" ] || { echo "    the subcommand table in lib/plan.sh changed shape; update this case"; exit 1; }
-for s in validate status list show ready blocked waves graph next body start verify evidence done; do
+for s in validate status list show ready blocked waves graph next body start verify evidence "done"; do
   printf '%s\n' "$SUBS" | grep -qx "$s" || { echo "    plan lost the $s subcommand"; exit 1; }
 done
 
@@ -84,7 +84,7 @@ expect_grep "unknown evidence type 'nonsense'"
 grep -q '"event":"plan_start"' .majordomus/state/ledger.jsonl || { echo "    plan start wrote no ledger event"; exit 1; }
 "$MJ" plan evidence I0001 --covers proof --type test --command "true" --result ok >/dev/null
 grep -q '"event":"plan_evidence"' .majordomus/state/ledger.jsonl || { echo "    plan evidence wrote no ledger event"; exit 1; }
-"$MJ" plan done I0001 >/dev/null
+"$MJ" plan "done" I0001 >/dev/null
 grep -q '"event":"plan_done"' .majordomus/state/ledger.jsonl || { echo "    plan done wrote no ledger event"; exit 1; }
 expect_exit 0 "$MJ" history --validate
 

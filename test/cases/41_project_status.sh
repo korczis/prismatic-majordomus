@@ -33,7 +33,7 @@ expect_exit 0 "$MJ" plan verify I0001
 [ "$(pj_status I0001)" = VERIFY ] || { echo "    I0001 should be VERIFY, is $(pj_status I0001)"; exit 1; }
 
 # --- DONE is gated on evidence, not on a claim
-expect_exit 10 "$MJ" plan done I0001
+expect_exit 10 "$MJ" plan "done" I0001
 expect_grep 'I0001 has no evidence for: proof'
 [ "$(pj_status I0001)" = VERIFY ] || { echo "    a refused done must not change the status"; exit 1; }
 
@@ -46,7 +46,7 @@ expect_exit 2 "$MJ" plan evidence I0001 --covers proof --type test --result "it 
 expect_grep 'narrative is not evidence'
 
 expect_exit 0 "$MJ" plan evidence I0001 --covers proof --type test --command "true" --result "exit 0"
-expect_exit 0 "$MJ" plan done I0001
+expect_exit 0 "$MJ" plan "done" I0001
 [ "$(pj_status I0001)" = DONE ] || { echo "    I0001 should be DONE, is $(pj_status I0001)"; exit 1; }
 
 # --- the graph recomputes: what was blocked is now ready, and the tool says so unprompted

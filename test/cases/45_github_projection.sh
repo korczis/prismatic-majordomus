@@ -24,7 +24,7 @@ expect_grep 'status:blocked'
 # --- GitHub state is derived from canonical status, not from anything on GitHub
 "$MJ" plan start I0001 >/dev/null
 "$MJ" plan evidence I0001 --covers proof --type test --command "true" --result ok >/dev/null
-"$MJ" plan done I0001 >/dev/null
+"$MJ" plan "done" I0001 >/dev/null
 expect_exit 0 "$SYNC" --plan
 expect_grep 'I0001 +closed +DONE'
 expect_grep 'I0002 +open +READY'

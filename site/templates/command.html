@@ -5,7 +5,7 @@
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
     <p class="mb-6 text-sm text-body-subtle">{% if c.read_only %}<span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span> {% endif %}Rendered from <a href="{{ project.repository_url }}/blob/master/docs/CLI.md" class="font-mono hover:underline">docs/CLI.md</a>.</p>
-    <article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ c.doc_md | markdown | safe }}</article>
+    <article class="format break-words [&_code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ c.doc_md | markdown | safe }}</article>
     {%- set caps = load_data(path="data/generated/capabilities.json") -%}
     {%- set mine = [x for x in caps.claims if x.command == c.name] -%}
     {%- if mine | length > 0 -%}
