@@ -160,6 +160,16 @@
       "external": false
     },
     {
+      "id": ".majordomus/state/session-current.yaml",
+      "kind": "artifact",
+      "label": "state/session-current.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".majordomus/profiles",
       "kind": "artifact",
       "label": "profiles",
@@ -360,16 +370,6 @@
       "external": false
     },
     {
-      "id": ".majordomus/state/session-current.yaml",
-      "kind": "artifact",
-      "label": "state/session-current.yaml",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": ".majordomus/state/sessions",
       "kind": "artifact",
       "label": "state/sessions",
@@ -434,6 +434,11 @@
     {
       "source": "lib/common.sh",
       "target": ".majordomus/state/current.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".majordomus/state/session-current.yaml",
       "kind": "reads"
     },
     {
@@ -514,6 +519,11 @@
     {
       "source": "lib/prompt.sh",
       "target": ".majordomus/state/open-questions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": ".majordomus/state/ledger.jsonl",
       "kind": "reads"
     },
     {
@@ -737,6 +747,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/session.sh",
+      "target": "lib/project.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/start.sh",
       "target": "lib/check.sh",
       "kind": "sources"
@@ -933,11 +948,6 @@
     },
     {
       "source": "lib/session.sh",
-      "target": ".majordomus/state/session-current.yaml",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/session.sh",
       "target": ".majordomus/state/sessions",
       "kind": "uses"
     },
@@ -1014,6 +1024,11 @@
     {
       "source": "lib/project.sh",
       "target": ".majordomus/project/milestones",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": ".majordomus/state/session-current.yaml",
       "kind": "writes"
     },
     {

@@ -352,6 +352,35 @@ nothing else; every other record is written exactly as before.
   is written down.
 - `status` prints the open session with the divergence label of the commit it opened at,
   or reports that there is none. Read-only. Absence is an answer, not a failure.
+- `close [--outcome closed|interrupted]` closes the episode into an immutable record under
+  `state/sessions/` and removes the open one. An authored summary may arrive on stdin and
+  is optional; identity fields in it are refused, as they are in a checkpoint.
+
+**The closed record is an envelope of references.** It names the tasks, issues, milestones,
+checkpoints, handovers, decisions, questions and evidence of the episode, and copies the
+body of none of them. It also carries the commits between the opening and closing commit —
+or the single entry `diverged` when the opening commit is no longer an ancestor, because a
+list computed across a history that no longer connects is a fiction.
+
+**The lists are derived at close, not accumulated while the session is open.** No other
+command knows sessions exist: `checkpoint`, `decision`, `question` and `plan` are
+unchanged. The references are read out of the ledger, which is already append-only, already
+written only by Majordomus, and already validated.
+
+**Selection is by the session stamp on each ledger line, not by a time range.** Every line
+carries the session that wrote it, next to the commit and branch it already carried. A time
+range was implemented first and was wrong the first time it ran: the ledger is one file per
+repository, two workers were writing to it, and no timestamp separates them, so one
+episode's envelope claimed the other's tasks, checkpoints and handovers. A line with no
+session belongs to no episode — sessions are optional, and work done outside one is
+attributed to nobody rather than to whoever had a session open nearby.
+
+`--outcome` takes `closed` or `interrupted`. Both are self-reported and neither is
+verified; `interrupted` exists because "this episode was cut short and its records may be
+incomplete" is the one thing about an ended session that changes what somebody does next.
+
+Exit `12` with no open session, `10` when the summary carries identity fields, `15` when
+the open record belongs to another checkout.
 
 **Writes:** `state/session-current.yaml`, mode `0600`, written atomically, and one
 `session.started` line in the ledger. `session_id`, `repository_id`, `worktree`, `branch`,
@@ -378,6 +407,11 @@ next: majordomus plan next; majordomus context; majordomus session close when th
 
 $ majordomus session start
 majordomus: session s-20260904153733-fc51 is open here since 2026-09-04T15:37:33Z; run majordomus session close first
+
+$ majordomus session close <<'EOF'
+The extraction boundary and the session schema landed; the compiler's discovery stage is next.
+EOF
+.majordomus/state/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
 ```
 
 ## `majordomus checkpoint`

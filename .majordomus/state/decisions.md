@@ -121,3 +121,11 @@ Why: an open session carries nothing another checkout needs — unlike a task re
 Rejected: tracking it for symmetry with current.yaml, which reproduces a hazard already observed in this repository: a stale committed task record blocked every worktree until somebody closed it by hand
 Evidence: .gitignore, and the foreign-record path in lib/session.sh with its case in test/cases/60_session_lifecycle.sh, which keeps the defence in place for anyone who commits one anyway
 Supersedes: -
+
+## 2026-09-04 — Every ledger line carries the session that wrote it, and the envelope selects by that stamp rather than by a time range
+Task: t-20260904172432-445e
+Head: 7ca51d2ce8c108364866050a7b9ca0ce5dd01d88
+Why: the first real run of the time-window implementation collected another worker's tasks, checkpoints and handovers, because the ledger is one file per repository and nothing in a timestamp tells two concurrent workers apart; which episode wrote an event is a fact the machine knows at write time, so it is recorded like head and branch rather than reconstructed afterwards
+Rejected: selecting every line from the session's own start event to the end of the ledger, which is what produced the misattribution; and filtering that window by branch, which would be right until a worker changed branch mid-episode and would then silently drop its own later events
+Evidence: test/cases/61_session_envelope.sh — the regression section injects an event stamped by another session and one stamped by none; the mutation back to a time window was run and the case fails on it, at the assertion that a second episode must not inherit the first one's checkpoints
+Supersedes: -
