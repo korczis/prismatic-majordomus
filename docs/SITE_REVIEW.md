@@ -47,7 +47,7 @@ claim pages is: Majordomus declares scope up front, detects a file outside it at
 | tagline, problem evidence, what it does, what it is not, limitations, roadmap | `README.md` by heading | `readme.json` |
 | profiles | `share/skeleton/profiles/*.yaml` | `profiles.json` |
 | policy | `share/skeleton/policy.yaml` | `policy.json` |
-| the ten principles | `share/skeleton/providers/body.md` | `lifecycle.json` |
+| the ten principles | `share/standard/majordomus/rules/principle-*.md` | `lifecycle.json` |
 | outcomes | `lib/finish.sh` | `lifecycle.json` |
 | claims and their status | `docs/CLAIMS.yaml` | `capabilities.json`, `docs/SITE_CLAIMS.md` |
 | claim detail | `docs/claims/<id>.md` | claim page bodies |
@@ -57,7 +57,7 @@ claim pages is: Majordomus declares scope up front, detects a file outside it at
 | marketing copy | `site/data/marketing.toml` | homepage leads |
 
 Nothing on the site is parsed from `CLAUDE.md` or `AGENTS.md`; those are themselves
-projections of `share/skeleton/providers/body.md`.
+projections of the seeded workflows under `share/skeleton/ai/repo/workflows/`.
 
 ## Validation performed
 

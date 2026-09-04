@@ -23,7 +23,7 @@ usage: majordomus history [--task <id>] [--event <name>] [--since <n>m|h|d|<time
                           [--limit <n>|--all] [--json]
        majordomus history --validate
        majordomus history --rotate
-  reads .majordomus/state/ledger.jsonl, oldest line first, newest --limit lines (default 20)
+  reads .ai/local/state/ledger.jsonl, oldest line first, newest --limit lines (default 20)
   --json      the matching ledger lines verbatim, one JSON object per line
   --validate  report malformed ledger lines; exit 10 when any is found
   --rotate    move all but the newest ledger.retention_max_lines lines into

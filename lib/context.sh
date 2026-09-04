@@ -37,7 +37,7 @@ usage: majordomus context [--for <provider>] [--prompt <name>] [--budget-lines <
   questions, recent decisions, the newest checkpoint, the most relevant handover, recent
   history — as far as the policy's context.builder_budget_lines allows, in that order
   --for      wrap the same body for one provider named in the policy's projections
-  --prompt   append a rendered prompt asset from .majordomus/prompts/
+  --prompt   append a rendered prompt asset from .ai/repo/prompts/
   read-only: writes nothing, records nothing, calls no model
   exit 0 normally, 10 when the sections that cannot be dropped already exceed the budget
 H

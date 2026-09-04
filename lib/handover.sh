@@ -14,7 +14,7 @@ mj_cmd_handover() {
 usage: majordomus handover [--close] [--no-task] < body.md
        majordomus handover --resolve [--task <id>] [--path]
        majordomus handover --list
-  writes .majordomus/state/handovers/<ts>--<branch>--<head>--<rand>.md (mode 0600, atomic, never staged)
+  writes .ai/local/state/handovers/<ts>--<branch>--<head>--<rand>.md (mode 0600, atomic, never staged)
   body needs these non-empty level-one headings: the policy's handover.required_sections
   --close     also mark the active task handed_over so a new task may start
   --no-task   allow writing without an active task

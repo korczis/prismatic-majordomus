@@ -13,6 +13,42 @@ Conventions:
 
 ---
 
+## `.ai/manifest.yaml`
+
+The section registry of the repository's AI layer. Discovery reads this file and never
+walks `.ai/`; a file under `repo/` that no section covers is not context and carries no
+authority. `init` writes it from the skeleton; the format version is what an executable
+checks before reading anything else, and one it does not read is refused with the reason.
+
+```yaml
+schema: ai-repository/v1
+
+repo:
+  path: repo              # tracked canonical context
+local:
+  path: local             # this checkout's own; ignored by git
+  tracked: false
+  implicit_context: false
+
+sections:                 # relative to .ai/; each one resolves to a path the tool reads
+  policy: repo/policy.yaml
+  profiles: repo/profiles
+  rules: repo/rules
+  prompts: repo/prompts
+  skills: repo/skills
+  workflows: repo/workflows
+  knowledge: repo/knowledge
+  adrs: repo/adrs
+  project: repo/project
+```
+
+Every key is required except that `project` may resolve to a directory that does not
+exist, which is a repository with no plan. Unknown keys are errors (`share/allow/manifest.txt`).
+`doctor` fails when a section the manifest names is absent, when `local/` is not ignored
+or carries a tracked file, or when pre-.ai project data still sits under `.majordomus/`.
+
+---
+
 ## `.ai/repo/policy.yaml`
 
 The one canonical, provider-neutral policy.
@@ -220,6 +256,32 @@ The allowed keys are `share/allow/rule.txt`; any other key is an error. `majordo
 verifies every one of those constraints against the source, that the vendored package
 matches its manifest, and additionally that no `mj_validate_*` function exists which no
 rule declares.
+## `.ai/repo/rules/vendor/majordomus/manifest.yaml`
+
+The package manifest: every rule file the vendored baseline holds, its identity and the
+hash of the file. Written by `init` and by `majordomus rules vendor update`, never by
+hand; `doctor` fails when a listed file is absent, differs from its hash, declares another
+identity, or when a file under `rules/` is not listed.
+
+```yaml
+vendor: majordomus
+package: majordomus-standard-rules
+version: 1
+format: ai-rules/v1
+source_revision: 0.1.0          # the executable version the package was taken from
+rules:
+  - id: majordomus.scope-integrity
+    version: 1
+    file: rules/scope-integrity.v1.md
+    sha256: 6b737b27...
+```
+
+The same manifest describes the package the distribution ships in
+`share/standard/majordomus/`; `rules vendor status` compares the two and reports a newer
+distribution package without applying it.
+
+---
+
 ## `.ai/repo/project/project.yaml`
 
 The canonical project model's root. Present only in a repository that plans through
@@ -352,7 +414,7 @@ head: 3f2a9c1e...                     # full SHA
 working_tree: dirty                   # clean | dirty
 ```
 
-`.majordomus/state/` is tracked by default, so this record travels with the branch. Another
+`.ai/local/state/` is never tracked, so this record stays with the checkout that wrote it. A copy that reaches another
 worktree on the same branch reads it and must not be held to a scope it never claimed, so
 `worktree` says which checkout the task belongs to. `check`, `finish --check` and `watch`
 report a record from another checkout and enforce nothing from it; `finish` refuses to write
@@ -593,7 +655,7 @@ issues:
 milestones:
   - M003
 checkpoints:
-  - .majordomus/state/checkpoints/20260904T161122Z--master--2c4dc6f--a1b2c3d4e5f60718.md
+  - .ai/local/state/checkpoints/20260904T161122Z--master--2c4dc6f--a1b2c3d4e5f60718.md
 handovers: []
 decisions:
   - "2026-09-04 — The session envelope is derived from the ledger, not accumulated"
@@ -705,6 +767,31 @@ itself, which the budget then pays for twice.
 
 ---
 
+## `.ai/repo/knowledge/sources.yaml`
+
+The repository's declared knowledge sources: which tracked files are knowledge, in which
+class. Discovery goes through the version-control index with the pathspec given here,
+never through a filesystem walk, so an untracked file, build output or a vendored tree is
+never a source and two machines report the same list in the same order. The tool ships
+the operational classes (the records it writes under the state directory) in
+`share/knowledge-sources.yaml`, with paths relative to that directory; a class's scope
+(`shared` or `operational`) is decided by which of the two files declared it.
+
+```yaml
+version: 1
+sources:
+  - id: policy              # the class, unique; also the order sources are reported in
+    kind: policy            # the node kind every source in this class produces
+    discovery: vcs          # the tracked files matching the pathspec
+    pathspec: ':(glob).ai/repo/policy.yaml'
+    required: true          # a class that discovers nothing is a finding, not a silence
+```
+
+Every `vcs` pathspec carries the `:(glob)` prefix so that `*` never crosses a directory
+separator and no two classes claim one file. Read back with `majordomus knowledge sources`.
+
+---
+
 ## `.ai/local/state/ledger.jsonl`
 
 Append-only. Written only by Majordomus. One JSON object per line. Retention-capped;
@@ -771,7 +858,7 @@ fresh clone carries the same evidence as the checkout that generated it.
 A file-mode target begins:
 
 ```markdown
-<!-- generated by `majordomus update` from .majordomus/policy.yaml (policy 8e1d2c3b4a5f, content 4b2f9a01c7d3e6f8) — do not edit; edit the policy and regenerate -->
+<!-- generated by `majordomus update` from .ai/repo/policy.yaml (policy 8e1d2c3b4a5f, content 4b2f9a01c7d3e6f8) — do not edit; edit the policy and regenerate -->
 ```
 
 `policy` is the hash of the policy and every profile, concatenated, at generation time.
@@ -797,7 +884,7 @@ nor the new output.
 ## Worktree coordination
 
 There is no sidecar registry. `start` and `check --overlap` read `git worktree list`
-and each worktree's own `.majordomus/state/current.yaml`. Git is the authority; nothing
+and each worktree's own `.ai/local/state/current.yaml`. Git is the authority; nothing
 can rot.
 
 ---

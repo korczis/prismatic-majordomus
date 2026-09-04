@@ -2,7 +2,7 @@
 # sourced by several commands; guard against re-sourcing
 [ -n "${MJ_LIB_decision:-}" ] && return 0 || MJ_LIB_decision=1
 # decision — append a durable decision record, or read the ones already recorded.
-# One file, append-only, newest at the bottom: .majordomus/state/decisions.md.
+# One file, append-only, newest at the bottom: .ai/local/state/decisions.md.
 # Supersession is expressed by a later entry naming an earlier one, never by editing it.
 
 mj_cmd_decision() {
@@ -17,7 +17,7 @@ usage: majordomus decision add "<what was decided>" --why "<rationale>"
                                [--supersedes "<text from an earlier decision>"]
        majordomus decision list [--task <id>] [--limit <n>]
        majordomus decision show "<text>"
-  appends one entry to .majordomus/state/decisions.md; the task id and git head are computed
+  appends one entry to .ai/local/state/decisions.md; the task id and git head are computed
   an entry is never edited or deleted: --supersedes records that a later decision replaced an earlier one
 H
       [ "$sub" = "" ] && return "$MJ_EX_USAGE"; return 0 ;;

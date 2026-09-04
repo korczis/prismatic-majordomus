@@ -3,7 +3,7 @@
 [ -n "${MJ_LIB_question:-}" ] && return 0 || MJ_LIB_question=1
 # question — open questions as explicit state instead of prose buried in a handover.
 #
-# One mutable index: .majordomus/state/open-questions.md. Resolving edits its line, because
+# One mutable index: .ai/local/state/open-questions.md. Resolving edits its line, because
 # an index of what is still open must not accumulate; the append-only record of opening and
 # resolving lives in the ledger. Any unresolved entry for the active task blocks
 # `finish --outcome completed`, which is why this file has a machine-written line format.

@@ -17,7 +17,7 @@ mj_cmd_checkpoint() {
 usage: majordomus checkpoint < body.md      record progress (body optional; empty body = timestamp only)
        majordomus checkpoint --show [--path]
        majordomus checkpoint --list
-  writes .majordomus/state/checkpoints/<ts>--<branch>--<head>--<rand>.md (mode 0600, atomic, never staged)
+  writes .ai/local/state/checkpoints/<ts>--<branch>--<head>--<rand>.md (mode 0600, atomic, never staged)
   the body is free text, not sections: at most the policy's checkpoint.max_body_lines lines
   it must not contain identity fields; those are computed from git
   --show   print the newest checkpoint for the active task in this worktree and branch

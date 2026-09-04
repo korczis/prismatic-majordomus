@@ -25,6 +25,18 @@ a="$(printf '%s\n' "$out_checkout" | grep -E '^(OK|FAIL|WARN)' | sed 's/  \[repr
 b="$(printf '%s\n' "$out_dist" | grep -E '^(OK|FAIL|WARN)' | sed 's/  \[reproduce:.*//' | sort)"
 [ "$a" = "$b" ] || { echo "    two locations of one version disagree about one repository"; diff <(printf '%s\n' "$a") <(printf '%s\n' "$b"); exit 1; }
 
+# --- the optional in-repository installation: a tool checkout under .majordomus/ is an
+# installation, never project data, and behaves like every other location
+mkdir -p .majordomus && cp -R "$DIST/bin" "$DIST/lib" "$DIST/share" .majordomus/
+git add -A >/dev/null; git commit -qm "vendor the tool" >/dev/null
+expect_exit 10 .majordomus/bin/majordomus doctor
+expect_no_grep 'pre-.ai\|majordomus migrate'
+expect_grep 'OK +layout +\.ai/'
+expect_exit 12 .majordomus/bin/majordomus check   # no task yet; the same answer bin/majordomus gives
+expect_grep 'no active task'
+[ ! -e .majordomus/.ai ] && [ ! -e .majordomus/state ] || { echo "    the in-repository installation gained state"; exit 1; }
+git rm -rq --cached .majordomus >/dev/null; rm -rf .majordomus; git commit -qm "unvendor" >/dev/null
+
 # --- through PATH, from another directory, with --repo naming the repository
 elsewhere="$(mktemp -d "${TMPDIR:-/tmp}/mj-elsewhere.XXXXXX")"
 ( cd "$elsewhere" && PATH="$DIST/bin:$PATH" majordomus --repo "$T" start "path task" --scope docs ) > "$elsewhere/path.out" 2>&1 \

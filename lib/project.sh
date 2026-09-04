@@ -9,9 +9,9 @@
 # model, so a surface cannot disagree with the tool about what is ready.
 #
 # Canonical layout, all of it authored by hand and none of it generated:
-#   .majordomus/project/project.yaml            the repository this model belongs to
-#   .majordomus/project/milestones/<ID>.yaml    one executable outcome specification
-#   .majordomus/project/issues/<ID>.yaml        one bounded execution contract
+#   .ai/repo/project/project.yaml            the repository this model belongs to
+#   .ai/repo/project/milestones/<ID>.yaml    one executable outcome specification
+#   .ai/repo/project/issues/<ID>.yaml        one bounded execution contract
 #
 # Status is never stored. An issue records what happened to it — started_at, verified_at,
 # completed_at, evidence — and the status is computed from those facts and from the state

@@ -3,7 +3,7 @@
 [ -n "${MJ_LIB_prompt:-}" ] && return 0 || MJ_LIB_prompt=1
 # prompt — small reusable repository-local prompt assets.
 #
-# A prompt asset is a Markdown file in .majordomus/prompts/ with two required front-matter
+# A prompt asset is a Markdown file in .ai/repo/prompts/ with two required front-matter
 # keys and a body. Rendering substitutes a closed, enumerated set of tokens from durable
 # state. There is no templating language: no conditionals, no loops, no shell, no include.
 # An unknown token is an error, exactly like an unknown configuration key, because a prompt
@@ -31,7 +31,7 @@ mj_cmd_prompt() {
 usage: majordomus prompt list
        majordomus prompt show <name>
        majordomus prompt render <name>
-  assets live in .majordomus/prompts/<name>.md with front matter: name (= filename), description
+  assets live in .ai/repo/prompts/<name>.md with front matter: name (= filename), description
   render substitutes these tokens and no others:
     inline: $(printf '%s' "$MJ_PROMPT_INLINE_TOKENS" | sed 's/ /, /g')
     on a line of their own: $(printf '%s' "$MJ_PROMPT_BLOCK_TOKENS" | sed 's/ /, /g')

@@ -70,6 +70,28 @@ expect_grep '^-my own rule'
 expect_exit 0 "$MJ" update --force
 expect_no_grep 'my own rule' CLAUDE.md
 expect_exit 0 "$MJ" doctor
+# a fresh clone carries the stamps inside the targets, so doctor judges it exactly as here:
+# no provenance file, nothing to regenerate, and a hand edit there is caught the same way
+git add -A >/dev/null; git commit -qm "projections" >/dev/null
+clone="$(mktemp -d "${TMPDIR:-/tmp}/mj-clone.XXXXXX")"; rm -rf "$clone"
+git clone -q "$T" "$clone"
+( cd "$clone" && git config user.email t@example.com && git config user.name t )
+cat > "$clone/.git/hooks/pre-commit" <<H
+#!/bin/sh
+$MJ doctor || exit \$?
+H
+cat > "$clone/.git/hooks/pre-push" <<H
+#!/bin/sh
+$MJ finish --check || exit \$?
+H
+chmod +x "$clone/.git/hooks/pre-commit" "$clone/.git/hooks/pre-push"
+expect_exit 0 "$MJ" --repo "$clone" doctor
+expect_grep 'OK +projection +CLAUDE.md — content matches its stamp'
+[ ! -e "$clone/.ai/local" ] || { echo "    a fresh clone carried local state"; exit 1; }
+echo "clone edit" >> "$clone/CLAUDE.md"
+expect_exit 10 "$MJ" --repo "$clone" doctor
+expect_grep 'content differs from its own stamp'
+rm -rf "$clone"
 # dry run writes nothing
 sed -i.bak 's/checkpoint_interval_default: 15m/checkpoint_interval_default: 20m/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
 expect_exit 0 "$MJ" update --dry-run

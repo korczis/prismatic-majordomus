@@ -599,7 +599,7 @@ done
 # ---------------------------------------------------------------- diagrams.json (Mermaid source from data, never hand-drawn)
 LIFECYCLE_MMD="$(printf 'stateDiagram-v2\n    [*] --> active: start\n    active --> active: check --checkpoint\n    active --> handed_over: handover --close\n    handed_over --> [*]: next start archives the record\n'; for o in $(printf '%s' "$OUTCOMES" | jq -r '.[]'); do printf '    active --> %s: finish --outcome %s\n    %s --> [*]\n' "$o" "$o" "$o"; done)"
 PIPELINE_MMD="$(printf 'flowchart LR\n    subgraph canonical\n        A[share/skeleton]\n        B[docs + README]\n        C[docs/CLAIMS.yaml]\n    end\n    G[scripts/generate-site-data]\n    D[(site/data/generated)]\n    Z[Zola]\n    F[Tailwind + Flowbite + Alpine]\n    P[GitHub Pages]\n    A --> G\n    B --> G\n    C --> G\n    G --> D --> Z --> F --> P\n')"
-PROJECTION_MMD="$(printf 'flowchart TD\n    P[.majordomus/policy.yaml]\n    U[majordomus update]\n    P --> U\n'; i=0; while :; do t="$(jq -r ".projections[$i].target // empty" "$OUT/policy.json")"; [ -n "$t" ] || break; pr="$(jq -r ".projections[$i].provider" "$OUT/policy.json")"; printf '    U --> T%s["%s<br/><small>%s</small>"]\n' "$i" "$t" "$pr"; i=$((i+1)); done; printf '    T0 -.->|stamp| D[majordomus doctor]\n')"
+PROJECTION_MMD="$(printf 'flowchart TD\n    P[.ai/repo/policy.yaml]\n    U[majordomus update]\n    P --> U\n'; i=0; while :; do t="$(jq -r ".projections[$i].target // empty" "$OUT/policy.json")"; [ -n "$t" ] || break; pr="$(jq -r ".projections[$i].provider" "$OUT/policy.json")"; printf '    U --> T%s["%s<br/><small>%s</small>"]\n' "$i" "$t" "$pr"; i=$((i+1)); done; printf '    T0 -.->|stamp| D[majordomus doctor]\n')"
 SUPERVISION_MMD="$(printf 'flowchart TD\n    H[Human / Organisation]\n    M[Majordomus<br/><small>policy · state · verification</small>]\n    W1[Claude Code]\n    W2[Codex]\n    W3[Gemini · Cursor · local]\n    V[Verified, accepted outcomes]\n    H --> M\n    M --> W1\n    M --> W2\n    M --> W3\n    W1 --> V\n    W2 --> V\n    W3 --> V\n')"
 jq -n --arg l "$LIFECYCLE_MMD" --arg p "$PIPELINE_MMD" --arg j "$PROJECTION_MMD" --arg s "$SUPERVISION_MMD" \
   '{schema:1, diagrams: {lifecycle: {title: "Task lifecycle", source: "lib/finish.sh outcome vocabulary", mermaid: $l},
@@ -883,20 +883,20 @@ if mj_project_load; then
 # no rank, and without this the generator published that roadmap and exited 0 — a page saying
 # nothing is reachable, with no reason given. The engine has already said so by this point:
 # a FAIL finding is what `plan validate` exits 10 on, so this asks the same question of the
-# same data instead of shelling back out to the CLI, which needs an installed .majordomus/
+# same data instead of shelling back out to the CLI, which needs an installed .ai/
 # that a disposable test repository does not have. Reported by the session that owns the
 # model; the first version of this guard called the CLI and broke every site case.
   # ------------------------------------------------------------ roadmap.json
   # The roadmap is the milestone graph, and it is not recomputed here: this calls the same
   # projection `majordomus plan roadmap --json` prints, in process, so the page and the
   # command cannot disagree about what is blocked. Calling the CLI instead would need an
-  # installed .majordomus/ that a disposable test repository does not have — that mistake
+  # installed .ai/ that a disposable test repository does not have — that mistake
   # cost every site case an hour ago.
   ( export MJ_JSON=1; mj_plan_roadmap ) > "$OUT/roadmap.json"
   # The milestone graph in the shape site/graph.js renders, so the roadmap reuses the runtime
   # /map/ and /evidence/ already use rather than adding a third picture of a dependency graph.
   jq '{schema: 1,
-       source: ".majordomus/project/milestones/",
+       source: ".ai/repo/project/milestones/",
        edge_kinds: {requires: "the target cannot begin until the source is accepted"},
        nodes: [.milestones[] | {id: .id, kind: "milestone",
                                 label: (if .version == "" then .id else .version + "  " + .id end),
@@ -956,21 +956,21 @@ jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | whi
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/guarantees/$id.md"; done
 # The count is computed, never written: the repository's own rule is that prose states
 # the command that produces a number rather than the number.
-mk_section supervises "What Majordomus supervises" "$(jq -r '.does | length' "$OUT/readme.json") responsibilities, one directory. Each is a file in .majordomus/ and a subcommand that reads it." supervises-section.html responsibility.html 20
+mk_section supervises "What Majordomus supervises" "$(jq -r '.does | length' "$OUT/readme.json") responsibilities, one layer. Each is a file under .ai/ and a subcommand that reads it." supervises-section.html responsibility.html 20
 i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while IFS="$(printf '\t')" read -r slug title text; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$text" | sed -E 's/`([^`]*)`/\1/g' | jq -Rn 'input')" "$i" "$(jstr "$slug")" > "$CONTENT_ROOT/supervises/$slug.md"; done
 mk_section doctrines "Doctrine" "A rule is enforced when it is declared, implemented, wired, executed, failure-propagating, tested and CI-blocking. Each one below shows its whole chain." doctrines-section.html doctrine.html 22
 i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrines.json" | while IFS="$(printf '\t')" read -r id slug title summary; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" "$(jq -r --arg id "$id" '.doctrines[] | select(.id==$id) | .source' "$OUT/doctrines.json" | jq -Rn 'input')" > "$CONTENT_ROOT/doctrines/$slug.md"; done
-mk_section plan "The plan" "Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .majordomus/project." plan-section.html issue.html 21
+mk_section plan "The plan" "Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .ai/repo/project." plan-section.html issue.html 21
 printf -- '+++\ntitle = "Dependency graph"\ndescription = "Every issue, every dependency, and the execution waves the graph implies — drawn from the canonical edges, never by hand."\nweight = 1\ntemplate = "dag.html"\n+++\n' > "$CONTENT_ROOT/plan/dag.md"
 i=1; for mid in $(jq -r '.milestones | sort_by(.order) | .[].id' "$OUT/plan.json"); do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "milestone.html"\n[extra]\nplan_id = %s\nsource = ".majordomus/project/milestones/%s.yaml"\n+++\n' \
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "milestone.html"\n[extra]\nplan_id = %s\nsource = ".ai/repo/project/milestones/%s.yaml"\n+++\n' \
     "$(jstr "$mid — $(jq -r --arg m "$mid" '.milestones[] | select(.id==$m) | .title' "$OUT/plan.json")")" \
     "$(jq -r --arg m "$mid" '.milestones[] | select(.id==$m) | .outcome' "$OUT/plan.json" | jq -Rn 'input')" \
     "$i" "$(jstr "$mid")" "$mid" > "$CONTENT_ROOT/plan/$mid.md"; done
 for iid in $(jq -r '.issues[].id' "$OUT/plan.json"); do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nplan_id = %s\nsource = ".majordomus/project/issues/%s.yaml"\n+++\n' \
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nplan_id = %s\nsource = ".ai/repo/project/issues/%s.yaml"\n+++\n' \
     "$(jstr "$iid — $(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .title' "$OUT/plan.json")")" \
     "$(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .objective' "$OUT/plan.json" | jq -Rn 'input')" \
     "$i" "$(jstr "$iid")" "$iid" > "$CONTENT_ROOT/plan/$iid.md"; done
@@ -997,12 +997,12 @@ SC="$STAGE/SITE_CLAIMS.md"
 
 # ---------------------------------------------------------------- docs/PLAN_STATUS.md (derived)
 # The same current state the website's /plan/ route shows, as a Markdown table for a reader
-# on GitHub. Generated from plan.json, which is generated from .majordomus/project. This is
+# on GitHub. Generated from plan.json, which is generated from .ai/repo/project. This is
 # a second rendering, never a second source: docs/PLANNING.md explains the semantics and
 # contains no figure, this file contains only figures and explains nothing.
 PS="$STAGE/PLAN_STATUS.md"
 {
-  printf '# Plan status\n\nGenerated by `scripts/generate-site-data` from `.majordomus/project/`. Do not edit; edit the\ncanonical records and regenerate. `majordomus plan status` prints the same thing at a terminal,\nand the website renders it at `/plan/`. Semantics are in [`PLANNING.md`](PLANNING.md).\n\n'
+  printf '# Plan status\n\nGenerated by `scripts/generate-site-data` from `.ai/repo/project/`. Do not edit; edit the\ncanonical records and regenerate. `majordomus plan status` prints the same thing at a terminal,\nand the website renders it at `/plan/`. Semantics are in [`PLANNING.md`](PLANNING.md).\n\n'
   # No commit here. This file is compared byte for byte by --check, so a field that records
   # the commit it was generated at is stale the moment committing it moves HEAD — the file
   # would name a commit that does not yet contain it. The input hash is the provenance that

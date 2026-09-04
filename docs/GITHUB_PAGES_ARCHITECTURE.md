@@ -64,7 +64,7 @@ flowchart LR
 | `profiles.json` | `share/skeleton/profiles/*.yaml` | every profile, every field |
 | `policy.json` | `share/skeleton/policy.yaml` | the policy as structure, plus the raw text |
 | `capabilities.json` | `docs/CLAIMS.yaml` | every claim; the generator fails on a missing path or an untested guaranteed claim |
-| `lifecycle.json` | `lib/finish.sh`, `share/skeleton/providers/body.md` | outcome vocabulary, divergence labels, lifecycle steps, the ten principles |
+| `lifecycle.json` | `lib/finish.sh`, `share/skeleton/ai/repo/workflows/task-lifecycle.md`, `share/standard/majordomus/` | outcome vocabulary, divergence labels, lifecycle steps, the ten principles (the rules tagged `principle`) |
 | `diagrams.json` | the files above | Mermaid source projected from data |
 | `readme.json` | `README.md` | the sections the homepage renders, by heading; a renamed heading fails the build |
 | `docs.json` | `docs/README.md` | the documentation index |

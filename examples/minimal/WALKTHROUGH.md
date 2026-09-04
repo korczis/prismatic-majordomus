@@ -125,7 +125,7 @@ doctor: 0 failure(s)
 
 ```
 $ majordomus start fix OAuth callback dropping state --scope lib/auth,test/oauth_test.rb --profile debugging --owner alice
-started t-20260904213702-43d0  profile=debugging  scope=lib/auth,test/oauth_test.rb
+started t-20260904215233-3a73  profile=debugging  scope=lib/auth,test/oauth_test.rb
 next: majordomus context; checkpoint every 15m; majordomus check before claiming anything
 ```
 
@@ -135,12 +135,12 @@ The worker edits `lib/auth/oauth.rb` and also, by mistake, `test/other.rb`, whic
 
 ```
 $ majordomus check
-OK   checkpoint  t-20260904213702-43d0 — 0m ago, interval 15m
+OK   checkpoint  t-20260904215233-3a73 — 0m ago, interval 15m
 OK   records     ledger.jsonl — every line is a well-formed event
-OK   blockers    t-20260904213702-43d0 — none open
+OK   blockers    t-20260904215233-3a73 — none open
 OK   records     decisions.md — every entry is attributable
-FAIL scope       test/other.rb — outside claimed scope (lib/auth,test/oauth_test.rb)  [reproduce: git status --porcelain; git diff --name-only f383160140b75b680af3f57b1f19205c5d1763ef HEAD]
-OK   state       t-20260904213702-43d0 — exact (head f383160)
+FAIL scope       test/other.rb — outside claimed scope (lib/auth,test/oauth_test.rb)  [reproduce: git status --porcelain; git diff --name-only ebe7349978707ecfb993dcf96c91d1e886c2b8d6 HEAD]
+OK   state       t-20260904215233-3a73 — exact (head ebe7349)
 check: 6 finding(s), 1 failing
 ```
 
@@ -148,12 +148,12 @@ After removing the out-of-scope file:
 
 ```
 $ majordomus check
-OK   checkpoint  t-20260904213702-43d0 — 0m ago, interval 15m
+OK   checkpoint  t-20260904215233-3a73 — 0m ago, interval 15m
 OK   records     ledger.jsonl — every line is a well-formed event
-OK   blockers    t-20260904213702-43d0 — none open
+OK   blockers    t-20260904215233-3a73 — none open
 OK   records     decisions.md — every entry is attributable
-OK   scope       t-20260904213702-43d0 — 1 touched file(s), all within scope
-OK   state       t-20260904213702-43d0 — exact (head f383160)
+OK   scope       t-20260904215233-3a73 — 1 touched file(s), all within scope
+OK   state       t-20260904215233-3a73 — exact (head ebe7349)
 check: 6 finding(s), 0 failing
 ```
 
@@ -161,13 +161,13 @@ check: 6 finding(s), 0 failing
 
 ```
 $ majordomus finish --outcome completed --verify-command true
-OK   blockers    t-20260904213702-43d0 — none open
-FAIL note        t-20260904213702-43d0 — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]
-FAIL regression  t-20260904213702-43d0 — profile debugging requires a regression test; no test path among touched files  [reproduce: git diff --name-only f383160140b75b680af3f57b1f19205c5d1763ef HEAD; git status --porcelain]
-OK   scope       t-20260904213702-43d0 — 1 touched file(s), all within scope
-OK   state       t-20260904213702-43d0 — exact (head f383160)
-INFO continuity  t-20260904213702-43d0 — applies to partial and blocked
-OK   verification t-20260904213702-43d0 — true — exit 0, 0s
+OK   blockers    t-20260904215233-3a73 — none open
+FAIL note        t-20260904215233-3a73 — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]
+FAIL regression  t-20260904215233-3a73 — profile debugging requires a regression test; no test path among touched files  [reproduce: git diff --name-only ebe7349978707ecfb993dcf96c91d1e886c2b8d6 HEAD; git status --porcelain]
+OK   scope       t-20260904215233-3a73 — 1 touched file(s), all within scope
+OK   state       t-20260904215233-3a73 — exact (head ebe7349)
+INFO continuity  t-20260904215233-3a73 — applies to partial and blocked
+OK   verification t-20260904215233-3a73 — true — exit 0, 0s
 finish: refused, 2 unmet
 blocking doctrines:
 - majordomus.note-integrity- majordomus.profile-requirements
@@ -177,16 +177,16 @@ blocking doctrines:
 
 ```
 $ printf "# Objective\n...\n# Current State\n...\n# Next Action\n...\n" | majordomus handover
-.ai/local/state/handovers/20260904T213721Z--main--f383160--50760282e303433d.md
+.ai/local/state/handovers/20260904T215253Z--main--ebe7349--94f25d33a110bfb3.md
 ```
 
 ```
 $ majordomus handover --resolve
-Handover: .ai/local/state/handovers/20260904T213721Z--main--f383160--50760282e303433d.md
+Handover: .ai/local/state/handovers/20260904T215253Z--main--ebe7349--94f25d33a110bfb3.md
 Match: same_worktree_same_branch
 Git state: exact
-Created: 2026-09-04T21:37:21Z (0m ago)
-Task: t-20260904213702-43d0
+Created: 2026-09-04T21:52:53Z (0m ago)
+Task: t-20260904215233-3a73
 ---
 
 # Objective
@@ -199,27 +199,81 @@ Add the regression test and finish.
 
 ```
 $ majordomus finish --outcome completed --verify-command true
-OK   blockers    t-20260904213702-43d0 — none open
-OK   note        t-20260904213702-43d0 — 20260904T213721Z--main--f383160--50760282e303433d.md
-OK   regression  t-20260904213702-43d0 — a test path was touched
-OK   scope       t-20260904213702-43d0 — 2 touched file(s), all within scope
-OK   state       t-20260904213702-43d0 — exact (head f383160)
-INFO continuity  t-20260904213702-43d0 — applies to partial and blocked
-OK   verification t-20260904213702-43d0 — true — exit 0, 0s
-finish: t-20260904213702-43d0 completed
+OK   blockers    t-20260904215233-3a73 — none open
+OK   note        t-20260904215233-3a73 — 20260904T215253Z--main--ebe7349--94f25d33a110bfb3.md
+OK   regression  t-20260904215233-3a73 — a test path was touched
+OK   scope       t-20260904215233-3a73 — 2 touched file(s), all within scope
+OK   state       t-20260904215233-3a73 — exact (head ebe7349)
+INFO continuity  t-20260904215233-3a73 — applies to partial and blocked
+OK   verification t-20260904215233-3a73 — true — exit 0, 0s
+finish: t-20260904215233-3a73 completed
 ```
 
 ## 7. What was recorded
 
 ```
-$ cat .majordomus/state/current.yaml
-cat: .majordomus/state/current.yaml: No such file or directory
+$ cat .ai/local/state/current.yaml
+id: t-20260904215233-3a73
+task: "fix OAuth callback dropping state"
+profile: debugging
+owner: "alice"
+scope:
+  - lib/auth
+  - test/oauth_test.rb
+started_at: 2026-09-04T21:52:33Z
+checkpoint_at: 2026-09-04T21:53:00Z
+outcome: completed
+# computed from git; never authored
+repository_id: /private/var/folders/kf/wdy_qjjd66707gpgsl7m1d6r0000gn/T/mj-example.xpDugG/.git
+worktree: /private/var/folders/kf/wdy_qjjd66707gpgsl7m1d6r0000gn/T/mj-example.xpDugG
+branch: main
+head: ebe7349978707ecfb993dcf96c91d1e886c2b8d6
+working_tree: clean
 ```
 
 ```
-$ tail -n 1 .majordomus/state/ledger.jsonl
+$ tail -n 1 .ai/local/state/ledger.jsonl
+{"ts":"2026-09-04T21:53:00Z","event":"task.finished","head":"ebe7349978707ecfb993dcf96c91d1e886c2b8d6","branch":"main","by":"majordomus/0.1.0","task_id":"t-20260904215233-3a73","outcome":"completed","contract":{"majordomus.blocker-resolution":"pass","majordomus.note-integrity":"pass","majordomus.profile-requirements":"pass","majordomus.scope-integrity":"pass","majordomus.state-consistency":"pass","majordomus.task-continuity":"skipped","majordomus.verification-integrity":"pass"},"verify":{"command":"true","exit":0,"seconds":0},"checkpoints":0}
 ```
 
 ## 8. Drift is visible
 
 Someone edits the generated file by hand and changes the policy without regenerating:
+
+```
+$ majordomus watch
+OK   layout      .ai/manifest.yaml — schema ai-repository/v1
+OK   layout      .ai/local/ — ignored, and nothing under it is tracked
+OK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool
+INFO checkpoint  t-20260904215233-3a73 — outcome is completed; freshness applies while a task is active
+OK   records     ledger.jsonl — every line is a well-formed event
+OK   policy      11 key(s) — every policy value the code reads is declared, with no reader-side default
+OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own
+OK   catalogue   6 use case(s), 4 application(s) — every command, doctrine, claim and cross-reference resolves, both directions
+DRIFT policy      .ai/repo/policy.yaml — policy or profiles changed after the last update of AGENTS.md CLAUDE.md GEMINI.md  [reproduce: majordomus update --dry-run]
+OK   records     decisions.md — every entry is attributable
+INFO project     .ai/repo/project — no canonical project model here; nothing to validate
+OK   handover    20260904T215253Z--main--ebe7349--94f25d33a110bfb3.md — exact, 0m ago
+INFO project     .ai/repo/project — no canonical project model here; nothing to validate
+DRIFT projection  AGENTS.md — content differs from its stamp (hand-edited?)  [reproduce: majordomus update --diff AGENTS.md]
+OK   projection  CLAUDE.md — content matches its stamp
+OK   projection  GEMINI.md — content matches its stamp
+OK   context     builder — 58 lines, budget 300  [reproduce: majordomus context]
+OK   prompt      4 asset(s) — front matter valid, every token known
+OK   records     open-questions.md — every entry parses
+OK   retention   ledger — 4 lines, cap 5000
+OK   retention   handovers — 1 files, cap 200
+OK   retention   checkpoints — 0 files, cap 500
+INFO project     .ai/repo/project — no canonical project model here; nothing to validate
+OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))
+OK   rules       38 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
+OK   scope       t-20260904215233-3a73 — 2 touched file(s), all within scope
+OK   state       t-20260904215233-3a73 — exact (head ebe7349)
+OK   verification t-20260904215233-3a73 — completed with a finish record
+watch: 2 drift finding(s)
+```
+
+```
+$ majordomus update
+REFUSE projection  AGENTS.md — current content matches neither its own stamp nor the new output (hand-edited?); use --diff AGENTS.md, then --force  [reproduce: majordomus update --diff AGENTS.md]
+```

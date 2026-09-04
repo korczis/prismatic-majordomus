@@ -566,7 +566,7 @@ mj_watch_policy() {
 
 # ---------------------------------------------------------------- project model validators
 # A repository is not obliged to have a canonical project model; most installations will
-# not. Both validators therefore skip cleanly when .majordomus/project/ is absent, so
+# not. Both validators therefore skip cleanly when .ai/repo/project/ is absent, so
 # adopting Majordomus does not turn an installation red for a feature nobody opted into.
 mj_project_doctrine_load() {
   mj_project_present || { MJ_DOCTRINE_SKIPPED=1; mj_doctrine_skip project "$(mj_rel "$MJ_PROJECT_DIR")" "no canonical project model here; nothing to validate"; return 1; }

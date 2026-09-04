@@ -42,10 +42,10 @@ run "$MJ" handover --resolve
 echo 'regression' >> test/oauth_test.rb
 run "$MJ" finish --outcome completed --verify-command "true"
 printf '\n## 7. What was recorded\n'
-run cat .majordomus/state/current.yaml
-printf '\n```\n$ tail -n 1 .majordomus/state/ledger.jsonl\n'; tail -n 1 .majordomus/state/ledger.jsonl | sed "s#$T#<repo>#g"; printf '```\n'
+run cat .ai/local/state/current.yaml
+printf '\n```\n$ tail -n 1 .ai/local/state/ledger.jsonl\n'; tail -n 1 .ai/local/state/ledger.jsonl | sed "s#$T#<repo>#g"; printf '```\n'
 printf '\n## 8. Drift is visible\n\nSomeone edits the generated file by hand and changes the policy without regenerating:\n'
 echo "my extra rule" >> AGENTS.md
-sed -i.bak 's/checkpoint_interval_default: 15m/checkpoint_interval_default: 20m/' .majordomus/policy.yaml; rm -f .majordomus/policy.yaml.bak
+sed -i.bak 's/checkpoint_interval_default: 15m/checkpoint_interval_default: 20m/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
 run "$MJ" watch
 run "$MJ" update
