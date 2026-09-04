@@ -63,6 +63,7 @@ body_edges || { echo "    plan body failed for an issue in the model"; exit 1; }
 "$MJ" plan start I0001 >/dev/null
 "$MJ" plan evidence I0001 --covers proof --type test --command "true" --result ok >/dev/null
 "$MJ" plan "done" I0001 >/dev/null
+graph_out="$("$MJ" plan graph)"
 for id in $(canonical_ids); do
   st="$(pj_status "$id")"
   "$MJ" --json plan list | grep -qF "\"id\":\"$id\",\"milestone\":\"M000\",\"status\":\"$st\"" \
@@ -71,9 +72,10 @@ for id in $(canonical_ids); do
     DONE|CANCELLED) want=closed ;;
     *) want=open ;;
   esac
-  "$SYNC" --plan | grep -qE "^  $id +$want +$st " \
-    || { echo "    $id is $st canonically; the GitHub projection disagrees"; "$SYNC" --plan | grep "$id"; exit 1; }
-  "$MJ" plan graph | grep -q "^    $id\[.*:::$(printf '%s' "$st" | tr 'A-Z' 'a-z')$" \
+  sync_out="$("$SYNC" --plan)"
+  printf '%s\n' "$sync_out" | grep -qE "^  $id +$want +$st " \
+    || { echo "    $id is $st canonically; the GitHub projection disagrees"; printf '%s\n' "$sync_out" | grep "$id"; exit 1; }
+  printf '%s\n' "$graph_out" | grep -q "^    $id\[.*:::$(printf '%s' "$st" | tr 'A-Z' 'a-z')$" \
     || { echo "    $id is $st canonically; the diagram styles it differently"; exit 1; }
 done
 
