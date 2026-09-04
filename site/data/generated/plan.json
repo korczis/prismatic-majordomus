@@ -7,7 +7,7 @@
   },
   "active_milestone": "runtime-adapters",
   "next_ready": "I0201",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0206 --> I0301\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0305 --> I0401\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0404 --> I0501\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0504 --> I0601\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "statuses": {
     "issue": [
       "READY",
@@ -2000,9 +2000,7 @@
       "blocked_by": [
         "I0205"
       ],
-      "dependents": [
-        "I0301"
-      ],
+      "dependents": [],
       "scope": [
         "docs",
         "site/data/generated"
@@ -2039,16 +2037,13 @@
       "slug": "telemetry-record-schema",
       "milestone": "execution-telemetry",
       "status": "BLOCKED",
-      "wave": 6,
+      "wave": 0,
       "priority": "p2",
       "profile": "deep-work",
       "parallel_safe": false,
       "title": "Define the execution record, including what an absence looks like",
-      "depends_on": [
-        "I0206"
-      ],
+      "depends_on": [],
       "blocked_by": [
-        "I0206",
         "milestone:execution-telemetry"
       ],
       "dependents": [
@@ -2091,7 +2086,7 @@
       "slug": "record-reported-telemetry",
       "milestone": "execution-telemetry",
       "status": "BLOCKED",
-      "wave": 7,
+      "wave": 1,
       "priority": "p2",
       "profile": "implementation",
       "parallel_safe": false,
@@ -2142,7 +2137,7 @@
       "slug": "absence-not-estimate",
       "milestone": "execution-telemetry",
       "status": "BLOCKED",
-      "wave": 8,
+      "wave": 2,
       "priority": "p2",
       "profile": "debugging",
       "parallel_safe": false,
@@ -2190,7 +2185,7 @@
       "slug": "telemetry-in-history",
       "milestone": "execution-telemetry",
       "status": "BLOCKED",
-      "wave": 9,
+      "wave": 3,
       "priority": "p2",
       "profile": "implementation",
       "parallel_safe": false,
@@ -2239,7 +2234,7 @@
       "slug": "publish-telemetry-claim",
       "milestone": "execution-telemetry",
       "status": "BLOCKED",
-      "wave": 10,
+      "wave": 4,
       "priority": "p3",
       "profile": "implementation",
       "parallel_safe": false,
@@ -2251,9 +2246,7 @@
         "I0304",
         "milestone:execution-telemetry"
       ],
-      "dependents": [
-        "I0401"
-      ],
+      "dependents": [],
       "scope": [
         "docs",
         "site/data/generated"
@@ -2289,16 +2282,13 @@
       "slug": "define-accepted-outcome",
       "milestone": "cost-per-accepted-outcome",
       "status": "BLOCKED",
-      "wave": 11,
+      "wave": 0,
       "priority": "p2",
       "profile": "deep-work",
       "parallel_safe": false,
       "title": "Define an accepted outcome, and join it to its measurements without storing the join",
-      "depends_on": [
-        "I0305"
-      ],
+      "depends_on": [],
       "blocked_by": [
-        "I0305",
         "milestone:cost-per-accepted-outcome"
       ],
       "dependents": [
@@ -2339,7 +2329,7 @@
       "slug": "report-measured-cost",
       "milestone": "cost-per-accepted-outcome",
       "status": "BLOCKED",
-      "wave": 12,
+      "wave": 1,
       "priority": "p2",
       "profile": "implementation",
       "parallel_safe": false,
@@ -2389,7 +2379,7 @@
       "slug": "thin-denominator",
       "milestone": "cost-per-accepted-outcome",
       "status": "BLOCKED",
-      "wave": 13,
+      "wave": 2,
       "priority": "p2",
       "profile": "debugging",
       "parallel_safe": false,
@@ -2439,7 +2429,7 @@
       "slug": "publish-cost-claim",
       "milestone": "cost-per-accepted-outcome",
       "status": "BLOCKED",
-      "wave": 14,
+      "wave": 3,
       "priority": "p3",
       "profile": "implementation",
       "parallel_safe": false,
@@ -2451,9 +2441,7 @@
         "I0403",
         "milestone:cost-per-accepted-outcome"
       ],
-      "dependents": [
-        "I0501"
-      ],
+      "dependents": [],
       "scope": [
         "docs",
         "site/data/generated"
@@ -2490,16 +2478,13 @@
       "slug": "comparable-work-classes",
       "milestone": "routing-recommendations",
       "status": "BLOCKED",
-      "wave": 15,
+      "wave": 0,
       "priority": "p3",
       "profile": "deep-work",
       "parallel_safe": false,
       "title": "Group comparable work from what the records already carry",
-      "depends_on": [
-        "I0404"
-      ],
+      "depends_on": [],
       "blocked_by": [
-        "I0404",
         "milestone:routing-recommendations"
       ],
       "dependents": [
@@ -2540,7 +2525,7 @@
       "slug": "recommend-from-measurements",
       "milestone": "routing-recommendations",
       "status": "BLOCKED",
-      "wave": 16,
+      "wave": 1,
       "priority": "p3",
       "profile": "implementation",
       "parallel_safe": false,
@@ -2589,7 +2574,7 @@
       "slug": "no-weak-recommendation",
       "milestone": "routing-recommendations",
       "status": "BLOCKED",
-      "wave": 17,
+      "wave": 2,
       "priority": "p3",
       "profile": "debugging",
       "parallel_safe": false,
@@ -2638,7 +2623,7 @@
       "slug": "advisory-not-routing",
       "milestone": "routing-recommendations",
       "status": "BLOCKED",
-      "wave": 18,
+      "wave": 3,
       "priority": "p3",
       "profile": "implementation",
       "parallel_safe": false,
@@ -2650,9 +2635,7 @@
         "I0503",
         "milestone:routing-recommendations"
       ],
-      "dependents": [
-        "I0601"
-      ],
+      "dependents": [],
       "scope": [
         "test/cases",
         "docs",
@@ -2690,16 +2673,13 @@
       "slug": "name-shared-source",
       "milestone": "shared-policy",
       "status": "BLOCKED",
-      "wave": 19,
+      "wave": 0,
       "priority": "p3",
       "profile": "deep-work",
       "parallel_safe": false,
       "title": "Let a policy name a shared source it does not copy",
-      "depends_on": [
-        "I0504"
-      ],
+      "depends_on": [],
       "blocked_by": [
-        "I0504",
         "milestone:shared-policy"
       ],
       "dependents": [
@@ -2743,7 +2723,7 @@
       "slug": "explicit-override",
       "milestone": "shared-policy",
       "status": "BLOCKED",
-      "wave": 20,
+      "wave": 1,
       "priority": "p3",
       "profile": "implementation",
       "parallel_safe": false,
@@ -2793,7 +2773,7 @@
       "slug": "report-policy-drift",
       "milestone": "shared-policy",
       "status": "BLOCKED",
-      "wave": 21,
+      "wave": 2,
       "priority": "p3",
       "profile": "implementation",
       "parallel_safe": false,
@@ -2843,7 +2823,7 @@
       "slug": "offline-survives-sharing",
       "milestone": "shared-policy",
       "status": "BLOCKED",
-      "wave": 22,
+      "wave": 3,
       "priority": "p3",
       "profile": "debugging",
       "parallel_safe": false,
@@ -2895,7 +2875,7 @@
       "slug": "publish-shared-policy-claim",
       "milestone": "shared-policy",
       "status": "BLOCKED",
-      "wave": 23,
+      "wave": 4,
       "priority": "p3",
       "profile": "implementation",
       "parallel_safe": false,
@@ -2946,7 +2926,11 @@
       "issues": [
         "I0001",
         "I0101",
-        "I0201"
+        "I0201",
+        "I0301",
+        "I0401",
+        "I0501",
+        "I0601"
       ]
     },
     {
@@ -2954,7 +2938,11 @@
       "issues": [
         "I0002",
         "I0102",
-        "I0202"
+        "I0202",
+        "I0302",
+        "I0402",
+        "I0502",
+        "I0602"
       ]
     },
     {
@@ -2962,7 +2950,11 @@
       "issues": [
         "I0003",
         "I0103",
-        "I0203"
+        "I0203",
+        "I0303",
+        "I0403",
+        "I0503",
+        "I0603"
       ]
     },
     {
@@ -2970,7 +2962,11 @@
       "issues": [
         "I0004",
         "I0104",
-        "I0204"
+        "I0204",
+        "I0304",
+        "I0404",
+        "I0504",
+        "I0604"
       ]
     },
     {
@@ -2979,7 +2975,9 @@
         "I0005",
         "I0006",
         "I0010",
-        "I0205"
+        "I0205",
+        "I0305",
+        "I0605"
       ]
     },
     {
@@ -2996,112 +2994,19 @@
       "wave": 6,
       "issues": [
         "I0011",
-        "I0014",
-        "I0301"
+        "I0014"
       ]
     },
     {
       "wave": 7,
       "issues": [
-        "I0012",
-        "I0302"
+        "I0012"
       ]
     },
     {
       "wave": 8,
       "issues": [
-        "I0015",
-        "I0303"
-      ]
-    },
-    {
-      "wave": 9,
-      "issues": [
-        "I0304"
-      ]
-    },
-    {
-      "wave": 10,
-      "issues": [
-        "I0305"
-      ]
-    },
-    {
-      "wave": 11,
-      "issues": [
-        "I0401"
-      ]
-    },
-    {
-      "wave": 12,
-      "issues": [
-        "I0402"
-      ]
-    },
-    {
-      "wave": 13,
-      "issues": [
-        "I0403"
-      ]
-    },
-    {
-      "wave": 14,
-      "issues": [
-        "I0404"
-      ]
-    },
-    {
-      "wave": 15,
-      "issues": [
-        "I0501"
-      ]
-    },
-    {
-      "wave": 16,
-      "issues": [
-        "I0502"
-      ]
-    },
-    {
-      "wave": 17,
-      "issues": [
-        "I0503"
-      ]
-    },
-    {
-      "wave": 18,
-      "issues": [
-        "I0504"
-      ]
-    },
-    {
-      "wave": 19,
-      "issues": [
-        "I0601"
-      ]
-    },
-    {
-      "wave": 20,
-      "issues": [
-        "I0602"
-      ]
-    },
-    {
-      "wave": 21,
-      "issues": [
-        "I0603"
-      ]
-    },
-    {
-      "wave": 22,
-      "issues": [
-        "I0604"
-      ]
-    },
-    {
-      "wave": 23,
-      "issues": [
-        "I0605"
+        "I0015"
       ]
     }
   ],
@@ -3215,10 +3120,6 @@
       "to": "I0206"
     },
     {
-      "from": "I0206",
-      "to": "I0301"
-    },
-    {
       "from": "I0301",
       "to": "I0302"
     },
@@ -3235,10 +3136,6 @@
       "to": "I0305"
     },
     {
-      "from": "I0305",
-      "to": "I0401"
-    },
-    {
       "from": "I0401",
       "to": "I0402"
     },
@@ -3251,10 +3148,6 @@
       "to": "I0404"
     },
     {
-      "from": "I0404",
-      "to": "I0501"
-    },
-    {
       "from": "I0501",
       "to": "I0502"
     },
@@ -3265,10 +3158,6 @@
     {
       "from": "I0503",
       "to": "I0504"
-    },
-    {
-      "from": "I0504",
-      "to": "I0601"
     },
     {
       "from": "I0601",

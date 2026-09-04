@@ -219,12 +219,7 @@ END {
     else if (nr == 0)                                       ms = "BLOCKED"
     else                                                    ms = "PLANNED"
     mstatus[id] = ms
-    # total is every issue; required is the denominator the derivation above uses, so a
-    # page can never print "n of total done" for a milestone the engine calls DONE.
-    cstr = "total=" tot ",required=" req
-    nsv = split(ISTATUS, sv, " ")
-    for (v = 1; v <= nsv; v++) cstr = cstr "," sv[v] "=" (cnt[sv[v]] + 0)
-    mrow[id] = cstr
+    mrow[id] = mcounts(id)
     mempty[id] = (tot == 0)
     if (req > 0 && nd == req && !mcov) {
       miss = ""
@@ -284,16 +279,7 @@ END {
   for (i = 1; i <= mn; i++) {
     id = mids[i]
     if (mblockedby[id] == "") continue
-    tot = 0; nd = 0; nr = 0; nb = 0; na = 0; nv = 0; nc = 0
-    for (j = 1; j <= inum; j++) {
-      iid = iids[j]
-      if (it[iid, "milestone"] != id) continue
-      tot++
-      s = status[iid]
-      if (s == "DONE") nd++; else if (s == "READY") nr++; else if (s == "BLOCKED") nb++
-      else if (s == "ACTIVE") na++; else if (s == "VERIFY") nv++; else if (s == "CANCELLED") nc++
-    }
-    mrow[id] = tot "\t" nd "\t" nr "\t" nb "\t" na "\t" nv "\t" nc
+    mrow[id] = mcounts(id)
   }
 
   # --- scope conflict: two issues that could run together but touch the same paths.
@@ -367,6 +353,23 @@ END {
   n = asortish(medges, men)
   for (k = 1; k <= n; k++) { split(medges[k], p, "\t"); print "R", p[1], p[2] }
   for (k = 1; k <= vn; k++) print vrec[k]
+}
+
+# The counts of one milestone: the two denominators, then one entry per declared status.
+# total is every issue; required is the denominator the milestone status derivation uses, so
+# no surface can print "n of total" for a milestone the engine calls DONE. Computed here and
+# nowhere else, and computed again after the gate, which changes statuses underneath it.
+function mcounts(id,   j, iid, tot, v, nsv, sv, cnt, out) {
+  tot = 0
+  for (j = 1; j <= inum; j++) {
+    iid = iids[j]
+    if (it[iid, "milestone"] != id) continue
+    tot++; cnt[status[iid]]++
+  }
+  out = "total=" tot ",required=" (tot - (cnt["CANCELLED"] + 0))
+  nsv = split(ISTATUS, sv, " ")
+  for (v = 1; v <= nsv; v++) out = out "," sv[v] "=" (cnt[sv[v]] + 0)
+  return out
 }
 
 function finding(level, code, subject, message) {
