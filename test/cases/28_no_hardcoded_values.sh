@@ -160,3 +160,31 @@ for term in $(grep -oE '^\| \*\*[a-z ]+\*\*' concepts.probe | sed -e 's/^| \*\*/
        "$ROOT/docs" "$ROOT/lib" "$ROOT/bin/majordomus" "$ROOT/share" || found=1
 done
 [ "$found" = 1 ] || { echo "    the vocabulary check cannot fail; it is vacuous"; exit 1; }
+
+# ---------------------------------------------------------------- empty is not a result
+# The sharper half of the same rule: a derivation that produces nothing is a fault in the
+# derivation, not an answer. Every instance found so far returned something plausible
+# instead of stopping — a count of the wrong shape, a regex that matched nothing by
+# construction, a runner reporting "0 passed" for a case that did not exist.
+#
+# Each list this case derives is checked for being non-empty, so a scan that silently stops
+# matching turns this case red instead of passing vacuously.
+[ -n "$COMMANDS" ] || { echo "    the command list derived from the dispatch table is empty"; exit 1; }
+[ -s inputs.txt ] || { echo "    the generator declared no inputs"; exit 1; }
+[ -n "$(claim_ids)" ] || { echo "    the claims section derived no ids"; exit 1; }
+[ -n "$(grep -oE '^\| \*\*[a-z ]+\*\*' "$ROOT/docs/CONCEPTS.md")" ] \
+  || { echo "    the concepts table derived no terms"; exit 1; }
+if [ -f "$ROOT/share/doctrines.yaml" ]; then
+  [ -n "$(grep -E '^  - id:' "$ROOT/share/doctrines.yaml")" ] || { echo "    the doctrine registry derived no ids"; exit 1; }
+fi
+
+# ---------------------------------------------------------------- locale independence
+# The generator hashes its input list, so the order of that list is part of the output. A
+# glob expands in the collation order of whoever runs it, and a directory holding both
+# M000.yaml and slug-named files sorts differently under byte order than under a
+# case-insensitive locale. That made the committed hash differ between a developer's
+# machine and CI, and CI was right — the tool declares byte-identical output for identical
+# input, and "identical input" cannot mean "on the same machine".
+a="$(LC_ALL=C "$ROOT/scripts/generate-site-data" --inputs)"
+b="$(LC_ALL=en_US.UTF-8 "$ROOT/scripts/generate-site-data" --inputs 2>/dev/null || printf '%s' "$a")"
+[ "$a" = "$b" ] || { echo "    the generator's input order depends on the locale; it must expand its globs in byte order"; exit 1; }
