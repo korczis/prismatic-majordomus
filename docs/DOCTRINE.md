@@ -146,7 +146,7 @@ drives enforcement:
 | surface | read by | authority today |
 |---|---|---|
 | `share/doctrines.yaml` | the dispatcher, `doctor`, `doctrine list`, the site | **authoritative**: what `check`, `finish`, `watch` and `doctor` enforce |
-| rule objects under `rules/` | `majordomus rules`, `init`, humans and other tools | resolved and verified, not yet dispatched |
+| rule objects under `rules/` | `majordomus rules`, `init`, humans and other tools | resolved by `rules list` and checked by `rules vendor status` only; `doctor` does not read them yet, so a hand-edited vendor file or an unresolvable set is not a `doctor` failure |
 
 The target is that the dispatcher and `doctor` read the resolved rule objects and the
 registry is retired, with the same chain — declared, validator exists, commands dispatch

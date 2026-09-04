@@ -748,9 +748,11 @@ refused by `vendor update` until `--force`.
 | exit | meaning |
 |---|---|
 | 0 | the set resolves; the vendored baseline is current |
+| 2 | unknown subcommand or option; `show` without an id |
 | 10 | the set does not resolve, or the vendored copy fails its manifest |
 | 11 | `vendor status`: the executable ships a different package than the one vendored |
 | 12 | no rule with that id; nothing vendored yet; no rules section in this layout |
+| 13 | the executable ships no standard rule package: a broken install, not a repository fault |
 | 15 | `vendor update` refused over a hand-edited vendor directory (`--force` overrides) |
 
 `test/cases/67_rule_dag.sh` proves each refusal by mutation, and proves that a newer
