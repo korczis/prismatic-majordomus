@@ -192,8 +192,7 @@ jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" --argjson checks 
   --arg problem_bullets "$(printf '%s' "$PROBLEM_MD" | awk '/^- /{f=1} f&&/^$/{exit} f')" \
   --arg notwhat "$(section_of "$ROOT/README.md" "What this is not" "Limitations")" --argjson does "$DOES_ROWS" \
   --arg limits "$(section_of "$ROOT/README.md" "Limitations" "Roadmap")" \
-  --arg roadmap "$(section_of "$ROOT/README.md" "Roadmap" "Contributing")" \
-  '{schema:1, finish_transcript:$finish, finish_checks:$checks, problem_md:$problem, problem_bullets_md:$problem_bullets, not_md:$notwhat, limitations_md:$limits, roadmap_md:$roadmap, does:$does}' > "$OUT/readme.json"
+  '{schema:1, finish_transcript:$finish, finish_checks:$checks, problem_md:$problem, problem_bullets_md:$problem_bullets, not_md:$notwhat, limitations_md:$limits, does:$does}' > "$OUT/readme.json"
 
 # ---------------------------------------------------------------- commands.json (CLI reference sections per command)
 # docs/CLI.md has one `## `majordomus <name>`` section per command; each becomes a page.
@@ -613,6 +612,38 @@ if mj_project_load; then
 # same data instead of shelling back out to the CLI, which needs an installed .majordomus/
 # that a disposable test repository does not have. Reported by the session that owns the
 # model; the first version of this guard called the CLI and broke every site case.
+  # ------------------------------------------------------------ roadmap.json
+  # The roadmap is the milestone graph, and it is not recomputed here: this calls the same
+  # projection `majordomus plan roadmap --json` prints, in process, so the page and the
+  # command cannot disagree about what is blocked. Calling the CLI instead would need an
+  # installed .majordomus/ that a disposable test repository does not have — that mistake
+  # cost every site case an hour ago.
+  ( MJ_JSON=1; mj_plan_roadmap ) > "$OUT/roadmap.json"
+  # The milestone graph in the shape site/graph.js renders, so the roadmap reuses the runtime
+  # /map/ and /evidence/ already use rather than adding a third picture of a dependency graph.
+  jq '{schema: 1,
+       source: ".majordomus/project/milestones/",
+       edge_kinds: {requires: "the target cannot begin until the source is accepted"},
+       nodes: [.milestones[] | {id: .id, kind: "milestone",
+                                label: (if .version == "" then .id else .version + "  " + .id end),
+                                status: .status, route: ("/plan/" + (.id | ascii_downcase) + "/"),
+                                external: false, summary: .title}],
+       edges: [.milestones[] | . as $m | $m.depends_on[] | {source: ., target: $m.id, kind: "requires"}]}' \
+    "$OUT/roadmap.json" > "$OUT/roadmap-graph.json"
+  [ -s "$OUT/roadmap.json" ] || { echo "generate-site-data: the roadmap projection produced nothing" >&2; exit 13; }
+  # The gate the engine enforces: a milestone whose dependencies are not all DONE is BLOCKED,
+  # whatever its own issues say. Asserted on the projection rather than reimplemented — this
+  # should never fire, and if it does the page and the engine have diverged.
+  jq -e '[.milestones[] | select((.blocked_by | length) > 0 and .status != "BLOCKED")] | length == 0' \
+    "$OUT/roadmap.json" >/dev/null \
+    || { echo "generate-site-data: a milestone has unmet dependencies but is not BLOCKED; the roadmap and the engine disagree" >&2; exit 10; }
+  # Each version milestone names the claim it would move from planned to guaranteed. Linking
+  # does not promote: a claim reaches guaranteed through implementation, test and CI, and the
+  # page says so. But a claim named here that does not exist would be a promise about nothing.
+  jq -e --slurpfile caps "$OUT/capabilities.json" \
+    '[.milestones[].claims[]] - ($caps[0].claims | map(.id)) | length == 0' "$OUT/roadmap.json" >/dev/null \
+    || { echo "generate-site-data: a milestone names a claim that is not in docs/CLAIMS.yaml" >&2; exit 10; }
+
 PLAN_FAILS="$(jq -r '[.findings[] | select(.level == "FAIL")] | length' "$OUT/plan.json")"
 if [ "$PLAN_FAILS" != 0 ]; then
   jq -r '.findings[] | select(.level == "FAIL") | "generate-site-data: project model: \(.code) \(.subject) — \(.message)"' "$OUT/plan.json" >&2
