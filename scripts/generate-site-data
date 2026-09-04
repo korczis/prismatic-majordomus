@@ -606,6 +606,19 @@ if mj_project_load; then
     '{schema:1, project:{name:$name, repository:$repo, default_branch:$branch},
       active_milestone:$active, next_ready:$next, mermaid:$mermaid,
       milestones:$milestones, issues:$issues, waves:$waves, edges:$edges, findings:$findings}' > "$OUT/plan.json"
+# Refuse an invalid model rather than project it. A cycle makes every milestone BLOCKED with
+# no rank, and without this the generator published that roadmap and exited 0 — a page saying
+# nothing is reachable, with no reason given. The engine has already said so by this point:
+# a FAIL finding is what `plan validate` exits 10 on, so this asks the same question of the
+# same data instead of shelling back out to the CLI, which needs an installed .majordomus/
+# that a disposable test repository does not have. Reported by the session that owns the
+# model; the first version of this guard called the CLI and broke every site case.
+PLAN_FAILS="$(jq -r '[.findings[] | select(.level == "FAIL")] | length' "$OUT/plan.json")"
+if [ "$PLAN_FAILS" != 0 ]; then
+  jq -r '.findings[] | select(.level == "FAIL") | "generate-site-data: project model: \(.code) \(.subject) — \(.message)"' "$OUT/plan.json" >&2
+  echo "generate-site-data: refusing to publish a roadmap from an invalid model (run: majordomus plan validate)" >&2
+  exit 10
+fi
 else
   echo "generate-site-data: no canonical project model in $ROOT/.majordomus/project" >&2; exit 12
 fi
