@@ -29,7 +29,7 @@ expect_exit 0 "$T/scripts/generate-site-data"
 
 # a module that stops naming a state file loses its edge to it
 [ "$(jq -r '[.edges[] | select(.source=="lib/question.sh" and .target==".majordomus/state/open-questions.md")] | length' "$A")" = 1 ]
-grep -v 'state/open-questions.md' "$T/lib/question.sh" > "$T/lib/question.sh.new" && mv "$T/lib/question.sh.new" "$T/lib/question.sh"
+grep -v 'MJ_STATE_DIR/open-questions.md' "$T/lib/question.sh" > "$T/lib/question.sh.new" && mv "$T/lib/question.sh.new" "$T/lib/question.sh"
 expect_exit 0 "$T/scripts/generate-site-data"
 [ "$(jq -r '[.edges[] | select(.source=="lib/question.sh" and .target==".majordomus/state/open-questions.md")] | length' "$A")" = 0 ] \
   || { echo "    the graph kept an edge for a reference that is no longer in the source"; exit 1; }
