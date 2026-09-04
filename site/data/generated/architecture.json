@@ -250,6 +250,16 @@
       "external": false
     },
     {
+      "id": ".majordomus/README.md",
+      "kind": "artifact",
+      "label": "README.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/finish.sh",
       "kind": "module",
       "label": "finish",
@@ -277,6 +287,36 @@
       "summary": "set up .majordomus/ in this repository (refuses to overwrite)",
       "read_only": null,
       "route": "/commands/init/",
+      "external": false
+    },
+    {
+      "id": "lib/rules.sh",
+      "kind": "module",
+      "label": "rules",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".majordomus/cache",
+      "kind": "artifact",
+      "label": "cache",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".majordomus/session-contexts",
+      "kind": "artifact",
+      "label": "session-contexts",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
       "external": false
     },
     {
@@ -443,6 +483,11 @@
     },
     {
       "source": "lib/doctor.sh",
+      "target": ".majordomus/README.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/doctor.sh",
       "target": ".majordomus/profiles",
       "kind": "reads"
     },
@@ -469,6 +514,16 @@
     {
       "source": "lib/finish.sh",
       "target": ".majordomus/state/checkpoints",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/state/decisions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/state/open-questions.md",
       "kind": "reads"
     },
     {
@@ -692,6 +747,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/init.sh",
+      "target": "lib/rules.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/plan.sh",
       "target": "lib/project.sh",
       "kind": "sources"
@@ -828,7 +888,37 @@
     },
     {
       "source": "lib/init.sh",
+      "target": ".majordomus/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/cache",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
       "target": ".majordomus/policy.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/profiles",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/prompts",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/session-contexts",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/state/checkpoints",
       "kind": "uses"
     },
     {
@@ -974,6 +1064,11 @@
     {
       "source": "lib/history.sh",
       "target": ".majordomus/state/ledger.jsonl",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/state/handovers",
       "kind": "writes"
     },
     {

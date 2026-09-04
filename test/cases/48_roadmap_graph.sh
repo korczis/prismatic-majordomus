@@ -6,6 +6,8 @@
 # amount of finished work inside it changes that.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
+# init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
+git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
 pj_init
 
 # A milestone with a version, a dependency list and no M-prefixed id. Identity is the slug;
@@ -29,7 +31,7 @@ evidence_required:
   - proof
 Y
     if [ $# -gt 0 ]; then printf 'depends_on:\n'; for d in "$@"; do printf -- '  - %s\n' "$d"; done; fi
-  } > ".majordomus/project/milestones/$id.yaml"
+  } > ".ai/repo/project/milestones/$id.yaml"
 }
 mstatus() { "$MJ" plan roadmap | awk -v i="$2" '$3==i{print $2}'; }
 mstat()   { "$MJ" plan roadmap | awk -v i="$1" '$3==i{print $2}'; }
@@ -59,7 +61,7 @@ pj_issue W1 first
 "$MJ" plan evidence W1 --covers proof --type test --command true --result ok >/dev/null
 "$MJ" plan 'done' W1 >/dev/null
 printf 'evidence:\n  - covers: proof\n    type: test\n    command: "true"\n    result: "ok"\n    recorded_at: 2026-09-04\n' \
-  >> .majordomus/project/milestones/first.yaml
+  >> .ai/repo/project/milestones/first.yaml
 [ "$(mstat first)"  = DONE    ] || { echo "    first is $(mstat first), expected DONE"; exit 1; }
 [ "$(mstat second)" = PLANNED ] || { echo "    second is $(mstat second), expected PLANNED once first is DONE"; exit 1; }
 [ "$(mstat third)"  = BLOCKED ] || { echo "    third is $(mstat third), expected still BLOCKED"; exit 1; }
@@ -82,17 +84,17 @@ rm_milestone loopa 0.9 1 loopb
 rm_milestone loopb 0.9 2 loopa
 expect_exit 10 "$MJ" plan validate
 expect_grep 'milestone_cycle'
-rm -f .majordomus/project/milestones/loopa.yaml .majordomus/project/milestones/loopb.yaml
+rm -f .ai/repo/project/milestones/loopa.yaml .ai/repo/project/milestones/loopb.yaml
 
 rm_milestone selfdep 0.9 1 selfdep
 expect_exit 10 "$MJ" plan validate
 expect_grep 'milestone_self_dependency'
-rm -f .majordomus/project/milestones/selfdep.yaml
+rm -f .ai/repo/project/milestones/selfdep.yaml
 
 rm_milestone dangling 0.9 1 nosuchmilestone
 expect_exit 10 "$MJ" plan validate
 expect_grep 'milestone_unknown_dependency'
-rm -f .majordomus/project/milestones/dangling.yaml
+rm -f .ai/repo/project/milestones/dangling.yaml
 expect_exit 0 "$MJ" plan validate
 
 # --- the JSON projection carries the same graph the text does

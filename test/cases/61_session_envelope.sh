@@ -12,8 +12,10 @@
 . "$ROOT/test/lib.sh"
 
 "$MJ" init >/dev/null
-LED=.majordomus/state/ledger.jsonl
-SES=.majordomus/state/sessions
+# init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
+git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
+LED=.ai/local/state/ledger.jsonl
+SES=.ai/local/state/sessions
 
 # --- closing with nothing open is a missing artifact, not a silent success
 expect_exit 12 "$MJ" session close
@@ -37,20 +39,20 @@ expect_grep '^tasks:$' "$rec"
 expect_no_grep 'the cause is in normalisation' "$rec"
 expect_no_grep 'the fixture proved the comparison was innocent' "$rec"
 expect_grep '^checkpoints:$' "$rec"
-expect_grep '^  - "\.majordomus/state/checkpoints/' "$rec"
-expect_grep '^  - "\.majordomus/state/handovers/' "$rec"
+expect_grep '^  - "\.ai/local/state/checkpoints/' "$rec"
+expect_grep '^  - "\.ai/local/state/handovers/' "$rec"
 expect_grep '^decisions:$' "$rec"
 expect_grep '^  - "Normalise before comparing"$' "$rec"
 # the authored summary is the only prose in the file
 expect_grep '^both pieces moved$' "$rec"
 
 # --- every referenced path exists; a reference is only worth what it resolves to
-sed -n 's/^  - "\(\.majordomus\/state\/[^"]*\)"$/\1/p' "$rec" | while IFS= read -r p; do
+sed -n 's/^  - "\(\.ai\/local\/state\/[^"]*\)"$/\1/p' "$rec" | while IFS= read -r p; do
   [ -f "$p" ] || { echo "    envelope references a file that does not exist: $p"; exit 1; }
 done
 
 # --- the open record is gone and exactly one close event was appended
-[ -f .majordomus/state/session-current.yaml ] && { echo "    close left the open record behind"; exit 1; }
+[ -f .ai/local/state/session-current.yaml ] && { echo "    close left the open record behind"; exit 1; }
 [ "$(grep -c '"event":"session.closed"' "$LED")" = 1 ] || { echo "    expected one session.closed event"; exit 1; }
 
 # --- absent and empty are different facts, so an empty list is written as one
@@ -63,12 +65,12 @@ printf 'a different sitting entirely\n' | "$MJ" checkpoint >/dev/null
 rec2="$(printf 'second episode\n' | "$MJ" session close)"
 [ "$rec2" != "$rec" ] || { echo "    the second close overwrote the first record"; exit 1; }
 expect_no_grep 'Normalise before comparing' "$rec2"
-[ "$(grep -c '^  - "\.majordomus/state/checkpoints/' "$rec2")" = 1 ] \
+[ "$(grep -c '^  - "\.ai/local/state/checkpoints/' "$rec2")" = 1 ] \
   || { echo "    the second episode claimed the first episode's checkpoints"; exit 1; }
 
 # --- one task spanning two sessions is named by both. The first record is not rewritten to
 #     mention the second; later information supersedes, it never edits.
-this_task="$(sed -n 's/^id: //p' .majordomus/state/current.yaml)"
+this_task="$(sed -n 's/^id: //p' .ai/local/state/current.yaml)"
 grep -q "\"$this_task\"" "$rec2" || { echo "    the second episode did not name the task it worked on"; exit 1; }
 grep -q "\"$this_task\"" "$rec" || { echo "    the first episode did not name the task it worked on"; exit 1; }
 
@@ -80,7 +82,7 @@ grep -q "\"$this_task\"" "$rec" || { echo "    the first episode did not name th
 #     lines fell outside the window for the wrong reason. The mutation was run against both
 #     drafts; only this one fails it.
 "$MJ" session start --owner tester >/dev/null
-printf '{"ts":"2099-01-01T00:00:00Z","event":"task.checkpoint","head":"deadbee","branch":"master","by":"majordomus/0.1.0","session":"s-99999999999999-ffff","task_id":"t-somebody-else","checkpoint_path":".majordomus/state/checkpoints/not-mine.md"}\n' >> "$LED"
+printf '{"ts":"2099-01-01T00:00:00Z","event":"task.checkpoint","head":"deadbee","branch":"master","by":"majordomus/0.1.0","session":"s-99999999999999-ffff","task_id":"t-somebody-else","checkpoint_path":".ai/local/state/checkpoints/not-mine.md"}\n' >> "$LED"
 printf '{"ts":"2099-01-01T00:00:01Z","event":"decision.recorded","head":"deadbee","branch":"master","by":"majordomus/0.1.0","task_id":"t-nobody","decision":"A decision no episode claimed"}\n' >> "$LED"
 printf 'mine only\n' | "$MJ" checkpoint >/dev/null
 rec3="$(printf 'attribution\n' | "$MJ" session close)"
@@ -101,7 +103,7 @@ expect_grep "^  - \"$short\"\$" "$rec4"
 "$MJ" session start --owner tester >/dev/null
 expect_exit 10 sh -c 'printf "head: 0000000\n" | "$0" session close' "$MJ"
 expect_grep 'must not contain identity fields'
-[ -f .majordomus/state/session-current.yaml ] || { echo "    a refused close still removed the open record"; exit 1; }
+[ -f .ai/local/state/session-current.yaml ] || { echo "    a refused close still removed the open record"; exit 1; }
 
 # --- the record is private and the store is append-only in practice: closing again writes
 #     a new file and never touches the last one

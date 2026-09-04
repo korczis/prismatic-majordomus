@@ -33,12 +33,12 @@ H
 
   # existing task? One active task per checkout — so a record belonging to another checkout
   # does not block this one. It is replaced in this working copy and left alone everywhere
-  # else, and the hazard of committing that replacement is stated rather than hidden.
+  # else; local state is never tracked, so nothing about the replacement travels.
   if mj_load_current; then
     local oc; oc="$(mj_cur outcome)"
     if mj_task_is_foreign; then
-      mj_warn task "$(mj_cur id)" "the record here belongs to $(mj_cur worktree); replacing it in this working copy only" "git diff $(mj_rel "$MJ_STATE_DIR")/current.yaml"
-      [ "$oc" = active ] && mj_warn task "$(mj_cur id)" "that task is still active there; committing this file would replace its record on the branch" "cat $(mj_rel "$MJ_STATE_DIR")/current.yaml"
+      mj_warn task "$(mj_cur id)" "the record here belongs to $(mj_cur worktree); replacing it in this working copy only" "cat $(mj_rel "$MJ_STATE_DIR")/current.yaml"
+      [ "$oc" = active ] && mj_info task "$(mj_cur id)" "that task is still active there; nothing here changes it" "majordomus --repo $(mj_cur worktree) check"
     else
       case "$oc" in
         active) mj_die "$MJ_EX_REFUSED" "task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus handover or majordomus finish first" ;;
@@ -59,6 +59,7 @@ H
 
   local id; id="t-$(mj_now_compact | tr -d 'TZ')-$(mj_rand16 | cut -c1-4)"
   local now; now="$(mj_now)"
+  mkdir -p "$MJ_STATE_DIR"
   {
     printf 'id: %s\ntask: "%s"\nprofile: %s\nowner: "%s"\nscope:\n' "$id" "$(printf '%s' "$task" | sed 's/"/\\"/g')" "$profile" "$owner"
     for p in $norm; do printf '  - %s\n' "$p"; done

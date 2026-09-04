@@ -8,21 +8,21 @@ expect_exit 12 "$MJ" doctor
 expect_grep 'FAIL wiring +doctor-on-commit'
 expect_grep 'FAIL projection +CLAUDE.md — missing'
 # unknown key in policy is a failure, named
-printf 'nonsense: 1\n' >> .majordomus/policy.yaml
+printf 'nonsense: 1\n' >> .ai/repo/policy.yaml
 expect_exit 12 "$MJ" doctor
 expect_grep 'FAIL policy .*unknown keys: nonsense'
-"$MJ" init --force >/dev/null
+reset_policy
 # malformed policy
-printf 'a:\n\tb: 1\n' > .majordomus/policy.yaml
+printf 'a:\n\tb: 1\n' > .ai/repo/policy.yaml
 expect_exit 10 "$MJ" doctor
 expect_grep 'does not parse'
-"$MJ" init --force >/dev/null
+reset_policy
 # profile name mismatch
-sed -i.bak 's/^name: routine/name: other/' .majordomus/profiles/routine.yaml && rm -f .majordomus/profiles/routine.yaml.bak
+sed -i.bak 's/^name: routine/name: other/' .ai/repo/profiles/routine.yaml && rm -f .ai/repo/profiles/routine.yaml.bak
 expect_exit 12 "$MJ" doctor
 expect_grep 'FAIL profiles +routine — name field'
 # json mode emits one object per finding
-"$MJ" init --force >/dev/null
+reset_policy
 expect_exit 12 "$MJ" --json doctor
 expect_grep '^\{"level":"FAIL","category":"wiring"'
 
@@ -31,8 +31,8 @@ expect_grep '^\{"level":"FAIL","category":"wiring"'
 # subshell — the parent then carried on with an empty value and produced
 # "[: : integer expected" plus a finding reading "over budget " with no number. Found by
 # running doctor in a repository that adopted the tool before these keys existed.
-"$MJ" init --force >/dev/null; "$MJ" update >/dev/null
-python3 - .majordomus/policy.yaml <<'PY'
+reset_policy; "$MJ" update >/dev/null
+python3 - .ai/repo/policy.yaml <<'PY'
 import sys,re
 p=sys.argv[1]; s=open(p).read()
 s=re.sub(r'^\s*builder_budget_lines:.*\n', '', s, flags=re.M)
@@ -43,4 +43,4 @@ expect_exit 10 "$MJ" doctor
 expect_grep "policy declares no context.builder_budget_lines"
 expect_no_grep 'integer expected'
 expect_no_grep 'over budget *$'
-"$MJ" init --force >/dev/null
+reset_policy

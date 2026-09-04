@@ -7,6 +7,8 @@
 # rewritten here to assert the behaviour that replaced it (M001/I0103).
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
+# init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
+git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
 
 # --- a question opened against a task refuses a completed finish for that task
 mkdir -p lib
@@ -25,7 +27,7 @@ expect_grep 'finish: t-.* blocked'
 
 # ---------------------------------------------------------------- across the boundary
 # The question is still unresolved in the store...
-grep -q '^- \[unresolved\] ' .majordomus/state/open-questions.md \
+grep -q '^- \[unresolved\] ' .ai/local/state/open-questions.md \
   || { echo "    the question was resolved by the handover; this case is testing nothing"; exit 1; }
 
 # ... and the next task sees it and is stopped by it, though it did not open it.
@@ -54,7 +56,7 @@ expect_exit 0 "$MJ" history --validate
 # Every fresh install ships open-questions.md with a commented example that matches the
 # unresolved pattern. A scan that did not skip the comment block would block the first
 # completed finish anybody attempted, on every installation.
-grep -q '\[unresolved\] <task id>' .majordomus/state/open-questions.md \
+grep -q '\[unresolved\] <task id>' .ai/local/state/open-questions.md \
   || { echo "    the shipped template no longer contains the example line; this check is stale"; exit 1; }
 "$MJ" start "third piece of work" --scope lib,note.md,note2.md,tool >/dev/null
 printf '# Objective\n\nthird\n\n# Current State\n\ndone\n\n# Next Action\n\nnothing\n' > note.md

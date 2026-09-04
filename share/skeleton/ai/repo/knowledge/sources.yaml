@@ -1,0 +1,71 @@
+# The repository's knowledge sources: which tracked files are knowledge, in which class.
+#
+# Discovery goes through the version-control index with the pathspec given here, under the
+# `:(glob)` prefix so that `*` never crosses a directory separator and no two classes claim
+# one file. Operational records (the active task, checkpoints, handovers, sessions,
+# decisions, questions) are not declared here: they live under .ai/local/ and are
+# discovered by the tool from the state directory it owns.
+#
+# fields:
+#   id          the class, unique; also the order sources are reported in
+#   kind        the node kind every source in this class produces
+#   discovery   vcs — the tracked files matching the pathspec
+#   pathspec    one pathspec, relative to the repository root
+#   required    true when a repository with this layer must have it, so that a class
+#               discovering nothing is a finding rather than a silence
+version: 1
+
+sources:
+  - id: policy
+    kind: policy
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/policy.yaml'
+    required: true
+
+  - id: profile
+    kind: profile
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/profiles/*.yaml'
+    required: true
+
+  - id: rule
+    kind: rule
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/rules/**/*.md'
+    required: true
+
+  - id: prompt
+    kind: prompt
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/prompts/*.md'
+    required: false
+
+  - id: workflow
+    kind: document
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/workflows/*.md'
+    required: false
+
+  - id: milestone
+    kind: milestone
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/milestones/*.yaml'
+    required: false
+
+  - id: issue
+    kind: issue
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/issues/*.yaml'
+    required: false
+
+  - id: document
+    kind: document
+    discovery: vcs
+    pathspec: ':(glob)docs/*.md'
+    required: false
+
+  - id: readme
+    kind: document
+    discovery: vcs
+    pathspec: ':(glob)*.md'
+    required: false

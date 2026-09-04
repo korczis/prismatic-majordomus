@@ -9,8 +9,8 @@ mkdir -p lib/auth test && echo a > lib/auth/callback && echo t > test/auth_test 
 
 # =================================================================== 1. start → handover → resume
 "$MJ" start "fix the OAuth callback" --scope lib/auth,test --profile debugging --owner alice >/dev/null
-id1=$(sed -n 's/^id: //p' .majordomus/state/current.yaml)
-expect_grep '"event":"task.started"' .majordomus/state/ledger.jsonl
+id1=$(sed -n 's/^id: //p' .ai/local/state/current.yaml)
+expect_grep '"event":"task.started"' .ai/local/state/ledger.jsonl
 
 # the worker gets its briefing, does work, records what it learned and what blocks it
 expect_exit 0 "$MJ" context
@@ -26,13 +26,13 @@ printf 'state mismatch reproduced with the fixture\ncause is in normalisation, n
 expect_exit 10 "$MJ" check
 expect_grep 'OK +scope .* all within scope'
 expect_grep 'FAIL blockers .* does the legacy mobile client'
-expect_grep 'INFO checkpoint +\.majordomus/state/checkpoints/'
+expect_grep 'INFO checkpoint +\.ai/local/state/checkpoints/'
 
 # the blocker refuses completion, exactly as the contract says
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
 expect_exit 10 "$MJ" finish --outcome completed --verify-command true
 expect_grep 'FAIL blockers'
-expect_grep '^outcome: active$' .majordomus/state/current.yaml
+expect_grep '^outcome: active$' .ai/local/state/current.yaml
 
 # the worker stops instead, handing over
 git commit -qam wip
@@ -44,7 +44,7 @@ Reproduced. The cause is URI normalisation in the callback handler, not the comp
 # Next Action
 Write the failing regression test in test/auth_test before changing the handler.
 EOF
-expect_grep '^outcome: handed_over$' .majordomus/state/current.yaml
+expect_grep '^outcome: handed_over$' .ai/local/state/current.yaml
 
 # --- a new session, which knows nothing except the repository -------------------------
 # everything it needs is in one command, resolved to this worktree and branch
@@ -65,8 +65,8 @@ expect_grep '^Task: '"$id1"'$'
 
 # it continues the same work as a new task; start names the record it would resume from
 expect_exit 0 "$MJ" start "continue the OAuth callback fix" --scope lib/auth,test --profile debugging --owner bob
-expect_grep 'INFO handover +\.majordomus/state/handovers/.* prior record, same_worktree_same_branch'
-id2=$(sed -n 's/^id: //p' .majordomus/state/current.yaml)
+expect_grep 'INFO handover +\.ai/local/state/handovers/.* prior record, same_worktree_same_branch'
+id2=$(sed -n 's/^id: //p' .ai/local/state/current.yaml)
 [ "$id1" != "$id2" ]
 
 # the earlier task's blocker is still open, and it still blocks: the work moved to a new
@@ -99,7 +99,7 @@ printf '# Objective\nFix the OAuth callback.\n# Current State\nFixed and covered
 expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
 expect_grep 'OK +verification .* exit 0'
 expect_grep 'OK +regression .* a test path was touched'
-expect_grep '^outcome: completed$' .majordomus/state/current.yaml
+expect_grep '^outcome: completed$' .ai/local/state/current.yaml
 
 # =================================================================== 2. history reconstructs it
 # every step of both tasks is in the ledger, in order, with its git head
@@ -114,22 +114,22 @@ expect_exit 0 "$MJ" history --task "$id2" --all
 expect_grep 'outcome=completed verify_exit=0'
 expect_grep 'question.resolved'
 # the verification that was accepted is recorded with its command and exit code
-expect_grep '"event":"task.finished".*"verify":\{"command":"true","exit":0' .majordomus/state/ledger.jsonl
-expect_grep '"checkpoints":[0-9]' .majordomus/state/ledger.jsonl
+expect_grep '"event":"task.finished".*"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
+expect_grep '"checkpoints":[0-9]' .ai/local/state/ledger.jsonl
 
 # search finds the durable knowledge without reading any of the files
 expect_exit 0 "$MJ" search "normalisation"
 expect_grep '^checkpoint '
 # search prints the line that matched, so the rationale is what comes back for a rationale term
 expect_exit 0 "$MJ" search "trailing slash" --kind decision
-expect_grep '^decision +\.majordomus/state/decisions.md:[0-9]+ +Why: the mismatch is a trailing slash'
+expect_grep '^decision +\.ai/local/state/decisions.md:[0-9]+ +Why: the mismatch is a trailing slash'
 expect_exit 0 "$MJ" search "Normalise the callback" --kind decision
 expect_grep 'Normalise the callback URI before comparing state'
 
 # =================================================================== 3. a stopped task
 git add -A && git commit -qm complete
 "$MJ" start "investigate the token store" --scope lib/auth --profile implementation >/dev/null
-id3=$(sed -n 's/^id: //p' .majordomus/state/current.yaml)
+id3=$(sed -n 's/^id: //p' .ai/local/state/current.yaml)
 "$MJ" question add "which team owns the token store?" >/dev/null
 expect_exit 0 "$MJ" question list
 expect_grep 'which team owns the token store' 
@@ -143,8 +143,8 @@ expect_exit 0 "$MJ" finish --outcome blocked --note "$note"
 expect_grep 'INFO blockers .* open questions do not refuse it'
 # with no handover for this task, the continuity finding says the note is the only record
 expect_grep 'WARN continuity .* the note.s Next Action is the only continuation record'
-expect_grep '^outcome: blocked$' .majordomus/state/current.yaml
-[ -f ".majordomus/state/completed/$id3.md" ]
+expect_grep '^outcome: blocked$' .ai/local/state/current.yaml
+[ -f ".ai/local/state/completed/$id3.md" ]
 expect_exit 0 "$MJ" history --task "$id3" --all
 expect_grep 'outcome=blocked' 
 
@@ -157,8 +157,8 @@ expect_grep 'watch: 0 drift'
 
 # and doctor proves each store is reachable through its own command, not merely present
 expect_exit 10 "$MJ" doctor          # hooks are not wired in a test repository
-expect_grep 'OK +layout +\.majordomus/state/checkpoints'
-expect_grep 'OK +layout +\.majordomus/prompts'
+expect_grep 'OK +layout +\.ai/local/state/checkpoints'
+expect_grep 'OK +layout +\.ai/repo/prompts'
 expect_grep 'OK +records +open-questions.md'
 expect_grep 'OK +records +ledger.jsonl'
 expect_grep 'OK +prompt +[0-9]+ asset'

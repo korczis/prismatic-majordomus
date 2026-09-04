@@ -3,6 +3,8 @@
 # so a subcommand added to lib/plan.sh is checked here from the moment it exists.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
+# init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
+git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
 
 SUBS="$(grep -oE '^    [a-z|]+\) sub="\$1"' "$ROOT/lib/plan.sh" | sed -E 's/^ *//; s/\).*//' | tr '|' '\n' | sed '/^$/d')"
 [ -n "$SUBS" ] || { echo "    the subcommand table in lib/plan.sh changed shape; update this case"; exit 1; }
@@ -39,7 +41,7 @@ expect_exit 0 "$MJ" plan show I0001
 expect_grep '## Objective'
 expect_grep '## Acceptance Criteria'
 expect_grep '## Dependencies'
-expect_grep '\.majordomus/project/issues/I0001\.yaml'
+expect_grep '\.ai/repo/project/issues/I0001\.yaml'
 expect_exit 0 "$MJ" plan show M000
 expect_grep '## Issue DAG'
 expect_grep 'flowchart LR'
@@ -81,16 +83,16 @@ expect_grep "unknown evidence type 'nonsense'"
 
 # --- a transition is recorded in the append-only ledger, like every other durable act
 "$MJ" plan start I0001 >/dev/null
-grep -q '"event":"plan_start"' .majordomus/state/ledger.jsonl || { echo "    plan start wrote no ledger event"; exit 1; }
+grep -q '"event":"plan_start"' .ai/local/state/ledger.jsonl || { echo "    plan start wrote no ledger event"; exit 1; }
 "$MJ" plan evidence I0001 --covers proof --type test --command "true" --result ok >/dev/null
-grep -q '"event":"plan_evidence"' .majordomus/state/ledger.jsonl || { echo "    plan evidence wrote no ledger event"; exit 1; }
+grep -q '"event":"plan_evidence"' .ai/local/state/ledger.jsonl || { echo "    plan evidence wrote no ledger event"; exit 1; }
 "$MJ" plan "done" I0001 >/dev/null
-grep -q '"event":"plan_done"' .majordomus/state/ledger.jsonl || { echo "    plan done wrote no ledger event"; exit 1; }
+grep -q '"event":"plan_done"' .ai/local/state/ledger.jsonl || { echo "    plan done wrote no ledger event"; exit 1; }
 expect_exit 0 "$MJ" history --validate
 
 # --- the read subcommands never write
-before="$(find .majordomus/project -type f -exec shasum -a 256 {} \; | sort)"
+before="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | sort)"
 for s in validate status list ready blocked waves graph next; do "$MJ" plan "$s" >/dev/null 2>&1 || true; done
 "$MJ" plan show I0001 >/dev/null; "$MJ" plan body M000 >/dev/null
-after="$(find .majordomus/project -type f -exec shasum -a 256 {} \; | sort)"
+after="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | sort)"
 [ "$before" = "$after" ] || { echo "    a read subcommand wrote to the canonical model"; exit 1; }

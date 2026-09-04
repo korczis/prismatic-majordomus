@@ -7,6 +7,8 @@
 . "$ROOT/test/lib.sh"
 
 "$MJ" init >/dev/null
+# init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
+git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
 
 # --- absence is an answer, not a failure
 expect_exit 0 "$MJ" session status
@@ -15,7 +17,7 @@ expect_grep 'No open session'
 # --- opening records identity computed from git, not authored
 expect_exit 0 "$MJ" session start --owner tester --worker "some-provider/some-model"
 expect_grep 'session s-[0-9]{14}-[0-9a-f]{4} opened'
-S=".majordomus/state/session-current.yaml"
+S=".ai/local/state/session-current.yaml"
 [ -f "$S" ] || { echo "    no open session record written"; exit 1; }
 
 head_now="$(git rev-parse HEAD)"
@@ -45,7 +47,7 @@ expect_grep 'is open here since'
 expect_grep 'session close'
 
 # --- the ledger recorded the open, and only the open
-grep -q '"event":"session.started"' .majordomus/state/ledger.jsonl || { echo "    no session.started event"; exit 1; }
+grep -q '"event":"session.started"' .ai/local/state/ledger.jsonl || { echo "    no session.started event"; exit 1; }
 
 # --- an open record belonging to another checkout is reported, never obeyed
 sed 's#^worktree: .*#worktree: /somewhere/else#' "$S" > "$S.foreign" && mv "$S.foreign" "$S"

@@ -317,6 +317,28 @@
       "test": "test/cases/28_no_hardcoded_values.sh"
     },
     {
+      "id": "ai_layout_integrity",
+      "slug": "ai-layout-integrity",
+      "title": "AI layer integrity",
+      "class": "blocking",
+      "principle": 1,
+      "summary": "The repository's AI layer is real: the manifest declares a format this executable reads and every section it names exists, the checkout-local half is ignored by git and nothing under it is tracked, and no project data remains under the pre-.ai .majordomus/ path.",
+      "validator": "ai_layout",
+      "validator_function": "mj_validate_ai_layout",
+      "defined_in": "lib/doctor.sh",
+      "category": "layout",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "init-refuses"
+      ],
+      "test": "test/cases/01_init.sh"
+    },
+    {
       "id": "layout_integrity",
       "slug": "layout-integrity",
       "title": "Layout integrity",
@@ -568,8 +590,8 @@
     }
   ],
   "counts": {
-    "declared": 25,
-    "blocking": 21,
+    "declared": 26,
+    "blocking": 22,
     "advisory": 4
   },
   "index": {
@@ -587,16 +609,17 @@
     "handover_integrity": 11,
     "task_continuity": 12,
     "policy_completeness": 13,
-    "layout_integrity": 14,
-    "policy_integrity": 15,
-    "projection_integrity": 16,
-    "enforcement_wiring": 17,
-    "context_budget": 18,
-    "retention_caps": 19,
-    "catalogue_integrity": 20,
-    "doctrine_wiring_integrity": 21,
-    "project_integrity": 22,
-    "dag_integrity": 23,
-    "roadmap_integrity": 24
+    "ai_layout_integrity": 14,
+    "layout_integrity": 15,
+    "policy_integrity": 16,
+    "projection_integrity": 17,
+    "enforcement_wiring": 18,
+    "context_budget": 19,
+    "retention_caps": 20,
+    "catalogue_integrity": 21,
+    "doctrine_wiring_integrity": 22,
+    "project_integrity": 23,
+    "dag_integrity": 24,
+    "roadmap_integrity": 25
   }
 }

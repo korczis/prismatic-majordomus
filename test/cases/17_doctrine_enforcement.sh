@@ -32,15 +32,15 @@ expect_grep 'blocker_resolution'
 # the same open question is expected when the outcome is blocked, and does not refuse
 expect_exit 0 "$MJ" finish --outcome blocked
 expect_grep 'INFO blockers .* outcome is blocked'
-expect_grep '^outcome: blocked$' .majordomus/state/current.yaml
+expect_grep '^outcome: blocked$' .ai/local/state/current.yaml
 # answered before the next section, which is about the advisory class: an unresolved
 # question blocks every later task on this branch, and would mask what follows
 "$MJ" question resolve "right table" --answer "yes, sessions" >/dev/null
 
 # --- advisory: a stale checkpoint is reported by check and does not fail it
 "$MJ" start "t2" --scope lib --profile routine >/dev/null
-sed -i.bak 's/^checkpoint_at: .*/checkpoint_at: 2020-01-01T00:00:00Z/' .majordomus/state/current.yaml
-rm -f .majordomus/state/current.yaml.bak
+sed -i.bak 's/^checkpoint_at: .*/checkpoint_at: 2020-01-01T00:00:00Z/' .ai/local/state/current.yaml
+rm -f .ai/local/state/current.yaml.bak
 expect_exit 0 "$MJ" check
 expect_grep 'WARN checkpoint'
 expect_no_grep '^FAIL'
@@ -70,7 +70,7 @@ NOTE="$(mktemp "${TMPDIR:-/tmp}/mj.note.XXXXXX")"; printf '# Reason\nnothing to 
 expect_exit 0 "$MJ" finish --outcome no_match --note "$NOTE"
 "$MJ" start "t3" --scope lib --profile routine >/dev/null
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-sed -i.bak 's/^    - note_present$/    - note_present\n    - invented_requirement/' .majordomus/policy.yaml
-rm -f .majordomus/policy.yaml.bak
+sed -i.bak 's/^    - note_present$/    - note_present\n    - invented_requirement/' .ai/repo/policy.yaml
+rm -f .ai/repo/policy.yaml.bak
 expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
 expect_grep "FAIL contract .* 'invented_requirement', which no doctrine defines"

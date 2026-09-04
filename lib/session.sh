@@ -97,6 +97,7 @@ mj_session_start() {
   local id now f tmp
   id="s-$(mj_now_compact | tr -d 'TZ')-$(mj_rand16 | cut -c1-4)"
   now="$(mj_now)"; f="$(mj_session_file)"; tmp="$f.mj-tmp"
+  mkdir -p "$MJ_STATE_DIR"
   {
     printf 'session_id: %s\nstarted_at: %s\nowner: "%s"\n' "$id" "$now" "$(printf '%s' "$owner" | sed 's/"/\\"/g')"
     # Absent stays absent. A worker identity nobody supplied is not inferred, because an

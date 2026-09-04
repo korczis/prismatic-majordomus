@@ -7,6 +7,9 @@
 # things down. Every source it reads is a file somebody already maintains; everything it
 # produces is derived and regenerable, and none of it outranks the file it came from.
 #
+# Which files are sources is declared twice, by two owners: the repository declares its
+# shared knowledge in its AI layer, the tool declares the operational records it writes.
+#
 # This file currently implements the first stage, discovery. The rest of the pipeline —
 # extract, resolve, graph, index, validate, query — arrives with the issues that specify
 # each of them.
@@ -18,17 +21,34 @@
 
 MJ_KSRC_FLAT=""
 
-mj_knowledge_sources_file() { printf '%s' "$MJ_SHARE_DIR/knowledge-sources.yaml"; }
+# Two declarations, one list. The repository's AI layer declares the shared sources — the
+# tracked files that are repository knowledge — under its knowledge section; the tool ships
+# the operational classes, the records it writes itself under the state directory. The
+# repository's classes come first, and the scope is decided by which file declared a class:
+# shared for the repository's, operational for the tool's. Neither file names the other.
+mj_knowledge_repo_sources()  { printf '%s' "$MJ_KNOWLEDGE_DIR/sources.yaml"; }
+mj_knowledge_state_sources() { printf '%s' "$MJ_SHARE_DIR/knowledge-sources.yaml"; }
 
 mj_ksrc_load() {
   [ -n "$MJ_KSRC_FLAT" ] && [ -f "$MJ_KSRC_FLAT" ] && return 0
-  local f; f="$(mj_knowledge_sources_file)"
-  [ -f "$f" ] || mj_die "$MJ_EX_INTERNAL" "knowledge source list missing: $f"
+  local f n=0 tmp
   MJ_KSRC_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.ksrc.XXXXXX")"
-  mj_yaml_flatten "$f" > "$MJ_KSRC_FLAT" 2>/dev/null \
-    || mj_die "$MJ_EX_INTERNAL" "knowledge source list does not parse: $f"
-  [ "$(mj_yget "$MJ_KSRC_FLAT" version)" = 1 ] \
-    || mj_die "$MJ_EX_INTERNAL" "knowledge source list version must be 1"
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ksr.XXXXXX")"
+  for f in "$(mj_knowledge_repo_sources)" "$(mj_knowledge_state_sources)"; do
+    [ -f "$f" ] || { [ "$f" = "$(mj_knowledge_state_sources)" ] && mj_die "$MJ_EX_INTERNAL" "knowledge source list missing: $f"; continue; }
+    mj_yaml_flatten "$f" > "$tmp" 2>/dev/null || mj_die "$MJ_EX_CONTRACT" "knowledge source list does not parse: $(mj_rel "$f")"
+    [ "$(mj_yget "$tmp" version)" = 1 ] || mj_die "$MJ_EX_CONTRACT" "knowledge source list version must be 1: $(mj_rel "$f")"
+    # renumber this file's classes after the ones already loaded, and stamp the scope
+    local scope=operational i=0
+    [ "$f" = "$(mj_knowledge_repo_sources)" ] && scope=shared
+    while [ -n "$(mj_yget "$tmp" "sources.$i.id")" ]; do
+      sed -n "s/^sources\.$i\./sources.$n./p" "$tmp" >> "$MJ_KSRC_FLAT"
+      printf 'sources.%s.scope=%s\n' "$n" "$scope" >> "$MJ_KSRC_FLAT"
+      i=$((i + 1)); n=$((n + 1))
+    done
+  done
+  rm -f "$tmp"
+  return 0
 }
 mj_ksrc()       { mj_yget "$MJ_KSRC_FLAT" "sources.$1.$2"; }
 mj_ksrc_count() { local i=0; while [ -n "$(mj_ksrc "$i" id)" ]; do i=$((i + 1)); done; printf '%s' "$i"; }
@@ -89,13 +109,13 @@ mj_kdisc_vcs() {
 }
 
 # One row per file in a state directory, or the single file itself. Operational records are
-# discovered here rather than from the index because a repository may keep its state out of
-# version control; nothing else on the filesystem is looked at.
+# discovered here rather than from the index because the state directory is never tracked;
+# the pathspec is relative to it, and nothing else on the filesystem is looked at.
 mj_kdisc_state() {
-  local cls="$1" kind="$2" scope="$3" spec="$4" abs f any=0
-  abs="$MJ_ROOT/$spec"
+  local cls="$1" kind="$2" scope="$3" spec="$4" abs f any=0 rel
+  abs="$MJ_STATE_DIR/$spec"; rel="$(mj_rel "$MJ_STATE_DIR")/$spec"
   if [ -f "$abs" ]; then
-    printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$(mj_sha256 "$abs")" "$spec"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$(mj_sha256 "$abs")" "$rel"
     MJ_KDISC_COUNT=$((MJ_KDISC_COUNT + 1))
     return 0
   fi
@@ -103,7 +123,7 @@ mj_kdisc_state() {
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     [ -f "$abs/$f" ] || continue
-    printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$(mj_sha256 "$abs/$f")" "$spec/$f"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$(mj_sha256 "$abs/$f")" "$rel/$f"
     MJ_KDISC_COUNT=$((MJ_KDISC_COUNT + 1)); any=1
   done < <(ls -1 "$abs" 2>/dev/null | LC_ALL=C sort)
   [ "$any" = 1 ]

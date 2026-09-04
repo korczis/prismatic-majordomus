@@ -2,6 +2,8 @@
 # failing the command it runs in, and skipping cleanly where no model exists.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
+# init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
+git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
 # A fresh checkout has neither declared enforcement hook, and their absence is a real
 # doctor failure that would mask the ones this case is about.
 mkdir -p .git/hooks
@@ -34,14 +36,14 @@ expect_grep 'OK   project'
 expect_grep 'OK   dag'
 
 # --- a key nobody reads fails doctor, with a reproduce command
-printf 'estimate: 3d\n' >> .majordomus/project/issues/I0001.yaml
+printf 'estimate: 3d\n' >> .ai/repo/project/issues/I0001.yaml
 expect_exit 10 "$MJ" doctor
 expect_grep 'FAIL project     I0001 — unknown keys: estimate'
 expect_grep 'majordomus plan validate'
 # ... and watch reports the same thing as drift rather than as a failure
 expect_exit 11 "$MJ" watch
 expect_grep 'DRIFT project'
-sed '$d' .majordomus/project/issues/I0001.yaml > /tmp/i.$$ && mv /tmp/i.$$ .majordomus/project/issues/I0001.yaml
+sed '$d' .ai/repo/project/issues/I0001.yaml > /tmp/i.$$ && mv /tmp/i.$$ .ai/repo/project/issues/I0001.yaml
 expect_exit 0 "$MJ" doctor
 
 # --- a cycle fails doctor through dag_integrity, and the failure reaches the exit code
@@ -52,14 +54,14 @@ expect_grep 'FAIL dag'
 expect_grep 'dependency cycle'
 expect_exit 11 "$MJ" watch
 expect_grep 'DRIFT dag'
-rm .majordomus/project/issues/I0003.yaml .majordomus/project/issues/I0004.yaml
+rm .ai/repo/project/issues/I0003.yaml .ai/repo/project/issues/I0004.yaml
 expect_exit 0 "$MJ" doctor
 
 # --- an unparseable canonical file is a load failure, named as one
-printf '\tbroken: yes\n' >> .majordomus/project/issues/I0002.yaml
+printf '\tbroken: yes\n' >> .ai/repo/project/issues/I0002.yaml
 expect_exit 10 "$MJ" doctor
 expect_grep 'the canonical model does not load'
-sed '$d' .majordomus/project/issues/I0002.yaml > /tmp/i.$$ && mv /tmp/i.$$ .majordomus/project/issues/I0002.yaml
+sed '$d' .ai/repo/project/issues/I0002.yaml > /tmp/i.$$ && mv /tmp/i.$$ .ai/repo/project/issues/I0002.yaml
 
 # --- work in progress is reported, never blocked: an active issue is not a doctor failure
 "$MJ" plan start I0001 >/dev/null

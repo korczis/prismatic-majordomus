@@ -4,6 +4,8 @@
 . "$ROOT/test/lib.sh"
 SYNC="$ROOT/scripts/github-sync"
 "$MJ" init >/dev/null
+# init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
+git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
 pj_init
 pj_milestone M000
 pj_issue I0001 M000
@@ -45,7 +47,7 @@ h1="$("$SYNC" --render I0002 | sed -n 's/^<!-- majordomus:begin \([0-9a-f]*\) --
 [ -n "$h1" ] || { echo "    no hash in the begin marker"; exit 1; }
 h1b="$("$SYNC" --render I0002 | sed -n 's/^<!-- majordomus:begin \([0-9a-f]*\) -->$/\1/p')"
 [ "$h1" = "$h1b" ] || { echo "    the projection is not deterministic"; exit 1; }
-sed 's/^title: .*/title: A different title/' .majordomus/project/issues/I0002.yaml > /tmp/i.$$ && mv /tmp/i.$$ .majordomus/project/issues/I0002.yaml
+sed 's/^title: .*/title: A different title/' .ai/repo/project/issues/I0002.yaml > /tmp/i.$$ && mv /tmp/i.$$ .ai/repo/project/issues/I0002.yaml
 h2="$("$SYNC" --render I0002 | sed -n 's/^<!-- majordomus:begin \([0-9a-f]*\) -->$/\1/p')"
 [ "$h1" != "$h2" ] || { echo "    a canonical change did not move the projection hash"; exit 1; }
 
@@ -68,8 +70,8 @@ expect_exit 12 "$SYNC" --render I9999
 expect_grep "no record 'I9999'"
 
 # --- nothing the adapter does writes to the canonical model
-before="$(find .majordomus/project -type f -exec shasum -a 256 {} \; | sort)"
+before="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | sort)"
 "$SYNC" --plan >/dev/null; "$SYNC" --render M000 >/dev/null
-after="$(find .majordomus/project -type f -exec shasum -a 256 {} \; | sort)"
+after="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | sort)"
 [ "$before" = "$after" ] || { echo "    the adapter wrote to the canonical model"; exit 1; }
 rm -f /tmp/rendered.$$ /tmp/cli.$$

@@ -13,7 +13,7 @@ expect_grep 'projections.updated'
 
 # a whole lifecycle, so the events are real rather than hand-written
 "$MJ" start "t1" --scope lib >/dev/null
-id=$(sed -n 's/^id: //p' .majordomus/state/current.yaml)
+id=$(sed -n 's/^id: //p' .ai/local/state/current.yaml)
 printf 'a note\n' | "$MJ" checkpoint >/dev/null
 "$MJ" decision add "use the existing store" --why "no second source of truth" >/dev/null
 "$MJ" question add "which environments?" >/dev/null
@@ -66,8 +66,8 @@ if command -v jq >/dev/null; then printf '%s\n' "$LAST_OUT" | jq -e . >/dev/null
 # --validate accepts a healthy ledger and rejects a corrupted one, naming the line
 expect_exit 0 "$MJ" history --validate
 expect_grep 'history --validate: ok'
-cp .majordomus/state/ledger.jsonl ledger.bak
-printf 'this is not json\n' >> .majordomus/state/ledger.jsonl
+cp .ai/local/state/ledger.jsonl ledger.bak
+printf 'this is not json\n' >> .ai/local/state/ledger.jsonl
 expect_exit 10 "$MJ" history --validate
 expect_grep 'FAIL ledger +line [0-9]+'
 # the same corruption is a failure for every gate that reads it
@@ -79,23 +79,23 @@ expect_grep 'DRIFT records +ledger.jsonl'
 expect_exit 0 "$MJ" history --all
 expect_grep 'task.finished'
 expect_no_grep 'this is not json'
-cp ledger.bak .majordomus/state/ledger.jsonl
+cp ledger.bak .ai/local/state/ledger.jsonl
 
 # --rotate: nothing to do under the cap
 expect_exit 0 "$MJ" history --rotate
 expect_grep '^nothing to rotate'
-[ "$(find .majordomus/state -name '*.archived' | wc -l | tr -d ' ')" = 0 ]
+[ "$(find .ai/local/state -name '*.archived' | wc -l | tr -d ' ')" = 0 ]
 
 # over the cap: the oldest lines move to an archive, none are lost, and it is recorded
-before=$(wc -l < .majordomus/state/ledger.jsonl | tr -d ' ')
-sed -i.bak 's/^  retention_max_lines: 5000/  retention_max_lines: 3/' .majordomus/policy.yaml; rm -f .majordomus/policy.yaml.bak
+before=$(wc -l < .ai/local/state/ledger.jsonl | tr -d ' ')
+sed -i.bak 's/^  retention_max_lines: 5000/  retention_max_lines: 3/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
 expect_exit 0 "$MJ" history --rotate
 expect_grep '^rotated: [0-9]+ line\(s\)'
-arch=$(find .majordomus/state -name '*.jsonl.archived')
+arch=$(find .ai/local/state -name '*.jsonl.archived')
 [ -f "$arch" ]
 # 3 kept + the ledger.rotated event appended after the rotation
-[ "$(wc -l < .majordomus/state/ledger.jsonl | tr -d ' ')" = 4 ]
+[ "$(wc -l < .ai/local/state/ledger.jsonl | tr -d ' ')" = 4 ]
 [ "$(( $(wc -l < "$arch" | tr -d ' ') + 3 ))" = "$before" ]     # nothing was deleted
-expect_grep '"event":"ledger.rotated"' .majordomus/state/ledger.jsonl
+expect_grep '"event":"ledger.rotated"' .ai/local/state/ledger.jsonl
 expect_exit 0 "$MJ" history --event ledger.rotated --all
 expect_grep 'archived=[0-9]+ kept=3'

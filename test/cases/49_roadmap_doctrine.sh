@@ -35,7 +35,7 @@ evidence_required:
   - proof
 Y
     if [ $# -gt 0 ]; then printf 'depends_on:\n'; for d in "$@"; do printf -- '  - %s\n' "$d"; done; fi
-  } > ".majordomus/project/milestones/$id.yaml"
+  } > ".ai/repo/project/milestones/$id.yaml"
 }
 readme() { # write a README with the given version rows
   { printf '# Fixture\n\n## Roadmap\n\n| version | adds |\n|---|---|\n'

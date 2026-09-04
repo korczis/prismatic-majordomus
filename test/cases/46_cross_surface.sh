@@ -6,6 +6,8 @@
 . "$ROOT/test/lib.sh"
 SYNC="$ROOT/scripts/github-sync"
 "$MJ" init >/dev/null
+# init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
+git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
 pj_init
 pj_milestone M000
 pj_issue I0001 M000
@@ -15,7 +17,7 @@ pj_issue I0004 M000 I0002 I0003
 pj_issue I0005 M000
 expect_exit 0 "$MJ" plan validate
 
-canonical_ids() { ls .majordomus/project/issues/*.yaml | sed 's#.*/##; s#\.yaml$##' | sort; }
+canonical_ids() { ls .ai/repo/project/issues/*.yaml | sed 's#.*/##; s#\.yaml$##' | sort; }
 cli_ids()       { "$MJ" plan list | awk 'NR>1{print $1}' | sort; }
 json_ids()      { "$MJ" --json plan list | tr ',' '\n' | sed -n 's/.*"id":"\([^"]*\)".*/\1/p' | sort; }
 graph_ids()     { "$MJ" plan graph | sed -n 's/^    \([I0-9]*\)\[.*/\1/p' | sort; }
@@ -27,7 +29,7 @@ graph_ready() { "$MJ" plan graph | sed -n 's/^    \([I0-9]*\)\[.*:::ready$/\1/p'
 sync_open()   { "$SYNC" --plan | awk '/^  I[0-9]+ +open +READY/{print $1}' | sort; }
 
 canonical_edges() {
-  for f in .majordomus/project/issues/*.yaml; do
+  for f in .ai/repo/project/issues/*.yaml; do
     id="$(basename "$f" .yaml)"
     awk '/^depends_on:/{f=1;next} f&&/^  - /{sub(/^  - /,"");print;next} f{exit}' "$f" \
       | while read -r d; do printf '%s --> %s\n' "$d" "$id"; done

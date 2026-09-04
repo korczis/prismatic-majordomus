@@ -23,8 +23,8 @@ expect_grep '^working_tree: dirty$' "$f"
 expect_grep '^  - lib/a$' "$f"
 expect_grep '^task_id: t-' "$f"
 expect_grep '^# Next Action$' "$f"
-expect_grep '"event":"task.handed_over"' .majordomus/state/ledger.jsonl
-[ "$(git status --porcelain | grep -c handovers)" -ge 1 ]   # present but never staged
+expect_grep '"event":"task.handed_over"' .ai/local/state/ledger.jsonl
+git check-ignore -q "$f" || { echo "    a handover record is not ignored; local state would travel"; exit 1; }   # present, ignored, never staged
 [ -z "$(git diff --cached --name-only)" ]
 # task still active (no --close), start refuses
 expect_exit 15 "$MJ" start "t2" --scope lib
@@ -37,7 +37,7 @@ git commit -qam more
 expect_exit 0 "$MJ" handover --resolve
 expect_grep '^Git state: advanced'
 expect_exit 0 "$MJ" handover --resolve --path
-expect_grep '^.majordomus/state/handovers/.*\.md$'
+expect_grep '^.ai/local/state/handovers/.*\.md$'
 git checkout -qb other
 expect_exit 0 "$MJ" handover --resolve
 expect_grep '^No relevant handover.$'
@@ -48,10 +48,10 @@ expect_exit 0 bash -c "printf '# Objective\nsecond\n# Current State\ns\n# Next A
 expect_exit 0 "$MJ" handover --resolve
 expect_grep '^second$'
 # --close lets a new task start; old one is archived, not lost
-expect_grep '^outcome: handed_over$' .majordomus/state/current.yaml
+expect_grep '^outcome: handed_over$' .ai/local/state/current.yaml
 expect_exit 0 "$MJ" start "t2" --scope lib
-[ "$(ls .majordomus/state/archive/*.yaml | wc -l | tr -d ' ')" = 1 ]
+[ "$(ls .ai/local/state/archive/*.yaml | wc -l | tr -d ' ')" = 1 ]
 # malformed record is skipped with a warning, not fatal
-printf 'garbage\n' > .majordomus/state/handovers/zzz.md
+printf 'garbage\n' > .ai/local/state/handovers/zzz.md
 expect_exit 0 "$MJ" handover --resolve
 expect_grep 'warning: skipped'

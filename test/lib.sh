@@ -23,12 +23,19 @@ expect_no_grep() {
 # octal permission bits of a file, GNU stat first (BSD stat has no -c and fails), then BSD
 file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 
+# restore the seeded policy and profiles from the skeleton after a case mutated them; the
+# files belong to the repository after init, so init itself never rewrites them
+reset_policy() {
+  cp "$ROOT/share/skeleton/policy.yaml" .ai/repo/policy.yaml
+  cp "$ROOT"/share/skeleton/profiles/*.yaml .ai/repo/profiles/
+}
+
 # ---------------------------------------------------------------- project model fixtures
 # A canonical project model small enough to reason about, built in the disposable repository
 # the case runs in. Cases append extra fields to the files these produce.
 pj_init() {
-  mkdir -p .majordomus/project/milestones .majordomus/project/issues
-  cat > .majordomus/project/project.yaml <<'Y'
+  mkdir -p .ai/repo/project/milestones .ai/repo/project/issues
+  cat > .ai/repo/project/project.yaml <<'Y'
 schema_version: 1
 name: Fixture
 repository: example/fixture
@@ -37,7 +44,7 @@ Y
 }
 # pj_milestone ID [ORDER]
 pj_milestone() {
-  cat > ".majordomus/project/milestones/$1.yaml" <<Y
+  cat > ".ai/repo/project/milestones/$1.yaml" <<Y
 id: $1
 title: Milestone $1
 slug: milestone-$1
@@ -74,7 +81,7 @@ evidence_required:
   - proof
 Y
     if [ $# -gt 0 ]; then printf 'depends_on:\n'; for d in "$@"; do printf -- '  - %s\n' "$d"; done; fi
-  } > ".majordomus/project/issues/$id.yaml"
+  } > ".ai/repo/project/issues/$id.yaml"
 }
 # pj_status ID  — the derived status of one issue, from the tool
 pj_status() { "$MJ" plan list | awk -v i="$1" '$1==i{print $2}'; }

@@ -15,16 +15,16 @@ expect_exit 0 "$MJ" decision list
 expect_grep '^\(none\)$'          # the commented template is not an entry
 
 "$MJ" start "t1" --scope lib >/dev/null
-id=$(sed -n 's/^id: //p' .majordomus/state/current.yaml)
+id=$(sed -n 's/^id: //p' .ai/local/state/current.yaml)
 
 expect_exit 0 "$MJ" decision add "Normalise the callback URI before comparing state" \
   --why "the mismatch is a trailing slash, not a forged state parameter" \
   --rejected "relaxing the comparison" --evidence "test/auth_test:41"
 expect_grep '^recorded: Normalise'
-expect_grep "^Task: $id\$" .majordomus/state/decisions.md
-expect_grep '^Head: '"$(git rev-parse HEAD)"'$' .majordomus/state/decisions.md
-expect_grep '^Rejected: relaxing the comparison$' .majordomus/state/decisions.md
-expect_grep '"event":"decision.recorded"' .majordomus/state/ledger.jsonl
+expect_grep "^Task: $id\$" .ai/local/state/decisions.md
+expect_grep '^Head: '"$(git rev-parse HEAD)"'$' .ai/local/state/decisions.md
+expect_grep '^Rejected: relaxing the comparison$' .ai/local/state/decisions.md
+expect_grep '"event":"decision.recorded"' .ai/local/state/ledger.jsonl
 
 # multi-line text is refused: one entry is one line per field, and the gates grep for them
 expect_exit 2 bash -c "'$MJ' decision add \"$(printf 'two\nlines')\" --why x"
@@ -52,11 +52,11 @@ expect_exit 2 "$MJ" decision add "replacement" --why w --supersedes "a decision 
 expect_grep 'matches no recorded decision'
 expect_exit 0 "$MJ" decision add "Compare the raw callback URI after all" --why "normalising hid a real mismatch" \
   --supersedes "Normalise the callback URI before comparing state"
-expect_grep '^Supersedes: Normalise the callback URI' .majordomus/state/decisions.md
-[ "$(grep -c '^## 20' .majordomus/state/decisions.md)" = 3 ]   # nothing was rewritten
+expect_grep '^Supersedes: Normalise the callback URI' .ai/local/state/decisions.md
+[ "$(grep -c '^## 20' .ai/local/state/decisions.md)" = 3 ]   # nothing was rewritten
 
 # a malformed entry is reported by check as a warning: nothing will ever find it
-printf '\n## 2026-01-01 — hand written, no fields\n' >> .majordomus/state/decisions.md
+printf '\n## 2026-01-01 — hand written, no fields\n' >> .ai/local/state/decisions.md
 expect_exit 0 "$MJ" check
 expect_grep 'WARN records +decisions.md .* lacks Task, Head or Why'
 
@@ -70,8 +70,8 @@ expect_grep 'must not contain'
 
 expect_exit 0 "$MJ" question add "Does the legacy mobile callback need the old URI form?"
 expect_grep "^opened for $id"
-expect_grep "^- \[unresolved\] $id — Does the legacy" .majordomus/state/open-questions.md
-expect_grep '"event":"question.opened"' .majordomus/state/ledger.jsonl
+expect_grep "^- \[unresolved\] $id — Does the legacy" .ai/local/state/open-questions.md
+expect_grep '"event":"question.opened"' .ai/local/state/ledger.jsonl
 expect_exit 0 "$MJ" question add "Which environments still run the old client?"
 expect_exit 0 "$MJ" question list
 expect_grep '^1  \[unresolved\]'
@@ -92,8 +92,8 @@ expect_exit 12 "$MJ" question resolve 9 --answer x
 expect_grep 'matches no unresolved question'
 expect_exit 0 "$MJ" question resolve 1 --answer "no; it was retired in 4.2"
 expect_grep "^resolved for $id"
-expect_grep "^- \[resolved [0-9-]+\] $id — Does the legacy.*— no; it was retired in 4.2$" .majordomus/state/open-questions.md
-expect_grep '"event":"question.resolved".*"answer":"no; it was retired in 4.2"' .majordomus/state/ledger.jsonl
+expect_grep "^- \[resolved [0-9-]+\] $id — Does the legacy.*— no; it was retired in 4.2$" .ai/local/state/open-questions.md
+expect_grep '"event":"question.resolved".*"answer":"no; it was retired in 4.2"' .ai/local/state/ledger.jsonl
 # text selectors work too
 expect_exit 0 "$MJ" question resolve "old client" --answer "staging only"
 expect_exit 0 "$MJ" question list
@@ -112,7 +112,7 @@ expect_exit 0 "$MJ" finish --outcome completed --verify-command true
 # a malformed unresolved entry FAILS: a gate that cannot read an entry can be bypassed
 git add -A && git commit -qm t1
 "$MJ" start "t2" --scope lib >/dev/null
-printf -- '- [unresolved] this line has no separator or date\n' >> .majordomus/state/open-questions.md
+printf -- '- [unresolved] this line has no separator or date\n' >> .ai/local/state/open-questions.md
 expect_exit 10 "$MJ" check
 expect_grep 'FAIL blockers +open-questions.md .* do not parse'
 expect_exit 10 "$MJ" doctor

@@ -16,7 +16,7 @@ expect_grep '^## BUDGET'
 expect_grep '^- handover — no record for this worktree and branch'
 
 "$MJ" start "fix the callback" --scope lib --profile debugging --owner alice >/dev/null
-id=$(sed -n 's/^id: //p' .majordomus/state/current.yaml)
+id=$(sed -n 's/^id: //p' .ai/local/state/current.yaml)
 
 # sections appear in authority order: git, task, profile, questions, ... history last
 expect_exit 0 "$MJ" context
@@ -32,7 +32,7 @@ expect_grep '^capability   strong$'
 expect_grep '^effort       high$'
 expect_grep 'verify command, regression test'
 # read-only: nothing was written
-expect_no_grep 'context' .majordomus/state/ledger.jsonl
+expect_no_grep 'context' .ai/local/state/ledger.jsonl
 
 # blockers are shown with why they matter, and are never dropped
 "$MJ" question add "which environments still run the old client?" >/dev/null
@@ -101,7 +101,7 @@ n=$(printf '%s\n' "$LAST_OUT" | wc -l | tr -d ' ')
 printf '%s\n' "$LAST_OUT" | grep -qE "^$n of 50 lines" || { echo "    budget line does not report $n"; exit 1; }
 # a record body degrades to a pointer rather than vanishing
 expect_exit 0 "$MJ" context --budget-lines 44
-expect_grep 'body omitted for budget — read .majordomus/state/'
+expect_grep 'body omitted for budget — read .ai/local/state/'
 expect_grep '^## LATEST CHECKPOINT'          # the section header survives
 # what cannot be dropped is over budget: exit 10, and it still prints so the worker sees why
 expect_exit 10 "$MJ" context --budget-lines 5
@@ -110,11 +110,11 @@ expect_grep '^## GIT'
 expect_exit 2 "$MJ" context --budget-lines x
 
 # the policy's own budget is the default
-sed -i.bak 's/^  builder_budget_lines: 300/  builder_budget_lines: 50/' .majordomus/policy.yaml; rm -f .majordomus/policy.yaml.bak
+sed -i.bak 's/^  builder_budget_lines: 300/  builder_budget_lines: 50/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
 expect_exit 0 "$MJ" context
 expect_grep 'of 50 lines'
 expect_grep '^- history — context budget 50 lines$'
-sed -i.bak 's/^  builder_budget_lines: 50/  builder_budget_lines: 300/' .majordomus/policy.yaml; rm -f .majordomus/policy.yaml.bak
+sed -i.bak 's/^  builder_budget_lines: 50/  builder_budget_lines: 300/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
 
 # --for names a provider from the policy and refuses one that is not there
 expect_exit 0 "$MJ" context --for claude-code
@@ -146,7 +146,7 @@ if command -v jq >/dev/null; then
 fi
 
 # a task naming a profile that no longer exists degrades instead of crashing
-rm .majordomus/profiles/deep-work.yaml
+rm .ai/repo/profiles/deep-work.yaml
 expect_exit 0 "$MJ" context
 expect_grep '^- profile deep-work — the task names a profile with no file'
 expect_grep '^## GIT'

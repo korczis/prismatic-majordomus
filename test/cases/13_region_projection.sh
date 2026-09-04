@@ -15,7 +15,7 @@ Keep it.
 MD
 
 # one projection, region mode
-awk '/^projections:/{exit} {print}' .majordomus/policy.yaml > policy.new
+awk '/^projections:/{exit} {print}' .ai/repo/policy.yaml > policy.new
 cat >> policy.new <<'YAML'
 projections:
   - provider: claude-code
@@ -23,14 +23,14 @@ projections:
     mode: region
     always_loaded: true
 YAML
-mv policy.new .majordomus/policy.yaml
+mv policy.new .ai/repo/policy.yaml
 
 # an unknown mode is refused rather than guessed at
-sed 's/    mode: region/    mode: nonsense/' .majordomus/policy.yaml > p.tmp && mv p.tmp .majordomus/policy.yaml
+sed 's/    mode: region/    mode: nonsense/' .ai/repo/policy.yaml > p.tmp && mv p.tmp .ai/repo/policy.yaml
 expect_exit 10 "$MJ" update
 expect_grep "unknown mode 'nonsense'"
 expect_grep 'Hand-written governance' CLAUDE.md
-sed 's/    mode: nonsense/    mode: region/' .majordomus/policy.yaml > p.tmp && mv p.tmp .majordomus/policy.yaml
+sed 's/    mode: nonsense/    mode: region/' .ai/repo/policy.yaml > p.tmp && mv p.tmp .ai/repo/policy.yaml
 
 # first update appends the region and leaves the rest of the document alone
 expect_exit 0 "$MJ" update
@@ -41,7 +41,7 @@ expect_grep 'Hand-written governance that predates Majordomus' CLAUDE.md
 expect_grep 'A rule the repository already had' CLAUDE.md
 # the begin marker carries the stamp: the policy hash and the hash of the region body
 expect_grep '^<!-- majordomus:begin [0-9a-f]{12} [0-9a-f]{16} -->$' CLAUDE.md
-[ ! -e .majordomus/generated ] || { echo "    a fingerprint file was written"; exit 1; }
+[ ! -e .ai/repo/generated ] || { echo "    a fingerprint file was written"; exit 1; }
 
 # deterministic: a second update changes nothing
 after="$(shasum -a 256 CLAUDE.md | cut -d' ' -f1)"
@@ -85,13 +85,13 @@ expect_exit 10 "$MJ" doctor
 expect_grep 'FAIL projection +CLAUDE.md — region markers are malformed'
 
 # the budget measures the generated region, and over budget nothing is written at all
-"$MJ" init --force >/dev/null
+reset_policy
 cat > CLAUDE.md <<'MD'
 # CLAUDE.md
 
 Hand-written.
 MD
-awk '/^projections:/{exit} {print}' .majordomus/policy.yaml > policy.new
+awk '/^projections:/{exit} {print}' .ai/repo/policy.yaml > policy.new
 cat >> policy.new <<'YAML'
 projections:
   - provider: claude-code
@@ -99,8 +99,8 @@ projections:
     mode: region
     always_loaded: true
 YAML
-mv policy.new .majordomus/policy.yaml
-sed 's/^  always_loaded_budget_lines: .*/  always_loaded_budget_lines: 5/' .majordomus/policy.yaml > p.tmp && mv p.tmp .majordomus/policy.yaml
+mv policy.new .ai/repo/policy.yaml
+sed 's/^  always_loaded_budget_lines: .*/  always_loaded_budget_lines: 5/' .ai/repo/policy.yaml > p.tmp && mv p.tmp .ai/repo/policy.yaml
 expect_exit 10 "$MJ" update
 expect_grep 'FAIL budget +CLAUDE.md — would be [0-9]+ lines, budget 5; nothing written'
 expect_no_grep 'majordomus:begin' CLAUDE.md

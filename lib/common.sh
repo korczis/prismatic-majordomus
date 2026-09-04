@@ -92,7 +92,7 @@ MJ_HOME="${MJ_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 MJ_SHARE_DIR="$MJ_HOME/share"
 MJ_SKELETON_DIR="$MJ_SHARE_DIR/skeleton"
 MJ_ALLOW_DIR="$MJ_SHARE_DIR/allow"
-MJ_STD_RULES_DIR="$MJ_SHARE_DIR/standard/rules"
+MJ_STD_RULES_DIR="$MJ_SHARE_DIR/standard/majordomus"
 MJ_PROVIDERS_DEFAULT_DIR="$MJ_SHARE_DIR/providers"
 export MJ_HOME MJ_SHARE_DIR MJ_SKELETON_DIR MJ_ALLOW_DIR MJ_STD_RULES_DIR MJ_PROVIDERS_DEFAULT_DIR
 
@@ -445,6 +445,9 @@ mj_ledger_append() {
   sid="$(mj_open_session_id)"
   [ -n "$sid" ] && line="$line,\"session\":\"$sid\""
   [ -n "$extra" ] && line="$line,$extra"
+  # the local half is never tracked, so a second worktree of the same repository starts
+  # without it; the first write creates it
+  mkdir -p "$MJ_STATE_DIR"
   printf '%s}\n' "$line" >> "$MJ_STATE_DIR/ledger.jsonl"
 }
 

@@ -12,6 +12,7 @@ before="$(cd "$DIST" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 | s
 # --- an absolute path outside the repository initialises this repository, not itself
 expect_exit 0 "$DIST/bin/majordomus" init
 expect_exit 0 "$DIST/bin/majordomus" update
+git add -A >/dev/null; git commit -qm install
 [ -f CLAUDE.md ] || { echo "    update from an external distribution wrote no projection"; exit 1; }
 [ ! -e "$DIST/.majordomus" ] && [ ! -e "$DIST/.ai" ] || { echo "    the distribution directory gained project data"; exit 1; }
 

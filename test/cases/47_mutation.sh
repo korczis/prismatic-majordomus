@@ -14,6 +14,8 @@ MJ="$T/tool/bin/majordomus"
 SYNC="$T/tool/scripts/github-sync"
 GEN="$T/tool/scripts/generate-site-data"
 "$MJ" init >/dev/null
+# init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
+git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
 pj_init
 pj_milestone M000
 pj_issue I0001 M000
@@ -48,7 +50,7 @@ before_status="$(pj_status I0001)"; before_wave="$(w I0001)"
 before_graph="$("$MJ" plan graph)"; before_sync="$("$SYNC" --plan)"
 before_waves="$("$MJ" plan waves)"; before_counts="$("$MJ" --json plan status)"
 before_body="$("$MJ" plan body I0001)"
-printf 'depends_on:\n  - I0002\n' >> .majordomus/project/issues/I0001.yaml
+printf 'depends_on:\n  - I0002\n' >> .ai/repo/project/issues/I0001.yaml
 expect_exit 0 "$MJ" plan validate
 [ "$before_status" = READY ] || { echo "    the fixture did not start from READY"; exit 1; }
 [ "$(pj_status I0001)" = BLOCKED ] || { echo "    adding a dependency did not block the issue"; exit 1; }
@@ -81,7 +83,7 @@ printf '%s\n' "$("$SYNC" --plan)" | grep -qE '^  I0002 +closed +DONE' || { echo 
 # ---------------------------------------------------------------- mutation 3: one evidence record
 # Removing the evidence takes the issue back to VERIFY. Completion is a derived fact, so it
 # cannot survive the disappearance of the thing that justified it.
-sed '/^evidence:/,$d' .majordomus/project/issues/I0002.yaml > "$T/i.yaml" && mv "$T/i.yaml" .majordomus/project/issues/I0002.yaml
+sed '/^evidence:/,$d' .ai/repo/project/issues/I0002.yaml > "$T/i.yaml" && mv "$T/i.yaml" .ai/repo/project/issues/I0002.yaml
 [ "$(pj_status I0002)" = VERIFY ] || { echo "    removing the evidence left the issue DONE; the gate is decorative"; exit 1; }
 [ "$(pj_status I0001)" = BLOCKED ] || { echo "    the dependent did not re-block when its dependency stopped being done"; exit 1; }
 printf '%s\n' "$("$SYNC" --plan)" | grep -qE '^  I0002 +open +VERIFY' || { echo "    the projection still reports the issue closed"; exit 1; }
@@ -89,15 +91,15 @@ printf '%s\n' "$("$SYNC" --plan)" | grep -qE '^  I0002 +open +VERIFY' || { echo 
 # ---------------------------------------------------------------- mutation 4: one acceptance criterion
 # A change with no effect on the graph must still reach the surfaces that render prose.
 before_body="$("$MJ" plan body I0003)"; before_wave3="$(w I0003)"
-sed 's/^  - The work is done$/  - The work is done and reviewed/' .majordomus/project/issues/I0003.yaml > "$T/i.yaml" \
-  && mv "$T/i.yaml" .majordomus/project/issues/I0003.yaml
+sed 's/^  - The work is done$/  - The work is done and reviewed/' .ai/repo/project/issues/I0003.yaml > "$T/i.yaml" \
+  && mv "$T/i.yaml" .ai/repo/project/issues/I0003.yaml
 moved "the projection body for a prose change" "$before_body" "$("$MJ" plan body I0003)"
 unchanged "the wave for a prose change" "$before_wave3" "$(w I0003)"
 "$MJ" plan body I0003 | grep -q 'done and reviewed' || { echo "    the changed criterion is not in the body"; exit 1; }
 
 # ---------------------------------------------------------------- mutation 5: the graph becomes illegal
 # The failure has to reach the exit code of every command that claims to validate the model.
-printf 'depends_on:\n  - I0001\n' >> .majordomus/project/issues/I0002.yaml
+printf 'depends_on:\n  - I0001\n' >> .ai/repo/project/issues/I0002.yaml
 expect_exit 10 "$MJ" plan validate
 expect_grep 'dependency cycle'
 # doctor exits 12 in this fixture because the copied tool has no projections or hooks
@@ -116,7 +118,7 @@ expect_grep 'DRIFT dag'
 # The roadmap graph is a second graph over the same model, so it needs its own propagation
 # proof: one edge between milestones has to move the roadmap sequence, the roadmap diagram,
 # the gate and the GitHub projection, and it must not be satisfiable by finishing work.
-rm -f .majordomus/project/issues/I0002.yaml   # undo mutation 5; the model is legal again
+rm -f .ai/repo/project/issues/I0002.yaml   # undo mutation 5; the model is legal again
 pj_issue I0002 M000
 expect_exit 0 "$MJ" plan validate
 
@@ -139,7 +141,7 @@ evidence_required:
   - proof
 Y
     if [ $# -gt 0 ]; then printf 'depends_on:\n'; for d in "$@"; do printf -- '  - %s\n' "$d"; done; fi
-  } > ".majordomus/project/milestones/$id.yaml"
+  } > ".ai/repo/project/milestones/$id.yaml"
 }
 rmsnap() { "$MJ" plan roadmap; "$MJ" plan rgraph; "$MJ" --json plan roadmap; "$SYNC" --plan; }
 mstat()  { "$MJ" plan roadmap | awk -v i="$1" '$3==i{print $2}'; }
@@ -154,7 +156,7 @@ moved "adding a milestone" "$before_rm" "$(rmsnap)"
 # now one edge, and one edge only: LATER requires M000, which is not DONE
 before_edge="$(rmsnap)"
 before_gh="$("$SYNC" --plan)"
-printf 'depends_on:\n  - M000\n' >> .majordomus/project/milestones/LATER.yaml
+printf 'depends_on:\n  - M000\n' >> .ai/repo/project/milestones/LATER.yaml
 expect_exit 0 "$MJ" plan validate
 moved "one milestone edge" "$before_edge" "$(rmsnap)"
 moved "one milestone edge, in the GitHub projection" "$before_gh" "$("$SYNC" --plan)"
@@ -199,13 +201,13 @@ for i in I0002 I0001 I0003; do
   [ "$(pj_status "$i")" = DONE ] || { echo "    $i is $(pj_status "$i") after its full lifecycle, expected DONE"; exit 1; }
 done
 printf 'evidence:\n  - covers: proof\n    type: test\n    command: "true"\n    result: "ok"\n    recorded_at: 2026-09-04\n' \
-  >> .majordomus/project/milestones/M000.yaml
+  >> .ai/repo/project/milestones/M000.yaml
 [ "$(mstat M000)"  = DONE   ] || { echo "    M000 is $(mstat M000), expected DONE"; exit 1; }
 [ "$(mstat LATER)" != BLOCKED ] || { echo "    LATER is still BLOCKED after its dependency reached DONE"; exit 1; }
 moved "completing a milestone dependency" "$before_release" "$(rmsnap)"
 
 # a milestone cycle is refused by every command that claims to validate the model
-printf 'depends_on:\n  - LATER\n' >> .majordomus/project/milestones/M000.yaml
+printf 'depends_on:\n  - LATER\n' >> .ai/repo/project/milestones/M000.yaml
 expect_exit 10 "$MJ" plan validate
 expect_grep 'milestone_cycle'
 expect_exit 12 "$MJ" doctor

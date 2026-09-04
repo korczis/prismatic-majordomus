@@ -1,0 +1,22 @@
+# The section registry of this repository's AI layer. Discovery reads this file; nothing
+# walks the directory. Paths are relative to .ai/. Unknown keys are errors.
+schema: ai-repository/v1
+
+repo:
+  path: repo
+
+local:
+  path: local
+  tracked: false
+  implicit_context: false
+
+sections:
+  policy: repo/policy.yaml
+  profiles: repo/profiles
+  rules: repo/rules
+  prompts: repo/prompts
+  skills: repo/skills
+  workflows: repo/workflows
+  knowledge: repo/knowledge
+  adrs: repo/adrs
+  project: repo/project

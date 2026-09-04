@@ -30,6 +30,8 @@ done
 
 # --- the vocabulary reaches the command surface, and the counts are keyed by it
 "$MJ" init >/dev/null
+# init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
+git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
 pj_init
 pj_milestone M000
 pj_issue I0001 M000
@@ -52,7 +54,7 @@ diff "$T/declared.txt" "$T/counted.txt" >/dev/null \
 "$MJ" plan start I0001 >/dev/null
 "$MJ" plan evidence I0001 --covers proof --type test --command true --result ok >/dev/null
 "$MJ" plan "done" I0001 >/dev/null
-printf 'cancelled: true\n' >> .majordomus/project/issues/I0002.yaml
+printf 'cancelled: true\n' >> .ai/repo/project/issues/I0002.yaml
 expect_exit 0 "$MJ" plan validate
 [ "$("$MJ" --json plan status | sed -n 's/.*"required":\([0-9]*\).*/\1/p')" = 1 ] \
   || { echo "    a cancelled issue still counts towards the denominator"; "$MJ" --json plan status; exit 1; }

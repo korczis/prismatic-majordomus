@@ -25,7 +25,7 @@ git add -A && git commit -qm base
 
 # --- start a scoped task
 "$MJ" start "add the retry seam" --scope src,test --profile debugging >/dev/null
-id="$(awk '/^id:/{print $2}' .majordomus/state/current.yaml)"
+id="$(awk '/^id:/{print $2}' .ai/local/state/current.yaml)"
 expect_exit 0 "$MJ" check
 expect_grep 'OK +scope'
 
@@ -40,7 +40,7 @@ expect_exit 0 "$MJ" check --checkpoint
 expect_grep 'INFO checkpoint'
 
 # --- a decision is externalised, not left in the conversation
-printf 'Task: %s\n\nChose an in-band retry seam over a wrapper: the wrapper duplicated the\nbackoff policy in two places.\n\nRejected: a decorator around the client.\n' "$id" >> .majordomus/state/decisions.md
+printf 'Task: %s\n\nChose an in-band retry seam over a wrapper: the wrapper duplicated the\nbackoff policy in two places.\n\nRejected: a decorator around the client.\n' "$id" >> .ai/local/state/decisions.md
 
 # --- a blocking question refuses completion, by name
 "$MJ" question add "does the upstream rate limit reset per minute or per hour?" >/dev/null
@@ -65,7 +65,7 @@ expect_exit 0 "$MJ" check
 
 # --- hand over, then resolve the handover in this same checkout
 printf '# Objective\nAdd a retry seam.\n# Current State\nSeam added; the regression test is not written.\n# Next Action\nWrite the regression test.\n' | "$MJ" handover --close >/dev/null
-expect_grep '^outcome: handed_over$' .majordomus/state/current.yaml
+expect_grep '^outcome: handed_over$' .ai/local/state/current.yaml
 expect_exit 0 "$MJ" watch
 expect_grep 'OK +handover'
 # the continuing session finds the record for this worktree and branch
@@ -74,9 +74,9 @@ expect_grep 'Next Action'
 
 # --- finish refuses without verification, and names the doctrine
 "$MJ" start "finish the retry seam" --scope src,test --profile debugging >/dev/null
-id2="$(awk '/^id:/{print $2}' .majordomus/state/current.yaml)"
+id2="$(awk '/^id:/{print $2}' .ai/local/state/current.yaml)"
 echo 'retry' >> src/a.py
-printf 'Task: %s\n\nKept the seam.\n' "$id2" >> .majordomus/state/decisions.md
+printf 'Task: %s\n\nKept the seam.\n' "$id2" >> .ai/local/state/decisions.md
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
 expect_exit 10 "$MJ" finish --outcome completed
 expect_grep 'FAIL verification .* requires --verify-command'
@@ -96,13 +96,13 @@ echo 'assert' >> test/a_test.py
 expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
 expect_grep 'OK +verification .* exit 0'
 expect_grep "finish: $id2 completed"
-expect_grep '^outcome: completed$' .majordomus/state/current.yaml
+expect_grep '^outcome: completed$' .ai/local/state/current.yaml
 
 # --- the ledger records the contract line by line, under doctrine ids
-expect_grep '"event":"task.finished"' .majordomus/state/ledger.jsonl
-expect_grep '"scope_integrity":"pass"' .majordomus/state/ledger.jsonl
-expect_grep '"verification_integrity":"pass"' .majordomus/state/ledger.jsonl
-expect_grep '"verify":\{"command":"true","exit":0' .majordomus/state/ledger.jsonl
+expect_grep '"event":"task.finished"' .ai/local/state/ledger.jsonl
+expect_grep '"scope_integrity":"pass"' .ai/local/state/ledger.jsonl
+expect_grep '"verification_integrity":"pass"' .ai/local/state/ledger.jsonl
+expect_grep '"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
 
 # --- and the installation is still healthy at the end of it
 expect_exit 0 "$MJ" doctor

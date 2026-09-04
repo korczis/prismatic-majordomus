@@ -15,7 +15,7 @@ expect_grep 'OK +scope'
 expect_grep 'FAIL verification .* requires --verify-command'
 expect_grep 'FAIL note .* no handover'
 expect_grep 'finish: refused, 3 unmet'
-expect_grep '^outcome: active$' .majordomus/state/current.yaml
+expect_grep '^outcome: active$' .ai/local/state/current.yaml
 # failing verify command is recorded as a failure
 expect_exit 10 "$MJ" finish --outcome completed --verify-command "false"
 expect_grep 'FAIL verification .* false — exit 1'
@@ -28,25 +28,25 @@ echo t2 >> test/a_test
 expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
 expect_grep 'OK +regression'
 expect_grep 'finish: t-.* completed'
-expect_grep '^outcome: completed$' .majordomus/state/current.yaml
-expect_grep '"event":"task.finished".*"outcome":"completed".*"verification_integrity":"pass".*"verify":\{"command":"true","exit":0' .majordomus/state/ledger.jsonl
+expect_grep '^outcome: completed$' .ai/local/state/current.yaml
+expect_grep '"event":"task.finished".*"outcome":"completed".*"verification_integrity":"pass".*"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
 # finishing twice is refused; --check on a finished task passes
 expect_exit 15 "$MJ" finish --outcome completed
 expect_exit 0 "$MJ" finish --check
 # new task archives the finished one (commit t1's work first so it is not "touched" by t2)
 git add -A && git commit -qm t1
 expect_exit 0 "$MJ" start "t2" --scope lib
-[ "$(find .majordomus/state/archive -name '*.yaml' | wc -l | tr -d ' ')" -ge 1 ]
+[ "$(find .ai/local/state/archive -name '*.yaml' | wc -l | tr -d ' ')" -ge 1 ]
 # blocked: needs a note with Next Action, blockers expected
-id=$(sed -n 's/^id: //p' .majordomus/state/current.yaml)
-printf -- '- [unresolved] %s — which db? (2026-09-03)\n' "$id" >> .majordomus/state/open-questions.md
+id=$(sed -n 's/^id: //p' .ai/local/state/current.yaml)
+printf -- '- [unresolved] %s — which db? (2026-09-03)\n' "$id" >> .ai/local/state/open-questions.md
 note="$(mktemp "${TMPDIR:-/tmp}/mj-note.XXXXXX")"; printf '# Objective\no\n# Current State\nwaiting\n' > "$note"
 expect_exit 10 "$MJ" finish --outcome blocked --note "$note"
 expect_grep 'lacks section\(s\): Next Action'
 printf '# Next Action\nask\n' >> "$note"
 expect_exit 0 "$MJ" finish --outcome blocked --note "$note"
 expect_grep 'INFO blockers .* open questions do not refuse it'
-[ -f ".majordomus/state/completed/$id.md" ]
+[ -f ".ai/local/state/completed/$id.md" ]
 # no_match needs # Reason; verification skipped
 "$MJ" start "t3" --scope lib >/dev/null
 n2="$(mktemp "${TMPDIR:-/tmp}/mj-note.XXXXXX")"; printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' > "$n2"

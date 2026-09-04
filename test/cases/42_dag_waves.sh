@@ -38,13 +38,13 @@ printf '%s' "$g" | grep -q 'I0001\[.*\]:::ready' || { echo "    node styling doe
 pj_issue I0009 M000 I9999
 expect_exit 10 "$MJ" plan validate
 expect_grep 'depends on I9999, which is not an issue'
-rm .majordomus/project/issues/I0009.yaml
+rm .ai/repo/project/issues/I0009.yaml
 
 # --- a self-dependency is a distinct finding, not a cycle report
 pj_issue I0008 M000 I0008
 expect_exit 10 "$MJ" plan validate
 expect_grep 'I0008 — depends on itself'
-rm .majordomus/project/issues/I0008.yaml
+rm .ai/repo/project/issues/I0008.yaml
 
 # --- a two-node cycle is detected and both members are named
 pj_issue I0006 M000 I0007
@@ -60,20 +60,20 @@ pj_issue I0007 M000 I0010
 pj_issue I0010 M000 I0006
 expect_exit 10 "$MJ" plan validate
 expect_grep 'dependency cycle'
-rm .majordomus/project/issues/I0006.yaml .majordomus/project/issues/I0007.yaml .majordomus/project/issues/I0010.yaml
+rm .ai/repo/project/issues/I0006.yaml .ai/repo/project/issues/I0007.yaml .ai/repo/project/issues/I0010.yaml
 expect_exit 0 "$MJ" plan validate
 
 # --- naming the same dependency twice is reported rather than counted twice
 pj_issue I0011 M000 I0001 I0001
 expect_exit 0 "$MJ" plan validate
 expect_grep 'names I0001 more than once'
-rm .majordomus/project/issues/I0011.yaml
+rm .ai/repo/project/issues/I0011.yaml
 
 # --- two issues that could run together but touch the same path are serialised, conservatively
 pj_issue I0012 M000
 pj_issue I0013 M000
-sed 's#^  - src/I0012$#  - src/shared#' .majordomus/project/issues/I0012.yaml > /tmp/a.$$ && mv /tmp/a.$$ .majordomus/project/issues/I0012.yaml
-sed 's#^  - src/I0013$#  - src/shared/inner#' .majordomus/project/issues/I0013.yaml > /tmp/b.$$ && mv /tmp/b.$$ .majordomus/project/issues/I0013.yaml
+sed 's#^  - src/I0012$#  - src/shared#' .ai/repo/project/issues/I0012.yaml > /tmp/a.$$ && mv /tmp/a.$$ .ai/repo/project/issues/I0012.yaml
+sed 's#^  - src/I0013$#  - src/shared/inner#' .ai/repo/project/issues/I0013.yaml > /tmp/b.$$ && mv /tmp/b.$$ .ai/repo/project/issues/I0013.yaml
 expect_exit 0 "$MJ" plan validate
 expect_grep 'shares src/shared with I0013'
 expect_exit 0 "$MJ" plan waves

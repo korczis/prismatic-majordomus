@@ -309,6 +309,40 @@ mj_validate_policy_defaults() {
   return 0
 }
 
+# The AI layer as a whole: the manifest is one this executable reads and names sections
+# that exist; the local half is ignored and nothing under it is tracked; no project data
+# is left under the pre-.ai path. This is the check a fresh clone is judged by before any
+# command reads a record: a layer that is not real makes every other finding moot.
+mj_validate_ai_layout() {
+  local bad=0 k d rel
+  if [ "$MJ_LAYOUT" != ai ]; then
+    # Reported, not failed, while the pre-.ai layout is still readable: the migration that
+    # moves a repository across is a deliberate step, and every other rule still holds here.
+    mj_warn layout ".majordomus" "project data lives under the pre-.ai layout; the manifest .ai/manifest.yaml is absent" "majordomus migrate"
+    return 0
+  fi
+  mj_doctrine_ok layout "$(mj_rel "$MJ_AI_MANIFEST")" "schema $(mj_man schema)"
+  for k in policy:MJ_POLICY_FILE profiles:MJ_PROFILES_DIR rules:MJ_RULES_DIR prompts:MJ_PROMPTS_DIR knowledge:MJ_KNOWLEDGE_DIR workflows:MJ_WORKFLOWS_DIR skills:MJ_SKILLS_DIR adrs:MJ_ADRS_DIR; do
+    d="${k#*:}"; d="${!d}"
+    [ -e "$d" ] || { mj_doctrine_fail layout "$(mj_rel "$d")" "named by the manifest as section '${k%%:*}' but absent" "majordomus init --extend"; bad=1; }
+  done
+  # the plan is the one section a repository may not have: an absent directory is a
+  # repository without a plan, which `plan` says, not a broken layer
+  [ -d "$MJ_PROJECT_DIR" ] || mj_info layout "$(mj_rel "$MJ_PROJECT_DIR")" "absent; this repository has no plan"
+  [ -f "$MJ_AI_DIR/README.md" ] || { mj_doctrine_fail layout ".ai/README.md" "the protocol entrypoint is absent; the layer is not readable without the tool" "majordomus init --extend"; bad=1; }
+  rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"
+  if ! mj_git check-ignore -q "$rel/state/current.yaml" 2>/dev/null; then
+    mj_doctrine_fail layout "$rel/" "is not ignored by git; local state would travel with the branch" "printf '%s/\\n' $rel >> .gitignore"; bad=1
+  elif [ -n "$(mj_git ls-files -- "$rel" 2>/dev/null | head -n 1)" ]; then
+    mj_doctrine_fail layout "$rel/" "carries tracked files; the local half is this checkout's own" "git ls-files $rel"; bad=1
+  else mj_doctrine_ok layout "$rel/" "ignored, and nothing under it is tracked"; fi
+  if [ -f "$MJ_ROOT/.majordomus/policy.yaml" ]; then
+    mj_doctrine_fail layout ".majordomus/policy.yaml" "pre-.ai project data beside the .ai layer; two layouts cannot both be authoritative" "majordomus migrate"; bad=1
+  fi
+  [ "$bad" = 0 ] && mj_doctrine_ok layout "$(mj_rel "$MJ_AI_DIR")/" "every section the manifest names exists; the layer is readable without the tool"
+  return 0
+}
+
 mj_validate_layout() {
   local d
   for d in "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_PROMPTS_DIR"; do
