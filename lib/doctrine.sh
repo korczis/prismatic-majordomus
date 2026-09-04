@@ -70,15 +70,19 @@ mj_doc_list() { mj_ylist "$MJ_DOC_FLAT" "doctrines.$1.$2"; }
 # index, id, validator, class, file, first test, policy_key, and the enforced_by, tests
 # and claims lists comma-joined. The dispatcher and the wiring verifier read these rows
 # with builtins, so a doctor run no longer pays a process per field per doctrine. The
-# separator is a control character no flattened value can carry.
+# separator is a tab: the one byte the flattener refuses in every front matter, so no
+# rule value can carry it, and a registry line that does carry one (a file name could)
+# stops the load rather than shifting a row.
 MJ_DOC_ROW=()
-MJ_DOC_SEP=$'\037'
+MJ_DOC_SEP=$'\t'
 mj_doctrine_rows() {
-  local line
+  local line rows
   MJ_DOC_ROW=()
-  while IFS= read -r line; do MJ_DOC_ROW[${#MJ_DOC_ROW[@]}]="$line"; done < <(awk '
-    function flush() { if (!have) return; printf "%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\n", cur, s["id"], s["validator"], s["class"], s["file"], s["test"], s["policy_key"], eb, ts, cl }
+  rows="$(mktemp "${TMPDIR:-/tmp}/mj.rows.XXXXXX")"
+  awk '
+    function flush() { if (!have) return; printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", cur, s["id"], s["validator"], s["class"], s["file"], s["test"], s["policy_key"], eb, ts, cl }
     BEGIN { have = 0 }
+    index($0, "\t") { print "ERROR:line " NR " of the registry carries a tab character" > "/dev/stderr"; exit 3 }
     { eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
       if (split(k, p, ".") < 3 || p[1] != "doctrines") next
       i = p[2]; f = substr(k, length("doctrines." i ".") + 1)
@@ -87,16 +91,29 @@ mj_doctrine_rows() {
       if (f ~ /^enforced_by\.[0-9]+$/) eb = (eb == "" ? v : eb "," v)
       else if (f ~ /^tests\.[0-9]+$/) ts = (ts == "" ? v : ts "," v)
       else if (f ~ /^claims\.[0-9]+$/) cl = (cl == "" ? v : cl "," v) }
-    END { flush() }' "$MJ_DOC_FLAT")
+    END { flush() }' "$MJ_DOC_FLAT" > "$rows" 2> "$rows.err" \
+    || { rm -f "$rows"; mj_die "$MJ_EX_INTERNAL" "cannot build the doctrine registry: $(sed -n 's/^ERROR://p' "$rows.err" | head -n 1); a rule file name or path is the only value the flattener does not refuse a tab in"; }
+  while IFS= read -r line; do MJ_DOC_ROW[${#MJ_DOC_ROW[@]}]="$line"; done < "$rows"
+  rm -f "$rows" "$rows.err"
 }
 # mj_doc_row <index> -> MJ_DR_ID MJ_DR_VAL MJ_DR_CLASS MJ_DR_FILE MJ_DR_TEST MJ_DR_KEY
-#                       MJ_DR_EB MJ_DR_TESTS MJ_DR_CLAIMS, or 1 past the last row
+#                       MJ_DR_EB MJ_DR_TESTS MJ_DR_CLAIMS, or 1 past the last row. Fields
+#                       are cut by expansion, so an empty one stays in its place.
 MJ_DR_ID=""; MJ_DR_VAL=""; MJ_DR_CLASS=""; MJ_DR_FILE=""; MJ_DR_TEST=""; MJ_DR_KEY=""; MJ_DR_EB=""; MJ_DR_TESTS=""; MJ_DR_CLAIMS=""
+# shellcheck disable=SC2034  # the row fields are read by the dispatcher and by doctor
 mj_doc_row() {
   [ "$1" -lt "${#MJ_DOC_ROW[@]}" ] || return 1
-  local IFS="$MJ_DOC_SEP" _i
-  # shellcheck disable=SC2034  # the row fields are read by the dispatcher and by doctor
-  read -r _i MJ_DR_ID MJ_DR_VAL MJ_DR_CLASS MJ_DR_FILE MJ_DR_TEST MJ_DR_KEY MJ_DR_EB MJ_DR_TESTS MJ_DR_CLAIMS <<< "${MJ_DOC_ROW[$1]}"
+  local r="${MJ_DOC_ROW[$1]}" s="$MJ_DOC_SEP"
+  r="${r#*"$s"}"
+  MJ_DR_ID="${r%%"$s"*}";    r="${r#*"$s"}"
+  MJ_DR_VAL="${r%%"$s"*}";   r="${r#*"$s"}"
+  MJ_DR_CLASS="${r%%"$s"*}"; r="${r#*"$s"}"
+  MJ_DR_FILE="${r%%"$s"*}";  r="${r#*"$s"}"
+  MJ_DR_TEST="${r%%"$s"*}";  r="${r#*"$s"}"
+  MJ_DR_KEY="${r%%"$s"*}";   r="${r#*"$s"}"
+  MJ_DR_EB="${r%%"$s"*}";    r="${r#*"$s"}"
+  MJ_DR_TESTS="${r%%"$s"*}"; r="${r#*"$s"}"
+  MJ_DR_CLAIMS="$r"
 }
 # mj_doc_field <index> <n> -> field n of the row (1 index, 2 id, 3 validator, 4 class,
 # 5 file, 6 test, 7 policy_key, 8 enforced_by, 9 tests, 10 claims), by expansion alone
