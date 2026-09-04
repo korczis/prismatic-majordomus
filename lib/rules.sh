@@ -30,6 +30,8 @@ mj_rule_front() {
   local f="$1" flat="$2" fm k v
   fm="$(mktemp "${TMPDIR:-/tmp}/mj.rf.XXXXXX")"
   if ! mj_record_front "$f" > "$fm" 2>/dev/null || [ ! -s "$fm" ]; then rm -f "$fm"; printf 'no front matter'; return 1; fi
+  # a fence that opens and never closes would read the whole file as front matter
+  awk 'NR > 1 && $0 == "---" { f = 1; exit } END { exit !f }' "$f" || { rm -f "$fm"; printf 'front matter never closes (no second ---)'; return 1; }
   if ! mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then rm -f "$fm"; printf 'front matter does not parse'; return 1; fi
   rm -f "$fm"
   for k in id version kind title description statement status class; do

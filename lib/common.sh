@@ -336,9 +336,12 @@ mj_yaml_flatten() {
   }' "$1"
 }
 # value of a flattened key (first match); empty if absent
-mj_yget() { sed -n "s/^$(printf '%s' "$2" | sed 's/[.[\*^$]/\\&/g')=//p" "$1" | head -n 1; }
+# One process each. These run thousands of times per command — the rule loader alone asks
+# for well over a thousand keys — and the sed|sed|head form they replaced cost four forks
+# per lookup, which was most of a command's wall time.
+mj_yget()  { awk -v k="$2" 'index($0, k "=") == 1 { print substr($0, length(k) + 2); exit }' "$1"; }
 # list values under a key prefix: key.0, key.1 ...
-mj_ylist() { sed -n "s/^$(printf '%s' "$2" | sed 's/[.[\*^$]/\\&/g')\.[0-9][0-9]*=//p" "$1"; }
+mj_ylist() { awk -v k="$2" 'index($0, k ".") == 1 { r = substr($0, length(k) + 2); if (r ~ /^[0-9]+=/) { sub(/^[0-9]+=/, "", r); print r } }' "$1"; }
 # keys not matching any regex in an allowlist file -> printed; returns 1 if any
 mj_yaml_unknown_keys() {
   local flat="$1" allow="$2" bad=0 key
