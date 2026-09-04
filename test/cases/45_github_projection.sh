@@ -1,3 +1,4 @@
+# majordomus-covers: plan
 # The GitHub projection, computed offline. No case here reaches the network: what is
 # proved is that the payload the adapter would post is derived from the canonical model
 # and from nothing else.

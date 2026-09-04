@@ -1,3 +1,5 @@
+# majordomus-covers: plan
+# majordomus-negative: plan
 # The plan command surface: every subcommand reachable, self-documenting, and refusing
 # what it does not understand. The list is read from the source rather than written here,
 # so a subcommand added to lib/plan.sh is checked here from the moment it exists.

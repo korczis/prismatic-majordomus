@@ -178,6 +178,71 @@ findings:
     status: open
     reproduce: "sed -n '86,89p' scripts/site-check"
 
+  - id: responsibility-map-in-the-generator
+    path: scripts/generate-site-data
+    lines: "305"
+    concept: what a responsibility is, and which claims cover it
+    authority: "docs/RESPONSIBILITIES.yaml, and the responsibility field on each claim"
+    duplicated_in:
+      - "RESP_KEYS, a map of nine titles to an owning command and a regular expression"
+    risk: high
+    detail: >-
+      docs/README.md said RESPONSIBILITIES.yaml was read by the site generator. It was not
+      read at all. The generator carried a map of nine titles when the canonical file had ten,
+      so the plan responsibility reached the site with no owning command and no guarantees,
+      and its page was a single sentence. Claims were associated by matching a regular
+      expression against claim text, while every claim already declared a responsibility
+      field - a second mechanism for a join the data already had, and a worse one. The files,
+      implementation and specification anchors each entry carried reached the site nowhere.
+    recommended: DERIVE
+    target: "read the canonical file; join claims by their own field; refuse a mismatch in both directions"
+    priority: 1
+    status: fixed
+    resolved_by: "the responsibilities projection now reads docs/RESPONSIBILITIES.yaml, joins the README table by readme_key in both directions, joins claims by responsibility and doctrines through those claims, and refuses a path that does not exist or an anchor that is not a heading. Proved by test/cases/37_responsibility_surface.sh."
+    reproduce: "grep -c RESP_KEYS scripts/generate-site-data"
+
+  - id: jq-inplace-temp-inside-the-staging-tree
+    path: scripts/generate-site-data
+    lines: "-"
+    concept: rewriting a generated file in place
+    authority: "the generator's own output"
+    duplicated_in: []
+    risk: high
+    detail: >-
+      Three steps rewrote a generated file with a redirect into the staging directory followed
+      by a move. The scratch file lived inside the directory that is published wholesale, so a
+      failed step leaked it into the site; and the && suppresses errexit, so the failure was
+      silent and the half-written file was published as if it were correct. Both were observed
+      rather than theorised - a broken readme.json and a leaked readme.json.tmp reached
+      site/data/generated before the cause was found.
+    recommended: GENERATE
+    target: "a helper that writes outside the staging tree and exits non-zero on failure"
+    priority: 1
+    status: fixed
+    resolved_by: "jq_inplace writes to a temporary file outside the staging directory and exits 13 when jq fails; all three call sites converted."
+    reproduce: "grep -c jq_inplace scripts/generate-site-data"
+
+  - id: plan-event-names-break-the-vocabulary
+    path: lib/plan.sh
+    lines: "372, 378, 389, 435"
+    concept: the ledger event vocabulary
+    authority: share/events.yaml
+    duplicated_in: []
+    risk: low
+    detail: >-
+      The four plan events are plan_start, plan_verify, plan_evidence and plan_done. Every
+      other name in the vocabulary is dotted - task.started, question.opened,
+      projections.updated - so these read as a different kind of thing when they are not.
+      They are registered as written rather than renamed, because thirty-five of them are
+      already in this repository's own append-only ledger and a rename would orphan every
+      one. This is the moment when the fix is cheapest and it is still not free; recorded so
+      that the choice is visible rather than assumed, and so the owner can decide.
+    recommended: KEEP_LITERAL
+    target: "the owner's call: normalise now while the count is small, or accept the inconsistency permanently"
+    priority: 3
+    status: open
+    reproduce: "sed -n 's/^  - id: //p' share/events.yaml | grep -c _"
+
   - id: site-check-generated-file-list
     path: scripts/site-check
     lines: "17"

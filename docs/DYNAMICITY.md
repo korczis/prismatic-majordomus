@@ -151,11 +151,40 @@ Every refusal is raised before a byte of output is written. An `exit` inside a
 the target — so a refusal written there reports the wrong exit code and leaves a ruined
 file behind. The validation runs first; the emitting pipeline cannot fail on policy.
 
+The same fixtures serve a second surface. A responsibility's page shows the command that
+acts on it refusing and accepting, drawn from that command's fixture — so the demonstration
+on `/supervises/finish/` and the one on `/commands/finish/` are the same scenarios, executed
+by the same case, and cannot disagree.
+
 The arrangement earns its keep. Writing the fixtures found a defect nothing else had:
 `rev-parse HEAD` in a repository with no commits prints the literal string `HEAD` on stdout
 and *then* fails, so the `|| printf 'NONE'` fallback appended to it and produced an identity
 field with an embedded newline — a permanently corrupt line in an append-only ledger, for
 anyone who ran `init` and `update` before their first commit.
+
+## A link check must walk both directions
+
+A rule that walks from a page to the things it links can only find links that are *wrong*.
+It cannot find links that are *missing*, because a missing link is invisible from that side
+by construction — there is nothing on the page to check.
+
+The defect that made this concrete: six claims in `docs/CLAIMS.yaml` declared
+`responsibility: plan`, the `/supervises/plan/` page linked none of them, and every check
+looked outward from the page. Walking from the claim's side — every claim that names a
+responsibility must appear on that responsibility's page — finds it immediately.
+
+So a relation is checked in both directions or it is not checked:
+
+- every id a page names must exist, and
+- every record that names the page must be linked from it.
+
+The second is the one nobody writes, and it is the one that catches the defect.
+
+There are two such rules today, `why` and `supervises`, each knowing one join. That is
+tolerable. A third is the point at which the relation itself should become data — the two
+collections, the field holding the ids, and the route shape — and one rule should walk it.
+Writing a third hand-rolled version would be the same mistake as the map this section's
+defect came from.
 
 ## A mutation must prove it mutated
 

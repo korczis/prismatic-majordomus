@@ -563,6 +563,10 @@ Events and their extra fields:
 | `question.resolved` | `question`, `answer` |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
+| `plan_start` | `issue` |
+| `plan_verify` | `issue` |
+| `plan_evidence` | `issue`, `covers` (the requirement it satisfies), `type` |
+| `plan_done` | `issue` |
 
 `doctor`, `check` (without `--checkpoint`), `watch`, `context`, `history`, `search`, and
 `prompt` write nothing, the ledger included.

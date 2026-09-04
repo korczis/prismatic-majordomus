@@ -4,6 +4,13 @@
   <a href="{{ get_url(path="/supervises/" ~ row.slug ~ "/", trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
     <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ row.title }}</h3>
     <p class="text-sm leading-relaxed text-body">{{ row.text | markdown(inline=true) | safe }}</p>
+    {#- What the tile promises the page will deliver. Every number here is counted from the
+        generated data, so a tile cannot advertise a guarantee the page does not carry. -#}
+    <ul class="mt-3 flex flex-wrap gap-1.5 text-xs">
+      {%- if row.command %}<li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">majordomus {{ row.command }}</span></li>{% endif -%}
+      {%- if row.claim_ids | length > 0 %}<li><span class="rounded border border-default px-1.5 py-0.5 text-body-subtle">{{ row.claim_ids | length }} guarantee{% if row.claim_ids | length != 1 %}s{% endif %}</span></li>{% endif -%}
+      {%- if row.doctrine_ids | length > 0 %}<li><span class="rounded border border-default px-1.5 py-0.5 text-body-subtle">{{ row.doctrine_ids | length }} enforced</span></li>{% endif -%}
+    </ul>
     <span class="mt-auto pt-3 text-sm font-medium text-fg-brand">Read more →</span>
   </a>
   {%- endfor -%}

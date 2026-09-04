@@ -88,3 +88,32 @@ events:
     requires: [archived, kept, archive]
     public: true
     note: The ledger's own maintenance, recorded in the ledger. Nothing is deleted; the archive path is part of the record so the rotation can be followed.
+
+  - id: plan_start
+    title: Issue started
+    summary: Execution of one issue in the project model began.
+    emitted_by: plan
+    requires: [issue]
+    public: true
+    note: The four plan events are named with an underscore rather than the dot the rest of the vocabulary uses. They are registered as written, because thirty-five of them are already in this repository's ledger; the inconsistency is recorded in docs/HARDCODING_LEDGER.yaml rather than fixed by a rename that would orphan them.
+
+  - id: plan_verify
+    title: Issue implementation complete
+    summary: An issue was recorded as implemented, with its evidence still outstanding.
+    emitted_by: plan
+    requires: [issue]
+    public: true
+
+  - id: plan_evidence
+    title: Evidence attached
+    summary: One piece of evidence was attached to an issue, against the requirement it satisfies.
+    emitted_by: plan
+    requires: [issue, covers, type]
+    public: true
+
+  - id: plan_done
+    title: Issue done
+    summary: An issue was recorded as complete, its required evidence present.
+    emitted_by: plan
+    requires: [issue]
+    public: true

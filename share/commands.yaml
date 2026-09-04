@@ -335,6 +335,24 @@ commands:
     demo: doctrine-registry
     note: The registry ships with the tool rather than with a repository. A doctrine is a statement about how Majordomus behaves; a repository configures the tool without redefining it.
 
+  - id: plan
+    title: plan
+    summary: The milestone and issue model — validate it, read it, and move one issue through it.
+    category: plan
+    stage: begin
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: true
+    syntax: majordomus plan <subcommand> [options]
+    reads: [.majordomus/project]
+    writes: [.majordomus/project]
+    exit_codes: [0, 2, 10, 12, 15]
+    demo: plan-model
+    note: Ten read-only subcommands and four that write one lifecycle marker each. The class names the command as a whole, which is what a single field can say; the syntax section separates READ from WRITE. It operates on the project model rather than on the active task record, so it needs no task.
+
   - id: version
     title: version
     summary: Print the version, without needing a repository or an installation.

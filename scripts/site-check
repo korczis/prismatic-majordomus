@@ -261,4 +261,40 @@ for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do
 done
 [ "$cmdbad" = 0 ] && ok command "every command page carries syntax, reads, writes, exit codes, a demonstration and resolving evidence"
 
+# 16. responsibility pages: a tile is owed the same treatment as a command. Each must say
+#     where its state lives, which command acts on it, show that command refusing and
+#     accepting, name what enforces it and what it guarantees — and its two deep links into
+#     the specification must land on headings that exist, not merely on pages that do.
+respbad=0
+for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do
+  page="$PUB/supervises/$slug/index.html"
+  [ -f "$page" ] || { bad supervises "no page for $slug"; respbad=1; continue; }
+  for heading in "Where it lives" "What is guaranteed"; do
+    grep -qF ">$heading<" "$page" || { bad supervises "$slug: no '$heading' section"; respbad=1; }
+  done
+  # the files and the implementation it names are linked, and they exist in this repository
+  for f in $(jq -r --arg s "$slug" '.does[] | select(.slug==$s) | .files[], .implementation' "$SITE/data/generated/readme.json"); do
+    [ -e "$ROOT/$f" ] || { bad supervises "$slug: names $f, which does not exist"; respbad=1; }
+    grep -qF "blob/master/$f" "$page" || { bad supervises "$slug: does not link $f"; respbad=1; }
+  done
+  # each deep link resolves to a heading id on the page it points at, not just to the page
+  for pair in cli schema; do
+    route="$(jq -r --arg s "$slug" --arg k "${pair}_route" '.does[] | select(.slug==$s) | .[$k]' "$SITE/data/generated/readme.json")"
+    target="${route%%#*}"; frag="${route#*#}"
+    [ -f "$PUB$target/index.html" ] || { bad supervises "$slug: $route names a page that does not exist"; respbad=1; continue; }
+    grep -qF "id=\"$frag\"" "$PUB$target/index.html" || { bad supervises "$slug: $route names no heading on that page"; respbad=1; }
+  done
+  # a responsibility with an owning command shows that command's demonstration
+  cmd="$(jq -r --arg s "$slug" '.does[] | select(.slug==$s) | .command // ""' "$SITE/data/generated/readme.json")"
+  if [ -n "$cmd" ]; then
+    grep -qF "/commands/$cmd/" "$page" || { bad supervises "$slug: does not link its command $cmd"; respbad=1; }
+    grep -q 'role="tablist"' "$page" || { bad supervises "$slug: no demonstration"; respbad=1; }
+  fi
+  # every claim and doctrine the data associates with it is on the page
+  for id in $(jq -r --arg s "$slug" '.does[] | select(.slug==$s) | .claim_ids[]' "$SITE/data/generated/readme.json"); do
+    grep -qF "/guarantees/$id/" "$page" || { bad supervises "$slug: claim $id is not linked"; respbad=1; }
+  done
+done
+[ "$respbad" = 0 ] && ok supervises "every responsibility names its state, its command, its guarantees, and two deep links that land on real headings"
+
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10
