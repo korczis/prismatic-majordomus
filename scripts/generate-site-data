@@ -257,6 +257,56 @@ jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" --argjson checks 
 # derived from canonical docs/RESPONSIBILITIES.yaml and docs/CLAIMS.yaml.
 Rf="$(flat "$ROOT/docs/RESPONSIBILITIES.yaml")"
 [ "$(yv "$Rf" version)" = 1 ] || { echo "generate-site-data: docs/RESPONSIBILITIES.yaml must be version 1" >&2; exit 10; }
+# The join below is by README row title, and a join is silent when it misses: an entry whose
+# readme_key no longer matches a row is never visited, and a row with no entry falls through
+# to a page with a null command and an empty claim list. Both look like a responsibility that
+# simply has nothing to say. So the correspondence is checked in both directions here, along
+# with the paths and headings each entry points at, before anything is rendered from it.
+README_TITLES="$(jq -r '.does[].title' "$OUT/readme.json")"
+[ -n "$README_TITLES" ] || { echo "generate-site-data: the README 'What it does' table produced no rows" >&2; exit 10; }
+heading_in() { # anchor, file -> the anchor is a level-two heading, bare or backticked
+  grep -qxF "## $1" "$2" || grep -qxF "## \`$1\`" "$2"
+}
+RESP_KEYS=""
+i=0
+while [ -n "$(yv "$Rf" "responsibilities.$i.id")" ]; do
+  rid="$(yv "$Rf" "responsibilities.$i.id")"
+  rk="$(yv "$Rf" "responsibilities.$i.readme_key")"
+  printf '%s\n' "$README_TITLES" | grep -qxF "$rk" \
+    || { echo "generate-site-data: responsibility $rid names README row '$rk', which the 'What it does' table does not have" >&2; exit 10; }
+  # .majordomus/ paths are runtime state that `init` creates in a consuming repository, not
+  # source files: a source-only checkout legitimately has none, and requiring them would make
+  # the generator refuse to run there. They are checked whenever the directory exists at all,
+  # which is every initialised repository including this one, so a moved or renamed runtime
+  # path is still caught rather than excused.
+  for p in $(mj_ylist "$Rf" "responsibilities.$i.files") "$(yv "$Rf" "responsibilities.$i.implementation")"; do
+    [ -n "$p" ] || { echo "generate-site-data: responsibility $rid declares an empty path" >&2; exit 10; }
+    # policy.yaml is what `init` writes, so it marks an initialised repository. Testing for
+    # the directory instead would be wrong: .majordomus/project/ is a canonical generator
+    # input, so the directory exists wherever those files were copied, initialised or not.
+    case "$p" in .majordomus/*) [ -f "$ROOT/.majordomus/policy.yaml" ] || continue ;; esac
+    [ -e "$ROOT/$p" ] || { echo "generate-site-data: responsibility $rid names missing path $p" >&2; exit 10; }
+  done
+  for a in cli_anchor:docs/CLI.md schema_anchor:docs/SCHEMAS.md; do
+    fld="${a%%:*}"; doc="${a#*:}"; val="$(yv "$Rf" "responsibilities.$i.$fld")"
+    [ -n "$val" ] || { echo "generate-site-data: responsibility $rid declares an empty $fld" >&2; exit 10; }
+    heading_in "$val" "$ROOT/$doc" \
+      || { echo "generate-site-data: responsibility $rid names $fld '$val', which is not a heading in $doc" >&2; exit 10; }
+  done
+  RESP_KEYS="$RESP_KEYS$rk
+"
+  i=$((i+1))
+done
+[ "$i" -gt 0 ] || { echo "generate-site-data: docs/RESPONSIBILITIES.yaml declares no responsibilities" >&2; exit 10; }
+# and the other direction, fed by a here-document rather than a pipe so that the refusal
+# exits the generator instead of a subshell of it
+while IFS= read -r t; do
+  [ -n "$t" ] || continue
+  printf '%s\n' "$RESP_KEYS" | grep -qxF "$t" \
+    || { echo "generate-site-data: README row '$t' has no entry in docs/RESPONSIBILITIES.yaml" >&2; exit 10; }
+done <<EOF
+$README_TITLES
+EOF
 RESPONSIBILITIES_JSON="$(
   i=0; printf '['
   first=1
@@ -273,13 +323,15 @@ RESPONSIBILITIES_JSON="$(
   printf ']'
 )"
 rm -f "$Rf"
+# No fallback for a missing row: the loop above has already refused that case, and a default
+# here would quietly restore the silence it exists to remove.
 jq --argjson resps "$RESPONSIBILITIES_JSON" --slurpfile caps "$OUT/capabilities.json" '
   ($resps | INDEX(.readme_key)) as $r_by_key
   | .does |= map(. as $row
-      | ($r_by_key[$row.title] // {}) as $r
-      | . + {slug: ($r.id // ($row.title | ascii_downcase)),
-             command: ($r.command // null),
-             claim_ids: [ $caps[0].claims[] | select(.responsibility == ($r.id // ($row.title | ascii_downcase))) | .id ]})' "$OUT/readme.json" > "$OUT/readme.json.tmp" && mv "$OUT/readme.json.tmp" "$OUT/readme.json"
+      | ($r_by_key[$row.title] | if . == null then error("no responsibility for README row \($row.title)") else . end) as $r
+      | . + {slug: $r.id,
+             command: (if $r.command == "" then null else $r.command end),
+             claim_ids: [ $caps[0].claims[] | select(.responsibility == $r.id) | .id ]})' "$OUT/readme.json" > "$OUT/readme.json.tmp" && mv "$OUT/readme.json.tmp" "$OUT/readme.json"
 
 # ---------------------------------------------------------------- doctrines.json
 # Every field the site shows about a doctrine is either in the registry or resolved from
