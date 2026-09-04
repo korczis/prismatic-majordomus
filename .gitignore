@@ -7,7 +7,7 @@
 /test/tmp/
 
 # site build dependencies (not part of the CLI)
-node_modules/
+node_modules
 
 # derived site, rebuilt by scripts/generate-site-data and scripts/site-build
 # (site/static/images/ is copied from assets/ at build but committed, so it stays tracked)
@@ -23,3 +23,6 @@ site/public/
 site/static/app.css
 site/static/js/
 site/static/syntax-*.css
+
+# transient staging for scripts/generate-site-data (removed on exit)
+.mj-stage.*/
