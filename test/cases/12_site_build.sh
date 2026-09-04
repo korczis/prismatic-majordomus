@@ -32,7 +32,8 @@ expect_grep 'Install Majordomus' "$P/index.html"
 for href in $(grep -oE 'href="[^"]*/(supervises|profiles|guarantees|commands|why)/[a-z0-9_-]+/"' "$P/index.html" | sed -E 's#.*/prismatic-majordomus/##; s#"$##' | sort -u); do [ -f "$P/$href/index.html" ] || { echo "    homepage tile links to missing $href"; exit 1; }; done
 expect_grep 'href="[^"]*/supervises/"' "$P/index.html"
 [ "$(grep -oE 'href="[^"]*/supervises/[a-z]+/"' "$P/supervises/index.html" | sort -u | wc -l | tr -d ' ')" = "$(jq '.does | length' "$ROOT/site/data/generated/readme.json")" ]
-[ "$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')" = "$(ls "$ROOT"/site/content-src/why/*.md | grep -vc _index)" ]
+n_why=0; for f in "$ROOT"/site/content-src/why/*.md; do case "$(basename "$f")" in _index.md) ;; *) n_why=$((n_why + 1)) ;; esac; done
+[ "$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')" = "$n_why" ]
 # every claim listed on the homepage links to its page; claim pages carry provenance and a verify command
 [ "$(grep -oE 'href="[^"]*/guarantees/[a-z-]+/"' "$P/index.html" | grep -vE '/(guaranteed|advisory|planned|rejected)/' | sort -u | wc -l | tr -d ' ')" -ge 12 ]
 expect_grep 'bash test/run.sh 03_update' "$P/guarantees/wiring-reconciliation/index.html"
