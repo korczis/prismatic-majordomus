@@ -345,8 +345,11 @@ local, so upgrading does not turn an existing installation red.
 
 ## `.majordomus/state/decisions.md`
 
-Append-only, dated, one entry per decision. Human-authored. Read by `check --explain`
-(printed as context) and by projections (referenced by path, never inlined).
+Append-only, dated, one entry per decision. Human-authored. Read by `decision list`,
+by `context` (which prints as many entries as `context.recent_decisions` allows, for this
+task or for the repository depending on the profile), by `search`, and by a prompt asset
+that uses `{{DECISIONS}}`. `check` reads it only to report entries that no task or head can
+be attributed to. Projections reference it by path and never inline it.
 
 Append-only. `decision add` writes one entry with `Task` and `Head` computed; the
 remaining fields come from its options. `--why` is required, because a decision with no
