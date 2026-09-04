@@ -93,6 +93,45 @@ sources:
     pathspec: ':(glob)*.md'
     required: false
 
+  - id: doctrine
+    kind: doctrine
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob)share/doctrines.yaml'
+    required: false
+
+  # The implementation and test classes exist so that the chain a claim already declares —
+  # claim, the file that implements it, the case that proves it — resolves to real nodes
+  # instead of to three strings. Without them every claim's edges dangle by construction,
+  # which is a report nobody can act on.
+  - id: library
+    kind: implementation
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob)lib/*.sh'
+    required: false
+
+  - id: engine
+    kind: implementation
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob)lib/*.awk'
+    required: false
+
+  - id: entrypoint
+    kind: implementation
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob)bin/*'
+    required: false
+
+  - id: case
+    kind: test
+    scope: shared
+    discovery: vcs
+    pathspec: ':(glob)test/cases/*.sh'
+    required: false
+
   - id: session
     kind: session
     scope: operational

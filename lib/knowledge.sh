@@ -114,13 +114,14 @@ mj_cmd_knowledge() {
   local sub="${1:-sources}"
   case "$sub" in
     --help|-h|help) mj_knowledge_usage; return 0 ;;
-    sources|nodes) shift || true ;;
+    sources|nodes|edges) shift || true ;;
     *) mj_die "$MJ_EX_USAGE" "knowledge: unknown subcommand '$sub' (see: majordomus knowledge --help)" ;;
   esac
   mj_require_installed
   case "$sub" in
     sources) mj_knowledge_sources "$@" ;;
     nodes)   mj_knowledge_nodes_cmd "$@" ;;
+    edges)   mj_knowledge_edges_cmd "$@" ;;
   esac
 }
 
@@ -132,6 +133,8 @@ usage: majordomus knowledge <subcommand> [options]
         the curated source classes and the files each one discovers    (read-only)
   nodes [--scope shared|operational|all] [--kind <k>] [--json]
         one node per canonical object, with its identity and kind      (read-only)
+  edges [--scope ...] [--type <t>] [--json]
+        one edge per stated relationship, with where it was observed   (read-only)
 
   Discovery is driven by the version-control index for repository knowledge and by the
   state directories Majordomus owns for operational records. An untracked file is not a
@@ -193,6 +196,11 @@ mj_knowledge_sources() {
 # too rather than being parsed by a second, laxer reader.
 mj_knowledge_rows() {
   local src="$1" cls scope kind hash path abs flat
+  # Every tracked path, so that a link can be told apart three ways: it resolves to a node,
+  # it resolves to a real file this compiler does not model, or it resolves to nothing. The
+  # list comes from the index rather than from the filesystem, for the same reason discovery
+  # does — repository truth, and no untracked file mistaken for a valid target.
+  mj_git ls-files -z 2>/dev/null | tr '\0' '\n' | awk 'NF { printf "T\t%s\n", $0 }'
   while IFS="$(printf '\t')" read -r cls scope kind hash path; do
     [ -n "$path" ] || continue
     abs="$MJ_ROOT/$path"
@@ -203,10 +211,16 @@ mj_knowledge_rows() {
         awk -v p="$path" '{ gsub(/\t/, " "); printf "L\t%s\t%s\t%s\n", p, NR, $0 }' "$abs"
         ;;
       document)
-        # The one thing taken from a document body, and only when it is unambiguous: the
-        # first level-one heading. No other prose is read, because no other prose states a
-        # fact about the document rather than in it.
+        # Two things are taken from a document body, and only these two, because only these
+        # two state a fact ABOUT the document rather than in it: its first level-one heading,
+        # and the inline links its author wrote.
         awk -v p="$path" '/^# / { t = substr($0, 3); gsub(/\t/, " ", t); printf "D\t%s\t%s\n", p, t; exit }' "$abs"
+        mj_knowledge_links "$path" "$abs"
+        ;;
+      implementation|test)
+        # Code and cases are nodes so that the chain a claim declares resolves, and that is
+        # all they are. Nothing reads their contents: a leading comment is a good summary and
+        # reading it would be reading prose, which is the line this compiler does not cross.
         ;;
       session|handover|checkpoint|prompt)
         # Records and prompt assets carry YAML front matter and an authored body. Only the
@@ -216,7 +230,7 @@ mj_knowledge_rows() {
         mj_knowledge_flat_rows "$path" "$flat"
         rm -f "$flat"
         ;;
-      policy|profile|milestone|issue|claim)
+      policy|profile|milestone|issue|claim|doctrine)
         mj_knowledge_flat_rows "$path" "$abs"
         ;;
       *)
@@ -228,6 +242,40 @@ mj_knowledge_rows() {
         ;;
     esac
   done < "$src"
+}
+
+# Inline links, and only inline links: `[text](target)` as the author wrote it.
+#
+# Fenced code is dropped first. A path inside a code sample is an example of a path, not a
+# reference to one, and letting one become an edge fills the graph with relationships nobody
+# asserted. Reference-style links and bare URLs are left alone: the first is not resolvable
+# without a second pass over the file, and the second is not a repository reference.
+#
+# A target with a scheme, a protocol-relative target and a bare anchor are all skipped —
+# none of them names a file in this repository. A fragment on a real path is trimmed,
+# because `docs/CLI.md#session` is a reference to `docs/CLI.md`.
+mj_knowledge_links() {
+  local path="$1" file="$2"
+  awk -v p="$path" '
+    /^[ \t]*(```|~~~)/ { fence = !fence; next }
+    fence { next }
+    {
+      line = $0
+      while (match(line, /\[[^]]*\]\([^)]+\)/)) {
+        chunk = substr(line, RSTART, RLENGTH)
+        line = substr(line, RSTART + RLENGTH)
+        t = chunk
+        sub(/^\[[^]]*\]\(/, "", t); sub(/\)$/, "", t)
+        sub(/[ \t].*$/, "", t)              # a link title after the target
+        sub(/#.*$/, "", t)                  # a fragment names a place in a file, not a file
+        if (t == "") continue
+        if (t ~ /^[a-zA-Z][a-zA-Z0-9+.-]*:/) continue   # any scheme
+        if (t ~ /^\/\//) continue                       # protocol relative
+        if (t ~ /^\//) continue                         # absolute: not a repository path
+        gsub(/\t/, " ", t)
+        printf "K\t%s\t%s\t%s\n", p, NR, t
+      }
+    }' "$file"
 }
 
 # Flatten one file and emit its keys. A file that does not parse is reported and skipped:
@@ -308,6 +356,55 @@ mj_knowledge_nodes_cmd() {
       [ "$t" = X ] || continue
       case "$a" in FAIL) mj_fail knowledge "$c" "$d" "majordomus knowledge nodes --json"; fails=$((fails + 1)) ;;
                    *)    mj_warn knowledge "$c" "$d" "majordomus knowledge nodes --json" ;; esac
+    done < "$out"
+  fi
+  rm -f "$out"
+  [ "$fails" = 0 ] || return "$MJ_EX_CONTRACT"
+  return 0
+}
+
+# The edges subcommand. Every row carries the file, and where there is one the field or
+# line, in which the relationship was observed. Nothing here is inferred.
+mj_knowledge_edges_cmd() {
+  local scope=all want_type="" out n=0 fails=0
+  while [ $# -gt 0 ]; do case "$1" in
+    --scope) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--scope needs a value"; scope="$2"; shift 2 ;;
+    --scope=*) scope="${1#--scope=}"; shift ;;
+    --type) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--type needs a value"; want_type="$2"; shift 2 ;;
+    --type=*) want_type="${1#--type=}"; shift ;;
+    --help|-h) mj_knowledge_usage; return 0 ;;
+    *) mj_die "$MJ_EX_USAGE" "knowledge edges: unknown option $1" ;;
+  esac; done
+  case "$scope" in shared|operational|all) ;;
+    *) mj_die "$MJ_EX_USAGE" "knowledge edges: --scope must be shared, operational or all" ;;
+  esac
+
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.kge.XXXXXX")"
+  mj_knowledge_nodes "$scope" > "$out" || { rm -f "$out"; return "$MJ_EX_INTERNAL"; }
+
+  local t a b c d first=1
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"schema":1,"scope":"%s","edges":[' "$scope"
+    while IFS="$(printf '\t')" read -r t a b c d; do
+      [ "$t" = E ] || continue
+      [ -n "$want_type" ] && [ "$c" != "$want_type" ] && continue
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"from":"%s","to":"%s","type":"%s","provenance":"%s"}' \
+        "$(mj_json_esc "$a")" "$(mj_json_esc "$b")" "$c" "$(mj_json_esc "$d")"
+    done < "$out"
+    printf ']}\n'
+  else
+    while IFS="$(printf '\t')" read -r t a b c d; do
+      [ "$t" = E ] || continue
+      [ -n "$want_type" ] && [ "$c" != "$want_type" ] && continue
+      printf '%-15s %-46s %-46s %s\n' "$c" "$a" "$b" "$d"
+      n=$((n + 1))
+    done < "$out"
+    printf 'knowledge edges: %s in scope %s%s\n' "$n" "$scope" "${want_type:+, type $want_type}"
+    while IFS="$(printf '\t')" read -r t a b c d; do
+      [ "$t" = X ] || continue
+      case "$a" in FAIL) mj_fail knowledge "$c" "$d" "majordomus knowledge edges --json"; fails=$((fails + 1)) ;;
+                   *)    mj_warn knowledge "$c" "$d" "majordomus knowledge edges --json" ;; esac
     done < "$out"
   fi
   rm -f "$out"

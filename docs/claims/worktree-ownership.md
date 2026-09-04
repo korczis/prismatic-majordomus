@@ -35,7 +35,7 @@ majordomus --repo ../second finish --outcome completed; echo $?   # 15, "finish 
 
 One tracked path still holds one record. Two checkouts working concurrently and both committing `current.yaml` will overwrite each other's record on the branch; `start` warns when it is about to set that up, and nothing prevents it. A repository with several concurrent worktrees should run `majordomus init --gitignore` so each checkout keeps its own untracked record.
 
-It does not attribute commits. A task records the commit it started at, and every file changed since counts as its work regardless of who changed it — see the limitation in [`CONTINUITY.md`](CONTINUITY.md).
+It does not attribute commits. A task records the commit it started at, and every file changed since counts as its work regardless of who changed it — see the limitation in [`CONTINUITY.md`](../CONTINUITY.md).
 
 ## Why it exists
 

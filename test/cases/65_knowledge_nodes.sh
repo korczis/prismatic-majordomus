@@ -42,6 +42,16 @@ claims:
     test: test/cases/04_start_check.sh
     status: guaranteed
 EOF
+# the files the claims point at. A declared relationship to a file that is not there is a
+# broken promise and the compiler fails on it, which is right and is 66's subject; here the
+# fixture is simply complete.
+mkdir -p lib test/cases
+printf '# schemas\n' > docs/SCHEMAS.md
+printf '# design\n' > docs/DESIGN.md
+printf '#!/usr/bin/env bash\n' > lib/common.sh
+printf '#!/usr/bin/env bash\n' > lib/start.sh
+printf '# a case\n' > test/cases/00_yaml_flatten.sh
+printf '# a case\n' > test/cases/04_start_check.sh
 git add -A >/dev/null && git commit -q -m install
 
 # --- a rebuild produces the same bytes

@@ -634,6 +634,45 @@ changes the other.
 - `nodes [--scope ...] [--kind <k>]` derives one node per canonical object: its identity,
   its kind, the source it came from and that source's hash. Exits `10` when two objects
   claim one identity.
+- `edges [--scope ...] [--type <t>]` derives one edge per stated relationship, with the file
+  and the field or line it was observed in.
+
+**No edge without provenance.** Every edge names where the relationship was stated, and an
+edge missing any of from, to, type or provenance is refused rather than emitted with a
+blank — a blank source reads as "unknown" and is indistinguishable from one nobody recorded.
+An edge nobody can trace to a line is not a fact, it is a guess wearing a fact's clothes, and
+it is a guess the person best placed to notice it is wrong will never see.
+
+**Nothing is inferred from prose.** The repository already states its relationships
+explicitly, in fields somebody maintains, and those are both free and correct. The edge
+types are a closed set; an undeclared one is an error rather than a new vocabulary word:
+
+| type | from → to | stated in |
+|---|---|---|
+| `part_of` | issue → milestone | the issue's `milestone` |
+| `depends_on` | issue → issue, milestone → milestone | the record's `depends_on` |
+| `declares` | milestone → claim | the milestone's `claims` |
+| `specified_by` | claim → document | `docs/CLAIMS.yaml`'s `source` |
+| `implemented_by` | claim → implementation | its `implementation` |
+| `tested_by` | claim → test, doctrine → test | its `test` |
+| `supports` | doctrine → claim | the doctrine's `claims` |
+| `references` | document → document | an inline Markdown link |
+
+Links are the one edge source that is not curated, and they are read conservatively. Fenced
+code is dropped first, because a path inside a code sample is an example of a path and not a
+reference to one. A target with a scheme, a protocol-relative target and an absolute path are
+all skipped; a fragment is trimmed, because `docs/CLI.md#session` refers to `docs/CLI.md`.
+
+**Severity distinguishes what Majordomus owns from what an author wrote.** A declared
+relationship pointing at a file the repository does not contain is a `FAIL`: it is a broken
+promise. A link in a document pointing at nothing is a `WARN`: a document may deliberately
+point outside the repository and the target alone cannot tell the two apart. A relationship
+pointing at a real file that this compiler does not model as one node — a container of many
+objects, or something outside the curated set — is silent, because a report that is large by
+design is a report people stop reading.
+
+`nodes` and `edges` are two views of one derivation, so a defect in either exits `10` on
+both. There is no clean node listing over a graph that is broken.
 
 **A node's identity is never its content hash.** It is the object's own canonical id where
 it has one — `claim:policy-parse`, `issue:I0801`, `milestone:M003`, `profile:debugging` —
