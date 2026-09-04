@@ -1,0 +1,112 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set policy = load_data(path="data/generated/policy.json") -%}
+{%- set readme = load_data(path="data/generated/readme.json") -%}
+{%- set lifecycle = load_data(path="data/generated/lifecycle.json") -%}
+{%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{%- set requires = policy.verification.finish_requires -%}
+{%- set checks = readme.finish_checks -%}
+{%- set ok_codes = [c for c in project.exit_codes if c.meaning == "ok"] -%}
+{%- set unmet_codes = [c for c in project.exit_codes if c.meaning == "contract unmet"] -%}
+{%- set unmet_code = unmet_codes[0].code -%}
+{%- set lines = readme.finish_transcript | split(pat="
+") -%}
+
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
+
+{#- The demonstration is deterministic and derived: the five keys come from the policy the tool
+    installs (verification.finish_requires), the printed lines come from the transcript in
+    README.md, and the outcome vocabulary comes from lib/finish.sh. Nothing here is a mock-up
+    of behaviour — it is the same data the command reads, arranged so a reader can turn a line
+    off. Progressive: without Alpine every line renders in its passing state with its
+    explanation, which is the contract as documentation. -#}
+<section class="mt-10" x-data="{ off: [], outcome: 'completed' }">
+  <h2 class="text-2xl font-bold tracking-tight text-heading">Try refusing it</h2>
+  <p class="mt-2 max-w-3xl text-body">Each row is one line of the contract. Switch one off and the verdict below changes — as it would in a terminal, for the same reason.</p>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+    <ul class="min-w-0 space-y-3">
+      {%- for key in requires %}{% set name = checks[loop.index0] %}
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-mono text-sm font-medium text-heading">{{ name }}</p>
+            <p class="mt-0.5 font-mono text-xs text-body-subtle">policy key <code>{{ key }}</code></p>
+          </div>
+          <label class="inline-flex shrink-0 cursor-pointer items-center gap-2" x-cloak>
+            <input type="checkbox" checked x-on:change="off = $event.target.checked ? off.filter(x => x !== '{{ name }}') : off.concat('{{ name }}')" class="h-4 w-4 rounded border-default text-brand focus:ring-2 focus:ring-brand">
+            <span class="font-mono text-xs text-body-subtle" x-text="off.includes('{{ name }}') ? 'unmet' : 'met'">met</span>
+          </label>
+        </div>
+        {#- The transcript row for this check. Matched on the name as its own space-delimited
+            column, not as a substring: "state" also occurs inside
+            .majordomus/state/open-questions.md on the blockers row, which put two lines on one
+            card until this was tightened. -#}
+        {%- set shown = [l for l in lines if (" " ~ name ~ " ") in l] %}
+        {%- for l in shown %}
+        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body">{{ l }}</p>
+        {%- endfor %}
+      </li>
+      {%- endfor %}
+    </ul>
+
+    <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+      <div class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
+        <p class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">the verdict</p>
+        {#- Both branches are always in the page. Alpine emphasises the one that applies rather
+            than hiding the other, so a reader without JavaScript gets the contract as
+            documentation — both outcomes, stated — instead of an empty box. Nothing here is
+            hidden by a static rule, which is the property site-check's nojs rule asserts. -#}
+        <div class="p-4">
+          <p class="font-mono text-sm" :class="off.length === 0 ? 'text-fg-success-strong' : 'text-body-subtle line-through'">
+            all {{ requires | length }} met &rarr; finish: accepted, outcome <span class="font-semibold">completed</span>, exit {{ ok_codes[0].code }}
+          </p>
+          <p class="mt-2 font-mono text-sm" :class="off.length > 0 ? 'text-fg-warning' : 'text-body-subtle'">
+            any unmet &rarr; finish: refused, <span x-text="off.length || 'n'">n</span> unmet, exit {{ unmet_code }}
+          </p>
+          <p class="mt-4 text-sm text-body">
+            On refusal nothing is written: the task stays active, no outcome is set, and no completion note is filed.
+            <span class="text-heading" x-text="off.length ? ('The failing lines here: ' + off.join(', ') + '.') : 'Each failing line is named, with the command that reproduces it.'">Each failing line is named, with the command that reproduces it.</span>
+          </p>
+          <p class="mt-3 text-sm text-body">On acceptance the outcome is recorded, the verification command and its exit code are appended to the ledger, and the note is filed under the completed records.</p>
+          <p class="mt-4 border-t border-default pt-3 text-xs text-body-subtle">There is no flag that turns a refusal into a warning.</p>
+        </div>
+      </div>
+
+      <div class="mt-4 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
+        <p class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">and if the work did not finish</p>
+        <ul class="divide-y divide-default">
+          {%- for o in lifecycle.outcomes %}
+          <li class="px-4 py-2.5"><span class="font-mono text-sm text-heading">{{ o }}</span></li>
+          {%- endfor %}
+        </ul>
+        <p class="border-t border-default px-4 py-3 text-sm text-body">A closed vocabulary, not prose. <code class="font-mono">no_match</code> means the thing sought does not exist; <code class="font-mono">failed</code> means the work could not be done. They read alike in a transcript and are different facts.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section class="mt-12">
+  <h2 class="text-2xl font-bold tracking-tight text-heading">What the transcript actually looks like</h2>
+  <figure class="mt-4 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
+    <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">real output, from README.md</figcaption>
+    <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
+  </figure>
+</section>
+
+{%- set contract_claims = [c for c in caps.claims if c.responsibility == "finish" or c.command == "finish"] %}
+{%- if contract_claims | length > 0 %}
+<section class="mt-12">
+  <h2 class="text-2xl font-bold tracking-tight text-heading">What is guaranteed here, and what proves it</h2>
+  <ul class="mt-4 space-y-3">
+    {%- for c in contract_claims %}
+    <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="flex flex-wrap items-start gap-2">{{ <badge status={c.status} /> }}
+        <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a></p>
+      {%- if c.test %}<p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.test }}">{{ c.test }}</a></p>{% endif %}
+    </li>
+    {%- endfor %}
+  </ul>
+</section>
+{%- endif %}
+{% endblock body %}

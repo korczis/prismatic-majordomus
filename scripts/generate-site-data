@@ -231,20 +231,28 @@ Df="$(flat "$ROOT/share/doctrines.yaml")"
 [ "$(yv "$Df" version)" = 1 ] || { echo "generate-site-data: share/doctrines.yaml must be version 1" >&2; exit 10; }
 # Validate the whole registry before emitting anything. A check inside the emitting
 # pipeline runs in a subshell and would leave a half-written file behind.
+# The three facts every doctrine is checked against are properties of the tree, not of the
+# doctrine, so they are read once here rather than re-scanned per doctrine. Scanning lib/ and
+# CLAIMS.yaml inside the loop cost more than the rest of the generator put together.
+VALIDATOR_FILES="$(grep -rnoE '^mj_validate_[a-z_]+\(\)' "$ROOT/lib" 2>/dev/null | sed "s#^$ROOT/##" | awk -F: '{n=$3; sub(/^mj_validate_/,"",n); sub(/\(\)$/,"",n); if (!(n in seen)) { seen[n]=1; print n "\t" $1 }}')"
+DEFINED_VALIDATORS=" $(printf '%s\n' "$VALIDATOR_FILES" | cut -f1 | tr '\n' ' ')"
+DISPATCHING=" $(grep -lF 'mj_doctrine_dispatch' "$ROOT"/lib/*.sh 2>/dev/null | sed 's#.*/##; s#\.sh$##' | tr '\n' ' ')"
+KNOWN_CLAIM_IDS=" $(sed -n 's/^  - id: //p' "$ROOT/docs/CLAIMS.yaml" | tr '\n' ' ')"
+has() { case "$2" in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 i=0
 while [ -n "$(yv "$Df" "doctrines.$i.id")" ]; do
   id="$(yv "$Df" "doctrines.$i.id")"; val="$(yv "$Df" "doctrines.$i.validator")"
   cls="$(yv "$Df" "doctrines.$i.class")"; tst="$(yv "$Df" "doctrines.$i.test")"
-  grep -rlE "^mj_validate_$val\(\)" "$ROOT/lib" >/dev/null 2>&1 \
+  has "$val" "$DEFINED_VALIDATORS" \
     || { echo "generate-site-data: doctrine $id names validator '$val' but no lib/ file defines mj_validate_$val" >&2; exit 10; }
   [ -f "$ROOT/$tst" ] || { echo "generate-site-data: doctrine $id names test $tst, which does not exist" >&2; exit 10; }
   case "$cls" in blocking|advisory) ;; *) echo "generate-site-data: doctrine $id has class '$cls' (blocking | advisory)" >&2; exit 10 ;; esac
-  j=0; while [ -n "$(yv "$Df" "doctrines.$i.enforced_by.$j")" ]; do c="$(yv "$Df" "doctrines.$i.enforced_by.$j")"
-    grep -q 'mj_doctrine_dispatch' "$ROOT/lib/$c.sh" 2>/dev/null \
+  j=0; while c="$(yv "$Df" "doctrines.$i.enforced_by.$j")"; [ -n "$c" ]; do
+    has "$c" "$DISPATCHING" \
       || { echo "generate-site-data: doctrine $id is declared for '$c', which does not dispatch" >&2; exit 10; }
     j=$((j+1)); done
-  j=0; while [ -n "$(yv "$Df" "doctrines.$i.claims.$j")" ]; do cid="$(yv "$Df" "doctrines.$i.claims.$j")"
-    grep -q "^  - id: $cid$" "$ROOT/docs/CLAIMS.yaml" \
+  j=0; while cid="$(yv "$Df" "doctrines.$i.claims.$j")"; [ -n "$cid" ]; do
+    has "$cid" "$KNOWN_CLAIM_IDS" \
       || { echo "generate-site-data: doctrine $id names claim '$cid', which is not in docs/CLAIMS.yaml" >&2; exit 10; }
     j=$((j+1)); done
   i=$((i+1))
@@ -252,7 +260,7 @@ done
 # Nothing in lib/ may validate outside a declared doctrine — the orphan check doctor runs,
 # repeated here so a broken chain cannot reach the published site at all.
 DECLARED=" $(i=0; while [ -n "$(yv "$Df" "doctrines.$i.validator")" ]; do printf '%s ' "$(yv "$Df" "doctrines.$i.validator")"; i=$((i+1)); done)"
-for fn in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$ROOT/lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
+for fn in $(printf '%s\n' "$VALIDATOR_FILES" | cut -f1); do
   case "$DECLARED" in *" $fn "*) ;; *) echo "generate-site-data: lib/ defines mj_validate_$fn, which no doctrine declares" >&2; exit 10 ;; esac
 done
 {
@@ -260,7 +268,7 @@ done
   i=0; first=1
   while [ -n "$(yv "$Df" "doctrines.$i.id")" ]; do
     id="$(yv "$Df" "doctrines.$i.id")"; val="$(yv "$Df" "doctrines.$i.validator")"
-    defined_in="$(grep -rlE "^mj_validate_$val\(\)" "$ROOT/lib" | sed "s#^$ROOT/##" | head -1)"
+    defined_in="$(printf '%s\n' "$VALIDATOR_FILES" | awk -F'\t' -v v="$val" '$1==v {print $2; exit}')"
     cmds=""; j=0
     while [ -n "$(yv "$Df" "doctrines.$i.enforced_by.$j")" ]; do cmds="$cmds$(jstr "$(yv "$Df" "doctrines.$i.enforced_by.$j")")," ; j=$((j+1)); done
     cl=""; j=0
@@ -598,6 +606,19 @@ if mj_project_load; then
     '{schema:1, project:{name:$name, repository:$repo, default_branch:$branch},
       active_milestone:$active, next_ready:$next, mermaid:$mermaid,
       milestones:$milestones, issues:$issues, waves:$waves, edges:$edges, findings:$findings}' > "$OUT/plan.json"
+# Refuse an invalid model rather than project it. A cycle makes every milestone BLOCKED with
+# no rank, and without this the generator published that roadmap and exited 0 — a page saying
+# nothing is reachable, with no reason given. The engine has already said so by this point:
+# a FAIL finding is what `plan validate` exits 10 on, so this asks the same question of the
+# same data instead of shelling back out to the CLI, which needs an installed .majordomus/
+# that a disposable test repository does not have. Reported by the session that owns the
+# model; the first version of this guard called the CLI and broke every site case.
+PLAN_FAILS="$(jq -r '[.findings[] | select(.level == "FAIL")] | length' "$OUT/plan.json")"
+if [ "$PLAN_FAILS" != 0 ]; then
+  jq -r '.findings[] | select(.level == "FAIL") | "generate-site-data: project model: \(.code) \(.subject) — \(.message)"' "$OUT/plan.json" >&2
+  echo "generate-site-data: refusing to publish a roadmap from an invalid model (run: majordomus plan validate)" >&2
+  exit 10
+fi
 else
   echo "generate-site-data: no canonical project model in $ROOT/.majordomus/project" >&2; exit 12
 fi
