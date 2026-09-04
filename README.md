@@ -134,6 +134,44 @@ a hardcoded count in the always-loaded file.
 These are projected into every generated instruction file, so every worker reads the
 same ten sentences.
 
+## Doctrine
+
+A principle is a sentence a worker reads. A **doctrine** is the part of a principle a
+machine can decide, and it names the code that decides it. Every rule Majordomus
+enforces is declared once in [`share/doctrines.yaml`](share/doctrines.yaml), and no
+command selects checks by hand — `check`, `finish`, `doctor` and `watch` each ask the
+registry what applies to them, so a rule added to the registry is enforced from that
+moment.
+
+A doctrine is either **blocking** (a violation stops the command with a non-zero exit)
+or **advisory** (reported, and the command still succeeds). There is no third class, no
+severity ladder, no baseline, and no override. The class is read at dispatch time and is
+what routes the finding, so changing one word in the registry changes whether
+`majordomus check` exits 0 — and a test asserts exactly that.
+
+The point of declaring rules is being able to check the declaration. `majordomus doctor`
+walks the chain for each one, reading the source rather than the registry's description
+of itself:
+
+```
+declared → validator exists → the commands it names dispatch → a blocking rule can
+exit non-zero → a test proves it → CI runs that test without swallowing it
+```
+
+and in the other direction, a validator that no doctrine declares is enforcement running
+under no rule, and fails. That check is itself mutation-tested: `18_doctrine_wiring.sh`
+breaks each link in a throwaway copy and fails unless `doctor` goes red, because a
+verifier that survives broken wiring proves nothing.
+
+```bash
+majordomus doctrine status     # declared, blocking, advisory, missing validators — all derived
+majordomus doctrine list       # id, class, validator, the commands that enforce it
+majordomus doctrine show <id>  # one rule, with its claims and its test
+majordomus check --rule <id>   # run one rule
+```
+
+Full model, and what was deliberately left out: [`docs/DOCTRINE.md`](docs/DOCTRINE.md).
+
 ## Execution profiles
 
 | profile | capability | effort | verbosity | context | verification | checkpoint |
@@ -200,6 +238,7 @@ when you do.
 | `start <task>` | begin a scoped task under a profile | task record, ledger | 0 / 15 |
 | `check` | is the task consistent with policy, scope, state? | no (`--checkpoint` updates one timestamp) | 0 / 10 |
 | `watch` | what has drifted? | no | 0 / 11 |
+| `doctrine` | what rules are enforced, by what, and are they wired? | no | 0 / 10 / 12 |
 | `update` | regenerate projections from policy | projections, fingerprints | 0 / 10 / 15 |
 | `handover` | write a continuation record; `--resolve` finds one | one new file | 0 / 10 / 12 |
 | `finish` | evaluate the finish contract | task record, ledger | 0 / 10 / 15 |

@@ -47,9 +47,19 @@ arbitrary. Most of them were paid for.
    the homepage renders those sections by heading, so update the generator in the same
    commit. `scripts/site-build` then `scripts/site-check` reproduces what CI does, and
    needs `zola`, `jq` and `npm ci`.
-6. Commit in conventional format, `type(scope): description`, small commits that each
+6. **A new rule the tool enforces is a doctrine, not an inline check.** Add an entry to
+   [`share/doctrines.yaml`](share/doctrines.yaml) and write its `mj_validate_<name>`
+   function in `lib/`; no command may select checks by name. `majordomus doctor` refuses
+   a doctrine whose validator does not exist, a doctrine declared for a command that does
+   not dispatch, a blocking doctrine whose command cannot exit non-zero, a doctrine with
+   no test file, a claim id that is not in `docs/CLAIMS.yaml`, and — in the other
+   direction — an `mj_validate_*` function that no doctrine declares. Report violations
+   with `mj_doctrine_fail`, never `mj_fail`: the doctrine's class decides the level, and
+   your validator must always `return 0`, because a non-zero return means the validator
+   itself broke. [`docs/DOCTRINE.md`](docs/DOCTRINE.md) is the full contract.
+7. Commit in conventional format, `type(scope): description`, small commits that each
    leave the tree consistent.
-7. Before marking the pull request ready, compare every capability sentence you touched
+8. Before marking the pull request ready, compare every capability sentence you touched
    in `README.md` or `docs/` against the tests. Wording that outruns the tests is
    downgraded or removed in the same pull request. A new capability sentence also needs
    a row in `docs/CLAIMS.yaml` with its status, implementation and test.

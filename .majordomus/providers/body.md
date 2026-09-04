@@ -20,6 +20,10 @@ then run `bin/majordomus update`.
 - **Every finding carries a reproduce command.**
 - **Blocking checks are deterministic and cheap.** Work in progress is reported, not blocked.
 - **No new nouns:** no agents, personas, roles, tiers, registries.
+- **A new enforced rule is a doctrine, not an inline check.** Declare it in
+  `share/doctrines.yaml` and write its `mj_validate_<name>`; no command selects checks
+  by hand. A validator no doctrine declares, or a doctrine whose validator does not
+  exist, fails `doctor`.
 - **Unknown configuration keys are errors.** Every state field is both written and read.
 - **Never store or summarise transcripts.**
 - **No network, no telemetry, no `eval`, no `curl | sh`, no silent overwrite, no
@@ -64,6 +68,15 @@ Several sessions share this checkout. Before writing, check `git status` and
 `.majordomus/state/current.yaml` to see whose task is active. A task's base commit goes
 stale when another session commits to this branch, and every file they touched is then
 reported outside your scope — close with a handover and start again at the current commit.
+
+### What is enforced here
+
+Every rule is declared in `share/doctrines.yaml` and dispatched from it — `blocking`
+stops the command, `advisory` reports and lets it pass. `majordomus doctor` proves each
+rule reaches the command that claims to run it, that a blocking one can exit non-zero,
+that a test covers it, and that CI runs that test; it also fails on a validator no
+doctrine declares. `majordomus doctrine list` shows what applies; a refusal names the
+rule that refused.
 
 ### Profiles
 

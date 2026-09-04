@@ -68,6 +68,17 @@ record was written: `exact`, `advanced`, `diverged`, `different_context`. On `di
 A checkpoint is short by policy and refused if it is long — write a handover instead. An
 unresolved question refuses `finish --outcome completed`, which is the point of recording it.
 
+### What is enforced, and what merely advises
+
+Every rule this tool applies is declared in one registry, and the commands read it rather
+than carrying their own lists. A rule is **blocking** — it stops the command — or
+**advisory** — it is reported and the command still succeeds. Nothing is enforced because
+it is written down here: `majordomus doctor` proves each rule reaches the command that
+claims to run it, and fails when it does not.
+
+Run `majordomus doctrine list` to see what applies to you, or `majordomus check --rule
+<id>` to run one. If a command refuses, it names the rule that refused.
+
 ### Profiles
 
 {{PROFILE_TABLE}}

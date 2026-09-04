@@ -16,6 +16,8 @@ every file it writes, uses these words and no others.
 | **handover** | an append-only continuation record with computed front matter and required sections, written when a worker stops | `.majordomus/state/handovers/` |
 | **decision** | what was decided, why, what was rejected, and which task decided it; superseded by a later entry naming it, never edited | `.majordomus/state/decisions.md` |
 | **open question** | something unresolved, recorded as state rather than prose; any entry naming the active task refuses `finish --outcome completed` | `.majordomus/state/open-questions.md` |
+| **doctrine** | a rule the tool enforces, declared once with the validator that decides it, the commands that run it, and the test that proves it; `blocking` stops a command, `advisory` reports and does not | `share/doctrines.yaml`, read by `doctrine`, `check --rule`, and every enforcing command |
+| **validator** | the function that decides one doctrine; it reports findings and never decides their level, because the doctrine's class does that | `mj_validate_<name>` in `lib/` |
 | **history event** | one line of the ledger: what happened, when, for which task, at which head | `.majordomus/state/ledger.jsonl`, read by `history` |
 | **context** | the assembled briefing for whoever works next: durable state in authority order, within a line budget, with every exclusion named | printed by `context`; never stored |
 | **authority order** | git, then task and profile, then blockers, then authored records, then history — the order sections appear in and the reverse of the order they are dropped in | `context` |
