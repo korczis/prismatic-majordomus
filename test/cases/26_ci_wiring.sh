@@ -59,6 +59,17 @@ for c in context history handover checkpoint decision question prompt; do
   grep -qE "majordomus $c" "$W" || { echo "    validate.yml never runs majordomus $c"; exit 1; }
 done
 
+# 6b. the canonical project model is a blocking gate, and the projection is proved offline.
+#     A model that cannot be executed is not a warning, and a projection that only works on a
+#     machine with a token is not a projection anyone can trust.
+grep -qE '^\s+run: bin/majordomus plan validate$' "$W" || { echo "    validate.yml does not run plan validate as a blocking step"; exit 1; }
+grep -q 'scripts/github-sync --plan' "$W" || { echo "    validate.yml does not check the GitHub projection offline"; exit 1; }
+grep -qE 'shellcheck.*scripts/github-sync' "$W" || { echo "    validate.yml does not shellcheck the GitHub adapter"; exit 1; }
+# the projection step must need no credential: a gate that only runs where a token exists is
+# a gate that does not run on a fork
+awk '/name: The GitHub projection is producible offline/,/^      - name:/' "$W" | grep -qiE 'secrets\.|GITHUB_TOKEN|gh auth' \
+  && { echo "    the offline projection step reaches for a credential"; exit 1; }
+
 # 7. shellcheck covers the tests as well as the tool: an unchecked test is an unchecked gate
 grep -q 'shellcheck.*test/cases/\*\.sh' "$W" || { echo "    validate.yml does not shellcheck test/cases"; exit 1; }
 

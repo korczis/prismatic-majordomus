@@ -60,6 +60,15 @@ pj_milestone M001 1
 expect_exit 0 "$MJ" plan validate
 expect_grep 'M001 — has no issues'
 
+# --- one id, one record: a milestone and an issue may not claim the same id
+cp .majordomus/project/milestones/M001.yaml .majordomus/project/issues/M001.yaml
+sed -i.bak 's/^milestone:.*$//' .majordomus/project/issues/M001.yaml 2>/dev/null || true
+rm -f .majordomus/project/issues/M001.yaml.bak
+expect_exit 10 "$MJ" plan validate
+expect_grep 'duplicate id M001'
+rm .majordomus/project/issues/M001.yaml
+expect_exit 0 "$MJ" plan validate
+
 # --- the canonical files are never generated: nothing under project/ carries a do-not-edit banner
 expect_no_grep 'DO NOT EDIT' .majordomus/project/project.yaml
 rm -f /tmp/I0001.keep.$$

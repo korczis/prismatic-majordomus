@@ -55,6 +55,25 @@ bin/majordomus finish --outcome <completed|partial|blocked|no_match|failed> --ve
 
 Default profile: `implementation`.
 
+### Take work from the plan
+
+Non-trivial work belongs to a milestone and to one issue in a validated dependency graph.
+No status is stored: `BLOCKED`, `READY`, `ACTIVE`, `VERIFY`, `DONE` are derived from what
+an issue records and from its dependencies, so writing a `status:` field is an unknown key.
+
+```
+bin/majordomus plan next             # the one issue that is ready; take that one
+bin/majordomus plan show <id>        # the whole contract, no conversation history needed
+bin/majordomus plan start <id>       # refused unless it is READY
+bin/majordomus plan evidence <id> --covers <token> --type test --command "<cmd>" --result "<what it showed>"
+bin/majordomus plan done <id>        # refused while a required evidence token is uncovered
+```
+
+Take something else only when it is a blocker, when it invalidates an assumption the
+milestone rests on, or when a person reprioritised. Trivial exceptions are a typo, a
+broken link, or a fix forced from outside the repository. See `docs/PLANNING.md` for the
+semantics and `docs/DOGFOODING.md` for why this repository holds itself to them.
+
 ### Continuity
 
 Your conversation does not survive; the records do. `context` assembles them — git state,
