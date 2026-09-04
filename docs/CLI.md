@@ -435,8 +435,11 @@ that can be bypassed by mistyping one.
 - `question resolve <n|"<text>"> --answer "<answer>"` rewrites that one line to
   `[resolved <date>]` and appends the answer. `n` is the number `question list` printed.
   `--answer` is required, and an ambiguous selector is refused rather than guessed.
-- `question list [--all] [--task <id>]` shows the active task's unresolved entries;
-  `--all` includes resolved ones and other tasks.
+- `question list [--all] [--task <id>]` shows every unresolved entry, because every one of
+  them refuses a completed finish here; `--task` narrows to what one task opened and
+  `--all` adds the resolved ones. The numbering is what `question resolve <n>` selects.
+  Any unresolved question can be resolved, not only one the active task opened: a gate
+  nobody can clear is a gate that gets worked around.
 
 Resolving edits the index because an index of what is still open must not accumulate. The
 append-only record of every opening and resolution, with its answer, is the ledger.

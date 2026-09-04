@@ -657,15 +657,15 @@
     },
     {
       "id": "blocker-survives-handover",
-      "claim": "A blocking question will keep blocking after the work is handed to a new task",
+      "claim": "A blocking question keeps blocking after the work is handed to a new task",
       "source": "docs/CONTINUITY.md",
-      "implementation": null,
-      "test": null,
-      "status": "planned",
-      "note": "Today a question is attached to the task that opened it, so handing over and starting a new task leaves it unresolved and no longer blocking. Found by running the documented end-to-end sequence rather than by review. Needs a decision about whether questions transfer with a handover or the gate widens; both are wrong in some case, so it is published as unfixed rather than guessed at.",
+      "implementation": "lib/check.sh",
+      "test": "test/cases/50_blocker_across_handover.sh",
+      "status": "guaranteed",
+      "note": "The gate reads every unresolved entry in the store rather than only the active task's, so a handover cannot launder a blocker. The store is tracked, so git scopes it to the branch. Only a completed finish is refused; blocked, partial, no_match and failed are honest non-completions and are not. Any task may resolve any question. The alternatives — transferring the question with the handover, or gating on scope overlap — were rejected in M001 with the case each gets wrong.",
       "source_route": "/docs/continuity/",
-      "command": null,
-      "test_case": null
+      "command": "check",
+      "test_case": "50_blocker_across_handover"
     },
     {
       "id": "runtime-adapters",

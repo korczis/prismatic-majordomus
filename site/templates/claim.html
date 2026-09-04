@@ -11,7 +11,7 @@
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
     <p class="flex flex-wrap items-center gap-3">{{ <badge status={c.status} /> }}<span class="text-sm text-body">{{ caps.statuses[c.status] }}</span></p>
-    {% if c.note %}<p class="mt-6 max-w-3xl text-base leading-relaxed text-heading">{{ c.note }}</p>{% endif %}
+    {% if c.note %}<p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">{{ c.note }}</p>{% endif %}
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
     <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono hover:underline">{{ page.extra.source }}</a>.</p>
 

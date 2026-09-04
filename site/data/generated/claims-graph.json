@@ -503,11 +503,11 @@
     {
       "id": "claim:blocker-survives-handover",
       "kind": "claim",
-      "label": "A blocking question will keep blocking after the work is handed to a new task",
-      "status": "planned",
+      "label": "A blocking question keeps blocking after the work is handed to a new task",
+      "status": "guaranteed",
       "route": "/guarantees/blocker-survives-handover/",
       "external": false,
-      "note": "Today a question is attached to the task that opened it, so handing over and starting a new task leaves it unresolved and no longer blocking. Found by running the documented end-to-end sequence rather than by review. Needs a decision about whether questions transfer with a handover or the gate widens; both are wrong in some case, so it is published as unfixed rather than guessed at."
+      "note": "The gate reads every unresolved entry in the store rather than only the active task's, so a handover cannot launder a blocker. The store is tracked, so git scopes it to the branch. Only a completed finish is refused; blocked, partial, no_match and failed are honest non-completions and are not. Any task may resolve any question. The alternatives — transferring the question with the handover, or gating on scope overlap — were rejected in M001 with the case each gets wrong."
     },
     {
       "id": "claim:runtime-adapters",
@@ -1059,6 +1059,13 @@
       "label": "test/cases/49_roadmap_doctrine.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/49_roadmap_doctrine.sh"
+    },
+    {
+      "id": "test:test/cases/50_blocker_across_handover.sh",
+      "kind": "test",
+      "label": "test/cases/50_blocker_across_handover.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/50_blocker_across_handover.sh"
     }
   ],
   "edges": [
@@ -1663,6 +1670,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:blocker-survives-handover",
+      "target": "impl:lib/check.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:project-schema",
       "target": "impl:lib/project.sh",
       "kind": "implemented_by"
@@ -1955,6 +1967,11 @@
     {
       "source": "claim:worktree-ownership",
       "target": "test:test/cases/27_foreign_task.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:blocker-survives-handover",
+      "target": "test:test/cases/50_blocker_across_handover.sh",
       "kind": "proved_by"
     },
     {
