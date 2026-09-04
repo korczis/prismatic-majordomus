@@ -136,8 +136,17 @@ mj_pj_list()  { mj_ylist "$MJ_PJ/flat/$1" "$2"; }
 # the next issue a worker should take: the lowest-wave READY issue of the active milestone,
 # highest priority first, then id. Derived on every call; never stored.
 mj_pj_next_ready() {
-  local m="${1:-$(mj_pj_active)}"
-  awk -F'\t' -v m="$m" '$1=="I" && $4=="READY" && ($3==m || m=="") {
+  local m="${1:-$(mj_pj_active)}" pick
+  pick="$(mj_pj_ready_ranked "$m")"
+  # The active milestone can have nothing ready while another one does — a milestone waiting
+  # on its own acceptance evidence, for instance. Answering "none" then would send a worker
+  # away from work that is genuinely executable, so the search widens rather than stops.
+  [ -n "$pick" ] || pick="$(mj_pj_ready_ranked "")"
+  printf '%s' "$pick"
+}
+# lowest wave, then priority, then id, among the READY issues of one milestone ("" = any)
+mj_pj_ready_ranked() {
+  awk -F'\t' -v m="$1" '$1=="I" && $4=="READY" && ($3==m || m=="") {
       p = $6; rank = (p=="p0"?0:(p=="p1"?1:(p=="p2"?2:3)))
       printf "%d\t%d\t%s\n", $5, rank, $2 }' "$MJ_PJ/model.tsv" \
     | sort -k1,1n -k2,2n -k3,3 | head -n 1 | cut -f3
