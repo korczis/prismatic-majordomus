@@ -41,7 +41,7 @@ decisions against a repository that no longer exists.
 So Majordomus stores none of it. What it stores is small, typed, and each piece has one
 home.
 
-## Six kinds of durable record
+## Six kinds of durable record, and a seventh that is not task-shaped
 
 | Record | Answers | Mutability | Where |
 |---|---|---|---|
@@ -54,6 +54,81 @@ home.
 
 Prompt assets in `.majordomus/prompts/` are a seventh thing, but they are not records of
 work — they are reusable framings, versioned with the repository.
+
+## The seventh kind: the session
+
+The six above are all task-shaped. Each one hangs off the work, which is right, and it
+leaves one question with nowhere to live: *what did one worker do between sitting down and
+stopping?*
+
+That question is not the same as any of the six. A task can outlive a worker; a worker can
+touch three tasks in an afternoon. Nothing in the six records that two decisions an hour
+apart, filed under different tasks, were made by the same person in the same sitting — and
+that is exactly the causal thread a later reader is trying to pick up.
+
+| Record | Answers | Mutability | Where |
+|---|---|---|---|
+| **session** | what one execution episode did, between which commits, producing which records | one open per worktree, then immutable | `state/session-current.yaml`, then `state/sessions/` |
+
+A session opens, may cross several tasks, and closes. `task != session` in both
+directions: a task spanning two sessions is named by both, and a session spanning two
+tasks names both.
+
+### A session is an envelope, not a narrative
+
+The closed record is identity, a temporal boundary, and references. It names the tasks,
+issues, milestones, checkpoints, handovers, decisions, questions and evidence of its
+episode, and it copies the body of none of them. An authored summary is allowed and is
+not authority; the records it points at are.
+
+The temptation is to write the episode down instead — one document with the decisions
+quoted, the checkpoint bodies inlined, the git log pasted, the reasoning narrated. That
+document is a transcript with better formatting, and it fails the same three ways any
+transcript does: it is a record of how somebody arrived somewhere rather than where they
+are, it grows with the length of the session rather than the size of the work, and it goes
+stale silently while the repository moves past it.
+
+So the session file holds pointers, and the pointers are checked. A reference to a
+checkpoint that does not exist is a reported defect, not a broken link nobody notices.
+
+### The envelope is derived, not accumulated
+
+Nothing writes into an open session. `checkpoint`, `decision`, `question` and `plan` are
+unchanged and know nothing about sessions. At close, the reference lists are computed by
+reading the ledger between the session's own two timestamps.
+
+The ledger is already append-only, already written only by Majordomus, already ordered by
+the order the commands ran, and already validated. It knows every fact the envelope needs.
+Having each command additionally append to a session file would put a write on the hot path
+of commands that today append one line, and would create a second mutable account of
+events the ledger already holds — which is the second source of truth this whole design
+refuses. The cost is that the ledger is now load-bearing for two purposes, and that is
+stated rather than hidden.
+
+### Sessions are read with the same rules as everything else
+
+Resolution is the two-tier rule: same repository, same worktree, same branch; then same
+repository, same branch; then nothing. A session from another branch is never offered.
+
+Divergence uses the same four labels — `exact`, `advanced`, `diverged`,
+`different_context` — computed at read time from the commit the session closed at. A
+session whose branch was rewritten underneath it is labelled `diverged` wherever it is
+printed, and is never quietly presented as current knowledge.
+
+Ordering comes from the recorded timestamp, with ledger line order breaking ties inside
+one second. Nothing reads filesystem modification time: it does not survive a clone, and
+it is not the time the record asserts.
+
+### What a session is not
+
+It is not a scope. A task claims paths; an episode does not, and giving one paths would
+create a second, weaker claim for the coordination check to disagree with.
+
+It is not a unit of acceptance. `finish` evaluates a task against its contract. Closing a
+session asserts only that the episode ended.
+
+It is not required. A worker that never opens a session loses the episode boundary and
+nothing else; every other record is written exactly as before.
 
 ## Checkpoint and handover are different objects
 

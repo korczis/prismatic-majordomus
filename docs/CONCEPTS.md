@@ -10,6 +10,8 @@ every file it writes, uses these words and no others.
 | **projection** | a provider-specific instruction file generated from the policy, headed with the command that regenerates it, fingerprinted | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any target the policy names |
 | **fingerprint** | the hash of a projection at generation time; a differing hash means a hand edit | `.majordomus/generated/fingerprints.yaml` |
 | **task** | the one active unit of work in a checkout | `.majordomus/state/current.yaml` |
+| **session** | one execution episode of one worker: it opens, it may touch several tasks, and it closes into an immutable record that references what the episode produced and copies none of it | `.majordomus/state/session-current.yaml` while open, `.majordomus/state/sessions/` once closed |
+| **envelope** | what a closed session record is: identity, a temporal boundary, and references — never a copy of the records it names | `.majordomus/state/sessions/<file>.md` |
 | **scope** | the normalised set of repository paths a task may touch | `scope:` in the task record |
 | **claim** | the same scope, seen from another worktree; overlap is reported, never blocked | reported by `start` and `check --overlap` |
 | **checkpoint** | a compact progress record inside an active task, capped by policy so that it stays quotable rather than becoming a report; also updates `checkpoint_at`, from which staleness is measured | `.majordomus/state/checkpoints/`, `checkpoint`, `check --checkpoint` |
@@ -48,6 +50,30 @@ escalate, or accept. The typed field decides; prose never does.
 No agent, persona, role, tier, registry, or catalogue. A supervisory
 tool that adds nouns becomes the thing it supervises. The only actor Majordomus knows is
 `owner`, a free-form string on the task record.
+
+## Task, session, handover: three objects, three questions
+
+They overlap in time and are easy to collapse into one, and each collapse loses something
+specific.
+
+A **task** answers *what is being worked on, under what constraints, within which paths*.
+It is scoped, it has a profile, and it outlives the worker: a task begun on Tuesday can be
+continued on Thursday by somebody else.
+
+A **session** answers *what one worker did between sitting down and stopping*. It is not
+scoped and it constrains nothing. It may span several tasks, and one task may be spanned
+by several sessions. It is the only object that can answer which work happened together
+and in what order.
+
+A **handover** answers *what the next person needs in order to continue this work*. It is
+authored, deliberate, rare, and it has required sections.
+
+Collapse the session into the task and you lose the episode: two decisions recorded an
+hour apart under different tasks look unrelated, because nothing records that one worker
+made both in one sitting. Collapse the session into the handover and you get a
+transcript — a narrative of an episode rather than a set of pointers to what it produced,
+which is the failure mode this whole design exists to avoid. Collapse the task into the
+session and scope becomes meaningless, because an episode does not have one.
 
 ## The two records people confuse
 

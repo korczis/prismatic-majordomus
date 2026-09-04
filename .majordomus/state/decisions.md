@@ -105,3 +105,11 @@ Why: every fresh install ships open-questions.md with a commented example line t
 Rejected: -
 Evidence: -
 Supersedes: -
+
+## 2026-09-04 — The session envelope is derived from the ledger at close, not accumulated by other commands
+Task: t-20260904153733-fc51
+Head: 3c9ba2f1c9ffc2340fd9b297db3a3a4abb95d5e4
+Why: the ledger is already append-only, already written only by Majordomus, already ordered by the order the commands ran, and already validated, so it holds every fact the envelope needs; deriving costs one read at close instead of a write on the hot path of every other command
+Rejected: each of checkpoint, decision, question and plan appending its reference to the open session file as it runs — rejected because it creates a second mutable account of events the ledger already holds, which is the second source of truth the session record exists to avoid being, and because it makes four commands fail when a session file is malformed
+Evidence: docs/SCHEMAS.md session record section; the cost is stated: the ledger becomes load-bearing for a second purpose, and equal-second events are ordered by ledger line order, the tiebreak the resolver already uses
+Supersedes: -

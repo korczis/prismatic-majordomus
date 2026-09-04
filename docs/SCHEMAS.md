@@ -487,6 +487,143 @@ as handovers: same worktree and branch, else same branch, else nothing.
 
 ---
 
+## `.majordomus/state/session-current.yaml`
+
+The open session in this worktree. One at a time; `session start` refuses while one is
+open rather than replacing it. Removed by `session close`, which is the only writer that
+removes it.
+
+```yaml
+session_id: s-20260904153733-fc51
+started_at: 2026-09-04T15:37:33Z
+owner: "alice"
+worker: "some-provider/some-model"      # optional; recorded only when supplied
+# computed from git; never authored
+repository_id: /abs/path/.git
+worktree: /abs/path
+branch: master
+start_head: 9b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b
+start_working_tree: dirty
+```
+
+`session_id` is `s-` followed by the compact UTC timestamp with its `T` and `Z` removed
+and four hex characters, which is the shape a task id already has. `worker` is a free-form
+string and is the only field a person or a worker supplies beyond `owner`; nothing
+validates it, and nothing infers it when it is absent — an unrecorded worker stays
+unrecorded rather than becoming a plausible guess.
+
+Unknown keys are an error, as in every other Majordomus YAML file.
+
+A session record from another worktree is reported and is not treated as this checkout's
+open session, exactly as a foreign task record is.
+
+---
+
+## `.majordomus/state/sessions/<file>.md`
+
+The immutable record of a closed session. Filename:
+`<utc-compact>--<session-id>--<branch-key>--<short-head>--<16 hex>.md`, e.g.
+`20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md`.
+
+The grammar is the handover's with the session id inserted after the timestamp, and it
+carries the same four properties. The leading UTC timestamp makes lexicographic order
+chronological order. `branch-key` is branch-safe by construction. The short head says
+which history the record was written against. The sixteen random hex characters plus an
+atomic hard-link publish make it collision-safe: a name already in use is retried, never
+overwritten. Nothing reads filesystem modification time, which does not survive a clone
+and is not the time the record asserts.
+
+```markdown
+---
+schema_version: 1
+created_at: 2026-09-04T17:14:02Z
+task_id: t-20260904153733-fc51
+profile: deep-work
+owner: "alice"
+repository_id: /abs/path/.git
+worktree: /abs/path
+branch: master
+head: 3c9ba2f1d0e5a7b9c3f5e7a9b1d3f5e7a9b1d3f5
+working_tree: dirty
+changed_files:
+  - lib/session.sh
+session_id: s-20260904153733-fc51
+started_at: 2026-09-04T15:37:33Z
+closed_at: 2026-09-04T17:14:02Z
+outcome: closed
+worker: "some-provider/some-model"
+start_head: 9b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b
+start_working_tree: dirty
+commits:
+  - 2c4dc6f
+  - 3c9ba2f
+tasks:
+  - t-20260904153733-fc51
+issues:
+  - I0801
+milestones:
+  - M003
+checkpoints:
+  - .majordomus/state/checkpoints/20260904T161122Z--master--2c4dc6f--a1b2c3d4e5f60718.md
+handovers: []
+decisions:
+  - "2026-09-04 — The session envelope is derived from the ledger, not accumulated"
+questions: []
+evidence:
+  - I0801:boundary_rewritten
+---
+
+Optional. Free text, written by whoever closed the session, or absent.
+```
+
+`created_at`, `head` and `working_tree` describe the close, so the record reads back
+through the same resolver and the same divergence label as a handover: `head` is the
+commit the session ended at, and the label compares it with the current one. `start_head`
+and `start_working_tree` describe the open.
+
+`commits` is the list of commits between `start_head` and `head`, shortest form. When the
+start commit is not an ancestor of the end commit — a rebase during the episode — the
+value is the single entry `diverged` rather than a list computed across a history that no
+longer connects.
+
+The reference lists carry the identity each kind actually has, and nothing invents one:
+
+| Field | Identity used | Why that one |
+|---|---|---|
+| `tasks` | task id | It exists and is stable. |
+| `issues`, `milestones` | canonical id | Same. |
+| `checkpoints`, `handovers` | repository-relative path | The files are immutable, so the path is the identity. |
+| `decisions` | the dated title | `decisions.md` has no id field; the dated title is the heading it already uses, and it is what the ledger records. |
+| `questions` | the question text | `open-questions.md` has no id field either; the text is what its line format keys on. |
+| `evidence` | `<issue>:<token>` | The pair an evidence record is attached to. |
+
+Two of those are weaker identities than the rest, and that is recorded rather than
+papered over: a decision or a question is referenced by text, so editing that text breaks
+the reference, and session validation reports it as a dangling reference rather than
+silently resolving to nothing.
+
+**The lists are derived, not accumulated.** They are computed at close time by reading
+`ledger.jsonl` between the session's `started_at` and `closed_at`, and by nothing else. No
+other command writes to the session record; `checkpoint`, `decision`, `question` and
+`plan` are unchanged and know nothing about sessions.
+
+The alternative — every command appending its reference to the open session file as it
+runs — was rejected twice over: it puts a write on the hot path of commands that
+currently only append one ledger line, and it creates a second mutable store of facts the
+ledger already holds, which is the thing this record exists to avoid being.
+
+The cost is that the ledger becomes load-bearing for a second purpose. It is append-only,
+written only by Majordomus, and already validated by `ledger_integrity`, which is what
+makes it a safe thing to derive from. Two events written inside the same second are
+ordered by ledger line order, the tiebreak the resolver already uses.
+
+Front matter is written by Majordomus. A body containing a line that looks like a
+front-matter key is rejected, as for a handover. Mode `0600`. Created atomically. Never
+overwritten, never edited after the fact: a closed session is superseded by later
+information, not corrected.
+
+---
+
 ## `.majordomus/prompts/<name>.md`
 
 A reusable framing, versioned with the repository. Front matter is authored, not computed —
