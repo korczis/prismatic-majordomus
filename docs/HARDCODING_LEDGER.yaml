@@ -243,6 +243,45 @@ findings:
     status: open
     reproduce: "sed -n 's/^  - id: //p' share/events.yaml | grep -c _"
 
+  - id: declared-readers-are-prose
+    path: docs/SCHEMAS.md
+    lines: "348"
+    concept: which command reads a file
+    authority: "the source of the command that reads it"
+    duplicated_in:
+      - "prose in docs/SCHEMAS.md and docs/CONCEPTS.md, checked by nothing"
+    risk: medium
+    detail: >-
+      Several documents state which command reads a file, in prose, and nothing checks the
+      statement. One was false: docs/SCHEMAS.md said .majordomus/state/decisions.md is "Read
+      by `check --explain` (printed as context)". `check --explain` prints the task, the
+      profile, the effective policy and the doctrines that apply to check, and no decision;
+      lib/check.sh reads decisions.md only in mj_validate_decisions, to report entries that
+      cannot be attributed to a task or a head. The readers that print it are `decision
+      list`, `context`, `search`, and a prompt asset using the DECISIONS token.
+
+      A rule was drafted and deliberately rejected rather than shipped. The decidable form
+      is: for "read by X", if X names a command then lib/X.sh must mention the file. That
+      catches the case where a declared reader never names the file at all, which is how
+      docs/RESPONSIBILITIES.yaml claimed a site-generator reader while the generator carried
+      a keyword table instead. It provably misses the case above, because lib/check.sh does
+      mention decisions.md — deciding that one needs to know which flag's branch the
+      reference is reachable from, which shell does not give you. A validator that returns
+      green on a statement demonstrably false is worse than no validator, because the green
+      then asserts something it cannot support, inside the mechanism whose whole purpose is
+      to catch exactly that. Stating the limit in the rule's summary does not rescue it: the
+      summary is prose and the exit code is what anyone acts on.
+
+      The end state is the shape already working for the specification anchors — declare the
+      reader, resolve it, refuse when it does not resolve. Until then the sentences are
+      corrected by hand and this row is why no rule guards them. Correcting one sentence does
+      not close it; the class stays open.
+    recommended: MOVE_TO_CANONICAL_DATA
+    target: "readers become a declared field, resolved and refused like cli_anchor and schema_anchor"
+    priority: 3
+    status: open
+    reproduce: "grep -rn 'Read by' docs/SCHEMAS.md docs/CONCEPTS.md"
+
   - id: site-check-generated-file-list
     path: scripts/site-check
     lines: "17"
