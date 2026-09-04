@@ -4,6 +4,8 @@
 # start — begin a scoped task under a profile. One active task per checkout.
 # shellcheck source=handover.sh
 . "$MJ_LIB_DIR/handover.sh"
+# shellcheck source=check.sh
+. "$MJ_LIB_DIR/check.sh"
 mj_cmd_start() {
   local task="" scope="" profile="" owner="${USER:-unknown}"
   while [ $# -gt 0 ]; do case "$1" in
@@ -29,13 +31,20 @@ H
   [ -n "$profile" ] || profile="$(mj_pol profiles.default)"
   mj_load_profile "$profile" || mj_die "$MJ_EX_MISSING" "no profile '$profile' (.majordomus/profiles/$profile.yaml)"
 
-  # existing task?
+  # existing task? One active task per checkout — so a record belonging to another checkout
+  # does not block this one. It is replaced in this working copy and left alone everywhere
+  # else, and the hazard of committing that replacement is stated rather than hidden.
   if mj_load_current; then
     local oc; oc="$(mj_cur outcome)"
-    case "$oc" in
-      active) mj_die "$MJ_EX_REFUSED" "task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus handover or majordomus finish first" ;;
-      *) mkdir -p "$MJ_DIR/state/archive"; mv "$MJ_CUR" "$MJ_DIR/state/archive/$(mj_cur id).yaml" ;;
-    esac
+    if mj_task_is_foreign; then
+      mj_warn task "$(mj_cur id)" "the record here belongs to $(mj_cur worktree); replacing it in this working copy only" "git diff .majordomus/state/current.yaml"
+      [ "$oc" = active ] && mj_warn task "$(mj_cur id)" "that task is still active there; committing this file would replace its record on the branch" "cat .majordomus/state/current.yaml"
+    else
+      case "$oc" in
+        active) mj_die "$MJ_EX_REFUSED" "task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus handover or majordomus finish first" ;;
+        *) mkdir -p "$MJ_DIR/state/archive"; mv "$MJ_CUR" "$MJ_DIR/state/archive/$(mj_cur id).yaml" ;;
+      esac
+    fi
   fi
 
   # normalise scope
@@ -54,8 +63,8 @@ H
     printf 'id: %s\ntask: "%s"\nprofile: %s\nowner: "%s"\nscope:\n' "$id" "$(printf '%s' "$task" | sed 's/"/\\"/g')" "$profile" "$owner"
     for p in $norm; do printf '  - %s\n' "$p"; done
     printf 'started_at: %s\ncheckpoint_at: %s\noutcome: active\n' "$now" "$now"
-    printf '# computed from git; never authored\nrepository_id: %s\nbranch: %s\nhead: %s\nworking_tree: %s\n' \
-      "$(mj_git_repo_id)" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
+    printf '# computed from git; never authored\nrepository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\n' \
+      "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
   } > "$MJ_DIR/state/current.yaml.mj-tmp" && mv "$MJ_DIR/state/current.yaml.mj-tmp" "$MJ_DIR/state/current.yaml"
   mj_ledger_append task.started "\"task_id\":\"$id\",\"profile\":\"$profile\",\"owner\":\"$(mj_json_esc "$owner")\",\"scope\":\"$(mj_json_esc "$(printf '%s' "$norm" | sed 's/^ //')")\""
 

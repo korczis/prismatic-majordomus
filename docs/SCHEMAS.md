@@ -174,10 +174,18 @@ outcome: active                       # active | completed | partial | blocked |
 
 # computed from git at start; refreshed at finish; never authored
 repository_id: /abs/path/.git         # git rev-parse --git-common-dir
+worktree: /abs/path                   # the checkout this task belongs to
 branch: main
 head: 3f2a9c1e...                     # full SHA
 working_tree: dirty                   # clean | dirty
 ```
+
+`.majordomus/state/` is tracked by default, so this record travels with the branch. Another
+worktree on the same branch reads it and must not be held to a scope it never claimed, so
+`worktree` says which checkout the task belongs to. `check`, `finish --check` and `watch`
+report a record from another checkout and enforce nothing from it; `finish` refuses to write
+to it at all. A record written before this field existed has no opinion and is treated as
+local, so upgrading does not turn an existing installation red.
 
 `outcome` and `checkpoint_at` are the only fields a command changes after `start`.
 `active` refuses a new `start`; every other outcome lets `start` archive the record to

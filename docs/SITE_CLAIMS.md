@@ -48,6 +48,7 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [A repository-local prompt renders against a closed set of state tokens, and an unknown token is an error](https://korczis.github.io/prismatic-majordomus/guarantees/prompt-asset/) | `docs/SCHEMAS.md` | `lib/prompt.sh` | `test/cases/24_prompt_search.sh` |
 | [Durable records are searchable literally, across kinds, without an index](https://korczis.github.io/prismatic-majordomus/guarantees/record-search/) | `docs/CLI.md` | `lib/search.sh` | `test/cases/24_prompt_search.sh` |
 | [Every continuity store is proven reachable through its own command, not merely present on disk](https://korczis.github.io/prismatic-majordomus/guarantees/continuity-reachable/) | `docs/CLI.md` | `lib/doctor.sh` | `test/cases/25_continuity_lifecycle.sh` |
+| [A task record names the checkout it belongs to, and another checkout is never held to its scope](https://korczis.github.io/prismatic-majordomus/guarantees/worktree-ownership/) | `docs/SCHEMAS.md` | `lib/check.sh` | `test/cases/27_foreign_task.sh` |
 
 ## advisory
 

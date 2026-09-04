@@ -399,6 +399,15 @@ claims:
     responsibility: watch
     note: The corpus is a handful of Markdown files and one JSONL. An index or an embedding store would be a second source of truth that has to be kept in step with the first, and a scan is faster than that problem. Revisited only if a repository appears where the scan is measurably too slow.
 
+  - id: worktree-ownership
+    claim: A task record names the checkout it belongs to, and another checkout is never held to its scope
+    source: docs/SCHEMAS.md
+    implementation: lib/check.sh
+    test: test/cases/27_foreign_task.sh
+    status: guaranteed
+    responsibility: scope
+    note: The record is tracked, so it travels with the branch. check, finish --check and watch report a foreign record and enforce nothing from it; finish refuses to write to it. A record from before the field existed is treated as local, so upgrading does not turn an installation red.
+
   - id: runtime-adapters
     claim: Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits
     source: docs/DESIGN.md

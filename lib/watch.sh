@@ -40,7 +40,9 @@ mj_cmd_watch() {
   fi
 
   # state, scope, staleness, verification
-  if mj_load_current; then
+  if mj_load_current && mj_task_is_foreign; then
+    mj_info state "$(mj_cur id)" "task belongs to $(mj_cur worktree), not this checkout" "cat .majordomus/state/current.yaml"
+  elif mj_load_current; then
     local id label; id="$(mj_cur id)"; label="$(mj_git_label "$(mj_cur head)" "$(mj_cur branch)")"
     case "$label" in
       exact|advanced) mj_ok state "$id" "$label" ;;

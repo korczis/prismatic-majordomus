@@ -45,9 +45,28 @@ H
 
 # shared by check, watch and finish; expects current, policy, profile loaded.
 # Sets MJ_LABEL, MJ_TOUCHED_IN, MJ_BLOCKED for the caller.
-MJ_LABEL=""; MJ_TOUCHED_IN=0; MJ_BLOCKED=0
+MJ_LABEL=""; MJ_TOUCHED_IN=0; MJ_BLOCKED=0; MJ_FOREIGN=0
+
+# Is the loaded task record about this checkout? The record is tracked, so it travels with
+# the branch: another worktree on the same branch reads it and would otherwise be held to a
+# scope it never claimed. "One active task per checkout" is checked at start; this is the
+# same fact represented in the record so that every reader can apply it.
+# A record written before `worktree` existed has no opinion, and is treated as local.
+mj_task_is_foreign() {
+  local w; w="$(mj_cur worktree)"
+  [ -n "$w" ] || return 1
+  [ "$w" = "$MJ_ROOT" ] && return 1
+  return 0
+}
+
 mj_run_task_checks() {
   local id label head branch; id="$(mj_cur id)"; head="$(mj_cur head)"; branch="$(mj_cur branch)"
+  if mj_task_is_foreign; then
+    MJ_FOREIGN=1; MJ_LABEL=exact; MJ_TOUCHED_IN=0; MJ_BLOCKED=0
+    mj_info task "$id" "belongs to $(mj_cur worktree), not this checkout; nothing enforced here" "cat .majordomus/state/current.yaml"
+    return 0
+  fi
+  MJ_FOREIGN=0
   label="$(mj_git_label "$head" "$branch")"
   case "$label" in
     exact|advanced) mj_ok state "$id" "$label (head ${head:0:7})" ;;
