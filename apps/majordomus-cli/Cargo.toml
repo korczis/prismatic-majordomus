@@ -1,0 +1,35 @@
+[package]
+name = "majordomus-cli"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Majordomus control-plane CLI: a data-driven stdio MCP server over the repository's .ai/ layer"
+license = "MIT"
+repository = "https://github.com/korczis/prismatic-majordomus"
+publish = false
+default-run = "majordomus"
+
+[[bin]]
+name = "majordomus"
+path = "src/main.rs"
+
+[lib]
+name = "majordomus_cli"
+path = "src/lib.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+# No YAML crate: the layer's YAML is the small subset docs/SCHEMAS.md defines, read by
+# src/metadata/yaml.rs exactly as the shell tool reads it.
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "std"] }
+regex-lite = "0.1"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+strip = true
