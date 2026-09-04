@@ -8,6 +8,10 @@
 # Usage: awk -f route-template.awk site/content/*.md site/content/*/*.md
 #   emits `route<TAB>template`, resolved in Zola's own order: the page's own `template`, else
 #   its section's `page_template`, else page.html. A section's own index uses its `template`.
+#   The route is lower-cased because Zola slugifies it: a page file named after a canonical
+#   record id — `I0001.md`, `M000.md` — is served at `/plan/i0001/`. Emitting the filename
+#   verbatim produced routes that matched nothing, and the sampler refused rather than
+#   silently skipping them, which is how this was found.
 #
 # One pass, resolved at the end, because section defaults may be read after the pages that
 # need them, and because ENDFILE is a GNU extension this repository does not have.
@@ -36,7 +40,7 @@ END {
   flush()
   for (i = 1; i <= ns; i++) {
     d = sect[i]
-    print "/" d "\t" (sect_own[d] != "" ? sect_own[d] : "section.html")
+    print "/" tolower(d) "\t" (sect_own[d] != "" ? sect_own[d] : "section.html")
   }
   for (i = 1; i <= nf; i++) {
     f = files[i]
@@ -45,6 +49,6 @@ END {
     t = own[f]
     if (t == "") t = section_tpl[dir]
     if (t == "") t = "page.html"
-    print "/" name "/\t" t
+    print "/" tolower(name) "/\t" t
   }
 }
