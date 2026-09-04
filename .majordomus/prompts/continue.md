@@ -2,6 +2,9 @@
 name: continue
 description: resume a task from durable state instead of from someone's memory
 ---
+
+# Resume a task from durable state instead of from someone's memory
+
 You are continuing work that another session started. Nothing about the previous
 conversation survives; everything below was recorded deliberately.
 

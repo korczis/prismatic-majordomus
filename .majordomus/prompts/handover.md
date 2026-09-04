@@ -2,6 +2,9 @@
 name: handover
 description: produce a continuation record body for the current task
 ---
+
+# Produce a continuation record body for the current task
+
 Write the body of a handover for task {{TASK_ID}} ({{TASK}}) as of {{NOW}},
 branch {{BRANCH}}, head {{HEAD}}.
 
