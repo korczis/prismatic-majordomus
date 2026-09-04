@@ -3409,7 +3409,7 @@
         "bin/majordomus",
         "share/allow",
         "docs/CLI.md",
-        "test/cases"
+        "test/cases/60_session_lifecycle.sh"
       ],
       "non_scope": [
         "Closing a session",
@@ -3471,7 +3471,8 @@
       ],
       "scope": [
         "lib/session.sh",
-        "test/cases"
+        "test/cases/60_session_lifecycle.sh",
+        "test/cases/61_session_envelope.sh"
       ],
       "non_scope": [
         "Reading a closed record back, which is its own issue",
@@ -3526,7 +3527,7 @@
       "scope": [
         "lib/session.sh",
         "bin/majordomus",
-        "test/cases"
+        "test/cases/62_session_divergence.sh"
       ],
       "non_scope": [
         "Knowledge",
@@ -3583,7 +3584,7 @@
         "lib/doctor.sh",
         "lib/watch.sh",
         ".majordomus/policy.yaml",
-        "test/cases"
+        "test/cases/63_session_doctrines.sh"
       ],
       "non_scope": [
         "Any background or automatic maintenance",
@@ -3635,7 +3636,7 @@
       "scope": [
         "lib/knowledge.sh",
         "bin/majordomus",
-        "test/cases"
+        "test/cases/64_knowledge_discovery.sh"
       ],
       "non_scope": [
         "Extraction, nodes, edges",
@@ -3697,7 +3698,7 @@
       "scope": [
         "lib/knowledge.sh",
         "lib/knowledge.awk",
-        "test/cases"
+        "test/cases/65_knowledge_nodes.sh"
       ],
       "non_scope": [
         "Edges",
@@ -3751,7 +3752,8 @@
       "scope": [
         "lib/knowledge.sh",
         "lib/knowledge.awk",
-        "test/cases"
+        "test/cases/66_knowledge_edges.sh",
+        "test/cases/67_knowledge_mutation.sh"
       ],
       "non_scope": [
         "Inferring a relationship from prose",
@@ -3807,7 +3809,7 @@
         "lib/knowledge.sh",
         "lib/knowledge.awk",
         ".gitignore",
-        "test/cases"
+        "test/cases/68_knowledge_manifest.sh"
       ],
       "non_scope": [
         "Search",
@@ -3862,7 +3864,7 @@
         "lib/knowledge.sh",
         "bin/majordomus",
         "docs/CLI.md",
-        "test/cases"
+        "test/cases/69_knowledge_query.sh"
       ],
       "non_scope": [
         "Any change to the existing search command's behaviour",
@@ -3919,7 +3921,7 @@
         "share/doctrines.yaml",
         "lib/doctor.sh",
         "lib/watch.sh",
-        "test/cases"
+        "test/cases/70_knowledge_validate.sh"
       ],
       "non_scope": [
         "Repairing anything automatically",
@@ -3976,7 +3978,7 @@
       "scope": [
         "lib/knowledge.sh",
         "lib/knowledge.awk",
-        "test/cases"
+        "test/cases/71_session_knowledge.sh"
       ],
       "non_scope": [
         "Any inference about why a session touched something",
@@ -4030,7 +4032,7 @@
         "share/allow/profile.txt",
         ".majordomus/profiles",
         "docs",
-        "test/cases"
+        "test/cases/72_context_knowledge.sh"
       ],
       "non_scope": [
         "Any similarity-based selection",
@@ -4089,7 +4091,7 @@
         ".majordomus/providers",
         "CLAUDE.md",
         "AGENTS.md",
-        "test/cases"
+        "test/cases/73_claims_and_docs.sh"
       ],
       "non_scope": [
         "Any website change",
@@ -4531,12 +4533,5 @@
       "to": "I0816"
     }
   ],
-  "findings": [
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I0804",
-      "message": "shares test/cases with I0808; they may not run concurrently"
-    }
-  ]
+  "findings": []
 }

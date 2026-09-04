@@ -11,7 +11,8 @@ current_state: "The ledger records task, checkpoint, handover, finish, decision,
 desired_state: "A closed record under .majordomus/state/sessions/ carries the computed identity, started_at and closed_at, start and end head and working tree, the outcome, and reference lists of task ids, issue ids, milestone ids, checkpoint paths, handover paths, decision entries and question ids observed in the ledger window. It copies no body. An authored summary on stdin is optional and is stored as the record body, subject to the identity-field refusal every other record uses."
 scope:
   - lib/session.sh
-  - test/cases
+  - test/cases/60_session_lifecycle.sh
+  - test/cases/61_session_envelope.sh
 non_scope:
   - Reading a closed record back, which is its own issue
   - Retention and archiving
