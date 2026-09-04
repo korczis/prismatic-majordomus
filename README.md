@@ -23,7 +23,7 @@ $ majordomus finish --outcome completed --verify-command "make test"
 OK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope
 OK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s
 OK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)
-FAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .majordomus/state/open-questions.md]
+FAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]
 OK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md
 finish: refused, 1 unmet
 ```
@@ -55,6 +55,7 @@ Better prompts do not fix any of this.
 
 | | |
 |---|---|
+| **Layer** | one portable `.ai/` directory, readable without the tool: `.ai/repo/` is tracked and canonical, `.ai/local/` is this checkout's own and ignored; `doctor` proves the manifest resolves, every section it names exists, and nothing under `local/` is tracked |
 | **Policy** | one provider-neutral `policy.yaml`; unknown keys are errors |
 | **Projection** | `update` generates `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any target you name, deterministically, and stamps each with the policy hash and the hash of its own content; a hand edit is detected and never silently overwritten |
 | **State** | one active task per checkout in `current.yaml`, with `branch`, `head`, and `working_tree` computed from git, never authored |
@@ -67,7 +68,8 @@ Better prompts do not fix any of this.
 | **Plan** | milestones are outcome specifications and issues are execution contracts; status, execution waves and the next ready issue are derived from the dependency graph, never stored |
 
 Every row above is backed by a case in [`test/cases/`](test/cases/). The README is not
-allowed to say more than the tests do.
+allowed to say more than the tests do. The layer is the repository's, not the tool's:
+Majordomus is the reference implementation that validates, projects and enforces it.
 
 ## Quick start
 
@@ -76,12 +78,14 @@ git clone https://github.com/korczis/prismatic-majordomus ~/majordomus
 export PATH="$HOME/majordomus/bin:$PATH"
 
 cd your-project
-majordomus init            # .majordomus/ with policy, four profiles, templates
+majordomus init            # .ai/: policy, four profiles, prompts, the vendored rule baseline, workflows
 majordomus update          # CLAUDE.md, AGENTS.md, GEMINI.md generated from the policy
 majordomus doctor          # names the two hook lines you still need to add
 ```
 
-Add the hook lines, run `doctor` again, commit. Then, per task:
+Add the hook lines, run `doctor` again, commit `.ai/repo/` and the generated files.
+`.ai/local/` is this checkout's own state and is ignored; it never travels through git.
+Then, per task:
 
 ```bash
 majordomus start "fix OAuth callback" --scope lib/auth --profile debugging
@@ -91,8 +95,10 @@ majordomus finish --outcome completed --verify-command "make test"
 ```
 
 Requirements: bash 3.2 or newer, git, and `sha256sum` or `shasum`. Nothing else.
-Nothing is installed into your project except `.majordomus/` and the files the policy
-names.
+Nothing is installed into your project except `.ai/` and the files the policy names. A
+repository set up before the `.ai/` layer, with its data under `.majordomus/`, is moved
+by `majordomus migrate` (preview with `--dry-run`); every other command refuses that
+layout and names it.
 
 ## Mental model
 
@@ -132,8 +138,9 @@ a hardcoded count in the always-loaded file.
 - Parallelism requires isolation.
 - Handovers transfer state, not transcripts.
 
-These are projected into every generated instruction file, so every worker reads the
-same ten sentences.
+Each is a rule object in the vendored baseline under `.ai/repo/rules/vendor/majordomus/`,
+one file each, and every enforced rule names the principle it rests on; every worker
+reads the same ten sentences from the same place, whichever tool it is.
 
 ## Doctrine
 
@@ -207,10 +214,10 @@ OK   blockers    t-20260903193012-a4f1 — none open
 check: 4 finding(s), 1 failing
 
 $ printf '# Objective\n…\n# Current State\n…\n# Next Action\n…\n' | majordomus handover
-.majordomus/state/handovers/20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md
+.ai/local/state/handovers/20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md
 
 $ majordomus handover --resolve      # next session, same branch
-Handover: .majordomus/state/handovers/20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md
+Handover: .ai/local/state/handovers/20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md
 Match: same_worktree_same_branch
 Git state: advanced
 ---
@@ -223,23 +230,28 @@ A walk-through with real output is in [`examples/minimal/`](examples/minimal/).
 ## Provider adapters
 
 ```
-.majordomus/policy.yaml + profiles/ + providers/body.md
-         |
-         |  majordomus update
-         v
-CLAUDE.md   AGENTS.md   GEMINI.md   <any target named in the policy>
+.ai/repo/policy.yaml + profiles/          .ai/repo/rules/  (the rules themselves)
+         |                                        ^
+         |  majordomus update                     |  read by the worker, never copied
+         v                                        |
+CLAUDE.md   AGENTS.md   GEMINI.md   <any target named in the policy>  --+
 ```
 
-Adapters are templates in `.majordomus/providers/`. They wrap one shared body; they do
-not add rules. A rule that exists for one provider and not another is a policy bug. The
-body is yours to edit per repository; the policy hash in every generated header changes
-when you do.
+Adapters are thin bootstraps. Each generated file tells the worker where the
+repository's context lives — `README.md`, then `.ai/README.md` and its discovery
+protocol — and carries no rule of its own, so a rule that exists for one provider and
+not another cannot happen. `doctor` fails a generated file that carries a rule and a
+`README.md` that does not name `AGENTS.md`. The templates ship with the tool under
+`share/providers/`; a repository that needs a different adapter puts its own at
+`.ai/repo/providers/<provider>.tmpl`, and the rules stay where they are.
 
 ## Commands
 
 | command | answers | writes | exit |
 |---|---|---|---|
-| `init` | set up `.majordomus/` here | yes; refuses to overwrite | 0 / 15 |
+| `init` | create the `.ai/` layer here | yes; refuses to overwrite, `--extend` adds what is missing | 0 / 15 |
+| `migrate` | move pre-`.ai` project data from `.majordomus/` into `.ai/` | git moves, a verified backup, the index | 0 / 12 / 15 |
+| `rules` | the effective rule set: vendored baseline plus project rules, resolved | only `vendor update` | 0 / 10 / 11 / 12 / 15 |
 | `doctor` | is Majordomus itself real and wired here? | no | 0 / 10 / 12 |
 | `start <task>` | begin a scoped task under a profile | task record, ledger | 0 / 15 |
 | `check` | is the task consistent with policy, scope, state? | no (`--checkpoint` updates one timestamp) | 0 / 10 |
@@ -255,13 +267,14 @@ continue". Details: [`docs/CLI.md`](docs/CLI.md).
 
 ## Customisation
 
-- **Rules workers read:** edit `.majordomus/providers/body.md`, run `update`.
+- **Rules workers read:** rule objects under `.ai/repo/rules/project/`, one Markdown
+  file each; the vendored baseline changes only through `rules vendor update`.
 - **Which files are generated:** the `projections` list in the policy.
 - **What "done" means:** `verification.finish_requires` in the policy, plus per-profile
   `verification.*` fields.
 - **Budget for the always-loaded file:** `context.always_loaded_budget_lines`.
 - **What must be wired:** the `enforcement` list; `doctor` reconciles it.
-- **A new task class:** a new file in `.majordomus/profiles/`.
+- **A new task class:** a new file in `.ai/repo/profiles/`.
 
 Unknown keys anywhere are errors, so a typo fails loudly.
 
@@ -289,7 +302,7 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 ## Roadmap
 
 The roadmap is not written here. Milestones are canonical records under
-`.majordomus/project/milestones/`, ordered by the dependency graph between them, and every
+`.ai/repo/project/milestones/`, ordered by the dependency graph between them, and every
 view of them is derived from that graph:
 
 ```

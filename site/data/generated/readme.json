@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "finish_transcript": "$ majordomus finish --outcome completed --verify-command \"make test\"\nOK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope\nOK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s\nOK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)\nFAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .majordomus/state/open-questions.md]\nOK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md\nfinish: refused, 1 unmet",
+  "finish_transcript": "$ majordomus finish --outcome completed --verify-command \"make test\"\nOK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope\nOK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s\nOK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)\nFAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]\nOK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md\nfinish: refused, 1 unmet",
   "finish_checks": [
     "scope",
     "verification",
@@ -13,6 +13,13 @@
   "not_md": "\n- not a model, and it never invokes one\n- not an agent framework, orchestrator, or runtime\n- not a prompt library or a memory system\n- not a server, daemon, database, queue, MCP surface, or hosted service\n- not a slice of any other platform; there is no shared code",
   "limitations_md": "\n- Majordomus is invoked by a person, a git hook, or a worker following its\n  instructions. It does not hook the worker's runtime.\n- It measures no tokens and no cost. [`docs/ECONOMICS.md`](docs/ECONOMICS.md) says what\n  it would take.\n- Scope overlap is reported, never blocked, and only across worktrees of one repository\n  on one machine.\n- The regression-test check in `finish` is a path heuristic (`test/`, `spec/`, `_test.`)\n  and says so in its message.\n- The YAML subset is deliberately small: maps, lists, lists of maps, inline lists,\n  quotes, comments. Anchors, multi-line scalars, and flow maps are rejected.",
   "does": [
+    {
+      "title": "Layer",
+      "text": "one portable `.ai/` directory, readable without the tool: `.ai/repo/` is tracked and canonical, `.ai/local/` is this checkout's own and ignored; `doctor` proves the manifest resolves, every section it names exists, and nothing under `local/` is tracked",
+      "slug": "layer",
+      "command": "init",
+      "claim_ids": []
+    },
     {
       "title": "Policy",
       "text": "one provider-neutral `policy.yaml`; unknown keys are errors",

@@ -40,27 +40,55 @@ a check passed, it failed.
 
 ## `majordomus init`
 
-Set up `.majordomus/` in the repository.
+Create the repository's AI layer, `.ai/`, from the tool's skeleton. It installs nothing:
+the tool stays wherever it was run from, no hook and no shell file is touched, and
+`.majordomus/` is never created.
 
-**Reads:** nothing.
-**Writes:** `.majordomus/policy.yaml`, `.majordomus/profiles/*.yaml`,
-`.majordomus/templates/*`, `.majordomus/providers/*.tmpl`, empty `.majordomus/state/`
-and `.majordomus/generated/`. Appends `.majordomus/state/` entries to `.gitignore` only
-with `--gitignore`; default is to track state.
+**Reads:** the skeleton under `share/skeleton/` and the standard rule package under
+`share/standard/majordomus/`.
+**Writes:** `.ai/README.md` (the protocol, readable without the tool) and
+`.ai/manifest.yaml` (the section registry, `ai-repository/v1`); under `.ai/repo/`, the
+tracked half: `policy.yaml`, `profiles/`, `prompts/`, `rules/` with its `README.md`, the
+vendored baseline `rules/vendor/majordomus/` (manifest and rule files, byte for byte the
+package the tool ships) and an empty `rules/project/`, `knowledge/sources.yaml`,
+`workflows/`, `skills/`, `adrs/`, `project/`; under `.ai/local/`, the checkout's own
+half: `state/` seeded with `decisions.md` and `open-questions.md`, plus `cache/`,
+`prompts/` and `session-contexts/`; and one `.ai/local/` line in `.gitignore`, added
+once. Everything under `.ai/repo/` belongs to the repository from that moment; a newer
+tool does not rewrite it.
 
-**Refuses** (`15`) if `.majordomus/` already exists, unless `--force`, which rewrites
-policy, profiles, templates, and provider templates and still never touches `state/`.
+**Refuses** (`15`) when `.ai/` already exists, unless `--extend`, which adds every file
+the skeleton ships and the repository lacks and overwrites nothing; and (`15`) when
+project data still lives under `.majordomus/`, the pre-`.ai` layout, naming
+`majordomus migrate`.
 
 **Does not** install git hooks. It prints the two lines a hook needs and the command
 `majordomus doctor` that will verify they were added.
 
 ```
 $ majordomus init
-created .majordomus/policy.yaml
-created .majordomus/profiles/{routine,implementation,debugging,deep-work}.yaml
-created .majordomus/templates/, .majordomus/providers/
-next: majordomus update      # generate CLAUDE.md, AGENTS.md, GEMINI.md
+created
+  .ai/README.md
+  .ai/manifest.yaml
+  .ai/repo/README.md
+  .ai/repo/policy.yaml
+  .ai/repo/profiles/
+  .ai/repo/prompts/
+  .ai/repo/rules/README.md
+  .ai/repo/rules/vendor/majordomus/
+  .ai/repo/knowledge/
+  .ai/repo/workflows/
+  .ai/repo/skills/
+  .ai/repo/adrs/
+  .gitignore:.ai/local/
+local state: .ai/local/state/ (ignored by git; this checkout's own)
+next: majordomus update      # generate the provider instruction files named in the policy
 next: majordomus doctor      # verify nothing is declared that is not wired
+
+$ majordomus init
+majordomus: .ai/ already exists in … (use --extend to add what is missing; nothing is overwritten)
+$ echo $?
+15
 ```
 
 ## `majordomus migrate`
@@ -157,7 +185,7 @@ from a pre-commit hook and from CI.
 
 ```
 $ majordomus doctor
-OK   policy      .majordomus/policy.yaml — parsed, version 1
+OK   policy      .ai/repo/policy.yaml — parsed, version 1
 OK   profiles    4 files — parsed
 FAIL wiring      finish-contract — bin/majordomus is not invoked by .git/hooks/pre-push  [reproduce: grep -n 'majordomus finish' .git/hooks/pre-push]
 OK   projection  CLAUDE.md — content matches its stamp
@@ -212,7 +240,7 @@ Is the current task consistent with policy, scope, and state? Read-only.
 - Touched files (`git status --porcelain` plus `git diff --name-only <base>..HEAD`) are
   within the claimed scope. Any outside → finding.
 - Checkpoint age against the profile's `checkpoint_interval` (`WARN`, never `FAIL`).
-- Files under `.majordomus/` and the projection targets are always in scope.
+- Files under `.ai/` and the projection targets are always in scope.
 - `--checkpoint` updates `checkpoint_at` and appends `task.checkpoint` to the ledger:
   the one documented write in an otherwise read-only command.
 - `state/open-questions.md` has no unresolved entry for this task.
@@ -250,7 +278,7 @@ scripts can tell "drift" from "healthy" without confusing it with a contract fai
 
 ```
 $ majordomus watch
-DRIFT policy      .majordomus/policy.yaml modified after last update  [reproduce: majordomus update --dry-run]
+DRIFT policy      .ai/repo/policy.yaml modified after last update  [reproduce: majordomus update --dry-run]
 DRIFT projection  AGENTS.md — content differs from its stamp (hand-edited?)  [reproduce: majordomus update --diff AGENTS.md]
 DRIFT checkpoint  t-20260903-193012-a4f1 — last checkpoint 48m ago, interval 15m
 watch: 3 findings
@@ -445,11 +473,11 @@ the open record belongs to another checkout.
 `session.started` line in the ledger. `session_id`, `repository_id`, `worktree`, `branch`,
 `start_head` and `start_working_tree` are computed from git and are never authored.
 
-The open record is deliberately **not tracked**. Every other state file is, because
-something outside the checkout reads it; an open session carries nothing anyone else needs,
-and committing one would make every checkout on the branch inherit an episode it did not
-open. A record that names another worktree is reported and never obeyed, which keeps the
-defence in place for anyone who commits one anyway.
+Nothing under `.ai/local/state/` is tracked, the open session record included: an open
+session carries nothing anyone else needs, and a record that arrived from another checkout
+would make this one inherit an episode it did not open. A record that names another
+worktree is reported and never obeyed, which keeps the defence in place for every way one
+can still arrive — a copied working directory, a synced folder.
 
 Exit `15` when a session is already open here, `10` when the record does not parse — a
 corrupt record fails loudly rather than being read as "no session", because reading it as
@@ -470,7 +498,7 @@ majordomus: session s-20260904153733-fc51 is open here since 2026-09-04T15:37:33
 $ majordomus session close <<'EOF'
 The extraction boundary and the session schema landed; the compiler's discovery stage is next.
 EOF
-.majordomus/state/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
+.ai/local/state/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
 ```
 
 ## `majordomus checkpoint`
@@ -504,7 +532,7 @@ OAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.
 Cause is in callback normalisation, not in the comparison.
 Next: regression test before touching the implementation.
 EOF
-.majordomus/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md
+.ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md
 ```
 
 ## `majordomus history`
@@ -597,7 +625,7 @@ finish: refused, 1 unmet
 
 List, show and render repository-local prompt assets. Read-only.
 
-An asset is `.majordomus/prompts/<name>.md`: YAML front matter with `name` (matching the
+An asset is `.ai/repo/prompts/<name>.md`: YAML front matter with `name` (matching the
 filename) and a non-empty `description`, then a body. They are small, versioned with the
 repository, and provider-neutral — a prompt library is not the goal, and nothing here
 invokes a model.
@@ -639,8 +667,8 @@ and one JSONL; a scan is faster than the staleness problem an index would introd
 
 ```
 $ majordomus search "callback" --kind decision --kind checkpoint
-checkpoint  .majordomus/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a.md:12  Cause is in callback normalisation, not in the comparison.
-decision    .majordomus/state/decisions.md:31  ## 2026-09-03 — Normalise the callback URI before comparing state
+checkpoint  .ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a.md:12  Cause is in callback normalisation, not in the comparison.
+decision    .ai/local/state/decisions.md:31  ## 2026-09-03 — Normalise the callback URI before comparing state
 search: 2 match(es)
 ```
 
@@ -669,12 +697,14 @@ changes the other.
 build output, vendored trees and editor droppings; it returns them in an order that
 differs between two machines; and it can return a file nobody meant to publish. Listing
 tracked files instead gives repository truth in a stable order, and an untracked file is
-never a source. Operational records are discovered from the state directories Majordomus
-itself owns, because a repository may keep them out of version control — and from nowhere
-else. No hidden directory is scanned because it happens to exist.
+never a source. Operational records are discovered from the state directory Majordomus
+itself owns under `.ai/local/`, which is never tracked — and from nowhere else. No hidden
+directory is scanned because it happens to exist.
 
-The source classes are declared in `share/knowledge-sources.yaml`, shipped with the tool.
-Each carries its scope:
+The source classes are declared twice, by two owners: the repository declares its shared
+sources in its AI layer, `.ai/repo/knowledge/sources.yaml`, and the tool ships the
+operational classes, the records it writes itself, in `share/knowledge-sources.yaml`. The
+scope of a class is decided by which file declared it; neither file names the other:
 
 | scope | meaning |
 |---|---|
@@ -683,10 +713,9 @@ Each carries its scope:
 
 The scope is a property of the class, so the publication boundary is decided in one place
 rather than at each producer. Every tracked pathspec carries the `:(glob)` prefix, under
-which `*` does not cross a directory separator. That is not tidiness: without it, `*.md`
-also matches `.majordomus/state/handovers/*.md`, and every handover in the checkout is
-discovered as shared repository knowledge. `test/cases/64_knowledge_discovery.sh` fails on
-that mutation.
+which `*` does not cross a directory separator. That is not tidiness: without it,
+`docs/*.md` also matches `docs/claims/*.md`, two classes silently overlap, and one file
+becomes two nodes. `test/cases/64_knowledge_discovery.sh` fails on that mutation.
 
 A class marked `required` that discovers nothing is reported as a `WARN`. The cost of a
 curated list is that a path can be forgotten, and a forgotten path is indistinguishable
@@ -694,10 +723,10 @@ from a repository that does not have that file unless something says so.
 
 ```
 $ majordomus knowledge sources --scope shared
-policy      shared      policy     4f2a9c1d8b30  .majordomus/policy.yaml
-profile     shared      profile    a1b2c3d4e5f6  .majordomus/profiles/debugging.yaml
+policy      shared      policy     4f2a9c1d8b30  .ai/repo/policy.yaml
+profile     shared      profile    a1b2c3d4e5f6  .ai/repo/profiles/debugging.yaml
 ...
-issue       shared      issue      0e5a7b9c3f51  .majordomus/project/issues/I0801.yaml
+issue       shared      issue      0e5a7b9c3f51  .ai/repo/project/issues/I0801.yaml
 claims      shared      claim      7c9e1b3d5f70  docs/CLAIMS.yaml
 document    shared      document   9b1e2d4f8c3a  docs/CONTINUITY.md
 knowledge sources: 169 file(s) in scope shared
@@ -811,7 +840,7 @@ $ majordomus finish --outcome completed --verify-command "make test"
 OK   scope         12 files, all within lib/auth
 OK   verification  make test — exit 0, 41s
 OK   state         exact (head 9b1e2d4)
-FAIL blockers      open-questions.md: "token refresh window — needs product decision" unresolved  [reproduce: grep -n 'unresolved' .majordomus/state/open-questions.md]
+FAIL blockers      open-questions.md: "token refresh window — needs product decision" unresolved  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]
 OK   note          handover 20260903T201455Z--main--9b1e2d4--c0ffee.md
 finish: refused, 1 unmet
 blocking doctrines:
@@ -865,8 +894,8 @@ an executable specification of an outcome; an issue is a bounded execution contr
 dependency graph between the issues decides what may be executed next. See
 [`docs/PLANNING.md`](PLANNING.md) for the semantics.
 
-**Reads:** `.majordomus/project/project.yaml`, `.majordomus/project/milestones/*.yaml`,
-`.majordomus/project/issues/*.yaml`, `share/allow/{project,milestone,issue}.txt`.
+**Reads:** `.ai/repo/project/project.yaml`, `.ai/repo/project/milestones/*.yaml`,
+`.ai/repo/project/issues/*.yaml`, `share/allow/{project,milestone,issue}.txt`.
 **Writes:** one lifecycle field in one issue file, and one ledger event — `start`, `verify`,
 `evidence` and `done` only. Every other subcommand writes nothing.
 
@@ -916,7 +945,7 @@ The same model is projected to GitHub by `scripts/github-sync` and to the websit
 ## `majordomus version`
 
 Print the version and exit. `--version` is accepted as a synonym, and `version` works
-without an installation: it never reads `.majordomus/`.
+without an installation: it never reads `.ai/`.
 
 **Reads:** nothing.
 **Writes:** nothing.

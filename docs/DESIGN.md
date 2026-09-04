@@ -199,7 +199,7 @@ blocked on a human, or when the session has exceeded its declared scope.
 One file. Small. Human-readable. Provider-neutral.
 
 ```yaml
-# .majordomus/policy.yaml
+# .ai/repo/policy.yaml
 version: 1
 
 context:
@@ -312,23 +312,39 @@ because an under-filled context is debugged from the exclusion list.
 ## Durable State Model
 
 ```
-.majordomus/
-  policy.yaml
-  profiles/
-    routine.yaml
-    implementation.yaml
-    debugging.yaml
-    deep-work.yaml
-  state/
-    current.yaml          # the one active task, or absent
-    decisions.md          # append-only, dated
-    open-questions.md     # things blocked on a human
-    handovers/            # append-only, one file per handover
-    ledger.jsonl          # append-only events, retention-capped
+.ai/
+  README.md               # the protocol, readable without the tool
+  manifest.yaml           # the section registry and the format version, ai-repository/v1
+  repo/                   # tracked: the canonical context every checkout shares
+    policy.yaml
+    profiles/
+      routine.yaml
+      implementation.yaml
+      debugging.yaml
+      deep-work.yaml
+    rules/
+      vendor/majordomus/  # the pinned baseline, byte for byte the package the tool ships
+      project/            # rules this repository wrote
+    prompts/  workflows/  skills/  knowledge/  adrs/  project/
+  local/                  # ignored: this checkout's own, never normative, never shared
+    state/
+      current.yaml        # the one active task, or absent
+      decisions.md        # append-only, dated
+      open-questions.md   # things blocked on a human
+      handovers/          # append-only, one file per handover
+      checkpoints/        # append-only, one file per checkpoint
+      sessions/           # closed session envelopes
+      ledger.jsonl        # append-only events, retention-capped
+    cache/  prompts/  session-contexts/
 ```
 
 Rules:
 
+- **Two halves, one boundary.** `repo/` is the whole shared contract; a fresh clone
+  contains it and nothing else. `local/` is operational state: it never travels through
+  git, is never loaded into a model's context implicitly, and outranks nothing. `doctor`
+  proves the boundary: the manifest resolves, every section it names exists, `local/`
+  is ignored and nothing under it is tracked.
 - **Identity is computed.** `repository_id`, `branch`, `head`, `working_tree`, and
   `changed_files` on any record come from git at write time. The projected instructions
   forbid the worker from authoring them.
@@ -342,8 +358,9 @@ Rules:
 - **Append-only stores have a retention cap.** One repository accumulated 10 GB of
   metrics snapshots that nothing ever read. `ledger.jsonl` and `handovers/` declare a
   cap and `doctor` reports when it is exceeded.
-- **Handovers are never staged or committed by Majordomus.** The writer creates one
-  new file atomically and prints its path. Committing is a human decision.
+- **Records are never staged or committed by Majordomus.** The writer creates one new
+  file atomically under `local/` and prints its path. A record reaches another checkout
+  only by being carried there — a handover names it, git does not move it.
 - **Transcripts are never stored.** A handover has required sections (`objective`,
   `current_state`, `next_action`) and is refused at write time if any is empty.
 
@@ -403,8 +420,11 @@ for the typed field.
 Distinctions the evidence made necessary:
 
 - **Guaranteed versus observed.** A check is either deterministic and blocking, or it
-  is a report with a reproduce command. There is no advisory tier. Every advisory tier
-  in the source material decayed into decoration within months.
+  is a report with a reproduce command. A rule's class, `blocking` or `advisory`, is
+  read at dispatch time and routes the finding; there is no third class, no severity
+  ladder and no override, because every graded tier in the source material decayed into
+  decoration within months. An advisory rule is one the tool reports and does not stop
+  on, and it says so; it never describes itself as enforcement.
 - **A trailer proves authorship of a string, never that a gate ran.** Majordomus never
   treats a commit-message marker as evidence. Evidence is a record in `ledger.jsonl`
   written by the gate itself.
@@ -422,7 +442,7 @@ Distinctions the evidence made necessary:
 ## Provider Projection Model
 
 ```
-.majordomus/policy.yaml
+.ai/repo/policy.yaml
          |
          |  majordomus update
          v
@@ -437,14 +457,16 @@ CLAUDE.md   AGENTS.md    GEMINI.md   (+ .cursor/rules, generic)
   of its own content, in its first line or its region's begin marker; `doctor` fails on
   a projection whose content differs from its stamp and `watch` reports a projection
   whose stamped policy hash is not the policy on disk (stale).
-- Adapters translate canonical concepts into a provider's format. They do not add
-  rules. A rule that exists for one provider and not another is a policy bug, not an
-  adapter feature.
-- The generic adapter produces a plain Markdown file for providers with no known
-  convention.
-- v0.1 projects a narrow, honest subset: always-loaded budget, profile table, state
-  file locations, the finish contract, and the forbidden-identity-fields rule. What is
-  not projected is listed in the README as not projected.
+- A projection is a thin bootstrap, not a rulebook. It tells the worker where the
+  repository's context lives — `README.md`, then `.ai/README.md` and its discovery
+  protocol — names the default profile and the task-lifecycle workflow, and carries no
+  rule of its own. The rules are read from `.ai/repo/rules/` by every worker alike, so a
+  rule that exists for one provider and not another cannot happen; `doctor` fails a
+  projection that carries one, and a `README.md` that does not name `AGENTS.md`.
+- Adapters translate that bootstrap into a provider's format and nothing more. The
+  templates ship with the tool; a repository that needs a different adapter overrides
+  one under `.ai/repo/providers/`, in the same thin shape. The generic adapter produces
+  a plain Markdown file for providers with no known convention.
 
 ## CLI Model
 
@@ -457,7 +479,9 @@ semantically distinct subcommands:
 
 | Command | Answers | Writes |
 |---|---|---|
-| `init` | set up `.majordomus/` in this repository | yes, refuses to overwrite |
+| `init` | create the `.ai/` layer in this repository | yes, refuses to overwrite; `--extend` adds what is missing |
+| `migrate` | move pre-`.ai` project data from `.majordomus/` into `.ai/`, previewed, with a verified backup | git moves, the backup, the index |
+| `rules` | the effective rule set, resolved: the vendored baseline plus the repository's own | only `vendor update` |
 | `doctor` | is Majordomus itself healthy and actually wired here? | no |
 | `start <task>` | begin a scoped task with a profile | `state/current.yaml`, claim |
 | `check` | is the current task consistent with policy, scope, and state? `--explain` prints the effective merged policy and profile | no |
@@ -516,7 +540,7 @@ without a reproduce command is a bug in Majordomus.
 
 - Local-first. No network calls. No telemetry. No credential collection.
 - No `eval`, no execution of text that came from a worker or a model.
-- Every write is to a path under `.majordomus/` or to a declared projection target.
+- Every write is to a path under `.ai/` or to a declared projection target.
   Path arguments are canonicalised and refused if they escape the repository root.
 - Overwrite requires an explicit flag; the default is refusal with a message naming the
   existing file.
@@ -602,7 +626,7 @@ v0.1 ships exactly:
   contract (which fields a completion note must carry) independently
 - state templates: current task, decisions, open questions, handover, completion note
 - the subcommands `majordomus --help` lists, in portable shell, with behavioural tests
-- `doctor` dispatching every doctrine the registry declares, including enforcement wiring reconciliation
+- `doctor` dispatching every doctrine the effective rule set declares, including enforcement wiring reconciliation and the vendored package's integrity
 - `watch` with the drift table above
 - `update` producing projections for Claude Code, Codex, Gemini, and generic Markdown,
   each stamped with its provenance
