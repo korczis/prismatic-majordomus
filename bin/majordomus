@@ -40,7 +40,8 @@ PLAN
   plan                 the milestone and issue model: validate, read, and move an issue
 
 SYSTEM
-  init                 set up .majordomus/ in this repository (refuses to overwrite)
+  init                 create the .ai/ layer in this repository (refuses to overwrite)
+  migrate              move pre-.ai project data from .majordomus/ into .ai/ (explicit, backed up)
   update               regenerate provider projections from policy
   doctor               is Majordomus itself healthy and actually wired here?      (read-only)
   doctrine             what rules are enforced, by what, and whether they are wired (read-only)
@@ -71,7 +72,7 @@ set -- "${pre[@]+"${pre[@]}"}" "$@"
 case "$cmd" in
   -h|--help|help) usage; exit 0 ;;
   version|--version) echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session|knowledge)
+  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session|knowledge|migrate)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"

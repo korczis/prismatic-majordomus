@@ -63,6 +63,54 @@ next: majordomus update      # generate CLAUDE.md, AGENTS.md, GEMINI.md
 next: majordomus doctor      # verify nothing is declared that is not wired
 ```
 
+## `majordomus migrate`
+
+Move a repository's project data from the pre-`.ai` layout under `.majordomus/` into the
+portable AI layer under `.ai/`, once and explicitly. No ordinary command migrates: `check`,
+`doctor`, `start` and the rest refuse (`12`) a legacy layout and name this command.
+
+**Markers:** legacy is `.majordomus/policy.yaml`; new is `.ai/manifest.yaml`; a
+`.majordomus/bin/majordomus` is a tool installation and never project data.
+
+**Reads:** every file under `.majordomus/`, the skeleton manifest (the destinations come
+from it), the tool's templates (to tell an unchanged template from a customised one).
+**Writes:** `.ai/README.md`, `.ai/manifest.yaml`; the canonical files moved into
+`.ai/repo/` (`git mv` where tracked, so history follows); `.majordomus/state/` moved to
+`.ai/local/state/` and taken out of the index; the rest of the layer seeded from the
+skeleton without overwriting anything that moved; one `.ai/local/` line in `.gitignore`;
+a byte-for-byte copy of the state under `tmp/majordomus-migrate-backup/<utc>/state/`,
+verified and printed, before the state moves; a `layout.migrated` ledger line; then
+`update --force` re-stamps the projections and `doctor` judges the result, each exit
+reported on its own line.
+
+**Behaviour:**
+- `--dry-run` prints the whole plan, one line per file with its action and destination,
+  and writes nothing. The same table drives the real run.
+- `templates/*.md` identical to the tool's own are dropped; a customised one moves to
+  `.ai/repo/templates/`. `generated/` is dropped: every projection now carries its own stamp.
+- A file under `.majordomus/` this version does not know is never deleted. It is reported,
+  and `.majordomus/` is removed only when it is empty.
+- Refuses (`15`) a `.majordomus/` that holds both `policy.yaml` and `bin/majordomus`,
+  and names the safe manual step; refuses (`15`) when a destination under `.ai/` already
+  exists, listing each one. Nothing is written in either case.
+- A legacy policy that does not parse, or is not version 1, is refused (`10`) before
+  anything moves: fix it in place first.
+- Idempotent: on a repository already on the `.ai` layout it says so and exits `0`. With
+  neither layout present it exits `12` and names `init`.
+- The state stops being tracked: its durability is the checkout plus the backup, not the
+  branch. Commit the tracked half after reviewing `git status`.
+
+```
+$ majordomus migrate --dry-run
+migrate: .majordomus/ (pre-.ai layout) -> .ai/ (ai-repository/v1)
+  move  .majordomus/policy.yaml -> .ai/repo/policy.yaml
+  move  .majordomus/profiles/debugging.yaml -> .ai/repo/profiles/debugging.yaml
+  state .majordomus/state/current.yaml -> .ai/local/state/current.yaml
+  drop  .majordomus/templates/handover.md    (identical to the tool's template)
+  ...
+dry run: nothing written
+```
+
 ## `majordomus doctor`
 
 Is the supervisory layer real here? Read-only. Blocking by design: intended to run

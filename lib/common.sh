@@ -74,7 +74,7 @@ mj_require_installed() {
   mj_require_repo
   case "$MJ_LAYOUT" in
     ai) [ -f "$MJ_POLICY_FILE" ] || mj_die "$MJ_EX_MISSING" "no $(mj_rel "$MJ_POLICY_FILE") in $MJ_ROOT; the manifest names it (run: majordomus init)" ;;
-    legacy) [ -f "$MJ_POLICY_FILE" ] || mj_die "$MJ_EX_MISSING" "no $(mj_rel "$MJ_POLICY_FILE") in $MJ_ROOT (run: majordomus init)" ;;
+    legacy) mj_die "$MJ_EX_MISSING" "project data lives under .majordomus/ (the pre-.ai layout); run: majordomus migrate" ;;
     *) mj_die "$MJ_EX_MISSING" "no .ai/manifest.yaml in $MJ_ROOT (run: majordomus init)" ;;
   esac
 }
@@ -131,19 +131,14 @@ mj_resolve_layout() {
     MJ_TEMPLATES_DIR="$MJ_AI_REPO_DIR/templates"
     MJ_STATE_DIR="$MJ_AI_LOCAL_DIR/state"
     MJ_CACHE_DIR="$MJ_AI_LOCAL_DIR/cache"
-  elif [ -d "$MJ_ROOT/.majordomus" ] && [ ! -f "$MJ_ROOT/.majordomus/bin/majordomus" ]; then
-    # project data under .majordomus/, which is what the pre-.ai layout was; a directory
-    # holding a tool distribution (bin/majordomus) is an installation, never project data
-    MJ_LAYOUT=legacy
-    MJ_AI_DIR="$MJ_ROOT/.majordomus"; MJ_AI_MANIFEST=""
-    MJ_AI_REPO_DIR="$MJ_AI_DIR"; MJ_AI_LOCAL_DIR="$MJ_AI_DIR"
-    MJ_POLICY_FILE="$MJ_AI_DIR/policy.yaml"; MJ_PROFILES_DIR="$MJ_AI_DIR/profiles"
-    MJ_PROMPTS_DIR="$MJ_AI_DIR/prompts"; MJ_PROJECT_DIR="$MJ_AI_DIR/project"
-    MJ_PROVIDERS_DIR="$MJ_AI_DIR/providers"; MJ_TEMPLATES_DIR="$MJ_AI_DIR/templates"
-    MJ_STATE_DIR="$MJ_AI_DIR/state"
-    MJ_RULES_DIR=""; MJ_KNOWLEDGE_DIR=""; MJ_ADRS_DIR=""; MJ_SKILLS_DIR=""; MJ_WORKFLOWS_DIR=""; MJ_CACHE_DIR=""
   else
+    # Project data under .majordomus/ is the pre-.ai layout, which nothing reads any more:
+    # the name is detected so that mj_require_installed can refuse with the migration
+    # named and `migrate` can find its source, and the paths are the .ai ones either way.
+    # A .majordomus/ holding a tool distribution (bin/majordomus) is an installation,
+    # never project data.
     MJ_LAYOUT=""
+    [ -d "$MJ_ROOT/.majordomus" ] && [ ! -f "$MJ_ROOT/.majordomus/bin/majordomus" ] && MJ_LAYOUT=legacy
     MJ_AI_REPO_DIR="$MJ_AI_DIR/repo"; MJ_AI_LOCAL_DIR="$MJ_AI_DIR/local"
     MJ_POLICY_FILE="$MJ_AI_REPO_DIR/policy.yaml"; MJ_PROFILES_DIR="$MJ_AI_REPO_DIR/profiles"
     MJ_RULES_DIR="$MJ_AI_REPO_DIR/rules"; MJ_PROMPTS_DIR="$MJ_AI_REPO_DIR/prompts"
