@@ -48,7 +48,9 @@ share/skeleton/providers/body.md
 docs/CLAIMS.yaml
 README.md
 LICENSE"
-for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md; do
+for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
+         "$ROOT"/.majordomus/project/project.yaml "$ROOT"/.majordomus/project/milestones/*.yaml \
+         "$ROOT"/.majordomus/project/issues/*.yaml; do
   case "$f" in */docs/SITE_CLAIMS.md) continue ;; esac   # written by this script; never its own input
   INPUTS="$INPUTS
 ${f#"$ROOT"/}"; done
@@ -510,6 +512,94 @@ page_template = "docs-page.html"
 +++
 ' > "$CONTENT/_index.md"
 
+# ---------------------------------------------------------------- plan.json (the execution model)
+# The canonical project model, projected for the website. Every value here comes from
+# lib/project.awk through lib/project.sh — the same engine `majordomus plan` reads, so the
+# roadmap cannot say one thing while the command says another. Nothing is recomputed here.
+MJ_ROOT="$ROOT"; MJ_DIR="$ROOT/.majordomus"; export MJ_ROOT MJ_DIR
+# shellcheck source=../lib/project.sh
+. "$ROOT/lib/project.sh"
+# shellcheck source=../lib/plan.sh
+. "$ROOT/lib/plan.sh"
+pj_list()  { mj_ylist "$MJ_PJ/flat/$1" "$2" | jq -R . | jq -sc .; }
+pj_ev()    { # evidence entries of one record as a JSON array
+  local id="$1" i=0
+  printf '['
+  while [ -n "$(mj_pj_get "$id" "evidence.$i.covers")" ]; do
+    [ "$i" = 0 ] || printf ','
+    jq -cn --arg c "$(mj_pj_get "$id" "evidence.$i.covers")" --arg t "$(mj_pj_get "$id" "evidence.$i.type")" \
+      --arg cmd "$(mj_pj_get "$id" "evidence.$i.command")" --arg r "$(mj_pj_get "$id" "evidence.$i.result")" \
+      --arg a "$(mj_pj_get "$id" "evidence.$i.artifact")" --arg co "$(mj_pj_get "$id" "evidence.$i.commit")" \
+      --arg at "$(mj_pj_get "$id" "evidence.$i.recorded_at")" \
+      '{covers:$c,type:$t,command:$cmd,result:$r,artifact:$a,commit:$co,recorded_at:$at}'
+    i=$((i+1))
+  done
+  printf ']'
+}
+csv_json() { printf '%s' "$1" | tr ',' '\n' | sed '/^$/d' | jq -R . | jq -sc .; }
+
+if mj_project_load; then
+  MS="$(first=1; printf '['; for id in $(mj_pj_milestone_ids); do
+    [ "$first" = 1 ] || printf ','; first=0
+    row="$(mj_pj_row M "$id")"
+    jq -cn --arg id "$id" --arg slug "$(printf '%s' "$row" | cut -f7)" --arg status "$(printf '%s' "$row" | cut -f3)" \
+      --argjson order "$(printf '%s' "$row" | cut -f4)" --arg priority "$(printf '%s' "$row" | cut -f5)" \
+      --arg title "$(printf '%s' "$row" | cut -f6)" \
+      --arg problem "$(mj_pj_get "$id" problem)" --arg outcome "$(mj_pj_get "$id" outcome)" \
+      --arg current "$(mj_pj_get "$id" current_state)" --arg desired "$(mj_pj_get "$id" desired_state)" \
+      --argjson scope "$(pj_list "$id" scope)" --argjson non_scope "$(pj_list "$id" non_scope)" \
+      --argjson acceptance "$(pj_list "$id" acceptance_criteria)" --argjson validation "$(pj_list "$id" validation)" \
+      --argjson need "$(pj_list "$id" evidence_required)" --argjson risks "$(pj_list "$id" risks)" \
+      --argjson evidence "$(pj_ev "$id")" \
+      --argjson total "$(printf '%s' "$row" | cut -f8)" --argjson done_n "$(printf '%s' "$row" | cut -f9)" \
+      --argjson ready "$(printf '%s' "$row" | cut -f10)" --argjson blocked "$(printf '%s' "$row" | cut -f11)" \
+      --argjson active "$(printf '%s' "$row" | cut -f12)" --argjson verify "$(printf '%s' "$row" | cut -f13)" \
+      --argjson cancelled "$(printf '%s' "$row" | cut -f14)" \
+      --argjson issues "$(mj_pj_of_milestone "$id" | jq -R . | jq -sc .)" \
+      --arg mermaid "$(mj_project_mermaid "$id")" \
+      '{id:$id,slug:$slug,status:$status,order:$order,priority:$priority,title:$title,
+        problem:$problem,outcome:$outcome,current_state:$current,desired_state:$desired,
+        scope:$scope,non_scope:$non_scope,acceptance_criteria:$acceptance,validation:$validation,
+        evidence_required:$need,risks:$risks,evidence:$evidence,issues:$issues,mermaid:$mermaid,
+        counts:{total:$total,done:$done_n,ready:$ready,blocked:$blocked,active:$active,verify:$verify,cancelled:$cancelled}}'
+  done; printf ']')"
+  IS="$(first=1; printf '['; for id in $(mj_pj_issue_ids); do
+    [ "$first" = 1 ] || printf ','; first=0
+    row="$(mj_pj_row I "$id")"
+    jq -cn --arg id "$id" --arg slug "$(printf '%s' "$row" | cut -f10)" --arg milestone "$(printf '%s' "$row" | cut -f3)" \
+      --arg status "$(printf '%s' "$row" | cut -f4)" --argjson wave "$(printf '%s' "$row" | cut -f5)" \
+      --arg priority "$(printf '%s' "$row" | cut -f6)" --arg profile "$(printf '%s' "$row" | cut -f7)" \
+      --argjson parallel "$(printf '%s' "$row" | cut -f8)" --arg title "$(printf '%s' "$row" | cut -f9)" \
+      --argjson deps "$(csv_json "$(printf '%s' "$row" | cut -f11)")" \
+      --argjson blocked_by "$(csv_json "$(printf '%s' "$row" | cut -f12)")" \
+      --argjson dependents "$(csv_json "$(printf '%s' "$row" | cut -f13)")" \
+      --argjson scope "$(pj_list "$id" scope)" --argjson non_scope "$(pj_list "$id" non_scope)" \
+      --arg objective "$(mj_pj_get "$id" objective)" --arg why "$(mj_pj_get "$id" why)" \
+      --arg current "$(mj_pj_get "$id" current_state)" --arg desired "$(mj_pj_get "$id" desired_state)" \
+      --argjson acceptance "$(pj_list "$id" acceptance_criteria)" --argjson validation "$(pj_list "$id" validation)" \
+      --argjson need "$(pj_list "$id" evidence_required)" --argjson evidence "$(pj_ev "$id")" \
+      --arg risk "$(mj_pj_get "$id" risk)" --arg completion "$(mj_pj_get "$id" completion)" \
+      --arg started "$(mj_pj_get "$id" started_at)" --arg verified "$(mj_pj_get "$id" verified_at)" \
+      --arg completed "$(mj_pj_get "$id" completed_at)" \
+      '{id:$id,slug:$slug,milestone:$milestone,status:$status,wave:$wave,priority:$priority,profile:$profile,
+        parallel_safe:$parallel,title:$title,depends_on:$deps,blocked_by:$blocked_by,dependents:$dependents,
+        scope:$scope,non_scope:$non_scope,objective:$objective,why:$why,current_state:$current,desired_state:$desired,
+        acceptance_criteria:$acceptance,validation:$validation,evidence_required:$need,evidence:$evidence,
+        risk:$risk,completion:$completion,started_at:$started,verified_at:$verified,completed_at:$completed}'
+  done; printf ']')"
+  WV="$(mj_pj_rows W | jq -Rn '[inputs | split("\t") | {wave: (.[1]|tonumber), issues: (.[2]|split(" "))}]')"
+  EG="$(mj_pj_rows G | jq -Rn '[inputs | split("\t") | {from: .[1], to: .[2]}]')"
+  FD="$(mj_pj_findings | jq -Rn '[inputs | split("\t") | {level: .[1], code: .[2], subject: .[3], message: .[4]}]')"
+  jq -n --arg name "$(mj_pj_project_name)" --arg repo "$(mj_pj_repository)" --arg branch "$(mj_pj_default_branch)" \
+    --arg active "$(mj_pj_active)" --arg next "$(mj_pj_next_ready)" --arg mermaid "$(mj_project_mermaid)" \
+    --argjson milestones "$MS" --argjson issues "$IS" --argjson waves "$WV" --argjson edges "$EG" --argjson findings "$FD" \
+    '{schema:1, project:{name:$name, repository:$repo, default_branch:$branch},
+      active_milestone:$active, next_ready:$next, mermaid:$mermaid,
+      milestones:$milestones, issues:$issues, waves:$waves, edges:$edges, findings:$findings}' > "$OUT/plan.json"
+else
+  echo "generate-site-data: no canonical project model in $ROOT/.majordomus/project" >&2; exit 12
+fi
+
 # ---------------------------------------------------------------- source.json
 HASH="$( (cd "$ROOT" && for f in $INPUTS; do printf '%s ' "$f"; mj_sha256 "$f"; done) | mj_sha256 /dev/stdin 2>/dev/null || (cd "$ROOT" && for f in $INPUTS; do printf '%s ' "$f"; mj_sha256 "$f"; done) | shasum -a 256 | cut -d' ' -f1)"
 COMMIT="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
@@ -522,7 +612,7 @@ mk_section() { # dir, title, description, section template, page template, weigh
   printf -- '+++\ntitle = %s\ndescription = %s\nsort_by = "weight"\ntemplate = "%s"\npage_template = "%s"\nweight = %s\n+++\n' "$(jstr "$2")" "$(jstr "$3")" "$4" "$5" "$6" > "$d/_index.md"
 }
 CONTENT_ROOT="$STAGE/content"
-rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines"
+rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/plan"
 mk_section profiles "Execution profiles" "Capability class, reasoning effort, output verbosity, presentation, context toggles and verification are independent fields. Rendered from the profile files a fresh install writes." profiles.html profile.html 30
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jq -Rn 'input')" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
@@ -544,6 +634,18 @@ i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while 
 mk_section doctrines "Doctrine" "A rule is enforced when it is declared, implemented, wired, executed, failure-propagating, tested and CI-blocking. Each one below shows its whole chain." doctrines-section.html doctrine.html 22
 i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrines.json" | while IFS="$(printf '\t')" read -r id slug title summary; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/doctrines.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/doctrines/$slug.md"; done
+mk_section plan "The plan" "Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .majordomus/project." plan-section.html issue.html 21
+printf -- '+++\ntitle = "Dependency graph"\ndescription = "Every issue, every dependency, and the execution waves the graph implies — drawn from the canonical edges, never by hand."\nweight = 1\ntemplate = "dag.html"\n+++\n' > "$CONTENT_ROOT/plan/dag.md"
+i=1; for mid in $(jq -r '.milestones | sort_by(.order) | .[].id' "$OUT/plan.json"); do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "milestone.html"\n[extra]\nplan_id = %s\nsource = ".majordomus/project/milestones/%s.yaml"\n+++\n' \
+    "$(jstr "$mid — $(jq -r --arg m "$mid" '.milestones[] | select(.id==$m) | .title' "$OUT/plan.json")")" \
+    "$(jq -r --arg m "$mid" '.milestones[] | select(.id==$m) | .outcome' "$OUT/plan.json" | jq -Rn 'input')" \
+    "$i" "$(jstr "$mid")" "$mid" > "$CONTENT_ROOT/plan/$mid.md"; done
+for iid in $(jq -r '.issues[].id' "$OUT/plan.json"); do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nplan_id = %s\nsource = ".majordomus/project/issues/%s.yaml"\n+++\n' \
+    "$(jstr "$iid — $(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .title' "$OUT/plan.json")")" \
+    "$(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .objective' "$OUT/plan.json" | jq -Rn 'input')" \
+    "$i" "$(jstr "$iid")" "$iid" > "$CONTENT_ROOT/plan/$iid.md"; done
 mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jq -Rn 'input')" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done

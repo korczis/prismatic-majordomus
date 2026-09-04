@@ -87,7 +87,20 @@ for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do [ -f 
 for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do [ -f "$PUB/commands/$n/index.html" ] || bad tiles "no page for command $n"; done
 for id in $(jq -r '.doctrines[].slug' "$SITE/data/generated/doctrines.json"); do [ -f "$PUB/doctrines/$id/index.html" ] || bad tiles "no page for doctrine $id"; done
 for f in "$SITE"/content-src/why/*.md; do slug="$(basename "$f" .md)"; [ "$slug" = _index ] && continue; [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
-for r in limitations roadmap why supervises commands; do [ -f "$PUB/$r/index.html" ] || bad tiles "no page for /$r/"; done
+for r in limitations roadmap why supervises commands plan plan/dag; do [ -f "$PUB/$r/index.html" ] || bad tiles "no page for /$r/"; done
+# the plan: every milestone and every issue is a page, and the DAG the page draws is the DAG
+# the data holds. A diagram that has drifted from its own edge list is the failure this catches.
+PJ="$SITE/data/generated/plan.json"
+for id in $(jq -r '.milestones[].id, .issues[].id' "$PJ"); do
+  [ -f "$PUB/plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/index.html" ] || bad tiles "no page for plan record $id"
+done
+# the diagram is HTML, so its arrows are escaped; compare against what the browser receives
+jq -r '.edges[] | .from + " --&gt; " + .to' "$PJ" | while read -r e; do
+  grep -qF -- "$e" "$PUB/plan/dag/index.html" || bad tiles "edge ${e/--&gt;/-->} is in plan.json but not in the rendered graph"
+done
+for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
+  grep -qF "plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/" "$PUB/plan/index.html" || bad tiles "READY issue $id is not linked from /plan/"
+done
 ok tiles "every profile, claim, status, responsibility, command, doctrine and why-moment has its own page"
 # 13d. every navigation target resolves
 for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g" | grep -E '^/' | sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done

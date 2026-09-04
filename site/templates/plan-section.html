@@ -1,0 +1,100 @@
+{# The roadmap. Every figure here comes from site/data/generated/plan.json, which
+   scripts/generate-site-data derives from .majordomus/project through lib/project.awk —
+   the same engine `majordomus plan` reads. Nothing on this page is written by hand. #}
+{% extends "page.html" %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+{%- set plan = load_data(path="data/generated/plan.json") -%}
+{%- set repo = "https://github.com/korczis/prismatic-majordomus/blob/master/" -%}
+{%- set issues = plan.issues -%}
+{%- set ready = [i for i in issues if i.status == "READY"] -%}
+{%- set blocked = [i for i in issues if i.status == "BLOCKED"] -%}
+{%- set active = [i for i in issues if i.status == "ACTIVE"] -%}
+{%- set verify = [i for i in issues if i.status == "VERIFY"] -%}
+{%- set done = [i for i in issues if i.status == "DONE"] -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  <dl class="grid max-w-3xl grid-cols-2 gap-4 border-b border-default pb-8 sm:grid-cols-5">
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ done | length }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ ready | length }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ active | length }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ verify | length }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ blocked | length }}</dd></div>
+  </dl>
+  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/.majordomus/project" class="text-fg-brand hover:underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand hover:underline">How that works</a>.</p>
+
+  {%- if plan.next_ready %}
+  {%- set nx = [i for i in issues if i.id == plan.next_ready] -%}
+  <div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5">
+    <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">next ready issue</p>
+    <p class="mt-2 text-lg font-semibold text-heading"><a href="{{ get_url(path="/plan/" ~ (plan.next_ready | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ plan.next_ready }}</a> — {{ nx[0].title }}</p>
+    <p class="mt-2 text-sm text-body">{{ nx[0].objective }}</p>
+    <p class="mt-3 font-mono text-xs text-body-subtle">majordomus plan next</p>
+  </div>
+  {%- endif %}
+
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Milestones</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">A milestone is an executable specification of an outcome, not a folder for tickets. Its state follows from its issues and from its own acceptance evidence — never from a count of closed tickets reaching a total.</p>
+  <ul class="mt-6 grid gap-4 lg:grid-cols-2">
+    {%- for ms in plan.milestones | sort(attribute="order") %}
+    <li>
+      <a href="{{ get_url(path="/plan/" ~ (ms.id | lower) ~ "/", trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">{{ ms.id }}</span>{{ <plan_status status={ms.status} /> }}{% if ms.id == plan.active_milestone %}<span class="rounded bg-brand-softer px-1.5 py-0.5 font-mono text-xs text-fg-brand-strong">active</span>{% endif %}</span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ ms.title }}</h3>
+        <p class="text-sm leading-relaxed text-body">{{ ms.outcome }}</p>
+        <p class="mt-4 font-mono text-xs text-body-subtle">{{ ms.counts.done }} of {{ ms.counts.total }} done · {{ ms.counts.ready }} ready · {{ ms.counts.active }} active · {{ ms.counts.verify }} verify · {{ ms.counts.blocked }} blocked</p>
+      </a>
+    </li>
+    {%- endfor %}
+  </ul>
+
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Execution waves</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">A wave is a layer of the dependency graph: an issue sits one layer past its deepest dependency. Sharing a wave is necessary for two issues to run at the same time and is not sufficient — overlapping declared scope serialises them, and that is reported below the graph on each milestone.</p>
+  <div class="mt-6 space-y-6">
+    {%- for w in plan.waves %}
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave {{ w.wave }}</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {%- for id in w.issues %}{%- set it = [i for i in issues if i.id == id] -%}
+        <li><a href="{{ get_url(path="/plan/" ~ (id | lower) ~ "/", trailing_slash=true) }}" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">{{ id }}</span>{{ <plan_status status={it[0].status} /> }}<span class="min-w-0 break-words text-sm text-heading">{{ it[0].title }}</span></a></li>
+        {%- endfor %}
+      </ul>
+    </div>
+    {%- endfor %}
+  </div>
+
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The graph</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Generated from the same edges the command reads, by <code class="font-mono text-heading">majordomus plan graph</code>. No diagram on this site is drawn by hand.</p>
+  {{ <plan_graph mermaid={plan.mermaid} caption="Every issue, every dependency" /> }}
+  <p class="mt-2 text-sm text-body"><a href="{{ get_url(path="/plan/dag/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The graph on its own page</a>, with the edge list.</p>
+
+  {%- if plan.findings | length > 0 %}
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Findings</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">What validation says about the model as published. A failure would have stopped this build; anything below is a warning the model reports and does not block.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[32rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">level</th><th scope="col" class="px-4 py-2">code</th><th scope="col" class="px-4 py-2">subject</th><th scope="col" class="px-4 py-2">message</th></tr></thead>
+      <tbody>{%- for f in plan.findings %}<tr class="border-t border-default"><td class="px-4 py-2 font-mono text-xs text-heading">{{ f.level }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ f.code }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ f.subject }}</td><td class="px-4 py-2 text-body">{{ f.message }}</td></tr>{%- endfor %}</tbody>
+    </table>
+  </div>
+  {%- endif %}
+
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">How to work through it</h2>
+  <div class="mt-4 max-w-3xl">
+  {% <code label="a worker with no conversation history"> %}
+majordomus plan next
+majordomus plan show <id>
+majordomus plan start <id>
+majordomus plan evidence <id> --covers <token> --type test --command "bash test/run.sh" --result "what it showed"
+majordomus plan done <id>
+{% </code> %}
+  </div>
+  <p class="mt-4 max-w-3xl text-sm text-body">Read <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand hover:underline">the planning model</a> for what the terms mean, and <a href="{{ get_url(path="/docs/dogfooding/", trailing_slash=true) }}" class="text-fg-brand hover:underline">dogfooding</a> for why this repository holds itself to it. The release roadmap — what each version adds — is <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand hover:underline">a separate page</a>.</p>
+</div>
+{% endblock content %}
+{% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}
