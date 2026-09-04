@@ -273,10 +273,31 @@ mj_projection_mode() {
 # ---------------------------------------------------------------- ledger
 # mj_ledger_append event 'extra json fields without braces'
 mj_ledger_append() {
-  local ev="$1" extra="${2:-}" line
+  local ev="$1" extra="${2:-}" line sid
   line="{\"ts\":\"$(mj_now)\",\"event\":\"$ev\",\"head\":\"$(mj_git_head)\",\"branch\":\"$(mj_json_esc "$(mj_git_branch)")\",\"by\":\"majordomus/$MJ_VERSION\""
+  sid="$(mj_open_session_id)"
+  [ -n "$sid" ] && line="$line,\"session\":\"$sid\""
   [ -n "$extra" ] && line="$line,$extra"
   printf '%s}\n' "$line" >> "$MJ_DIR/state/ledger.jsonl"
+}
+
+# The open session in THIS worktree, or nothing. Read with two seds rather than the YAML
+# parser: this runs on every ledger append, and the two fields it needs are top-level
+# scalars written by one command.
+#
+# Which episode wrote an event is a fact the machine knows, so it is stamped like `head`
+# and `branch` are, rather than reconstructed later from a time range. A time range cannot
+# tell two workers apart — the ledger is one file per repository, and a session that
+# selected by time alone claimed another session's checkpoints the first time this was run
+# for real. A line with no session belongs to no episode, which is the honest answer for
+# work done outside one: sessions are optional, and nothing is attributed by proximity.
+mj_open_session_id() {
+  local f w
+  f="$MJ_DIR/state/session-current.yaml"
+  [ -f "$f" ] || return 0
+  w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+  [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && return 0
+  sed -n 's/^session_id: //p' "$f" | head -n 1
 }
 
 # ---------------------------------------------------------------- current task

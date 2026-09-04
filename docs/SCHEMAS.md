@@ -610,19 +610,30 @@ the reference, and session validation reports it as a dangling reference rather 
 silently resolving to nothing.
 
 **The lists are derived, not accumulated.** They are computed at close time by reading
-`ledger.jsonl` between the session's `started_at` and `closed_at`, and by nothing else. No
-other command writes to the session record; `checkpoint`, `decision`, `question` and
-`plan` are unchanged and know nothing about sessions.
+`ledger.jsonl`, and by nothing else. No other command writes to the session record;
+`checkpoint`, `decision`, `question` and `plan` are unchanged and know nothing about
+sessions.
 
 The alternative — every command appending its reference to the open session file as it
 runs — was rejected twice over: it puts a write on the hot path of commands that
 currently only append one ledger line, and it creates a second mutable store of facts the
 ledger already holds, which is the thing this record exists to avoid being.
 
+**Selection is by the session stamp on each line, not by a time range.** Every ledger line
+carries a `session` field naming the episode that wrote it, alongside the `head` and
+`branch` it already carried; all three are computed, none is authored. A time range was
+tried first and was wrong: the ledger is one file per repository, and the first real run
+of it collected another worker's tasks, checkpoints and handovers, because nothing in a
+timestamp tells two concurrent workers apart.
+
+A line carrying no `session` belongs to no episode, and no envelope claims it. That is the
+correct answer rather than a gap — sessions are optional, and work done outside one is
+attributed to nobody instead of to whoever happened to have a session open nearby.
+
 The cost is that the ledger becomes load-bearing for a second purpose. It is append-only,
 written only by Majordomus, and already validated by `ledger_integrity`, which is what
-makes it a safe thing to derive from. Two events written inside the same second are
-ordered by ledger line order, the tiebreak the resolver already uses.
+makes it a safe thing to derive from. Ledger line order is preserved, so two events
+written inside the same second need no tiebreak at all.
 
 Front matter is written by Majordomus. A body containing a line that looks like a
 front-matter key is rejected, as for a handover. Mode `0600`. Created atomically. Never
@@ -678,14 +689,21 @@ Append-only. Written only by Majordomus. One JSON object per line. Retention-cap
 `doctor` reports when over cap, and `history --rotate` moves the oldest lines to
 `ledger.<utc>.jsonl.archived` (never deletes).
 
-One line is one **history event**: what happened, when, for which task, and at which head.
-`majordomus history` reads them back.
+One line is one **history event**: what happened, when, for which task, at which head, and
+in which session. `majordomus history` reads them back.
 
 Common envelope:
 
 ```json
-{"ts":"2026-09-03T19:30:12Z","event":"task.started","task_id":"t-20260903-193012-a4f1","head":"3f2a9c1e...","branch":"main","by":"majordomus/0.1.0"}
+{"ts":"2026-09-03T19:30:12Z","event":"task.started","head":"3f2a9c1e...","branch":"main","by":"majordomus/0.1.0","session":"s-20260903193010-a4f1","task_id":"t-20260903193012-b7c2"}
 ```
+
+`session` is present when a session is open in this worktree and absent otherwise. Like
+`head` and `branch` it is computed, never authored. It is what a closed session's
+reference lists are selected by, and it exists because the alternative does not work: the
+ledger is one file per repository, so a selection by time range cannot tell two concurrent
+workers apart, and the first real run of one claimed another worker's records. A line with
+no `session` belongs to no episode, which is the honest answer for work done outside one.
 
 Events and their extra fields:
 
@@ -699,6 +717,8 @@ Events and their extra fields:
 | `decision.recorded` | `decision` (the entry's title) |
 | `question.opened` | `question` |
 | `question.resolved` | `question`, `answer` |
+| `session.started` | `owner`, `worker` when one was supplied |
+| `session.closed` | `outcome`, `session_path` |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
 

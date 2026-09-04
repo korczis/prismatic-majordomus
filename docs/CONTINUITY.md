@@ -94,8 +94,8 @@ checkpoint that does not exist is a reported defect, not a broken link nobody no
 ### The envelope is derived, not accumulated
 
 Nothing writes into an open session. `checkpoint`, `decision`, `question` and `plan` are
-unchanged and know nothing about sessions. At close, the reference lists are computed by
-reading the ledger between the session's own two timestamps.
+unchanged and know nothing about sessions. At close, the reference lists are computed from
+the ledger.
 
 The ledger is already append-only, already written only by Majordomus, already ordered by
 the order the commands ran, and already validated. It knows every fact the envelope needs.
@@ -104,6 +104,17 @@ of commands that today append one line, and would create a second mutable accoun
 events the ledger already holds — which is the second source of truth this whole design
 refuses. The cost is that the ledger is now load-bearing for two purposes, and that is
 stated rather than hidden.
+
+What it selects, and why it is not a time range, is worth stating because the obvious
+implementation is wrong. Every ledger line now carries the session that wrote it, next to
+the commit and branch it already carried. A first version selected every line between the
+session's two timestamps instead, and the first time it ran for real it claimed another
+worker's tasks, checkpoints and handovers: the ledger is one file per repository, two
+workers were writing to it, and no timestamp can separate them. Which episode wrote an
+event is something the machine knows when it writes it, so it is recorded then.
+
+A line with no session belongs to no episode. Sessions are optional, and work done outside
+one is attributed to nobody rather than to whoever had a session open nearby.
 
 ### Sessions are read with the same rules as everything else
 
