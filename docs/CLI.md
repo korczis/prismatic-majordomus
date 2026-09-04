@@ -365,6 +365,7 @@ weakest evidence about the present.
 | `GIT` | git | always |
 | `TASK` | `state/current.yaml` | a task is active and the profile's `context.task` is not `false` |
 | `PROFILE` | `profiles/<name>.yaml` | the task names a profile that exists |
+| `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |
 | `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |
 | `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |
 | `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |
@@ -420,6 +421,39 @@ scope        lib/auth
 ## BUDGET
 41 of 300 lines
 ```
+
+**Context documents.** The same command carries the scoped-context subcommands, all
+read-only, all accepting `--json`; see [`CONTEXT.md`](CONTEXT.md) for the model and
+[`SCHEMAS.md`](SCHEMAS.md) for the front matter.
+
+```
+majordomus context list                       every document: id, path, scope, composition, providers, status
+majordomus context resolve <path> [--provider P] [--audience A]
+                                              NN  <id>  <path>  scope=… composition=… providers=…   in effective order
+majordomus context explain <path> [...]       resolve, plus one line per document saying why it is in
+                                              (ancestor at depth N, tracks, directory) and every filtered
+                                              or superseded document with its reason
+majordomus context validate                   the whole tree; findings in the usual format; exit 10 on any FAIL
+majordomus context affected [--base <ref>|--staged|--worktree]
+                                              which documents and scopes a change set touches; a tracked
+                                              path that changed is a WARN naming the document, never the exit code
+majordomus context check-sync [--base <ref>]  validate, projections up to date, affected review items;
+                                              invalid tree FAIL exit 10, hand-edited projection DRIFT exit 11,
+                                              absent projection INFO (doctor owns missing), otherwise 0
+```
+
+The target of `resolve`, `explain` and the bare briefing is a repository-relative
+directory (a file resolves to its own); a path that does not exist, or a symlink or `..`
+that escapes the repository, is refused (`15`, `refused-path`). Inside the `.ai/` tree
+the result is the ancestor chain admitted by each document's scope; outside it, the root
+chain plus every document whose `tracks` matches the target. Order is depth, then
+`order`, then path. The briefing gains a `CONTEXT DOCUMENTS` section listing the
+effective chain for the active task's scope paths.
+
+The error classes, used verbatim in messages and in `--json`: `invalid-front-matter`,
+`unsupported-schema`, `unknown-key`, `duplicate-id`, `broken-reference`, `cycle`,
+`illegal-override`, `unknown-provider`, `invalid-manifest`, `stale-projection`,
+`out-of-sync`, `refused-path`.
 
 ## `majordomus session`
 

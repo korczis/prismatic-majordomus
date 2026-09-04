@@ -12,7 +12,7 @@ every file it writes, uses these words and no others.
 | **task** | the one active unit of work in a checkout | `.ai/local/state/current.yaml` |
 | **session** | one execution episode of one worker: it opens, it may touch several tasks, and it closes into an immutable record that references what the episode produced and copies none of it | `.ai/local/state/session-current.yaml` while open, `.ai/local/state/sessions/` once closed |
 | **envelope** | what a closed session record is: identity, a temporal boundary, and references — never a copy of the records it names | `.ai/local/state/sessions/<file>.md` |
-| **scope** | the normalised set of repository paths a task may touch | `scope:` in the task record |
+| **scope** | the normalised set of repository paths a task may touch, or that a context document applies to | `scope:` in the task record; `scope:` and `paths:` in a context document |
 | **claim** | the same scope, seen from another worktree; overlap is reported, never blocked | reported by `start` and `check --overlap` |
 | **checkpoint** | a compact progress record inside an active task, capped by policy so that it stays quotable rather than becoming a report; also updates `checkpoint_at`, from which staleness is measured | `.ai/local/state/checkpoints/`, `checkpoint`, `check --checkpoint` |
 | **handover** | an append-only continuation record with computed front matter and required sections, written when a worker stops | `.ai/local/state/handovers/` |
@@ -23,6 +23,8 @@ every file it writes, uses these words and no others.
 | **validator** | the function that decides one doctrine; it reports findings and never decides their level, because the doctrine's class does that | `mj_validate_<name>` in `lib/` |
 | **history event** | one line of the ledger: what happened, when, for which task, at which head | `.ai/local/state/ledger.jsonl`, read by `history` |
 | **context** | the assembled briefing for whoever works next: durable state in authority order, within a line budget, with every exclusion named | printed by `context`; never stored |
+| **context document** | a Markdown file under the `.ai/` tree whose front matter declares `schema: context/v1` and `kind: context`: an identity that survives a move, a scope (its directory, its subtree, or listed paths), the providers and audience it addresses, and how it composes with its ancestors | `.ai/**/README.md`; the file names the manifest's `context.documents` requires |
+| **effective context** | the documents that apply to one path, computed: the ancestor chain admitted by each document's scope, least specific first, then `order`, then path; filtered by provider, audience and status; superseded documents dropped, `final` ones never superseded | `context resolve <path>`; `context explain` says why |
 | **authority order** | git, then task and profile, then blockers, then authored records, then history — the order sections appear in and the reverse of the order they are dropped in | `context` |
 | **prompt asset** | a small, versioned, provider-neutral framing in the repository, rendered against a closed set of state tokens | `.ai/repo/prompts/<name>.md`, `prompt` |
 | **record resolution** | choosing the right prior record: same worktree and branch, else same branch, else nothing — never repository-wide | `handover --resolve`, `checkpoint --show`, `context` |

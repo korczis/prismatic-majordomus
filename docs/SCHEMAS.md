@@ -256,6 +256,53 @@ The allowed keys are `share/allow/rule.txt`; any other key is an error. `majordo
 verifies every one of those constraints against the source, that the vendored package
 matches its manifest, and additionally that no `mj_validate_*` function exists which no
 rule declares.
+## `.ai/**/README.md` — context documents
+
+A context document is a Markdown file under the `.ai/` tree (minus `local/` and
+`rules/vendor/`) whose front matter declares the contract below. The manifest's
+`context.documents` names the file names that must carry it wherever they appear in the
+tree; today that is `README.md`. See [`CONTEXT.md`](CONTEXT.md) for the model.
+
+```markdown
+---
+schema: context/v1
+id: ai.repo.rules                 # identity; ^[a-z][a-z0-9-]*(\.[a-z0-9-]+)*$ ; unique across the tree; survives a move
+kind: context
+title: Repository rules
+description: One sentence.
+status: active                    # active | deprecated (discovered and listed, never applied)
+scope: subtree                    # directory | subtree | explicit
+paths: []                         # explicit only: repo-relative directories inside the tree
+providers: ["*"]                  # "*" or provider names from the policy's projections
+audience: [human, agent]          # who it addresses; resolve --audience filters
+composition: extend               # extend | replace | final
+order: 100                        # integer; ties within one depth are broken by path
+supersedes: []                    # replace only: ids of ancestor-chain documents, none of them final
+tracks: [lib/rules.sh]            # git pathspecs this document describes
+---
+```
+
+| field | required | meaning |
+|---|---|---|
+| `schema` | yes | `context/v1`; a newer value is refused, never guessed at |
+| `id` | yes | identity, unique across the tree; the file name is a convention |
+| `kind` | yes | `context`; another kind is another kind of file |
+| `title`, `description` | yes | one line each |
+| `status` | yes | `active` or `deprecated` |
+| `scope` | yes | `directory`, `subtree` or `explicit` |
+| `paths` | with `explicit` | repository-relative directories inside the tree the document applies to |
+| `providers` | yes | `"*"` or names of projections in the policy; an unknown name fails validation |
+| `audience` | no | `human`, `agent`; a filter, never a permission |
+| `composition` | yes | `extend`, `replace` or `final` |
+| `order` | yes | an integer; less is earlier within one depth |
+| `supersedes` | with `replace` | ids in the ancestor chain this document stands in for; a `final` ancestor cannot be named |
+| `tracks` | no | pathspecs whose change names this document for review |
+
+The allowed keys are `share/allow/context.txt`; any other key is an error. There are no
+defaults: a required key that is missing is `invalid-front-matter`, not a silent value.
+`majordomus context validate` checks every constraint over the whole tree, and
+`majordomus doctor` dispatches the same check through `majordomus.context-integrity`.
+
 ## `.ai/repo/rules/vendor/majordomus/manifest.yaml`
 
 The package manifest: every rule file the vendored baseline holds, its identity and the

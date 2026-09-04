@@ -11,7 +11,6 @@ audience: [human, agent]
 composition: final
 order: 10
 ---
-
 # Repository AI context
 
 This `.ai/` directory is the provider-neutral AI context and governance layer for this
@@ -48,8 +47,9 @@ or read as policy. `local/` never contains rules.
 
 ## Discovery
 
-Discovery is driven by `manifest.yaml`, never by walking this directory. The manifest
-names the format version and where each section lives:
+Discovery starts from `manifest.yaml`: the manifest names the tree and where each section
+lives, and a document's own contract, its front matter, identifies it as context. The
+manifest names the tree; the contract identifies a document:
 
 1. read this file,
 2. read `manifest.yaml`,
@@ -61,6 +61,31 @@ names the format version and where each section lives:
 A file under `repo/` that no manifest section covers is not context and carries no
 authority. Discoverability is not eager loading: discover what may apply, resolve what
 does apply, then load the minimum that suffices.
+
+## Scoped context
+
+Every `README.md` in this tree is a context document: Markdown whose front matter declares
+`schema: context/v1` and `kind: context`, an `id` that survives a move, a `scope`
+(`directory`, `subtree` or explicit `paths`), the `providers` and `audience` it addresses,
+and a `composition`. The manifest's `context.documents` names the file names that must
+carry that contract wherever they appear in the tree.
+
+The effective context for a path is the chain of documents from `.ai/` down to the
+nearest directory that has one, least specific first: this file, then `repo/README.md`,
+then the section's own. A document with `composition: extend` adds to its ancestors; one
+with `replace` names in `supersedes` the ancestors it stands in for; one marked `final`
+may not be superseded by any descendant. The nearest document never silently replaces the
+chain above it, and sibling directories never see each other's documents. A path outside
+the tree, such as `lib/`, gets the root chain plus every document whose `tracks` names it.
+
+```text
+majordomus context resolve <path>     the effective chain for a path, in order
+majordomus context explain <path>     the same, with why each document is in or out
+majordomus context validate           the whole tree: contracts, ids, references, overrides
+```
+
+A provider's own nested-file loading is an optimisation; this resolution is what applies.
+`--provider` and `--audience` filter; a deprecated document is listed, never applied.
 
 ## Rules
 

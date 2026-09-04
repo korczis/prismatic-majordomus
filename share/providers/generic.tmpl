@@ -7,6 +7,11 @@ Read `README.md`, then [`.ai/README.md`](.ai/README.md), and follow its
 discovery protocol: the effective rules under `.ai/repo/rules/` with their
 dependencies, the workflows and knowledge the task needs, and never `.ai/local/`.
 
+Before working under a path, run `majordomus context resolve <path>` (or read the
+`README.md` chain from `.ai/` down to that directory): each document adds to its
+ancestors and the nearest one does not replace them. A provider's own nested-file
+loading is an optimisation; the Majordomus resolution is what applies.
+
 This repository is supervised by Majordomus. Run `majordomus context` before working;
 the task lifecycle is `.ai/repo/workflows/task-lifecycle.md`; the default profile is
 `{{DEFAULT_PROFILE}}`. `AGENTS.md` carries the same bootstrap for every

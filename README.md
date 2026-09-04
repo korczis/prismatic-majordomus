@@ -71,6 +71,17 @@ Every row above is backed by a case in [`test/cases/`](test/cases/). The README 
 allowed to say more than the tests do. The layer is the repository's, not the tool's:
 Majordomus is the reference implementation that validates, projects and enforces it.
 
+**Scoped context.** Context is a tree, not one file. Every `README.md` under `.ai/` is a
+context document: front matter gives it an identity that survives a move, a scope (its
+directory, its subtree, or listed paths), the providers it addresses, and how it composes
+with its ancestors. `majordomus context resolve <path>` prints the documents that apply to
+a path, least specific first; the nearest one adds to the chain and never silently
+replaces it, and sibling directories never see each other's. `context validate` refuses a
+tree with a missing contract, a duplicate id, a broken or cyclic override, or an override
+of a document marked `final`; `context affected` names the documents a change set touches,
+including the ones that track the code that changed; `context check-sync` is the one
+command a hook runs. The model is in [`docs/CONTEXT.md`](docs/CONTEXT.md).
+
 ## Quick start
 
 ```bash
