@@ -1,0 +1,28 @@
+id: I0701
+milestone: M002
+title: Reproduce the misattribution as an executable case
+slug: reproduce-misattribution
+priority: p1
+profile: debugging
+parallel_safe: true
+objective: "Write a behavioural case in which two workers share one checkout — one starts a task, the other records a decision — and assert what happens today, so that the defect stops being an anecdote and becomes something a command demonstrates."
+why: "This was found by three sessions colliding in one evening, which is a story rather than a test. A characterisation case is what makes the fix provable and what turns the eventual behaviour change red if it regresses."
+current_state: "decision, checkpoint and question resolve the active task from .majordomus/state/current.yaml. Nothing in test/cases exercises a second worker writing while somebody else's task is active."
+desired_state: "A case runs the sequence in a disposable repository, asserts that the record is attributed to the active task rather than to the worker that wrote it, and says in a comment that this is the gap being characterised rather than the behaviour being blessed."
+scope:
+  - test/cases
+non_scope:
+  - Any change to lib/decision.sh, lib/checkpoint.sh or lib/question.sh
+depends_on: []
+acceptance_criteria:
+  - The case starts a task, then records a decision as a second worker, and reaches an entry in decisions.md
+  - It asserts the current attribution explicitly and marks it in a comment as the gap, not the goal
+  - It covers checkpoint and question as well as decision, or says why they are out of its reach
+  - It runs in a disposable repository like every other case
+validation:
+  - bash test/run.sh
+evidence_required:
+  - gap_reproduced
+risk: "A characterisation test that pins the wrong behaviour is a trap unless the comment saying so is unmissable; that comment is the whole safety mechanism."
+created_at: 2026-09-04
+updated_at: 2026-09-04
