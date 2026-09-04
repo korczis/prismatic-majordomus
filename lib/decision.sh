@@ -46,7 +46,8 @@ mj_decision_add() {
   mj_is_multiline "$title$why$rejected$evidence$supersedes" && mj_die "$MJ_EX_USAGE" "decision add: text must be single-line" 
   mj_require_installed
   local file; file="$(mj_decision_file)"
-  [ -f "$file" ] || mj_die "$MJ_EX_MISSING" "no $file (run: majordomus init)"
+  # the store is checkout-local and absent on a fresh clone; the first decision seeds it
+  [ -f "$file" ] || { mkdir -p "$MJ_STATE_DIR"; cp "$MJ_SKELETON_DIR/templates/decisions.md" "$file"; }
 
   local task_id=none
   mj_load_current && task_id="$(mj_cur id)"
@@ -93,7 +94,8 @@ mj_decision_list() {
   case "$limit" in ''|*[!0-9]*) mj_die "$MJ_EX_USAGE" "decision list: --limit must be a number" ;; esac
   mj_require_installed
   local file; file="$(mj_decision_file)"
-  [ -f "$file" ] || mj_die "$MJ_EX_MISSING" "no $file (run: majordomus init)"
+  # absent on a fresh clone: nothing recorded here yet, which is an answer, not a failure
+  [ -f "$file" ] || { printf '(none)\n'; return 0; }
   mj_decision_entries "$file" "$want" "$limit"
 }
 
@@ -101,7 +103,7 @@ mj_decision_show() {
   [ $# -ge 1 ] || mj_die "$MJ_EX_USAGE" "decision show: text to match is required"
   mj_require_installed
   local file; file="$(mj_decision_file)"
-  [ -f "$file" ] || mj_die "$MJ_EX_MISSING" "no $file (run: majordomus init)"
+  [ -f "$file" ] || { mj_err "no decision matches '$1' (nothing recorded in this checkout yet)"; return "$MJ_EX_MISSING"; }
   local out; out="$(awk -v pat="$1" '
     /<!--/ { c=1 } /-->/ { c=0; next }
     c { next }

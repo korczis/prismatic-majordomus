@@ -30,10 +30,16 @@ H
 }
 
 mj_question_file() { printf '%s' "$MJ_STATE_DIR/open-questions.md"; }
+# The store is checkout-local and absent on a fresh clone. A writer seeds it from the
+# template; a reader treats absence as "no questions", which is the true answer.
 mj_question_require() {
   mj_require_installed
   MJ_Q="$(mj_question_file)"
-  [ -f "$MJ_Q" ] || mj_die "$MJ_EX_MISSING" "no $MJ_Q (run: majordomus init)"
+  [ -f "$MJ_Q" ] || { mkdir -p "$MJ_STATE_DIR"; cp "$MJ_SKELETON_DIR/templates/open-questions.md" "$MJ_Q"; }
+}
+mj_question_require_read() {
+  mj_require_installed
+  MJ_Q="$(mj_question_file)"
 }
 
 mj_question_add() {
@@ -78,7 +84,7 @@ mj_question_resolve() {
   [ -n "$sel" ] || mj_die "$MJ_EX_USAGE" "question resolve: a number or matching text is required"
   [ -n "$answer" ] || mj_die "$MJ_EX_USAGE" "question resolve: --answer is required (resolving without an answer loses the answer)"
   mj_is_multiline "$answer" && mj_die "$MJ_EX_USAGE" "question resolve: the answer must be single-line" 
-  mj_question_require
+  mj_question_require_read
   # Any unresolved question can be resolved, not only one the active task opened. The gate
   # blocks on all of them, and a gate nobody can clear is a gate that gets worked around.
   # The ledger still records which task did the resolving.
@@ -112,7 +118,7 @@ mj_question_list() {
     --task=*) want="${1#--task=}"; shift ;;
     *) mj_die "$MJ_EX_USAGE" "question list: unknown option $1" ;;
   esac; done
-  mj_question_require
+  mj_question_require_read
   # Default: every unresolved question, because every one of them refuses a completed
   # finish here. --task narrows to what one task opened; --all adds the resolved ones.
   # The numbering matches what `question resolve <n>` selects.

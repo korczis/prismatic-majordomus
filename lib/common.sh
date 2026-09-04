@@ -112,8 +112,8 @@ mj_is_ai_path() { case "$1" in "$(mj_rel "$MJ_AI_DIR")"|"$(mj_rel "$MJ_AI_DIR")"
 # Resolve the repository layout. Never fails: a repository with no AI layer resolves to
 # the paths init would create, so init and doctor can name them.
 #   ai      .ai/manifest.yaml exists; every section path is read from it
-#   legacy  the pre-.ai layout, .majordomus/policy.yaml; read-only compatibility during
-#           the migration, removed once `majordomus migrate` exists
+#   legacy  project data under .majordomus/ and no manifest: the pre-.ai layout. Nothing
+#           reads it; the value only makes every command refuse and name `migrate`
 mj_resolve_layout() {
   MJ_AI_DIR="$MJ_ROOT/.ai"; MJ_AI_MANIFEST="$MJ_AI_DIR/manifest.yaml"
   if [ -f "$MJ_AI_MANIFEST" ]; then

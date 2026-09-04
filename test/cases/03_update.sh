@@ -88,6 +88,12 @@ chmod +x "$clone/.git/hooks/pre-commit" "$clone/.git/hooks/pre-push"
 expect_exit 0 "$MJ" --repo "$clone" doctor
 expect_grep 'OK +projection +CLAUDE.md — content matches its stamp'
 [ ! -e "$clone/.ai/local" ] || { echo "    a fresh clone carried local state"; exit 1; }
+# every reading command answers on a clone with no local state at all, as CI runs them
+for c in "context --budget-lines 400" "history --validate" "handover --resolve" "checkpoint --list" "decision list" "question list --all" "prompt list" "rules list" "doctrine status"; do
+  # shellcheck disable=SC2086
+  expect_exit 0 "$MJ" --repo "$clone" $c || { echo "    $c failed on a fresh clone"; exit 1; }
+done
+[ ! -e "$clone/.ai/local" ] || { echo "    a reading command created local state on the clone"; exit 1; }
 echo "clone edit" >> "$clone/CLAUDE.md"
 expect_exit 10 "$MJ" --repo "$clone" doctor
 expect_grep 'content differs from its own stamp'
