@@ -544,12 +544,14 @@ claims:
     note: v1.0.
 
   - id: task-dependencies
-    claim: Dependencies between tasks are deliberately not represented
+    claim: A task record has no dependencies; sequencing between sessions is not represented
     source: docs/DESIGN.md
     implementation: '-'
     test: '-'
     status: rejected
-    note: No use case in the evidence justified a dependency graph. Listed so that the omission is visible rather than assumed to be an oversight. Revisited only when a real case appears.
+    responsibility: state
+    note: "Refused for task records, and only for them. Issues and milestones do carry dependencies, validated as two graphs — see docs/ROADMAP.md and docs/PLANNING.md. What stays refused is a task, the record of one session's work, waiting on another; one task is active per checkout and coordination between checkouts is the scope overlap report. The original wording said no dependency graph existed anywhere, which stopped being true when the plan model landed."
+
 
   - id: project-schema
     claim: Milestones and issues are canonical repository files, and a key nobody reads is an error
