@@ -40,7 +40,7 @@
         </div>
         {#- The transcript row for this check. Matched on the name as its own space-delimited
             column, not as a substring: "state" also occurs inside
-            .majordomus/state/open-questions.md on the blockers row, which put two lines on one
+            .ai/local/state/open-questions.md on the blockers row, which put two lines on one
             card until this was tightened. -#}
         {%- set shown = [l for l in lines if (" " ~ name ~ " ") in l] %}
         {%- for l in shown %}

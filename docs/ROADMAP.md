@@ -120,7 +120,7 @@ history is kept rather than rewritten; an accepted milestone is never edited awa
 Write one file:
 
 ```
-.majordomus/project/milestones/<slug>.yaml
+.ai/repo/project/milestones/<slug>.yaml
 ```
 
 It appears in `plan roadmap`, in `plan rgraph`, in the generated site data and in the

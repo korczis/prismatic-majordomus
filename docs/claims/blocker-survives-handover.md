@@ -10,7 +10,7 @@ Only completion is refused. `blocked`, `partial`, `no_match` and `failed` are ho
 
 `mj_question_unresolved_any` returns every unresolved line in the store, skipping the HTML comment block that carries the file's own example — every fresh install ships one, and a scan that did not skip it would refuse the first completed finish anybody attempted. `mj_validate_blockers` calls it, names how many are open and quotes the first, and `question resolve` searches the same list, so any task can clear any question. A gate nobody can clear is a gate that gets worked around.
 
-Nothing new is stored. The store is tracked, so git is what decides which questions a branch can see, and the entry keeps the id of the task that asked — provenance survives the widening.
+Nothing new is stored. The store is checkout-local, so the questions a gate can see are the ones asked in this working copy, and the entry keeps the id of the task that asked — provenance survives the widening.
 
 ## How to see it
 
@@ -28,7 +28,7 @@ majordomus finish --outcome completed --verify-command true    # accepted
 
 **A question about abandoned work blocks everything after it.** If the work an open question was about is dropped and nobody answers or retires the question, every later task on that branch is refused completion until somebody writes an answer. That is the case this behaviour is deliberately wrong in. It is loud — `question list` names it and one command clears it — which is why it was chosen over the alternatives, whose failure was silent.
 
-It is scoped to a branch, not to a repository or a worktree: the store is a tracked file, so a question on another branch is invisible until the branches merge. Two workers sharing one branch share its blockers, which is the same coupling they already have on every other tracked record.
+It is scoped to a checkout, not to a repository or a branch: the store lives under `.ai/local/`, which git ignores, so a question asked in another worktree is invisible here until a handover carries it over. Two workers sharing one working copy share its blockers, which is the same coupling they already have on every other local record.
 
 There is no withdrawal verb. A question that turns out not to need answering is resolved with an answer that says so; adding a second way to close one would be a second vocabulary for the same act.
 

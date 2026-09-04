@@ -6,7 +6,7 @@ When a task starts, Majordomus looks at every other worktree of the same reposit
 
 ## How it works
 
-`lib/start.sh` runs `git worktree list --porcelain`, opens `.majordomus/state/current.yaml` in each other worktree, keeps only records with outcome `active`, and tests every pair of paths with `mj_path_contains` in both orders after normalising. `check --overlap` runs the same report on demand. There is no sidecar registry to rot; git is the authority on which worktrees exist.
+`lib/start.sh` runs `git worktree list --porcelain`, opens `.ai/local/state/current.yaml` in each other worktree, keeps only records with outcome `active`, and tests every pair of paths with `mj_path_contains` in both orders after normalising. `check --overlap` runs the same report on demand. There is no sidecar registry to rot; git is the authority on which worktrees exist.
 
 ## How to see it
 

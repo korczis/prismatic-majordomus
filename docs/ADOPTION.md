@@ -9,13 +9,15 @@ git clone <this repository> ~/majordomus
 export PATH="$HOME/majordomus/bin:$PATH"     # or symlink bin/majordomus somewhere on PATH
 
 cd <your project>
-majordomus init          # .majordomus/ with policy, profiles, templates
+majordomus init          # .ai/ with the policy, profiles, rules, prompts and workflows
 majordomus update        # CLAUDE.md, AGENTS.md, GEMINI.md generated from the policy
 majordomus doctor        # tells you exactly which hook lines are missing
 ```
 
 Add the two hook lines `init` printed. Run `doctor` again; it should report zero
-failures. Commit `.majordomus/` and the generated files.
+failures. Commit `.ai/repo/` and the generated files. `.ai/local/` is this checkout's own
+state — the task record, ledger, checkpoints, handovers — and `init` ignores it; it never
+travels through git, and a fresh clone starts without it.
 
 From then on:
 
@@ -33,7 +35,7 @@ tools. `mode: region` keeps them. Majordomus then owns only the text between two
 and copies everything else through byte for byte:
 
 ```yaml
-# .majordomus/policy.yaml
+# .ai/repo/policy.yaml
 projections:
   - provider: claude-code
     target: CLAUDE.md
@@ -63,8 +65,8 @@ because that is what the dispatcher does with it.
 
 ## Week one: adjust the policy, not the projections
 
-Every rule the workers see comes from `.majordomus/policy.yaml` and the profiles. Edit
-those, run `update`. If someone edits `CLAUDE.md` directly, `doctor` and `watch` say so,
+Every rule the workers see comes from `.ai/repo/policy.yaml`, the profiles and the rules
+under `.ai/repo/rules/`. Edit those, run `update`. If someone edits `CLAUDE.md` directly, `doctor` and `watch` say so,
 and `update` refuses to overwrite until you look at the diff.
 
 Typical first edits:
@@ -88,9 +90,25 @@ correct and worktrees are overhead. The README says so; believe it.
 The pre-push hook runs `finish --check`, which passes when no task is active. Nothing
 about the repository's past is judged. Start supervising from the first `start`.
 
+## Upgrading from the pre-`.ai` layout
+
+Repositories set up before the `.ai/` layer kept everything under `.majordomus/`. Every
+command refuses that layout and names the one that moves it:
+
+```bash
+majordomus migrate --dry-run   # the whole plan, one line per file; writes nothing
+majordomus migrate             # git-moves the tracked half into .ai/repo/, moves the state
+                               # into .ai/local/state/ after a verified byte-for-byte backup
+                               # whose path it prints, re-stamps the projections, runs doctor
+```
+
+Nothing under `.majordomus/` that the migration does not recognise is deleted; it is
+reported, and the directory stays until you move it by hand. A `.majordomus/bin/majordomus`
+is a tool installation, not project data, and is left alone. See `CLI.md`.
+
 ## Removing Majordomus
 
-Delete `.majordomus/`, the generated projections, and the two hook lines. For a region
+Delete `.ai/`, the generated projections, and the two hook lines. For a region
 projection, delete the marked block from the host document; everything around it was
 never touched.
 

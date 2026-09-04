@@ -11,7 +11,7 @@ A profile may declare `effort_escalation`: after a stated number of blocked atte
 ## How to see it
 
 ```bash
-grep -A2 '^effort_escalation' .majordomus/profiles/debugging.yaml
+grep -A2 '^effort_escalation' .ai/repo/profiles/debugging.yaml
 ```
 
 ## What it does not cover

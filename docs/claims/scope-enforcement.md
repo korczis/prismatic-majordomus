@@ -2,7 +2,7 @@
 
 ## What it means
 
-If a task's changes — uncommitted or committed since the task started — include a file outside the declared scope, `check` and `finish` fail on it by name. Files under `.majordomus/` and the generated instruction files are always allowed, because the tool itself writes them.
+If a task's changes — uncommitted or committed since the task started — include a file outside the declared scope, `check` and `finish` fail on it by name. Files under `.ai/` and the generated instruction files are always allowed, because the tool itself writes them.
 
 ## How it works
 

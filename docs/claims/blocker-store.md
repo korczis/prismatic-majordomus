@@ -2,7 +2,7 @@
 
 ## What it means
 
-`.majordomus/state/open-questions.md` is read by the gate that refuses completion while something is unresolved. If an entry in it does not parse, the gate cannot see it — so a malformed entry is treated as a blocking failure, not as a formatting problem.
+`.ai/local/state/open-questions.md` is read by the gate that refuses completion while something is unresolved. If an entry in it does not parse, the gate cannot see it — so a malformed entry is treated as a blocking failure, not as a formatting problem.
 
 ## How it works
 
@@ -11,7 +11,7 @@
 ## How to see it
 
 ```bash
-printf -- '- [unresolved] no separator and no date\n' >> .majordomus/state/open-questions.md
+printf -- '- [unresolved] no separator and no date\n' >> .ai/local/state/open-questions.md
 majordomus check                  # FAIL blockers open-questions.md — line(s) 4 do not parse
 majordomus doctor                 # FAIL records  open-questions.md
 majordomus watch                  # DRIFT records open-questions.md

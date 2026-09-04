@@ -2,7 +2,7 @@
 
 ## What it means
 
-`.majordomus/state/ledger.jsonl` is append-only and is the only record of what happened that nothing else can reconstruct: which tasks were started, checkpointed, handed over and finished, and on what contract. A line that is not a well-formed event is reported by name and line number, by `check`, by `doctor` and by `watch`.
+`.ai/local/state/ledger.jsonl` is append-only and is the only record of what happened that nothing else can reconstruct: which tasks were started, checkpointed, handed over and finished, and on what contract. A line that is not a well-formed event is reported by name and line number, by `check`, by `doctor` and by `watch`.
 
 ## How it works
 
@@ -11,7 +11,7 @@
 ## How to see it
 
 ```bash
-echo 'this is not json' >> .majordomus/state/ledger.jsonl
+echo 'this is not json' >> .ai/local/state/ledger.jsonl
 majordomus history --validate     # exit 10, naming the line
 majordomus doctor                 # FAIL records  ledger.jsonl — line(s) 8 are not well-formed events
 majordomus watch                  # DRIFT records ledger.jsonl

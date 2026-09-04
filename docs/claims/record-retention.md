@@ -15,12 +15,12 @@ Under the cap it does nothing and says so, rather than producing an empty archiv
 ## How to see it
 
 ```bash
-before=$(wc -l < .majordomus/state/ledger.jsonl)
+before=$(wc -l < .ai/local/state/ledger.jsonl)
 majordomus history --rotate
-# rotated: 4812 line(s) to .majordomus/state/ledger.20260903T204411Z.jsonl.archived, 5000 kept
+# rotated: 4812 line(s) to .ai/local/state/ledger.20260903T204411Z.jsonl.archived, 5000 kept
 
-archived=$(wc -l < .majordomus/state/ledger.*.jsonl.archived)
-kept=$(wc -l < .majordomus/state/ledger.jsonl)
+archived=$(wc -l < .ai/local/state/ledger.*.jsonl.archived)
+kept=$(wc -l < .ai/local/state/ledger.jsonl)
 # archived + kept accounts for every line that existed, plus the rotation event itself
 
 majordomus history --event ledger.rotated --all

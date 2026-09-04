@@ -25,7 +25,7 @@ majordomus finish --outcome completed --verify-command "make test"
 majordomus question resolve 1 --answer "no, it was retired in 4.2"
 majordomus finish --outcome completed --verify-command "make test"   # accepted
 
-printf -- '- [unresolved] a line with no separator\n' >> .majordomus/state/open-questions.md
+printf -- '- [unresolved] a line with no separator\n' >> .ai/local/state/open-questions.md
 majordomus check; echo $?    # 10, naming the line
 ```
 

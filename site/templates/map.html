@@ -3,7 +3,7 @@
 {%- set graph = load_data(path="data/generated/architecture.json") -%}
 {%- set graph_id = "architecture" -%}
 {%- set graph_rings = "entry,module,artifact" -%}
-{%- set graph_label = "Modules of the CLI and the files under .majordomus/ they touch. Solid arrows are reads and writes the scan could place; dashed arrows are references it would not claim a direction for." -%}
+{%- set graph_label = "Modules of the CLI and the files under .ai/ they touch. Solid arrows are reads and writes the scan could place; dashed arrows are references it would not claim a direction for." -%}
 <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
 {% include "partials/graph.html" %}
 <div class="mt-10 grid gap-4 sm:grid-cols-3">

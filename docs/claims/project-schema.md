@@ -2,7 +2,7 @@
 
 ## What it means
 
-A milestone is one file under `.majordomus/project/milestones/`, an issue is one file under `.majordomus/project/issues/`, and both are hand-written YAML in the same restricted subset the policy uses. Every key in them is checked against an allowlist in `share/allow/`. A key that no code reads is a failure of `majordomus plan validate` and of `majordomus doctor`, not a comment.
+A milestone is one file under `.ai/repo/project/milestones/`, an issue is one file under `.ai/repo/project/issues/`, and both are hand-written YAML in the same restricted subset the policy uses. Every key in them is checked against an allowlist in `share/allow/`. A key that no code reads is a failure of `majordomus plan validate` and of `majordomus doctor`, not a comment.
 
 ## How it works
 
@@ -11,7 +11,7 @@ A milestone is one file under `.majordomus/project/milestones/`, an issue is one
 ## How to see it
 
 ```bash
-printf 'estimate: 3d\n' >> .majordomus/project/issues/I0001.yaml
+printf 'estimate: 3d\n' >> .ai/repo/project/issues/I0001.yaml
 majordomus plan validate
 # FAIL schema      I0001 — unknown keys: estimate  [reproduce: majordomus plan validate]
 ```

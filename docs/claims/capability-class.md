@@ -11,8 +11,8 @@ Profiles say `fast`, `standard`, `strong` or `strongest`, never a model identifi
 ## How to see it
 
 ```bash
-grep -h '^capability:' .majordomus/profiles/*.yaml
-grep -rnE 'claude-|gpt-|gemini-' .majordomus/   # nothing
+grep -h '^capability:' .ai/repo/profiles/*.yaml
+grep -rnE 'claude-|gpt-|gemini-' .ai/repo/   # nothing
 ```
 
 ## What it does not cover

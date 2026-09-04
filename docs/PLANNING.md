@@ -24,13 +24,13 @@ A **milestone** is an executable specification of an outcome. Not a folder for t
 statement of the problem, the outcome that ends it, the current and desired state, what is in
 scope and what is deliberately not, the criteria that would make it true, the validation that
 would demonstrate it, and the evidence required to accept it. One file under
-`.majordomus/project/milestones/`.
+`.ai/repo/project/milestones/`.
 
 An **issue** is a bounded execution contract. It carries enough for a worker with no
 conversation history to execute it: the objective, why it exists, the current and desired
 state, the paths it may touch, what it depends on, the acceptance criteria, the validation
 commands, and the evidence its completion requires. One file under
-`.majordomus/project/issues/`.
+`.ai/repo/project/issues/`.
 
 Both are hand-written YAML in the same restricted subset the policy uses, and both are
 checked against an allowlist: a key nobody reads is an error, not a comment.

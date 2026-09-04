@@ -2,7 +2,7 @@
 
 ## What it means
 
-The always-loaded instruction file may point workers at other files (`docs/DESIGN.md`, `.majordomus/state/decisions.md`). `doctor` extracts every repository-relative Markdown link from it and checks the target exists. A worker following a broken pointer wastes a session on a file that is not there.
+The always-loaded instruction file may point workers at other files (`docs/DESIGN.md`, `.ai/repo/rules/README.md`). `doctor` extracts every repository-relative Markdown link from it and checks the target exists. A worker following a broken pointer wastes a session on a file that is not there.
 
 ## How it works
 
@@ -11,7 +11,7 @@ The always-loaded instruction file may point workers at other files (`docs/DESIG
 ## How to see it
 
 ```bash
-sed -i.bak 's#docs/DESIGN.md#docs/MISSING.md#' .majordomus/providers/body.md && majordomus update --force
+sed -i.bak 's#docs/DESIGN.md#docs/MISSING.md#' .ai/repo/providers/body.md && majordomus update --force
 majordomus doctor
 # FAIL links       CLAUDE.md — reference docs/MISSING.md does not resolve
 ```

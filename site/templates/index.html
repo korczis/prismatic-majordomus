@@ -133,7 +133,7 @@ git clone {{ project.repository_url }} ~/majordomus
 export PATH="$HOME/majordomus/bin:$PATH"
 
 cd your-project
-majordomus init      # .majordomus/ with policy, profiles, templates
+majordomus init      # .ai/ with the policy, profiles, rules, prompts and workflows
 majordomus update    # CLAUDE.md, AGENTS.md, GEMINI.md from the policy
 majordomus doctor    # names the two hook lines still missing
 {% </code> %}</div>
@@ -144,7 +144,7 @@ majordomus check
 majordomus finish --outcome completed --verify-command "make test"
 {% </code> %}</div>
     </div>
-    <p class="mt-6 max-w-3xl text-sm text-body">Requirements: {{ project.requirements | join(sep=", ") }}. Nothing is installed into your project except <code class="font-mono text-heading">.majordomus/</code> and the instruction files the policy names.</p>
+    <p class="mt-6 max-w-3xl text-sm text-body">Requirements: {{ project.requirements | join(sep=", ") }}. Nothing is installed into your project except <code class="font-mono text-heading">.ai/</code> and the instruction files the policy names; <code class="font-mono text-heading">.ai/local/</code> is ignored and never leaves the checkout.</p>
   </div>
 </section>
 

@@ -11,7 +11,7 @@ Exactly one projection is marked `always_loaded: true` — the file every sessio
 ## How to see it
 
 ```bash
-sed -i.bak 's/always_loaded_budget_lines: 150/always_loaded_budget_lines: 10/' .majordomus/policy.yaml
+sed -i.bak 's/always_loaded_budget_lines: 150/always_loaded_budget_lines: 10/' .ai/repo/policy.yaml
 majordomus update
 # FAIL budget      CLAUDE.md — would be 78 lines, budget 10; nothing written
 ```

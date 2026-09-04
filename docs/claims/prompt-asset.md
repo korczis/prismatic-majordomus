@@ -2,7 +2,7 @@
 
 ## What it means
 
-`.majordomus/prompts/<name>.md` holds a small reusable framing — how to frame a defect so the fix is proven, how to write a continuation record, how to review a diff against its claimed scope. They are versioned with the repository, provider-neutral, and rendered against the current task's state.
+`.ai/repo/prompts/<name>.md` holds a small reusable framing — how to frame a defect so the fix is proven, how to write a continuation record, how to review a diff against its claimed scope. They are versioned with the repository, provider-neutral, and rendered against the current task's state.
 
 This is not a prompt library. Nothing ranks them, nothing selects one automatically, and nothing loads one unless asked.
 
@@ -24,7 +24,7 @@ An asset whose body asks for the whole context is excluded from `context --promp
 majordomus prompt list
 majordomus prompt render debug
 
-printf -- '---\nname: typo\ndescription: d\n---\nhello {{TSAK}}\n' > .majordomus/prompts/typo.md
+printf -- '---\nname: typo\ndescription: d\n---\nhello {{TSAK}}\n' > .ai/repo/prompts/typo.md
 majordomus prompt render typo; echo $?      # 10, naming the unknown token
 majordomus doctor                            # FAIL prompt  typo — unknown token
 ```

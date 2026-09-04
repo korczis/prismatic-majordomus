@@ -2,7 +2,7 @@
 
 ## What it means
 
-A repository can keep prompt assets under `.majordomus/prompts/`, and the generated instructions point workers at them. An asset that no longer renders — an unknown token, broken front matter — is a broken reference, and is reported as a failure rather than discovered by the worker who tried to use it.
+A repository can keep prompt assets under `.ai/repo/prompts/`, and the generated instructions point workers at them. An asset that no longer renders — an unknown token, broken front matter — is a broken reference, and is reported as a failure rather than discovered by the worker who tried to use it.
 
 ## How it works
 

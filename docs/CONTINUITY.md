@@ -52,7 +52,7 @@ home.
 | **open question** | what is unresolved, and what it blocks | mutable index; the ledger keeps the history | `state/open-questions.md` |
 | **history event** | what happened, when, for which task, at which commit | append-only | `state/ledger.jsonl` |
 
-Prompt assets in `.majordomus/prompts/` are a seventh thing, but they are not records of
+Prompt assets in `.ai/repo/prompts/` are a seventh thing, but they are not records of
 work — they are reusable framings, versioned with the repository.
 
 ## The seventh kind: the session
@@ -245,7 +245,9 @@ An unresolved question in a handover paragraph is a note. An entry in
 `state/open-questions.md` **refuses `finish --outcome completed`** — any entry, not only one
 the active task opened. A question is a person owing an answer, and the work it blocks
 outlives the task that asked; a gate that forgot at the task boundary would be a gate a
-handover walks past. The store is tracked, so git is what scopes this to the branch.
+handover walks past. The store is checkout-local, under the ignored `.ai/local/state/`,
+so the questions a gate can see are the ones asked in this working copy; a question is
+carried to another checkout by the handover that names it, never by git.
 
 Only *completed* is refused. `blocked`, `partial`, `no_match` and `failed` are honest
 statements that the work did not finish, and refusing them would buy a green gate by forcing
@@ -303,7 +305,7 @@ is wrong in one case: a question about work that was abandoned, left unanswered,
 completion of every later task on that branch until somebody writes an answer. The direction
 was chosen because it fails loudly — `question list` names it and `question resolve` clears
 it in one command — where the alternatives fail silently. See `M001` in
-`.majordomus/project/` for the alternatives that were rejected and the case each gets wrong.
+`.ai/repo/project/` for the alternatives that were rejected and the case each gets wrong.
 
 It does not measure tokens, context savings, or cost. The budget is lines, because lines
 are what it can count. See [`ECONOMICS.md`](ECONOMICS.md).

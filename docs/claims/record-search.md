@@ -16,8 +16,8 @@ There is no index, no ranking, no embedding and no cache.
 
 ```bash
 majordomus search "callback" --kind decision --kind checkpoint
-# checkpoint  .majordomus/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a.md:12  Cause is in callback normalisation.
-# decision    .majordomus/state/decisions.md:31  ## 2026-09-03 — Normalise the callback URI
+# checkpoint  .ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a.md:12  Cause is in callback normalisation.
+# decision    .ai/local/state/decisions.md:31  ## 2026-09-03 — Normalise the callback URI
 # search: 2 match(es)
 
 majordomus search "a phrase that appears nowhere"; echo $?   # 12

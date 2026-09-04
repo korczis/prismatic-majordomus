@@ -24,10 +24,10 @@ State mismatch reproduced with test/fixtures/callback.json.
 The cause is in normalisation, not in the comparison.
 Next: regression test before touching the implementation.
 NOTE
-# .majordomus/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md
+# .ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md
 
 majordomus checkpoint --show
-stat -f %Lp .majordomus/state/checkpoints/*.md   # 600
+stat -f %Lp .ai/local/state/checkpoints/*.md   # 600
 
 # the cap refuses rather than truncates
 yes line | head -100 | majordomus checkpoint; echo $?   # 10

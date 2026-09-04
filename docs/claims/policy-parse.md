@@ -2,7 +2,7 @@
 
 ## What it means
 
-`.majordomus/policy.yaml` is read by a parser that knows exactly which keys may appear at every level. A key it does not know — a typo, a field from a newer version, a field someone invented — is an error, not a silent no-op. The same rule applies to every profile file.
+`.ai/repo/policy.yaml` is read by a parser that knows exactly which keys may appear at every level. A key it does not know — a typo, a field from a newer version, a field someone invented — is an error, not a silent no-op. The same rule applies to every profile file.
 
 ## How it works
 
@@ -11,9 +11,9 @@
 ## How to see it
 
 ```bash
-echo "nonsense: 1" >> .majordomus/policy.yaml
+echo "nonsense: 1" >> .ai/repo/policy.yaml
 majordomus doctor
-# FAIL policy      .majordomus/policy.yaml — unknown keys: nonsense  [reproduce: grep -nE 'nonsense' .majordomus/policy.yaml]
+# FAIL policy      .ai/repo/policy.yaml — unknown keys: nonsense  [reproduce: grep -nE 'nonsense' .ai/repo/policy.yaml]
 ```
 
 ## What it does not cover

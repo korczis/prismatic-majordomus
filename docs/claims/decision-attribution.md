@@ -2,7 +2,7 @@
 
 ## What it means
 
-`.majordomus/state/decisions.md` is where a worker externalises a decision so the next one does not reopen it. An entry that does not say which task made it, at which commit, and why, cannot be found by the worker who needs it. That is reported as a warning; it does not stop a command.
+`.ai/local/state/decisions.md` is where a worker externalises a decision so the next one does not reopen it. An entry that does not say which task made it, at which commit, and why, cannot be found by the worker who needs it. That is reported as a warning; it does not stop a command.
 
 ## How it works
 
@@ -13,7 +13,7 @@ The file is deliberately hand-editable: `majordomus decision` writes well-formed
 ## How to see it
 
 ```bash
-printf '\n## 2026-01-01 — hand written, no fields\n' >> .majordomus/state/decisions.md
+printf '\n## 2026-01-01 — hand written, no fields\n' >> .ai/local/state/decisions.md
 majordomus check                  # WARN records decisions.md — entry at line(s) 12 lacks Task, Head or Why
 echo $?                           # 0
 ```

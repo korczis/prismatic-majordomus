@@ -8,7 +8,7 @@ That is the whole rule. Everything below is what following it costs.
 
 This repository is supervised by the tool it ships. `majordomus doctor` runs on every commit
 through `.githooks/pre-commit`; `majordomus finish --check` runs on every push. The
-provider instruction files at the root are generated from `.majordomus/policy.yaml` and
+provider instruction files at the root are generated from `.ai/repo/policy.yaml` and
 regenerated when it changes. Now the plan is under the same rule: non-trivial work here
 belongs to a milestone and to one issue, with a position in the dependency graph, acceptance
 criteria, a validation command and evidence.

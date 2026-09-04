@@ -22,7 +22,7 @@ The check compares full key paths rather than last segments, which is not fussin
 
 ```bash
 # a policy key the code reads but the policy does not declare
-sed -i '' '/builder_budget_lines/d' .majordomus/policy.yaml
+sed -i '' '/builder_budget_lines/d' .ai/repo/policy.yaml
 majordomus context
 # majordomus: policy is missing required key 'context.builder_budget_lines'
 

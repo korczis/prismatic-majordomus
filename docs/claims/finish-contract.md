@@ -15,7 +15,7 @@ majordomus finish --outcome completed --verify-command "make test"
 # OK   scope         t-… — 12 touched file(s), all within scope
 # OK   verification  t-… — make test — exit 0, 41s
 # OK   state         t-… — advanced (head 9b1e2d4)
-# FAIL blockers      t-… — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .majordomus/state/open-questions.md]
+# FAIL blockers      t-… — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]
 # OK   note          t-… — 20260903T201455Z--main--9b1e2d4--c0ffee.md
 # finish: refused, 1 unmet
 ```

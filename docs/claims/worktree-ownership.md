@@ -2,9 +2,9 @@
 
 ## What it means
 
-`.majordomus/state/` is tracked by default, so the active task record travels with the branch. A second worktree checking out that branch reads a record it never wrote — and, before this, was held to a scope it never claimed. Its `pre-push` hook ran `finish --check` against someone else's task and refused every file outside that task's paths.
+Before the `.ai` layout, the state directory was tracked by default, so the active task record travelled with the branch. A second worktree checking out that branch read a record it never wrote — and, before this, was held to a scope it never claimed. Its `pre-push` hook ran `finish --check` against someone else's task and refused every file outside that task's paths.
 
-Now the record says which checkout it belongs to, and a reader that is not that checkout reports it and enforces nothing.
+Now the record says which checkout it belongs to, and a reader that is not that checkout reports it and enforces nothing. The state lives under `.ai/local/`, which is ignored, so a record no longer arrives through git at all; the field remains the defence for every other way one can arrive — a copied working directory, a synced folder.
 
 ## How it works
 
@@ -16,7 +16,7 @@ Now the record says which checkout it belongs to, and a reader that is not that 
 - `finish --check` does the same, so the `pre-push` gate passes
 - `watch` reports it rather than counting it as this checkout's drift
 - `finish` refuses outright: it will not write an outcome into another checkout's record
-- `start` proceeds — one active task per checkout means a foreign record does not block this one — and warns that the replacement is local to this working copy, and that committing it would replace the other checkout's record on the branch
+- `start` proceeds — one active task per checkout means a foreign record does not block this one — and says that the replacement is local to this working copy and changes nothing where the task is active
 
 A record with no `worktree` field, written before it existed, is treated as local. An upgrade that turned every existing installation red would be a worse bug than the one being fixed.
 
@@ -33,7 +33,7 @@ majordomus --repo ../second finish --outcome completed; echo $?   # 15, "finish 
 
 ## What it does not cover
 
-One tracked path still holds one record. Two checkouts working concurrently and both committing `current.yaml` will overwrite each other's record on the branch; `start` warns when it is about to set that up, and nothing prevents it. A repository with several concurrent worktrees should run `majordomus init --gitignore` so each checkout keeps its own untracked record.
+One checkout still holds one record. Two people working in the same working directory share it, and the second `start` replaces the first; nothing about the field tells two workers in one checkout apart, because to git they are one.
 
 It does not attribute commits. A task records the commit it started at, and every file changed since counts as its work regardless of who changed it — see the limitation in [`CONTINUITY.md`](CONTINUITY.md).
 

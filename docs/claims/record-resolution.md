@@ -22,7 +22,7 @@ The result carries its reasoning: the match class, the git label comparing the r
 
 ```bash
 majordomus handover --resolve
-# Handover: .majordomus/state/handovers/20260903T201455Z--main--9b1e2d4--c0ffee12.md
+# Handover: .ai/local/state/handovers/20260903T201455Z--main--9b1e2d4--c0ffee12.md
 # Match: same_worktree_same_branch
 # Git state: advanced
 # Created: 2026-09-03T20:14:55Z (37m ago)

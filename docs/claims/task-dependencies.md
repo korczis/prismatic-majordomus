@@ -25,7 +25,7 @@ are executing.
 ## How to see it
 
 ```bash
-grep -rn depend .majordomus/state/current.yaml     # nothing to find
+grep -rn depend .ai/local/state/current.yaml     # nothing to find
 majordomus plan graph                              # the issue graph, which does exist
 majordomus plan rgraph                             # the milestone graph, which also does
 ```

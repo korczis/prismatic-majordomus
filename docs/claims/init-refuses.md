@@ -2,23 +2,27 @@
 
 ## What it means
 
-`majordomus init` creates `.majordomus/`. If that directory already exists, `init` refuses with exit code 15 and says so. `--force` rewrites the policy, profiles, templates and provider templates — and still never touches `state/`, where the task record, decisions, open questions, handovers and ledger live.
+`majordomus init` creates `.ai/`. If it already exists, `init` refuses with exit code 15 and says so. There is no flag that rewrites anything: `--extend` adds what is missing from the skeleton and overwrites nothing, so a policy, a profile or a rule the repository has edited stays exactly as it is, and `.ai/local/state/`, where the task record, decisions, open questions, handovers and ledger live, is never written over by any run of `init`.
+
+A repository whose project data still lives under `.majordomus/`, the pre-`.ai` layout, is refused too, with `majordomus migrate` named as the way forward; `init` does not create a second layout beside the first.
 
 ## How it works
 
-`lib/init.sh` tests for the directory before copying anything from `share/skeleton/`. Under `--force` it copies everything except `state/`, and creates `state/decisions.md` and `state/open-questions.md` only when they are absent. `--gitignore` appends one line to `.gitignore`, once.
+`lib/init.sh` resolves the layout before copying anything from `share/skeleton/`. On the `.ai` layout without `--extend` it refuses; with `--extend` every file is copied through one helper that returns without writing when the destination exists, and it lists what it created. The `.ai/local/` ignore line is appended to `.gitignore` once, however often `init` runs.
 
 ## How to see it
 
 ```bash
 majordomus init
-majordomus init          # majordomus: .majordomus/ already exists in … (use --force to rewrite everything except state/)
+majordomus init          # majordomus: .ai/ already exists in … (use --extend to add what is missing; nothing is overwritten)
 echo $?                  # 15
+rm .ai/repo/workflows/plan.md
+majordomus init --extend # created .ai/repo/workflows/plan.md, and nothing else changed
 ```
 
 ## What it does not cover
 
-`--force` does overwrite a hand-edited `policy.yaml`; the refusal protects state, and the flag is the explicit decision to reset configuration.
+`--extend` restores a file the skeleton ships and the repository deleted, which is the right answer for a missing file and the wrong one for a file deleted on purpose; a deletion that should stick is a project decision to record, not something `init` can know.
 
 ## Why it exists
 

@@ -11,7 +11,7 @@ Nothing is implemented. The ledger already records per task the session count, h
 ## How to see it
 
 ```bash
-jq -c 'select(.event=="task.finished") | {task_id, outcome, verify}' .majordomus/state/ledger.jsonl
+jq -c 'select(.event=="task.finished") | {task_id, outcome, verify}' .ai/local/state/ledger.jsonl
 ```
 
 ## What it does not cover

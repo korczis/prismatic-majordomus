@@ -15,7 +15,7 @@ it is described as real.
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.
 - **No credential handling.** Majordomus never reads, stores, or asks for secrets.
-- **Writes are confined.** Every write goes under `.majordomus/` or to a projection
+- **Writes are confined.** Every write goes under `.ai/` or to a projection
   target named in the policy. Path arguments are canonicalised and refused if they
   resolve outside the repository root.
 - **No silent overwrite.** Overwriting requires an explicit flag; the default is refusal

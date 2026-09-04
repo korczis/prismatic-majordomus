@@ -1,5 +1,5 @@
 {# The roadmap. Every figure here comes from site/data/generated/plan.json, which
-   scripts/generate-site-data derives from .majordomus/project through lib/project.awk —
+   scripts/generate-site-data derives from .ai/repo/project through lib/project.awk —
    the same engine `majordomus plan` reads. Nothing on this page is written by hand. #}
 {% extends "page.html" %}
 {% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
@@ -22,7 +22,7 @@
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ st | lower }}</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ [i for i in issues if i.status == st] | length }}</dd></div>
     {%- endfor %}
   </dl>
-  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/.majordomus/project" class="text-fg-brand hover:underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand hover:underline">How that works</a>.</p>
+  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/project" class="text-fg-brand hover:underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand hover:underline">How that works</a>.</p>
 
   {%- if plan.next_ready %}
   {%- set nx = [i for i in issues if i.id == plan.next_ready] -%}

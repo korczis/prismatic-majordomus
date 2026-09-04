@@ -7,7 +7,7 @@ graph = "architecture"
 +++
 Nobody drew this. `scripts/lib/architecture-scan.awk` reads `bin/majordomus` and `lib/*.sh`
 on every build and reports what it can prove: which module sources which, and which file
-under `.majordomus/` each module names. A module that stops touching a file loses its edge
+under `.ai/` each module names. A module that stops touching a file loses its edge
 the same day. A diagram that cannot go stale is worth more than a prettier one that can.
 
 ## What an edge means

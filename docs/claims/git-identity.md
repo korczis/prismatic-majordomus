@@ -12,7 +12,7 @@
 
 ```bash
 majordomus start "t" --scope lib
-grep -E '^(branch|head|working_tree):' .majordomus/state/current.yaml   # values from git
+grep -E '^(branch|head|working_tree):' .ai/local/state/current.yaml   # values from git
 printf '# Objective\nx\nhead: abc\n# Current State\ny\n# Next Action\nz\n' | majordomus handover
 # majordomus: handover: body must not contain identity fields; they are computed
 ```

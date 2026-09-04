@@ -2,7 +2,7 @@
 
 ## What it means
 
-Each file under `.majordomus/profiles/` must parse, must carry only known keys, must have a `name` equal to its filename, and the profile the policy names as default must exist as a file. A policy that points at a profile nobody wrote is a failure, not a fallback to something else.
+Each file under `.ai/repo/profiles/` must parse, must carry only known keys, must have a `name` equal to its filename, and the profile the policy names as default must exist as a file. A policy that points at a profile nobody wrote is a failure, not a fallback to something else.
 
 ## How it works
 
@@ -11,7 +11,7 @@ Each file under `.majordomus/profiles/` must parse, must carry only known keys, 
 ## How to see it
 
 ```bash
-sed -i.bak 's/^name: routine/name: other/' .majordomus/profiles/routine.yaml
+sed -i.bak 's/^name: routine/name: other/' .ai/repo/profiles/routine.yaml
 majordomus doctor
 # FAIL profiles    routine — name field 'other' does not match filename
 ```

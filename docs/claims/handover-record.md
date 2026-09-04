@@ -2,7 +2,7 @@
 
 ## What it means
 
-`majordomus handover` takes a Markdown body on standard input and writes one new file under `state/handovers/`, named by timestamp, branch, short commit and a random suffix. The front matter — schema version, timestamps, task id, profile, owner, repository id, worktree, branch, head, working tree, changed files — is computed. The body must contain each section the policy requires (`# Objective`, `# Current State`, `# Next Action` by default), each non-empty; template placeholders in angle brackets count as empty. The file is created with mode 0600 through a temporary file and a hard link, so it cannot clobber an existing record; it is never staged or committed.
+`majordomus handover` takes a Markdown body on standard input and writes one new file under `state/handovers/`, named by timestamp, branch, short commit and a random suffix. The front matter — schema version, timestamps, task id, profile, owner, repository id, worktree, branch, head, working tree, changed files — is computed. The body must contain each section the policy requires (`# Objective`, `# Current State`, `# Next Action` by default), each non-empty; template placeholders in angle brackets count as empty. The file is created with mode 0600 through a temporary file and a hard link, so it cannot clobber an existing record; it lives under the ignored `.ai/local/`, so it is never staged or committed, and it reaches another checkout only by being carried there.
 
 ## How it works
 
@@ -12,7 +12,7 @@
 
 ```bash
 printf '# Objective\nfix it\n# Current State\nhalf done\n# Next Action\nfinish it\n' | majordomus handover
-# .majordomus/state/handovers/20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md
+# .ai/local/state/handovers/20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md
 printf '# Objective\nx\n# Current State\n\n' | majordomus handover
 # majordomus: handover: missing or empty section(s): Current State, Next Action
 ```

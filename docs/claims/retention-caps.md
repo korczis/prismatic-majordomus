@@ -11,7 +11,7 @@
 ## How to see it
 
 ```bash
-sed -i.bak 's/retention_max_lines: 5000/retention_max_lines: 1/' .majordomus/policy.yaml
+sed -i.bak 's/retention_max_lines: 5000/retention_max_lines: 1/' .ai/repo/policy.yaml
 majordomus doctor
 # FAIL retention   ledger — 3 lines over cap 1
 ```

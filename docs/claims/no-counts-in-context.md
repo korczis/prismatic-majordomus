@@ -11,7 +11,7 @@ The always-loaded instruction file must not contain sentences like "14 agents", 
 ## How to see it
 
 ```bash
-echo "This repository has 12 agents." >> .majordomus/providers/body.md && majordomus update --force
+echo "This repository has 12 agents." >> .ai/repo/providers/body.md && majordomus update --force
 majordomus doctor
 # FAIL counts      CLAUDE.md — hardcoded count in always-loaded context
 ```

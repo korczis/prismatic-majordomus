@@ -20,14 +20,14 @@
 
 ```bash
 majordomus doctor
-# ok  layout     .majordomus/state/checkpoints — present
+# ok  layout     .ai/local/state/checkpoints — present
 # ok  records    open-questions.md — every entry parses
 # ok  records    ledger.jsonl — every line carries ts and event
 # ok  prompt     4 asset(s) — front matter valid, every token known
 # ok  resolver   handovers — same_worktree_same_branch, advanced
 # ok  context    builder — 106 lines, budget 300
 
-printf -- '---\nname: broken\ndescription: d\n---\n{{NOPE}}\n' > .majordomus/prompts/broken.md
+printf -- '---\nname: broken\ndescription: d\n---\n{{NOPE}}\n' > .ai/repo/prompts/broken.md
 majordomus doctor; echo $?    # 10
 ```
 

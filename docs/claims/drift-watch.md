@@ -11,9 +11,9 @@
 ## How to see it
 
 ```bash
-sed -i.bak 's/checkpoint_interval_default: 15m/checkpoint_interval_default: 25m/' .majordomus/policy.yaml
+sed -i.bak 's/checkpoint_interval_default: 15m/checkpoint_interval_default: 25m/' .ai/repo/policy.yaml
 majordomus watch; echo $?
-# DRIFT policy      .majordomus/policy.yaml — policy or profiles changed after the last update  [reproduce: majordomus update --dry-run]
+# DRIFT policy      .ai/repo/policy.yaml — policy or profiles changed after the last update  [reproduce: majordomus update --dry-run]
 # 11
 ```
 

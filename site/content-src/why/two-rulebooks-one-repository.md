@@ -25,7 +25,7 @@ and is dispatched by nothing. Seventeen such cases were found before this tool w
 
 ## What Majordomus does
 
-There is one canonical policy, `.majordomus/policy.yaml`. `majordomus update` generates
+There is one canonical policy, `.ai/repo/policy.yaml`. `majordomus update` generates
 every instruction file the policy names — `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any
 target you add — from the same body, deterministically, and stamps each with the policy hash and the hash of its own content.
 A hand edit is detected by `doctor` and `watch`; `update` refuses to overwrite it until you
