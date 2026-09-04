@@ -303,10 +303,10 @@
       "id": "lib/rules.sh",
       "kind": "module",
       "label": "rules",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
+      "command": "rules",
+      "summary": "the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)",
+      "read_only": true,
+      "route": "/commands/rules/",
       "external": false
     },
     {
@@ -769,6 +769,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/question.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/rules.sh",
       "kind": "sources"
     },
     {

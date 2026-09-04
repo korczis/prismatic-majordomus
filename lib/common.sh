@@ -87,14 +87,17 @@ mj_require_installed() {
 # AI layer lives under .ai/: repo/ is tracked canonical context, local/ is checkout-local
 # and ignored. Every path the commands read or write is resolved here and nowhere else.
 # a script that sources this file for its helpers alone (the test suite, the site generator)
-# need not have set MJ_BIN_DIR; the distribution is the directory this file lives under
-MJ_HOME="${MJ_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+# need not have set MJ_BIN_DIR; the distribution is the directory this file lives under.
+# Never taken from the environment: a majordomus started by another majordomus (a verify
+# command, a hook) must read its own distribution, not the one that started it.
+if [ -n "${MJ_BIN_DIR:-}" ]; then MJ_HOME="$(cd "$MJ_BIN_DIR/.." && pwd)"
+else MJ_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; fi
 MJ_SHARE_DIR="$MJ_HOME/share"
 MJ_SKELETON_DIR="$MJ_SHARE_DIR/skeleton"
 MJ_ALLOW_DIR="$MJ_SHARE_DIR/allow"
 MJ_STD_RULES_DIR="$MJ_SHARE_DIR/standard/majordomus"
 MJ_PROVIDERS_DEFAULT_DIR="$MJ_SHARE_DIR/providers"
-export MJ_HOME MJ_SHARE_DIR MJ_SKELETON_DIR MJ_ALLOW_DIR MJ_STD_RULES_DIR MJ_PROVIDERS_DEFAULT_DIR
+export MJ_SHARE_DIR MJ_SKELETON_DIR MJ_ALLOW_DIR MJ_STD_RULES_DIR MJ_PROVIDERS_DEFAULT_DIR
 
 MJ_LAYOUT=""; MJ_AI_DIR=""; MJ_AI_MANIFEST=""; MJ_AI_REPO_DIR=""; MJ_AI_LOCAL_DIR=""
 MJ_STATE_DIR=""; MJ_POLICY_FILE=""; MJ_PROFILES_DIR=""; MJ_PROMPTS_DIR=""; MJ_PROJECT_DIR=""
