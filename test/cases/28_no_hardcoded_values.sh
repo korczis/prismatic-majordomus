@@ -160,3 +160,20 @@ for term in $(grep -oE '^\| \*\*[a-z ]+\*\*' concepts.probe | sed -e 's/^| \*\*/
        "$ROOT/docs" "$ROOT/lib" "$ROOT/bin/majordomus" "$ROOT/share" || found=1
 done
 [ "$found" = 1 ] || { echo "    the vocabulary check cannot fail; it is vacuous"; exit 1; }
+
+# ---------------------------------------------------------------- empty is not a result
+# The sharper half of the same rule: a derivation that produces nothing is a fault in the
+# derivation, not an answer. Every instance found so far returned something plausible
+# instead of stopping — a count of the wrong shape, a regex that matched nothing by
+# construction, a runner reporting "0 passed" for a case that did not exist.
+#
+# Each list this case derives is checked for being non-empty, so a scan that silently stops
+# matching turns this case red instead of passing vacuously.
+[ -n "$COMMANDS" ] || { echo "    the command list derived from the dispatch table is empty"; exit 1; }
+[ -s inputs.txt ] || { echo "    the generator declared no inputs"; exit 1; }
+[ -n "$(claim_ids)" ] || { echo "    the claims section derived no ids"; exit 1; }
+[ -n "$(grep -oE '^\| \*\*[a-z ]+\*\*' "$ROOT/docs/CONCEPTS.md")" ] \
+  || { echo "    the concepts table derived no terms"; exit 1; }
+if [ -f "$ROOT/share/doctrines.yaml" ]; then
+  [ -n "$(grep -E '^  - id:' "$ROOT/share/doctrines.yaml")" ] || { echo "    the doctrine registry derived no ids"; exit 1; }
+fi
