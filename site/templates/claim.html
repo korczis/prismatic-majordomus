@@ -1,5 +1,6 @@
 {% extends "page.html" %}
 {% block body %}
+{%- set why = load_data(path="data/generated/why.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 {%- set c = [x for x in caps.claims if x.id == page.extra.claim_id][0] -%}
@@ -11,7 +12,7 @@
   <div class="min-w-0">
     <p class="flex flex-wrap items-center gap-3">{{ <badge status={c.status} /> }}<span class="text-sm text-body">{{ caps.statuses[c.status] }}</span></p>
     {% if c.note %}<p class="mt-6 max-w-3xl text-base leading-relaxed text-heading">{{ c.note }}</p>{% endif %}
-    <article class="format break-words [&_code]:break-words [&_code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
     <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono hover:underline">{{ page.extra.source }}</a>.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provenance</h2>
@@ -42,6 +43,8 @@ bash test/run.sh {{ c.test_case }}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related claims <span class="font-mono text-sm font-normal text-body-subtle">same implementation</span></h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in related %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={x.status} /> }}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
     {% endif %}
+    {%- set why_key = c.id -%}{%- set why_field = "claims" -%}
+    {% include "partials/why-backlinks.html" %}
   </div>
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5">
     <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">{{ c.status }} claims</h2>

@@ -4,7 +4,7 @@
 {%- set graph_id = "claims" -%}
 {%- set graph_rings = "" -%}
 {%- set graph_label = "Every claim and the evidence attached to it. Evidence nodes are shared, so a file carrying several claims appears once." -%}
-<article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
 {% include "partials/graph.html" %}
 <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
   {%- for status, meaning in graph.statuses %}

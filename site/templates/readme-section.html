@@ -3,7 +3,7 @@
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}{{ readme[page.extra.section] | markdown | safe }}</article>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}{{ readme[page.extra.section] | markdown | safe }}</article>
     <p class="mt-6 text-xs text-body-subtle">Rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono hover:underline">{{ page.extra.source }}</a>; a renamed heading fails the build rather than emptying this page.</p>
   </div>
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">next</h2><ul class="space-y-1 text-sm">{% for n in page.extra.next %}<li><a href="{{ get_url(path=n[1], trailing_slash=true) }}" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">{{ n[0] }} →</a></li>{% endfor %}</ul></div></aside>

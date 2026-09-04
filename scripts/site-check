@@ -106,6 +106,28 @@ for f in "$SITE"/content-src/*.md; do
   git -C "$ROOT" check-ignore -q "$rel" 2>/dev/null || bad ignored "$rel is projected from content-src but not in .gitignore"
 done; ok ignored "every projection of site/content-src/ is ignored, not committed"
 
+# 13c. the why section links both ways: every moment reaches its commands, responsibilities and
+# claims, and every one of those pages carries a link back. A one-way link is how the section
+# drifted out of the rest of the site before — the pages knew about the tool, the tool did not
+# know about the pages.
+WJ="$SITE/data/generated/why.json"
+for slug in $(jq -r '.moments[].slug' "$WJ"); do
+  page="$PUB/why/$slug/index.html"
+  [ -f "$page" ] || { bad why "no page for moment $slug"; continue; }
+  grep -qF "why/$slug/" "$PUB/why/index.html" || bad why "the index does not link moment $slug"
+  for id in $(jq -r --arg s "$slug" '.moments[] | select(.slug==$s) | .claims[]' "$WJ"); do
+    grep -qF "guarantees/$id/" "$page" || bad why "moment $slug names claim $id but does not link it"
+    grep -qF "why/$slug/" "$PUB/guarantees/$id/index.html" || bad why "claim $id is named by moment $slug but does not link back"
+  done
+  for r in $(jq -r --arg s "$slug" '.moments[] | select(.slug==$s) | .responsibilities[]' "$WJ"); do
+    grep -qF "why/$slug/" "$PUB/supervises/$r/index.html" || bad why "responsibility $r is named by moment $slug but does not link back"
+  done
+  for n in $(jq -r --arg s "$slug" '.moments[] | select(.slug==$s) | .commands[]' "$WJ"); do
+    grep -qF "commands/$n/" "$page" || bad why "moment $slug names command $n but does not link it"
+  done
+done
+ok why "$(jq '.moments | length' "$WJ") moments: every command, responsibility and claim is linked, and links back"
+
 # 13b. graphs: every edge endpoint resolves to a node, and no graph is empty
 for g in architecture claims-graph; do
   gf="$SITE/data/generated/$g.json"
