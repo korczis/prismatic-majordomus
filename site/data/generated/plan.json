@@ -5,14 +5,164 @@
     "repository": "korczis/prismatic-majordomus",
     "default_branch": "master"
   },
-  "active_milestone": "M000",
-  "next_ready": "I0010",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::verify\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::ready\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::blocked\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::blocked\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::ready\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "active_milestone": "M001",
+  "next_ready": "I0102",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::ready\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::blocked\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "milestones": [
+    {
+      "id": "cost-per-accepted-outcome",
+      "slug": "cost-per-accepted-outcome",
+      "status": "BLOCKED",
+      "order": 40,
+      "priority": "p2",
+      "title": "Cost per accepted outcome, only on measured data",
+      "problem": "Cost per token is not a useful unit of work. The unit that matters is what an accepted outcome cost, and that cannot be computed without both telemetry and an acceptance record.",
+      "outcome": "The cost of an accepted outcome is computed from measured telemetry and the finish contract that accepted it, and is reported only where both exist.",
+      "current_state": "Not started, and not startable: it needs execution telemetry underneath it.",
+      "desired_state": "A completed, accepted task can state what it cost, from measurement rather than estimate.",
+      "scope": [
+        "lib"
+      ],
+      "non_scope": [
+        "Any figure derived from elapsed time or token count as a proxy for progress"
+      ],
+      "acceptance_criteria": [
+        "Cost is reported only for outcomes that were accepted by the finish contract",
+        "An outcome without telemetry reports no cost rather than a modelled one",
+        "The denominator is a real acceptance, never a count of sessions"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "risks": [
+        "Accepted outcomes are rare enough early on that the number is noisy; it must say so."
+      ],
+      "evidence": [],
+      "issues": [],
+      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 0,
+        "done": 0,
+        "ready": 0,
+        "blocked": 0,
+        "active": 0,
+        "verify": 0,
+        "cancelled": 0
+      }
+    },
+    {
+      "id": "execution-telemetry",
+      "slug": "execution-telemetry",
+      "status": "BLOCKED",
+      "order": 30,
+      "priority": "p2",
+      "title": "Execution telemetry, only from providers that expose it honestly",
+      "problem": "Nothing here measures what a session actually consumed. Every economic statement about AI-assisted work in this repository is currently an argument rather than a measurement.",
+      "outcome": "Execution telemetry is recorded for providers that report it truthfully, and absence is recorded as absence rather than estimated.",
+      "current_state": "Not started. docs/ECONOMICS.md states what it would take and deliberately claims nothing.",
+      "desired_state": "A completed task carries measured execution facts, or an explicit record that the provider did not supply them.",
+      "scope": [
+        "lib",
+        "share"
+      ],
+      "non_scope": [
+        "Estimating a number a provider does not report"
+      ],
+      "acceptance_criteria": [
+        "Telemetry is recorded only where the provider reports it",
+        "A provider that reports nothing produces an explicit absence, never a guess",
+        "The record is durable and readable back through the existing history surface"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "risks": [
+        "A provider's self-reported usage may itself be unreliable; the record must say who reported it."
+      ],
+      "evidence": [],
+      "issues": [],
+      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 0,
+        "done": 0,
+        "ready": 0,
+        "blocked": 0,
+        "active": 0,
+        "verify": 0,
+        "cancelled": 0
+      }
+    },
+    {
+      "id": "foundation",
+      "slug": "foundation",
+      "status": "DONE",
+      "order": 10,
+      "priority": "p0",
+      "title": "A supervisory control layer that is real rather than described",
+      "problem": "An AI worker in a repository has no durable memory, no declared scope, and no contract that says when its work is finished. Every session starts from nothing and ends by asserting success. The evidence that a rule is enforced is usually a sentence claiming it is.",
+      "outcome": "A repository carries one policy, a small set of profiles, durable task state, and a set of commands that refuse work which does not meet a declared contract — with every rule dispatched from a registry that proves it reaches the command claiming to run it.",
+      "current_state": "Delivered. The policy, the profiles, the durable records, the command surface, the doctrine registry with wiring reconciliation and the provider projections all exist and are covered by the behavioural suite.",
+      "desired_state": "Unchanged: this milestone is the base every later one is measured against.",
+      "scope": [
+        "bin",
+        "lib",
+        "share",
+        "test"
+      ],
+      "non_scope": [
+        "Measuring tokens or cost",
+        "Constraining a provider's runtime"
+      ],
+      "acceptance_criteria": [
+        "One canonical policy projects to every provider and drift is detectable in one command",
+        "A task declares scope, and work outside it is reported",
+        "A finish contract is evaluated rather than asserted",
+        "Every enforced rule is declared in a registry, dispatched from it, and proven to reach its command",
+        "Every behaviour has a case in the suite and CI runs it"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "risks": [
+        "The floor is bash 3.2 and BSD userland, which bounds what the engine can be asked to do."
+      ],
+      "evidence": [
+        {
+          "covers": "suite",
+          "type": "test",
+          "command": "bash test/run.sh",
+          "result": "the behavioural suite covering the policy, the profiles, the task lifecycle, the doctrine registry and the provider projections passes",
+          "artifact": "",
+          "commit": "",
+          "recorded_at": "2026-09-04"
+        }
+      ],
+      "issues": [],
+      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 0,
+        "done": 0,
+        "ready": 0,
+        "blocked": 0,
+        "active": 0,
+        "verify": 0,
+        "cancelled": 0
+      }
+    },
     {
       "id": "M000",
       "slug": "milestone-dag-driven-development",
-      "status": "ACTIVE",
+      "status": "DONE",
       "order": 0,
       "priority": "p0",
       "title": "Milestone and DAG driven development",
@@ -66,7 +216,44 @@
         "The engine is shell and awk; a graph large enough to make that slow would need a different implementation. Measured, not assumed.",
         "GitHub is a projection. If a human edits a generated issue body, the next sync reports drift rather than silently overwriting it, which means drift can accumulate unattended."
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "suite",
+          "type": "test",
+          "command": "bash test/run.sh",
+          "result": "40 passed, 0 failed at 4427aee; case 51 added afterwards passes on its own",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:40Z"
+        },
+        {
+          "covers": "cross_surface",
+          "type": "test",
+          "command": "bash test/run.sh 46_cross_surface",
+          "result": "1 passed — the CLI, the JSON output, the Mermaid diagram, the GitHub projection and a freshly generated site-data file agree on every set they can be asked about",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:41Z"
+        },
+        {
+          "covers": "mutation",
+          "type": "test",
+          "command": "bash test/run.sh 47_mutation",
+          "result": "1 passed — five canonical mutations, every surface moves with each",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:41Z"
+        },
+        {
+          "covers": "github",
+          "type": "manual",
+          "command": "scripts/github-sync --apply && scripts/github-sync --check",
+          "result": "eight milestones and nineteen issues on korczis/prismatic-majordomus, states matching derived status, check exits 0",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/milestone/1",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:42Z"
+        }
+      ],
       "issues": [
         "I0001",
         "I0002",
@@ -84,14 +271,211 @@
         "I0014",
         "I0015"
       ],
-      "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::verify\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::ready\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::blocked\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::blocked\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::ready\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
         "total": 15,
-        "done": 9,
-        "ready": 2,
-        "blocked": 3,
+        "done": 15,
+        "ready": 0,
+        "blocked": 0,
         "active": 0,
-        "verify": 1,
+        "verify": 0,
+        "cancelled": 0
+      }
+    },
+    {
+      "id": "M001",
+      "slug": "blocker-survives-handover",
+      "status": "ACTIVE",
+      "order": 1,
+      "priority": "p1",
+      "title": "A blocking question survives a handover",
+      "problem": "An open question is the mechanism for stopping acceptance when work depends on a person. It is attached to the task that opened it, and the gate only reads questions belonging to the active task. Handing over and starting a new task therefore leaves the question unresolved and no longer blocking anything, so the one thing that was supposed to refuse a completed finish refuses nothing. The gap was found by running the documented end-to-end sequence, not by review, and it is published as a planned claim with no implementation and no test.",
+      "outcome": "An unresolved question keeps refusing a completed finish after the work moves to a new task, or the alternative is chosen deliberately and the reason is recorded where the next worker will read it.",
+      "current_state": "docs/CLAIMS.yaml carries blocker-survives-handover as planned, with implementation and test both '-'. lib/question.sh matches unresolved lines by the active task id; lib/check.sh reads only those. Nothing detects that a handover has orphaned a blocker.",
+      "desired_state": "The behaviour is decided between two named alternatives, implemented, proved by a behavioural case, and the claim moves from planned to guaranteed with its implementation and test filled in.",
+      "scope": [
+        "lib/question.sh",
+        "lib/check.sh",
+        "share/skeleton/templates/open-questions.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        "docs/CONTINUITY.md",
+        "test/cases"
+      ],
+      "non_scope": [
+        "A question that blocks across repositories or worktrees",
+        "Assigning a question to a person, or notifying anybody",
+        "Any change to the finish contract's other lines"
+      ],
+      "acceptance_criteria": [
+        "A behavioural case demonstrates the current escape, so the gap is executable rather than asserted",
+        "The choice between transferring the question and widening the gate is recorded as a decision with what was rejected and why",
+        "The chosen behaviour is implemented and a case fails when it is removed",
+        "The claim in docs/CLAIMS.yaml moves to guaranteed with a real implementation path and a real test path",
+        "The claim detail page states what the behaviour does not cover"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor",
+        "scripts/generate-site-data --check"
+      ],
+      "evidence_required": [
+        "gap_reproduced",
+        "decision_recorded",
+        "behaviour_tested"
+      ],
+      "risks": [
+        "Transferring a question with a handover makes it a property of the work rather than of the task, which is right in the common case and wrong when the handover is to a different piece of work. Widening the gate to every unresolved question blocks tasks that never opened one. The decision has to name the case it is choosing to be wrong in."
+      ],
+      "evidence": [],
+      "issues": [
+        "I0101",
+        "I0102",
+        "I0103",
+        "I0104"
+      ],
+      "mermaid": "flowchart LR\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::ready\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::blocked\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::blocked\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 4,
+        "done": 1,
+        "ready": 1,
+        "blocked": 2,
+        "active": 0,
+        "verify": 0,
+        "cancelled": 0
+      }
+    },
+    {
+      "id": "routing-recommendations",
+      "slug": "routing-recommendations",
+      "status": "BLOCKED",
+      "order": 50,
+      "priority": "p3",
+      "title": "Routing recommendations derived from measured cost",
+      "problem": "Choosing which capability to send a task to is currently a judgement nobody can check. A recommendation not derived from measured outcomes is an opinion with a command around it.",
+      "outcome": "The profile a task should run under is recommended from measured cost per accepted outcome, and the recommendation names the data it came from.",
+      "current_state": "Not started, and gated on cost per accepted outcome existing at all.",
+      "desired_state": "A worker can ask which profile a class of task should use and get an answer traceable to measurements.",
+      "scope": [
+        "lib"
+      ],
+      "non_scope": [
+        "Automatic routing without a person's decision"
+      ],
+      "acceptance_criteria": [
+        "Every recommendation names the measurements it was derived from",
+        "Insufficient data produces no recommendation rather than a weak one",
+        "The recommendation is advisory and never silently changes a profile"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "risks": [
+        "A recommendation that is followed becomes a cause of the data that justifies it."
+      ],
+      "evidence": [],
+      "issues": [],
+      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 0,
+        "done": 0,
+        "ready": 0,
+        "blocked": 0,
+        "active": 0,
+        "verify": 0,
+        "cancelled": 0
+      }
+    },
+    {
+      "id": "runtime-adapters",
+      "slug": "runtime-adapters",
+      "status": "PLANNED",
+      "order": 20,
+      "priority": "p1",
+      "title": "Profiles become runtime constraints rather than advice",
+      "problem": "A profile declares an effort and a verbosity, and then nothing enforces them. The worker reads the projection and is trusted to behave. An axis that only ever appears in generated prose is a preference, not a control.",
+      "outcome": "A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice.",
+      "current_state": "Not started. The profiles exist and project correctly; nothing derives a runtime limit from them.",
+      "desired_state": "Starting a task under a profile constrains what the worker may do, and the constraint is visible in the same place the profile is.",
+      "scope": [
+        "lib",
+        "share"
+      ],
+      "non_scope": [
+        "Provider-specific behaviour that cannot be verified from this repository"
+      ],
+      "acceptance_criteria": [
+        "At least one runtime limit is derived from the profile and applied, not merely printed",
+        "The limit is opt-in and a repository that does not want it is unaffected",
+        "A behavioural case proves the limit changes what happens, not only what is reported"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "risks": [
+        "Only providers that expose a real knob can be clamped honestly; the rest would be theatre."
+      ],
+      "evidence": [],
+      "issues": [],
+      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 0,
+        "done": 0,
+        "ready": 0,
+        "blocked": 0,
+        "active": 0,
+        "verify": 0,
+        "cancelled": 0
+      }
+    },
+    {
+      "id": "shared-policy",
+      "slug": "shared-policy",
+      "status": "BLOCKED",
+      "order": 60,
+      "priority": "p3",
+      "title": "Shared policy across repositories and workers",
+      "problem": "Policy is per repository. An organisation running many repositories has no way to state a rule once, and no way to see where it is not being followed.",
+      "outcome": "A policy can be shared across repositories and workers, with local override remaining explicit and drift from the shared source detectable in one command.",
+      "current_state": "Not started. Everything the tool does today is scoped to a single checkout.",
+      "desired_state": "One policy statement governs many repositories, and every deviation from it is visible rather than assumed.",
+      "scope": [
+        "lib",
+        "share"
+      ],
+      "non_scope": [
+        "A hosted service, a registry, or any component that must be running for the tool to work"
+      ],
+      "acceptance_criteria": [
+        "A shared policy can be consumed by more than one repository without copying it",
+        "A local override is explicit and survives an update of the shared source",
+        "Drift between the shared policy and a repository's effective policy is reported by one command"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "risks": [
+        "Shared policy is where a local tool becomes a distributed one; the offline guarantee has to survive it."
+      ],
+      "evidence": [],
+      "issues": [],
+      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 0,
+        "done": 0,
+        "ready": 0,
+        "blocked": 0,
+        "active": 0,
+        "verify": 0,
         "cancelled": 0
       }
     }
@@ -501,7 +885,7 @@
       "id": "I0008",
       "slug": "github-projection",
       "milestone": "M000",
-      "status": "VERIFY",
+      "status": "DONE",
       "wave": 5,
       "priority": "p1",
       "profile": "implementation",
@@ -548,13 +932,22 @@
           "artifact": "",
           "commit": "2dd5915d62182c8c35f609391a23c355fad1134a",
           "recorded_at": "2026-09-04T03:13:06Z"
+        },
+        {
+          "covers": "github",
+          "type": "manual",
+          "command": "scripts/github-sync --apply && scripts/github-sync --check",
+          "result": "created milestone M000 and 15 issues on korczis/prismatic-majordomus, 10 closed and 5 open matching derived status; check exits 0 with no drift. A hand edit inside a generated region was detected (exit 11), refused by --apply, and overwritten only under --force",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/milestone/1",
+          "commit": "82f23ef82836f8360b302ec2af1d38a665b4ec65",
+          "recorded_at": "2026-09-04T04:08:50Z"
         }
       ],
       "risk": "A sync that overwrites a human comment thread would make GitHub hostile to use.",
       "completion": "",
       "started_at": "2026-09-04T03:13:04Z",
       "verified_at": "2026-09-04T03:13:05Z",
-      "completed_at": ""
+      "completed_at": "2026-09-04T04:08:51Z"
     },
     {
       "id": "I0009",
@@ -621,7 +1014,7 @@
       "id": "I0010",
       "slug": "model-tests",
       "milestone": "M000",
-      "status": "READY",
+      "status": "DONE",
       "wave": 4,
       "priority": "p0",
       "profile": "debugging",
@@ -656,18 +1049,28 @@
       "evidence_required": [
         "suite"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "suite",
+          "type": "test",
+          "command": "bash test/run.sh",
+          "result": "40 passed, 0 failed at 4427aee — every case, each in a disposable repository. Case 51 was added afterwards and passes on its own; a 41-case run is in flight",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:14:45Z"
+        }
+      ],
       "risk": "Low",
       "completion": "",
-      "started_at": "",
-      "verified_at": "",
-      "completed_at": ""
+      "started_at": "2026-09-04T03:33:05Z",
+      "verified_at": "2026-09-04T05:14:43Z",
+      "completed_at": "2026-09-04T05:14:45Z"
     },
     {
       "id": "I0011",
       "slug": "consistency-and-mutation",
       "milestone": "M000",
-      "status": "BLOCKED",
+      "status": "DONE",
       "wave": 6,
       "priority": "p0",
       "profile": "debugging",
@@ -678,10 +1081,7 @@
         "I0009",
         "I0010"
       ],
-      "blocked_by": [
-        "I0008",
-        "I0010"
-      ],
+      "blocked_by": [],
       "dependents": [
         "I0012"
       ],
@@ -709,18 +1109,37 @@
         "cross_surface",
         "mutation"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "cross_surface",
+          "type": "test",
+          "command": "bash test/run.sh 46_cross_surface",
+          "result": "1 passed — the CLI, the JSON output, the Mermaid diagram, the GitHub projection and a freshly generated site-data file agree on the issue set, the READY set, the edge set and the next ready issue, across separate processes",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:14:49Z"
+        },
+        {
+          "covers": "mutation",
+          "type": "test",
+          "command": "bash test/run.sh 47_mutation",
+          "result": "1 passed — five canonical mutations each move every surface: an added edge, a completed dependency, a deleted evidence record, a prose-only change, and an induced cycle reaching plan validate, doctor and watch",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:14:50Z"
+        }
+      ],
       "risk": "Low",
       "completion": "",
-      "started_at": "",
-      "verified_at": "",
-      "completed_at": ""
+      "started_at": "2026-09-04T05:14:46Z",
+      "verified_at": "2026-09-04T05:14:48Z",
+      "completed_at": "2026-09-04T05:14:50Z"
     },
     {
       "id": "I0012",
       "slug": "ci-enforcement",
       "milestone": "M000",
-      "status": "BLOCKED",
+      "status": "DONE",
       "wave": 7,
       "priority": "p1",
       "profile": "implementation",
@@ -729,9 +1148,7 @@
       "depends_on": [
         "I0011"
       ],
-      "blocked_by": [
-        "I0011"
-      ],
+      "blocked_by": [],
       "dependents": [
         "I0015"
       ],
@@ -756,12 +1173,22 @@
       "evidence_required": [
         "ci_test"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "ci_test",
+          "type": "test",
+          "command": "bash test/run.sh 26_ci_wiring",
+          "result": "1 passed — validate.yml runs bin/majordomus plan validate as a blocking step and renders the whole GitHub projection offline, neither step reaches for a credential, and the adapter is shellchecked",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:03Z"
+        }
+      ],
       "risk": "Low",
       "completion": "",
-      "started_at": "",
-      "verified_at": "",
-      "completed_at": ""
+      "started_at": "2026-09-04T05:15:01Z",
+      "verified_at": "2026-09-04T05:15:02Z",
+      "completed_at": "2026-09-04T05:15:04Z"
     },
     {
       "id": "I0013",
@@ -823,7 +1250,7 @@
       "id": "I0014",
       "slug": "worker-instructions",
       "milestone": "M000",
-      "status": "READY",
+      "status": "DONE",
       "wave": 6,
       "priority": "p0",
       "profile": "implementation",
@@ -863,18 +1290,28 @@
       "evidence_required": [
         "projection_fresh"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "projection_fresh",
+          "type": "build",
+          "command": "bin/majordomus update && bin/majordomus doctor && bin/majordomus watch",
+          "result": "CLAUDE.md 132 lines within the 150 budget; links resolve; no hardcoded counts; doctor 0 failures; watch reports no projection drift",
+          "artifact": "",
+          "commit": "ee0a128498e3935cbc91509f3c49ccf286948110",
+          "recorded_at": "2026-09-04T03:59:22Z"
+        }
+      ],
       "risk": "The always-loaded budget is a hard cap; adding text can push the projection over it.",
       "completion": "",
-      "started_at": "",
-      "verified_at": "",
-      "completed_at": ""
+      "started_at": "2026-09-04T03:49:50Z",
+      "verified_at": "2026-09-04T03:59:21Z",
+      "completed_at": "2026-09-04T03:59:23Z"
     },
     {
       "id": "I0015",
       "slug": "dogfood-cutover",
       "milestone": "M000",
-      "status": "BLOCKED",
+      "status": "DONE",
       "wave": 8,
       "priority": "p0",
       "profile": "deep-work",
@@ -884,10 +1321,7 @@
         "I0012",
         "I0014"
       ],
-      "blocked_by": [
-        "I0012",
-        "I0014"
-      ],
+      "blocked_by": [],
       "dependents": [],
       "scope": [
         ".majordomus/project"
@@ -912,8 +1346,215 @@
       "evidence_required": [
         "lifecycle"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "lifecycle",
+          "type": "manual",
+          "command": "bin/majordomus plan start I0101 && plan verify I0101 && plan evidence I0101 --covers gap_reproduced ... && plan done I0101 && plan next",
+          "result": "M001 opened from docs/CLAIMS.yaml's blocker-survives-handover, a planned claim with no implementation and no test. I0101 went READY to ACTIVE to VERIFY to DONE through the command surface; its evidence is bash test/run.sh 50_blocker_across_handover with its result; the graph then derived I0102 as the next ready issue without anybody choosing it",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/milestone/9",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:08Z"
+        }
+      ],
       "risk": "Choosing a milestone to make the demonstration easy would defeat the purpose.",
+      "completion": "",
+      "started_at": "2026-09-04T05:15:05Z",
+      "verified_at": "2026-09-04T05:15:06Z",
+      "completed_at": "2026-09-04T05:15:08Z"
+    },
+    {
+      "id": "I0101",
+      "slug": "reproduce-escaped-blocker",
+      "milestone": "M001",
+      "status": "DONE",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "debugging",
+      "parallel_safe": true,
+      "title": "Reproduce the escaped blocker as an executable case",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I0102"
+      ],
+      "scope": [
+        "test/cases"
+      ],
+      "non_scope": [
+        "Any change to lib/question.sh or lib/check.sh"
+      ],
+      "objective": "Write a behavioural case that runs the documented sequence — open a question, hand over, start a new task, finish completed — and records what happens today, so that the gap stops being a sentence in a claim note and becomes something a command demonstrates.",
+      "why": "A defect described in prose is a defect nobody can prove was fixed. The case has to exist before the fix, or the fix has no witness.",
+      "current_state": "docs/CLAIMS.yaml says the blocker is escapable and cites no test. Nothing in test/cases exercises the sequence across a handover.",
+      "desired_state": "A case in test/cases runs the sequence and asserts the behaviour that exists today, labelled as the gap it is, so that changing the behaviour turns it red and forces the claim and the case to move together.",
+      "acceptance_criteria": [
+        "The case opens a question against a task, hands over, starts a new task, and reaches a completed finish",
+        "It asserts the current outcome explicitly and says in a comment that this is the gap, not the goal",
+        "It runs in a disposable repository like every other case"
+      ],
+      "validation": [
+        "bash test/run.sh 50_blocker_across_handover"
+      ],
+      "evidence_required": [
+        "gap_reproduced"
+      ],
+      "evidence": [
+        {
+          "covers": "gap_reproduced",
+          "type": "test",
+          "command": "bash test/run.sh 50_blocker_across_handover",
+          "result": "1 passed, 0 failed — the case runs the documented sequence and asserts that a completed finish is accepted while a question raised by the same line of work is still unresolved",
+          "artifact": "",
+          "commit": "82f23ef82836f8360b302ec2af1d38a665b4ec65",
+          "recorded_at": "2026-09-04T04:12:54Z"
+        }
+      ],
+      "risk": "A characterisation test pinning the wrong behaviour is a trap if nobody reads the comment. The comment is the whole safety mechanism, so it has to be unmissable.",
+      "completion": "",
+      "started_at": "2026-09-04T04:12:46Z",
+      "verified_at": "2026-09-04T04:12:53Z",
+      "completed_at": "2026-09-04T04:12:54Z"
+    },
+    {
+      "id": "I0102",
+      "slug": "decide-blocker-scope",
+      "milestone": "M001",
+      "status": "READY",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Decide whether a question transfers or the gate widens",
+      "depends_on": [
+        "I0101"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0103"
+      ],
+      "scope": [
+        ".majordomus/state/decisions.md"
+      ],
+      "non_scope": [
+        "Implementing the decision"
+      ],
+      "objective": "Choose between the two alternatives the claim names, record the decision with what was rejected and why, and state which case the chosen behaviour is deliberately wrong in.",
+      "why": "The claim was published as unfixed precisely because both answers are wrong somewhere. Implementing one without recording why is how a repository acquires behaviour nobody can defend.",
+      "current_state": "The claim note names the two alternatives and stops there. No decision record exists.",
+      "desired_state": "A dated entry in .majordomus/state/decisions.md names the choice, the rejected alternative, the case each is wrong in, and the evidence it rests on.",
+      "acceptance_criteria": [
+        "The decision names both alternatives and the case each one gets wrong",
+        "It cites the case from I0101 as its evidence",
+        "It is attributable to a task, which majordomus check verifies"
+      ],
+      "validation": [
+        "bin/majordomus decision list",
+        "bin/majordomus check"
+      ],
+      "evidence_required": [
+        "decision_recorded"
+      ],
+      "evidence": [],
+      "risk": "A decision recorded without the failing case behind it is an opinion.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0103",
+      "slug": "implement-blocker-persistence",
+      "milestone": "M001",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Implement the decision and prove it holds",
+      "depends_on": [
+        "I0102"
+      ],
+      "blocked_by": [
+        "I0102"
+      ],
+      "dependents": [
+        "I0104"
+      ],
+      "scope": [
+        "lib/question.sh",
+        "lib/check.sh",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Changing any other line of the finish contract"
+      ],
+      "objective": "Make the chosen behaviour real in the question store and the blocker gate, and turn the characterisation case from I0101 into a case that fails when the behaviour is removed.",
+      "why": "The gate is the only mechanism in the tool that stops a completed finish for a human reason. A gate with a known escape is worse than none, because people trust it.",
+      "current_state": "The gate reads only unresolved questions belonging to the active task.",
+      "desired_state": "The behaviour the decision chose is implemented, and removing it turns a case red.",
+      "acceptance_criteria": [
+        "The case from I0101 asserts the chosen behaviour rather than the gap",
+        "Reverting the implementation turns that case red, demonstrated by running it against the reverted source",
+        "majordomus doctor and majordomus watch stay green"
+      ],
+      "validation": [
+        "bash test/run.sh 50_blocker_across_handover",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "behaviour_tested"
+      ],
+      "evidence": [],
+      "risk": "The question store's line format is machine-written and read by three commands; a change to it has to keep every existing entry parseable, which questions_store_integrity checks.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0104",
+      "slug": "promote-blocker-claim",
+      "milestone": "M001",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Move the claim from planned to guaranteed",
+      "depends_on": [
+        "I0103"
+      ],
+      "blocked_by": [
+        "I0103"
+      ],
+      "dependents": [],
+      "scope": [
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        "docs/CONTINUITY.md"
+      ],
+      "non_scope": [
+        "Any behaviour change"
+      ],
+      "objective": "Update docs/CLAIMS.yaml and the claim's detail page so the public surface states what is now true, with the file that implements it and the test that proves it.",
+      "why": "A capability that works and is still published as planned understates the tool; one published as guaranteed without a test overstates it. The matrix is the only place either is caught.",
+      "current_state": "blocker-survives-handover is planned, with implementation and test both '-', and a note describing the gap.",
+      "desired_state": "The claim is guaranteed, cites lib/question.sh and the case from I0103, and its detail page says what the behaviour does not cover.",
+      "acceptance_criteria": [
+        "The claim is guaranteed and both paths exist",
+        "The detail page has a section saying what the behaviour does not cover",
+        "The generated site data regenerates without a stale file"
+      ],
+      "validation": [
+        "scripts/generate-site-data --check",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "docs_build"
+      ],
+      "evidence": [],
+      "risk": "Promoting a claim is the moment the repository starts being believed on it.",
       "completion": "",
       "started_at": "",
       "verified_at": "",
@@ -924,25 +1565,29 @@
     {
       "wave": 0,
       "issues": [
-        "I0001"
+        "I0001",
+        "I0101"
       ]
     },
     {
       "wave": 1,
       "issues": [
-        "I0002"
+        "I0002",
+        "I0102"
       ]
     },
     {
       "wave": 2,
       "issues": [
-        "I0003"
+        "I0003",
+        "I0103"
       ]
     },
     {
       "wave": 3,
       "issues": [
-        "I0004"
+        "I0004",
+        "I0104"
       ]
     },
     {
@@ -1058,7 +1703,26 @@
     {
       "from": "I0014",
       "to": "I0015"
+    },
+    {
+      "from": "I0101",
+      "to": "I0102"
+    },
+    {
+      "from": "I0102",
+      "to": "I0103"
+    },
+    {
+      "from": "I0103",
+      "to": "I0104"
     }
   ],
-  "findings": []
+  "findings": [
+    {
+      "level": "WARN",
+      "code": "empty_milestone",
+      "subject": "runtime-adapters",
+      "message": "is reachable and has no issues; it is an outcome nobody is executing"
+    }
+  ]
 }

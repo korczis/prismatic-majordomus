@@ -140,6 +140,24 @@ for f in "$SITE"/content-src/*.md; do
   git -C "$ROOT" check-ignore -q "$rel" 2>/dev/null || bad ignored "$rel is projected from content-src but not in .gitignore"
 done; ok ignored "every projection of site/content-src/ is ignored, not committed"
 
+# 13f. the contract demonstration is the policy's own list. The page pairs each key in
+# policy.verification.finish_requires with the check name the transcript prints, by position,
+# and a positional pairing that nobody checks is a pairing that will silently rotate. Asserted
+# by containment: scope_respected must contain scope, note_present must contain note.
+RQ="$(jq -r '.verification.finish_requires[]' "$SITE/data/generated/policy.json")"
+CK="$(jq -r '.finish_checks[]' "$SITE/data/generated/readme.json")"
+if [ "$(printf '%s\n' "$RQ" | wc -l)" != "$(printf '%s\n' "$CK" | wc -l)" ]; then
+  bad contract "policy.finish_requires and readme.finish_checks are different lengths; the contract page pairs them by position"
+else
+  n=1; bad_pair=0
+  for k in $RQ; do
+    c="$(printf '%s\n' "$CK" | sed -n "${n}p")"
+    case "$k" in *"$c"*) ;; *) bad contract "finish_requires[$((n-1))] is '$k' but the transcript's line $n is '$c' — the pairing has rotated"; bad_pair=1 ;; esac
+    n=$((n+1))
+  done
+  [ "$bad_pair" = 1 ] || ok contract "$(printf '%s\n' "$RQ" | wc -l | tr -d ' ') contract lines: the policy key and the printed line agree, in order"
+fi
+
 # 13d. progressive enhancement, as the property rather than a proxy for it: no content may be
 # unreachable without a runtime. An x-show element is inert with JavaScript off and renders,
 # which is correct — unless it is *also* hidden by something static. x-cloak is exactly that

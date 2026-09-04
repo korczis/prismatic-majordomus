@@ -1,0 +1,37 @@
+id: I0101
+milestone: M001
+title: Reproduce the escaped blocker as an executable case
+slug: reproduce-escaped-blocker
+priority: p1
+profile: debugging
+parallel_safe: true
+objective: "Write a behavioural case that runs the documented sequence — open a question, hand over, start a new task, finish completed — and records what happens today, so that the gap stops being a sentence in a claim note and becomes something a command demonstrates."
+why: "A defect described in prose is a defect nobody can prove was fixed. The case has to exist before the fix, or the fix has no witness."
+current_state: "docs/CLAIMS.yaml says the blocker is escapable and cites no test. Nothing in test/cases exercises the sequence across a handover."
+desired_state: "A case in test/cases runs the sequence and asserts the behaviour that exists today, labelled as the gap it is, so that changing the behaviour turns it red and forces the claim and the case to move together."
+scope:
+  - test/cases
+non_scope:
+  - Any change to lib/question.sh or lib/check.sh
+depends_on: []
+acceptance_criteria:
+  - The case opens a question against a task, hands over, starts a new task, and reaches a completed finish
+  - It asserts the current outcome explicitly and says in a comment that this is the gap, not the goal
+  - It runs in a disposable repository like every other case
+validation:
+  - bash test/run.sh 50_blocker_across_handover
+evidence_required:
+  - gap_reproduced
+risk: "A characterisation test pinning the wrong behaviour is a trap if nobody reads the comment. The comment is the whole safety mechanism, so it has to be unmissable."
+created_at: 2026-09-04
+updated_at: 2026-09-04T04:12:54Z
+started_at: 2026-09-04T04:12:46Z
+verified_at: 2026-09-04T04:12:53Z
+completed_at: 2026-09-04T04:12:54Z
+evidence:
+  - covers: gap_reproduced
+    type: test
+    command: "bash test/run.sh 50_blocker_across_handover"
+    result: "1 passed, 0 failed — the case runs the documented sequence and asserts that a completed finish is accepted while a question raised by the same line of work is still unresolved"
+    commit: 82f23ef82836f8360b302ec2af1d38a665b4ec65
+    recorded_at: 2026-09-04T04:12:54Z

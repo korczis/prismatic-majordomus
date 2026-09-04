@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "source": ".majordomus/project/milestones/",
+  "edge_kinds": {
+    "requires": "the target cannot begin until the source is accepted"
+  },
+  "nodes": [
+    {
+      "id": "M000",
+      "kind": "milestone",
+      "label": "M000",
+      "status": "DONE",
+      "route": "/plan/m000/",
+      "external": false,
+      "summary": "Milestone and DAG driven development"
+    },
+    {
+      "id": "M001",
+      "kind": "milestone",
+      "label": "M001",
+      "status": "ACTIVE",
+      "route": "/plan/m001/",
+      "external": false,
+      "summary": "A blocking question survives a handover"
+    },
+    {
+      "id": "foundation",
+      "kind": "milestone",
+      "label": "0.1  foundation",
+      "status": "DONE",
+      "route": "/plan/foundation/",
+      "external": false,
+      "summary": "A supervisory control layer that is real rather than described"
+    },
+    {
+      "id": "runtime-adapters",
+      "kind": "milestone",
+      "label": "0.2  runtime-adapters",
+      "status": "PLANNED",
+      "route": "/plan/runtime-adapters/",
+      "external": false,
+      "summary": "Profiles become runtime constraints rather than advice"
+    },
+    {
+      "id": "execution-telemetry",
+      "kind": "milestone",
+      "label": "0.3  execution-telemetry",
+      "status": "BLOCKED",
+      "route": "/plan/execution-telemetry/",
+      "external": false,
+      "summary": "Execution telemetry, only from providers that expose it honestly"
+    },
+    {
+      "id": "cost-per-accepted-outcome",
+      "kind": "milestone",
+      "label": "0.4  cost-per-accepted-outcome",
+      "status": "BLOCKED",
+      "route": "/plan/cost-per-accepted-outcome/",
+      "external": false,
+      "summary": "Cost per accepted outcome, only on measured data"
+    },
+    {
+      "id": "routing-recommendations",
+      "kind": "milestone",
+      "label": "0.5  routing-recommendations",
+      "status": "BLOCKED",
+      "route": "/plan/routing-recommendations/",
+      "external": false,
+      "summary": "Routing recommendations derived from measured cost"
+    },
+    {
+      "id": "shared-policy",
+      "kind": "milestone",
+      "label": "1.0  shared-policy",
+      "status": "BLOCKED",
+      "route": "/plan/shared-policy/",
+      "external": false,
+      "summary": "Shared policy across repositories and workers"
+    }
+  ],
+  "edges": [
+    {
+      "source": "foundation",
+      "target": "runtime-adapters",
+      "kind": "requires"
+    },
+    {
+      "source": "runtime-adapters",
+      "target": "execution-telemetry",
+      "kind": "requires"
+    },
+    {
+      "source": "execution-telemetry",
+      "target": "cost-per-accepted-outcome",
+      "kind": "requires"
+    },
+    {
+      "source": "cost-per-accepted-outcome",
+      "target": "routing-recommendations",
+      "kind": "requires"
+    },
+    {
+      "source": "routing-recommendations",
+      "target": "shared-policy",
+      "kind": "requires"
+    }
+  ]
+}

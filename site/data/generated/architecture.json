@@ -300,6 +300,16 @@
       "external": false
     },
     {
+      "id": ".majordomus/project/milestones",
+      "kind": "artifact",
+      "label": "project/milestones",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".majordomus/project/issues",
       "kind": "artifact",
       "label": "project/issues",
@@ -812,6 +822,16 @@
       "kind": "uses"
     },
     {
+      "source": "lib/plan.sh",
+      "target": ".majordomus/project/issues",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/project.sh",
+      "target": ".majordomus/project/issues",
+      "kind": "uses"
+    },
+    {
       "source": "lib/prompt.sh",
       "target": ".majordomus/prompts",
       "kind": "uses"
@@ -928,12 +948,12 @@
     },
     {
       "source": "lib/plan.sh",
-      "target": ".majordomus/project/issues",
+      "target": ".majordomus/project/milestones",
       "kind": "writes"
     },
     {
       "source": "lib/project.sh",
-      "target": ".majordomus/project/issues",
+      "target": ".majordomus/project/milestones",
       "kind": "writes"
     },
     {

@@ -44,6 +44,24 @@ majordomus finish --outcome <completed|partial|blocked|no_match|failed> --verify
 
 Default profile: `{{DEFAULT_PROFILE}}`.
 
+### Take work from the plan, not from memory
+
+Non-trivial work belongs to a milestone and to one issue with a place in a dependency
+graph. Status is derived from what an issue records and from the state of its
+dependencies; there is no status field to set.
+
+| When | Run |
+|---|---|
+| starting a session | `majordomus plan next` — the one issue that is ready |
+| before you begin | `majordomus plan show <id>` — objective, scope, acceptance, evidence |
+| you begin it | `majordomus plan start <id>` — refused unless it is READY |
+| you have proof | `majordomus plan evidence <id> --covers <token> --type test --command "<cmd>" --result "<what it showed>"` |
+| it is finished | `majordomus plan done <id>` — refused while a required token is uncovered |
+
+Take something else only when it is a blocker, when it invalidates an assumption the
+milestone rests on, or when a person reprioritised. Not because it looked more useful.
+A repository with no `.majordomus/project/` has no plan, and `plan` says so.
+
 ### Start every session with `majordomus context`
 
 Your conversation does not survive. The repository's records do. `context` assembles them —
@@ -111,5 +129,6 @@ no diff, no narrative of the session: what is true now, and the one next action.
 | handovers, checkpoints | `.majordomus/state/handovers/`, `state/checkpoints/` |
 | history | `.majordomus/state/ledger.jsonl` — read it with `majordomus history` |
 | prompt assets | `.majordomus/prompts/` |
+| milestones, issues | `.majordomus/project/` — read them with `majordomus plan` |
 
 This file is generated from the policy. Edit the policy; run `majordomus update`.

@@ -28,4 +28,15 @@ evidence_required:
   - lifecycle
 risk: "Choosing a milestone to make the demonstration easy would defeat the purpose."
 created_at: 2026-09-04
-updated_at: 2026-09-04
+updated_at: 2026-09-04T05:15:08Z
+started_at: 2026-09-04T05:15:05Z
+verified_at: 2026-09-04T05:15:06Z
+completed_at: 2026-09-04T05:15:08Z
+evidence:
+  - covers: lifecycle
+    type: manual
+    command: "bin/majordomus plan start I0101 && plan verify I0101 && plan evidence I0101 --covers gap_reproduced ... && plan done I0101 && plan next"
+    result: "M001 opened from docs/CLAIMS.yaml's blocker-survives-handover, a planned claim with no implementation and no test. I0101 went READY to ACTIVE to VERIFY to DONE through the command surface; its evidence is bash test/run.sh 50_blocker_across_handover with its result; the graph then derived I0102 as the next ready issue without anybody choosing it"
+    artifact: "https://github.com/korczis/prismatic-majordomus/milestone/9"
+    commit: 05423af4606587fa58db1ee1dadb4d31847cfa0c
+    recorded_at: 2026-09-04T05:15:08Z

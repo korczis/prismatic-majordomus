@@ -65,6 +65,26 @@ pj_issue I0005 M000
 printf 'cancelled: true\n' >> .majordomus/project/issues/I0005.yaml
 [ "$(pj_status I0005)" = CANCELLED ] || { echo "    I0005 should be CANCELLED, is $(pj_status I0005)"; exit 1; }
 
+# --- a milestone whose issues are all done is VERIFY until its own acceptance is proved,
+#     and the evidence that proves it is written by the same command, not by hand
+rm .majordomus/project/issues/I0005.yaml
+sed '/^evidence:/,$d' .majordomus/project/issues/I0001.yaml > /tmp/i.$$ && mv /tmp/i.$$ .majordomus/project/issues/I0001.yaml
+"$MJ" plan evidence I0001 --covers proof --type test --command "true" --result ok >/dev/null
+"$MJ" plan start I0002 >/dev/null
+"$MJ" plan evidence I0002 --covers proof --type test --command "true" --result ok >/dev/null
+"$MJ" plan "done" I0002 >/dev/null
+expect_exit 0 "$MJ" plan status
+expect_grep '^M000   VERIFY'
+expect_exit 0 "$MJ" plan validate
+expect_grep 'every issue is DONE but milestone evidence is missing for proof'
+expect_exit 15 "$MJ" plan evidence M000 --covers invented --type test --command true
+expect_grep 'does not require evidence'
+expect_exit 0 "$MJ" plan evidence M000 --covers proof --type test --command "true" --result "the outcome holds"
+expect_exit 0 "$MJ" plan status
+expect_grep '^M000   DONE'
+expect_exit 12 "$MJ" plan evidence M999 --covers proof --type test --command true
+expect_grep 'no issue or milestone'
+
 # --- milestone status is derived from its issues, not from a count of closed tickets
 expect_exit 0 "$MJ" plan status
-expect_grep '^M000   ACTIVE'
+expect_grep '^M000   DONE'

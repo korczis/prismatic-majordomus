@@ -19,6 +19,8 @@ READ
   status               milestone progress and the next executable issue       (read-only)
   list                 one line per issue: id, status, wave, milestone, title (read-only)
   show <id>            the full record of one milestone or issue              (read-only)
+  roadmap              milestones in derived order, with now and next         (read-only)
+  rgraph               the milestone dependency graph as Mermaid                (read-only)
   ready                issues whose dependencies are all satisfied            (read-only)
   blocked              issues waiting on a dependency, and on which one       (read-only)
   waves                topological execution waves, derived from the graph    (read-only)
@@ -29,7 +31,7 @@ READ
 WRITE (one lifecycle marker each, into the issue's own file)
   start <id>           record that execution began
   verify <id>          record that implementation is complete, evidence pending
-  evidence <id>        attach one piece of evidence to an issue
+  evidence <id>        attach one piece of evidence to an issue or a milestone
   done <id>            record completion; refuses while required evidence is missing
 
 options:
@@ -51,7 +53,7 @@ mj_cmd_plan() {
   [ $# -ge 1 ] || { mj_plan_usage; exit "$MJ_EX_USAGE"; }
   case "$1" in
     --help|-h|help) mj_plan_usage; return 0 ;;
-    validate|status|list|show|ready|blocked|waves|graph|next|body|start|verify|evidence|done) sub="$1"; shift ;;
+    validate|status|list|show|ready|blocked|waves|graph|next|body|start|verify|evidence|roadmap|rgraph|done) sub="$1"; shift ;;
     *) mj_die "$MJ_EX_USAGE" "plan: unknown subcommand '$1' (see: majordomus plan --help)" ;;
   esac
   while [ $# -gt 0 ]; do case "$1" in
@@ -84,6 +86,8 @@ mj_cmd_plan() {
     blocked)  mj_plan_state_list BLOCKED "$m" ;;
     waves)    mj_plan_waves "$m" ;;
     graph)    mj_project_mermaid "$m" ;;
+    roadmap)  mj_plan_roadmap ;;
+    rgraph)   mj_project_roadmap_mermaid ;;
     next)     mj_plan_next "$m" ;;
     body)     mj_plan_body "$ids" ;;
     start)    mj_plan_transition "$ids" start ;;
@@ -91,6 +95,60 @@ mj_cmd_plan() {
     done)     mj_plan_transition "$ids" "done" ;;
     evidence) mj_plan_evidence "$ids" "$covers" "$etype" "$ecmd" "$eres" "$eart" ;;
   esac
+}
+
+# ---------------------------------------------------------------- roadmap
+# The roadmap is a projection over the milestone graph, in derived order. Nothing here is
+# authored: the sequence comes from the dependency ranks, the status from the issues and the
+# gate, and "now" and "next" from the first unblocked milestones in that sequence.
+mj_plan_roadmap() {
+  local id st ver ttl now="" nxt="" blk
+  if [ "$MJ_JSON" = 1 ]; then
+    awk -F'\t' '
+      function esc(x) { gsub(/\\/, "\\\\", x); gsub(/"/, "\\\"", x); return x }
+      function lst(x,   n, a, i, o) {
+        if (x == "") return "[]"
+        n = split(x, a, ","); o = ""
+        for (i = 1; i <= n; i++) o = o (i > 1 ? "," : "") "\"" esc(a[i]) "\""
+        return "[" o "]"
+      }
+      $1 == "M" { r[++n] = $16 + 0 "\t" $4 + 0 "\t" $0 }
+      END {
+        for (i = 1; i < n; i++) for (j = i + 1; j <= n; j++) {
+          split(r[i], x, "\t"); split(r[j], y, "\t")
+          if (x[1] > y[1] || (x[1] == y[1] && x[2] > y[2])) { t = r[i]; r[i] = r[j]; r[j] = t }
+        }
+        printf "{\"schema\":1,\"milestones\":["
+        for (i = 1; i <= n; i++) {
+          sub(/^[^\t]*\t[^\t]*\t/, "", r[i]); split(r[i], f, "\t")
+          printf "%s{\"id\":\"%s\",\"version\":\"%s\",\"title\":\"%s\",\"status\":\"%s\",\"rank\":%d,\"order\":%d,\"issues\":{\"total\":%d,\"done\":%d,\"ready\":%d,\"blocked\":%d,\"active\":%d,\"verify\":%d,\"cancelled\":%d},\"depends_on\":%s,\"blocked_by\":%s,\"dependents\":%s,\"claims\":%s}", \
+            (i > 1 ? "," : ""), esc(f[2]), esc(f[15]), esc(f[6]), esc(f[3]), f[16], f[4], \
+            f[8], f[9], f[10], f[11], f[12], f[13], f[14], \
+            lst(f[17]), lst(f[18]), lst(f[19]), lst(f[20])
+        }
+        printf "]}\n"
+      }' "$MJ_PJ/model.tsv"
+    return 0
+  fi
+  printf 'VERSION  STATUS      MILESTONE                     TITLE\n'
+  for id in $(mj_pj_roadmap); do
+    st="$(mj_pj_m_status "$id")"; ver="$(mj_pj_m_version "$id")"; ttl="$(mj_pj_m_title "$id")"
+    printf '%-8s %-11s %-29s %s\n' "${ver:--}" "$st" "$id" "$ttl"
+  done
+  for id in $(mj_pj_roadmap); do
+    st="$(mj_pj_m_status "$id")"
+    case "$st" in DONE|CANCELLED|SUPERSEDED) continue ;; esac
+    if [ -z "$(mj_pj_m_blocked "$id")" ] && [ -z "$now" ]; then now="$id"; continue; fi
+    [ -z "$nxt" ] && nxt="$id"
+  done
+  printf '\n'
+  [ -n "$now" ] && printf 'now:  %s — %s\n' "$now" "$(mj_pj_m_title "$now")"
+  if [ -n "$nxt" ]; then
+    blk="$(mj_pj_m_blocked "$nxt")"
+    printf 'next: %s — %s%s\n' "$nxt" "$(mj_pj_m_title "$nxt")" \
+      "$([ -n "$blk" ] && printf ' (blocked by %s)' "$blk")"
+  fi
+  return 0
 }
 
 # ---------------------------------------------------------------- validate
@@ -255,10 +313,7 @@ mj_plan_body() {
   [ -n "$id" ] || mj_die "$MJ_EX_USAGE" "plan body needs an id"
   f="$(mj_pj_flat "$id")"
   [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no milestone or issue '$id'"
-  case "$id" in
-    M*) mj_plan_body_milestone "$id" ;;
-    *)  mj_plan_body_issue "$id" ;;
-  esac
+  if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id"; else mj_plan_body_issue "$id"; fi
 }
 
 mj_plan_sec() { # heading, flat key (scalar)
@@ -410,13 +465,17 @@ mj_plan_has_evidence() {
 # without the other.
 mj_plan_evidence() {
   local id="$1" covers="$2" etype="$3" ecmd="$4" eres="$5" eart="$6" f tmp
-  [ -n "$id" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs an issue id"
+  [ -n "$id" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs an issue or milestone id"
   [ -n "$covers" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs --covers <token>"
   [ -n "$etype" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs --type <test|build|ci|artifact|manual>"
   case "$etype" in test|build|ci|artifact|manual) ;; *) mj_die "$MJ_EX_USAGE" "unknown evidence type '$etype'" ;; esac
   [ -n "$ecmd" ] || [ -n "$eart" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs --command or --artifact; narrative is not evidence"
+  # A milestone is gated on evidence the same way an issue is — it reaches DONE only when
+  # its own acceptance is proved, not when its issues run out — so the command writes to
+  # either record rather than making milestone acceptance the one thing done by hand.
   f="$MJ_DIR/project/issues/$id.yaml"
-  [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no issue '$id'"
+  [ -f "$f" ] || f="$MJ_DIR/project/milestones/$id.yaml"
+  [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no issue or milestone '$id'"
   mj_pj_list "$id" evidence_required | grep -qx -- "$covers" \
     || mj_die "$MJ_EX_REFUSED" "$id does not require evidence '$covers' (declared: $(mj_pj_list "$id" evidence_required | paste -sd, -))"
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ev.XXXXXX")"

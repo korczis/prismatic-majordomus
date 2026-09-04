@@ -21,12 +21,12 @@ expect_grep 'overflow-x-auto' "$P/render-test/index.html"
 expect_grep 'role="note"' "$P/render-test/index.html"
 expect_grep 'footnote' "$P/render-test/index.html"
 expect_grep '<pre class="mermaid">' "$P/render-test/index.html"
-# navigation: five groups, dropdown menus present with Flowbite hooks; render-test is noindex
-# One dropdown per navigation group that has items; a group without items is a plain
-# link. Counted from nav.toml rather than written down, so adding a group does not make
-# this case fail for a reason that has nothing to do with the site being wrong.
-nav_groups="$(awk '/^\[\[groups\]\]/{g++} /^items = \[/{withitems++} END{print withitems+0}' "$ROOT/site/data/nav.toml")"
-[ "$(grep -o 'data-dropdown-toggle="nav-menu-' "$P/index.html" | wc -l | tr -d ' ')" = "$nav_groups" ]
+# navigation: every group in nav.toml that has items becomes a dropdown, with the Flowbite
+# hook. The expected number is read from the data rather than written here, so adding a
+# navigation group does not fail this case for the wrong reason. render-test is noindex.
+navgroups="$(awk '/^\[\[groups\]\]/{g++} /^items = \[/{d++} END{print d+0}' "$ROOT/site/data/nav.toml")"
+[ "$(grep -o 'data-dropdown-toggle="nav-menu-' "$P/index.html" | wc -l | tr -d ' ')" = "$navgroups" ] \
+  || { echo "    nav.toml declares $navgroups groups with items; the navbar renders $(grep -c 'data-dropdown-toggle="nav-menu-' "$P/index.html")"; exit 1; }
 expect_grep '<meta name="robots" content="noindex">' "$P/render-test/index.html"
 expect_no_grep '<meta name="robots" content="noindex">' "$P/index.html"
 # homepage: one primary CTA in the final block, boundary statement present

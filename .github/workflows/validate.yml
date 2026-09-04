@@ -23,7 +23,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y shellcheck >/dev/null
-          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/site-build scripts/site-check scripts/site-serve
+          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/github-sync scripts/site-build scripts/site-check scripts/site-serve
           shellcheck -x -s bash -S warning test/cases/*.sh
       # The one canonical validation surface. Every behavioural, negative and integration
       # case runs here; nothing is skipped, and no failure is swallowed. test/run.sh exits
@@ -51,6 +51,20 @@ jobs:
           for p in $(ls .majordomus/prompts/*.md | xargs -n1 basename | sed 's/\.md$//'); do
             bin/majordomus prompt render "$p" | grep -q '{{' && { echo "unrendered token in $p"; exit 1; }
             true
+          done
+      # The canonical project model: schemas, references, the dependency graph, and status
+      # consistency. Blocking, with no advisory pass — a model that cannot be executed is not
+      # a warning. `plan validate` exits 10 on any failing finding and 0 on warnings only.
+      - name: the project model validates
+        run: bin/majordomus plan validate
+      # The GitHub projection, computed offline. This needs no token and makes no request: it
+      # renders what would be posted from the canonical model, so a projection that cannot be
+      # produced fails here rather than at the moment somebody runs --apply.
+      - name: the GitHub projection is producible offline
+        run: |
+          scripts/github-sync --plan
+          for id in $(bin/majordomus plan list | awk 'NR>1{print $1}'); do
+            scripts/github-sync --render "$id" | grep -q '^<!-- majordomus:begin' || { echo "no generated region for $id"; exit 1; }
           done
       # The committed derived site data must match the canonical files it is generated from.
       - name: derived site data in sync

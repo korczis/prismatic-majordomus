@@ -1,0 +1,39 @@
+id: M001
+title: A blocking question survives a handover
+slug: blocker-survives-handover
+order: 1
+priority: p1
+problem: "An open question is the mechanism for stopping acceptance when work depends on a person. It is attached to the task that opened it, and the gate only reads questions belonging to the active task. Handing over and starting a new task therefore leaves the question unresolved and no longer blocking anything, so the one thing that was supposed to refuse a completed finish refuses nothing. The gap was found by running the documented end-to-end sequence, not by review, and it is published as a planned claim with no implementation and no test."
+outcome: "An unresolved question keeps refusing a completed finish after the work moves to a new task, or the alternative is chosen deliberately and the reason is recorded where the next worker will read it."
+current_state: "docs/CLAIMS.yaml carries blocker-survives-handover as planned, with implementation and test both '-'. lib/question.sh matches unresolved lines by the active task id; lib/check.sh reads only those. Nothing detects that a handover has orphaned a blocker."
+desired_state: "The behaviour is decided between two named alternatives, implemented, proved by a behavioural case, and the claim moves from planned to guaranteed with its implementation and test filled in."
+scope:
+  - lib/question.sh
+  - lib/check.sh
+  - share/skeleton/templates/open-questions.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - docs/CONTINUITY.md
+  - test/cases
+non_scope:
+  - A question that blocks across repositories or worktrees
+  - Assigning a question to a person, or notifying anybody
+  - Any change to the finish contract's other lines
+acceptance_criteria:
+  - A behavioural case demonstrates the current escape, so the gap is executable rather than asserted
+  - The choice between transferring the question and widening the gate is recorded as a decision with what was rejected and why
+  - The chosen behaviour is implemented and a case fails when it is removed
+  - The claim in docs/CLAIMS.yaml moves to guaranteed with a real implementation path and a real test path
+  - The claim detail page states what the behaviour does not cover
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - scripts/generate-site-data --check
+evidence_required:
+  - gap_reproduced
+  - decision_recorded
+  - behaviour_tested
+risks:
+  - "Transferring a question with a handover makes it a property of the work rather than of the task, which is right in the common case and wrong when the handover is to a different piece of work. Widening the gate to every unresolved question blocks tasks that never opened one. The decision has to name the case it is choosing to be wrong in."
+created_at: 2026-09-04
+updated_at: 2026-09-04
