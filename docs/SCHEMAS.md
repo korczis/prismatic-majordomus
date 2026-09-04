@@ -543,11 +543,17 @@ Common envelope:
 {"ts":"2026-09-03T19:30:12Z","event":"task.started","task_id":"t-20260903-193012-a4f1","head":"3f2a9c1e...","branch":"main","by":"majordomus/0.1.0"}
 ```
 
+The event vocabulary is closed. `share/events.yaml` declares every name the ledger
+accepts, what writes it, and the payload keys it must carry; `mj_ledger_append` refuses
+an unregistered name, `history --event` refuses to filter on one, and
+`history --validate` reports a stored line whose name no reader recognises. Adding an
+event means adding an entry there — the same rule that makes an unknown policy key an
+error.
+
 Events and their extra fields:
 
 | event | extra fields |
 |---|---|
-| `bootstrap` | `reason` |
 | `task.started` | `profile`, `scope[]`, `owner` |
 | `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved |
 | `task.finished` | `outcome`, `contract` (object of doctrine id → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null, `checkpoints` (count) |

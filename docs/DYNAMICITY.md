@@ -66,8 +66,8 @@ file in `docs/` appears in no row.
 | Claim | `docs/CLAIMS.yaml` | registry walk | guarantees pages, `docs/SITE_CLAIMS.md` |
 | Responsibility | `docs/RESPONSIBILITIES.yaml` | registry walk | site, doctrine registry |
 | Document | `docs/*.md` + the index tables | directory glob, index enforced | site routes |
-| Command | *target:* `share/commands.yaml` | validated against the dispatch table | usage, docs, pages, demos, coverage |
-| Event type | *target:* `share/events.yaml` | registry walk | ledger validation, `history`, context |
+| Command | `share/commands.yaml` | validated against the dispatch table | docs, pages, demos, coverage |
+| Event type | `share/events.yaml` | registry walk | ledger validation, `history`, `docs/SCHEMAS.md` |
 | Projection | `.majordomus/policy.yaml` `projections[]` | policy walk | `update`, `doctor`, `watch` |
 | Context provider | *target:* one table in `lib/context.sh` | registry walk | assembly, budget dropping, JSON |
 
@@ -97,23 +97,32 @@ Two properties every generator must have:
 A durable state change is an event. The ledger is append-only and already the canonical
 record; the target is a registered vocabulary over it, not a second log.
 
-Nine event names are written today and none is registered, so a typo produces a durable
-record that every reader ignores and `history --event` cannot distinguish an unknown name
-from one that has not occurred. The target is `share/events.yaml` declaring each type with
-its required payload fields, `mj_ledger_append` refusing an unregistered name, and
-`history` refusing to filter on one.
+`share/events.yaml` declares every name the ledger accepts, the command that writes it,
+and the payload keys that name requires. `mj_ledger_append` refuses an unregistered name
+and one missing a required field; `history --event` refuses to filter on a name that is
+not declared, rather than answering with the empty result a declared-but-absent name would
+give; `history --validate` reports a stored line whose name no reader recognises. Before
+that, a mistyped name produced a durable record that every reader silently ignored, and
+`docs/SCHEMAS.md` documented a `bootstrap` event that nothing had ever written.
 
-Two constraints on that work:
+Two constraints shaped the work:
 
 - **Existing names are kept.** Renaming breaks every ledger that exists, including this
-  repository's own. The vocabulary is registered as written.
+  repository's own, and a reader that silently omits everything before a rename is worse
+  than an inconsistent name. The vocabulary is registered as written.
 - **Ledger order is load-bearing.** `mj_record_rank` uses ledger position to break
   resolution ties between records created in the same second. Nothing may reorder,
   rewrite, or rotate lines without accounting for it.
 
-The one absent event worth adding is a refused `finish`: today an accepted completion is
-recorded and a refusal leaves no trace, so a task refused four times looks exactly like
-one that passed first try.
+Rendering is the one place a per-event branch is still allowed to exist, because how an
+event reads to a person is presentation rather than vocabulary. There is exactly one such
+branch, in `lib/history.sh`, and it is reconciled against the registry rather than removed:
+an event with no rendering, and a rendering for an event that is not declared, both fail.
+
+The one absent event still worth adding is a refused `finish`: an accepted completion is
+recorded and a refusal leaves no trace, so a task refused four times looks exactly like one
+that passed first try. `test/cases/32_refusal_lifecycle.sh` performs four refusals and
+carries the assertion that will hold when the event exists.
 
 ## Self-governance
 

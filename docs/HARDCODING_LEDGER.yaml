@@ -20,6 +20,10 @@
 #   medium  a check exists but is indirect, or the drift is visible only on the website
 #   low     drift is cosmetic or already caught by a test
 #
+# status:
+#   open    the finding stands; the reproduce command still shows it
+#   fixed   resolved, with the commit that resolved it named in `resolved_by`
+#
 # Every row's `reproduce` command shows the finding without trusting this file.
 version: 1
 
@@ -44,6 +48,7 @@ findings:
     recommended: REGISTRY
     target: share/commands.yaml, validated against the dispatch table
     priority: 1
+    status: open
     reproduce: "grep -n 'init|doctor|start' bin/majordomus; grep -n 'COMMANDS=' scripts/generate-site-data"
 
   - id: event-vocabulary-unregistered
@@ -66,6 +71,9 @@ findings:
     recommended: EVENT
     target: share/events.yaml, a validator on append, and history refusing an unregistered name
     priority: 1
+    status: fixed
+    resolved_by: "share/events.yaml declares the nine names as written; mj_ledger_append refuses an unregistered name and one missing a required field; history --event refuses to filter on one; history --validate reports a stored line no reader recognises. The phantom bootstrap event is gone from docs/SCHEMAS.md. Reconciled by test/cases/33_event_registry.sh."
+
     reproduce: "grep -rn 'mj_ledger_append' lib/ | sed 's/(.*//'"
 
   - id: finish-refusal-leaves-no-trace
@@ -85,6 +93,7 @@ findings:
     recommended: EVENT
     target: "a finish.refused event carrying the doctrines that refused"
     priority: 1
+    status: open
     reproduce: "grep -n 'mj_ledger_append' lib/finish.sh"
 
   - id: context-provider-lists
@@ -106,6 +115,7 @@ findings:
     recommended: REGISTRY
     target: "one table of context providers: id, order, budget behaviour, JSON key"
     priority: 2
+    status: open
     reproduce: "grep -n 'MJ_CTX_ORDER\\|MJ_CTX_DROP_ORDER\\|for d in 30.profile' lib/context.sh"
 
   - id: search-kind-vocabulary
@@ -126,6 +136,7 @@ findings:
     recommended: MOVE_TO_CANONICAL_DATA
     target: "one list, with usage text and validation derived from it"
     priority: 3
+    status: open
     reproduce: "grep -n 'handover|checkpoint|decision' lib/search.sh"
 
   - id: generated-json-inventory
@@ -145,6 +156,8 @@ findings:
     recommended: DERIVE
     target: "iterate the files the generator actually produced"
     priority: 1
+    status: fixed
+    resolved_by: "d0028b9 — check mode now iterates the staging directory and reports an ORPHAN for a committed file the generator no longer produces"
     reproduce: "ls site/data/generated/ | sed 's/\\.json$//' | while read -r b; do grep -q \"\\b$b\\b\" <(sed -n '328p;332,334p' scripts/generate-site-data) || echo \"never compared: $b\"; done"
 
   - id: site-tile-route-list
@@ -162,6 +175,7 @@ findings:
     recommended: DERIVE
     target: "iterate the generated content collections"
     priority: 2
+    status: open
     reproduce: "sed -n '86,89p' scripts/site-check"
 
   - id: orphan-provider-templates
@@ -179,6 +193,7 @@ findings:
     recommended: REGISTRY
     target: "provider discovery with an explicit answer for an undeclared template"
     priority: 3
+    status: open
     reproduce: "ls .majordomus/providers/*.tmpl; grep -n 'provider:' .majordomus/policy.yaml"
 
   - id: derivable-counts-in-prose
@@ -200,6 +215,7 @@ findings:
     recommended: REMOVE_DUPLICATE
     target: "phrase without the number, or generate the sentence"
     priority: 2
+    status: open
     reproduce: "grep -rnE '\\b(eight|[0-9]+) (commands|subcommands|cases)\\b' README.md docs/"
 
   - id: exit-code-table-in-prose
@@ -218,6 +234,7 @@ findings:
     recommended: DERIVE
     target: "generate the table, or assert it matches lib/common.sh in a test"
     priority: 3
+    status: open
     reproduce: "sed -n '7p' lib/common.sh; sed -n '20,27p' docs/CLI.md"
 
   - id: reference-navigation-hand-written
@@ -236,6 +253,7 @@ findings:
     recommended: DERIVE
     target: "curated groups, generated members for reference collections"
     priority: 3
+    status: open
     reproduce: "cat site/data/nav.toml"
 
   - id: ci-platform-matrix
@@ -252,6 +270,7 @@ findings:
     recommended: KEEP_LITERAL
     target: "-"
     priority: 4
+    status: open
     reproduce: "sed -n '5,12p' .github/workflows/validate.yml"
 
   - id: schema-allowlists
@@ -268,6 +287,7 @@ findings:
     recommended: KEEP_LITERAL
     target: "-"
     priority: 4
+    status: open
     reproduce: "ls share/allow/"
 
   - id: docs-index-tables
@@ -285,4 +305,5 @@ findings:
     recommended: KEEP_LITERAL
     target: "-"
     priority: 4
+    status: open
     reproduce: "sed -n '227,233p' scripts/generate-site-data"
