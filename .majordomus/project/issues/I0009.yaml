@@ -31,4 +31,14 @@ evidence_required:
   - site_test
 risk: "The site build is the slowest surface; a regression here is found late."
 created_at: 2026-09-04
-updated_at: 2026-09-04
+updated_at: 2026-09-04T03:28:33Z
+started_at: 2026-09-04T03:18:38Z
+verified_at: 2026-09-04T03:28:32Z
+completed_at: 2026-09-04T03:28:33Z
+evidence:
+  - covers: site_test
+    type: build
+    command: "scripts/generate-site-data --check && scripts/site-build && scripts/site-check"
+    result: "site-check: 0 failure(s); every milestone and issue has a page, every canonical edge appears in the rendered graph, every READY issue is linked from /plan/"
+    commit: 615c2b29848fc0d110f5e998a0fb22872dd65ad0
+    recorded_at: 2026-09-04T03:28:33Z

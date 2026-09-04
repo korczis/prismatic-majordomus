@@ -1,0 +1,71 @@
+{# One milestone, rendered from data/generated/plan.json. Nothing on this page is authored:
+   the status, the counts, the wave layout and the diagram are all derived from the canonical
+   record by the same engine the command line reads. #}
+{% extends "page.html" %}
+{% block body %}
+{%- set plan = load_data(path="data/generated/plan.json") -%}
+{%- set ms = [m for m in plan.milestones if m.id == page.extra.plan_id][0] -%}
+{%- set mine = [i for i in plan.issues if i.milestone == ms.id] -%}
+{%- set repo = "https://github.com/korczis/prismatic-majordomus/blob/master/" -%}
+<div class="min-w-0">
+  <p class="flex flex-wrap items-center gap-3">{{ <plan_status status={ms.status} /> }}<span class="text-sm text-body">{{ ms.counts.done }} of {{ ms.counts.total }} issues done{% if ms.id == plan.active_milestone %} · this is the active milestone{% endif %}</span></p>
+
+  <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ ms.counts.done }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ ms.counts.ready }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ ms.counts.active }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ ms.counts.verify }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ ms.counts.blocked }}</dd></div>
+  </dl>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Problem</h2>
+  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.problem }}</p>
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Outcome</h2>
+  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.outcome }}</p>
+  {%- if ms.current_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.current_state }}</p>{% endif %}
+  {%- if ms.desired_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.desired_state }}</p>{% endif %}
+
+  {{ <plan_list title="Scope" items={ms.scope} mono="1" /> }}
+  {{ <plan_list title="Out of scope" items={ms.non_scope} /> }}
+  {{ <plan_list title="Acceptance criteria" items={ms.acceptance_criteria} /> }}
+  {{ <plan_list title="Validation" items={ms.validation} mono="1" /> }}
+  {{ <plan_list title="Evidence required" items={ms.evidence_required} mono="1" /> }}
+  {{ <plan_list title="Risks" items={ms.risks} /> }}
+
+  {%- if ms.evidence | length > 0 %}
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">A milestone is never done because its issues are; the last step is its own acceptance, and it is gated on the rows below.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[34rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th></tr></thead>
+      <tbody>{%- for e in ms.evidence %}<tr class="border-t border-default"><td class="px-4 py-2 font-mono text-xs text-heading">{{ e.covers }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ e.type }}</td><td class="px-4 py-2 font-mono text-xs text-body break-words">{{ e.command }}</td><td class="px-4 py-2 text-body">{{ e.result }}</td></tr>{%- endfor %}</tbody>
+    </table>
+  </div>
+  {%- endif %}
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Issues</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Each one is an execution contract with its own acceptance criteria, validation command and required evidence. The wave column is the layer of the dependency graph it sits in.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[38rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">issue</th><th scope="col" class="px-4 py-2">status</th><th scope="col" class="px-4 py-2">wave</th><th scope="col" class="px-4 py-2">depends on</th><th scope="col" class="px-4 py-2">title</th></tr></thead>
+      <tbody>
+        {%- for i in mine %}
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="{{ get_url(path="/plan/" ~ (i.id | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ i.id }}</a></td>
+          <td class="px-4 py-2">{{ <plan_status status={i.status} /> }}</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">{{ i.wave }}</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">{% for d in i.depends_on %}<a href="{{ get_url(path="/plan/" ~ (d | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ d }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% if i.depends_on | length == 0 %}—{% endif %}</td>
+          <td class="px-4 py-2 text-heading">{{ i.title }}</td>
+        </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The graph</h2>
+  {{ <plan_graph mermaid={ms.mermaid} caption={ms.id ~ " dependency graph"} /> }}
+
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="{{ repo }}.majordomus/project/milestones/{{ ms.id }}.yaml" class="font-mono text-fg-brand hover:underline">.majordomus/project/milestones/{{ ms.id }}.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show {{ ms.id }}</code>.</p>
+</div>
+{% endblock body %}
+{% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}

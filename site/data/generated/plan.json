@@ -1,0 +1,1064 @@
+{
+  "schema": 1,
+  "project": {
+    "name": "Prismatic Majordomus",
+    "repository": "korczis/prismatic-majordomus",
+    "default_branch": "master"
+  },
+  "active_milestone": "M000",
+  "next_ready": "I0010",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::verify\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::ready\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::blocked\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::blocked\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::ready\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "milestones": [
+    {
+      "id": "M000",
+      "slug": "milestone-dag-driven-development",
+      "status": "ACTIVE",
+      "order": 0,
+      "priority": "p0",
+      "title": "Milestone and DAG driven development",
+      "problem": "Work in this repository was planned in conversation and in task records that describe one session at a time. There was no executable specification of an outcome, no dependency graph between pieces of work, and no way for a fresh worker to ask the repository what to do next. The tool supervises a task; nothing supervised the plan the task belonged to.",
+      "outcome": "Every non-trivial change in this repository belongs to a milestone specification and to one dependency-linked issue execution contract, validated as a DAG, with status derived rather than asserted, and projected to GitHub and to the website from that one canonical model.",
+      "current_state": "The canonical model, its engine, its CLI, its projections, its doctrines and its tests exist and are exercised by this milestone's own issues. GitHub carried no issues and no milestones before this work.",
+      "desired_state": "A fresh worker with no conversation history runs `majordomus plan next`, receives one issue, executes it inside its declared scope, attaches evidence, and the graph recomputes what is ready without anybody editing a status field.",
+      "scope": [
+        ".majordomus/project",
+        "lib/project.sh",
+        "lib/project.awk",
+        "lib/plan.sh",
+        "share/allow",
+        "share/doctrines.yaml",
+        "scripts/github-sync",
+        "scripts/generate-site-data",
+        "site",
+        "test/cases",
+        "docs"
+      ],
+      "non_scope": [
+        "A hosted planning backend or database",
+        "A second project-management vocabulary; milestones and issues are the only new nouns",
+        "Bidirectional GitHub write-back into the canonical files",
+        "Estimation, burndown, velocity or any scheduling model"
+      ],
+      "acceptance_criteria": [
+        "The canonical model parses, rejects unknown keys, and refuses a duplicate id",
+        "A dependency cycle, a self-dependency and an unknown dependency are each rejected with a named finding",
+        "READY, BLOCKED, ACTIVE, VERIFY, DONE and CANCELLED are derived from recorded facts and stored nowhere",
+        "Execution waves are computed from the graph, and overlapping scope inside one wave is reported",
+        "The Mermaid DAG is generated from the same graph the CLI reads",
+        "GitHub milestones and issues are created and updated from the canonical model, and drift between them is reported",
+        "The website renders the roadmap, every milestone, every issue and the DAG from generated data",
+        "Every surface agrees: the CLI, the site data and the GitHub projection report the same issue set and the same READY set",
+        "Changing one dependency changes every surface",
+        "CI refuses a push whose canonical model is invalid or whose generated artifacts are stale"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus plan validate",
+        "scripts/generate-site-data --check"
+      ],
+      "evidence_required": [
+        "suite",
+        "cross_surface",
+        "mutation",
+        "github"
+      ],
+      "risks": [
+        "The engine is shell and awk; a graph large enough to make that slow would need a different implementation. Measured, not assumed.",
+        "GitHub is a projection. If a human edits a generated issue body, the next sync reports drift rather than silently overwriting it, which means drift can accumulate unattended."
+      ],
+      "evidence": [],
+      "issues": [
+        "I0001",
+        "I0002",
+        "I0003",
+        "I0004",
+        "I0005",
+        "I0006",
+        "I0007",
+        "I0008",
+        "I0009",
+        "I0010",
+        "I0011",
+        "I0012",
+        "I0013",
+        "I0014",
+        "I0015"
+      ],
+      "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::verify\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::ready\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::blocked\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::blocked\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::ready\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 15,
+        "done": 9,
+        "ready": 2,
+        "blocked": 3,
+        "active": 0,
+        "verify": 1,
+        "cancelled": 0
+      }
+    }
+  ],
+  "issues": [
+    {
+      "id": "I0001",
+      "slug": "audit-planning-reality",
+      "milestone": "M000",
+      "status": "DONE",
+      "wave": 0,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": true,
+      "title": "Audit what actually plans work in this repository",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I0002"
+      ],
+      "scope": [
+        "docs"
+      ],
+      "non_scope": [
+        "Any change to behaviour"
+      ],
+      "objective": "Establish an evidence-backed map of how work is currently planned, tracked and remembered here, so that the model that replaces it is built against reality rather than against the README.",
+      "why": "Every later issue depends on knowing what already exists. The repository already has a canonical-to-derived architecture for claims, doctrines and the website; a planning model that ignored it would be a second architecture.",
+      "current_state": "Planning lived in task records, handovers, checkpoints and decisions. GitHub had no milestones and no issues. There was no dependency relation between pieces of work anywhere.",
+      "desired_state": "The current-state map exists, backed by commands anyone can rerun, and the schema work that follows cites it.",
+      "acceptance_criteria": [
+        "The GitHub milestone and issue inventory is measured, not assumed",
+        "The existing canonical-to-derived pipeline is identified so the new model reuses it",
+        "The portability constraints that bound the implementation are named"
+      ],
+      "validation": [
+        "gh issue list --state all",
+        "gh api repos/korczis/prismatic-majordomus/milestones"
+      ],
+      "evidence_required": [
+        "inventory"
+      ],
+      "evidence": [
+        {
+          "covers": "inventory",
+          "type": "manual",
+          "command": "gh issue list --state all --limit 50; gh api repos/korczis/prismatic-majordomus/milestones",
+          "result": "both empty: the repository had no GitHub issues and no milestones before this milestone",
+          "artifact": "",
+          "commit": "60f83e37ce4553835dd018a70793128cec0a2f76",
+          "recorded_at": "2026-09-04T02:54:02Z"
+        }
+      ],
+      "risk": "Low. Read-only.",
+      "completion": "",
+      "started_at": "2026-09-04T02:54:00Z",
+      "verified_at": "2026-09-04T02:54:01Z",
+      "completed_at": "2026-09-04T02:54:02Z"
+    },
+    {
+      "id": "I0002",
+      "slug": "canonical-schema",
+      "milestone": "M000",
+      "status": "DONE",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": true,
+      "title": "Define the canonical milestone and issue schema",
+      "depends_on": [
+        "I0001"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0003"
+      ],
+      "scope": [
+        ".majordomus/project",
+        "share/allow",
+        "docs/SCHEMAS.md"
+      ],
+      "non_scope": [
+        "JSON Schema; this repository validates with allowlists and its own YAML subset",
+        "A separate evidence directory; evidence lives inside the record it proves"
+      ],
+      "objective": "Define the smallest repository-native representation of a milestone outcome specification and an issue execution contract, and enforce it the way every other configuration file here is enforced: a key nobody reads is an error.",
+      "why": "Every surface downstream reads these files. A field that is written and never read, or read and never written, becomes a lie that the website eventually publishes.",
+      "current_state": "Policy, profiles and prompts each have an allowlist under share/allow. Milestones and issues had none because they did not exist.",
+      "desired_state": "share/allow/project.txt, share/allow/milestone.txt and share/allow/issue.txt exist and every key in a canonical file matches one of them.",
+      "acceptance_criteria": [
+        "An unknown key in a milestone or issue file is a reported failure",
+        "No status field exists in either schema",
+        "Evidence is part of the record whose completion it gates"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "bash test/run.sh 40_project_model"
+      ],
+      "evidence_required": [
+        "schema_test"
+      ],
+      "evidence": [
+        {
+          "covers": "schema_test",
+          "type": "test",
+          "command": "bash test/run.sh 40_project_model",
+          "result": "1 passed, 0 failed",
+          "artifact": "",
+          "commit": "2dd5915d62182c8c35f609391a23c355fad1134a",
+          "recorded_at": "2026-09-04T03:12:44Z"
+        }
+      ],
+      "risk": "A schema too small forces a later migration; a schema too large invites fields nobody reads.",
+      "completion": "",
+      "started_at": "2026-09-04T03:12:42Z",
+      "verified_at": "2026-09-04T03:12:43Z",
+      "completed_at": "2026-09-04T03:12:44Z"
+    },
+    {
+      "id": "I0003",
+      "slug": "derivation-engine",
+      "milestone": "M000",
+      "status": "DONE",
+      "wave": 2,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Implement the model loader and the status derivation engine",
+      "depends_on": [
+        "I0002"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0004"
+      ],
+      "scope": [
+        "lib/project.sh",
+        "lib/project.awk"
+      ],
+      "non_scope": [
+        "Any status field a human can set directly"
+      ],
+      "objective": "Load every canonical file into one normalised model and derive issue and milestone status from recorded facts, in exactly one implementation that every surface calls.",
+      "why": "Four surfaces need to know what is READY. Four implementations of READY is four answers. One engine is the whole architecture.",
+      "current_state": "Nothing read the canonical files.",
+      "desired_state": "lib/project.sh loads the files, lib/project.awk derives the model, and the CLI, the site generator and the GitHub adapter all read that model.",
+      "acceptance_criteria": [
+        "Issue status is derived from started_at, verified_at, completed_at, cancelled, evidence coverage and dependency state",
+        "Milestone status is derived from its issues and its own evidence",
+        "The active milestone is derived from order and status, not declared",
+        "A completed issue whose required evidence is missing derives VERIFY, not DONE"
+      ],
+      "validation": [
+        "bash test/run.sh 41_project_status"
+      ],
+      "evidence_required": [
+        "status_test"
+      ],
+      "evidence": [
+        {
+          "covers": "status_test",
+          "type": "test",
+          "command": "bash test/run.sh 41_project_status",
+          "result": "1 passed, 0 failed",
+          "artifact": "",
+          "commit": "2dd5915d62182c8c35f609391a23c355fad1134a",
+          "recorded_at": "2026-09-04T03:12:46Z"
+        }
+      ],
+      "risk": "bash 3.2 has no associative arrays; the graph work is done in awk, which does.",
+      "completion": "",
+      "started_at": "2026-09-04T03:12:45Z",
+      "verified_at": "2026-09-04T03:12:46Z",
+      "completed_at": "2026-09-04T03:12:47Z"
+    },
+    {
+      "id": "I0004",
+      "slug": "dag-and-waves",
+      "milestone": "M000",
+      "status": "DONE",
+      "wave": 3,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Implement DAG validation and execution waves",
+      "depends_on": [
+        "I0003"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0005",
+        "I0006",
+        "I0010"
+      ],
+      "scope": [
+        "lib/project.awk"
+      ],
+      "non_scope": [
+        "Estimation or critical-path scheduling"
+      ],
+      "objective": "Validate the dependency graph and derive topological execution waves, refusing every malformed graph with a named finding rather than a guess.",
+      "why": "A dependency list without validation is a suggestion. A cycle that nobody detects becomes a set of issues that can never be ready and nobody can explain why.",
+      "current_state": "No graph existed.",
+      "desired_state": "Unknown, self and duplicate dependencies, duplicate ids and cycles are each rejected by name, and waves are computed by Kahn layering.",
+      "acceptance_criteria": [
+        "A cycle is detected and the issues inside it are named",
+        "A self-dependency and an unknown dependency are each a distinct finding",
+        "Waves place an issue one layer past its deepest dependency",
+        "Two issues sharing a wave and a scope path are reported as serialised"
+      ],
+      "validation": [
+        "bash test/run.sh 42_dag_waves"
+      ],
+      "evidence_required": [
+        "dag_test"
+      ],
+      "evidence": [
+        {
+          "covers": "dag_test",
+          "type": "test",
+          "command": "bash test/run.sh 42_dag_waves",
+          "result": "1 passed, 0 failed",
+          "artifact": "",
+          "commit": "2dd5915d62182c8c35f609391a23c355fad1134a",
+          "recorded_at": "2026-09-04T03:12:49Z"
+        }
+      ],
+      "risk": "Low",
+      "completion": "",
+      "started_at": "2026-09-04T03:12:48Z",
+      "verified_at": "2026-09-04T03:12:48Z",
+      "completed_at": "2026-09-04T03:12:50Z"
+    },
+    {
+      "id": "I0005",
+      "slug": "plan-command",
+      "milestone": "M000",
+      "status": "DONE",
+      "wave": 4,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Implement the plan command surface",
+      "depends_on": [
+        "I0004"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0007",
+        "I0008",
+        "I0009",
+        "I0013",
+        "I0014"
+      ],
+      "scope": [
+        "lib/plan.sh",
+        "bin/majordomus",
+        "docs/CLI.md"
+      ],
+      "non_scope": [
+        "Any network call; the CLI never leaves the machine"
+      ],
+      "objective": "Give a worker one command that answers what is ready, why something is blocked, what the graph looks like, and that moves an issue through its lifecycle while refusing illegal transitions.",
+      "why": "A model nobody can query is a filing cabinet. The command is how a fresh session with no conversation history finds its work.",
+      "current_state": "The engine existed with no interface.",
+      "desired_state": "majordomus plan validate, status, list, show, ready, blocked, waves, graph, next, body, start, verify, evidence and done all read the one model.",
+      "acceptance_criteria": [
+        "plan start refuses an issue that is not READY",
+        "plan done refuses while a required evidence token has no evidence",
+        "plan evidence refuses a token the issue does not require",
+        "plan evidence refuses without a command or an artifact",
+        "every subcommand answers --help and an unknown one exits 2"
+      ],
+      "validation": [
+        "bash test/run.sh 43_plan_command"
+      ],
+      "evidence_required": [
+        "command_test"
+      ],
+      "evidence": [
+        {
+          "covers": "command_test",
+          "type": "test",
+          "command": "bash test/run.sh 43_plan_command",
+          "result": "1 passed, 0 failed",
+          "artifact": "",
+          "commit": "2dd5915d62182c8c35f609391a23c355fad1134a",
+          "recorded_at": "2026-09-04T03:12:52Z"
+        }
+      ],
+      "risk": "Low",
+      "completion": "",
+      "started_at": "2026-09-04T03:12:50Z",
+      "verified_at": "2026-09-04T03:12:51Z",
+      "completed_at": "2026-09-04T03:12:53Z"
+    },
+    {
+      "id": "I0006",
+      "slug": "mermaid-from-graph",
+      "milestone": "M000",
+      "status": "DONE",
+      "wave": 4,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Generate the Mermaid DAG from the graph",
+      "depends_on": [
+        "I0004"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0009"
+      ],
+      "scope": [
+        "lib/project.sh"
+      ],
+      "non_scope": [
+        "Layout tuning beyond what Mermaid decides"
+      ],
+      "objective": "Render the dependency graph as Mermaid from the same edges the engine derives, so that no diagram anywhere is drawn by hand.",
+      "why": "A hand-drawn dependency diagram is a second source of truth that is wrong the first time an edge changes.",
+      "current_state": "The site rendered Mermaid for architecture diagrams written by hand in Markdown.",
+      "desired_state": "majordomus plan graph emits the DAG, and the docs, the site and the GitHub milestone body all use that output.",
+      "acceptance_criteria": [
+        "Every node in the diagram is an issue in the model and every edge is a dependency in the model",
+        "Node styling reflects derived status",
+        "Restricting to one milestone emits only that milestone's subgraph"
+      ],
+      "validation": [
+        "bash test/run.sh 42_dag_waves"
+      ],
+      "evidence_required": [
+        "mermaid_test"
+      ],
+      "evidence": [
+        {
+          "covers": "mermaid_test",
+          "type": "test",
+          "command": "bash test/run.sh 42_dag_waves",
+          "result": "1 passed, 0 failed",
+          "artifact": "",
+          "commit": "2dd5915d62182c8c35f609391a23c355fad1134a",
+          "recorded_at": "2026-09-04T03:12:55Z"
+        }
+      ],
+      "risk": "Low",
+      "completion": "",
+      "started_at": "2026-09-04T03:12:53Z",
+      "verified_at": "2026-09-04T03:12:54Z",
+      "completed_at": "2026-09-04T03:12:55Z"
+    },
+    {
+      "id": "I0007",
+      "slug": "model-doctrine",
+      "milestone": "M000",
+      "status": "DONE",
+      "wave": 5,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Enforce the canonical model as doctrine",
+      "depends_on": [
+        "I0005"
+      ],
+      "blocked_by": [],
+      "dependents": [],
+      "scope": [
+        "share/doctrines.yaml",
+        "lib/doctor.sh"
+      ],
+      "non_scope": [
+        "Blocking a commit on a work-in-progress issue; progress is reported, not blocked"
+      ],
+      "objective": "Add the project model to the doctrine registry so that doctor reports a broken model and watch reports a model that has drifted, through the same dispatcher every other rule uses.",
+      "why": "A rule enforced by a script nobody runs is documentation. The doctrine registry is how this repository makes enforcement verifiable end to end.",
+      "current_state": "The registry covered policy, profiles, scope, state, notes, projections and retention. Nothing covered the plan.",
+      "desired_state": "project_integrity and dag_integrity are declared, have validator functions, are dispatched by doctor and watch, and each has a test.",
+      "acceptance_criteria": [
+        "A repository with no canonical model skips both doctrines rather than failing",
+        "An invalid model is a blocking doctor failure with a reproduce command",
+        "watch reports the same violations as drift"
+      ],
+      "validation": [
+        "bash test/run.sh 44_model_doctrine"
+      ],
+      "evidence_required": [
+        "doctrine_test"
+      ],
+      "evidence": [
+        {
+          "covers": "doctrine_test",
+          "type": "test",
+          "command": "bash test/run.sh 44_model_doctrine",
+          "result": "1 passed, 0 failed",
+          "artifact": "",
+          "commit": "2dd5915d62182c8c35f609391a23c355fad1134a",
+          "recorded_at": "2026-09-04T03:12:57Z"
+        }
+      ],
+      "risk": "A doctrine that fails in a repository without a project model would make every user installation red.",
+      "completion": "",
+      "started_at": "2026-09-04T03:12:56Z",
+      "verified_at": "2026-09-04T03:12:57Z",
+      "completed_at": "2026-09-04T03:12:58Z"
+    },
+    {
+      "id": "I0008",
+      "slug": "github-projection",
+      "milestone": "M000",
+      "status": "VERIFY",
+      "wave": 5,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Project the model to GitHub milestones and issues",
+      "depends_on": [
+        "I0005"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0011"
+      ],
+      "scope": [
+        "scripts/github-sync"
+      ],
+      "non_scope": [
+        "Writing GitHub state back into the canonical files",
+        "Any network call inside bin, lib, share or test"
+      ],
+      "objective": "Create and update GitHub milestones and issues from the canonical model, report drift instead of overwriting human edits, and keep every network call out of the tool itself.",
+      "why": "GitHub is where collaboration happens, so it must show the plan. It is not where the plan lives, so it must never be the thing that defines it.",
+      "current_state": "The repository had no GitHub issues or milestones at all.",
+      "desired_state": "scripts/github-sync renders the projection from majordomus plan body, creates what is missing, updates what changed, and reports what a human has edited.",
+      "acceptance_criteria": [
+        "The adapter runs offline against a fixture and produces the exact payload it would post",
+        "A managed issue whose body differs from the projection is reported as drift, not overwritten",
+        "A closed issue whose canonical status is not DONE is reported",
+        "The tool itself contains no network client"
+      ],
+      "validation": [
+        "bash test/run.sh 45_github_projection",
+        "scripts/github-sync --plan"
+      ],
+      "evidence_required": [
+        "projection_test",
+        "github"
+      ],
+      "evidence": [
+        {
+          "covers": "projection_test",
+          "type": "test",
+          "command": "bash test/run.sh 45_github_projection",
+          "result": "1 passed, 0 failed",
+          "artifact": "",
+          "commit": "2dd5915d62182c8c35f609391a23c355fad1134a",
+          "recorded_at": "2026-09-04T03:13:06Z"
+        }
+      ],
+      "risk": "A sync that overwrites a human comment thread would make GitHub hostile to use.",
+      "completion": "",
+      "started_at": "2026-09-04T03:13:04Z",
+      "verified_at": "2026-09-04T03:13:05Z",
+      "completed_at": ""
+    },
+    {
+      "id": "I0009",
+      "slug": "site-projection",
+      "milestone": "M000",
+      "status": "DONE",
+      "wave": 5,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Project the model into the website",
+      "depends_on": [
+        "I0005",
+        "I0006"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0011"
+      ],
+      "scope": [
+        "scripts/generate-site-data",
+        "site/templates",
+        "site/data/generated"
+      ],
+      "non_scope": [
+        "Any hand-written roadmap content"
+      ],
+      "objective": "Generate the roadmap, every milestone page, every issue page and the DAG page from the canonical model through the existing site data pipeline.",
+      "why": "The website already derives every capability claim from a canonical file. A hand-written roadmap page beside it would be the one page that can be wrong.",
+      "current_state": "The site derived project, profiles, policy, claims, doctrines, commands and docs. It had no roadmap.",
+      "desired_state": "site/data/generated/plan.json exists, and the roadmap, milestone, issue and DAG routes render from it and from nothing else.",
+      "acceptance_criteria": [
+        "The generated data contains every milestone and issue with its derived status and wave",
+        "The roadmap, milestone, issue and DAG routes exist and are reachable from navigation",
+        "The pages are mobile-first and the DAG stays readable on a narrow screen",
+        "Stale generated data fails the sync check"
+      ],
+      "validation": [
+        "scripts/generate-site-data --check",
+        "scripts/site-build",
+        "scripts/site-check"
+      ],
+      "evidence_required": [
+        "site_test"
+      ],
+      "evidence": [
+        {
+          "covers": "site_test",
+          "type": "build",
+          "command": "scripts/generate-site-data --check && scripts/site-build && scripts/site-check",
+          "result": "site-check: 0 failure(s); every milestone and issue has a page, every canonical edge appears in the rendered graph, every READY issue is linked from /plan/",
+          "artifact": "",
+          "commit": "615c2b29848fc0d110f5e998a0fb22872dd65ad0",
+          "recorded_at": "2026-09-04T03:28:33Z"
+        }
+      ],
+      "risk": "The site build is the slowest surface; a regression here is found late.",
+      "completion": "",
+      "started_at": "2026-09-04T03:18:38Z",
+      "verified_at": "2026-09-04T03:28:32Z",
+      "completed_at": "2026-09-04T03:28:33Z"
+    },
+    {
+      "id": "I0010",
+      "slug": "model-tests",
+      "milestone": "M000",
+      "status": "READY",
+      "wave": 4,
+      "priority": "p0",
+      "profile": "debugging",
+      "parallel_safe": true,
+      "title": "Behavioural tests for schema, status, graph and command",
+      "depends_on": [
+        "I0004"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0011"
+      ],
+      "scope": [
+        "test/cases"
+      ],
+      "non_scope": [
+        "Property-based testing frameworks"
+      ],
+      "objective": "Prove each rule of the model with a case that fails when the rule is removed, in a disposable repository, the way every other rule here is proven.",
+      "why": "The repository forbids a capability sentence without a test behind it. The model makes several capability sentences.",
+      "current_state": "No test touched the model.",
+      "desired_state": "Cases cover the schema, status derivation, the graph, the waves, the command surface and the doctrine wiring.",
+      "acceptance_criteria": [
+        "A duplicate id, an unknown dependency, a self-dependency and a cycle each have a negative case",
+        "READY, BLOCKED, ACTIVE, VERIFY and DONE each have a case",
+        "Wave assignment has a case with a diamond dependency",
+        "Every case runs in a disposable repository, never against this checkout"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "Low",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0011",
+      "slug": "consistency-and-mutation",
+      "milestone": "M000",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p0",
+      "profile": "debugging",
+      "parallel_safe": false,
+      "title": "Cross-surface consistency and mutation tests",
+      "depends_on": [
+        "I0008",
+        "I0009",
+        "I0010"
+      ],
+      "blocked_by": [
+        "I0008",
+        "I0010"
+      ],
+      "dependents": [
+        "I0012"
+      ],
+      "scope": [
+        "test/cases"
+      ],
+      "non_scope": [
+        "Live GitHub calls in the test suite"
+      ],
+      "objective": "Prove that the CLI, the generated site data and the GitHub projection describe the same graph, and that changing one canonical dependency changes all of them.",
+      "why": "One engine is a claim. A test that compares the surfaces is the only thing that keeps it true after the next change.",
+      "current_state": "Each surface was tested on its own.",
+      "desired_state": "A case compares the issue set, the READY set and the edge set across surfaces, and a second case mutates a dependency and asserts every surface moved.",
+      "acceptance_criteria": [
+        "Canonical issue count equals CLI count equals site data count equals projection count",
+        "Canonical READY set equals the CLI READY set equals the site data READY set",
+        "Canonical edges equal Mermaid edges equal site data edges",
+        "Adding one dependency changes status, waves, Mermaid and site data together"
+      ],
+      "validation": [
+        "bash test/run.sh 34_cross_surface",
+        "bash test/run.sh 35_mutation"
+      ],
+      "evidence_required": [
+        "cross_surface",
+        "mutation"
+      ],
+      "evidence": [],
+      "risk": "Low",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0012",
+      "slug": "ci-enforcement",
+      "milestone": "M000",
+      "status": "BLOCKED",
+      "wave": 7,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Make CI refuse an invalid model or a stale projection",
+      "depends_on": [
+        "I0011"
+      ],
+      "blocked_by": [
+        "I0011"
+      ],
+      "dependents": [
+        "I0015"
+      ],
+      "scope": [
+        ".github/workflows"
+      ],
+      "non_scope": [
+        "Any CI step that needs a GitHub token to pass"
+      ],
+      "objective": "Add the model validation and the projection freshness check to the blocking CI job, with no advisory pass.",
+      "why": "A validator that runs only when somebody remembers is not enforcement.",
+      "current_state": "CI ran the suite, doctor, watch and the site data sync check.",
+      "desired_state": "CI also runs plan validate and the offline GitHub projection check, and fails on either.",
+      "acceptance_criteria": [
+        "plan validate runs in the blocking job and its exit code is not swallowed",
+        "The GitHub projection is checked offline against the canonical model",
+        "No new step requires network access to succeed"
+      ],
+      "validation": [
+        "bash test/run.sh 26_ci_wiring"
+      ],
+      "evidence_required": [
+        "ci_test"
+      ],
+      "evidence": [],
+      "risk": "Low",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0013",
+      "slug": "document-the-model",
+      "milestone": "M000",
+      "status": "DONE",
+      "wave": 5,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Document the semantics and the dogfooding rule",
+      "depends_on": [
+        "I0005"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0014"
+      ],
+      "scope": [
+        "docs"
+      ],
+      "non_scope": [
+        "Any count, progress figure or status written in prose"
+      ],
+      "objective": "Write the human documentation that explains why the model exists and what its terms mean, and leave every current fact to be generated.",
+      "why": "Documentation that states current state goes stale. Documentation that states semantics does not. The split has to be deliberate or the first roadmap paragraph rots.",
+      "current_state": "docs explained the task lifecycle and the doctrine chain, and nothing explained the plan.",
+      "desired_state": "docs/PLANNING.md explains the model and docs/DOGFOODING.md states the rule that Majordomus cannot recommend a discipline it does not use.",
+      "acceptance_criteria": [
+        "The documents explain semantics and contain no current-state figures",
+        "Every command they name exists and answers --help",
+        "Both appear on the website through the existing docs pipeline"
+      ],
+      "validation": [
+        "scripts/generate-site-data --check",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "docs_build"
+      ],
+      "evidence": [
+        {
+          "covers": "docs_build",
+          "type": "build",
+          "command": "scripts/generate-site-data --check",
+          "result": "site data: in sync (bb6614bc9be5); docs/PLANNING.md and docs/DOGFOODING.md indexed and rendered",
+          "artifact": "",
+          "commit": "2dd5915d62182c8c35f609391a23c355fad1134a",
+          "recorded_at": "2026-09-04T03:16:45Z"
+        }
+      ],
+      "risk": "Low",
+      "completion": "",
+      "started_at": "2026-09-04T03:13:12Z",
+      "verified_at": "2026-09-04T03:16:44Z",
+      "completed_at": "2026-09-04T03:16:45Z"
+    },
+    {
+      "id": "I0014",
+      "slug": "worker-instructions",
+      "milestone": "M000",
+      "status": "READY",
+      "wave": 6,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Make the worker instructions require the model",
+      "depends_on": [
+        "I0005",
+        "I0013"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0015"
+      ],
+      "scope": [
+        "share/skeleton/providers/body.md",
+        ".majordomus/providers/body.md",
+        "CLAUDE.md",
+        "AGENTS.md"
+      ],
+      "non_scope": [
+        "Provider-specific wording; the body is provider neutral"
+      ],
+      "objective": "Change the always-loaded provider instructions so that a fresh worker of any provider selects work through the model rather than from conversation or a TODO list.",
+      "why": "The model only becomes the way work happens if the file every worker loads first says so.",
+      "current_state": "The projection body described the task lifecycle and said nothing about milestones, issues or dependencies.",
+      "desired_state": "The generated CLAUDE.md and AGENTS.md carry the plan lifecycle, and the projections stay inside their line budget.",
+      "acceptance_criteria": [
+        "The always-loaded projection instructs a worker to take work from plan next",
+        "The projection stays within the policy line budget",
+        "Regenerating the projections produces no diff"
+      ],
+      "validation": [
+        "bin/majordomus update",
+        "bin/majordomus doctor",
+        "bin/majordomus watch"
+      ],
+      "evidence_required": [
+        "projection_fresh"
+      ],
+      "evidence": [],
+      "risk": "The always-loaded budget is a hard cap; adding text can push the projection over it.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0015",
+      "slug": "dogfood-cutover",
+      "milestone": "M000",
+      "status": "BLOCKED",
+      "wave": 8,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Open the first real milestone and execute one issue through it",
+      "depends_on": [
+        "I0012",
+        "I0014"
+      ],
+      "blocked_by": [
+        "I0012",
+        "I0014"
+      ],
+      "dependents": [],
+      "scope": [
+        ".majordomus/project"
+      ],
+      "non_scope": [
+        "A synthetic demonstration milestone"
+      ],
+      "objective": "Prove the system on real repository work: open a milestone that exists because the repository needs it, and take one of its issues from READY to DONE entirely through the model.",
+      "why": "Infrastructure that has never carried real work is a demo. The cutover is the only evidence that the discipline is usable.",
+      "current_state": "M000 was executed partly outside the system, because the system did not exist when it began.",
+      "desired_state": "A real post-bootstrap milestone exists, one of its issues is DONE with evidence recorded through plan evidence, and the graph has recomputed the next ready issue.",
+      "acceptance_criteria": [
+        "The milestone addresses a defect or gap the repository already recorded, not one invented for this issue",
+        "One issue moved READY to ACTIVE to VERIFY to DONE through the command surface",
+        "The evidence attached to it is a command and its result, not a narrative",
+        "The next ready issue after it is derived, not chosen"
+      ],
+      "validation": [
+        "bin/majordomus plan status",
+        "bin/majordomus plan next"
+      ],
+      "evidence_required": [
+        "lifecycle"
+      ],
+      "evidence": [],
+      "risk": "Choosing a milestone to make the demonstration easy would defeat the purpose.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    }
+  ],
+  "waves": [
+    {
+      "wave": 0,
+      "issues": [
+        "I0001"
+      ]
+    },
+    {
+      "wave": 1,
+      "issues": [
+        "I0002"
+      ]
+    },
+    {
+      "wave": 2,
+      "issues": [
+        "I0003"
+      ]
+    },
+    {
+      "wave": 3,
+      "issues": [
+        "I0004"
+      ]
+    },
+    {
+      "wave": 4,
+      "issues": [
+        "I0005",
+        "I0006",
+        "I0010"
+      ]
+    },
+    {
+      "wave": 5,
+      "issues": [
+        "I0007",
+        "I0008",
+        "I0009",
+        "I0013"
+      ]
+    },
+    {
+      "wave": 6,
+      "issues": [
+        "I0011",
+        "I0014"
+      ]
+    },
+    {
+      "wave": 7,
+      "issues": [
+        "I0012"
+      ]
+    },
+    {
+      "wave": 8,
+      "issues": [
+        "I0015"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "I0001",
+      "to": "I0002"
+    },
+    {
+      "from": "I0002",
+      "to": "I0003"
+    },
+    {
+      "from": "I0003",
+      "to": "I0004"
+    },
+    {
+      "from": "I0004",
+      "to": "I0005"
+    },
+    {
+      "from": "I0004",
+      "to": "I0006"
+    },
+    {
+      "from": "I0004",
+      "to": "I0010"
+    },
+    {
+      "from": "I0005",
+      "to": "I0007"
+    },
+    {
+      "from": "I0005",
+      "to": "I0008"
+    },
+    {
+      "from": "I0005",
+      "to": "I0009"
+    },
+    {
+      "from": "I0005",
+      "to": "I0013"
+    },
+    {
+      "from": "I0005",
+      "to": "I0014"
+    },
+    {
+      "from": "I0006",
+      "to": "I0009"
+    },
+    {
+      "from": "I0008",
+      "to": "I0011"
+    },
+    {
+      "from": "I0009",
+      "to": "I0011"
+    },
+    {
+      "from": "I0010",
+      "to": "I0011"
+    },
+    {
+      "from": "I0011",
+      "to": "I0012"
+    },
+    {
+      "from": "I0012",
+      "to": "I0015"
+    },
+    {
+      "from": "I0013",
+      "to": "I0014"
+    },
+    {
+      "from": "I0014",
+      "to": "I0015"
+    }
+  ],
+  "findings": []
+}
