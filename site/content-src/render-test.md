@@ -3,7 +3,8 @@ title = "Rendering reference"
 description = "Representative Markdown for validating Flowbite Typography, syntax highlighting, tables, callouts and Mermaid across viewports. Not linked from navigation."
 template = "docs-page.html"
 [extra]
-source = "site/content/render-test.md"
+source = "site/content-src/render-test.md"
+noindex = true
 +++
 This page exists to validate rendering. It is the one Markdown file under `site/content/` that is hand-written, and it carries no product claims.
 

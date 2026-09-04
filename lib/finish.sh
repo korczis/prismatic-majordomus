@@ -86,7 +86,8 @@ H
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
   [ -n "$note" ] && { mkdir -p "$MJ_DIR/state/completed"; cp "$note" "$MJ_DIR/state/completed/$id.md"; }
   local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS}"
-  mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj"
+  local cps=0; cps="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
 }
 
@@ -161,5 +162,23 @@ mj_validate_profile_requirements() {
     else mj_doctrine_fail decisions "$id" "profile $profile requires an entry 'Task: $id' in decisions.md" "grep -n 'Task:' .majordomus/state/decisions.md"; fi
   fi
   [ "$any" = 0 ] && { mj_doctrine_skip regression "$id" "profile $profile adds no requirement beyond the shared contract"; MJ_DOCTRINE_SKIPPED=1; }
+  return 0
+}
+
+# Whatever stops short of completed must leave the next worker something to act on.
+# note_present already requires the section; this requires that a task claiming to be
+# handed over actually has a handover record. Advisory: the note's Next Action is a
+# real continuation record, just a weaker one than a handover.
+mj_validate_continuity() {
+  local id; id="$(mj_cur id)"
+  case "$MJ_FINISH_OUTCOME" in
+    partial|blocked) ;;
+    *) mj_doctrine_skip continuity "$id" "applies to partial and blocked"; MJ_DOCTRINE_SKIPPED=1; return 0 ;;
+  esac
+  if mj_resolve_latest "$MJ_DIR/state/handovers" "$id"; then
+    mj_doctrine_ok continuity "$id" "handover $(basename "$MJ_RES_PATH") carries the next action"
+  else
+    mj_doctrine_fail continuity "$id" "no handover for this task; the note's Next Action is the only continuation record" "majordomus handover < note.md"
+  fi
   return 0
 }

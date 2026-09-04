@@ -3,7 +3,10 @@
 version: 1
 
 context:
-  always_loaded_budget_lines: 150
+  always_loaded_budget_lines: 150        # hard cap on the always-loaded projection
+  builder_budget_lines: 300              # hard cap on what `majordomus context` prints
+  recent_decisions: 5                    # decisions offered to a worker, newest first
+  max_list_items: 20                     # cap on any list inside the assembled context
   strategy: minimum-sufficient
   transcript_is_state: false
 
@@ -19,6 +22,10 @@ verification:
     - state_updated
     - no_open_blockers
     - note_present
+
+checkpoint:
+  max_body_lines: 40                     # a checkpoint is a progress note, not a report
+  retention_max_files: 500
 
 handover:
   required_sections: [Objective, Current State, Next Action]

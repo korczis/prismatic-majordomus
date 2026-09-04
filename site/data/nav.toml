@@ -1,0 +1,48 @@
+# Site navigation: five intents, small on purpose. Rendered by templates/partials/navbar.html
+# as Flowbite dropdowns on desktop and as labelled flat lists inside the collapsed mobile menu.
+# A group with no items is a plain link. Every href must resolve; scripts/site-check verifies it.
+
+[[groups]]
+label = "Why"
+href = "/why/"
+
+[[groups]]
+label = "Get started"
+href = "/getting-started/"
+items = [
+  { label = "Quick start", href = "/getting-started/" },
+  { label = "Commands", href = "/commands/" },
+  { label = "Execution profiles", href = "/profiles/" },
+]
+
+[[groups]]
+label = "Concepts"
+href = "/docs/concepts/"
+items = [
+  { label = "Vocabulary", href = "/docs/concepts/" },
+  { label = "What it supervises", href = "/supervises/" },
+  { label = "Canonical policy", href = "/policy/" },
+  { label = "Design", href = "/docs/design/" },
+]
+
+[[groups]]
+label = "Trust"
+href = "/guarantees/"
+items = [
+  { label = "Guarantees", href = "/guarantees/" },
+  { label = "Doctrine", href = "/doctrines/" },
+  { label = "Limitations", href = "/limitations/" },
+  { label = "Roadmap", href = "/roadmap/" },
+  { label = "Extraction report", href = "/docs/extraction-report/" },
+  { label = "Economics", href = "/docs/economics/" },
+]
+
+[[groups]]
+label = "Reference"
+href = "/docs/"
+items = [
+  { label = "All documents", href = "/docs/" },
+  { label = "CLI reference", href = "/docs/cli/" },
+  { label = "File schemas", href = "/docs/schemas/" },
+  { label = "How this site is built", href = "/architecture/" },
+]

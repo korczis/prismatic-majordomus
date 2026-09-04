@@ -22,9 +22,8 @@ mkdir -p lib test && echo a > lib/a && echo t > test/a_test && git add . && git 
 
 # --- blocking: an unresolved question refuses completion (blocker_resolution)
 "$MJ" start "t1" --scope lib,test --profile implementation >/dev/null
-id="$(grep '^id:' .majordomus/state/current.yaml | awk '{print $2}')"
 echo b >> lib/a
-printf -- '- [unresolved] %s — is this the right table?\n' "$id" >> .majordomus/state/open-questions.md
+"$MJ" question add "is this the right table?" >/dev/null
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
 expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
 expect_grep 'FAIL blockers'

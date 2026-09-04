@@ -17,20 +17,34 @@ majordomus $MJ_VERSION — a lightweight supervisory control layer for AI-assist
 
 usage: majordomus <command> [options]
 
-  init                 set up .majordomus/ in this repository (refuses to overwrite)
-  doctor               is Majordomus itself healthy and actually wired here?   (read-only)
+TASK
   start <task>         begin a scoped task under a profile
   check                is the current task consistent with policy, scope, state? (read-only)
-  watch                what has drifted: state, policy, projections, retention   (read-only)
-  update               regenerate provider projections from policy
-  handover             write an append-only continuation record (body on stdin)
   finish               evaluate the finish contract; refuse if unmet
-  doctrine             what rules are enforced, by what, and whether they are wired
+
+CONTEXT
+  context              what the next worker needs to know now, within budget    (read-only)
+  checkpoint           record compact progress inside the active task
+  handover             write an append-only continuation record (body on stdin)
+
+MEMORY
+  history              read the append-only ledger back                          (read-only)
+  decision             record or read durable decisions
+  question             open, resolve and list questions that block acceptance
+  prompt               list, show and render repository-local prompt assets      (read-only)
+  search <text>        find durable records without reading all of them          (read-only)
+
+SYSTEM
+  init                 set up .majordomus/ in this repository (refuses to overwrite)
+  update               regenerate provider projections from policy
+  doctor               is Majordomus itself healthy and actually wired here?      (read-only)
+  doctrine             what rules are enforced, by what, and whether they are wired (read-only)
+  watch                what has drifted: state, policy, projections, retention    (read-only)
   version              print the version
 
 global options:
   --repo <path>        repository to operate on (default: the git toplevel of the cwd)
-  --json               one JSON object per finding on stdout (read-only commands)
+  --json               machine-readable output (read-only commands)
   --help               this text, or <command> --help
 
 exit codes: 0 ok · 2 usage · 10 contract unmet · 11 drift found · 12 missing artifact
@@ -52,7 +66,7 @@ set -- "${pre[@]+"${pre[@]}"}" "$@"
 case "$cmd" in
   -h|--help|help) usage; exit 0 ;;
   version|--version) echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish|doctrine)
+  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"

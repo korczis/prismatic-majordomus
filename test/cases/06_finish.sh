@@ -7,7 +7,7 @@ expect_grep 'nothing to enforce'
 expect_exit 12 "$MJ" finish --outcome completed
 "$MJ" start "t1" --scope lib,test --profile debugging >/dev/null
 expect_exit 2 "$MJ" finish
-expect_exit 2 "$MJ" finish --outcome done
+expect_exit 2 "$MJ" finish --outcome nonsense
 echo b >> lib/a
 # contract printed line by line; verification required by profile
 expect_exit 10 "$MJ" finish --outcome completed
@@ -36,7 +36,7 @@ expect_exit 0 "$MJ" finish --check
 # new task archives the finished one (commit t1's work first so it is not "touched" by t2)
 git add -A && git commit -qm t1
 expect_exit 0 "$MJ" start "t2" --scope lib
-[ -f .majordomus/state/archive/*.yaml ]
+[ "$(find .majordomus/state/archive -name '*.yaml' | wc -l | tr -d ' ')" -ge 1 ]
 # blocked: needs a note with Next Action, blockers expected
 id=$(sed -n 's/^id: //p' .majordomus/state/current.yaml)
 printf -- '- [unresolved] %s — which db? (2026-09-03)\n' "$id" >> .majordomus/state/open-questions.md

@@ -6,7 +6,6 @@
 #   share/skeleton/profiles/*.yaml     ->  profiles.json
 #   share/skeleton/policy.yaml         ->  policy.json
 #   docs/CLAIMS.yaml                   ->  capabilities.json
-#   share/doctrines.yaml + lib/        ->  doctrines.json (each link of the chain, resolved)
 #   lib/finish.sh + share/skeleton     ->  lifecycle.json (outcome vocabulary, commands)
 #   share/skeleton/providers/body.md   ->  principles (the ten rules workers actually read)
 #   docs/*.md                          ->  docs index
@@ -169,10 +168,13 @@ section_of() { # file, heading, next-heading -> body between them; fails if the 
 FINISH_BLOCK="$(awk '/^```/{c++; if(c==1){f=1;next} if(c==2){exit}} f' "$ROOT/README.md")"
 [ -n "$FINISH_BLOCK" ] || { echo "generate-site-data: README.md has no first fenced block (the hero renders it)" >&2; exit 10; }
 DOES_ROWS="$(section_of "$ROOT/README.md" "What it does" "Quick start" | grep -E '^\| \*\*' | sed -E 's/^\| \*\*([^*]+)\*\* \| (.*) \|$/\1|\2/' | jq -Rn '[inputs | split("|") | {title: .[0], text: .[1]}]')"
-jq -n --arg finish "$FINISH_BLOCK" --arg problem "$(section_of "$ROOT/README.md" "The problem" "What it does")" \
+PROBLEM_MD="$(section_of "$ROOT/README.md" "The problem" "What it does")"
+jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" \
+  --arg problem_bullets "$(printf '%s' "$PROBLEM_MD" | awk '/^- /{f=1} f&&/^$/{exit} f')" \
   --arg notwhat "$(section_of "$ROOT/README.md" "What this is not" "Limitations")" --argjson does "$DOES_ROWS" \
   --arg limits "$(section_of "$ROOT/README.md" "Limitations" "Roadmap")" \
-  '{schema:1, finish_transcript:$finish, problem_md:$problem, not_md:$notwhat, limitations_md:$limits, does:$does}' > "$OUT/readme.json"
+  --arg roadmap "$(section_of "$ROOT/README.md" "Roadmap" "Contributing")" \
+  '{schema:1, finish_transcript:$finish, problem_md:$problem, problem_bullets_md:$problem_bullets, not_md:$notwhat, limitations_md:$limits, roadmap_md:$roadmap, does:$does}' > "$OUT/readme.json"
 
 # ---------------------------------------------------------------- commands.json (CLI reference sections per command)
 # docs/CLI.md has one `## `majordomus <name>`` section per command; each becomes a page.
@@ -232,7 +234,6 @@ done
 # repeated here so a broken chain cannot reach the published site at all.
 DECLARED=" $(i=0; while [ -n "$(yv "$Df" "doctrines.$i.validator")" ]; do printf '%s ' "$(yv "$Df" "doctrines.$i.validator")"; i=$((i+1)); done)"
 for fn in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$ROOT/lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
-  [ "$fn" = environment ] && continue
   case "$DECLARED" in *" $fn "*) ;; *) echo "generate-site-data: lib/ defines mj_validate_$fn, which no doctrine declares" >&2; exit 10 ;; esac
 done
 {
@@ -263,6 +264,7 @@ jq '. + {counts: {declared: (.doctrines|length),
                   advisory: ([.doctrines[]|select(.class=="advisory")]|length)},
          index: (reduce (.doctrines|to_entries[]) as $e ({}; . + {($e.value.id): $e.key}))}' \
   "$OUT/doctrines.json" > "$OUT/doctrines.json.tmp" && mv "$OUT/doctrines.json.tmp" "$OUT/doctrines.json"
+
 # ---------------------------------------------------------------- diagrams.json (Mermaid source from data, never hand-drawn)
 LIFECYCLE_MMD="$(printf 'stateDiagram-v2\n    [*] --> active: start\n    active --> active: check --checkpoint\n    active --> handed_over: handover --close\n    handed_over --> [*]: next start archives the record\n'; for o in $(printf '%s' "$OUTCOMES" | jq -r '.[]'); do printf '    active --> %s: finish --outcome %s\n    %s --> [*]\n' "$o" "$o" "$o"; done)"
 PIPELINE_MMD="$(printf 'flowchart LR\n    subgraph canonical\n        A[share/skeleton]\n        B[docs + README]\n        C[docs/CLAIMS.yaml]\n    end\n    G[scripts/generate-site-data]\n    D[(site/data/generated)]\n    Z[Zola]\n    F[Tailwind + Flowbite + Alpine]\n    P[GitHub Pages]\n    A --> G\n    B --> G\n    C --> G\n    G --> D --> Z --> F --> P\n')"
@@ -299,7 +301,9 @@ done
 CONTENT="$ROOT/site/content/docs"
 [ "$CHECK" = 1 ] && CONTENT="$OUT/content-docs"
 rm -rf "$CONTENT"; mkdir -p "$CONTENT"
-for d in DESIGN CLI SCHEMAS CONCEPTS DOCTRINE ADOPTION ECONOMICS EXTRACTION_REPORT; do
+# every document listed in the docs/README.md index becomes a page; adding a row is the only step
+# (AGENTS.md is listed in the index but lives at the repository root; it is rendered as "contract" below)
+for d in $(jq -r '.docs[].path' "$OUT/docs.json" | grep -E '^[A-Z_]+\.md$' | sed 's/\.md$//' | while read -r n; do [ -f "$ROOT/docs/$n.md" ] && printf '%s\n' "$n"; done); do
   src="$ROOT/docs/$d.md"; slug="$(printf '%s' "$d" | tr 'A-Z_' 'a-z-')"
   title="$(grep -m1 '^# ' "$src" | sed 's/^# //; s/ — .*//')"
   summary="$(jq -r --arg p "$d.md" '.docs[] | select(.path==$p) | .summary' "$OUT/docs.json")"
@@ -365,13 +369,12 @@ jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | whi
 mk_section supervises "What Majordomus supervises" "Nine responsibilities, one directory. Each is a file in .majordomus/ and a subcommand that reads it." supervises-section.html responsibility.html 20
 i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while IFS="$(printf '\t')" read -r slug title text; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$text" | sed -E 's/`([^`]*)`/\1/g' | jq -Rn 'input')" "$i" "$(jstr "$slug")" > "$CONTENT_ROOT/supervises/$slug.md"; done
-mk_section commands "Commands" "One executable, eight subcommands. Exit codes are a contract." commands-section.html command.html 25
-i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jq -Rn 'input')" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
-
 mk_section doctrines "Doctrine" "A rule is enforced when it is declared, implemented, wired, executed, failure-propagating, tested and CI-blocking. Each one below shows its whole chain." doctrines-section.html doctrine.html 22
 i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrines.json" | while IFS="$(printf '\t')" read -r id slug title summary; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/doctrines.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/doctrines/$slug.md"; done
+mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
+i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jq -Rn 'input')" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
 
 # ---------------------------------------------------------------- docs/SITE_CLAIMS.md (derived release artifact)
 SC="$ROOT/docs/SITE_CLAIMS.md"; [ "$CHECK" = 1 ] && SC="$OUT/SITE_CLAIMS.md"

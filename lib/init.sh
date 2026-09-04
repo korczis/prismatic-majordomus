@@ -6,7 +6,7 @@ mj_cmd_init() {
     --force) force=1 ;; --gitignore) gitignore=1 ;;
     --help|-h) cat <<H
 usage: majordomus init [--force] [--gitignore]
-  --force      rewrite policy, profiles, templates, providers (state/ is never touched)
+  --force      rewrite policy, profiles, templates, providers, prompts (state/ is never touched)
   --gitignore  add .majordomus/state/ to .gitignore (default: state is tracked)
 H
       return 0 ;;
@@ -18,11 +18,13 @@ H
   if [ -e "$MJ_DIR" ] && [ "$force" != 1 ]; then
     mj_die "$MJ_EX_REFUSED" ".majordomus/ already exists in $MJ_ROOT (use --force to rewrite everything except state/)"
   fi
-  mkdir -p "$MJ_DIR/profiles" "$MJ_DIR/templates" "$MJ_DIR/providers" "$MJ_DIR/state/handovers" "$MJ_DIR/generated"
+  mkdir -p "$MJ_DIR/profiles" "$MJ_DIR/templates" "$MJ_DIR/providers" "$MJ_DIR/prompts" \
+           "$MJ_DIR/state/handovers" "$MJ_DIR/state/checkpoints" "$MJ_DIR/generated"
   cp "$skel/policy.yaml" "$MJ_DIR/policy.yaml"
   cp "$skel"/profiles/*.yaml "$MJ_DIR/profiles/"
   cp "$skel"/templates/*.md "$MJ_DIR/templates/"
   cp "$skel"/providers/* "$MJ_DIR/providers/"
+  cp "$skel"/prompts/*.md "$MJ_DIR/prompts/"
   [ -f "$MJ_DIR/state/decisions.md" ]      || cp "$skel/templates/decisions.md" "$MJ_DIR/state/decisions.md"
   [ -f "$MJ_DIR/state/open-questions.md" ] || cp "$skel/templates/open-questions.md" "$MJ_DIR/state/open-questions.md"
   if [ "$gitignore" = 1 ]; then
@@ -32,7 +34,7 @@ H
   cat <<OUT
 created .majordomus/policy.yaml
 created .majordomus/profiles/ (routine, implementation, debugging, deep-work)
-created .majordomus/templates/, .majordomus/providers/, .majordomus/state/, .majordomus/generated/
+created .majordomus/templates/, .majordomus/providers/, .majordomus/prompts/, .majordomus/state/, .majordomus/generated/
 next: majordomus update      # generate the provider instruction files named in the policy
 next: majordomus doctor      # verify nothing is declared that is not wired
 hooks are not installed by init; add these two lines yourself, doctor verifies them:

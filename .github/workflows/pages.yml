@@ -51,6 +51,10 @@ jobs:
         run: scripts/site-build
       - name: check the site
         run: scripts/site-check
+      # Browser-measured: no horizontal overflow at 320/390/1280 on any route, mobile menu, dropdowns,
+      # theme toggle, Mermaid rendering. Skips with a notice when no Chrome is present.
+      - name: probe the site in a browser
+        run: CHROME_BIN=google-chrome scripts/site-probe
       - name: manifest
         run: cat site/data/generated/source.json
       - uses: actions/configure-pages@v5

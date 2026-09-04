@@ -21,6 +21,7 @@ H
   esac; done
   mj_require_installed
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
+  [ "$dry" = 1 ] || mj_ensure_layout
 
   local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.up.XXXXXX")"
   # policy hash: policy + profiles, in that order, concatenated
@@ -171,4 +172,21 @@ mj_expand_blocks() {
 }
 mj_render() { # template, fragment dir, policy sha
   sed -e "s|{{POLICY_SHA}}|${3:0:12}|g" "$1" | mj_expand_blocks "$2"
+}
+
+# Bring an installation created by an older version up to the current layout: create the
+# directories this version reads, and seed the skeleton prompt assets when the directory
+# is absent entirely. Never overwrites a file, never deletes, never touches state records.
+mj_ensure_layout() {
+  local skel="$MJ_BIN_DIR/../share/skeleton" d
+  for d in state/handovers state/checkpoints prompts; do
+    [ -d "$MJ_DIR/$d" ] || { mkdir -p "$MJ_DIR/$d"; printf 'create .majordomus/%s/\n' "$d"; }
+  done
+  if [ -d "$skel/prompts" ] && [ -z "$(ls -1 "$MJ_DIR/prompts" 2>/dev/null)" ]; then
+    cp "$skel"/prompts/*.md "$MJ_DIR/prompts/" 2>/dev/null || true
+    printf 'create .majordomus/prompts/ (%s asset(s))\n' "$(ls -1 "$MJ_DIR"/prompts/*.md 2>/dev/null | wc -l | tr -d ' ')"
+  fi
+  for d in decisions open-questions; do
+    [ -f "$MJ_DIR/state/$d.md" ] || { cp "$skel/templates/$d.md" "$MJ_DIR/state/$d.md" 2>/dev/null && printf 'create .majordomus/state/%s.md\n' "$d"; }
+  done
 }

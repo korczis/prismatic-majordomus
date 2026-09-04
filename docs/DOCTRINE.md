@@ -61,12 +61,18 @@ Each entry carries:
 The class is not a label on a diagram. `mj_doctrine_fail` reads it and routes the finding
 accordingly, so changing `advisory` to `blocking` in the registry changes whether
 `majordomus check` exits 0 — and `test/cases/17_doctrine_enforcement.sh` flips exactly
-that value and asserts the exit code moves. There is one advisory doctrine today
-(checkpoint freshness). Everything else blocks.
+that value and asserts the exit code moves. Four doctrines are advisory today — checkpoint freshness, decision records, task
+continuity and layout integrity. Everything else blocks.
 
 `watch` asks the same doctrines a different question — not *is this wrong* but *has this
-moved* — so under `watch` a violation is reported as `DRIFT` and the exit code is 11. The
-rule, the validator and the message are the same.
+moved* — so under `watch` a violation is reported as `DRIFT` and the exit code is 11,
+advisory doctrines included: watch never blocks work, so the class has nothing to decide
+there. The rule, the validator and the message are the same.
+
+Not every doctrine is watchable, and the registry says which by omitting `watch` from
+`enforced_by`. An unresolved question is the clearest case: it is a recorded state, written
+down on purpose, and the opposite of drift. A questions file that no longer *parses* is
+drift, and that is a different doctrine.
 
 ## The dispatcher
 

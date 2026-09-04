@@ -109,6 +109,42 @@ claims:
     responsibility: policy
     note: The test changes checkpoint freshness from advisory to blocking in a copy of the registry and asserts that check's exit code moves from 0 to 10. There are two classes and no override.
 
+  - id: ledger-integrity
+    claim: Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record
+    source: docs/DOCTRINE.md
+    implementation: lib/check.sh
+    test: test/cases/22_history.sh
+    status: guaranteed
+    responsibility: state
+    note: The reader skips a bad line rather than crashing, and check, doctor and watch all report it. The ledger is the one durable record nothing else can reconstruct.
+
+  - id: decision-attribution
+    claim: A decision record without a task, a head and a reason is reported, and does not block
+    source: docs/DOCTRINE.md
+    implementation: lib/check.sh
+    test: test/cases/21_decision_question.sh
+    status: advisory
+    responsibility: state
+    note: decisions.md is hand-editable by design, so an unattributable entry is a warning. finish still refuses when a profile requires a record it cannot find.
+
+  - id: blocker-store
+    claim: An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does
+    source: docs/DOCTRINE.md
+    implementation: lib/check.sh
+    test: test/cases/21_decision_question.sh
+    status: guaranteed
+    responsibility: scope
+    note: A gate that cannot read an entry can be bypassed by mistyping one, so an unreadable question is not a lesser problem than an open one.
+
+  - id: prompt-assets
+    claim: Every repository-local prompt asset renders, and an unknown token is a failure
+    source: docs/DOCTRINE.md
+    implementation: lib/prompt.sh
+    test: test/cases/24_prompt_search.sh
+    status: guaranteed
+    responsibility: policy
+    note: Covers name and filename mismatch, an empty description, an unknown front-matter key, missing front matter, and a block token used inline.
+
   - id: no-silent-overwrite
     claim: A hand-edited instruction file is never silently overwritten
     source: docs/CLI.md

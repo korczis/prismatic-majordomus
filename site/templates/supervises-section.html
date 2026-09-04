@@ -6,6 +6,12 @@
 {% block content %}
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/responsibility-cards.html" %}</div>
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
+{%- set lifecycle = load_data(path="data/generated/lifecycle.json") -%}
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  {% include "partials/responsibility-cards.html" %}
+  <h2 class="mt-14 text-2xl font-bold tracking-tight text-heading">The ten sentences every worker reads</h2>
+  <p class="mt-2 max-w-3xl text-body">Projected into every generated instruction file from the same source; the responsibilities above are how the tool backs them.</p>
+  <ol class="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-2">{%- for pr in lifecycle.principles -%}<li class="flex gap-3 text-base text-heading"><span class="font-mono text-sm text-body-subtle">{{ loop.index }}</span><span>{{ pr }}</span></li>{%- endfor -%}</ol>
+</div>
 {% endblock content %}

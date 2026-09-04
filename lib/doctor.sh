@@ -1,11 +1,26 @@
 #!/usr/bin/env bash
+# sourced by watch as well as run directly; guard against re-sourcing
+[ -n "${MJ_LIB_doctor:-}" ] && return 0 || MJ_LIB_doctor=1
 # doctor — is Majordomus itself healthy and actually wired here? Read-only.
 #
-# doctor runs no check by name either: it dispatches the doctrines whose enforced_by
-# names doctor, and one of those doctrines — doctrine_wiring_integrity — verifies the
-# whole chain, including this dispatch.
+# doctor runs no check by name: it dispatches the doctrines whose enforced_by names
+# doctor, and one of those — doctrine_wiring_integrity — verifies the whole chain,
+# including this dispatch.
 # shellcheck source=doctrine.sh
 . "$MJ_LIB_DIR/doctrine.sh"
+# doctor enforces doctrines whose validators live in check.sh — the store rules it shares
+# with check. Sourcing it is the dependency being honest rather than a second copy.
+# shellcheck source=check.sh
+. "$MJ_LIB_DIR/check.sh"
+# the continuity validators read these stores through their own commands' helpers
+# shellcheck source=question.sh
+. "$MJ_LIB_DIR/question.sh"
+# shellcheck source=decision.sh
+. "$MJ_LIB_DIR/decision.sh"
+# shellcheck source=prompt.sh
+. "$MJ_LIB_DIR/prompt.sh"
+# shellcheck source=context.sh
+. "$MJ_LIB_DIR/context.sh"
 
 MJ_DOCTOR_MISSING=0
 mj_cmd_doctor() {
@@ -17,33 +32,22 @@ mj_cmd_doctor() {
   mj_require_installed
   MJ_DOCTOR_MISSING=0
 
-  # The policy has to parse before anything else can be judged against it. This is the
-  # one ordering doctor imposes; everything after it is the registry's order.
+  # The policy has to parse before anything can be judged against it. This is the one
+  # ordering doctor imposes; everything after it is the registry's order.
   if ! mj_load_policy 2>/dev/null; then
     mj_fail policy ".majordomus/policy.yaml" "does not parse: $(mj_yaml_flatten "$MJ_DIR/policy.yaml" 2>&1 >/dev/null | sed 's/^ERROR://')" "majordomus doctor"
     mj_finish_doctor; return
   fi
 
   mj_doctrine_dispatch doctor
-  mj_validate_environment
+  mj_report_environment
   mj_finish_doctor
 }
 
 # ---------------------------------------------------------------- validators
 mj_validate_policy() {
   local unk
-  # watch asks whether the policy has moved since the projections were generated;
-  # doctor asks whether it is valid at all. Same rule, two questions.
-  if [ "$MJ_DOCTRINE_CMD" = watch ]; then
-    local tmp psha fp="$MJ_DIR/generated/fingerprints.yaml" fpflat=""
-    tmp="$(mktemp "${TMPDIR:-/tmp}/mj.w.XXXXXX")"; mj_policy_cat > "$tmp"; psha="$(mj_sha256 "$tmp")"; rm -f "$tmp"
-    if [ -f "$fp" ]; then fpflat="$(mktemp "${TMPDIR:-/tmp}/mj.wf.XXXXXX")"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || { rm -f "$fpflat"; fpflat=""; }; fi
-    if [ -z "$fpflat" ]; then mj_doctrine_fail policy "fingerprints" "no projections generated yet" "majordomus update"
-    elif [ "$(mj_yget "$fpflat" policy_sha256)" = "$psha" ]; then mj_doctrine_ok policy "policy+profiles" "match last update (${psha:0:12})"
-    else mj_doctrine_fail policy ".majordomus/policy.yaml" "policy or profiles changed after the last update" "majordomus update --dry-run"; fi
-    [ -n "$fpflat" ] && rm -f "$fpflat"
-    return 0
-  fi
+  [ "$MJ_DOCTRINE_CMD" = watch ] && { mj_watch_policy; return 0; }
   if [ "$(mj_pol version)" = 1 ]; then
     unk="$(mj_yaml_unknown_keys "$MJ_POL_FLAT" "$MJ_BIN_DIR/../share/allow/policy.txt" || true)"
       if [ -z "$unk" ]; then mj_doctrine_ok policy ".majordomus/policy.yaml" "parsed, version 1"
@@ -121,6 +125,7 @@ mj_validate_wiring() {
   return 0
 }
 
+MJ_DOCTOR_ALWAYS=""; MJ_DOCTOR_ALWAYS_MODE="file"
 mj_validate_projection() {
   [ "$MJ_DOCTRINE_CMD" = watch ] && { mj_watch_projection; return 0; }
   local fp="$MJ_DIR/generated/fingerprints.yaml" fpflat="" j=0 tgt want have always="" always_mode="file" budget
@@ -162,9 +167,12 @@ mj_validate_projection() {
   MJ_DOCTOR_ALWAYS="$always"; MJ_DOCTOR_ALWAYS_MODE="$always_mode"
   return 0
 }
-MJ_DOCTOR_ALWAYS=""; MJ_DOCTOR_ALWAYS_MODE="file"
 
 mj_validate_budget() {
+  # Two budgets, one rule: the context a worker is given must fit what was budgeted for
+  # it. doctor measures the always-loaded projection and the builder; watch measures only
+  # the builder, because the projection's size is drift the projection doctrine reports.
+  [ "$MJ_DOCTRINE_CMD" = watch ] && { mj_context_builder_check; return 0; }
   local owned rc always="$MJ_DOCTOR_ALWAYS" always_mode="$MJ_DOCTOR_ALWAYS_MODE" budget
   owned="$(mktemp "${TMPDIR:-/tmp}/mj.own.XXXXXX")"
   # 5. budget on always-loaded projection
@@ -197,6 +205,11 @@ mj_validate_budget() {
   elif [ -z "$always" ]; then mj_doctrine_fail budget "policy" "no projection is marked always_loaded: true"; fi
   rm -f "$owned"
 
+  # 8. the continuity subsystem: reachable through the CLI, not merely present on disk.
+  #    A directory full of records that no command reads is the failure mode this whole
+  #    tool exists to catch, so doctor proves each store is readable by the command that
+  #    owns it rather than checking that the files exist.
+  mj_context_builder_check
   return 0
 }
 
@@ -206,11 +219,13 @@ mj_validate_retention() {
   if [ "$ll" -le "${cap:-5000}" ]; then mj_doctrine_ok retention "ledger" "$ll lines, cap ${cap:-5000}"; else mj_doctrine_fail retention "ledger" "$ll lines over cap $cap" "wc -l .majordomus/state/ledger.jsonl"; fi
   cap="$(mj_pol handover.retention_max_files)"; hc="$(find "$MJ_DIR/state/handovers" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$hc" -le "${cap:-200}" ]; then mj_doctrine_ok retention "handovers" "$hc files, cap ${cap:-200}"; else mj_doctrine_fail retention "handovers" "$hc files over cap $cap" "ls .majordomus/state/handovers | wc -l"; fi
+  cap="$(mj_pol checkpoint.retention_max_files)"; hc="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$hc" -le "${cap:-500}" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap ${cap:-500}"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi
 
   return 0
 }
 
-mj_validate_environment() {
+mj_report_environment() {
   local env="bash ${BASH_VERSION%%(*}"; env="$env, git $(git --version | awk '{print $3}')"
   mj_has jq && env="$env, jq $(jq --version 2>/dev/null | sed 's/jq-//')" || env="$env, jq absent"
   mj_has shellcheck && env="$env, shellcheck present"
@@ -249,6 +264,70 @@ mj_finish_doctor() {
   [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
 }
 
+# Prove the continuity subsystem is wired, not merely installed. Each check runs the real
+# code path a worker would run; a store that cannot be read is a failure, because a record
+# nothing reads is indistinguishable from no record at all.
+# ---------------------------------------------------------------- continuity validators
+# These were one inline mj_doctor_continuity block. Each is now a declared doctrine, so
+# the class decides the level and watch gets the drift view for free rather than by
+# a second copy of the same logic.
+
+mj_validate_layout() {
+  local d
+  for d in state/handovers state/checkpoints prompts; do
+    if [ -d "$MJ_DIR/$d" ]; then mj_doctrine_ok layout ".majordomus/$d" "present"
+    else mj_doctrine_fail layout ".majordomus/$d" "missing; the command that writes it will create it, but update installs it" "majordomus update"; fi
+  done
+  return 0
+}
+
+# The questions store is read by the blocker gate. It is validated here as well as in
+# check because doctor answers a different question — is the installation sound — and a
+# repository with no active task never reaches the check path at all.
+mj_validate_questions_store() {
+  local bad; bad="$(mj_question_malformed "$MJ_DIR/state/open-questions.md")"
+  if [ -n "$bad" ]; then mj_doctrine_fail records "open-questions.md" "line(s) $(printf '%s' "$bad" | sed 's/ $//') do not parse; an unreadable entry cannot block acceptance" "majordomus question list --all"
+  else mj_doctrine_ok records "open-questions.md" "every entry parses"; fi
+  return 0
+}
+
+mj_validate_prompts() {
+  local f n=0 reason bad=0
+  [ -d "$MJ_DIR/prompts" ] || return 0
+  [ "$MJ_DOCTRINE_CMD" = watch ] && mj_watch_prompts_empty
+  for f in "$MJ_DIR"/prompts/*.md; do
+    [ -f "$f" ] || continue; n=$((n + 1))
+    reason="$(mj_prompt_validate "$f")" || { mj_doctrine_fail prompt "$(basename "$f" .md)" "$(printf '%s' "$reason" | tr '\n' ';' | sed 's/;$//')" "majordomus prompt show $(basename "$f" .md)"; bad=1; }
+  done
+  [ "$n" -gt 0 ] && [ "$bad" = 0 ] && mj_doctrine_ok prompt "$n asset(s)" "front matter valid, every token known"
+  return 0
+}
+
+# The resolver running and reporting a clean absence is as healthy as it finding a
+# record; only a malformed record is a finding.
+mj_validate_resolver() {
+  [ "$MJ_DOCTRINE_CMD" = watch ] && { mj_watch_resolver; return 0; }
+  if mj_resolve_latest "$MJ_DIR/state/handovers" ""; then
+    mj_doctrine_ok resolver "handovers" "$MJ_RES_MATCH, $(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" "majordomus handover --resolve"
+  else mj_doctrine_ok resolver "handovers" "no record for this worktree and branch (absence, not a stale match)" "majordomus handover --resolve"; fi
+  [ "$MJ_RES_SKIPPED" -gt 0 ] && mj_doctrine_fail resolver "handovers" "$MJ_RES_SKIPPED record(s) skipped as malformed" "majordomus handover --list"
+  return 0
+}
+
+# Part of context_budget: the same rule about the same resource, measured through the
+# real command path rather than by re-implementing the builder here.
+mj_context_builder_check() {
+  local budget out lines
+  budget="$(mj_pol context.builder_budget_lines)"; [ -n "$budget" ] || budget=300
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.dc.XXXXXX")"
+  if ( export MJ_JSON=0; mj_cmd_context ) > "$out" 2>/dev/null; then
+    lines="$(mj_lines "$out")"
+    if [ "$lines" -le "$budget" ]; then mj_doctrine_ok context "builder" "$lines lines, budget $budget" "majordomus context"
+    else mj_doctrine_fail context "builder" "$lines lines over budget $budget" "majordomus context"; fi
+  else mj_doctrine_fail context "builder" "majordomus context failed" "majordomus context"; fi
+  rm -f "$out"
+  return 0
+}
 # ---------------------------------------------------------------- doctrine wiring
 # The imported idea this whole layer exists for: a rule is not enforced because it is
 # written down. Every link below is read out of the source, never out of the registry's
@@ -303,7 +382,6 @@ mj_validate_doctrine_wiring() {
   local f declared=" "
   i=0; while [ -n "$(mj_doc "$i" id)" ]; do declared="$declared$(mj_doc "$i" validator) "; i=$((i+1)); done
   for f in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
-    case "$f" in environment) continue ;; esac   # doctor's own environment report is not a rule
     case "$declared" in *" $f "*) ;; *) mj_doctrine_fail doctrine "mj_validate_$f" "validator exists but no doctrine declares it; it runs under no rule" "grep -rn 'mj_validate_$f' lib/ share/doctrines.yaml"; bad=1 ;; esac
   done
 
@@ -322,7 +400,6 @@ mj_validate_doctrine_wiring() {
   [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n doctrines" "validator, dispatch, propagation, test and CI resolve for every one"
   return 0
 }
-
 # watch's view of the same doctrine: the fingerprints are the record of what Majordomus
 # last generated, so drift is measured against them rather than against the policy.
 mj_watch_projection() {
@@ -346,4 +423,17 @@ mj_watch_projection() {
     k=$((k+1))
   done
   rm -f "$fpflat" "$owned"
+}
+
+# watch asks whether the policy has moved since the projections were generated; doctor
+# asks whether it is valid at all. Same doctrine, two questions.
+mj_watch_policy() {
+  local tmp psha fp="$MJ_DIR/generated/fingerprints.yaml" fpflat=""
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.w.XXXXXX")"; mj_policy_cat > "$tmp"; psha="$(mj_sha256 "$tmp")"; rm -f "$tmp"
+  if [ -f "$fp" ]; then fpflat="$(mktemp "${TMPDIR:-/tmp}/mj.wf.XXXXXX")"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || { rm -f "$fpflat"; fpflat=""; }; fi
+  if [ -z "$fpflat" ]; then mj_doctrine_fail policy "fingerprints" "no projections generated yet" "majordomus update"
+  elif [ "$(mj_yget "$fpflat" policy_sha256)" = "$psha" ]; then mj_doctrine_ok policy "policy+profiles" "match last update (${psha:0:12})"
+  else mj_doctrine_fail policy ".majordomus/policy.yaml" "policy or profiles changed after the last update" "majordomus update --dry-run"; fi
+  [ -n "$fpflat" ] && rm -f "$fpflat"
+  return 0
 }

@@ -18,10 +18,13 @@ being maintained separately from the repository that backs it.
 | public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
 | claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
 | marketing copy | headline, section leads, button labels; no claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
+| navigation | five intents, their dropdown items and hrefs | `site/data/nav.toml` | yes |
+| claim detail | what each claim means, how it works, how to see it, what it does not cover, why it exists | `docs/claims/<id>.md` | yes |
+| case studies | the five recognition moments, each with its homepage hook in front matter | `site/content-src/why/*.md` | yes |
 | rendering reference | representative Markdown for visual validation | `site/content-src/render-test.md` | yes |
 | derived data | stable JSON the templates read | `site/data/generated/*.json` | never |
 | derived release artifact | the claims matrix as Markdown | `docs/SITE_CLAIMS.md` | never |
-| derived content | canonical Markdown with generated front matter | `site/content/docs/*.md`, `site/content/render-test.md` | never |
+| derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command and case study | `site/content/{docs,profiles,guarantees,supervises,commands,why}/`, `render-test.md`, `architecture.md` | never |
 | presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
 | styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
 | behaviour | theme toggle, Mermaid init | `site/theme.js`, `site/diagrams.js` | yes |
@@ -161,15 +164,43 @@ which is an index. The pages read and followed, on 2026-09-04: getting-started/q
 components/card, components/badge, components/footer, components/typography. The repository's
 installed `flowbite` is 4.0.2, matching the documented token vocabulary.
 
+## Routes
+
+Every tile on the homepage is a link to a page with its own title, description, canonical URL
+and Open Graph metadata. The route classes and their sources:
+
+| route | source | template |
+|---|---|---|
+| `/` | `readme.json`, `marketing.toml`, `lifecycle.json`, `capabilities.json`, `diagrams.json`, the `why` section | `index.html` |
+| `/why/`, `/why/<slug>/` | `site/content-src/why/*.md` | `why-section.html`, `why.html` |
+| `/getting-started/` | `project.json`, `policy.json`, `lifecycle.json` | `getting-started.html` |
+| `/supervises/`, `/supervises/<slug>/` | `readme.json` (What it does rows, cross-linked to commands and claims by keyword) | `supervises-section.html`, `responsibility.html` |
+| `/commands/`, `/commands/<name>/` | `commands.json` (each command's section of `docs/CLI.md`) | `commands-section.html`, `command.html` |
+| `/profiles/`, `/profiles/<slug>/` | `profiles.json` | `profiles.html`, `profile.html` |
+| `/policy/` | `policy.json` including the raw file | `policy.html` |
+| `/guarantees/`, `/guarantees/<status>/`, `/guarantees/<id>/` | `capabilities.json`, `docs/claims/<id>.md` | `guarantees.html`, `status.html`, `claim.html` |
+| `/limitations/`, `/roadmap/` | `readme.json` sections by heading | `readme-section.html` |
+| `/architecture/` | `site/content-src/architecture.md`, `source.json`, `diagrams.json` | `architecture.html` |
+| `/docs/`, `/docs/<doc>/` | `docs/*.md` listed in `docs/README.md` | `docs-section.html`, `docs-page.html` |
+| `/render-test/` | `site/content-src/render-test.md`, `noindex` | `docs-page.html` |
+
+Navigation is `site/data/nav.toml`: five intents (Why, Get started, Concepts, Trust,
+Reference), rendered as Flowbite dropdowns on desktop and as labelled flat lists inside the
+collapsed menu on phones. `scripts/site-check` verifies every navigation and homepage link
+resolves and every tile class has its page.
+
 ## Responsive strategy
 
 Mobile-first: base classes describe the phone layout, `sm:`/`md:`/`lg:`/`xl:` add columns.
 Every `<pre>` and `<table>` sits in a scroll container, either an explicit `overflow-x-auto`
 wrapper or a Typography container carrying `[&_pre]:overflow-x-auto` and
 `[&_table]:overflow-x-auto`. Grid items that hold code carry `min-w-0`. Validation is
-measured, not eyeballed: an iframe probe loads each route at 320, 375, 390, 768, 1024 and
-1280 px and asserts `document.scrollWidth == clientWidth`; `test/cases/09_site_mobile_first.sh`
-lints the built HTML for the structural causes of overflow.
+measured, not eyeballed: `scripts/site-probe` builds a copy under the deployment prefix, serves
+it locally, loads every route in headless Chrome inside iframes of 320, 390 and 1280 px and
+asserts `document.scrollWidth == clientWidth`, then exercises the mobile menu, a navigation
+dropdown and the theme toggle and counts rendered Mermaid diagrams. It runs in the Pages
+workflow and skips with a notice where no Chrome exists. `test/cases/09_site_mobile_first.sh`
+lints the built HTML for the structural causes of overflow without a browser.
 
 ## Accessibility
 
@@ -183,7 +214,8 @@ disclosure works without JavaScript.
 
 `.github/workflows/pages.yml`: checkout → Node 22 → pinned Zola → `npm ci` →
 `bash test/run.sh` → `bin/majordomus doctor` → `scripts/generate-site-data --check` →
-`scripts/site-build` → `scripts/site-check` → upload `site/public` → deploy. The site never
+`scripts/site-build` → `scripts/site-check` → `scripts/site-probe` → upload `site/public` →
+deploy. The site never
 deploys from a tree whose tests fail or whose derived data is stale.
 
 ## Sync guarantee
@@ -203,7 +235,8 @@ npm ci                      # Tailwind, Flowbite, Alpine, Mermaid — pinned
 brew install zola           # or the release binary; CI pins 0.23.4
 scripts/site-serve          # generate, build, serve at http://127.0.0.1:1111/prismatic-majordomus/
 scripts/site-build          # production build into site/public/
-scripts/site-check          # the checks CI runs
+scripts/site-check          # the static checks CI runs
+scripts/site-probe          # the browser-measured checks (needs Chrome; --quick for one page per section)
 ```
 
 ## Adding new canonical data

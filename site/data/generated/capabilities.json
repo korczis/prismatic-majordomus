@@ -128,6 +128,54 @@
       "test_case": "17_doctrine_enforcement"
     },
     {
+      "id": "ledger-integrity",
+      "claim": "Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record",
+      "source": "docs/DOCTRINE.md",
+      "implementation": "lib/check.sh",
+      "test": "test/cases/22_history.sh",
+      "status": "guaranteed",
+      "note": "The reader skips a bad line rather than crashing, and check, doctor and watch all report it. The ledger is the one durable record nothing else can reconstruct.",
+      "source_route": "/docs/doctrine/",
+      "command": "check",
+      "test_case": "22_history"
+    },
+    {
+      "id": "decision-attribution",
+      "claim": "A decision record without a task, a head and a reason is reported, and does not block",
+      "source": "docs/DOCTRINE.md",
+      "implementation": "lib/check.sh",
+      "test": "test/cases/21_decision_question.sh",
+      "status": "advisory",
+      "note": "decisions.md is hand-editable by design, so an unattributable entry is a warning. finish still refuses when a profile requires a record it cannot find.",
+      "source_route": "/docs/doctrine/",
+      "command": "check",
+      "test_case": "21_decision_question"
+    },
+    {
+      "id": "blocker-store",
+      "claim": "An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does",
+      "source": "docs/DOCTRINE.md",
+      "implementation": "lib/check.sh",
+      "test": "test/cases/21_decision_question.sh",
+      "status": "guaranteed",
+      "note": "A gate that cannot read an entry can be bypassed by mistyping one, so an unreadable question is not a lesser problem than an open one.",
+      "source_route": "/docs/doctrine/",
+      "command": "check",
+      "test_case": "21_decision_question"
+    },
+    {
+      "id": "prompt-assets",
+      "claim": "Every repository-local prompt asset renders, and an unknown token is a failure",
+      "source": "docs/DOCTRINE.md",
+      "implementation": "lib/prompt.sh",
+      "test": "test/cases/24_prompt_search.sh",
+      "status": "guaranteed",
+      "note": "Covers name and filename mismatch, an empty description, an unknown front-matter key, missing front matter, and a block token used inline.",
+      "source_route": "/docs/doctrine/",
+      "command": null,
+      "test_case": "24_prompt_search"
+    },
+    {
       "id": "no-silent-overwrite",
       "claim": "A hand-edited instruction file is never silently overwritten",
       "source": "docs/CLI.md",

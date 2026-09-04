@@ -20,6 +20,9 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [Wiring is found in a hook or in any subhook of the directory that hook dispatches to](https://korczis.github.io/prismatic-majordomus/guarantees/dispatcher-wiring/) | `docs/CLI.md` | `lib/doctor.sh` | `test/cases/14_wiring_dispatcher.sh` |
 | [Every rule the tool enforces is declared in one registry, and doctor proves each one is reached by the command that claims to run it](https://korczis.github.io/prismatic-majordomus/guarantees/doctrine-registry/) | `docs/DOCTRINE.md` | `lib/doctrine.sh` | `test/cases/18_doctrine_wiring.sh` |
 | [A doctrine's class is what decides whether a violation stops the command, not a label beside it](https://korczis.github.io/prismatic-majordomus/guarantees/doctrine-class-decides/) | `docs/DOCTRINE.md` | `lib/doctrine.sh` | `test/cases/17_doctrine_enforcement.sh` |
+| [Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record](https://korczis.github.io/prismatic-majordomus/guarantees/ledger-integrity/) | `docs/DOCTRINE.md` | `lib/check.sh` | `test/cases/22_history.sh` |
+| [An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does](https://korczis.github.io/prismatic-majordomus/guarantees/blocker-store/) | `docs/DOCTRINE.md` | `lib/check.sh` | `test/cases/21_decision_question.sh` |
+| [Every repository-local prompt asset renders, and an unknown token is a failure](https://korczis.github.io/prismatic-majordomus/guarantees/prompt-assets/) | `docs/DOCTRINE.md` | `lib/prompt.sh` | `test/cases/24_prompt_search.sh` |
 | [A hand-edited instruction file is never silently overwritten](https://korczis.github.io/prismatic-majordomus/guarantees/no-silent-overwrite/) | `docs/CLI.md` | `lib/update.sh` | `test/cases/03_update.sh` |
 | [The always-loaded instruction file has a line budget with a failing check](https://korczis.github.io/prismatic-majordomus/guarantees/context-budget/) | `share/skeleton/policy.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
 | [Every repository-relative reference in the always-loaded file is proven to resolve](https://korczis.github.io/prismatic-majordomus/guarantees/pointer-integrity/) | `docs/DESIGN.md` | `lib/doctor.sh` | `test/cases/03_update.sh` |
@@ -46,6 +49,7 @@ Projected into the worker's instructions. Whether a worker honours it is not obs
 
 | claim | source | implementation | test |
 |---|---|---|---|
+| [A decision record without a task, a head and a reason is reported, and does not block](https://korczis.github.io/prismatic-majordomus/guarantees/decision-attribution/) | `docs/DOCTRINE.md` | `lib/check.sh` | `test/cases/21_decision_question.sh` |
 | [Capability class, reasoning effort, output verbosity, context and verification are five independent axes](https://korczis.github.io/prismatic-majordomus/guarantees/profile-axes/) | `share/skeleton/profiles/implementation.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
 | [A profile names a capability class rather than a vendor model](https://korczis.github.io/prismatic-majordomus/guarantees/capability-class/) | `share/skeleton/profiles/deep-work.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
 | [A profile declares which context a worker should load and no more](https://korczis.github.io/prismatic-majordomus/guarantees/minimum-context/) | `share/skeleton/profiles/routine.yaml` | `lib/check.sh` | `test/cases/04_start_check.sh` |

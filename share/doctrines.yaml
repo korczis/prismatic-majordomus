@@ -50,7 +50,10 @@ doctrines:
     summary: A task with an unresolved open question cannot be completed; it can be finished as blocked.
     validator: blockers
     category: blockers
-    enforced_by: [check, finish, watch]
+    # Not watch. An open question is a recorded state, deliberately written down — the
+    # opposite of drift. A question store that no longer parses is drift, and that is
+    # questions_store_integrity, which watch does enforce.
+    enforced_by: [check, finish]
     policy_key: no_open_blockers
     exit_code: 10
     claims: [finish-contract]
@@ -106,6 +109,90 @@ doctrines:
     claims: [profile-axes, profile-validate]
     test: test/cases/16_profiles.sh
 
+  - id: ledger_integrity
+    title: Ledger integrity
+    class: blocking
+    principle: 1
+    summary: Every line of the append-only ledger is a well-formed event; the one durable record nothing else can reconstruct stays readable.
+    validator: ledger
+    category: records
+    enforced_by: [check, doctor, watch]
+    exit_code: 10
+    claims: [ledger-integrity]
+    test: test/cases/22_history.sh
+
+  - id: decision_records
+    title: Decision records
+    class: advisory
+    principle: 3
+    summary: Every entry in decisions.md carries the task, the head and the reason, so a decision can be found by the worker who needs it.
+    validator: decisions
+    category: records
+    enforced_by: [check, doctor, watch]
+    exit_code: 0
+    claims: [decision-attribution]
+    test: test/cases/21_decision_question.sh
+
+  - id: questions_store_integrity
+    title: Questions store integrity
+    class: blocking
+    principle: 3
+    summary: Every entry in open-questions.md parses, because a gate that cannot read an entry can be bypassed by mistyping one.
+    validator: questions_store
+    category: records
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [blocker-store]
+    test: test/cases/21_decision_question.sh
+
+  - id: prompt_integrity
+    title: Prompt integrity
+    class: blocking
+    principle: 2
+    summary: Every repository-local prompt asset renders, and every token in it is one the renderer knows.
+    validator: prompts
+    category: prompt
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [prompt-assets]
+    test: test/cases/24_prompt_search.sh
+
+  - id: handover_integrity
+    title: Handover integrity
+    class: blocking
+    principle: 10
+    summary: The resolver runs and reports either the record for this worktree and branch or its clean absence; a malformed record is never silently skipped, and a record describing a history this checkout no longer has is reported.
+    validator: resolver
+    category: resolver
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [handover-record, divergence-label]
+    test: test/cases/23_context.sh
+
+  - id: task_continuity
+    title: Task continuity
+    class: advisory
+    principle: 10
+    summary: A task finished as partial or blocked should leave a handover record, not only a note section.
+    validator: continuity
+    category: continuity
+    enforced_by: [finish]
+    exit_code: 0
+    claims: [handover-record]
+    test: test/cases/25_continuity_lifecycle.sh
+
+  - id: layout_integrity
+    title: Layout integrity
+    class: advisory
+    principle: 1
+    summary: The directories the durable commands write into are installed rather than created on first use.
+    validator: layout
+    category: layout
+    enforced_by: [doctor]
+    exit_code: 0
+    claims: [retention-caps]
+    test: test/cases/25_continuity_lifecycle.sh
+
   - id: policy_integrity
     title: Policy integrity
     class: blocking
@@ -146,10 +233,10 @@ doctrines:
     title: Context budget
     class: blocking
     principle: 2
-    summary: The always-loaded projection stays within its line budget, every reference in it resolves, and it states no count that will go stale.
+    summary: The always-loaded projection stays within its line budget, every reference in it resolves, it states no count that will go stale, and the assembled context fits the builder's own budget.
     validator: budget
     category: budget
-    enforced_by: [doctor]
+    enforced_by: [doctor, watch]
     exit_code: 10
     claims: [context-budget, pointer-integrity, no-counts-in-context]
     test: test/cases/02_doctor_basic.sh

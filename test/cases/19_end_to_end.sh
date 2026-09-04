@@ -43,7 +43,7 @@ expect_grep 'INFO checkpoint'
 printf 'Task: %s\n\nChose an in-band retry seam over a wrapper: the wrapper duplicated the\nbackoff policy in two places.\n\nRejected: a decorator around the client.\n' "$id" >> .majordomus/state/decisions.md
 
 # --- a blocking question refuses completion, by name
-printf -- '- [unresolved] %s — does the upstream rate limit reset per minute or per hour?\n' "$id" >> .majordomus/state/open-questions.md
+"$MJ" question add "does the upstream rate limit reset per minute or per hour?" >/dev/null
 expect_exit 10 "$MJ" check
 expect_grep 'FAIL blockers'
 expect_exit 10 "$MJ" check --rule blocker_resolution
@@ -53,8 +53,7 @@ expect_exit 2 "$MJ" check --rule verification_integrity
 expect_grep 'is not enforced by check'
 
 # --- resolve it; check passes again
-sed -i.bak "s/^- \[unresolved\] $id/- [resolved] $id/" .majordomus/state/open-questions.md
-rm -f .majordomus/state/open-questions.md.bak
+"$MJ" question resolve 1 --answer "per minute; confirmed against the published limits" >/dev/null
 expect_exit 0 "$MJ" check
 
 # --- work outside the claimed scope is refused

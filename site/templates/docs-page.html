@@ -10,7 +10,7 @@
   </nav>
   <div class="min-w-0">
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono hover:underline">{{ page.extra.source }}</a> — the same Markdown GitHub shows.</p>
-    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
+    <article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
     {%- set caps = load_data(path="data/generated/capabilities.json") -%}
     {%- set mine = [x for x in caps.claims if x.source == page.extra.source] -%}
     {%- if mine | length > 0 -%}

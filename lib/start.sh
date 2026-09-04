@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
+# sourced by several commands; guard against re-sourcing
+[ -n "${MJ_LIB_start:-}" ] && return 0 || MJ_LIB_start=1
 # start — begin a scoped task under a profile. One active task per checkout.
+# shellcheck source=handover.sh
+. "$MJ_LIB_DIR/handover.sh"
 mj_cmd_start() {
   local task="" scope="" profile="" owner="${USER:-unknown}"
   while [ $# -gt 0 ]; do case "$1" in
@@ -57,7 +61,13 @@ H
 
   printf 'started %s  profile=%s  scope=%s\n' "$id" "$profile" "$(printf '%s' "$norm" | sed 's/^ //; s/ /,/g')"
   mj_report_overlap "$norm"
-  printf 'next: worker reads the projected instructions; checkpoint every %s; majordomus check\n' "$(mj_pro checkpoint_interval)"
+  # continuity: name the prior record this checkout would resolve to, without injecting it
+  if mj_resolve_latest "$MJ_DIR/state/handovers" ""; then
+    mj_info handover "${MJ_RES_PATH#"$MJ_ROOT/"}" \
+      "prior record, $MJ_RES_MATCH, $(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH"), $(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")" \
+      "majordomus handover --resolve"
+  fi
+  printf 'next: majordomus context; checkpoint every %s; majordomus check before claiming anything\n' "$(mj_pro checkpoint_interval)"
 }
 
 # report claims in other worktrees that contain or are contained by our scope

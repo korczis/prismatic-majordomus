@@ -42,11 +42,23 @@
   </div>
 </section>
 
-{# 2. problem — README "The problem" #}
+{# 2. problem — the failure mode, then the README's evidence bullets only (its prose duplicates the hero) #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="01" kicker="the problem" title="Most AI-assisted work fails for boring reasons" lead={m.leads.problem} /> }}
-    <div class="format break-words max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ readme.problem_md | markdown | safe }}</div>
+    {{ <section_head number="01" kicker="the problem" title="A session grades its own homework" lead={m.leads.problem} /> }}
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <ol class="min-w-0 space-y-2 font-mono text-sm" aria-label="What an unsupervised session does">
+        {%- for step in ["loads whatever context it likes", "interprets whichever rulebook it found", "chooses its own scope", "changes files", "declares itself done"] -%}
+        <li class="flex items-center gap-3 rounded-base border border-default bg-neutral-primary px-4 py-3 text-heading"><span class="text-body-subtle">{{ loop.index }}</span>{{ step }}</li>
+        {%- endfor -%}
+        <li class="pt-2 font-sans text-base font-semibold text-fg-brand-strong">Who independently checks that any of it was acceptable?</li>
+      </ol>
+      <div class="format min-w-0 max-w-none dark:format-invert">
+        <p class="text-body">The environments this tool was distilled from had the failure at scale:</p>
+        {{ readme.problem_bullets_md | markdown | safe }}
+        <p class="text-body">Better prompts do not fix any of this. <a href="{{ get_url(path="/docs/extraction-report/", trailing_slash=true) }}">The evidence, with its derivation →</a></p>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -55,13 +67,17 @@
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="02" kicker="the core model" title="Majordomus supervises how work is executed" lead={m.leads.model} /> }}
     <div class="mx-auto max-w-3xl">{{ <diagram key="supervision" /> }}</div>
+    <div class="mx-auto mt-8 max-w-3xl rounded-base border border-brand-subtle bg-brand-softer p-5">
+      <p class="text-base font-semibold text-fg-brand-strong">The worker does not get to define its own successful completion.</p>
+      <p class="mt-2 text-sm text-heading">{{ m.leads.boundary }}</p>
+    </div>
   </div>
 </section>
 
 {# 3b. before / with — marketing.toml; structural, no numbers #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="02b" kicker="before / after" title={m.compare.title} /> }}
+    {{ <section_head number="03" kicker="before / after" title={m.compare.title} /> }}
     <div class="grid gap-6 lg:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-6">
         <h3 class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.compare.before_title }}</h3>
@@ -78,7 +94,7 @@
 {# 4. drop-in installation — the real commands #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="03" kicker="drop-in" title="One directory, one pointer" lead={m.leads.install} /> }}
+    {{ <section_head number="04" kicker="drop-in" title="One directory, one pointer" lead={m.leads.install} /> }}
     <div class="grid gap-6 lg:grid-cols-2">
       <div class="min-w-0">{% <code label="install once"> %}
 git clone {{ project.repository_url }} ~/majordomus
@@ -100,14 +116,6 @@ majordomus finish --outcome completed --verify-command "make test"
   </div>
 </section>
 
-{# 5. what it supervises — README "What it does" table rows #}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="04" kicker="what it supervises" title="Nine responsibilities, one directory" lead={m.leads.supervises} /> }}
-    {% include "partials/responsibility-cards.html" %}
-  </div>
-</section>
-
 {# 6. how it works — lifecycle.json #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
@@ -121,23 +129,14 @@ majordomus finish --outcome completed --verify-command "make test"
       </a></li>
       {%- endfor -%}
     </ol>
-    <p class="mt-6 text-sm text-body">Outcomes are a closed vocabulary: {% for o in lifecycle.outcomes %}<code class="font-mono text-heading">{{ o }}</code>{% if not loop.last %}, {% endif %}{% endfor %}. State read back is labelled {% for l in lifecycle.divergence_labels %}<code class="font-mono text-heading">{{ l }}</code>{% if not loop.last %}, {% endif %}{% endfor %} against git.</p>
-  </div>
-</section>
-
-{# 7. profiles — profiles.json #}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="06" kicker="execution profiles" title="Five axes, never collapsed into one" lead={m.leads.profiles} /> }}
-    {% include "partials/profile-cards.html" %}
-    <p class="mt-6"><a href="{{ get_url(path="/profiles/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand hover:underline">Every field of every profile →</a></p>
+    <p class="mt-6 text-sm text-body">Nine responsibilities sit behind those four commands — <a href="{{ get_url(path="/supervises/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">what Majordomus supervises →</a>. Outcomes are a closed vocabulary: {% for o in lifecycle.outcomes %}<code class="font-mono text-heading">{{ o }}</code>{% if not loop.last %}, {% endif %}{% endfor %}. State read back is labelled {% for l in lifecycle.divergence_labels %}<code class="font-mono text-heading">{{ l }}</code>{% if not loop.last %}, {% endif %}{% endfor %} against git.</p>
   </div>
 </section>
 
 {# 8. capabilities — capabilities.json #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="07" kicker="guaranteed · advisory · planned" title="What is real, what is projected, what is not built" lead={m.leads.capabilities} /> }}
+    {{ <section_head number="06" kicker="guaranteed · advisory · planned" title="What is real, what is projected, what is not built" lead={m.leads.capabilities} /> }}
     <div class="grid gap-4 md:grid-cols-3">
       {%- for status in ["guaranteed", "advisory", "planned"] -%}
       {%- set rows = [c for c in caps.claims if c.status == status] -%}
@@ -155,37 +154,18 @@ majordomus finish --outcome completed --verify-command "make test"
   </div>
 </section>
 
-{# 9. principles — lifecycle.json (from the generated worker instructions) #}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="08" kicker="core principles" title="The ten sentences every worker reads" /> }}
-    <ol class="grid gap-x-8 gap-y-3 sm:grid-cols-2">
-      {%- for p in lifecycle.principles -%}<li class="flex gap-3 text-base text-heading"><span class="font-mono text-sm text-body-subtle">{{ loop.index }}</span><span>{{ p }}</span></li>{%- endfor -%}
-    </ol>
-  </div>
-</section>
-
 {# 10. what it is not — README #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="09" kicker="what it is not" title="Not another runtime" /> }}
-    <div class="format break-words max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ readme.not_md | markdown | safe }}</div>
-  </div>
-</section>
-
-{# 11. this site — diagrams.json pipeline #}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="10" kicker="this site" title="Built the way it tells you to build" lead={m.leads.architecture} /> }}
-    {{ <diagram key="pipeline" /> }}
-    <p class="mt-6 text-sm text-body">Inputs hashed at <span class="font-mono">{{ source.source_hash | truncate(length=12, end="") }}</span>; <code class="font-mono text-heading">scripts/generate-site-data --check</code> fails the build when the committed data no longer matches the repository. <a href="{{ get_url(path="/architecture/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">How the site is derived →</a></p>
+    {{ <section_head number="07" kicker="what it is not" title="Not another runtime" /> }}
+    <div class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ readme.not_md | markdown | safe }}</div>
   </div>
 </section>
 
 {# 11b. who it is for — marketing.toml audiences; no claims, no numbers #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="11" kicker="who it is for" title="The same discipline, three vantage points" /> }}
+    {{ <section_head number="08" kicker="who it is for" title="The same discipline, three vantage points" /> }}
     <div class="grid gap-4 md:grid-cols-3">
       {{ <linkcard href={get_url(path="/getting-started/", trailing_slash=true)} kicker="a developer" title="Copy one directory" text={m.audiences.developer} /> }}
       {{ <linkcard href={get_url(path="/guarantees/", trailing_slash=true)} kicker="an engineering lead" title="One policy, one contract" text={m.audiences.lead} /> }}
@@ -194,14 +174,26 @@ majordomus finish --outcome completed --verify-command "make test"
   </div>
 </section>
 
-{# 12. final cta #}
+{# 12. final cta — one primary action, the rest are secondary #}
 <section class="bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 text-center sm:px-6 lg:px-8 lg:py-20">
-    <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ m.leads.final }}</h2>
-    <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-      <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }}</a>
-      <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">What is guaranteed</a>
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    <div class="mx-auto max-w-3xl text-center">
+      <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ m.leads.final }}</h2>
+      <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+        <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">Install Majordomus</a>
+      </div>
+      <p class="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm font-medium">
+        <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Read the guarantees</a>
+        <a href="{{ get_url(path="/architecture/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Explore the architecture</a>
+        <a href="{{ project.repository_url }}" class="text-fg-brand hover:underline">View on GitHub</a>
+      </p>
     </div>
+    <ul class="mx-auto mt-12 grid max-w-4xl gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+      <li><a href="{{ get_url(path="/supervises/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary p-4 hover:bg-neutral-secondary-medium"><span class="block font-semibold text-heading">Nine responsibilities</span><span class="text-body">what each file and command is for, and the ten sentences every worker reads</span></a></li>
+      <li><a href="{{ get_url(path="/profiles/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary p-4 hover:bg-neutral-secondary-medium"><span class="block font-semibold text-heading">Execution profiles</span><span class="text-body">five axes, never collapsed into one</span></a></li>
+      <li><a href="{{ get_url(path="/docs/concepts/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary p-4 hover:bg-neutral-secondary-medium"><span class="block font-semibold text-heading">Vocabulary</span><span class="text-body">the words, and the two outcomes people confuse</span></a></li>
+      <li><a href="{{ get_url(path="/architecture/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary p-4 hover:bg-neutral-secondary-medium"><span class="block font-semibold text-heading">How this site is built</span><span class="text-body">a projection of the repository, checked for drift</span></a></li>
+    </ul>
   </div>
 </section>
 {% endblock content %}

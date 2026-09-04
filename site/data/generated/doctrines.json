@@ -63,8 +63,7 @@
       "category": "blockers",
       "enforced_by": [
         "check",
-        "finish",
-        "watch"
+        "finish"
       ],
       "exit_code": 10,
       "policy_key": "no_open_blockers",
@@ -162,6 +161,161 @@
       "test": "test/cases/16_profiles.sh"
     },
     {
+      "id": "ledger_integrity",
+      "slug": "ledger-integrity",
+      "title": "Ledger integrity",
+      "class": "blocking",
+      "principle": 1,
+      "summary": "Every line of the append-only ledger is a well-formed event; the one durable record nothing else can reconstruct stays readable.",
+      "validator": "ledger",
+      "validator_function": "mj_validate_ledger",
+      "defined_in": "lib/check.sh",
+      "category": "records",
+      "enforced_by": [
+        "check",
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "ledger-integrity"
+      ],
+      "test": "test/cases/22_history.sh"
+    },
+    {
+      "id": "decision_records",
+      "slug": "decision-records",
+      "title": "Decision records",
+      "class": "advisory",
+      "principle": 3,
+      "summary": "Every entry in decisions.md carries the task, the head and the reason, so a decision can be found by the worker who needs it.",
+      "validator": "decisions",
+      "validator_function": "mj_validate_decisions",
+      "defined_in": "lib/check.sh",
+      "category": "records",
+      "enforced_by": [
+        "check",
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 0,
+      "policy_key": "",
+      "claims": [
+        "decision-attribution"
+      ],
+      "test": "test/cases/21_decision_question.sh"
+    },
+    {
+      "id": "questions_store_integrity",
+      "slug": "questions-store-integrity",
+      "title": "Questions store integrity",
+      "class": "blocking",
+      "principle": 3,
+      "summary": "Every entry in open-questions.md parses, because a gate that cannot read an entry can be bypassed by mistyping one.",
+      "validator": "questions_store",
+      "validator_function": "mj_validate_questions_store",
+      "defined_in": "lib/doctor.sh",
+      "category": "records",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "blocker-store"
+      ],
+      "test": "test/cases/21_decision_question.sh"
+    },
+    {
+      "id": "prompt_integrity",
+      "slug": "prompt-integrity",
+      "title": "Prompt integrity",
+      "class": "blocking",
+      "principle": 2,
+      "summary": "Every repository-local prompt asset renders, and every token in it is one the renderer knows.",
+      "validator": "prompts",
+      "validator_function": "mj_validate_prompts",
+      "defined_in": "lib/doctor.sh",
+      "category": "prompt",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "prompt-assets"
+      ],
+      "test": "test/cases/24_prompt_search.sh"
+    },
+    {
+      "id": "handover_integrity",
+      "slug": "handover-integrity",
+      "title": "Handover integrity",
+      "class": "blocking",
+      "principle": 10,
+      "summary": "The resolver runs and reports either the record for this worktree and branch or its clean absence; a malformed record is never silently skipped, and a record describing a history this checkout no longer has is reported.",
+      "validator": "resolver",
+      "validator_function": "mj_validate_resolver",
+      "defined_in": "lib/doctor.sh",
+      "category": "resolver",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "handover-record",
+        "divergence-label"
+      ],
+      "test": "test/cases/23_context.sh"
+    },
+    {
+      "id": "task_continuity",
+      "slug": "task-continuity",
+      "title": "Task continuity",
+      "class": "advisory",
+      "principle": 10,
+      "summary": "A task finished as partial or blocked should leave a handover record, not only a note section.",
+      "validator": "continuity",
+      "validator_function": "mj_validate_continuity",
+      "defined_in": "lib/finish.sh",
+      "category": "continuity",
+      "enforced_by": [
+        "finish"
+      ],
+      "exit_code": 0,
+      "policy_key": "",
+      "claims": [
+        "handover-record"
+      ],
+      "test": "test/cases/25_continuity_lifecycle.sh"
+    },
+    {
+      "id": "layout_integrity",
+      "slug": "layout-integrity",
+      "title": "Layout integrity",
+      "class": "advisory",
+      "principle": 1,
+      "summary": "The directories the durable commands write into are installed rather than created on first use.",
+      "validator": "layout",
+      "validator_function": "mj_validate_layout",
+      "defined_in": "lib/doctor.sh",
+      "category": "layout",
+      "enforced_by": [
+        "doctor"
+      ],
+      "exit_code": 0,
+      "policy_key": "",
+      "claims": [
+        "retention-caps"
+      ],
+      "test": "test/cases/25_continuity_lifecycle.sh"
+    },
+    {
       "id": "policy_integrity",
       "slug": "policy-integrity",
       "title": "Policy integrity",
@@ -237,13 +391,14 @@
       "title": "Context budget",
       "class": "blocking",
       "principle": 2,
-      "summary": "The always-loaded projection stays within its line budget, every reference in it resolves, and it states no count that will go stale.",
+      "summary": "The always-loaded projection stays within its line budget, every reference in it resolves, it states no count that will go stale, and the assembled context fits the builder's own budget.",
       "validator": "budget",
       "validator_function": "mj_validate_budget",
       "defined_in": "lib/doctor.sh",
       "category": "budget",
       "enforced_by": [
-        "doctor"
+        "doctor",
+        "watch"
       ],
       "exit_code": 10,
       "policy_key": "",
@@ -301,9 +456,9 @@
     }
   ],
   "counts": {
-    "declared": 13,
-    "blocking": 12,
-    "advisory": 1
+    "declared": 20,
+    "blocking": 16,
+    "advisory": 4
   },
   "index": {
     "scope_integrity": 0,
@@ -313,11 +468,18 @@
     "verification_integrity": 4,
     "note_integrity": 5,
     "profile_requirements": 6,
-    "policy_integrity": 7,
-    "projection_integrity": 8,
-    "enforcement_wiring": 9,
-    "context_budget": 10,
-    "retention_caps": 11,
-    "doctrine_wiring_integrity": 12
+    "ledger_integrity": 7,
+    "decision_records": 8,
+    "questions_store_integrity": 9,
+    "prompt_integrity": 10,
+    "handover_integrity": 11,
+    "task_continuity": 12,
+    "layout_integrity": 13,
+    "policy_integrity": 14,
+    "projection_integrity": 15,
+    "enforcement_wiring": 16,
+    "context_budget": 17,
+    "retention_caps": 18,
+    "doctrine_wiring_integrity": 19
   }
 }

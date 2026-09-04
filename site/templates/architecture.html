@@ -1,7 +1,7 @@
 {% extends "page.html" %}
 {% block body %}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
-  <div class="min-w-0"><article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>{{ <diagram key="pipeline" /> }}{{ <diagram key="projection" /> }}</div>
+  <div class="min-w-0"><article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>{{ <diagram key="pipeline" /> }}{{ <diagram key="projection" /> }}</div>
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">this build</h2>
       <dl class="space-y-2 text-sm"><div><dt class="text-body-subtle">source version</dt><dd class="font-mono text-heading">{{ source.source_version }}</dd></div><div><dt class="text-body-subtle">commit</dt><dd class="font-mono text-heading">{{ source.source_commit | truncate(length=12, end="") }}</dd></div><div><dt class="text-body-subtle">input hash</dt><dd class="font-mono text-heading">{{ source.source_hash | truncate(length=16, end="") }}</dd></div><div><dt class="text-body-subtle">generator</dt><dd class="font-mono text-heading">generate-site-data v{{ source.generator_version }}</dd></div></dl>

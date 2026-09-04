@@ -6,7 +6,7 @@
 {%- set r = [x for x in readme.does if x.slug == page.extra.slug][0] -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <div class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ r.text | markdown | safe }}</div>
+    <div class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ r.text | markdown | safe }}</div>
     {%- set matching = [x for x in cmds.commands if x.name == (r.command or "")] -%}
     {%- if matching | length > 0 -%}
     {%- set cmd = matching[0] -%}

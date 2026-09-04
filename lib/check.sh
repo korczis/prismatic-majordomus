@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034  # MJ_LABEL, MJ_TOUCHED_IN, MJ_BLOCKED are read by finish.sh and watch.sh
+# sourced by several commands; guard against re-sourcing
+[ -n "${MJ_LIB_check:-}" ] && return 0 || MJ_LIB_check=1
 # check — is the current task consistent with policy, scope, and state? Read-only,
 # except --checkpoint which updates checkpoint_at (the one documented write).
 #
-# check runs no validator by name. It asks the doctrine dispatcher for everything the
-# registry declares for this command, so a doctrine added to share/doctrines.yaml is
-# enforced here without this file changing.
+# check runs no validator by name. It asks the doctrine dispatcher for everything
+# share/doctrines.yaml declares for this command, so a doctrine added to the registry is
+# enforced here without this file changing, and a check that exists here without a
+# doctrine declaring it is a failure doctor reports.
 # shellcheck source=doctrine.sh
 . "$MJ_LIB_DIR/doctrine.sh"
 mj_cmd_check() {
@@ -61,8 +64,8 @@ mj_doctrine_one() {
   mj_doctrine_applies "$i" "$cmd" || mj_die "$MJ_EX_USAGE" "doctrine '$id' is not enforced by $cmd (it is enforced by: $(mj_doc_list "$i" enforced_by | paste -sd, -))"
   fn="mj_validate_$(mj_doc "$i" validator)"
   mj_is_function "$fn" || mj_die "$MJ_EX_INTERNAL" "doctrine '$id' declares validator '$(mj_doc "$i" validator)' but no function $fn exists"
-  MJ_DOCTRINE_ID="$id"; MJ_DOCTRINE_CLASS="$(mj_doc "$i" class)"
-  "$fn"; MJ_DOCTRINE_ID=""; MJ_DOCTRINE_CLASS=""
+  MJ_DOCTRINE_ID="$id"; MJ_DOCTRINE_CLASS="$(mj_doc "$i" class)"; MJ_DOCTRINE_CMD="$cmd"
+  "$fn"; MJ_DOCTRINE_ID=""; MJ_DOCTRINE_CLASS=""; MJ_DOCTRINE_CMD=""
 }
 
 # shared by check, watch and finish; expects current, policy, profile loaded.
@@ -80,7 +83,6 @@ mj_finish_gate() {
   MJ_DOCTRINE_SKIPPED=1
   return 1
 }
-
 # A task-scoped doctrine has nothing to say when no task is active. watch dispatches
 # with or without one; check and finish refuse earlier.
 mj_task_gate() {
@@ -106,6 +108,7 @@ mj_validate_state() {
     different_context) mj_doctrine_fail state "$id" "recorded on branch '$branch', now on '$(mj_git_branch)'" "git branch --show-current" ;;
   esac
   MJ_LABEL="$label"
+  return 0
 }
 
 mj_validate_scope() {
@@ -130,24 +133,58 @@ mj_validate_checkpoint() {
   local id cp interval now_e cp_e age; id="$(mj_cur id)"
   cp="$(mj_cur checkpoint_at)"; interval="$(mj_duration_secs "$(mj_pro checkpoint_interval)")" || interval=900
   now_e="$(mj_epoch "$(mj_now)")"; cp_e="$(mj_epoch "$cp")"
-  [ -n "$cp_e" ] || { mj_doctrine_fail checkpoint "$id" "checkpoint_at '$cp' is not a timestamp this platform can read" "grep -n checkpoint_at .majordomus/state/current.yaml"; return 0; }
-  age=$((now_e - cp_e))
-  if [ "$age" -le "$interval" ]; then mj_doctrine_ok checkpoint "$id" "$((age/60))m ago, interval $(mj_pro checkpoint_interval)"
-  else mj_doctrine_fail checkpoint "$id" "$((age/60))m ago, interval $(mj_pro checkpoint_interval) — run: majordomus check --checkpoint" "majordomus check --checkpoint"; fi
+  if [ -z "$cp_e" ]; then
+    mj_doctrine_fail checkpoint "$id" "checkpoint_at '$cp' is missing or is not a timestamp this platform can read" "grep -n checkpoint_at .majordomus/state/current.yaml"
+  else
+    age=$((now_e - cp_e))
+    if [ "$age" -le "$interval" ]; then mj_doctrine_ok checkpoint "$id" "$((age/60))m ago, interval $(mj_pro checkpoint_interval)"
+    else mj_doctrine_fail checkpoint "$id" "$((age/60))m ago, interval $(mj_pro checkpoint_interval) — run: majordomus check --checkpoint" "majordomus check --checkpoint"; fi
+  fi
+  # where the next worker would resume from; informational, never a finding
+  if mj_resolve_latest "$MJ_DIR/state/checkpoints" "$id"; then
+    mj_info checkpoint "${MJ_RES_PATH#"$MJ_ROOT/"}" "newest record, $(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")" "majordomus checkpoint --show"
+  fi
   return 0
 }
 
+# The blocker gate and the store it reads are one rule: a gate that cannot parse an entry
+# can be bypassed by mistyping one, so an unreadable question blocks exactly as an
+# unresolved question does.
 mj_validate_blockers() {
   mj_task_gate blockers || return 0
   mj_finish_gate blockers || return 0
-  local id q; id="$(mj_cur id)"; q="$MJ_DIR/state/open-questions.md"
-  if [ "$MJ_DOCTRINE_CMD" = finish ] && [ "${MJ_FINISH_OUTCOME:-}" = blocked ]; then
-    mj_doctrine_skip blockers "$(mj_cur id)" "outcome is blocked; open questions expected"; MJ_DOCTRINE_SKIPPED=1; return 0
+  local id q bad; id="$(mj_cur id)"; q="$MJ_DIR/state/open-questions.md"
+  MJ_BLOCKED=0
+  bad="$(mj_question_malformed "$q")"
+  if [ -n "$bad" ]; then
+    mj_doctrine_fail blockers "open-questions.md" "line(s) $(printf '%s' "$bad" | sed 's/ $//') do not parse; an unreadable entry cannot block acceptance" "majordomus question list --all"
+    MJ_BLOCKED=1; return 0
   fi
-  if [ -f "$q" ] && grep -qE "^\- \[unresolved\] $id " "$q"; then
-    mj_doctrine_fail blockers "$id" "unresolved: $(grep -E "^\- \[unresolved\] $id " "$q" | head -n1 | sed "s/^- \[unresolved\] $id — //" | cut -c1-80)" "grep -n 'unresolved' .majordomus/state/open-questions.md"
+  if [ "$MJ_DOCTRINE_CMD" = finish ] && [ "${MJ_FINISH_OUTCOME:-}" = blocked ]; then
+    grep -qE "^\- \[unresolved\] $id " "$q" 2>/dev/null && MJ_BLOCKED=1
+    mj_doctrine_skip blockers "$id" "outcome is blocked; open questions expected"; MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  if grep -qE "^\- \[unresolved\] $id " "$q" 2>/dev/null; then
+    mj_doctrine_fail blockers "$id" "unresolved: $(grep -E "^\- \[unresolved\] $id " "$q" | head -n1 | sed "s/^- \[unresolved\] $id — //" | cut -c1-80)" "majordomus question list"
     MJ_BLOCKED=1
-  else mj_doctrine_ok blockers "$id" "none open"; MJ_BLOCKED=0; fi
+  else mj_doctrine_ok blockers "$id" "none open"; fi
+  return 0
+}
+
+# The ledger is the one durable record nothing else can reconstruct, so a malformed line
+# blocks. decisions.md is hand-editable by design, so an unattributable entry is reported
+# and does not block — that difference is the two classes, declared in the registry.
+mj_validate_ledger() {
+  local bad; bad="$(mj_ledger_bad_lines "$MJ_DIR/state/ledger.jsonl")"
+  if [ -n "$bad" ]; then mj_doctrine_fail records "ledger.jsonl" "line(s) $(printf '%s' "$bad" | sed 's/ $//') are not well-formed events" "majordomus history --validate"
+  else mj_doctrine_ok records "ledger.jsonl" "every line is a well-formed event"; fi
+  return 0
+}
+
+mj_validate_decisions() {
+  local bad; bad="$(mj_decision_malformed "$MJ_DIR/state/decisions.md")"
+  if [ -n "$bad" ]; then mj_doctrine_fail records "decisions.md" "entry at line(s) $(printf '%s' "$bad" | sed 's/ $//') lacks Task, Head or Why; nothing will find it" "majordomus decision list"
+  else mj_doctrine_ok records "decisions.md" "every entry is attributable"; fi
   return 0
 }
 
@@ -157,6 +194,10 @@ mj_report_overlap_from_current() {
   mj_report_overlap "$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ')"
   [ "$MJ_FINDINGS" = 0 ] && mj_info overlap "$(mj_cur id)" "no other worktree claims an overlapping path"
 }
-# start.sh defines mj_report_overlap; check needs it too
+# start.sh defines mj_report_overlap; question.sh and decision.sh define the store validators
 # shellcheck source=start.sh
 . "$MJ_LIB_DIR/start.sh"
+# shellcheck source=question.sh
+. "$MJ_LIB_DIR/question.sh"
+# shellcheck source=decision.sh
+. "$MJ_LIB_DIR/decision.sh"
