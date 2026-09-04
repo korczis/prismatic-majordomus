@@ -114,11 +114,14 @@ mj_cmd_knowledge() {
   local sub="${1:-sources}"
   case "$sub" in
     --help|-h|help) mj_knowledge_usage; return 0 ;;
-    sources) shift || true ;;
+    sources|nodes) shift || true ;;
     *) mj_die "$MJ_EX_USAGE" "knowledge: unknown subcommand '$sub' (see: majordomus knowledge --help)" ;;
   esac
   mj_require_installed
-  mj_knowledge_sources "$@"
+  case "$sub" in
+    sources) mj_knowledge_sources "$@" ;;
+    nodes)   mj_knowledge_nodes_cmd "$@" ;;
+  esac
 }
 
 mj_knowledge_usage() {
@@ -127,6 +130,8 @@ usage: majordomus knowledge <subcommand> [options]
 
   sources [--scope shared|operational|all] [--json]
         the curated source classes and the files each one discovers    (read-only)
+  nodes [--scope shared|operational|all] [--kind <k>] [--json]
+        one node per canonical object, with its identity and kind      (read-only)
 
   Discovery is driven by the version-control index for repository knowledge and by the
   state directories Majordomus owns for operational records. An untracked file is not a
@@ -174,5 +179,138 @@ mj_knowledge_sources() {
     done
   fi
   rm -f "$out"
+  return 0
+}
+
+# ---------------------------------------------------------------- extraction
+# Turn the discovered sources into the rows lib/knowledge.awk reads. This function does the
+# reading; it decides nothing. What a node is, what its id is and what kind it carries are
+# all settled in the awk, so there is one implementation of those semantics rather than one
+# here and another in whatever calls it next.
+#
+# Structured sources are flattened through the same restricted YAML subset the policy and
+# the project model use, so a file that this tool refuses everywhere else is refused here
+# too rather than being parsed by a second, laxer reader.
+mj_knowledge_rows() {
+  local src="$1" cls scope kind hash path abs flat
+  while IFS="$(printf '\t')" read -r cls scope kind hash path; do
+    [ -n "$path" ] || continue
+    abs="$MJ_ROOT/$path"
+    printf 'S\t%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$hash" "$path"
+    case "$kind" in
+      decision|question)
+        # Line-oriented stores: their entries are not YAML and are not pretended to be.
+        awk -v p="$path" '{ gsub(/\t/, " "); printf "L\t%s\t%s\t%s\n", p, NR, $0 }' "$abs"
+        ;;
+      document)
+        # The one thing taken from a document body, and only when it is unambiguous: the
+        # first level-one heading. No other prose is read, because no other prose states a
+        # fact about the document rather than in it.
+        awk -v p="$path" '/^# / { t = substr($0, 3); gsub(/\t/, " ", t); printf "D\t%s\t%s\n", p, t; exit }' "$abs"
+        ;;
+      session|handover|checkpoint|prompt)
+        # Records and prompt assets carry YAML front matter and an authored body. Only the
+        # front matter is a source of facts.
+        flat="$(mktemp "${TMPDIR:-/tmp}/mj.kf.XXXXXX")"
+        mj_record_front "$abs" > "$flat" 2>/dev/null || : > "$flat"
+        mj_knowledge_flat_rows "$path" "$flat"
+        rm -f "$flat"
+        ;;
+      policy|profile|milestone|issue|claim)
+        mj_knowledge_flat_rows "$path" "$abs"
+        ;;
+      *)
+        # A kind this reader has no rule for gets no content rows at all. Sending it to the
+        # YAML flattener anyway was the shell guessing: a Markdown file handed to the
+        # structured reader produced "does not parse as the restricted YAML subset", which
+        # is a complaint about a file that was never claimed to be YAML. The extractor emits
+        # an `unknown` node for it and says so once, which is the honest report.
+        ;;
+    esac
+  done < "$src"
+}
+
+# Flatten one file and emit its keys. A file that does not parse is reported and skipped:
+# one malformed input must not cost the whole build, and it must not be silently absent
+# either.
+mj_knowledge_flat_rows() {
+  local path="$1" file="$2" flat
+  flat="$(mktemp "${TMPDIR:-/tmp}/mj.kn.XXXXXX")"
+  if mj_yaml_flatten "$file" > "$flat" 2>/dev/null; then
+    awk -F= -v p="$path" '{ k = $1; sub(/^[^=]*=/, "", $0); gsub(/\t/, " ", $0)
+                            printf "F\t%s\t%s\t%s\n", p, k, $0 }' "$flat"
+  else
+    printf 'X\tWARN\tunparsed_source\t%s\tdoes not parse as the restricted YAML subset; no node was extracted from it\n' "$path"
+  fi
+  rm -f "$flat"
+}
+
+# The node set, sorted. Sorting happens here rather than in the awk because awk has no
+# portable sort, and it is done under the C collation so that two machines with different
+# locales produce the same bytes.
+mj_knowledge_nodes() {
+  local scope="${1:-all}" disc rows
+  disc="$(mktemp "${TMPDIR:-/tmp}/mj.kd.XXXXXX")"
+  rows="$(mktemp "${TMPDIR:-/tmp}/mj.kr.XXXXXX")"
+  mj_knowledge_discover "$scope" > "$disc" || { rm -f "$disc" "$rows"; return "$MJ_EX_INTERNAL"; }
+  mj_knowledge_rows "$disc" > "$rows"
+  awk -f "$MJ_LIB_DIR/knowledge.awk" "$rows" | LC_ALL=C sort
+  rm -f "$disc" "$rows"
+}
+
+# The nodes subcommand. Read-only: it derives on demand and writes nothing, because a query
+# that rebuilds an index as a side effect is a write wearing a read's name.
+mj_knowledge_nodes_cmd() {
+  local scope=all want_kind="" out n=0 fails=0
+  while [ $# -gt 0 ]; do case "$1" in
+    --scope) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--scope needs a value"; scope="$2"; shift 2 ;;
+    --scope=*) scope="${1#--scope=}"; shift ;;
+    --kind) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--kind needs a value"; want_kind="$2"; shift 2 ;;
+    --kind=*) want_kind="${1#--kind=}"; shift ;;
+    --help|-h) mj_knowledge_usage; return 0 ;;
+    *) mj_die "$MJ_EX_USAGE" "knowledge nodes: unknown option $1" ;;
+  esac; done
+  case "$scope" in shared|operational|all) ;;
+    *) mj_die "$MJ_EX_USAGE" "knowledge nodes: --scope must be shared, operational or all" ;;
+  esac
+
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.kno.XXXXXX")"
+  mj_knowledge_nodes "$scope" > "$out" || { rm -f "$out"; return "$MJ_EX_INTERNAL"; }
+
+  local t a b c d e g first=1
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"schema":1,"scope":"%s","nodes":[' "$scope"
+    while IFS="$(printf '\t')" read -r t a b c d e g; do
+      [ "$t" = N ] || continue
+      [ -n "$want_kind" ] && [ "$b" != "$want_kind" ] && continue
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"id":"%s","kind":"%s","scope":"%s","source":"%s","hash":"%s","title":"%s"}' \
+        "$(mj_json_esc "$a")" "$b" "$c" "$(mj_json_esc "$d")" "$e" "$(mj_json_esc "$g")"
+    done < "$out"
+    printf '],"findings":['
+    first=1
+    while IFS="$(printf '\t')" read -r t a b c d; do
+      [ "$t" = X ] || continue
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"level":"%s","code":"%s","subject":"%s","message":"%s"}' \
+        "$a" "$b" "$(mj_json_esc "$c")" "$(mj_json_esc "$d")"
+    done < "$out"
+    printf ']}\n'
+  else
+    while IFS="$(printf '\t')" read -r t a b c d e g; do
+      [ "$t" = N ] || continue
+      [ -n "$want_kind" ] && [ "$b" != "$want_kind" ] && continue
+      printf '%-11s %-11s %s  %-52s %s\n' "$b" "$c" "$(printf '%s' "$e" | cut -c1-12)" "$a" "$g"
+      n=$((n + 1))
+    done < "$out"
+    printf 'knowledge nodes: %s in scope %s%s\n' "$n" "$scope" "${want_kind:+, kind $want_kind}"
+    while IFS="$(printf '\t')" read -r t a b c d; do
+      [ "$t" = X ] || continue
+      case "$a" in FAIL) mj_fail knowledge "$c" "$d" "majordomus knowledge nodes --json"; fails=$((fails + 1)) ;;
+                   *)    mj_warn knowledge "$c" "$d" "majordomus knowledge nodes --json" ;; esac
+    done < "$out"
+  fi
+  rm -f "$out"
+  [ "$fails" = 0 ] || return "$MJ_EX_CONTRACT"
   return 0
 }

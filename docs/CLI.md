@@ -605,6 +605,39 @@ changes the other.
 - `sources [--scope shared|operational|all]` lists the curated source classes and the
   files each one discovers, with the class, the scope, the kind, a content hash and the
   repository-relative path.
+- `nodes [--scope ...] [--kind <k>]` derives one node per canonical object: its identity,
+  its kind, the source it came from and that source's hash. Exits `10` when two objects
+  claim one identity.
+
+**A node's identity is never its content hash.** It is the object's own canonical id where
+it has one — `claim:policy-parse`, `issue:I0801`, `milestone:M003`, `profile:debugging` —
+and its repository path where it does not, as in `document:docs/CONTINUITY.md`. A hash says
+whether something *changed*; it can never say what something *is*, because then every edit
+would delete a node and create a stranger, and every reference to it would point at nothing
+without anything saying so. The hash rides along on the node and is what freshness is
+measured with.
+
+The consequence is deliberate: editing a document keeps its node and moves its hash;
+renaming one is a delete and an add, and disturbs no other node.
+
+**A kind comes from structure, never from prose.** It is decided by the source class the
+file was discovered in and by fields the file itself declares. Nothing reads a body looking
+for a word that suggests a type: a document that discusses roadmaps and milestones is a
+document that discusses them. Where no rule applies the kind is `unknown` and the node is
+still emitted, with one finding naming the class — an explicit unknown is information, and a
+confident wrong answer is not.
+
+**A title is taken or left empty, never invented.** From the record's own `title` or
+`description`, or from a document's first level-one heading. A document with no heading gets
+no title rather than its filename, because a filename standing in for a title reads like a
+fact and is a guess.
+
+Two stores have no id field of their own. A decision is keyed by its title and a question by
+its text — in both cases exactly what the ledger records and what a session envelope
+references, so three places name the same thing the same way and nothing maps between them.
+Answering a question rewrites the line it lives on, and the identity survives that: the
+appended answer is stripped, and only when what remains ends in the entry's opening date, so
+a question whose own text contains a dash is left whole rather than cut at a guess.
 
 **Discovery is driven by the repository index, not by a filesystem walk.** A walk returns
 build output, vendored trees and editor droppings; it returns them in an order that
