@@ -300,3 +300,15 @@ doctrines:
     exit_code: 10
     claims: [dag-validation, execution-waves]
     test: test/cases/44_model_doctrine.sh
+
+  - id: roadmap_integrity
+    title: The roadmap is a projection, never a document
+    class: blocking
+    principle: 4
+    summary: No document is a second authority for the roadmap. While a hand-written roadmap table exists, it can neither list a version no milestone declares nor hide one the model does.
+    validator: roadmap
+    category: roadmap
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [roadmap-derived]
+    test: test/cases/49_roadmap_doctrine.sh

@@ -600,6 +600,15 @@
       "note": "Evidence is a command and its result, or an artifact. Narrative is refused. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE."
     },
     {
+      "id": "claim:roadmap-derived",
+      "kind": "claim",
+      "label": "The roadmap is derived from milestone state, and no document may be a second authority for it",
+      "status": "guaranteed",
+      "route": "/guarantees/roadmap-derived/",
+      "external": false,
+      "note": "The sequence is the topological rank of the milestone graph, so no list of versions exists anywhere. While a hand-written roadmap table survives, the doctrine holds it to the model in both directions; once it is gone the check holds trivially, which is the regression it exists to refuse."
+    },
+    {
       "id": "claim:github-projection",
       "kind": "claim",
       "label": "GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten",
@@ -802,6 +811,13 @@
       "kind": "source",
       "label": "docs/PLANNING.md",
       "route": "/docs/planning/",
+      "external": false
+    },
+    {
+      "id": "source:docs/ROADMAP.md",
+      "kind": "source",
+      "label": "docs/ROADMAP.md",
+      "route": "/docs/roadmap/",
       "external": false
     },
     {
@@ -1020,6 +1036,13 @@
       "label": "test/cases/45_github_projection.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/45_github_projection.sh"
+    },
+    {
+      "id": "test:test/cases/49_roadmap_doctrine.sh",
+      "kind": "test",
+      "label": "test/cases/49_roadmap_doctrine.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/49_roadmap_doctrine.sh"
     }
   ],
   "edges": [
@@ -1349,6 +1372,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:roadmap-derived",
+      "target": "source:docs/ROADMAP.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:github-projection",
       "target": "source:docs/PLANNING.md",
       "kind": "specified_by"
@@ -1634,6 +1662,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:roadmap-derived",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:github-projection",
       "target": "impl:scripts/github-sync",
       "kind": "implemented_by"
@@ -1916,6 +1949,11 @@
     {
       "source": "claim:evidence-gates-done",
       "target": "test:test/cases/41_project_status.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:roadmap-derived",
+      "target": "test:test/cases/49_roadmap_doctrine.sh",
       "kind": "proved_by"
     },
     {
