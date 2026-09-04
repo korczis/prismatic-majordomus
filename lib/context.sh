@@ -290,7 +290,9 @@ mj_ctx_verification() {
 # ---------------------------------------------------------------- assembly and budget
 # Sections are dropped in a fixed order, least reliable evidence first, and every drop is
 # named in EXCLUDED. Bodies of authored records degrade to a pointer rather than vanish.
-MJ_CTX_DROP_ORDER="90.history 80.files 50.decisions 60.checkpoint 70.handover"
+# The document chain is derived, not evidence: it is dropped after the derived listings and
+# before any authored record body, and the worker is told the one command that rebuilds it.
+MJ_CTX_DROP_ORDER="90.history 80.files 35.documents 50.decisions 60.checkpoint 70.handover"
 MJ_CTX_ORDER="10.git 20.task 30.profile 35.documents 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt"
 
 # Render the whole document, including its own header and trailer, into $1. The budget
@@ -326,6 +328,9 @@ mj_context_emit() {
           mv "$MJ_CTX_TMP/$d.short" "$MJ_CTX_TMP/$d"
         else rm -f "$MJ_CTX_TMP/$d"; fi
         dropped="$dropped ${d#*.}-body"; mj_ctx_excl "${d#*.} body" "context budget $budget lines" ;;
+      35.documents)
+        rm -f "$MJ_CTX_TMP/$d"; dropped="$dropped ${d#*.}"
+        mj_ctx_excl "context documents" "context budget $budget lines; run: majordomus context resolve <path>" ;;
       *)
         rm -f "$MJ_CTX_TMP/$d"; dropped="$dropped ${d#*.}"; mj_ctx_excl "${d#*.}" "context budget $budget lines" ;;
     esac
