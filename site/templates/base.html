@@ -10,6 +10,7 @@
 <title>{% block title %}{{ project.name }} — {{ project.tagline | lower | trim_end(pat=".") }}{% endblock title %}</title>
 <meta name="description" content="{% block description %}{{ project.tagline }}{% endblock description %}">
 <link rel="canonical" href="{{ page_url }}">
+{% if page is defined and page.extra.noindex is defined and page.extra.noindex %}<meta name="robots" content="noindex">{% endif %}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{ project.name }}">
 <meta property="og:title" content="{% block ogtitle %}{{ project.name }}{% endblock ogtitle %}">

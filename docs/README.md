@@ -13,6 +13,8 @@ Each of these is rendered on the website as well, from this same Markdown.
 | [`ADOPTION.md`](ADOPTION.md) | teams | day one, week one, several workers, removal |
 | [`ECONOMICS.md`](ECONOMICS.md) | leads | the claim it refuses to make, what v0.1 controls without measuring, where the cost actually is, what the ledger alone can measure, and what honest measurement would take |
 | [`EXTRACTION_REPORT.md`](EXTRACTION_REPORT.md) | humans | how the design was derived: root cause, pattern ledger, rejected patterns, risks, plan |
+| [`GITHUB_PAGES_ARCHITECTURE.md`](GITHUB_PAGES_ARCHITECTURE.md) | maintainers | how the website is derived from the repository and checked for drift |
+| [`SITE_REVIEW.md`](SITE_REVIEW.md) | maintainers | route audit, ownership of site facts, validation performed |
 | [`../AGENTS.md`](../AGENTS.md) | AI workers and contributors | the operating contract for changing this repository, generated from `.majordomus/` |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) · [`../SECURITY.md`](../SECURITY.md) | contributors | process; security commitments and stated limits |
 

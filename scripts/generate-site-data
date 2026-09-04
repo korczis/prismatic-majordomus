@@ -167,10 +167,13 @@ section_of() { # file, heading, next-heading -> body between them; fails if the 
 FINISH_BLOCK="$(awk '/^```/{c++; if(c==1){f=1;next} if(c==2){exit}} f' "$ROOT/README.md")"
 [ -n "$FINISH_BLOCK" ] || { echo "generate-site-data: README.md has no first fenced block (the hero renders it)" >&2; exit 10; }
 DOES_ROWS="$(section_of "$ROOT/README.md" "What it does" "Quick start" | grep -E '^\| \*\*' | sed -E 's/^\| \*\*([^*]+)\*\* \| (.*) \|$/\1|\2/' | jq -Rn '[inputs | split("|") | {title: .[0], text: .[1]}]')"
-jq -n --arg finish "$FINISH_BLOCK" --arg problem "$(section_of "$ROOT/README.md" "The problem" "What it does")" \
+PROBLEM_MD="$(section_of "$ROOT/README.md" "The problem" "What it does")"
+jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" \
+  --arg problem_bullets "$(printf '%s' "$PROBLEM_MD" | awk '/^- /{f=1} f&&/^$/{exit} f')" \
   --arg notwhat "$(section_of "$ROOT/README.md" "What this is not" "Limitations")" --argjson does "$DOES_ROWS" \
   --arg limits "$(section_of "$ROOT/README.md" "Limitations" "Roadmap")" \
-  '{schema:1, finish_transcript:$finish, problem_md:$problem, not_md:$notwhat, limitations_md:$limits, does:$does}' > "$OUT/readme.json"
+  --arg roadmap "$(section_of "$ROOT/README.md" "Roadmap" "Contributing")" \
+  '{schema:1, finish_transcript:$finish, problem_md:$problem, problem_bullets_md:$problem_bullets, not_md:$notwhat, limitations_md:$limits, roadmap_md:$roadmap, does:$does}' > "$OUT/readme.json"
 
 # ---------------------------------------------------------------- commands.json (CLI reference sections per command)
 # docs/CLI.md has one `## `majordomus <name>`` section per command; each becomes a page.
@@ -236,7 +239,9 @@ done
 CONTENT="$ROOT/site/content/docs"
 [ "$CHECK" = 1 ] && CONTENT="$OUT/content-docs"
 rm -rf "$CONTENT"; mkdir -p "$CONTENT"
-for d in DESIGN CLI SCHEMAS CONCEPTS ADOPTION ECONOMICS EXTRACTION_REPORT; do
+# every document listed in the docs/README.md index becomes a page; adding a row is the only step
+# (AGENTS.md is listed in the index but lives at the repository root; it is rendered as "contract" below)
+for d in $(jq -r '.docs[].path' "$OUT/docs.json" | grep -E '^[A-Z_]+\.md$' | sed 's/\.md$//' | while read -r n; do [ -f "$ROOT/docs/$n.md" ] && printf '%s\n' "$n"; done); do
   src="$ROOT/docs/$d.md"; slug="$(printf '%s' "$d" | tr 'A-Z_' 'a-z-')"
   title="$(grep -m1 '^# ' "$src" | sed 's/^# //; s/ — .*//')"
   summary="$(jq -r --arg p "$d.md" '.docs[] | select(.path==$p) | .summary' "$OUT/docs.json")"
@@ -302,7 +307,7 @@ jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | whi
 mk_section supervises "What Majordomus supervises" "Nine responsibilities, one directory. Each is a file in .majordomus/ and a subcommand that reads it." supervises-section.html responsibility.html 20
 i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while IFS="$(printf '\t')" read -r slug title text; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$text" | sed -E 's/`([^`]*)`/\1/g' | jq -Rn 'input')" "$i" "$(jstr "$slug")" > "$CONTENT_ROOT/supervises/$slug.md"; done
-mk_section commands "Commands" "One executable, eight subcommands. Exit codes are a contract." commands-section.html command.html 25
+mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jq -Rn 'input')" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
 

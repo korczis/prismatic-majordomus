@@ -4,7 +4,7 @@
 {%- set policy = load_data(path="data/generated/policy.json") -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
   <div class="min-w-0">
-    <article class="format break-words max-w-none dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
+    <article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
     <ol class="mt-8 space-y-6">
       <li class="min-w-0"><h2 class="mb-2 text-lg font-semibold text-heading"><span class="font-mono text-fg-brand">1</span> Install the CLI</h2>{% <code label="once per machine"> %}
 git clone {{ project.repository_url }} ~/majordomus

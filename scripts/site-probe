@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# site-probe — measures the built site in a real browser: horizontal overflow at phone and desktop
+# widths on every route, the mobile menu, the navigation dropdowns, the theme toggle, and Mermaid
+# rendering. Needs a Chrome/Chromium binary; without one it reports SKIP and exits 0, because a
+# missing browser is not a broken site. Exit 0 clean, 10 findings, 12 site/public missing.
+#
+#   scripts/site-probe            probe every route at 320, 390 and 1280 px
+#   scripts/site-probe --quick    homepage and one page per section only
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"; QUICK=0
+[ "${1:-}" = --quick ] && QUICK=1
+[ -d "$PUB" ] || { echo "site-probe: site/public missing; run scripts/site-build" >&2; exit 12; }
+CHROME=""
+for c in "${CHROME_BIN:-}" google-chrome google-chrome-stable chromium chromium-browser "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; do
+  [ -n "$c" ] && { command -v "$c" >/dev/null 2>&1 || [ -x "$c" ]; } && { CHROME="$c"; break; }
+done
+[ -n "$CHROME" ] || { echo "SKIP site-probe: no Chrome/Chromium found (set CHROME_BIN)"; exit 0; }
+command -v python3 >/dev/null || { echo "SKIP site-probe: python3 needed for the local server"; exit 0; }
+
+PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
+PORT="${SITE_PROBE_PORT:-}"
+if [ -z "$PORT" ]; then for c in 8791 8792 8793 8794 8795 8796; do lsof -ti ":$c" >/dev/null 2>&1 || { PORT=$c; break; }; done; fi
+[ -n "$PORT" ] || { echo "site-probe: no free port in 8791-8796 (set SITE_PROBE_PORT)" >&2; exit 12; }
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/mj-probe.XXXXXX")"; trap 'rm -rf "$WORK"; [ -n "${SRV:-}" ] && kill "$SRV" 2>/dev/null || true' EXIT
+# build a copy served under the production prefix, with base_url pointing at this server
+BASE="http://127.0.0.1:$PORT$PREFIX"
+( cd "$SITE" && zola build --force --base-url "$BASE" --output-dir "$WORK/out" >/dev/null 2>&1 ) || { echo "site-probe: zola build for the probe origin failed" >&2; exit 12; }
+[ -f "$WORK/out/index.html" ] || { echo "site-probe: probe build produced no index.html in $WORK/out" >&2; exit 12; }
+for a in app.css giallo-light.css giallo-dark.css js images; do [ -e "$PUB/$a" ] && cp -R "$PUB/$a" "$WORK/out/" 2>/dev/null || true; done
+mkdir -p "$WORK/srv"; ln -s "$WORK/out" "$WORK/srv$PREFIX"
+( cd "$WORK/srv" && exec python3 -m http.server "$PORT" >/dev/null 2>&1 ) & SRV=$!
+for _ in 1 2 3 4 5 6 7 8 9 10; do curl -s -o /dev/null "http://127.0.0.1:$PORT$PREFIX/" && break; sleep 0.5; done
+curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT$PREFIX/" | grep -q 200 || { echo "site-probe: local server did not serve $PREFIX/" >&2; exit 12; }
+
+fails=0; ok() { printf 'OK   %-10s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-10s %s\n' "$1" "$2"; fails=$((fails+1)); }
+title_of() { "$CHROME" --headless=new --disable-gpu --window-size=1400,1000 --virtual-time-budget=9000 --dump-dom "$1" 2>/dev/null | grep -oE '<title>[^<]*' | sed 's/<title>//' | head -1; }
+
+routes="$(cd "$WORK/out" && find . -name index.html | sed 's#^\.##; s#index.html$##' | sort)"
+if [ "$QUICK" = 1 ]; then routes="$(printf '%s\n' "$routes" | awk -F/ '!seen[$2]++')"; fi
+n=0
+for r in $routes; do
+  for w in 320 390 1280; do
+    cat > "$WORK/srv/p.html" <<HTML
+<!doctype html><title>probe</title><iframe id=f src="$PREFIX$r" style="width:${w}px;height:900px;border:0"></iframe>
+<script>document.getElementById('f').addEventListener('load',()=>{setTimeout(()=>{const d=document.getElementById('f').contentDocument;const vw=d.documentElement.clientWidth,sw=d.documentElement.scrollWidth;const pres=d.querySelectorAll('pre.mermaid').length,svg=d.querySelectorAll('pre.mermaid svg').length;const x=[...d.querySelectorAll('body *')].filter(e=>{const b=e.getBoundingClientRect();const p=e.parentElement?e.parentElement.getBoundingClientRect():b;return b.right>vw+1&&p.right<=vw+1}).slice(0,2).map(e=>e.tagName.toLowerCase()+'.'+(e.className||'').toString().split(' ').slice(0,2).join('.'));document.title='vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' wide='+(x.join('|')||'none')},2500)});</script>
+HTML
+    t="$(title_of "http://127.0.0.1:$PORT/p.html")"; n=$((n+1))
+    vw="$(printf '%s' "$t" | sed -n 's/.*vw=\([0-9]*\).*/\1/p')"; sw="$(printf '%s' "$t" | sed -n 's/.*sw=\([0-9]*\).*/\1/p')"
+    [ -n "$vw" ] || { bad probe "$r @$w: no measurement (page did not load)"; continue; }
+    [ "$sw" -le "$vw" ] || bad overflow "$r @${w}px: scrollWidth $sw > viewport $vw ($(printf '%s' "$t" | sed -n 's/.*wide=//p'))"
+    m="$(printf '%s' "$t" | sed -n 's/.*mermaid=\([0-9]*\/[0-9]*\).*/\1/p')"; [ "${m%/*}" = "${m#*/}" ] || bad mermaid "$r @${w}px: rendered ${m%/*} of ${m#*/} diagrams"
+  done
+done
+ok overflow "$n route×width measurements without horizontal overflow (or listed above)"
+
+# behaviour on the homepage: mobile menu, one dropdown, theme toggle
+cat > "$WORK/srv/b.html" <<HTML
+<!doctype html><title>probe</title><iframe id=f src="$PREFIX/" style="width:390px;height:900px;border:0"></iframe>
+<script>document.getElementById('f').addEventListener('load',()=>{setTimeout(()=>{const d=document.getElementById('f').contentDocument,w=document.getElementById('f').contentWindow;
+const menu=d.getElementById('navbar-main');const mb=d.querySelector('[data-collapse-toggle="navbar-main"]');mb.click();
+const dark0=d.documentElement.classList.contains('dark');d.getElementById('theme-toggle').click();
+setTimeout(()=>{const dark1=d.documentElement.classList.contains('dark');document.title='menu='+(!menu.classList.contains('hidden')&&menu.getBoundingClientRect().height>0)+' expanded='+mb.getAttribute('aria-expanded')+' theme='+(dark0!==dark1)+' stored='+w.localStorage.getItem('color-theme')},800)},2500)});</script>
+HTML
+t="$(title_of "http://127.0.0.1:$PORT/b.html")"
+printf '%s' "$t" | grep -q 'menu=true expanded=true' && ok menu "mobile menu opens via Flowbite collapse" || bad menu "mobile menu did not open ($t)"
+printf '%s' "$t" | grep -q 'theme=true' && ok theme "theme toggle flips html.dark and persists" || bad theme "theme toggle did not flip ($t)"
+cat > "$WORK/srv/d.html" <<HTML
+<!doctype html><title>probe</title><iframe id=f src="$PREFIX/" style="width:1200px;height:800px;border:0"></iframe>
+<script>document.getElementById('f').addEventListener('load',()=>{setTimeout(()=>{const d=document.getElementById('f').contentDocument;const b=d.querySelector('[data-dropdown-toggle]');const m=d.getElementById(b.getAttribute('data-dropdown-toggle'));b.click();setTimeout(()=>{document.title='dropdown='+(!m.classList.contains('hidden')&&m.getBoundingClientRect().height>0)+' links='+m.querySelectorAll('a').length},700)},2500)});</script>
+HTML
+t="$(title_of "http://127.0.0.1:$PORT/d.html")"
+printf '%s' "$t" | grep -q 'dropdown=true' && ok dropdown "navigation dropdown opens via Flowbite" || bad dropdown "dropdown did not open ($t)"
+
+printf 'site-probe: %s failure(s) with %s\n' "$fails" "$CHROME"; [ "$fails" = 0 ] && exit 0 || exit 10

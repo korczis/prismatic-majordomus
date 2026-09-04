@@ -5,7 +5,7 @@
 [hero]
 kicker = "portable shell · no runtime · no model calls"
 headline = "Your AI workers are brilliant. Nobody is managing them."
-lead = "Every fresh session re-reads the repository, reasons at maximum, works on whatever it likes, and says \"done\" when it feels like it. Majordomus is the layer that decides what a worker is told, what it may touch, and whether \"done\" is true."
+lead = "Every fresh session re-reads the repository, reasons at maximum, works on whatever it likes, and says \"done\" when it feels like it. Majordomus is the layer that decides what a worker is told, declares which paths its work may touch, and refuses to accept \"done\" until a contract says so."
 cta_primary = "Get started"
 cta_secondary = "View on GitHub"
 transcript_caption = "This is what \"done\" looks like when it has to be earned. Real output from the repository's own README."
@@ -35,7 +35,9 @@ after = [
 ]
 
 [leads]
-problem = "Every failure listed was observed in a working environment before it was designed against. The evidence, with magnitudes, is in the extraction report."
+problem = "An AI session is the only witness to its own work. Nothing outside the conversation states what it was allowed to do or checks what it did."
+boundary = "Majordomus does not stop a worker from touching a file while it runs. It declares the scope up front, detects a file outside it at check and at finish, and refuses to accept the work as completed — nothing is written to the record until every line of the contract passes. Refused acceptance, not runtime prevention, is the contract."
+narrow = "The narrowness is the point: a supervisor that also ran the workers, stored their memory or chose their models would be one more thing nobody supervises."
 model = "Majordomus does not replace a worker and never invokes a model. It decides what a worker is told, what it may touch, and whether its claim of being done can be believed."
 install = "One directory in your repository holds the policy, the profiles, and the durable state. Nothing is compiled, served, or running in the background."
 supervises = "Every responsibility is a file in one directory and a subcommand that reads it."

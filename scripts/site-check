@@ -28,7 +28,8 @@ for f in $pages; do
   grep -q '<meta name="description"' "$f" || bad route "$rel: no description"
   grep -q '<main' "$f" || bad route "$rel: no <main> landmark"
   [ "$(grep -o '<h1' "$f" | wc -l | tr -d ' ')" = 1 ] || bad route "$rel: expected exactly one <h1>"
-  grep -qE '\{\{|\{%|\[\[[A-Z_]+\]\]' "$f" && bad route "$rel: unresolved template placeholder"
+  # a {{...}} inside a code span is rendered output (documented prompt tokens), not an unrendered template
+  sed -e 's|<code[^>]*>[^<]*</code>||g' "$f" | grep -qE '\{\{|\{%|\[\[[A-Z_]+\]\]' && bad route "$rel: unresolved template placeholder"
   grep -qE ' style="' "$f" && bad route "$rel: inline style attribute (forbidden by the custom CSS policy)"
 done; ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, description, main, one h1, no placeholders, no inline styles"
 # 5. prefix: every root-absolute href/src carries the deployment path
@@ -81,7 +82,11 @@ for st in guaranteed advisory planned rejected; do [ -f "$PUB/guarantees/$st/ind
 for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do [ -f "$PUB/supervises/$slug/index.html" ] || bad tiles "no page for responsibility $slug"; done
 for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do [ -f "$PUB/commands/$n/index.html" ] || bad tiles "no page for command $n"; done
 for f in "$SITE"/content-src/why/*.md; do slug="$(basename "$f" .md)"; [ "$slug" = _index ] && continue; [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
+for r in limitations roadmap why supervises commands; do [ -f "$PUB/$r/index.html" ] || bad tiles "no page for /$r/"; done
 ok tiles "every profile, claim, status, responsibility, command and why-moment has its own page"
+# 13d. every navigation target resolves
+for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g" | grep -E '^/' | sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
+ok nav "every navigation link on the homepage resolves"
 # 13c. every claim mention on the homepage is a link to its page
 for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do
   claim="$(jq -r --arg i "$id" '.claims[] | select(.id==$i) | .claim' "$SITE/data/generated/capabilities.json")"
