@@ -17,14 +17,13 @@
       "title": "Policy",
       "text": "one provider-neutral `policy.yaml`; unknown keys are errors",
       "slug": "policy",
-      "command": null,
+      "command": "update",
       "claim_ids": [
         "policy-parse",
-        "profile-validate",
-        "wiring-reconciliation",
-        "projection-generation",
-        "drift-watch",
-        "shared-policy"
+        "doctrine-class-decides",
+        "prompt-assets",
+        "prompt-asset",
+        "derived-not-declared"
       ]
     },
     {
@@ -37,9 +36,7 @@
         "projection-fingerprint",
         "region-projection",
         "no-silent-overwrite",
-        "context-budget",
-        "drift-watch",
-        "github-projection"
+        "context-budget"
       ]
     },
     {
@@ -48,14 +45,13 @@
       "slug": "state",
       "command": "start",
       "claim_ids": [
+        "ledger-integrity",
+        "decision-attribution",
         "git-identity",
-        "consistency-check",
         "divergence-label",
-        "drift-watch",
-        "context-assembly",
         "checkpoint-record",
-        "prompt-asset",
-        "roadmap-derived"
+        "decision-record",
+        "task-dependencies"
       ]
     },
     {
@@ -64,11 +60,12 @@
       "slug": "scope",
       "command": "check",
       "claim_ids": [
+        "blocker-store",
         "scoped-task",
         "consistency-check",
         "scope-enforcement",
         "overlap-report",
-        "drift-watch",
+        "task-commit-attribution",
         "worktree-ownership"
       ]
     },
@@ -76,19 +73,16 @@
       "title": "Profiles",
       "text": "four bundles that set capability class, reasoning effort, verbosity, presentation, context toggles, verification, and checkpoint interval independently",
       "slug": "profiles",
-      "command": "start",
+      "command": "check",
       "claim_ids": [
         "profile-validate",
-        "scoped-task",
-        "consistency-check",
         "profile-axes",
         "capability-class",
         "minimum-context",
         "effort-escalation",
         "checkpoint-interval",
         "context-assembly",
-        "checkpoint-record",
-        "runtime-adapters"
+        "context-selection-budget"
       ]
     },
     {
@@ -97,10 +91,9 @@
       "slug": "handover",
       "command": "handover",
       "claim_ids": [
-        "retention-caps",
-        "drift-watch",
         "handover-record",
-        "no-transcripts"
+        "no-transcripts",
+        "record-resolution"
       ]
     },
     {
@@ -111,8 +104,8 @@
       "claim_ids": [
         "finish-contract",
         "typed-outcome",
-        "cost-per-outcome",
-        "routing"
+        "open-question-gate",
+        "blocker-survives-handover"
       ]
     },
     {
@@ -121,25 +114,14 @@
       "slug": "doctor",
       "command": "doctor",
       "claim_ids": [
-        "policy-parse",
-        "profile-validate",
         "wiring-reconciliation",
-        "exit-code-contract",
         "dispatcher-wiring",
-        "blocker-store",
-        "context-budget",
+        "doctrine-registry",
+        "catalogue-resolves",
         "pointer-integrity",
         "no-counts-in-context",
         "retention-caps",
-        "init-refuses",
-        "reproduce-command",
-        "no-network",
-        "drift-watch",
-        "context-selection-budget",
-        "checkpoint-record",
-        "record-resolution",
-        "open-question-gate",
-        "dag-validation"
+        "continuity-reachable"
       ]
     },
     {
@@ -148,15 +130,27 @@
       "slug": "watch",
       "command": "watch",
       "claim_ids": [
-        "drift-watch"
+        "drift-watch",
+        "history-ledger-read",
+        "record-retention",
+        "record-search",
+        "semantic-retrieval"
       ]
     },
     {
       "title": "Plan",
       "text": "milestones are outcome specifications and issues are execution contracts; status, execution waves and the next ready issue are derived from the dependency graph, never stored",
       "slug": "plan",
-      "command": null,
-      "claim_ids": []
+      "command": "plan",
+      "claim_ids": [
+        "project-schema",
+        "project-status-derived",
+        "dag-validation",
+        "execution-waves",
+        "evidence-gates-done",
+        "roadmap-derived",
+        "github-projection"
+      ]
     }
   ]
 }

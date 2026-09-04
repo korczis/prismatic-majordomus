@@ -50,6 +50,7 @@ share/applications.yaml
 share/skeleton/policy.yaml
 share/skeleton/providers/body.md
 docs/CLAIMS.yaml
+docs/RESPONSIBILITIES.yaml
 README.md
 LICENSE"
 # LC_ALL=C so the globs below expand in byte order rather than in the collation order of
@@ -159,7 +160,9 @@ Cf="$(flat "$ROOT/docs/CLAIMS.yaml")"
     jq -cn --arg id "$(yv "$Cf" "claims.$i.id")" --arg claim "$(yv "$Cf" "claims.$i.claim")" --arg source "$(yv "$Cf" "claims.$i.source")" \
       --arg impl "$(yv "$Cf" "claims.$i.implementation")" --arg test "$(yv "$Cf" "claims.$i.test")" --arg status "$(yv "$Cf" "claims.$i.status")" \
       --arg note "$(yv "$Cf" "claims.$i.note")" \
+      --arg resp "$(yv "$Cf" "claims.$i.responsibility")" \
       '{id:$id, claim:$claim, source:$source, implementation:(if $impl=="-" then null else $impl end), test:(if $test=="-" then null else $test end), status:$status, note:(if $note=="" then null else $note end),
+        responsibility:(if $resp=="" then null else $resp end),
         source_route: ($source | if test("^docs/[A-Z_]+\\.md$") then "/docs/" + (ltrimstr("docs/") | rtrimstr(".md") | ascii_downcase | gsub("_";"-")) + "/"
                                 elif . == "AGENTS.md" then "/docs/contract/"
                                 elif startswith("share/skeleton/profiles/") then "/profiles/" + (ltrimstr("share/skeleton/profiles/") | rtrimstr(".yaml")) + "/"
@@ -250,15 +253,33 @@ jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" --argjson checks 
 } | jq . > "$OUT/commands.json"
 
 # ---------------------------------------------------------------- responsibilities (README "What it does" rows, cross-linked)
-# The cross-links are data: which command owns a responsibility and which claims mention it, by
-# a keyword per row. Kept here, not in templates, so the templates only render.
-RESP_KEYS='{"Policy":[null,"policy|unknown key"],"Projection":["update","projection|instruction file|hand-edited"],"State":["start","identity|state|divergence"],"Scope":["check","scope|overlap"],"Profiles":["start","profile|capability class|axes|checkpoint|escalat"],"Handover":["handover","handover|transcript"],"Finish":["finish","finish|outcome"],"Doctor":["doctor","wiring|reconciled|enforcement|exit code|budget|resolve|count|retention|refused|reproduce|network|unknown key"],"Watch":["watch","drift"]}'
-jq --argjson keys "$RESP_KEYS" --slurpfile caps "$OUT/capabilities.json" '
-  .does |= map(. as $row
-    | ($keys[$row.title] // [null, "(?!)"]) as $k
-    | . + {slug: ($row.title | ascii_downcase),
-           command: $k[0],
-           claim_ids: [ $caps[0].claims[] | select(.claim | test($k[1]; "i")) | .id ]})' "$OUT/readme.json" > "$OUT/readme.json.tmp" && mv "$OUT/readme.json.tmp" "$OUT/readme.json"
+# The cross-links are data: which command owns a responsibility and which claims mention it,
+# derived from canonical docs/RESPONSIBILITIES.yaml and docs/CLAIMS.yaml.
+Rf="$(flat "$ROOT/docs/RESPONSIBILITIES.yaml")"
+[ "$(yv "$Rf" version)" = 1 ] || { echo "generate-site-data: docs/RESPONSIBILITIES.yaml must be version 1" >&2; exit 10; }
+RESPONSIBILITIES_JSON="$(
+  i=0; printf '['
+  first=1
+  while [ -n "$(yv "$Rf" "responsibilities.$i.id")" ]; do
+    [ "$first" = 1 ] || printf ','; first=0
+    id="$(yv "$Rf" "responsibilities.$i.id")"
+    title="$(yv "$Rf" "responsibilities.$i.title")"
+    rk="$(yv "$Rf" "responsibilities.$i.readme_key")"
+    cmd="$(yv "$Rf" "responsibilities.$i.command")"
+    jq -cn --arg id "$id" --arg title "$title" --arg rk "$rk" --arg cmd "$cmd" \
+      '{id:$id, title:$title, readme_key:$rk, command:$cmd}'
+    i=$((i+1))
+  done
+  printf ']'
+)"
+rm -f "$Rf"
+jq --argjson resps "$RESPONSIBILITIES_JSON" --slurpfile caps "$OUT/capabilities.json" '
+  ($resps | INDEX(.readme_key)) as $r_by_key
+  | .does |= map(. as $row
+      | ($r_by_key[$row.title] // {}) as $r
+      | . + {slug: ($r.id // ($row.title | ascii_downcase)),
+             command: ($r.command // null),
+             claim_ids: [ $caps[0].claims[] | select(.responsibility == ($r.id // ($row.title | ascii_downcase))) | .id ]})' "$OUT/readme.json" > "$OUT/readme.json.tmp" && mv "$OUT/readme.json.tmp" "$OUT/readme.json"
 
 # ---------------------------------------------------------------- doctrines.json
 # Every field the site shows about a doctrine is either in the registry or resolved from

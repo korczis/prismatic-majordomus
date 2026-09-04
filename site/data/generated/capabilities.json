@@ -15,6 +15,7 @@
       "test": "test/cases/00_yaml_flatten.sh",
       "status": "guaranteed",
       "note": "A restricted YAML subset. Tabs, anchors, flow maps and multi-line scalars are refused rather than guessed at.",
+      "responsibility": "policy",
       "source_route": "/docs/schemas/",
       "command": null,
       "test_case": "00_yaml_flatten"
@@ -27,6 +28,7 @@
       "test": "test/cases/02_doctor_basic.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "profiles",
       "source_route": "/docs/schemas/",
       "command": "doctor",
       "test_case": "02_doctor_basic"
@@ -39,6 +41,7 @@
       "test": "test/cases/03_update.sh",
       "status": "guaranteed",
       "note": "The path must exist, be executable, and be invoked by the named dispatcher. A hook that invokes it and discards the exit code counts as not wired.",
+      "responsibility": "doctor",
       "source_route": "/docs/design/",
       "command": "doctor",
       "test_case": "03_update"
@@ -51,6 +54,7 @@
       "test": "test/cases/03_update.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": null,
       "source_route": "/docs/cli/",
       "command": null,
       "test_case": "03_update"
@@ -63,6 +67,7 @@
       "test": "test/cases/03_update.sh",
       "status": "guaranteed",
       "note": "Running update twice leaves the byte-identical file. The test asserts the hash.",
+      "responsibility": "projection",
       "source_route": "/docs/design/",
       "command": "update",
       "test_case": "03_update"
@@ -75,6 +80,7 @@
       "test": "test/cases/03_update.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "projection",
       "source_route": "/docs/schemas/",
       "command": "update",
       "test_case": "03_update"
@@ -87,6 +93,7 @@
       "test": "test/cases/13_region_projection.sh",
       "status": "guaranteed",
       "note": "How a repository that already has a hand-written CLAUDE.md adopts Majordomus. An edit outside the markers is never drift; an edit inside them is caught. Malformed markers are refused, not guessed at.",
+      "responsibility": "projection",
       "source_route": "/docs/schemas/",
       "command": "update",
       "test_case": "13_region_projection"
@@ -99,6 +106,7 @@
       "test": "test/cases/14_wiring_dispatcher.sh",
       "status": "guaranteed",
       "note": "The finding names the file that actually carries the invocation. A subhook that is not executable is reported as not wired, because the dispatcher skips it.",
+      "responsibility": "doctor",
       "source_route": "/docs/cli/",
       "command": "doctor",
       "test_case": "14_wiring_dispatcher"
@@ -111,6 +119,7 @@
       "test": "test/cases/18_doctrine_wiring.sh",
       "status": "guaranteed",
       "note": "A doctrine whose validator does not exist, a validator no doctrine declares, a command that never dispatches, a blocking rule whose command cannot exit non-zero, a missing test, and CI that swallows the suite are six separate failures with six separate messages. Each is mutation-tested.",
+      "responsibility": "doctor",
       "source_route": "/docs/doctrine/",
       "command": null,
       "test_case": "18_doctrine_wiring"
@@ -123,6 +132,7 @@
       "test": "test/cases/17_doctrine_enforcement.sh",
       "status": "guaranteed",
       "note": "The test changes checkpoint freshness from advisory to blocking in a copy of the registry and asserts that check's exit code moves from 0 to 10. There are two classes and no override.",
+      "responsibility": "policy",
       "source_route": "/docs/doctrine/",
       "command": null,
       "test_case": "17_doctrine_enforcement"
@@ -135,6 +145,7 @@
       "test": "test/cases/22_history.sh",
       "status": "guaranteed",
       "note": "The reader skips a bad line rather than crashing, and check, doctor and watch all report it. The ledger is the one durable record nothing else can reconstruct.",
+      "responsibility": "state",
       "source_route": "/docs/doctrine/",
       "command": "check",
       "test_case": "22_history"
@@ -147,6 +158,7 @@
       "test": "test/cases/21_decision_question.sh",
       "status": "advisory",
       "note": "decisions.md is hand-editable by design, so an unattributable entry is a warning. finish still refuses when a profile requires a record it cannot find.",
+      "responsibility": "state",
       "source_route": "/docs/doctrine/",
       "command": "check",
       "test_case": "21_decision_question"
@@ -159,6 +171,7 @@
       "test": "test/cases/21_decision_question.sh",
       "status": "guaranteed",
       "note": "A gate that cannot read an entry can be bypassed by mistyping one, so an unreadable question is not a lesser problem than an open one.",
+      "responsibility": "scope",
       "source_route": "/docs/doctrine/",
       "command": "check",
       "test_case": "21_decision_question"
@@ -171,6 +184,7 @@
       "test": "test/cases/24_prompt_search.sh",
       "status": "guaranteed",
       "note": "Covers name and filename mismatch, an empty description, an unknown front-matter key, missing front matter, and a block token used inline.",
+      "responsibility": "policy",
       "source_route": "/docs/doctrine/",
       "command": null,
       "test_case": "24_prompt_search"
@@ -183,6 +197,7 @@
       "test": "test/cases/28_catalogue.sh",
       "status": "guaranteed",
       "note": "Prose describing the tool is checked the same way the tool checks itself. Cross-references are verified in both directions, so a use case naming an application that does not name it back is a failure rather than a silent asymmetry. An application declaring no does_not_fit_when is refused, because a catalogue that only lists fits is marketing.",
+      "responsibility": "doctor",
       "source_route": "/docs/doctrine/",
       "command": "doctor",
       "test_case": "28_catalogue"
@@ -195,6 +210,7 @@
       "test": "test/cases/03_update.sh",
       "status": "guaranteed",
       "note": "update refuses, offers a diff, and overwrites only under an explicit flag.",
+      "responsibility": "projection",
       "source_route": "/docs/cli/",
       "command": "update",
       "test_case": "03_update"
@@ -207,6 +223,7 @@
       "test": "test/cases/03_update.sh",
       "status": "guaranteed",
       "note": "Over budget, nothing is written at all.",
+      "responsibility": "projection",
       "source_route": "/policy/",
       "command": "update",
       "test_case": "03_update"
@@ -219,6 +236,7 @@
       "test": "test/cases/03_update.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "doctor",
       "source_route": "/docs/design/",
       "command": "doctor",
       "test_case": "03_update"
@@ -231,6 +249,7 @@
       "test": "test/cases/03_update.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "doctor",
       "source_route": "/docs/design/",
       "command": "doctor",
       "test_case": "03_update"
@@ -243,6 +262,7 @@
       "test": "test/cases/02_doctor_basic.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "doctor",
       "source_route": "/policy/",
       "command": "doctor",
       "test_case": "02_doctor_basic"
@@ -255,6 +275,7 @@
       "test": "test/cases/01_init.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": null,
       "source_route": "/docs/cli/",
       "command": "init",
       "test_case": "01_init"
@@ -267,6 +288,7 @@
       "test": "test/cases/02_doctor_basic.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": null,
       "source_route": "/docs/design/",
       "command": null,
       "test_case": "02_doctor_basic"
@@ -279,6 +301,7 @@
       "test": "test/cases/08_no_forbidden_constructs.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": null,
       "source_route": "/docs/design/",
       "command": null,
       "test_case": "08_no_forbidden_constructs"
@@ -291,6 +314,7 @@
       "test": "test/cases/04_start_check.sh",
       "status": "guaranteed",
       "note": "A scope path that escapes the repository root is refused. Starting a second task while one is active is refused.",
+      "responsibility": "scope",
       "source_route": "/docs/cli/",
       "command": "start",
       "test_case": "04_start_check"
@@ -303,6 +327,7 @@
       "test": "test/cases/04_start_check.sh",
       "status": "guaranteed",
       "note": "A handover body that tries to set one is rejected rather than merged.",
+      "responsibility": "state",
       "source_route": "/docs/schemas/",
       "command": "start",
       "test_case": "04_start_check"
@@ -315,6 +340,7 @@
       "test": "test/cases/04_start_check.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "scope",
       "source_route": "/docs/cli/",
       "command": "check",
       "test_case": "04_start_check"
@@ -327,6 +353,7 @@
       "test": "test/cases/04_start_check.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "scope",
       "source_route": "/docs/design/",
       "command": "check",
       "test_case": "04_start_check"
@@ -339,6 +366,7 @@
       "test": "test/cases/04_start_check.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "state",
       "source_route": "/docs/schemas/",
       "command": null,
       "test_case": "04_start_check"
@@ -351,6 +379,7 @@
       "test": "test/cases/04_start_check.sh",
       "status": "guaranteed",
       "note": "Reported, never blocking. Work in progress is reported and never blocked.",
+      "responsibility": "scope",
       "source_route": "/docs/design/",
       "command": "check",
       "test_case": "04_start_check"
@@ -363,6 +392,7 @@
       "test": "test/cases/07_watch.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "watch",
       "source_route": "/docs/design/",
       "command": "watch",
       "test_case": "07_watch"
@@ -375,6 +405,7 @@
       "test": "test/cases/05_handover.sh",
       "status": "guaranteed",
       "note": "A body with a missing or empty required section is refused and names the sections.",
+      "responsibility": "handover",
       "source_route": "/docs/schemas/",
       "command": "handover",
       "test_case": "05_handover"
@@ -387,6 +418,7 @@
       "test": "test/cases/05_handover.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "handover",
       "source_route": "/docs/design/",
       "command": "handover",
       "test_case": "05_handover"
@@ -399,6 +431,7 @@
       "test": "test/cases/06_finish.sh",
       "status": "guaranteed",
       "note": null,
+      "responsibility": "finish",
       "source_route": "/docs/cli/",
       "command": "finish",
       "test_case": "06_finish"
@@ -411,6 +444,7 @@
       "test": "test/cases/06_finish.sh",
       "status": "guaranteed",
       "note": "no_match means the work was done and the thing sought does not exist. failed means the work could not be done. They are different facts.",
+      "responsibility": "finish",
       "source_route": "/docs/schemas/",
       "command": "finish",
       "test_case": "06_finish"
@@ -423,6 +457,7 @@
       "test": "test/cases/03_update.sh",
       "status": "advisory",
       "note": "The axes are validated and projected into the worker's instructions. Whether a worker honours them is not observable from outside the worker.",
+      "responsibility": "profiles",
       "source_route": "/profiles/implementation/",
       "command": "update",
       "test_case": "03_update"
@@ -435,6 +470,7 @@
       "test": "test/cases/03_update.sh",
       "status": "advisory",
       "note": "Mapping a class to a concrete model is left to whoever runs the worker. Majordomus never selects or invokes a model.",
+      "responsibility": "profiles",
       "source_route": "/profiles/deep-work/",
       "command": "update",
       "test_case": "03_update"
@@ -447,6 +483,7 @@
       "test": "test/cases/04_start_check.sh",
       "status": "advisory",
       "note": "majordomus context now assembles a briefing from those toggles, and that selection is guaranteed (see context-assembly). This claim stays advisory because nothing measures what the worker actually read once it has been handed the briefing.",
+      "responsibility": "profiles",
       "source_route": "/profiles/routine/",
       "command": "check",
       "test_case": "04_start_check"
@@ -459,6 +496,7 @@
       "test": "test/cases/03_update.sh",
       "status": "advisory",
       "note": null,
+      "responsibility": "profiles",
       "source_route": "/profiles/debugging/",
       "command": "update",
       "test_case": "03_update"
@@ -471,6 +509,7 @@
       "test": "test/cases/04_start_check.sh",
       "status": "advisory",
       "note": "The staleness report is guaranteed. Whether the worker checkpoints is not.",
+      "responsibility": "profiles",
       "source_route": "/policy/",
       "command": "check",
       "test_case": "04_start_check"
@@ -483,6 +522,7 @@
       "test": "test/cases/23_context.sh",
       "status": "guaranteed",
       "note": "Git first, then task and profile, then blockers, then authored records, then history. The profile's context block decides what is offered; it is the only code that reads those fields.",
+      "responsibility": "profiles",
       "source_route": "/docs/continuity/",
       "command": null,
       "test_case": "23_context"
@@ -495,6 +535,7 @@
       "test": "test/cases/23_context.sh",
       "status": "guaranteed",
       "note": "The count is of the printed document, not of its sections. Git, task, profile and open blockers are never dropped; record bodies degrade to a pointer before they disappear.",
+      "responsibility": "profiles",
       "source_route": "/policy/",
       "command": null,
       "test_case": "23_context"
@@ -507,6 +548,7 @@
       "test": "test/cases/20_checkpoint.sh",
       "status": "guaranteed",
       "note": "The cap is what keeps a checkpoint distinct from a handover. Mode 0600, created atomically, never staged.",
+      "responsibility": "state",
       "source_route": "/docs/schemas/",
       "command": null,
       "test_case": "20_checkpoint"
@@ -519,6 +561,7 @@
       "test": "test/cases/23_context.sh",
       "status": "guaranteed",
       "note": "Same worktree and branch, else same branch, else nothing. Ties within one second are broken by ledger order. Absence is reported as absence.",
+      "responsibility": "handover",
       "source_route": "/docs/continuity/",
       "command": null,
       "test_case": "23_context"
@@ -531,6 +574,7 @@
       "test": "test/cases/22_history.sh",
       "status": "guaranteed",
       "note": "What happened, when, for which task, at which head, and what outcome was accepted. Never what anyone said.",
+      "responsibility": "watch",
       "source_route": "/docs/cli/",
       "command": null,
       "test_case": "22_history"
@@ -543,6 +587,7 @@
       "test": "test/cases/22_history.sh",
       "status": "guaranteed",
       "note": "Refuses to overwrite an existing archive, and does nothing when the ledger is under its cap.",
+      "responsibility": "watch",
       "source_route": "/docs/schemas/",
       "command": null,
       "test_case": "22_history"
@@ -555,6 +600,7 @@
       "test": "test/cases/21_decision_question.sh",
       "status": "guaranteed",
       "note": "--why is required. --supersedes refuses text matching no recorded decision. Task and head are computed.",
+      "responsibility": "state",
       "source_route": "/docs/schemas/",
       "command": null,
       "test_case": "21_decision_question"
@@ -567,6 +613,7 @@
       "test": "test/cases/21_decision_question.sh",
       "status": "guaranteed",
       "note": "A gate that cannot read an entry can be bypassed by mistyping one, so check, doctor and watch all fail on a malformed entry.",
+      "responsibility": "finish",
       "source_route": "/docs/schemas/",
       "command": null,
       "test_case": "21_decision_question"
@@ -579,6 +626,7 @@
       "test": "test/cases/24_prompt_search.sh",
       "status": "guaranteed",
       "note": "No conditionals, loops, includes or shell. A prompt that silently renders a misspelled token as literal text is worse than one that refuses.",
+      "responsibility": "policy",
       "source_route": "/docs/schemas/",
       "command": null,
       "test_case": "24_prompt_search"
@@ -591,6 +639,7 @@
       "test": "test/cases/24_prompt_search.sh",
       "status": "guaranteed",
       "note": "A fixed-string grep in authority order. No ranking, no embedding, no index that could fall out of step with the records it describes.",
+      "responsibility": "watch",
       "source_route": "/docs/cli/",
       "command": null,
       "test_case": "24_prompt_search"
@@ -603,6 +652,7 @@
       "test": "test/cases/25_continuity_lifecycle.sh",
       "status": "guaranteed",
       "note": "doctor runs the resolver, renders every prompt asset, validates both parsed stores and builds the context. A directory of records that no command reads is the failure this tool exists to catch.",
+      "responsibility": "doctor",
       "source_route": "/docs/cli/",
       "command": "doctor",
       "test_case": "25_continuity_lifecycle"
@@ -615,6 +665,7 @@
       "test": null,
       "status": "planned",
       "note": "Today scope is checked with git diff base..HEAD, and a commit range has no author, so another session committing to the same branch in the same checkout has its files counted as this task's work. Recording each commit as it happens turns the question from a heuristic about ranges into an enumeration. The list would be a lookup that git overrules, never authority, and a rewritten commit would be reported as unrecognised rather than resolved to a guess.",
+      "responsibility": "scope",
       "source_route": "/docs/continuity/",
       "command": null,
       "test_case": null
@@ -627,6 +678,7 @@
       "test": "test/cases/28_no_hardcoded_values.sh",
       "status": "guaranteed",
       "note": "Policy values have no reader-side defaults, claim statuses are declared in the matrix, the site fixtures derive their inputs from the generator, and every command, doctrine and claim is checked against a list read from the dispatch table or the registry rather than written into the test.",
+      "responsibility": "policy",
       "source_route": "/docs/concepts/",
       "command": "doctor",
       "test_case": "28_no_hardcoded_values"
@@ -639,6 +691,7 @@
       "test": null,
       "status": "rejected",
       "note": "The corpus is a handful of Markdown files and one JSONL. An index or an embedding store would be a second source of truth that has to be kept in step with the first, and a scan is faster than that problem. Revisited only if a repository appears where the scan is measurably too slow.",
+      "responsibility": "watch",
       "source_route": "/docs/continuity/",
       "command": null,
       "test_case": null
@@ -651,6 +704,7 @@
       "test": "test/cases/27_foreign_task.sh",
       "status": "guaranteed",
       "note": "The record is tracked, so it travels with the branch. check, finish --check and watch report a foreign record and enforce nothing from it; finish refuses to write to it. A record from before the field existed is treated as local, so upgrading does not turn an installation red.",
+      "responsibility": "scope",
       "source_route": "/docs/schemas/",
       "command": "check",
       "test_case": "27_foreign_task"
@@ -663,6 +717,7 @@
       "test": "test/cases/50_blocker_across_handover.sh",
       "status": "guaranteed",
       "note": "The gate reads every unresolved entry in the store rather than only the active task's, so a handover cannot launder a blocker. The store is tracked, so git scopes it to the branch. Only a completed finish is refused; blocked, partial, no_match and failed are honest non-completions and are not. Any task may resolve any question. The alternatives — transferring the question with the handover, or gating on scope overlap — were rejected in M001 with the case each gets wrong.",
+      "responsibility": "finish",
       "source_route": "/docs/continuity/",
       "command": "check",
       "test_case": "50_blocker_across_handover"
@@ -675,6 +730,7 @@
       "test": null,
       "status": "planned",
       "note": "The one implementation studied was rolled back within days because its limits were global constants rather than task-derived.",
+      "responsibility": null,
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -687,6 +743,7 @@
       "test": null,
       "status": "planned",
       "note": "Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement.",
+      "responsibility": null,
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -699,6 +756,7 @@
       "test": null,
       "status": "planned",
       "note": null,
+      "responsibility": null,
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -711,6 +769,7 @@
       "test": null,
       "status": "planned",
       "note": "Recommendations only. Majordomus does not invoke a model.",
+      "responsibility": null,
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -723,6 +782,7 @@
       "test": null,
       "status": "planned",
       "note": null,
+      "responsibility": null,
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -735,6 +795,7 @@
       "test": null,
       "status": "rejected",
       "note": "Refused for task records, and only for them. Issues and milestones do carry dependencies, validated as two graphs — see docs/ROADMAP.md and docs/PLANNING.md. What stays refused is a task, the record of one session's work, waiting on another; one task is active per checkout and coordination between checkouts is the scope overlap report. The original wording said no dependency graph existed anywhere, which stopped being true when the plan model landed.",
+      "responsibility": "state",
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -747,6 +808,7 @@
       "test": "test/cases/40_project_model.sh",
       "status": "guaranteed",
       "note": "The same allowlist rule the policy and the profiles live under. The filename is the id; a record that disagrees with its own filename is refused rather than reconciled.",
+      "responsibility": "plan",
       "source_route": "/docs/schemas/",
       "command": null,
       "test_case": "40_project_model"
@@ -759,6 +821,7 @@
       "test": "test/cases/41_project_status.sh",
       "status": "guaranteed",
       "note": "An issue records started_at, verified_at, completed_at, cancelled and its evidence. BLOCKED, READY, ACTIVE, VERIFY, DONE and CANCELLED follow from those and from the state of its dependencies. `status` is not a field, so writing one is an unknown key.",
+      "responsibility": "plan",
       "source_route": "/docs/planning/",
       "command": null,
       "test_case": "41_project_status"
@@ -771,6 +834,7 @@
       "test": "test/cases/42_dag_waves.sh",
       "status": "guaranteed",
       "note": "Kahn layering; the issues that never leave the graph are the ones reported. A malformed graph fails doctor and is reported by watch as drift.",
+      "responsibility": "plan",
       "source_route": "/docs/planning/",
       "command": null,
       "test_case": "42_dag_waves"
@@ -783,6 +847,7 @@
       "test": "test/cases/42_dag_waves.sh",
       "status": "guaranteed",
       "note": "Sharing a wave is necessary for concurrency, not sufficient. Overlapping declared scope serialises conservatively, because a false serialisation costs time and a false parallel costs a conflict.",
+      "responsibility": "plan",
       "source_route": "/docs/planning/",
       "command": null,
       "test_case": "42_dag_waves"
@@ -795,6 +860,7 @@
       "test": "test/cases/41_project_status.sh",
       "status": "guaranteed",
       "note": "Evidence is a command and its result, or an artifact. Narrative is refused. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE.",
+      "responsibility": "plan",
       "source_route": "/docs/planning/",
       "command": null,
       "test_case": "41_project_status"
@@ -807,6 +873,7 @@
       "test": "test/cases/49_roadmap_doctrine.sh",
       "status": "guaranteed",
       "note": "The sequence is the topological rank of the milestone graph, so no list of versions exists anywhere. While a hand-written roadmap table survives, the doctrine holds it to the model in both directions; once it is gone the check holds trivially, which is the regression it exists to refuse.",
+      "responsibility": "plan",
       "source_route": "/docs/roadmap/",
       "command": "doctor",
       "test_case": "49_roadmap_doctrine"
@@ -819,6 +886,7 @@
       "test": "test/cases/45_github_projection.sh",
       "status": "guaranteed",
       "note": "The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit.",
+      "responsibility": "plan",
       "source_route": "/docs/planning/",
       "command": null,
       "test_case": "45_github_projection"
