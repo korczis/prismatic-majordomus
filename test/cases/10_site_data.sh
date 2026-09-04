@@ -1,7 +1,7 @@
 # The site data normaliser: canonical files in, stable JSON out, and --check detects drift.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
-cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/scripts" "$ROOT/docs" "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/AGENTS.md" "$T/"; mkdir -p "$T/site/data" "$T/test"; cp -R "$ROOT/site/data/marketing.toml" "$T/site/data/"; cp -R "$ROOT/site/content-src" "$T/site/"; cp -R "$ROOT/test/cases" "$T/test/"
+cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/scripts" "$ROOT/docs" "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/AGENTS.md" "$T/"; mkdir -p "$T/site/data" "$T/test"; cp -R "$ROOT/site/data/marketing.toml" "$T/site/data/"; cp -R "$ROOT/site/content-src" "$T/site/"; cp -R "$ROOT/test/cases" "$T/test/"; mkdir -p "$T/.majordomus"; cp -R "$ROOT/.majordomus/project" "$T/.majordomus/"
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 expect_exit 0 "$T/scripts/generate-site-data"
 for f in project profiles policy capabilities lifecycle docs diagrams source; do [ -f "$T/site/data/generated/$f.json" ]; jq -e '.schema == 1' "$T/site/data/generated/$f.json" >/dev/null; done
