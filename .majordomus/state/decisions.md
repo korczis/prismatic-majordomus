@@ -129,3 +129,11 @@ Why: the first real run of the time-window implementation collected another work
 Rejected: selecting every line from the session's own start event to the end of the ledger, which is what produced the misattribution; and filtering that window by branch, which would be right until a worker changed branch mid-episode and would then silently drop its own later events
 Evidence: test/cases/61_session_envelope.sh — the regression section injects an event stamped by another session and one stamped by none; the mutation back to a time window was run and the case fails on it, at the assertion that a second episode must not inherit the first one's checkpoints
 Supersedes: -
+
+## 2026-09-04 — Take the RESPONSIBILITIES.yaml enforcement gap under the active task rather than filing a plan issue
+Task: t-20260904171856-a507
+Head: ca66fca22d1f10c80ca8f50f4f80b1e3ae6ebdaf
+Why: A person reprioritised, which the contract allows as a reason to work outside the plan. The gap is in the same canonical file b34f250 introduced, and the active task's scope already covers scripts/generate-site-data, docs, README.md and test/cases, so a new task record would add churn without adding a boundary.
+Rejected: -
+Evidence: -
+Supersedes: -
