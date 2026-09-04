@@ -68,6 +68,7 @@ Specified and not implemented. Named so the omission is visible.
 
 | claim | source | implementation | test |
 |---|---|---|---|
+| [A blocking question will keep blocking after the work is handed to a new task](https://korczis.github.io/prismatic-majordomus/guarantees/blocker-survives-handover/) | `docs/CONTINUITY.md` | — | — |
 | [Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits](https://korczis.github.io/prismatic-majordomus/guarantees/runtime-adapters/) | `docs/DESIGN.md` | — | — |
 | [Execution telemetry will be recorded once a provider exposes it honestly](https://korczis.github.io/prismatic-majordomus/guarantees/telemetry/) | `docs/DESIGN.md` | — | — |
 | [Cost per accepted outcome will be reported from measured data only](https://korczis.github.io/prismatic-majordomus/guarantees/cost-per-outcome/) | `docs/DESIGN.md` | — | — |

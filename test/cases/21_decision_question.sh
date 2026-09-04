@@ -100,6 +100,9 @@ expect_exit 0 "$MJ" question list
 expect_grep 'no open questions'
 expect_exit 0 "$MJ" question list --all
 expect_grep 'resolved'
+# the file's own commented template is not an entry
+expect_no_grep '<task id>'
+expect_no_grep 'YYYY-MM-DD'
 
 # with both resolved, check passes and finish accepts
 expect_exit 0 "$MJ" check

@@ -106,7 +106,8 @@ mj_question_list() {
   fi
   local n=0 line
   if [ "$all" = 1 ] && [ -z "$want" ]; then
-    while IFS= read -r line; do n=$((n+1)); printf '%s\n' "$line"; done < <(grep -E '^- \[(unresolved|resolved )' "$MJ_Q" 2>/dev/null || true)
+    # the file's own template lives in an HTML comment and is not an entry
+    while IFS= read -r line; do n=$((n+1)); printf '%s\n' "$line"; done < <(awk '/<!--/{c=1} /-->/{c=0;next} !c && /^- \[(unresolved|resolved )/' "$MJ_Q" 2>/dev/null || true)
   else
     while IFS= read -r line; do n=$((n+1)); printf '%s  %s\n' "$n" "$(printf '%s' "$line" | sed 's/^- //')"; done < <(mj_question_unresolved "$want" "$MJ_Q" | sed 's/^[0-9]*://')
     if [ "$all" = 1 ]; then grep -E "^- \[resolved [0-9-]+\] $want " "$MJ_Q" 2>/dev/null | sed 's/^- /-  /' && n=$((n+1)); fi
