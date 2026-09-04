@@ -13,7 +13,7 @@ Conventions:
 
 ---
 
-## `.majordomus/policy.yaml`
+## `.ai/repo/policy.yaml`
 
 The one canonical, provider-neutral policy.
 
@@ -101,7 +101,7 @@ The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
 
 ---
 
-## `.majordomus/profiles/<name>.yaml`
+## `.ai/repo/profiles/<name>.yaml`
 
 Five independent axes. Nothing here names a vendor model.
 
@@ -198,7 +198,7 @@ doctrines:
 `majordomus doctor` verifies every one of those constraints against the source, and
 additionally that no `mj_validate_*` function exists which no doctrine declares.
 
-## `.majordomus/project/project.yaml`
+## `.ai/repo/project/project.yaml`
 
 The canonical project model's root. Present only in a repository that plans through
 milestones and issues; the model is opt-in and `doctor` skips it where it is absent.
@@ -216,7 +216,7 @@ not finished, computed on every read.
 
 ---
 
-## `.majordomus/project/milestones/<ID>.yaml`
+## `.ai/repo/project/milestones/<ID>.yaml`
 
 One executable specification of an outcome. The filename is the id; a record whose `id`
 disagrees with its filename is refused rather than reconciled.
@@ -256,7 +256,7 @@ There is no `status:` field; see below.
 
 ---
 
-## `.majordomus/project/issues/<ID>.yaml`
+## `.ai/repo/project/issues/<ID>.yaml`
 
 One bounded execution contract, carrying enough for a worker with no conversation history.
 
@@ -307,7 +307,7 @@ Unknown keys are checked against `share/allow/project.txt`, `share/allow/milesto
 
 ---
 
-## `.majordomus/state/current.yaml`
+## `.ai/local/state/current.yaml`
 
 The one active task. Absent when nothing is active.
 
@@ -343,7 +343,7 @@ local, so upgrading does not turn an existing installation red.
 
 ---
 
-## `.majordomus/state/decisions.md`
+## `.ai/local/state/decisions.md`
 
 Append-only, dated, one entry per decision. Human-authored. Read by `decision list`,
 by `context` (which prints as many entries as `context.recent_decisions` allows, for this
@@ -374,7 +374,7 @@ warning: the file is hand-editable by design, and an entry nothing can attribute
 decision that no gate will ever find. Text inside an HTML comment is the file's own
 template and is not an entry.
 
-## `.majordomus/state/open-questions.md`
+## `.ai/local/state/open-questions.md`
 
 Things blocked on a human. `finish --outcome completed` refuses while any entry for the
 current task is `unresolved`.
@@ -402,7 +402,7 @@ mistyping one.
 
 ---
 
-## `.majordomus/state/handovers/<file>.md`
+## `.ai/local/state/handovers/<file>.md`
 
 Filename: `<utc-compact>--<branch-key>--<short-head>--<16 hex>.md`, e.g.
 `20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md`. `branch-key` is the branch
@@ -447,7 +447,7 @@ front-matter key is rejected. Mode `0600`. Created atomically. Never staged.
 
 ---
 
-## `.majordomus/state/checkpoints/<file>.md`
+## `.ai/local/state/checkpoints/<file>.md`
 
 Filename and front matter are exactly a handover's; only the directory and the body rules
 differ. Written by `checkpoint`, mode `0600`, created atomically, never staged.
@@ -487,7 +487,7 @@ as handovers: same worktree and branch, else same branch, else nothing.
 
 ---
 
-## `.majordomus/state/session-current.yaml`
+## `.ai/local/state/session-current.yaml`
 
 The open session in this worktree. One at a time; `session start` refuses while one is
 open rather than replacing it. Removed by `session close`, which is the only writer that
@@ -526,7 +526,7 @@ open session, exactly as a foreign task record is.
 
 ---
 
-## `.majordomus/state/sessions/<file>.md`
+## `.ai/local/state/sessions/<file>.md`
 
 The immutable record of a closed session. Filename:
 `<utc-compact>--<session-id>--<branch-key>--<short-head>--<16 hex>.md`, e.g.
@@ -642,7 +642,7 @@ information, not corrected.
 
 ---
 
-## `.majordomus/prompts/<name>.md`
+## `.ai/repo/prompts/<name>.md`
 
 A reusable framing, versioned with the repository. Front matter is authored, not computed —
 these are not records of work.
@@ -683,7 +683,7 @@ itself, which the budget then pays for twice.
 
 ---
 
-## `.majordomus/state/ledger.jsonl`
+## `.ai/local/state/ledger.jsonl`
 
 Append-only. Written only by Majordomus. One JSON object per line. Retention-capped;
 `doctor` reports when over cap, and `history --rotate` moves the oldest lines to

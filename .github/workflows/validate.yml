@@ -48,7 +48,7 @@ jobs:
           bin/majordomus decision list > /dev/null
           bin/majordomus question list --all > /dev/null
           bin/majordomus prompt list | grep -q .
-          for p in $(ls .majordomus/prompts/*.md | xargs -n1 basename | sed 's/\.md$//'); do
+          for p in $(ls .ai/repo/prompts/*.md | xargs -n1 basename | sed 's/\.md$//'); do
             bin/majordomus prompt render "$p" | grep -q '{{' && { echo "unrendered token in $p"; exit 1; }
             true
           done

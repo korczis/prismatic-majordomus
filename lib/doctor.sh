@@ -316,9 +316,7 @@ mj_validate_policy_defaults() {
 mj_validate_ai_layout() {
   local bad=0 k d rel
   if [ "$MJ_LAYOUT" != ai ]; then
-    # Reported, not failed, while the pre-.ai layout is still readable: the migration that
-    # moves a repository across is a deliberate step, and every other rule still holds here.
-    mj_warn layout ".majordomus" "project data lives under the pre-.ai layout; the manifest .ai/manifest.yaml is absent" "majordomus migrate"
+    mj_doctrine_fail layout ".ai/manifest.yaml" "absent; this repository has no AI layer this executable reads" "majordomus init"
     return 0
   fi
   mj_doctrine_ok layout "$(mj_rel "$MJ_AI_MANIFEST")" "schema $(mj_man schema)"

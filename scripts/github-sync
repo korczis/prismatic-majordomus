@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # github-sync — project the canonical project model onto GitHub milestones and issues.
 #
-# GitHub is a projection, never the source. The canonical files under .majordomus/project/
+# GitHub is a projection, never the source. The canonical files under .ai/repo/project/
 # decide what exists, what it says and whether it is open; GitHub carries the collaboration
 # around it. Nothing here ever writes a GitHub value back into a canonical file.
 #
@@ -173,7 +173,7 @@ if [ "$MODE" = apply ]; then
     [ -n "$l" ] || continue
     printf '%s\n' "$have_labels" | grep -qxF "$l" && continue
     case "$l" in
-      majordomus)              d="Managed by the canonical project model in .majordomus/project" ;;
+      majordomus)              d="Managed by the canonical project model in .ai/repo/project" ;;
       priority:*)              d="Priority ${l#priority:}, from the canonical record" ;;
       status:blocked)          d="Derived: a dependency is not done" ;;
       status:verify)           d="Derived: implementation complete, required evidence missing" ;;
@@ -188,7 +188,7 @@ fi
 # ---------------------------------------------------------------- milestones
 for id in $(selected_milestones); do
   num="$(remote_milestone_number "$id")"
-  desc="$(printf '%s — %s. Canonical: .majordomus/project/milestones/%s.yaml' \
+  desc="$(printf '%s — %s. Canonical: .ai/repo/project/milestones/%s.yaml' \
     "$(mj_pj_m_status "$id")" "$(mj_pj_get "$id" outcome)" "$id" | cut -c1-980)"
   if [ -z "$num" ]; then
     note DRIFT missing "milestone $id is not on GitHub"

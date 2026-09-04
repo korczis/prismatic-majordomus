@@ -17,17 +17,17 @@ responsibilities:
     title: Policy
     readme_key: Policy
     command: update
-    files: [.majordomus/policy.yaml]
+    files: [.ai/repo/policy.yaml]
     implementation: lib/common.sh
     cli_anchor: majordomus update
-    schema_anchor: .majordomus/policy.yaml
+    schema_anchor: .ai/repo/policy.yaml
     order: 1
 
   - id: projection
     title: Projection
     readme_key: Projection
     command: update
-    files: [.majordomus/providers]
+    files: [.ai/repo/providers]
     implementation: lib/update.sh
     cli_anchor: majordomus update
     schema_anchor: Projection stamp
@@ -37,17 +37,17 @@ responsibilities:
     title: State
     readme_key: State
     command: start
-    files: [.majordomus/state/current.yaml, .majordomus/state/ledger.jsonl]
+    files: [.ai/local/state/current.yaml, .ai/local/state/ledger.jsonl]
     implementation: lib/start.sh
     cli_anchor: majordomus start <task>
-    schema_anchor: .majordomus/state/current.yaml
+    schema_anchor: .ai/local/state/current.yaml
     order: 3
 
   - id: scope
     title: Scope
     readme_key: Scope
     command: check
-    files: [.majordomus/state/current.yaml]
+    files: [.ai/local/state/current.yaml]
     implementation: lib/check.sh
     cli_anchor: majordomus check
     schema_anchor: Worktree coordination
@@ -57,27 +57,27 @@ responsibilities:
     title: Profiles
     readme_key: Profiles
     command: check
-    files: [.majordomus/profiles]
+    files: [.ai/repo/profiles]
     implementation: lib/update.sh
     cli_anchor: majordomus check
-    schema_anchor: .majordomus/profiles/<name>.yaml
+    schema_anchor: .ai/repo/profiles/<name>.yaml
     order: 5
 
   - id: handover
     title: Handover
     readme_key: Handover
     command: handover
-    files: [.majordomus/state/handovers]
+    files: [.ai/local/state/handovers]
     implementation: lib/handover.sh
     cli_anchor: majordomus handover
-    schema_anchor: .majordomus/state/handovers/<file>.md
+    schema_anchor: .ai/local/state/handovers/<file>.md
     order: 6
 
   - id: finish
     title: Finish
     readme_key: Finish
     command: finish
-    files: [.majordomus/state/ledger.jsonl]
+    files: [.ai/local/state/ledger.jsonl]
     implementation: lib/finish.sh
     cli_anchor: majordomus finish
     schema_anchor: Completion note (when no handover is written)
@@ -87,7 +87,7 @@ responsibilities:
     title: Doctor
     readme_key: Doctor
     command: doctor
-    files: [.majordomus/policy.yaml]
+    files: [.ai/repo/policy.yaml]
     implementation: lib/doctor.sh
     cli_anchor: majordomus doctor
     schema_anchor: Projection stamp
@@ -97,18 +97,18 @@ responsibilities:
     title: Watch
     readme_key: Watch
     command: watch
-    files: [.majordomus/state/ledger.jsonl]
+    files: [.ai/local/state/ledger.jsonl]
     implementation: lib/watch.sh
     cli_anchor: majordomus watch
-    schema_anchor: .majordomus/state/ledger.jsonl
+    schema_anchor: .ai/local/state/ledger.jsonl
     order: 9
 
   - id: plan
     title: Plan
     readme_key: Plan
     command: plan
-    files: [.majordomus/project/milestones, .majordomus/project/issues]
+    files: [.ai/repo/project/milestones, .ai/repo/project/issues]
     implementation: lib/project.awk
     cli_anchor: majordomus plan
-    schema_anchor: .majordomus/project/issues/<ID>.yaml
+    schema_anchor: .ai/repo/project/issues/<ID>.yaml
     order: 10
