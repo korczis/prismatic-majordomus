@@ -1,3 +1,17 @@
+---
+schema: context/v1
+id: ai.repo.knowledge
+kind: context
+title: Knowledge
+description: How repository knowledge is declared and discovered, never collected.
+status: active
+scope: subtree
+providers: ["*"]
+audience: [human, agent]
+composition: extend
+order: 100
+---
+
 # Knowledge
 
 Knowledge is declared, not collected. `sources.yaml` names the classes of repository

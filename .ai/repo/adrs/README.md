@@ -1,3 +1,17 @@
+---
+schema: context/v1
+id: ai.repo.adrs
+kind: context
+title: Architecture decisions
+description: Accepted, durable decisions about how this repository is built.
+status: active
+scope: subtree
+providers: ["*"]
+audience: [human, agent]
+composition: extend
+order: 100
+---
+
 # Architecture decisions
 
 Accepted, durable decisions about how this repository is built, one file each, with the

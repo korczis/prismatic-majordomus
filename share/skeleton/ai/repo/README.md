@@ -1,3 +1,17 @@
+---
+schema: context/v1
+id: ai.repo
+kind: context
+title: Tracked repository context
+description: The tracked half of the layer and what each section under it is for.
+status: active
+scope: subtree
+providers: ["*"]
+audience: [human, agent]
+composition: extend
+order: 20
+---
+
 # Tracked repository context
 
 Everything in this directory is repository-specific canonical context, tracked in Git and

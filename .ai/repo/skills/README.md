@@ -1,3 +1,17 @@
+---
+schema: context/v1
+id: ai.repo.skills
+kind: context
+title: Skills
+description: Reusable provider-neutral operational procedures, loaded only when the task is about them.
+status: active
+scope: subtree
+providers: ["*"]
+audience: [human, agent]
+composition: extend
+order: 100
+---
+
 # Skills
 
 Reusable, provider-neutral operational procedures: how to do one bounded kind of work in

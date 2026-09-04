@@ -432,6 +432,23 @@ mj_region_splice() {
   fi
 }
 
+# mj_projection_status TARGET MODE PROVIDER
+mj_projection_status() {
+  local tgt="$1" mode="$2" prov="$3" owned rc stamp
+  mj_provider_template "$prov" >/dev/null || { printf 'no_template'; return 0; }
+  [ -f "$MJ_ROOT/$tgt" ] || { printf 'absent'; return 0; }
+  owned="$(mktemp "${TMPDIR:-/tmp}/mj.own.XXXXXX")"
+  rc=0; mj_owned_content "$MJ_ROOT/$tgt" "$mode" > "$owned" 2>/dev/null || rc=$?
+  case "$rc" in
+    0) ;;
+    1) rm -f "$owned"; printf 'region_absent'; return 0 ;;
+    *) rm -f "$owned"; printf 'malformed'; return 0 ;;
+  esac
+  if ! stamp="$(mj_stamp_read "$MJ_ROOT/$tgt" "$mode")"; then rm -f "$owned"; printf 'unstamped'; return 0; fi
+  if [ "$(mj_sha256 "$owned" | cut -c1-16)" = "$(printf '%s' "${stamp#* }" | cut -c1-16)" ]; then printf 'ok %s' "${stamp%% *}"; else printf 'hand_edited %s' "${stamp%% *}"; fi
+  rm -f "$owned"
+  return 0
+}
 # projection mode of index $1: "file" (whole file) or "region" (between markers)
 mj_projection_mode() {
   local m; m="$(mj_pol "projections.$1.mode")"

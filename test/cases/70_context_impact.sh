@@ -1,7 +1,7 @@
 # Impact of a change on scoped context documents, black-box against the context/v1
 # contract: a root document reaches every descendant, a child never reaches its sibling,
 # identity survives a directory move, a deleted document breaks whoever supersedes it, the
-# manifest touches everything, a `tracks` match is a review item and nothing more, and an
+# manifest touches everything, a `tracks` match is a review item (WARN, never the exit code) and nothing more, and an
 # unrelated change is silence.
 #
 # Every scenario is one change in the working tree against HEAD (the default change set),
@@ -104,7 +104,7 @@ clean "the manifest change"
 # --- a change to a tracked path is a review item, advisory, exit 0
 printf 'thing() { echo changed; }\n' > lib/thing.sh
 expect_exit 0 "$MJ" context affected
-expect_grep 'REVIEW +context +.*ai\.repo\.areas\.beta.*tracks lib/thing\.sh \(M\)'
+expect_grep 'WARN +context +.*ai\.repo\.areas\.beta.*tracks lib/thing\.sh \(M lib/thing\.sh\)'
 expect_no_grep '^FAIL'
 expect_no_grep '(ai\.repo\.areas\.alpha|areas/gamma)'
 clean "the tracked change"

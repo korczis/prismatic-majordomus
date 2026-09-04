@@ -1,3 +1,18 @@
+---
+schema: context/v1
+id: ai.repo.workflows
+kind: context
+title: Workflows
+description: The multi-step processes a worker follows here, and when each applies.
+status: active
+scope: subtree
+providers: ["*"]
+audience: [human, agent]
+composition: extend
+order: 100
+tracks: [lib/start.sh, lib/check.sh, lib/finish.sh, lib/handover.sh, lib/plan.sh]
+---
+
 # Workflows
 
 Multi-step processes a worker follows in this repository. Each is a sequence of commands

@@ -1,3 +1,18 @@
+---
+schema: context/v1
+id: ai.repo.rules
+kind: context
+title: Repository rules
+description: The rule object format, where rules live, how they are loaded and composed.
+status: active
+scope: subtree
+providers: ["*"]
+audience: [human, agent]
+composition: extend
+order: 100
+tracks: [lib/rules.sh, lib/doctrine.sh, share/standard/majordomus, share/allow/rule.txt]
+---
+
 # Repository rules
 
 A rule is a Markdown document with YAML front matter. The front matter is the machine
