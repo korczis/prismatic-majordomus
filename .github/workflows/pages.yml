@@ -51,10 +51,18 @@ jobs:
         run: scripts/site-build
       - name: check the site
         run: scripts/site-check
-      # Browser-measured: no horizontal overflow at 320/390/1280 on any route, mobile menu, dropdowns,
-      # theme toggle, Mermaid rendering. Skips with a notice when no Chrome is present.
+      # Browser-measured: no horizontal overflow at 320/390/1280, mobile menu, dropdowns, theme
+      # toggle, Mermaid rendering. Skips with a notice when no Chrome is present.
       - name: probe the site in a browser
-        run: CHROME_BIN=google-chrome scripts/site-probe
+        # One route per template, which covers every layout: pages sharing a template share
+        # their overflow behaviour, and the sample follows the template rather than the section
+        # name, which is only a proxy for it. The complete sweep of every route runs in
+        # validate.yml on the same push, in parallel, so the branch is still not green until
+        # every route has been measured — it just no longer sits between a green build and a
+        # published artifact. What that trades away, stated plainly: an overflow that only one
+        # page of a template exhibits, from its own data rather than its layout, can be live
+        # for minutes rather than hours. The full run in validate is what catches it.
+        run: CHROME_BIN=google-chrome scripts/site-probe --quick
       - name: manifest
         run: cat site/data/generated/source.json
       - uses: actions/configure-pages@v5

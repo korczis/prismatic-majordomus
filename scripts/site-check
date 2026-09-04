@@ -97,6 +97,16 @@ for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do
   claim="$(jq -r --arg i "$id" '.claims[] | select(.id==$i) | .claim' "$SITE/data/generated/capabilities.json")"
   if grep -qF "$claim" "$PUB/index.html" && ! grep -F "$claim" "$PUB/index.html" | grep -qF "guarantees/$id/"; then bad claims "homepage mentions claim $id without linking its page"; fi
 done
+# 13e. every directory the generator writes under site/content/ must be ignored. The fact
+# lives in generate-site-data, which writes each section fresh and deletes it first, so a new
+# section nobody added to .gitignore shows up as untracked files that the next `git add -A`
+# commits and the following generate deletes again. Derived by scanning for $CONTENT_ROOT
+# uses rather than by listing the sections, so the next one is covered the day it is written.
+for d in $(grep -oE '\$CONTENT_ROOT/[a-z-]+' "$ROOT/scripts/generate-site-data" | sed 's#.*/##' | sort -u); do
+  git -C "$ROOT" check-ignore -q "site/content/$d/" 2>/dev/null \
+    || bad ignored "generate-site-data writes site/content/$d/ but .gitignore does not cover it"
+done
+
 # 13a. derived content is ignored: site/content-src/*.md is projected into site/content/, and
 # .gitignore names those projections one by one. A new page whose projection is not ignored
 # would be committed as if someone had written it by hand, and would then rot.
@@ -105,6 +115,22 @@ for f in "$SITE"/content-src/*.md; do
   rel="site/content/$(basename "$f")"
   git -C "$ROOT" check-ignore -q "$rel" 2>/dev/null || bad ignored "$rel is projected from content-src but not in .gitignore"
 done; ok ignored "every projection of site/content-src/ is ignored, not committed"
+
+# 13d. progressive enhancement, as the property rather than a proxy for it: no content may be
+# unreachable without a runtime. An x-show element is inert with JavaScript off and renders,
+# which is correct — unless it is *also* hidden by something static. x-cloak is exactly that
+# (base.html hides it by CSS until Alpine removes the attribute), and so is the `hidden` class.
+# Either one turns "collapsed" into "gone" for a reader without JavaScript. Stated this way the
+# rule passes a tab set, which legitimately shows one panel at a time once Alpine runs, and
+# fails the disclosure that hid the canonical policy file behind a runtime.
+bad_ne=0
+for f in $pages; do
+  rel="${f#"$PUB"/}"
+  # one element per line first, so the two attributes are only seen together when they are
+  hits="$(tr '<' '\n' < "$f" | grep 'x-show' | grep -cE 'x-cloak|class="[^"]*(^| )hidden( |")' || true)"
+  [ "$hits" = 0 ] || { bad nojs "$rel: $hits element(s) carry x-show and are also hidden statically — unreachable without JavaScript"; bad_ne=1; }
+done
+[ "$bad_ne" = 1 ] || ok nojs "no element is hidden by both a runtime and a static rule; every x-show renders without JavaScript"
 
 # 13c. the why section links both ways: every moment reaches its commands, responsibilities and
 # claims, and every one of those pages carries a link back. A one-way link is how the section
