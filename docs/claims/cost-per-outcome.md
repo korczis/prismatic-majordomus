@@ -2,7 +2,7 @@
 
 ## What it means
 
-**Planned for v0.4.** The unit that matters is tokens, cost and time per accepted outcome — not per prompt — computed from measured telemetry and the ledger's outcomes. A task run under the right profile may spend more on one prompt and less on the task, because it needed two sessions instead of three and no retry.
+**Planned.** The unit that matters is tokens, cost and time per accepted outcome — not per prompt — computed from measured telemetry and the ledger's outcomes. A task run under the right profile may spend more on one prompt and less on the task, because it needed two sessions instead of three and no retry.
 
 ## How it works
 

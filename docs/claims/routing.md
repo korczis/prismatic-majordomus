@@ -2,7 +2,7 @@
 
 ## What it means
 
-**Planned for v0.5.** Once cost per accepted outcome exists per profile and task class, Majordomus can say which profile produced the best acceptance rate per unit cost for a class of work — as a recommendation to change a profile, never as an automatic model choice.
+**Planned.** Once cost per accepted outcome exists per profile and task class, Majordomus can say which profile produced the best acceptance rate per unit cost for a class of work — as a recommendation to change a profile, never as an automatic model choice.
 
 ## How it works
 

@@ -46,15 +46,29 @@ if [ "$QUICK" = 1 ]; then
     printf '%s\n' "$MAP" | cut -f1 | grep -qxF "$r" || missing="$missing $r"
   done
   [ -z "$missing" ] || { echo "site-probe: no template resolves for:$missing — the sample would not cover them" >&2; exit 12; }
-  routes="$(printf '%s\n' "$MAP" | awk -F'\t' '!seen[$2]++ { print $1 }' | sort)"
-  echo "site-probe: --quick, one route per template ($(printf '%s\n' "$routes" | wc -l | tr -d ' ') of $(printf '%s\n' "$MAP" | wc -l | tr -d ' '))"
+  # One route per template covers layout, and the widest page of each template is added on
+  # top of it — more coverage for a few seconds, not a guarantee. Be clear about what this
+  # does not do: it does not cover content. Every overflow this site has produced came from
+  # canonical data rendered into a shared template, and byte length does not predict which
+  # page that will be — the page that overflowed carried a 40-character token while a page
+  # that did not carries an 82-character one. What overflows depends on which element holds
+  # the token and what CSS reaches it. So --quick is for a local loop; CI runs the sweep.
+  SAMPLE="$(printf '%s\n' "$MAP" | awk -F'\t' -v out="$WORK/out" '
+    { r = $1; t = $2
+      cmd = "wc -c < \"" out r "index.html\" 2>/dev/null"; cmd | getline sz; close(cmd); sz = sz + 0
+      if (!(t in first)) { first[t] = r; order[++n] = t }
+      if (sz > big[t]) { big[t] = sz; widest[t] = r } }
+    END { for (i = 1; i <= n; i++) { print first[order[i]]
+            if (widest[order[i]] != "" && widest[order[i]] != first[order[i]]) print widest[order[i]] } }')"
+  routes="$(printf '%s\n' "$SAMPLE" | sort -u)"
+  echo "site-probe: --quick, one route per template plus each template's widest page ($(printf '%s\n' "$routes" | wc -l | tr -d ' ') of $(printf '%s\n' "$MAP" | wc -l | tr -d ' '))"
 fi
 n=0
 for r in $routes; do
   for w in 320 390 1280; do
     cat > "$WORK/srv/p.html" <<HTML
 <!doctype html><title>probe</title><iframe id=f src="$PREFIX$r" style="width:${w}px;height:900px;border:0"></iframe>
-<script>document.getElementById('f').addEventListener('load',()=>{setTimeout(()=>{const d=document.getElementById('f').contentDocument;const vw=d.documentElement.clientWidth,sw=d.documentElement.scrollWidth;const pres=d.querySelectorAll('pre.mermaid').length,svg=d.querySelectorAll('pre.mermaid svg').length;const x=[...d.querySelectorAll('body *')].filter(e=>{const b=e.getBoundingClientRect();const p=e.parentElement?e.parentElement.getBoundingClientRect():b;return b.right>vw+1&&p.right<=vw+1}).slice(0,2).map(e=>e.tagName.toLowerCase()+'.'+(e.className||'').toString().split(' ').slice(0,2).join('.'));document.title='vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' wide='+(x.join('|')||'none')},2500)});</script>
+<script>document.getElementById('f').addEventListener('load',()=>{setTimeout(()=>{const d=document.getElementById('f').contentDocument;const vw=d.documentElement.clientWidth,sw=d.documentElement.scrollWidth;const pres=d.querySelectorAll('pre.mermaid').length,svg=d.querySelectorAll('pre.mermaid svg').length;const nm=e=>e.tagName.toLowerCase()+'.'+(e.className||'').toString().split(' ').slice(0,2).join('.');const clipped=e=>{for(let p=e;p;p=p.parentElement){const o=getComputedStyle(p);if(o.overflowX==='auto'||o.overflowX==='scroll'||o.overflowX==='hidden')return true}return false};const x=[...d.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>vw+1&&!clipped(e.parentElement||e)).slice(0,2).map(nm);const tw=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT),rg=d.createRange(),tx=[];let nd;while((nd=tw.nextNode())){if(!nd.nodeValue.trim()||clipped(nd.parentElement))continue;rg.selectNodeContents(nd);if(rg.getBoundingClientRect().right>vw+1)tx.push('text \''+nd.nodeValue.trim().slice(0,22)+'\' in '+nm(nd.parentElement))}document.title='vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' wide='+(x.concat(tx.slice(0,2)).join('|')||'none')},2500)});</script>
 HTML
     t="$(title_of "http://127.0.0.1:$PORT/p.html")"; n=$((n+1))
     vw="$(printf '%s' "$t" | sed -n 's/.*vw=\([0-9]*\).*/\1/p')"; sw="$(printf '%s' "$t" | sed -n 's/.*sw=\([0-9]*\).*/\1/p')"

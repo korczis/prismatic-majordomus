@@ -2,11 +2,11 @@
 
 ## What it means
 
-**Planned for v1.0.** One canonical policy distributed to many repositories, with the same projections, the same finish contract and the same drift checks everywhere a team's workers run.
+**Planned.** One canonical policy distributed to many repositories, with the same projections, the same finish contract and the same drift checks everywhere a team's workers run.
 
 ## How it works
 
-Nothing is implemented. v0.1 is local-first: one policy per repository, one active task per checkout, overlap seen across worktrees on one machine.
+Nothing is implemented. Today it is local-first: one policy per repository, one active task per checkout, overlap seen across worktrees on one machine.
 
 ## How to see it
 

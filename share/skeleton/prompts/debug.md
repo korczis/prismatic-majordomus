@@ -3,6 +3,9 @@ name: debug
 description: frame a defect so that the fix is proven, not asserted
 profile: debugging
 ---
+
+# Frame a defect so that the fix is proven, not asserted
+
 Task {{TASK_ID}} on branch {{BRANCH}} at {{HEAD}}: {{TASK}}
 
 Scope: {{SCOPE}}

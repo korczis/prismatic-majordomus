@@ -2,7 +2,7 @@
 
 ## What it means
 
-**Planned for v0.2.** Optional, provider-specific hooks into a worker's runtime that clamp how many lines a single read may return, condense oversized tool output (head, diagnostic lines, tail, with a note that it was truncated), and cap how many sub-workers a session may spawn — with every limit derived from the task's profile rather than a global constant.
+**Planned.** Optional, provider-specific hooks into a worker's runtime that clamp how many lines a single read may return, condense oversized tool output (head, diagnostic lines, tail, with a note that it was truncated), and cap how many sub-workers a session may spawn — with every limit derived from the task's profile rather than a global constant.
 
 ## How it works
 

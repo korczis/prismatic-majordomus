@@ -2,7 +2,7 @@
 
 ## What it means
 
-**Planned for v0.3.** Per task: input, output and cached tokens, the model and effort actually used, elapsed time and tool-call count — recorded into the ledger next to what it already holds. Only from providers that expose these numbers; nothing estimated is ever labelled as measured.
+**Planned.** Per task: input, output and cached tokens, the model and effort actually used, elapsed time and tool-call count — recorded into the ledger next to what it already holds. Only from providers that expose these numbers; nothing estimated is ever labelled as measured.
 
 ## How it works
 

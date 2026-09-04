@@ -2,6 +2,9 @@
 name: review
 description: review the working diff against the claimed scope and the finish contract
 ---
+
+# Review the working diff against the claimed scope and the finish contract
+
 Review the uncommitted and committed work of task {{TASK_ID}} in {{REPOSITORY}}
 on branch {{BRANCH}} (working tree {{WORKING_TREE}}).
 
