@@ -44,6 +44,7 @@ GEN_VERSION=1
 
 # ---------------------------------------------------------------- inputs
 INPUTS="bin/majordomus
+share/commands.yaml
 share/doctrines.yaml
 share/use-cases.yaml
 share/applications.yaml
@@ -61,7 +62,11 @@ LICENSE"
 # uppercase and lowercase names has the same effect; this one merely reached that state
 # first.
 LC_ALL=C; export LC_ALL
+
+# test cases are inputs because each one declares which commands it covers, and that
+# metadata is the evidence the command pages render
 for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
+         "$ROOT"/test/cases/*.sh \
          "$ROOT"/.majordomus/project/project.yaml "$ROOT"/.majordomus/project/milestones/*.yaml \
          "$ROOT"/.majordomus/project/issues/*.yaml; do
   case "$f" in */docs/SITE_CLAIMS.md|*/docs/PLAN_STATUS.md) continue ;; esac   # written by this script; never its own input
@@ -232,22 +237,110 @@ jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" --argjson checks 
   --arg limits "$(section_of "$ROOT/README.md" "Limitations" "Roadmap")" \
   '{schema:1, finish_transcript:$finish, finish_checks:$checks, problem_md:$problem, problem_bullets_md:$problem_bullets, not_md:$notwhat, limitations_md:$limits, does:$does}' > "$OUT/readme.json"
 
-# ---------------------------------------------------------------- commands.json (CLI reference sections per command)
-# docs/CLI.md has one `## `majordomus <name>`` section per command; each becomes a page.
+# ---------------------------------------------------------------- commands.json (from share/commands.yaml)
+# The registry owns what a command is; docs/CLI.md supplies the narrative; the coverage
+# metadata each test case declares about itself supplies the evidence. Nothing here restates
+# a fact that one of those three already holds.
+Kf="$(flat "$ROOT/share/commands.yaml")"
+COVER="$(mktemp "${TMPDIR:-/tmp}/mj.cov.XXXXXX")"
+for f in "$ROOT"/test/cases/*.sh; do
+  n="$(basename "$f" .sh)"
+  for c in $(sed -n 's/^# majordomus-covers: *//p' "$f" | head -1); do
+    [ "$c" = none ] && continue
+    printf '%s\tbehaviour\t%s\n' "$c" "$n" >> "$COVER"
+  done
+  for c in $(sed -n 's/^# majordomus-negative: *//p' "$f" | head -1); do
+    printf '%s\tnegative\t%s\n' "$c" "$n" >> "$COVER"
+  done
+done
+cover_json() { awk -F'\t' -v c="$1" -v l="$2" '$1==c && $2==l {print $3}' "$COVER" | sort -u | jq -R . | jq -sc .; }
+# The demonstration is the fixture test/cases/34_command_fixtures.sh executes, with each
+# scenario's setup script inlined so the page can show the preparation it ran against. A
+# page that rendered a different scenario from the one the tests run would be a second
+# implementation, which is the thing this whole arrangement exists to prevent.
+FIXDIR="$ROOT/test/fixtures/commands"
+demo_json() {
+  local fx="$FIXDIR/$1.json"
+  [ -f "$fx" ] || { echo "generate-site-data: command $1 has no fixture at test/fixtures/commands/$1.json" >&2; exit 10; }
+  local tmp; tmp="$(mktemp "${TMPDIR:-/tmp}/mj.demo.XXXXXX")"
+  cp "$fx" "$tmp"
+  local sid setup body stdin
+  for sid in $(jq -r '.scenarios[].id' "$fx"); do
+    setup="$(jq -r --arg s "$sid" '.scenarios[] | select(.id==$s) | .setup' "$fx")"
+    body="$(cat "$FIXDIR/setup/$setup.sh")"
+    stdin="$(jq -r --arg s "$sid" '.scenarios[] | select(.id==$s) | .stdin // ""' "$fx")"
+    if [ -n "$stdin" ]; then stdin="$(cat "$FIXDIR/stdin/$stdin")"; fi
+    jq --arg s "$sid" --arg b "$body" --arg i "$stdin" \
+      '.scenarios |= map(if .id == $s then . + {setup_sh: $b, stdin_body: (if $i == "" then null else $i end)} else . end)' \
+      "$tmp" > "$tmp.n" && mv "$tmp.n" "$tmp"
+  done
+  jq -c . "$tmp"; rm -f "$tmp" "$tmp.n"
+}
+# Everything that can refuse runs before a byte is written. An `exit` inside a
+# `{ ... } | jq . > file` group kills the group while the redirect has already truncated the
+# target, so the refusal would be reported as jq's parse error and leave a ruined file.
+i=0
+while [ -n "$(yv "$Kf" "commands.$i.id")" ]; do
+  cid="$(yv "$Kf" "commands.$i.id")"
+  if [ "$(yv "$Kf" "commands.$i.visibility")" = public ]; then
+    awk -v h="## \`majordomus $cid" 'index($0,h)==1{f=1;found=1;next} f&&/^## /{exit} f' "$ROOT/docs/CLI.md" | grep -q . \
+      || { echo "generate-site-data: docs/CLI.md has no section for command '$cid'" >&2; exit 10; }
+    [ -f "$FIXDIR/$cid.json" ] \
+      || { echo "generate-site-data: command $cid has no fixture at test/fixtures/commands/$cid.json" >&2; exit 10; }
+    d="$(yv "$Kf" "commands.$i.demo")"
+    [ -n "$d" ] && [ "$d" != none ] \
+      || { echo "generate-site-data: command $cid declares no demo" >&2; exit 10; }
+    [ -n "$(cover_json "$cid" behaviour | jq -r '.[0] // empty')" ] \
+      || { echo "generate-site-data: command $cid has no behavioural test; add one and declare it in that case's header" >&2; exit 10; }
+    [ -n "$(cover_json "$cid" negative | jq -r '.[0] // empty')" ] \
+      || { echo "generate-site-data: command $cid has no negative test; add one and declare it in that case's header" >&2; exit 10; }
+  fi
+  i=$((i+1))
+done
+
 {
-  printf '{"schema":1,"commands":['
-  first=1
-  for name in $(jq -r '.commands[].name' "$OUT/project.json"); do
-    [ "$name" = version ] && continue
-    body="$(awk -v h="## \`majordomus $name" 'index($0,h)==1{f=1;next} f&&/^## /{exit} f' "$ROOT/docs/CLI.md" | sed -E "$LINKSED")"
-    [ -n "$body" ] || { echo "generate-site-data: docs/CLI.md has no section for command '$name'" >&2; exit 10; }
+  printf '{"schema":1,"stages":['
+  i=0; first=1
+  while [ -n "$(yv "$Kf" "stages.$i.id")" ]; do
     [ "$first" = 1 ] || printf ','; first=0
-    jq -cn --arg n "$name" --arg s "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/project.json")" \
-      --argjson ro "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .read_only' "$OUT/project.json")" --arg body "$body" \
-      '{name:$n, summary:$s, read_only:$ro, doc_md:$body}'
+    jq -cn --arg id "$(yv "$Kf" "stages.$i.id")" --arg title "$(yv "$Kf" "stages.$i.title")" '{id:$id, title:$title}'
+    i=$((i+1))
+  done
+  printf '],"commands":['
+  i=0; first=1
+  while [ -n "$(yv "$Kf" "commands.$i.id")" ]; do
+    cid="$(yv "$Kf" "commands.$i.id")"
+    if [ "$(yv "$Kf" "commands.$i.visibility")" != public ]; then i=$((i+1)); continue; fi
+    body="$(awk -v h="## \`majordomus $cid" 'index($0,h)==1{f=1;next} f&&/^## /{exit} f' "$ROOT/docs/CLI.md" | sed -E "$LINKSED")"
+
+    cls="$(yv "$Kf" "commands.$i.class")"
+    if [ "$cls" = read-only ]; then ro=true; else ro=false; fi
+    [ "$first" = 1 ] || printf ','; first=0
+    jq -cn --arg n "$cid" --arg summary "$(yv "$Kf" "commands.$i.summary")" \
+      --arg category "$(yv "$Kf" "commands.$i.category")" --arg stage "$(yv "$Kf" "commands.$i.stage")" \
+      --arg class "$cls" --argjson read_only "$ro" \
+      --arg requires_task "$(yv "$Kf" "commands.$i.requires_task")" \
+      --argjson requires_repository "$(jbool "$(yv "$Kf" "commands.$i.requires_repository")")" \
+      --argjson requires_installed "$(jbool "$(yv "$Kf" "commands.$i.requires_installed")")" \
+      --argjson json_output "$(jbool "$(yv "$Kf" "commands.$i.json")")" \
+      --arg syntax "$(yv "$Kf" "commands.$i.syntax")" --arg demo "$(yv "$Kf" "commands.$i.demo")" \
+      --arg note "$(yv "$Kf" "commands.$i.note")" --arg body "$body" \
+      --argjson reads "$(ylist_json "$Kf" "commands.$i.reads")" \
+      --argjson writes "$(ylist_json "$Kf" "commands.$i.writes")" \
+      --argjson exit_codes "$(mj_ylist "$Kf" "commands.$i.exit_codes" | jq -sc 'map(tonumber)')" \
+      --argjson behaviour "$(cover_json "$cid" behaviour)" \
+      --argjson negative "$(cover_json "$cid" negative)" \
+      --argjson demo_data "$(demo_json "$cid")" \
+      '{name:$n, summary:$summary, category:$category, stage:$stage, class:$class, read_only:$read_only,
+        requires_task:$requires_task, requires_repository:$requires_repository, requires_installed:$requires_installed,
+        json_output:$json_output, syntax:$syntax, demo:$demo, note:(if $note=="" then null else $note end),
+        reads:$reads, writes:$writes, exit_codes:$exit_codes,
+        tests:{behaviour:$behaviour, negative:$negative}, demo_data:$demo_data, doc_md:$body}'
+    i=$((i+1))
   done
   printf ']}'
 } | jq . > "$OUT/commands.json"
+rm -f "$Kf" "$COVER"
 
 # ---------------------------------------------------------------- responsibilities (README "What it does" rows, cross-linked)
 # The cross-links are data: which command owns a responsibility and which claims mention it, by

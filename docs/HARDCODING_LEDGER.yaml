@@ -178,6 +178,26 @@ findings:
     status: open
     reproduce: "sed -n '86,89p' scripts/site-check"
 
+  - id: site-check-generated-file-list
+    path: scripts/site-check
+    lines: "17"
+    concept: which generated files carry a schema
+    authority: "the files site/data/generated/ actually contains"
+    duplicated_in:
+      - "gen_files, a literal list of nine names plus source"
+    risk: medium
+    detail: >-
+      The same shape as generated-json-inventory, in the checker rather than the generator, and
+      it appeared after that one was fixed. A generated file whose name is not in this list is
+      never checked for a schema version, and the count printed in the OK line is a count of
+      the list rather than of the directory. The rule to follow is three lines below in the
+      same file, where the command check reads its list from the generated data.
+    recommended: DERIVE
+    target: "iterate site/data/generated/*.json"
+    priority: 2
+    status: open
+    reproduce: "sed -n '17p' scripts/site-check; ls site/data/generated/ | wc -l"
+
   - id: orphan-provider-templates
     path: .majordomus/providers
     lines: "-"

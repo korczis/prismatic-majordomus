@@ -2,17 +2,168 @@
 {% block body %}
 {%- set cmds = load_data(path="data/generated/commands.json") -%}
 {%- set c = [x for x in cmds.commands if x.name == page.extra.name][0] -%}
-<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+{%- set repo = project.repository_url -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">{% if c.read_only %}<span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span> {% endif %}Rendered from <a href="{{ project.repository_url }}/blob/master/docs/CLI.md" class="font-mono hover:underline">docs/CLI.md</a>.</p>
-    <article class="format break-words [&_code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ c.doc_md | markdown | safe }}</article>
+
+    {#- A. Purpose, and what kind of command this is -#}
+    <p class="text-lg text-body">{{ c.summary }}</p>
+    <ul class="mt-4 flex flex-wrap gap-2 text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">{{ c.class }}</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">{{ c.category }}</span></li>
+      {%- if c.requires_task != "none" %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">active task {{ c.requires_task }}</span></li>{% endif -%}
+      {%- if c.json_output %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li>{% endif -%}
+      {%- if not c.requires_installed %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">runs before init</span></li>{% endif -%}
+    </ul>
+    {%- if c.note %}<p class="mt-4 border-l-2 border-default pl-4 text-sm text-body">{{ c.note }}</p>{% endif -%}
+
+    {#- C. Syntax -#}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading">{{ c.syntax }}</pre></div>
+
+    {#- J. Where it sits in the lifecycle -#}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
+    <ol class="mt-3 flex flex-wrap gap-2 text-sm">
+      {%- for st in cmds.stages -%}
+      <li class="rounded-base border px-3 py-1.5 {% if st.id == c.stage %}border-brand-subtle bg-brand-softer font-medium text-fg-brand-strong{% else %}border-default bg-neutral-primary-soft text-body-subtle{% endif %}"{% if st.id == c.stage %} aria-current="step"{% endif %}>{{ st.title }}</li>
+      {%- endfor -%}
+    </ol>
+    <p class="mt-3 text-sm text-body-subtle">Other commands at this stage:
+      {%- set siblings = [x for x in cmds.commands if x.stage == c.stage and x.name != c.name] -%}
+      {%- if siblings | length > 0 -%}
+      {% for q in siblings %}<a href="{{ get_url(path="/commands/" ~ q.name ~ "/", trailing_slash=true) }}" class="font-mono text-fg-brand hover:underline">{{ q.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.
+      {%- else -%} none — this is the only one. {%- endif -%}
+    </p>
+
+    {#- E and F. Reads and writes, from the registry rather than from prose -#}
+    <div class="mt-10 grid gap-6 sm:grid-cols-2">
+      <div class="min-w-0">
+        <h2 class="text-xl font-semibold tracking-tight text-heading">Reads</h2>
+        {%- if c.reads | length > 0 -%}
+        <ul class="mt-3 space-y-1 text-sm">{% for r in c.reads %}<li class="break-all font-mono text-body">{{ r }}</li>{% endfor %}</ul>
+        {%- else -%}<p class="mt-3 text-sm text-body-subtle">Nothing. It needs no repository state at all.</p>{%- endif -%}
+      </div>
+      <div class="min-w-0">
+        <h2 class="text-xl font-semibold tracking-tight text-heading">Writes</h2>
+        {%- if c.writes | length > 0 -%}
+        <ul class="mt-3 space-y-1 text-sm">{% for w in c.writes %}<li class="break-all font-mono text-body">{{ w }}</li>{% endfor %}</ul>
+        {%- else -%}<p class="mt-3 text-sm font-medium text-heading">Nothing. This command is read-only.</p>{%- endif -%}
+      </div>
+    </div>
+
+    {#- H. Exit semantics, joined to the one exit-code contract -#}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exit codes</h2>
+    <p class="mt-2 text-sm text-body-subtle">Only the codes this command can produce. The full contract is on the <a href="{{ get_url(path="/commands/", trailing_slash=true) }}" class="text-fg-brand hover:underline">commands index</a>.</p>
+    <ul class="mt-3 space-y-1 text-sm">
+      {%- for e in project.exit_codes -%}
+        {%- if e.code in c.exit_codes -%}
+        <li><code class="font-mono font-semibold text-heading">{{ e.code }}</code> <span class="text-body">{{ e.meaning }}</span></li>
+        {%- endif -%}
+      {%- endfor -%}
+    </ul>
+
+    {#- L. The interactive demonstration. Every scenario below is executed against the real
+        binary by test/cases/34_command_fixtures.sh; this page renders that fixture and
+        nothing else. Without JavaScript every scenario is shown, in order. -#}
+    {%- set d = c.demo_data -%}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{{ d.title }}</h2>
+    <p class="mt-2 text-sm text-body">{{ d.intro }}</p>
+    <div class="mt-4" x-data="{ s: '{{ d.scenarios[0].id }}' }">
+      <div role="tablist" aria-label="Scenarios" class="flex flex-wrap gap-2">
+        {%- for sc in d.scenarios -%}
+        <button type="button" role="tab" x-on:click="s = '{{ sc.id }}'" :aria-selected="s === '{{ sc.id }}' ? 'true' : 'false'"
+          class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+          :class="s === '{{ sc.id }}' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">{{ sc.title }}</button>
+        {%- endfor -%}
+      </div>
+      {%- for sc in d.scenarios -%}
+      <div x-show="s === '{{ sc.id }}'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <h3 class="text-base font-semibold text-heading">{{ sc.title }}</h3>
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs">
+          {%- for k, v in sc.given -%}
+          <div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 {% if v %}bg-success-soft{% else %}bg-neutral-secondary-medium{% endif %}">
+            <dt class="text-body">{{ k }}</dt>
+            <dd class="font-mono font-medium {% if v %}text-fg-success-strong{% else %}text-body-subtle{% endif %}">{% if v %}yes{% else %}no{% endif %}</dd>
+          </div>
+          {%- endfor -%}
+        </dl>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ sc.setup_sh }}</pre></div>
+        {%- if sc.stdin_body %}
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">…and this body on standard input</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ sc.stdin_body }}</pre></div>
+        {% endif -%}
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus{% for a in sc.run %} {{ a }}{% endfor %}{% if sc.stdin_body %} &lt; body.md{% endif %}</pre></div>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
+        <ul class="mt-2 space-y-1">{% for line in sc.expect.stdout_contains %}<li class="break-all font-mono text-sm text-body">{{ line }}</li>{% endfor %}</ul>
+        <p class="mt-3 text-sm">
+          <span class="text-body-subtle">exit</span>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold {% if sc.expect.exit == 0 %}bg-success-soft text-fg-success-strong{% else %}bg-danger-soft text-fg-danger-strong{% endif %}">{{ sc.expect.exit }}</code>
+        </p>
+        <p class="mt-4 text-sm text-body">{{ sc.explain }}</p>
+      </div>
+      {%- endfor -%}
+    </div>
+
+    {#- B, D, G, K. The authored reference: when to use it, its options, its output, examples -#}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Reference</h2>
+    <article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ c.doc_md | markdown | safe }}</article>
+
+    {#- M. Evidence. Generated from coverage metadata; nothing here is typed by hand. -#}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
+    <p class="mt-2 text-sm text-body-subtle">Every case below runs in CI on Linux and macOS. The site refuses to build if a public command has no behavioural case, no negative case, or no demonstration.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
+        <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.behaviour %}<li><a href="{{ repo }}/blob/master/test/cases/{{ t }}.sh" class="break-all font-mono text-fg-brand hover:underline">{{ t }}</a></li>{% endfor %}</ul>
+      </div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
+        <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.negative %}<li><a href="{{ repo }}/blob/master/test/cases/{{ t }}.sh" class="break-all font-mono text-fg-brand hover:underline">{{ t }}</a></li>{% endfor %}</ul>
+      </div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Implementation</h3>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="{{ repo }}/blob/master/bin/majordomus" class="break-all font-mono text-fg-brand hover:underline">bin/majordomus</a></li>
+          {%- if c.name != "version" %}<li><a href="{{ repo }}/blob/master/lib/{{ c.name }}.sh" class="break-all font-mono text-fg-brand hover:underline">lib/{{ c.name }}.sh</a></li>{% endif -%}
+          <li><a href="{{ repo }}/blob/master/share/commands.yaml" class="break-all font-mono text-fg-brand hover:underline">share/commands.yaml</a></li>
+        </ul>
+      </div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Demonstration</h3>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="{{ repo }}/blob/master/test/fixtures/commands/{{ c.name }}.json" class="break-all font-mono text-fg-brand hover:underline">fixtures/{{ c.name }}.json</a></li>
+          <li><a href="{{ repo }}/blob/master/test/cases/34_command_fixtures.sh" class="break-all font-mono text-fg-brand hover:underline">34_command_fixtures</a></li>
+        </ul>
+      </div>
+    </div>
+
+    {#- N. Claims this command implements -#}
     {%- set caps = load_data(path="data/generated/capabilities.json") -%}
     {%- set mine = [x for x in caps.claims if x.command == c.name] -%}
     {%- if mine | length > 0 -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Claims this command implements</h2>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Guarantees this command carries</h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in mine %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={x.status} /> }}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
     {%- endif -%}
   </div>
-  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</h2><ul class="space-y-1 text-sm">{% for q in cmds.commands %}<li><a href="{{ get_url(path="/commands/" ~ q.name ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 font-mono {% if q.name == c.name %}bg-brand-softer text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.name == c.name %} aria-current="page"{% endif %}>{{ q.name }}</a></li>{% endfor %}</ul><p class="mt-4 text-xs text-body-subtle"><a href="{{ get_url(path="/docs/cli/", trailing_slash=true) }}" class="hover:underline">Full CLI reference →</a></p></div></aside>
+
+  {#- O. Related commands, grouped by the registry's own categories -#}
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</h2>
+      {%- for st in cmds.stages -%}
+        {%- set group = [x for x in cmds.commands if x.stage == st.id] -%}
+        {%- if group | length > 0 -%}
+        <p class="mb-1 mt-3 text-xs font-medium text-body-subtle">{{ st.title }}</p>
+        <ul class="space-y-1 text-sm">{% for q in group %}<li><a href="{{ get_url(path="/commands/" ~ q.name ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 font-mono {% if q.name == c.name %}bg-brand-softer text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.name == c.name %} aria-current="page"{% endif %}>{{ q.name }}</a></li>{% endfor %}</ul>
+        {%- endif -%}
+      {%- endfor -%}
+      <p class="mt-4 text-xs text-body-subtle"><a href="{{ get_url(path="/docs/cli/", trailing_slash=true) }}" class="hover:underline">Full CLI reference →</a></p>
+    </div>
+  </aside>
 </div>
 {% endblock body %}

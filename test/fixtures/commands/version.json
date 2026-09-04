@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "command": "version",
+  "title": "The version string, and the argument it refuses",
+  "intro": "version needs no repository and no installation, because it is dispatched ahead of the option parser. That is exactly how a command comes to ignore arguments the rest of the surface refuses, so it has to refuse them for itself.",
+  "scenarios": [
+    {
+      "id": "prints",
+      "title": "Printing the version",
+      "given": { "unknown option given": false },
+      "setup": "bare",
+      "run": ["version"],
+      "expect": { "exit": 0, "stdout_contains": ["^majordomus [0-9]+\\.[0-9]+\\.[0-9]+$"] },
+      "explain": "The one string every other surface derives its version from — this site, the ledger's `by` field, and the generated provider instructions."
+    },
+    {
+      "id": "refuses-unknown",
+      "title": "An argument it does not know",
+      "given": { "unknown option given": true },
+      "setup": "bare",
+      "run": ["version", "--no-such-option"],
+      "expect": { "exit": 2, "stdout_contains": ["unknown option --no-such-option"] },
+      "explain": "Exit 2 is USAGE. Until recently this printed the version and exited 0, which made version the one command in the surface that silently accepted anything at all."
+    }
+  ]
+}

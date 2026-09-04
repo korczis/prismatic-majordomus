@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "command": "doctor",
+  "title": "Is every declared enforcement actually wired?",
+  "intro": "doctor's primary guarantee is reconciliation: for each enforcement the policy declares, the path must exist, be executable, and be invoked by the artifact named in wired_by without its exit code being swallowed. Everything else it reports is secondary to that.",
+  "scenarios": [
+    {
+      "id": "not-wired",
+      "title": "The policy declares enforcement that nothing runs",
+      "given": {
+        "hooks installed": false
+      },
+      "setup": "installed",
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 10,
+        "stdout_contains": [
+          "FAIL wiring",
+          "doctor-on-commit"
+        ]
+      },
+      "explain": "This is the failure the tool exists to catch. The policy says a check runs on every commit; nothing runs it. Declared and unwired is worse than absent, because it reads as protection."
+    },
+    {
+      "id": "wired",
+      "title": "Both hooks in place and honouring the exit code",
+      "given": {
+        "hooks installed": true
+      },
+      "setup": "installed-wired",
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "OK   wiring",
+          "doctor: 0 failure"
+        ]
+      },
+      "explain": "doctor names the file that does the wiring, so the report is checkable rather than reassuring. A hook that invoked the command and discarded its exit code would still be reported as unwired."
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "command": "checkpoint",
+  "title": "A progress note, not a report",
+  "intro": "A checkpoint is what the next worker would need if you stopped now. It is capped in length on purpose: past the cap you are writing a handover, and it says so.",
+  "scenarios": [
+    {
+      "id": "records",
+      "title": "Recording progress",
+      "given": {
+        "active task": true
+      },
+      "setup": "active-task",
+      "stdin": "checkpoint-body.md",
+      "run": [
+        "checkpoint"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          ".majordomus/state/checkpoints/"
+        ]
+      },
+      "explain": "The file is written atomically at mode 0600 and is never staged. Its name carries the timestamp, branch and head, so a record can be placed without opening it."
+    },
+    {
+      "id": "no-task",
+      "title": "With no active task",
+      "given": {
+        "active task": false
+      },
+      "setup": "installed",
+      "stdin": "checkpoint-body.md",
+      "run": [
+        "checkpoint"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no active task"
+        ]
+      },
+      "explain": "A checkpoint belongs to a task. Writing one with nothing to attach it to would produce a record that no later reader could place."
+    }
+  ]
+}

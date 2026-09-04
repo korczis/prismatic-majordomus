@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "command": "init",
+  "title": "Setting up, and refusing to overwrite",
+  "intro": "init is the only command that runs before .majordomus/ exists. It writes a policy, four profiles, templates, provider templates and prompt assets, and it never touches state/ — including under --force.",
+  "scenarios": [
+    {
+      "id": "fresh",
+      "title": "A repository with no .majordomus/",
+      "given": { "already installed": false, "--force": false },
+      "setup": "bare",
+      "run": ["init"],
+      "expect": { "exit": 0, "stdout_contains": ["created .majordomus/policy.yaml"] },
+      "explain": "The skeleton is copied in and the two hook lines it needs are printed, together with the command that will verify they were added. init does not install hooks itself."
+    },
+    {
+      "id": "refuses",
+      "title": "A repository that already has one",
+      "given": { "already installed": true, "--force": false },
+      "setup": "installed",
+      "run": ["init"],
+      "expect": { "exit": 15, "stdout_contains": ["already exists"] },
+      "explain": "Exit 15 is REFUSED, not an error. Overwriting a policy someone has edited is the kind of silent loss this tool exists to prevent, so it stops and says what to pass if you meant it."
+    },
+    {
+      "id": "force",
+      "title": "Rewriting deliberately with --force",
+      "given": { "already installed": true, "--force": true },
+      "setup": "installed",
+      "run": ["init", "--force"],
+      "expect": { "exit": 0, "stdout_contains": ["policy.yaml"] },
+      "explain": "--force rewrites policy, profiles, templates and provider templates. state/ is still untouched: durable records are never collateral damage of a reinstall."
+    }
+  ]
+}

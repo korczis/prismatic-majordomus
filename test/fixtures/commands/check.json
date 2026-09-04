@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "command": "check",
+  "title": "Is this task still consistent with what it claimed?",
+  "intro": "check is read-only and answers three questions at once: does the record still describe this checkout, is the work inside the claimed scope, and is anything blocking acceptance.",
+  "scenarios": [
+    {
+      "id": "consistent",
+      "title": "Work inside the claimed scope",
+      "given": {
+        "work stays in scope": true
+      },
+      "setup": "active-task",
+      "run": [
+        "check"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "OK   scope",
+          "0 failing"
+        ]
+      },
+      "explain": "Every finding is printed, not only the failures, so the report says what was checked rather than only what went wrong."
+    },
+    {
+      "id": "out-of-scope",
+      "title": "A file changed that the task never claimed",
+      "given": {
+        "work stays in scope": false
+      },
+      "setup": "check-scope-violation",
+      "run": [
+        "check"
+      ],
+      "expect": {
+        "exit": 10,
+        "stdout_contains": [
+          "FAIL scope",
+          "docs/d"
+        ]
+      },
+      "explain": "check names the individual file, because the useful question is which change to move or claim \u2014 not merely that something is wrong."
+    }
+  ]
+}

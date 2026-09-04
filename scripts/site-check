@@ -232,4 +232,33 @@ ok graphs "architecture and claims graphs are connected and their routes resolve
 n="$(jq '.claims | length' "$SITE/data/generated/capabilities.json")"; m="$(grep -o '<tr class="align-top">' "$PUB/guarantees/index.html" | wc -l | tr -d ' ')"
 [ "$n" = "$m" ] && ok claims "$n claims rendered on /guarantees/" || bad claims "capabilities.json has $n claims, /guarantees/ renders $m"
 
+# 15. command pages: a route that compiles is not a documented command. Each public command
+#     must show its syntax, what it reads and writes, its exit codes, a demonstration whose
+#     scenarios come from the fixtures the tests execute, and evidence that resolves. The
+#     command list is read from the generated data, so a command added later is checked here
+#     without this file being edited.
+cmdbad=0
+for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do
+  page="$PUB/commands/$n/index.html"
+  [ -f "$page" ] || { bad command "no page for $n"; cmdbad=1; continue; }
+  for heading in Syntax Lifecycle Reads Writes "Exit codes" Reference Evidence; do
+    grep -qF ">$heading<" "$page" || { bad command "$n: no $heading section"; cmdbad=1; }
+  done
+  # the syntax shown is the syntax the registry declares
+  syn="$(jq -r --arg n "$n" '.commands[] | select(.name==$n) | .syntax' "$SITE/data/generated/commands.json")"
+  grep -qF "$(printf '%s' "$syn" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')" "$page" \
+    || { bad command "$n: the page does not show its declared syntax"; cmdbad=1; }
+  # every scenario in the fixture is on the page, and the demonstration is operable
+  for sid in $(jq -r --arg n "$n" '.commands[] | select(.name==$n) | .demo_data.scenarios[].id' "$SITE/data/generated/commands.json"); do
+    grep -qF "s === '$sid'" "$page" || { bad command "$n: scenario $sid is not rendered"; cmdbad=1; }
+  done
+  grep -q 'role="tablist"' "$page" || { bad command "$n: the demonstration has no tablist"; cmdbad=1; }
+  # evidence links resolve to files that exist in this repository
+  for t in $(jq -r --arg n "$n" '.commands[] | select(.name==$n) | .tests.behaviour[], .tests.negative[]' "$SITE/data/generated/commands.json" | sort -u); do
+    [ -f "$ROOT/test/cases/$t.sh" ] || { bad command "$n: evidence names test/cases/$t.sh, which does not exist"; cmdbad=1; }
+    grep -qF "test/cases/$t.sh" "$page" || { bad command "$n: $t is not linked on the page"; cmdbad=1; }
+  done
+done
+[ "$cmdbad" = 0 ] && ok command "every command page carries syntax, reads, writes, exit codes, a demonstration and resolving evidence"
+
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "command": "question",
+  "title": "The gate, not the notebook",
+  "intro": "A question is opened when you are blocked on a person. Every unresolved question for the active task refuses finish --outcome completed \u2014 that is the whole point of the command.",
+  "scenarios": [
+    {
+      "id": "opens",
+      "title": "Opening a question against the active task",
+      "given": {
+        "active task": true
+      },
+      "setup": "active-task",
+      "run": [
+        "question",
+        "add",
+        "should tabs be an error or a warning?"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^opened for t-"
+        ]
+      },
+      "explain": "From this moment the task cannot be finished as completed. It can be finished as blocked, which is the honest outcome when the answer is not yours to give."
+    },
+    {
+      "id": "no-task",
+      "title": "With no active task",
+      "given": {
+        "active task": false
+      },
+      "setup": "installed",
+      "run": [
+        "question",
+        "add",
+        "who owns the parser?"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no active task"
+        ]
+      },
+      "explain": "A question is opened against a task. Without one there is nothing for it to block, and an unattached blocker would never be seen again."
+    }
+  ]
+}

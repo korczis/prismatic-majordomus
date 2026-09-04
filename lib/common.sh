@@ -78,7 +78,10 @@ mj_require_installed() {
 mj_git() { git -C "$MJ_ROOT" "$@"; }
 mj_git_repo_id() { mj_git rev-parse --git-common-dir 2>/dev/null | { read -r d; case "$d" in /*) printf '%s' "$d" ;; *) printf '%s/%s' "$MJ_ROOT" "$d" ;; esac; }; }
 mj_git_branch()  { mj_git symbolic-ref --short HEAD 2>/dev/null || printf 'DETACHED'; }
-mj_git_head()    { mj_git rev-parse HEAD 2>/dev/null || printf 'NONE'; }
+# --verify, because plain `rev-parse HEAD` in a repository with no commits prints the
+# literal string "HEAD" on stdout and *then* fails. The fallback would append to that,
+# producing an identity field with an embedded newline and a permanently corrupt ledger line.
+mj_git_head()    { local h; h="$(mj_git rev-parse --verify HEAD 2>/dev/null)" || h=""; [ -n "$h" ] || h=NONE; printf '%s' "$h"; }
 mj_git_dirty()   { [ -z "$(mj_git status --porcelain=v1 2>/dev/null)" ] && printf 'clean' || printf 'dirty'; }
 mj_branch_key()  { mj_git_branch | sed 's/[^A-Za-z0-9._-]/-/g'; }
 

@@ -124,6 +124,39 @@ recorded and a refusal leaves no trace, so a task refused four times looks exact
 that passed first try. `test/cases/32_refusal_lifecycle.sh` performs four refusals and
 carries the assertion that will hold when the event exists.
 
+## Demonstrations are projections, not descriptions
+
+A command's page carries an interactive demonstration. The risk in that is obvious: a page
+that describes behaviour becomes a second implementation, and the second one is never the
+one that ships.
+
+So the demonstration is not written. `test/fixtures/commands/<command>.json` holds a set of
+scenarios — a situation, the command run, the expected exit code, the lines the output must
+contain, and an explanation. `test/cases/34_command_fixtures.sh` executes every one of them
+against the real binary in a fresh repository, and the site generator inlines the same file
+into the page. What the page shows is what a test asserted.
+
+Two consequences worth stating:
+
+- **No shell lives in the fixture.** Preparation is a real script under
+  `test/fixtures/commands/setup/`, composed by sourcing, which the page displays verbatim
+  and the case sources. Nothing executes a string that came from data, which keeps the rule
+  against `eval` intact and makes the demonstration honest at the same time.
+- **The generator refuses rather than degrades.** A public command with no fixture, no
+  demonstration id, no behavioural case or no negative case stops the build. There is no
+  "tests coming soon" state for a command the project claims to support.
+
+Every refusal is raised before a byte of output is written. An `exit` inside a
+`{ ... } | jq . > file` group kills only the group, while the redirect has already truncated
+the target — so a refusal written there reports the wrong exit code and leaves a ruined
+file behind. The validation runs first; the emitting pipeline cannot fail on policy.
+
+The arrangement earns its keep. Writing the fixtures found a defect nothing else had:
+`rev-parse HEAD` in a repository with no commits prints the literal string `HEAD` on stdout
+and *then* fails, so the `|| printf 'NONE'` fallback appended to it and produced an identity
+field with an embedded newline — a permanently corrupt line in an append-only ledger, for
+anyone who ran `init` and `update` before their first commit.
+
 ## Self-governance
 
 Majordomus supervises this repository with the same registries it ships. There is no
