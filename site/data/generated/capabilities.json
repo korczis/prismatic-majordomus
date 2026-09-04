@@ -104,6 +104,30 @@
       "test_case": "14_wiring_dispatcher"
     },
     {
+      "id": "doctrine-registry",
+      "claim": "Every rule the tool enforces is declared in one registry, and doctor proves each one is reached by the command that claims to run it",
+      "source": "docs/DOCTRINE.md",
+      "implementation": "lib/doctrine.sh",
+      "test": "test/cases/18_doctrine_wiring.sh",
+      "status": "guaranteed",
+      "note": "A doctrine whose validator does not exist, a validator no doctrine declares, a command that never dispatches, a blocking rule whose command cannot exit non-zero, a missing test, and CI that swallows the suite are six separate failures with six separate messages. Each is mutation-tested.",
+      "source_route": "/docs/doctrine/",
+      "command": null,
+      "test_case": "18_doctrine_wiring"
+    },
+    {
+      "id": "doctrine-class-decides",
+      "claim": "A doctrine's class is what decides whether a violation stops the command, not a label beside it",
+      "source": "docs/DOCTRINE.md",
+      "implementation": "lib/doctrine.sh",
+      "test": "test/cases/17_doctrine_enforcement.sh",
+      "status": "guaranteed",
+      "note": "The test changes checkpoint freshness from advisory to blocking in a copy of the registry and asserts that check's exit code moves from 0 to 10. There are two classes and no override.",
+      "source_route": "/docs/doctrine/",
+      "command": null,
+      "test_case": "17_doctrine_enforcement"
+    },
+    {
       "id": "no-silent-overwrite",
       "claim": "A hand-edited instruction file is never silently overwritten",
       "source": "docs/CLI.md",

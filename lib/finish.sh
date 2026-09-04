@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # MJ_DOCTRINE_SKIPPED is read by the dispatcher in doctrine.sh
 # finish — evaluate the finish contract; refuse if unmet. --check evaluates without writing.
+#
+# The contract is a doctrine bundle, not a list in this file. Every line comes from
+# share/doctrines.yaml (the doctrines whose enforced_by names finish), and the policy's
+# verification.finish_requires selects which of them this repository applies. A refusal
+# names the doctrines that caused it.
 # shellcheck source=check.sh
 . "$MJ_LIB_DIR/check.sh"
 # shellcheck source=handover.sh
 . "$MJ_LIB_DIR/handover.sh"
+
+MJ_FINISH_OUTCOME=""; MJ_FINISH_VERIFY=""; MJ_FINISH_NOTE=""
+MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""
+export MJ_FINISH_OUTCOME
+
 mj_cmd_finish() {
   local outcome="" verify="" check=0 note=""
   while [ $# -gt 0 ]; do case "$1" in
@@ -46,81 +57,109 @@ H
     "") mj_die "$MJ_EX_USAGE" "finish: --outcome is required (completed|partial|blocked|no_match|failed)" ;;
     *) mj_die "$MJ_EX_USAGE" "finish: unknown outcome '$outcome'" ;; esac
 
-  # run the shared checks quietly into counters, then print the contract explicitly
-  local saved_json="$MJ_JSON"; MJ_JSON=1; mj_run_task_checks > /dev/null; MJ_JSON="$saved_json"
-  local scope_ok=1 state_ok=1
-  # shellcheck disable=SC2034
-  MJ_FINDINGS=0; MJ_FAILS=0
-  case "$MJ_LABEL" in exact|advanced) ;; *) state_ok=0 ;; esac
-  local f s inside; for f in $(mj_git_touched "$(mj_cur head)"); do
-    case "$f" in .majordomus/*) continue ;; esac; case " $(mj_projection_targets | tr '\n' ' ') " in *" $f "*) continue ;; esac
-    inside=0; for s in $(mj_ylist "$MJ_CUR_FLAT" scope); do mj_path_contains "$s" "$f" && { inside=1; break; }; done
-    [ "$inside" = 1 ] || scope_ok=0
+  MJ_FINISH_OUTCOME="$outcome"; MJ_FINISH_VERIFY="$verify"; MJ_FINISH_NOTE="$note"
+  MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""
+  mj_doctrine_dispatch finish
+
+  # The policy may name a requirement the registry does not define. That is a
+  # configuration error, not a passing contract, so it is reported and it refuses.
+  local r
+  for r in $(mj_ylist "$MJ_POL_FLAT" verification.finish_requires); do
+    mj_doctrine_for_policy_key "$r" >/dev/null || mj_fail contract "$r" "verification.finish_requires names '$r', which no doctrine defines" "majordomus doctrine list"
   done
 
-  local unmet=0 contract="" r vexit="" vsecs="" line
-  for r in $(mj_ylist "$MJ_POL_FLAT" verification.finish_requires); do
-    case "$r" in
-      scope_respected)
-        if [ "$scope_ok" = 1 ]; then mj_ok scope "$id" "$MJ_TOUCHED_IN touched file(s), all within scope"; line=pass
-        else mj_fail scope "$id" "touched files outside claimed scope" "majordomus check"; line=fail; fi ;;
-      verification_ran)
-        if [ "$outcome" != completed ]; then mj_info verification "$id" "skipped for outcome $outcome"; line=skipped
-        else
-          local need; need="$(mj_pro verification.verify_command_required)"
-          [ "$need" = if_files_changed ] && { [ "$MJ_TOUCHED_IN" -gt 0 ] && need=true || need=false; }
-          if [ "$need" != true ]; then mj_info verification "$id" "not required by profile $profile"; line=skipped
-          elif [ -z "$verify" ]; then mj_fail verification "$id" "profile $profile requires --verify-command" "majordomus finish --outcome completed --verify-command \"<cmd>\""; line=fail
-          else
-            local t0 t1; t0="$(date +%s)"
-            if ( cd "$MJ_ROOT" && sh -c "$verify" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
-            t1="$(date +%s)"; vsecs=$((t1-t0))
-            if [ "$vexit" = 0 ]; then mj_ok verification "$id" "$verify — exit 0, ${vsecs}s"; line=pass
-            else mj_fail verification "$id" "$verify — exit $vexit, ${vsecs}s" "$verify"; line=fail; fi
-          fi
-        fi ;;
-      state_updated)
-        if [ "$state_ok" = 1 ]; then mj_ok state "$id" "$MJ_LABEL (head $(mj_git_head | cut -c1-7))"; line=pass
-        else mj_fail state "$id" "$MJ_LABEL — the task record no longer describes this checkout" "majordomus check"; line=fail; fi ;;
-      no_open_blockers)
-        if [ "$outcome" = blocked ]; then mj_info blockers "$id" "outcome is blocked; open questions expected"; line=skipped
-        elif [ "$MJ_BLOCKED" = 0 ]; then mj_ok blockers "$id" "none open"; line=pass
-        else mj_fail blockers "$id" "unresolved entry in open-questions.md" "grep -n 'unresolved' .majordomus/state/open-questions.md"; line=fail; fi ;;
-      note_present)
-        local nf="" need_sec
-        case "$outcome" in completed) need_sec="$(mj_ylist "$MJ_POL_FLAT" handover.required_sections | tr '\n' '|')" ;;
-          partial|blocked) need_sec="Next Action|" ;; *) need_sec="Reason|" ;; esac
-        if [ -n "$note" ]; then nf="$note"
-        else nf="$(grep -l "^task_id: $id$" "$MJ_DIR"/state/handovers/*.md 2>/dev/null | sort | tail -n1)"; fi
-        if [ -z "$nf" ] || [ ! -f "$nf" ]; then mj_fail note "$id" "no --note file and no handover for this task" "majordomus handover < note.md"; line=fail
-        else local miss; miss="$(mj_check_sections "$nf" "$need_sec")"
-          if [ -z "$miss" ]; then mj_ok note "$id" "$(basename "$nf")"; line=pass
-          else mj_fail note "$id" "$(basename "$nf") lacks section(s): $miss" "grep -n '^# ' $nf"; line=fail; fi
-        fi ;;
-      *) mj_warn contract "$r" "unknown finish requirement; ignored"; line=skipped ;;
-    esac
-    [ "$line" = fail ] && unmet=$((unmet+1)); contract="$contract\"$r\":\"$line\","
+  local unmet="$MJ_FAILS" contract="" e refused=""
+  for e in $MJ_DOCTRINE_RESULTS; do
+    contract="$contract\"${e%%:*}\":\"${e#*:}\","
+    [ "${e#*:}" = fail ] && refused="$refused ${e%%:*}"
   done
-  # profile-level requirements, only for completed
-  if [ "$outcome" = completed ]; then
-    if [ "$(mj_pro verification.regression_test_required)" = true ]; then
-      if mj_git_touched "$(mj_cur head)" | grep -qiE '(^|/)(test|tests|spec|specs)(/|_|\.|$)|_test\.|\.test\.|_spec\.|\.spec\.'; then mj_ok regression "$id" "a test path was touched"
-      else mj_fail regression "$id" "profile $profile requires a regression test; no test path among touched files" "git diff --name-only $(mj_cur head) HEAD; git status --porcelain"; unmet=$((unmet+1)); fi
-      contract="$contract\"regression_test\":\"$([ "$unmet" = 0 ] && echo pass || echo fail)\","
-    fi
-    if [ "$(mj_pro verification.decision_record_required)" = true ]; then
-      if grep -q "^Task: $id" "$MJ_DIR/state/decisions.md" 2>/dev/null; then mj_ok decisions "$id" "decision record present"
-      else mj_fail decisions "$id" "profile $profile requires an entry 'Task: $id' in decisions.md" "grep -n 'Task:' .majordomus/state/decisions.md"; unmet=$((unmet+1)); fi
-    fi
-  fi
   contract="{${contract%,}}"
   if [ "$unmet" -gt 0 ]; then
-    [ "$MJ_JSON" = 1 ] || printf 'finish: refused, %s unmet\n' "$unmet"; exit "$MJ_EX_CONTRACT"; fi
+    if [ "$MJ_JSON" != 1 ]; then
+      printf 'finish: refused, %s unmet\n' "$unmet"
+      [ -n "$refused" ] && printf 'blocking doctrines:%s\n' "$(printf '%s' "$refused" | tr ' ' '\n' | sed '/^$/d' | sed 's/^/\n- /' | tr -d '\n' | sed 's/^/\n/')"
+    fi
+    exit "$MJ_EX_CONTRACT"
+  fi
 
   local now; now="$(mj_now)"
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
   [ -n "$note" ] && { mkdir -p "$MJ_DIR/state/completed"; cp "$note" "$MJ_DIR/state/completed/$id.md"; }
-  local vj=null; [ -n "$vexit" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$vexit,\"seconds\":$vsecs}"
+  local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS}"
   mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
+}
+
+# the doctrine index whose policy_key is <key>, or failure
+mj_doctrine_for_policy_key() {
+  local i=0
+  mj_doctrine_load
+  while [ -n "$(mj_doc "$i" id)" ]; do [ "$(mj_doc "$i" policy_key)" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i+1)); done
+  return 1
+}
+# is the doctrine currently executing selected by this repository's policy?
+# A doctrine with no policy_key is not selectable and always applies.
+mj_finish_selected() {
+  local i key
+  i="$(mj_doc_index "$MJ_DOCTRINE_ID")" || return 0
+  key="$(mj_doc "$i" policy_key)"; [ -n "$key" ] || return 0
+  local r; for r in $(mj_ylist "$MJ_POL_FLAT" verification.finish_requires); do [ "$r" = "$key" ] && return 0; done
+  return 1
+}
+
+# ---------------------------------------------------------------- finish-only validators
+mj_validate_verification() {
+  local id; id="$(mj_cur id)"
+  mj_finish_selected || { mj_doctrine_skip verification "$id" "not in verification.finish_requires"; MJ_DOCTRINE_SKIPPED=1; return 0; }
+  if [ "$MJ_FINISH_OUTCOME" != completed ]; then
+    mj_doctrine_skip verification "$id" "skipped for outcome $MJ_FINISH_OUTCOME"; MJ_DOCTRINE_SKIPPED=1; return 0; fi
+  local need; need="$(mj_pro verification.verify_command_required)"
+  [ "$need" = if_files_changed ] && { [ "$MJ_TOUCHED_IN" -gt 0 ] && need=true || need=false; }
+  if [ "$need" != true ]; then
+    mj_doctrine_skip verification "$id" "not required by profile $(mj_cur profile)"; MJ_DOCTRINE_SKIPPED=1; return 0; fi
+  if [ -z "$MJ_FINISH_VERIFY" ]; then
+    mj_doctrine_fail verification "$id" "profile $(mj_cur profile) requires --verify-command" "majordomus finish --outcome completed --verify-command \"<cmd>\""; return 0; fi
+  local t0 t1 vexit; t0="$(date +%s)"
+  if ( cd "$MJ_ROOT" && sh -c "$MJ_FINISH_VERIFY" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
+  t1="$(date +%s)"; MJ_FINISH_VEXIT="$vexit"; MJ_FINISH_VSECS=$((t1-t0))
+  if [ "$vexit" = 0 ]; then mj_doctrine_ok verification "$id" "$MJ_FINISH_VERIFY — exit 0, ${MJ_FINISH_VSECS}s"
+  else mj_doctrine_fail verification "$id" "$MJ_FINISH_VERIFY — exit $vexit, ${MJ_FINISH_VSECS}s" "$MJ_FINISH_VERIFY"; fi
+  return 0
+}
+
+mj_validate_note() {
+  local id nf="" need_sec miss; id="$(mj_cur id)"
+  mj_finish_selected || { mj_doctrine_skip note "$id" "not in verification.finish_requires"; MJ_DOCTRINE_SKIPPED=1; return 0; }
+  case "$MJ_FINISH_OUTCOME" in
+    completed) need_sec="$(mj_ylist "$MJ_POL_FLAT" handover.required_sections | tr '\n' '|')" ;;
+    partial|blocked) need_sec="Next Action|" ;;
+    *) need_sec="Reason|" ;;
+  esac
+  if [ -n "$MJ_FINISH_NOTE" ]; then nf="$MJ_FINISH_NOTE"
+  else nf="$(grep -l "^task_id: $id$" "$MJ_DIR"/state/handovers/*.md 2>/dev/null | sort | tail -n1)"; fi
+  if [ -z "$nf" ] || [ ! -f "$nf" ]; then
+    mj_doctrine_fail note "$id" "no --note file and no handover for this task" "majordomus handover < note.md"; return 0; fi
+  miss="$(mj_check_sections "$nf" "$need_sec")"
+  if [ -z "$miss" ]; then mj_doctrine_ok note "$id" "$(basename "$nf")"
+  else mj_doctrine_fail note "$id" "$(basename "$nf") lacks section(s): $miss" "grep -n '^# ' $nf"; fi
+  return 0
+}
+
+mj_validate_profile_requirements() {
+  local id profile any=0; id="$(mj_cur id)"; profile="$(mj_cur profile)"
+  if [ "$MJ_FINISH_OUTCOME" != completed ]; then
+    mj_doctrine_skip regression "$id" "profile requirements apply to completed only"; MJ_DOCTRINE_SKIPPED=1; return 0; fi
+  if [ "$(mj_pro verification.regression_test_required)" = true ]; then
+    any=1
+    if mj_git_touched "$(mj_cur head)" | grep -qiE '(^|/)(test|tests|spec|specs)(/|_|\.|$)|_test\.|\.test\.|_spec\.|\.spec\.'; then
+      mj_doctrine_ok regression "$id" "a test path was touched"
+    else mj_doctrine_fail regression "$id" "profile $profile requires a regression test; no test path among touched files" "git diff --name-only $(mj_cur head) HEAD; git status --porcelain"; fi
+  fi
+  if [ "$(mj_pro verification.decision_record_required)" = true ]; then
+    any=1
+    if grep -q "^Task: $id" "$MJ_DIR/state/decisions.md" 2>/dev/null; then mj_doctrine_ok decisions "$id" "decision record present"
+    else mj_doctrine_fail decisions "$id" "profile $profile requires an entry 'Task: $id' in decisions.md" "grep -n 'Task:' .majordomus/state/decisions.md"; fi
+  fi
+  [ "$any" = 0 ] && { mj_doctrine_skip regression "$id" "profile $profile adds no requirement beyond the shared contract"; MJ_DOCTRINE_SKIPPED=1; }
+  return 0
 }

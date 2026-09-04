@@ -1,14 +1,10 @@
 . "$ROOT/test/lib.sh"
 # Every subcommand the binary dispatches is reachable, self-documenting, and exercised
 # here — so "tested in CI" is true of each one individually, not only of the suite.
-COMMANDS="init doctor start check watch update handover finish version"
+COMMANDS="init doctor start check watch update handover finish doctrine version"
 
 # the binary's own dispatch table is the list this case is allowed to check
-for c in $COMMANDS; do
-  grep -qE "^  (init\|doctor\|start\|check\|watch\|update\|handover\|finish\)|  version\|--version\))" "$ROOT/bin/majordomus" \
-    || true
-done
-grep -q 'init|doctor|start|check|watch|update|handover|finish)' "$ROOT/bin/majordomus" \
+grep -q 'init|doctor|start|check|watch|update|handover|finish|doctrine)' "$ROOT/bin/majordomus" \
   || { echo "    the dispatch table in bin/majordomus changed shape; update this case"; exit 1; }
 
 # usage lists every command
@@ -20,7 +16,7 @@ expect_grep 'exit codes: 0 ok'
 
 # every command answers --help without an installation, and says what it is
 "$MJ" init >/dev/null
-for c in doctor start check watch update handover finish; do
+for c in doctor start check watch update handover finish doctrine; do
   expect_exit 0 "$MJ" "$c" --help
   expect_grep "usage: majordomus $c" || { echo "    $c --help does not print its usage"; exit 1; }
 done
@@ -46,7 +42,8 @@ done
 # the read-only commands stay read-only: nothing under state/ changes when they run
 "$MJ" update >/dev/null
 before="$(find .majordomus/state -type f -exec shasum -a 256 {} \; | sort)"
-"$MJ" doctor >/dev/null 2>&1 || true
-"$MJ" watch  >/dev/null 2>&1 || true
+"$MJ" doctor   >/dev/null 2>&1 || true
+"$MJ" watch    >/dev/null 2>&1 || true
+"$MJ" doctrine >/dev/null 2>&1 || true
 after="$(find .majordomus/state -type f -exec shasum -a 256 {} \; | sort)"
-[ "$before" = "$after" ] || { echo "    doctor or watch wrote to .majordomus/state"; exit 1; }
+[ "$before" = "$after" ] || { echo "    a read-only command wrote to .majordomus/state"; exit 1; }

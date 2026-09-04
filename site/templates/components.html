@@ -59,3 +59,19 @@
   <span class="mt-auto pt-3 text-sm font-medium text-fg-brand">Read more →</span>
 </a>
 {% endcomponent linkcard %}
+
+{#- A doctrine's class. blocking stops the command; advisory reports and lets it pass. -#}
+{% component doctrine_class(class) %}
+{%- if class == "blocking" -%}<span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">blocking</span>
+{%- else -%}<span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span>
+{%- endif -%}
+{% endcomponent doctrine_class %}
+
+{#- One link of the enforcement chain, with the file or command that closes it. -#}
+{% component chain_link(step, label, detail="", href="") %}
+<li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-default py-2 last:border-0">
+  <span class="w-6 shrink-0 font-mono text-xs text-body-subtle">{{ step }}</span>
+  <span class="w-40 shrink-0 text-sm font-medium text-heading">{{ label }}</span>
+  <span class="min-w-0 break-words font-mono text-xs text-body">{%- if href %}<a href="{{ href }}" class="text-fg-brand hover:underline">{{ detail }}</a>{% else %}{{ detail }}{% endif -%}</span>
+</li>
+{% endcomponent chain_link %}

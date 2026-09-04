@@ -150,6 +150,47 @@ The four shipped profiles:
 
 ---
 
+## `share/doctrines.yaml`
+
+Ships with the tool, not with a repository. A repository configures Majordomus in
+`.majordomus/policy.yaml`; it does not declare doctrines, because a doctrine is a
+statement about how the tool behaves and every user of the tool is entitled to the same
+behaviour. See [`DOCTRINE.md`](DOCTRINE.md) for the model.
+
+```yaml
+version: 1
+doctrines:
+  - id: scope_integrity          # stable; used by --rule, by refusal messages, and by the site
+    title: Scope integrity
+    class: blocking              # blocking | advisory — nothing else parses
+    principle: 4                 # 1-10, into the operating principles
+    summary: A task touches only the paths it claimed; work found elsewhere is not accepted as done.
+    validator: scope             # runs mj_validate_scope; a name with no function is a failure
+    category: scope              # the finding category a violation is reported under
+    enforced_by: [check, finish, watch]
+    exit_code: 10                # from the existing contract; a doctrine invents no code
+    policy_key: scope_respected  # finish doctrines only: the name used in verification.finish_requires
+    claims: [scope-enforcement, scoped-task]   # ids in docs/CLAIMS.yaml
+    test: test/cases/04_start_check.sh
+```
+
+| field | required | meaning |
+|---|---|---|
+| `id` | yes | unique; `[a-z_]+`. The URL slug on the site is the id with `_` replaced by `-` |
+| `title`, `summary` | yes | one line each, rendered verbatim |
+| `class` | yes | `blocking` stops the command; `advisory` reports and lets it pass. Any other value is a configuration error and fails closed |
+| `principle` | yes | index into the ten principles in the provider body |
+| `validator` | yes | the suffix of `mj_validate_<validator>`; the function must exist in `lib/` |
+| `category` | yes | the finding category, so output stays one vocabulary |
+| `enforced_by` | yes | commands that dispatch it; each must exist and call `mj_doctrine_dispatch` |
+| `exit_code` | yes | `0` for advisory, otherwise a code from the exit-code contract |
+| `policy_key` | no | present only on doctrines a repository can select in `verification.finish_requires` |
+| `claims` | no | claim ids this doctrine backs; each must exist in `docs/CLAIMS.yaml` |
+| `test` | yes | the case that proves the behaviour; the file must exist |
+
+`majordomus doctor` verifies every one of those constraints against the source, and
+additionally that no `mj_validate_*` function exists which no doctrine declares.
+
 ## `.majordomus/state/current.yaml`
 
 The one active task. Absent when nothing is active.
@@ -267,7 +308,7 @@ Events and their extra fields:
 | `bootstrap` | `reason` |
 | `task.started` | `profile`, `scope[]`, `owner` |
 | `task.checkpoint` | — |
-| `task.finished` | `outcome`, `contract` (object of line → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null |
+| `task.finished` | `outcome`, `contract` (object of doctrine id → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null |
 | `task.handed_over` | `handover_path`, `closed` (true with `--close`) |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
 

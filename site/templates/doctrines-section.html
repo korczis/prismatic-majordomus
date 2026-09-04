@@ -1,0 +1,52 @@
+{% extends "page.html" %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+{%- set doc = load_data(path="data/generated/doctrines.json") -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  <dl class="grid max-w-3xl grid-cols-1 gap-4 border-b border-default pb-8 sm:grid-cols-3">
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ doc.counts.declared }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ doc.counts.blocking }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">advisory</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ doc.counts.advisory }}</dd></div>
+  </dl>
+  <p class="mt-4 max-w-3xl text-sm text-body">Counted from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/doctrines.yaml" class="text-fg-brand hover:underline">the registry</a> when this page was built. Every doctrine below resolves to a validator function, a command that dispatches it, a test, and a CI job — or the build fails and this page is not published.</p>
+
+  {#- Alpine filters the list. Every row is in the HTML; the filter hides, it does not fetch. -#}
+  <div class="mt-8" x-data="{ q: '', cls: 'all' }">
+    <div class="flex flex-wrap items-center gap-3">
+      <label class="sr-only" for="doctrine-filter">Filter doctrines</label>
+      <input id="doctrine-filter" type="search" x-model="q" placeholder="Filter by name, validator or command" class="w-full max-w-sm rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm text-heading placeholder:text-body-subtle focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+      <div class="flex gap-1" role="group" aria-label="Filter by class">
+        <button type="button" x-on:click="cls = 'all'" :class="cls === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium">All</button>
+        <button type="button" x-on:click="cls = 'blocking'" :class="cls === 'blocking' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium">Blocking</button>
+        <button type="button" x-on:click="cls = 'advisory'" :class="cls === 'advisory' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium">Advisory</button>
+      </div>
+    </div>
+    <p class="mt-2 text-xs text-body-subtle">Filtering runs in the browser. Without JavaScript every doctrine below is still listed.</p>
+
+    <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {%- for d in doc.doctrines -%}
+      <li x-show="(cls === 'all' || cls === '{{ d.class }}') && ('{{ d.id }} {{ d.title | lower }} {{ d.validator }} {{ d.enforced_by | join(sep=" ") }}'.includes(q.toLowerCase()))">
+        <a href="{{ get_url(path="/doctrines/" ~ d.slug ~ "/", trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <div class="mb-2 flex items-start justify-between gap-2">{{ <doctrine_class class={d.class} /> }}<span class="font-mono text-xs text-body-subtle">{{ d.enforced_by | join(sep=" · ") }}</span></div>
+          <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ d.title }}</h2>
+          <p class="text-sm leading-relaxed text-body">{{ d.summary }}</p>
+          <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">{{ d.validator_function }}</span>
+        </a>
+      </li>
+      {%- endfor -%}
+    </ul>
+  </div>
+
+  <div class="mt-12 max-w-3xl">
+    <h2 class="text-xl font-semibold tracking-tight text-heading">Principle, doctrine, guarantee</h2>
+    <p class="mt-3 text-body">A <strong class="text-heading">principle</strong> says why work is organised this way — the ten rules a worker reads. A <strong class="text-heading">doctrine</strong> is the part of a principle a machine can decide, and it names the validator that decides it. A <strong class="text-heading">guarantee</strong> is what may then be promised in public, and it is only listed as guaranteed once a test proves it and CI runs that test.</p>
+    <p class="mt-3 text-body">The distinction matters because the failure it prevents is invisible: a rule that is written down, has a script, has a test, and is invoked by nothing at all. <a href="{{ get_url(path="/docs/doctrine/", trailing_slash=true) }}" class="text-fg-brand hover:underline">How the wiring is verified</a> · <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">What is guaranteed</a></p>
+  </div>
+</div>
+{% endblock content %}

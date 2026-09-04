@@ -25,6 +25,7 @@ usage: majordomus <command> [options]
   update               regenerate provider projections from policy
   handover             write an append-only continuation record (body on stdin)
   finish               evaluate the finish contract; refuse if unmet
+  doctrine             what rules are enforced, by what, and whether they are wired
   version              print the version
 
 global options:
@@ -51,7 +52,7 @@ set -- "${pre[@]+"${pre[@]}"}" "$@"
 case "$cmd" in
   -h|--help|help) usage; exit 0 ;;
   version|--version) echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish)
+  init|doctor|start|check|watch|update|handover|finish|doctrine)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"

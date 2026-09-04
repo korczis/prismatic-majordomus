@@ -189,14 +189,14 @@ scripts can tell "drift" from "healthy" without confusing it with a contract fai
 | scope | touched files outside claim (same check as `check`) |
 | handover | task is `handed_over` but no handover names it, or that handover lacks a required section |
 | verification | `current.yaml` has a terminal outcome with no `task.finished` ledger record for it |
-| staleness | `current.yaml` older than the profile's checkpoint interval |
+| checkpoint | `current.yaml` older than the profile's checkpoint interval |
 | retention | `ledger.jsonl` or `handovers/` over cap |
 
 ```
 $ majordomus watch
 DRIFT policy      .majordomus/policy.yaml modified after last update  [reproduce: majordomus update --dry-run]
 DRIFT projection  AGENTS.md — hash differs from fingerprint (hand-edited?)  [reproduce: majordomus update --diff AGENTS.md]
-DRIFT staleness   t-20260903-193012-a4f1 — last checkpoint 48m ago, interval 15m
+DRIFT checkpoint  t-20260903-193012-a4f1 — last checkpoint 48m ago, interval 15m
 watch: 3 findings
 ```
 
@@ -302,12 +302,44 @@ OK   verification  make test — exit 0, 41s
 OK   state         exact (head 9b1e2d4)
 FAIL blockers      open-questions.md: "token refresh window — needs product decision" unresolved  [reproduce: grep -n 'unresolved' .majordomus/state/open-questions.md]
 OK   note          handover 20260903T201455Z--main--9b1e2d4--c0ffee.md
-finish: refused, 1 of 5 unmet
+finish: refused, 1 unmet
+blocking doctrines:
+- blocker_resolution
 $ echo $?
 10
 ```
 
+The contract is not a list inside `finish`. It is the set of doctrines whose
+`enforced_by` names `finish`, selected by this repository's
+`verification.finish_requires`. A requirement in the policy that no doctrine defines is
+reported and refuses, rather than being ignored. See
+[`DOCTRINE.md`](DOCTRINE.md).
+
 ---
+
+## `majordomus doctrine`
+
+Report what rules are enforced here, by what, and whether they are wired. Read-only.
+
+**Reads:** `share/doctrines.yaml` (shipped with the tool), `lib/`, `docs/CLAIMS.yaml`.
+**Writes:** nothing.
+
+```
+majordomus doctrine [status]     derived counts
+majordomus doctrine list         id, class, validator, enforcing commands
+majordomus doctrine show <id>    the full record for one doctrine
+```
+
+**Behaviour:**
+- `status` prints how many doctrines are declared, how many block, how many are advisory,
+  how many name a validator that does not exist, and how many name a test file that does
+  not exist. Every number is derived on the spot; none is stored.
+- `list` prints one line per doctrine.
+- `show <id>` prints the record, including which claims it backs, the test that proves it,
+  and which file defines its validator. An unknown id exits `12`.
+- Exits `0` when no validator and no test file is missing, `10` otherwise. Whether the
+  enforcement is actually *reached* is a stronger question, and `majordomus doctor`
+  answers it.
 
 ## `majordomus version`
 

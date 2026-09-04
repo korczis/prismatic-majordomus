@@ -14,7 +14,7 @@ pages="$(find "$PUB" -name '*.html')"
 # 1. data in sync with canonical sources
 if "$ROOT/scripts/generate-site-data" --check >/dev/null 2>&1; then ok sync "site/data/generated matches canonical inputs"; else bad sync "site/data/generated is stale; run scripts/generate-site-data"; fi
 # 2. generated data schema: every file parses and carries schema 1
-gen_files="project profiles policy capabilities lifecycle docs diagrams readme commands source"
+gen_files="project profiles policy capabilities lifecycle docs diagrams readme commands doctrines source"
 for f in $gen_files; do
   [ "$(jq -r '.schema' "$SITE/data/generated/$f.json" 2>/dev/null)" = 1 ] || bad schema "$f.json missing or schema != 1"
 done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -d ' ')) carries schema 1"
@@ -80,8 +80,9 @@ for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do [
 for st in guaranteed advisory planned rejected; do [ -f "$PUB/guarantees/$st/index.html" ] || bad tiles "no page for status $st"; done
 for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do [ -f "$PUB/supervises/$slug/index.html" ] || bad tiles "no page for responsibility $slug"; done
 for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do [ -f "$PUB/commands/$n/index.html" ] || bad tiles "no page for command $n"; done
+for id in $(jq -r '.doctrines[].slug' "$SITE/data/generated/doctrines.json"); do [ -f "$PUB/doctrines/$id/index.html" ] || bad tiles "no page for doctrine $id"; done
 for f in "$SITE"/content-src/why/*.md; do slug="$(basename "$f" .md)"; [ "$slug" = _index ] && continue; [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
-ok tiles "every profile, claim, status, responsibility, command and why-moment has its own page"
+ok tiles "every profile, claim, status, responsibility, command, doctrine and why-moment has its own page"
 # 13c. every claim mention on the homepage is a link to its page
 for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do
   claim="$(jq -r --arg i "$id" '.claims[] | select(.id==$i) | .claim' "$SITE/data/generated/capabilities.json")"

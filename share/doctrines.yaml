@@ -1,0 +1,179 @@
+# The doctrine registry: every rule Majordomus enforces, what enforces it, where it runs,
+# and what proves it. Shipped with the tool, not with the repository — a repository
+# configures Majordomus in .majordomus/policy.yaml, it does not invent doctrines.
+#
+# A doctrine is enforced only when every link of this chain holds:
+#   declared here -> validator function exists -> the command it names invokes the
+#   dispatcher -> the dispatcher's failure reaches the exit code -> a test proves it ->
+#   CI runs that test.
+# `majordomus doctor` derives each link from the source rather than trusting this file,
+# and reports the break. See docs/DOCTRINE.md.
+#
+# class:
+#   blocking  a violation stops the command with a non-zero exit
+#   advisory  a violation is reported and does not stop the command
+# There is no third class, no severity ladder, no baseline, and no override. See
+# docs/DOCTRINE.md "What was rejected" for why.
+version: 1
+
+doctrines:
+  - id: scope_integrity
+    title: Scope integrity
+    class: blocking
+    principle: 4
+    summary: A task touches only the paths it claimed; work found elsewhere is not accepted as done.
+    validator: scope
+    category: scope
+    enforced_by: [check, finish, watch]
+    policy_key: scope_respected
+    exit_code: 10
+    claims: [scope-enforcement, scoped-task]
+    test: test/cases/04_start_check.sh
+
+  - id: state_consistency
+    title: State consistency
+    class: blocking
+    principle: 1
+    summary: The task record still describes this checkout — same branch, and HEAD at or ahead of the recorded commit.
+    validator: state
+    category: state
+    enforced_by: [check, finish, watch]
+    policy_key: state_updated
+    exit_code: 10
+    claims: [git-identity, divergence-label, consistency-check]
+    test: test/cases/04_start_check.sh
+
+  - id: blocker_resolution
+    title: Blocker resolution
+    class: blocking
+    principle: 3
+    summary: A task with an unresolved open question cannot be completed; it can be finished as blocked.
+    validator: blockers
+    category: blockers
+    enforced_by: [check, finish, watch]
+    policy_key: no_open_blockers
+    exit_code: 10
+    claims: [finish-contract]
+    test: test/cases/17_doctrine_enforcement.sh
+
+  - id: checkpoint_freshness
+    title: Checkpoint freshness
+    class: advisory
+    principle: 1
+    summary: A task whose last checkpoint is older than its profile's interval is reported, not stopped.
+    validator: checkpoint
+    category: checkpoint
+    enforced_by: [check, watch]
+    exit_code: 0
+    claims: [checkpoint-interval]
+    test: test/cases/04_start_check.sh
+
+  - id: verification_integrity
+    title: Verification integrity
+    class: blocking
+    principle: 8
+    summary: Completion requires a verification command that actually ran and exited 0; its exit code and duration are recorded.
+    validator: verification
+    category: verification
+    enforced_by: [finish]
+    policy_key: verification_ran
+    exit_code: 10
+    claims: [finish-contract, typed-outcome]
+    test: test/cases/19_end_to_end.sh
+
+  - id: note_integrity
+    title: Note integrity
+    class: blocking
+    principle: 10
+    summary: Every outcome needs a note carrying the sections that outcome requires, and no transcript.
+    validator: note
+    category: note
+    enforced_by: [finish]
+    policy_key: note_present
+    exit_code: 10
+    claims: [handover-record, no-transcripts]
+    test: test/cases/06_finish.sh
+
+  - id: profile_requirements
+    title: Profile requirements
+    class: blocking
+    principle: 5
+    summary: A profile may demand more than the shared contract — a regression test, a decision record — and finish refuses without it.
+    validator: profile_requirements
+    category: regression
+    enforced_by: [finish]
+    exit_code: 10
+    claims: [profile-axes, profile-validate]
+    test: test/cases/16_profiles.sh
+
+  - id: policy_integrity
+    title: Policy integrity
+    class: blocking
+    principle: 2
+    summary: The policy and every profile parse, declare version 1, and carry no key the schema does not define.
+    validator: policy
+    category: policy
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [policy-parse, profile-validate]
+    test: test/cases/02_doctor_basic.sh
+
+  - id: projection_integrity
+    title: Projection integrity
+    class: blocking
+    principle: 1
+    summary: Every generated instruction file exists, matches its fingerprint, and is never silently overwritten after a hand edit.
+    validator: projection
+    category: projection
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [projection-fingerprint, no-silent-overwrite, region-projection, projection-generation]
+    test: test/cases/03_update.sh
+
+  - id: enforcement_wiring
+    title: Enforcement wiring
+    class: blocking
+    principle: 7
+    summary: Every enforcement the policy declares is invoked by the hook it names, from a file the dispatcher will actually execute, without swallowing the exit code.
+    validator: wiring
+    category: wiring
+    enforced_by: [doctor]
+    exit_code: 10
+    claims: [wiring-reconciliation, dispatcher-wiring]
+    test: test/cases/14_wiring_dispatcher.sh
+
+  - id: context_budget
+    title: Context budget
+    class: blocking
+    principle: 2
+    summary: The always-loaded projection stays within its line budget, every reference in it resolves, and it states no count that will go stale.
+    validator: budget
+    category: budget
+    enforced_by: [doctor]
+    exit_code: 10
+    claims: [context-budget, pointer-integrity, no-counts-in-context]
+    test: test/cases/02_doctor_basic.sh
+
+  - id: retention_caps
+    title: Retention caps
+    class: blocking
+    principle: 1
+    summary: The ledger and the handover directory stay under the caps the policy sets, so durable state does not grow without bound.
+    validator: retention
+    category: retention
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [retention-caps]
+    test: test/cases/02_doctor_basic.sh
+
+  - id: doctrine_wiring_integrity
+    title: Doctrine wiring integrity
+    class: blocking
+    principle: 7
+    summary: Every doctrine in this registry resolves to a validator that exists, is reached from every command it names, propagates failure, is proved by a test, and is run by CI — and every validator in the source is declared here.
+    validator: doctrine_wiring
+    category: doctrine
+    enforced_by: [doctor]
+    exit_code: 10
+    claims: [wiring-reconciliation, doctrine-registry, doctrine-class-decides]
+    test: test/cases/18_doctrine_wiring.sh

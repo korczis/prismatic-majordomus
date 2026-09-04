@@ -26,7 +26,7 @@ expect_grep 'DRIFT scope +outside.txt'
 rm outside.txt
 sed -i.bak 's/^checkpoint_at: .*/checkpoint_at: 2020-01-01T00:00:00Z/' .majordomus/state/current.yaml; rm -f .majordomus/state/current.yaml.bak
 expect_exit 11 "$MJ" watch
-expect_grep 'DRIFT staleness'
+expect_grep 'DRIFT checkpoint'
 # completed without a finish record
 sed -i.bak 's/^outcome: active/outcome: completed/' .majordomus/state/current.yaml; rm -f .majordomus/state/current.yaml.bak
 expect_exit 11 "$MJ" watch
