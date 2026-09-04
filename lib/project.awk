@@ -141,20 +141,6 @@ END {
     if (!left[id] && wave[id] == "" && st != "CANCELLED") wave[id] = 0
   }
 
-  # --- scope conflict: two issues that could run together but touch the same paths.
-  #     Reported conservatively — an uncertain overlap serialises rather than races.
-  for (i = 1; i <= inum; i++) for (j = i + 1; j <= inum; j++) {
-    a = iids[i]; b = iids[j]
-    if (status[a] != "READY" && status[a] != "ACTIVE") continue
-    if (status[b] != "READY" && status[b] != "ACTIVE") continue
-    if (wave[a] != wave[b]) continue
-    for (x = 1; x <= scpn[a]; x++) for (y = 1; y <= scpn[b]; y++)
-      if (overlap(scp[a, x], scp[b, y])) {
-        finding("WARN", "scope_conflict", a, "shares " scp[a, x] " with " b "; they may not run concurrently")
-        x = scpn[a] + 1; break
-      }
-  }
-
   # --- the milestone graph: validate it before anything derives from it. Same rules the
   #     issue graph lives under, applied one level up: an edge to a milestone that does not
   #     exist, an edge to itself, and a cycle are each refused by name.
@@ -259,6 +245,52 @@ END {
     if (mstatus[id] == "DONE" || mstatus[id] == "CANCELLED" || mstatus[id] == "SUPERSEDED") continue
     if (mblockedby[id] != "") continue
     finding("WARN", "empty_milestone", id, "is reachable and has no issues; it is an outcome nobody is executing")
+  }
+
+  # --- the gate reaches the work. An issue inside a milestone the gate has blocked is not
+  #     executable, whatever its own dependencies say: the outcome it belongs to is not
+  #     reachable yet. Without this the issue graph offers READY work inside a blocked
+  #     milestone, and the only way to stop it is to chain issues across milestone
+  #     boundaries by hand — which encodes in data a fact the graph already knows, and
+  #     flattens the waves into a line so they carry no parallelism.
+  for (j = 1; j <= inum; j++) {
+    iid = iids[j]; mid = it[iid, "milestone"]
+    if (mid == "" || mblockedby[mid] == "") continue
+    if (status[iid] == "CANCELLED" || status[iid] == "DONE") continue
+    if (status[iid] == "ACTIVE" || status[iid] == "VERIFY")
+      finding("FAIL", "premature_execution", iid, "is " status[iid] " while its milestone " mid " waits on " mblockedby[mid])
+    status[iid] = "BLOCKED"
+    blockedby[iid] = (blockedby[iid] == "" ? "milestone:" mid : blockedby[iid] ",milestone:" mid)
+  }
+
+  # counts follow the statuses, so a blocked milestone cannot report ready work
+  for (i = 1; i <= mn; i++) {
+    id = mids[i]
+    if (mblockedby[id] == "") continue
+    tot = 0; nd = 0; nr = 0; nb = 0; na = 0; nv = 0; nc = 0
+    for (j = 1; j <= inum; j++) {
+      iid = iids[j]
+      if (it[iid, "milestone"] != id) continue
+      tot++
+      s = status[iid]
+      if (s == "DONE") nd++; else if (s == "READY") nr++; else if (s == "BLOCKED") nb++
+      else if (s == "ACTIVE") na++; else if (s == "VERIFY") nv++; else if (s == "CANCELLED") nc++
+    }
+    mrow[id] = tot "\t" nd "\t" nr "\t" nb "\t" na "\t" nv "\t" nc
+  }
+
+  # --- scope conflict: two issues that could run together but touch the same paths.
+  #     Reported conservatively — an uncertain overlap serialises rather than races.
+  for (i = 1; i <= inum; i++) for (j = i + 1; j <= inum; j++) {
+    a = iids[i]; b = iids[j]
+    if (status[a] != "READY" && status[a] != "ACTIVE") continue
+    if (status[b] != "READY" && status[b] != "ACTIVE") continue
+    if (wave[a] != wave[b]) continue
+    for (x = 1; x <= scpn[a]; x++) for (y = 1; y <= scpn[b]; y++)
+      if (overlap(scp[a, x], scp[b, y])) {
+        finding("WARN", "scope_conflict", a, "shares " scp[a, x] " with " b "; they may not run concurrently")
+        x = scpn[a] + 1; break
+      }
   }
 
   # --- the active milestone: the lowest-ranked unblocked milestone that is ACTIVE, else the

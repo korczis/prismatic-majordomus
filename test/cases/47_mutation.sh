@@ -163,27 +163,27 @@ moved "one milestone edge, in the GitHub projection" "$before_gh" "$("$SYNC" --p
 [ "$("$MJ" --json plan roadmap | jq -r '.milestones[]|select(.id=="LATER")|.blocked_by[0]')" = M000 ] \
   || { echo "    the JSON does not name what blocks LATER"; exit 1; }
 
-# the gate is not satisfiable by finishing work inside the blocked milestone
+# The gate reaches the work. An issue inside a milestone whose dependency is unmet is not
+# offered, whatever its own dependencies say — otherwise the only way to stop the graph
+# handing out work behind a closed gate is to chain issues across milestone boundaries by
+# hand, which encodes in data a fact the graph already knows.
 pj_issue W1 LATER
-"$MJ" plan start W1 >/dev/null || true
-"$MJ" plan verify W1 >/dev/null || true
-"$MJ" plan evidence W1 --covers proof --type test --command true --result ok >/dev/null
-expect_exit 0 "$MJ" plan 'done' W1
-[ "$(mstat LATER)" = BLOCKED ] \
-  || { echo "    finishing every issue carried LATER past an unmet dependency; the gate is not a gate"; exit 1; }
-# Work finished inside a milestone that is not reachable yet is a contradiction, not a
-# state to display: the model is invalid until either the dependency is met or the work
-# is not claimed as complete.
-expect_exit 10 "$MJ" plan validate
-expect_grep 'milestone_premature'
+[ "$(pj_status W1)" = BLOCKED ] \
+  || { echo "    W1 is $(pj_status W1) inside a blocked milestone; the gate does not reach the work"; exit 1; }
+"$MJ" plan blocked | grep -q 'milestone:LATER' \
+  || { echo "    the blocker is not named as the milestone"; exit 1; }
 
-# Withdrawing the premature claim restores a legal model. A transition is refused while the
-# model is invalid, which is itself the gate doing its job: no work may be recorded inside a
-# contradiction.
+# and the refusal holds at the transition, not only in the listing
+expect_exit 15 "$MJ" plan start W1
+expect_grep 'BLOCKED, not READY .waiting on milestone:LATER.'
+expect_exit 15 "$MJ" plan 'done' W1
+expect_grep 'cannot be DONE while milestone:LATER is not DONE'
+expect_exit 0 "$MJ" plan validate
+
+# an issue behind an unfinished issue dependency is refused too, and names that dependency
+# rather than the milestone
 expect_exit 15 "$MJ" plan start I0001
 expect_grep 'BLOCKED, not READY'
-rm -f .majordomus/project/issues/W1.yaml
-expect_exit 0 "$MJ" plan validate
 
 # completing the dependency releases it, with nothing edited by hand
 before_release="$(rmsnap)"
