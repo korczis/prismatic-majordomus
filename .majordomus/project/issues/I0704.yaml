@@ -1,0 +1,31 @@
+id: I0704
+milestone: M002
+title: Publish what attribution guarantees, and what it still cannot
+slug: publish-attribution
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "State on the public surface what a record's attribution now means, and state plainly what it does not: that a worker's identity is supplied by the session, not verified, and that nothing here proves who a worker was."
+why: "Attribution is the kind of guarantee a reader will assume is stronger than it is. The distance between naming a worker and authenticating one has to be written where the claim is, not left to be inferred."
+current_state: "The behaviour will exist and be tested. Nothing on the public surface says what it covers."
+desired_state: "A claim states what is guaranteed with the file and the case behind it, and says on its detail page that the identity is asserted by the session and never verified."
+scope:
+  - docs
+  - site/data/generated
+non_scope:
+  - Any behaviour change
+  - Any claim about verifying who a worker is
+depends_on:
+  - I0703
+acceptance_criteria:
+  - The claim cites an implementation path and a test path that both exist
+  - The detail page says the identity is supplied, not verified
+  - The generated site data regenerates with no stale file
+validation:
+  - scripts/generate-site-data --check
+  - bash test/run.sh
+evidence_required:
+  - docs_build
+risk: "A claim about attribution read as a claim about authentication would be the most damaging overstatement on the site."
+created_at: 2026-09-04
+updated_at: 2026-09-04

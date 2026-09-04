@@ -5,9 +5,9 @@
     "repository": "korczis/prismatic-majordomus",
     "default_branch": "master"
   },
-  "active_milestone": "runtime-adapters",
-  "next_ready": "I0201",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "active_milestone": "M002",
+  "next_ready": "I0701",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "statuses": {
     "issue": [
       "READY",
@@ -271,6 +271,66 @@
           "ACTIVE": 0,
           "VERIFY": 0,
           "DONE": 4,
+          "CANCELLED": 0
+        }
+      }
+    },
+    {
+      "id": "M002",
+      "slug": "record-attribution",
+      "status": "PLANNED",
+      "order": 2,
+      "priority": "p1",
+      "title": "A durable record names the worker that wrote it",
+      "problem": "Every durable record is attributed to the task that is active in the checkout, because decision, checkpoint and question all read .majordomus/state/current.yaml to find out whose work they belong to. Several workers share one checkout, so the record names whoever started a task there rather than whoever ran the command. In one evening three sessions wrote under another session's active task, and one decision had to be dropped by hand after the fact because the premise it recorded belonged to somebody else. Attribution is the one property of a record that cannot be reconstructed later: the conversation that would settle it is gone.",
+      "outcome": "A durable record either names the worker that produced it or is refused, and a record written from one session can never arrive attributed to another session's task.",
+      "current_state": "Not started. lib/decision.sh, lib/checkpoint.sh and lib/question.sh each resolve the active task from the checkout and write it into the record. Nothing distinguishes two workers sharing that checkout, and nothing reports that it cannot.",
+      "desired_state": "Attribution is verifiable from the record alone. Where the tool cannot establish who wrote something, it says so and refuses rather than guessing from what happens to be active.",
+      "scope": [
+        "lib",
+        "share",
+        "test/cases",
+        "docs"
+      ],
+      "non_scope": [
+        "A registry of named workers, personas or agents",
+        "Any identity the repository has to maintain, or that outlives the session that used it",
+        "Locking a checkout to one worker"
+      ],
+      "acceptance_criteria": [
+        "A record written while another worker's task is active is attributed correctly or refused by name",
+        "The attribution can be checked from the record alone, with no conversation history",
+        "No new record type and no registry of workers is introduced",
+        "A behavioural case reproduces two workers writing in one checkout"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "risks": [
+        "The obvious fix is an identity the tool maintains, which is a registry of named workers by another name and is refused everywhere else in this repository. Whatever is chosen has to be supplied by the session and stored only inside the record it explains.",
+        "Refusing to write an unattributable record can lose a decision somebody was trying to make. The refusal has to say what to run instead, in the same breath."
+      ],
+      "evidence": [],
+      "issues": [
+        "I0701",
+        "I0702",
+        "I0703",
+        "I0704"
+      ],
+      "mermaid": "flowchart LR\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 4,
+        "required": 4,
+        "by_status": {
+          "READY": 1,
+          "BLOCKED": 3,
+          "ACTIVE": 0,
+          "VERIFY": 0,
+          "DONE": 0,
           "CANCELLED": 0
         }
       }
@@ -2918,6 +2978,197 @@
       "started_at": "",
       "verified_at": "",
       "completed_at": ""
+    },
+    {
+      "id": "I0701",
+      "slug": "reproduce-misattribution",
+      "milestone": "M002",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "debugging",
+      "parallel_safe": true,
+      "title": "Reproduce the misattribution as an executable case",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I0702"
+      ],
+      "scope": [
+        "test/cases"
+      ],
+      "non_scope": [
+        "Any change to lib/decision.sh, lib/checkpoint.sh or lib/question.sh"
+      ],
+      "objective": "Write a behavioural case in which two workers share one checkout — one starts a task, the other records a decision — and assert what happens today, so that the defect stops being an anecdote and becomes something a command demonstrates.",
+      "why": "This was found by three sessions colliding in one evening, which is a story rather than a test. A characterisation case is what makes the fix provable and what turns the eventual behaviour change red if it regresses.",
+      "current_state": "decision, checkpoint and question resolve the active task from .majordomus/state/current.yaml. Nothing in test/cases exercises a second worker writing while somebody else's task is active.",
+      "desired_state": "A case runs the sequence in a disposable repository, asserts that the record is attributed to the active task rather than to the worker that wrote it, and says in a comment that this is the gap being characterised rather than the behaviour being blessed.",
+      "acceptance_criteria": [
+        "The case starts a task, then records a decision as a second worker, and reaches an entry in decisions.md",
+        "It asserts the current attribution explicitly and marks it in a comment as the gap, not the goal",
+        "It covers checkpoint and question as well as decision, or says why they are out of its reach",
+        "It runs in a disposable repository like every other case"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "gap_reproduced"
+      ],
+      "evidence": [],
+      "risk": "A characterisation test that pins the wrong behaviour is a trap unless the comment saying so is unmissable; that comment is the whole safety mechanism.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0702",
+      "slug": "decide-attribution",
+      "milestone": "M002",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Decide how a record is attributed, between named alternatives",
+      "depends_on": [
+        "I0701"
+      ],
+      "blocked_by": [
+        "I0701"
+      ],
+      "dependents": [
+        "I0703"
+      ],
+      "scope": [
+        "docs"
+      ],
+      "non_scope": [
+        "Implementing anything"
+      ],
+      "objective": "Choose between the alternatives that actually exist — attribute to the session that ran the command, refuse to write when the active task belongs to somebody else, or require the task to be named explicitly — and record the choice with the case each rejected option gets wrong.",
+      "why": "Every option here trades a different thing away, and the wrong one either invents an identity this repository refuses to maintain or makes the common single-worker case tedious. A decision record is the only artefact that survives to explain why the chosen one was chosen.",
+      "current_state": "The gap is reproduced. Nothing has been decided, and the obvious fix — a worker identity the tool maintains — is the one the doctrine against new nouns exists to prevent.",
+      "desired_state": "One decision record naming the choice, both rejected alternatives, and the situation each of them is wrong in, with the conditions the choice imposes on the implementation.",
+      "acceptance_criteria": [
+        "The record names the choice and both rejected alternatives, each with the case it gets wrong",
+        "Any identity the choice relies on is supplied by the session and stored only inside the record it explains",
+        "The conditions the implementation must meet are stated, not left to the implementer"
+      ],
+      "validation": [
+        "bin/majordomus decision list"
+      ],
+      "evidence_required": [
+        "decision_recorded"
+      ],
+      "evidence": [],
+      "risk": "Choosing to refuse rather than to attribute makes a single worker pay for a problem only concurrent workers have; whichever way it goes, the cost falls on somebody and the record has to say who.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0703",
+      "slug": "implement-attribution",
+      "milestone": "M002",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p1",
+      "profile": "debugging",
+      "parallel_safe": false,
+      "title": "Implement the decision and prove it holds",
+      "depends_on": [
+        "I0702"
+      ],
+      "blocked_by": [
+        "I0702"
+      ],
+      "dependents": [
+        "I0704"
+      ],
+      "scope": [
+        "lib",
+        "share",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Any behaviour the decision did not choose"
+      ],
+      "objective": "Implement whatever I0702 decided across every command that writes a durable record, and turn the characterisation case into one that asserts the new behaviour.",
+      "why": "A defect is fixed when the case that reproduced it goes from describing the gap to describing the guarantee. Anything less leaves the next worker unable to tell which of the two the code is in.",
+      "current_state": "The choice is recorded. decision, checkpoint and question still resolve the active task from the checkout, and the case still asserts that.",
+      "desired_state": "Every command that writes a durable record follows the decision, the case asserts the new behaviour, and a refusal — if that is what was chosen — names the rule that refused and what to run instead.",
+      "acceptance_criteria": [
+        "Every command that writes a durable record is covered, not only decision",
+        "The case from I0701 asserts the guarantee rather than the gap",
+        "A refusal names the rule and the command that resolves it",
+        "If the rule is enforced, it is declared in share/doctrines.yaml and doctor proves it reaches its command"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "suite",
+        "doctor"
+      ],
+      "evidence": [],
+      "risk": "Three commands share this resolution path; fixing one and not the others leaves a defect that looks fixed, which is worse than one that looks broken.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0704",
+      "slug": "publish-attribution",
+      "milestone": "M002",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Publish what attribution guarantees, and what it still cannot",
+      "depends_on": [
+        "I0703"
+      ],
+      "blocked_by": [
+        "I0703"
+      ],
+      "dependents": [],
+      "scope": [
+        "docs",
+        "site/data/generated"
+      ],
+      "non_scope": [
+        "Any behaviour change",
+        "Any claim about verifying who a worker is"
+      ],
+      "objective": "State on the public surface what a record's attribution now means, and state plainly what it does not: that a worker's identity is supplied by the session, not verified, and that nothing here proves who a worker was.",
+      "why": "Attribution is the kind of guarantee a reader will assume is stronger than it is. The distance between naming a worker and authenticating one has to be written where the claim is, not left to be inferred.",
+      "current_state": "The behaviour will exist and be tested. Nothing on the public surface says what it covers.",
+      "desired_state": "A claim states what is guaranteed with the file and the case behind it, and says on its detail page that the identity is asserted by the session and never verified.",
+      "acceptance_criteria": [
+        "The claim cites an implementation path and a test path that both exist",
+        "The detail page says the identity is supplied, not verified",
+        "The generated site data regenerates with no stale file"
+      ],
+      "validation": [
+        "scripts/generate-site-data --check",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "docs_build"
+      ],
+      "evidence": [],
+      "risk": "A claim about attribution read as a claim about authentication would be the most damaging overstatement on the site.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
     }
   ],
   "waves": [
@@ -2930,7 +3181,8 @@
         "I0301",
         "I0401",
         "I0501",
-        "I0601"
+        "I0601",
+        "I0701"
       ]
     },
     {
@@ -2942,7 +3194,8 @@
         "I0302",
         "I0402",
         "I0502",
-        "I0602"
+        "I0602",
+        "I0702"
       ]
     },
     {
@@ -2954,7 +3207,8 @@
         "I0303",
         "I0403",
         "I0503",
-        "I0603"
+        "I0603",
+        "I0703"
       ]
     },
     {
@@ -2966,7 +3220,8 @@
         "I0304",
         "I0404",
         "I0504",
-        "I0604"
+        "I0604",
+        "I0704"
       ]
     },
     {
@@ -3174,6 +3429,18 @@
     {
       "from": "I0604",
       "to": "I0605"
+    },
+    {
+      "from": "I0701",
+      "to": "I0702"
+    },
+    {
+      "from": "I0702",
+      "to": "I0703"
+    },
+    {
+      "from": "I0703",
+      "to": "I0704"
     }
   ],
   "findings": []
