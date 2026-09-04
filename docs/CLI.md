@@ -231,6 +231,9 @@ byte for byte.
 
 Write an append-only continuation record.
 
+**Record resolution** — choosing which prior record is about the work happening here — is the same rule for handovers, checkpoints and `context`: same worktree and branch, else same branch, else nothing.
+
+
 **Input:** the authored body on stdin. Required sections are the policy's
 `handover.required_sections` as level-one headings, each with non-empty content;
 template placeholders in angle brackets count as empty. Optional: `# Completed`,

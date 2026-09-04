@@ -219,12 +219,12 @@ mj_validate_budget() {
 
 mj_validate_retention() {
   local cap ll hc
-  cap="$(mj_pol ledger.retention_max_lines)"; ll=0; [ -f "$MJ_DIR/state/ledger.jsonl" ] && ll="$(mj_lines "$MJ_DIR/state/ledger.jsonl")"
-  if [ "$ll" -le "${cap:-5000}" ]; then mj_doctrine_ok retention "ledger" "$ll lines, cap ${cap:-5000}"; else mj_doctrine_fail retention "ledger" "$ll lines over cap $cap" "wc -l .majordomus/state/ledger.jsonl"; fi
-  cap="$(mj_pol handover.retention_max_files)"; hc="$(find "$MJ_DIR/state/handovers" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
-  if [ "$hc" -le "${cap:-200}" ]; then mj_doctrine_ok retention "handovers" "$hc files, cap ${cap:-200}"; else mj_doctrine_fail retention "handovers" "$hc files over cap $cap" "ls .majordomus/state/handovers | wc -l"; fi
-  cap="$(mj_pol checkpoint.retention_max_files)"; hc="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
-  if [ "$hc" -le "${cap:-500}" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap ${cap:-500}"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi
+  cap="$(mj_pol_req ledger.retention_max_lines)"; ll=0; [ -f "$MJ_DIR/state/ledger.jsonl" ] && ll="$(mj_lines "$MJ_DIR/state/ledger.jsonl")"
+  if [ "$ll" -le "$cap" ]; then mj_doctrine_ok retention "ledger" "$ll lines, cap $cap"; else mj_doctrine_fail retention "ledger" "$ll lines over cap $cap" "wc -l .majordomus/state/ledger.jsonl"; fi
+  cap="$(mj_pol_req handover.retention_max_files)"; hc="$(find "$MJ_DIR/state/handovers" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "handovers" "$hc files, cap $cap"; else mj_doctrine_fail retention "handovers" "$hc files over cap $cap" "majordomus handover --list | wc -l"; fi
+  cap="$(mj_pol_req checkpoint.retention_max_files)"; hc="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap $cap"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi
 
   return 0
 }
@@ -276,6 +276,35 @@ mj_finish_doctor() {
 # the class decides the level and watch gets the drift view for free rather than by
 # a second copy of the same logic.
 
+# Every literal policy key the code reads exists in the skeleton policy, and no reader
+# carries its own default for one. A default written beside a reader is a second source of
+# truth for the same number: nothing keeps the two in step, and a reader that substitutes
+# its own value enforces something the configuration does not say.
+#
+# The key list is derived from the source, not written here, so a new mj_pol_req call is
+# covered the moment it is written.
+mj_validate_policy_defaults() {
+  local skel="$MJ_BIN_DIR/../share/skeleton/policy.yaml" k last bad=0 n=0 flat
+  [ -f "$skel" ] || { mj_doctrine_skip policy "skeleton" "no skeleton policy to compare against"; MJ_DOCTRINE_SKIPPED=1; return 0; }
+  flat="$(mktemp "${TMPDIR:-/tmp}/mj.sk.XXXXXX")"
+  mj_yaml_flatten "$skel" > "$flat" 2>/dev/null || { rm -f "$flat"; mj_doctrine_fail policy "skeleton" "share/skeleton/policy.yaml does not parse" "majordomus doctor"; return 0; }
+  for k in $(grep -rhE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' "$MJ_BIN_DIR/../lib" | grep -v '^[[:space:]]*#' \
+             | grep -oE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
+    n=$((n + 1))
+    if [ -z "$(mj_yget "$flat" "$k")" ] && ! grep -qE "^${k}\." "$flat"; then
+      mj_doctrine_fail policy "$k" "read by lib/ but absent from share/skeleton/policy.yaml" "grep -rn 'mj_pol_req $k' lib/"; bad=1
+    fi
+  done
+  rm -f "$flat"
+  # a reader that supplies its own default is the drift this check exists to prevent
+  for k in $(grep -rlnE 'mj_pol +[a-z_.]+\)"; \[ -n|:-[0-9]+\}' "$MJ_BIN_DIR/../lib" 2>/dev/null | grep -v common.sh || true); do
+    last="$(grep -nE 'mj_pol +[a-z_.]+\)"; \[ -n' "$k" | head -1 | cut -d: -f1)"
+    [ -n "$last" ] && { mj_doctrine_fail policy "$(basename "$k"):$last" "a policy value is read with a default written beside it; use mj_pol_req" "grep -n 'mj_pol ' $k"; bad=1; }
+  done
+  [ "$bad" = 0 ] && mj_doctrine_ok policy "$n key(s)" "every policy value the code reads is declared, with no reader-side default"
+  return 0
+}
+
 mj_validate_layout() {
   local d
   for d in state/handovers state/checkpoints prompts; do
@@ -322,7 +351,7 @@ mj_validate_resolver() {
 # real command path rather than by re-implementing the builder here.
 mj_context_builder_check() {
   local budget out lines
-  budget="$(mj_pol context.builder_budget_lines)"; [ -n "$budget" ] || budget=300
+  budget="$(mj_pol_req context.builder_budget_lines)"
   out="$(mktemp "${TMPDIR:-/tmp}/mj.dc.XXXXXX")"
   if ( export MJ_JSON=0; mj_cmd_context ) > "$out" 2>/dev/null; then
     lines="$(mj_lines "$out")"

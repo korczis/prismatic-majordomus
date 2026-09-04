@@ -528,8 +528,11 @@ itself, which the budget then pays for twice.
 ## `.majordomus/state/ledger.jsonl`
 
 Append-only. Written only by Majordomus. One JSON object per line. Retention-capped;
-`doctor` reports when over cap, and `ledger --rotate` moves the oldest lines to
+`doctor` reports when over cap, and `history --rotate` moves the oldest lines to
 `ledger.<utc>.jsonl.archived` (never deletes).
+
+One line is one **history event**: what happened, when, for which task, and at which head.
+`majordomus history` reads them back.
 
 Common envelope:
 

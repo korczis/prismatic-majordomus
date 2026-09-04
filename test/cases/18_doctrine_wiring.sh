@@ -4,7 +4,7 @@
 . "$ROOT/test/lib.sh"
 # The mutations below rewrite the tool itself, so the case runs against its own copy.
 mkdir -p "$T/tool" "$T/tool/.github/workflows"
-cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/docs" "$T/tool/"
+fixture_repo "$T/tool" docs
 cp -R "$ROOT/test" "$T/tool/"
 cp "$ROOT/.github/workflows/validate.yml" "$T/tool/.github/workflows/"
 MJ="$T/tool/bin/majordomus"

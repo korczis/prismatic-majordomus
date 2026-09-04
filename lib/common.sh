@@ -294,6 +294,15 @@ mj_load_policy() {
   mj_yaml_flatten "$MJ_DIR/policy.yaml" > "$MJ_POL_FLAT" || return 1
 }
 mj_pol() { [ -n "${MJ_POL_FLAT:-}" ] || return 0; mj_yget "$MJ_POL_FLAT" "$1"; }
+# A policy value the code depends on. There is no default here on purpose: a fallback
+# written beside the reader is a second source of truth for the same number, and a reader
+# that silently substitutes its own value enforces something the configuration does not
+# say. A missing key is a policy error, and doctor names the key.
+mj_pol_req() {
+  local v; v="$(mj_pol "$1")"
+  [ -n "$v" ] || mj_die "$MJ_EX_CONTRACT" "policy is missing required key '$1' (.majordomus/policy.yaml)"
+  printf '%s' "$v"
+}
 mj_load_profile() {
   local name="$1"
   # cleared first: a failed load must not leave the previous profile readable as this one

@@ -78,3 +78,26 @@ Y
 }
 # pj_status ID  — the derived status of one issue, from the tool
 pj_status() { "$MJ" plan list | awk -v i="$1" '$1==i{print $2}'; }
+
+# Build a fixture copy of the repository into $1: the runtime the tool needs to run, plus
+# every canonical input the site generator declares, plus any extra paths given after $1.
+#
+# The input list comes from `generate-site-data --inputs`, not from a list written here. Six
+# fixtures used to carry their own copy list, and when the generator gained a new canonical
+# input every one of them went stale at once — five cases failed with "canonical input
+# missing" on a repository that had the file. A fixture that derives its inputs cannot drift
+# from the thing it is a fixture for.
+fixture_repo() {
+  local dst="$1" p; shift
+  mkdir -p "$dst"
+  cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/scripts" "$dst/"
+  for p in $("$ROOT/scripts/generate-site-data" --inputs); do
+    mkdir -p "$dst/$(dirname "$p")"
+    cp "$ROOT/$p" "$dst/$p"
+  done
+  for p in "$@"; do
+    [ -e "$ROOT/$p" ] || continue
+    mkdir -p "$dst/$(dirname "$p")"
+    cp -R "$ROOT/$p" "$dst/$p"
+  done
+}

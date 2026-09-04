@@ -141,15 +141,6 @@
       "note": "Covers name and filename mismatch, an empty description, an unknown front-matter key, missing front matter, and a block token used inline."
     },
     {
-      "id": "claim:catalogue-resolves",
-      "kind": "claim",
-      "label": "A use case or application cannot name a command, doctrine or claim that does not exist, and the two catalogues cannot disagree about which applies to which",
-      "status": "guaranteed",
-      "route": "/guarantees/catalogue-resolves/",
-      "external": false,
-      "note": "Prose describing the tool is checked the same way the tool checks itself. Cross-references are verified in both directions, so a use case naming an application that does not name it back is a failure rather than a silent asymmetry. An application declaring no does_not_fit_when is refused, because a catalogue that only lists fits is marketing."
-    },
-    {
       "id": "claim:no-silent-overwrite",
       "kind": "claim",
       "label": "A hand-edited instruction file is never silently overwritten",
@@ -465,6 +456,24 @@
       "note": "doctor runs the resolver, renders every prompt asset, validates both parsed stores and builds the context. A directory of records that no command reads is the failure this tool exists to catch."
     },
     {
+      "id": "claim:task-commit-attribution",
+      "kind": "claim",
+      "label": "A task will know which commits it produced, rather than inferring them from a range",
+      "status": "planned",
+      "route": "/guarantees/task-commit-attribution/",
+      "external": false,
+      "note": "Today scope is checked with git diff base..HEAD, and a commit range has no author, so another session committing to the same branch in the same checkout has its files counted as this task's work. Recording each commit as it happens turns the question from a heuristic about ranges into an enumeration. The list would be a lookup that git overrules, never authority, and a rewritten commit would be reported as unrecognised rather than resolved to a guess."
+    },
+    {
+      "id": "claim:derived-not-declared",
+      "kind": "claim",
+      "label": "What the tool knows about itself is written once and derived everywhere else, and a second copy is a test failure",
+      "status": "guaranteed",
+      "route": "/guarantees/derived-not-declared/",
+      "external": false,
+      "note": "Policy values have no reader-side defaults, claim statuses are declared in the matrix, the site fixtures derive their inputs from the generator, and every command, doctrine and claim is checked against a list read from the dispatch table or the registry rather than written into the test."
+    },
+    {
       "id": "claim:semantic-retrieval",
       "kind": "claim",
       "label": "Ranked or semantic retrieval over durable records is deliberately not implemented",
@@ -761,6 +770,13 @@
       "external": false
     },
     {
+      "id": "source:docs/CONCEPTS.md",
+      "kind": "source",
+      "label": "docs/CONCEPTS.md",
+      "route": "/docs/concepts/",
+      "external": false
+    },
+    {
       "id": "source:docs/CONTINUITY.md",
       "kind": "source",
       "label": "docs/CONTINUITY.md",
@@ -971,11 +987,11 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/27_foreign_task.sh"
     },
     {
-      "id": "test:test/cases/28_catalogue.sh",
+      "id": "test:test/cases/28_no_hardcoded_values.sh",
       "kind": "test",
-      "label": "test/cases/28_catalogue.sh",
+      "label": "test/cases/28_no_hardcoded_values.sh",
       "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_catalogue.sh"
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_no_hardcoded_values.sh"
     },
     {
       "id": "test:test/cases/40_project_model.sh",
@@ -1074,11 +1090,6 @@
     },
     {
       "source": "claim:prompt-assets",
-      "target": "source:docs/DOCTRINE.md",
-      "kind": "specified_by"
-    },
-    {
-      "source": "claim:catalogue-resolves",
       "target": "source:docs/DOCTRINE.md",
       "kind": "specified_by"
     },
@@ -1258,6 +1269,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:task-commit-attribution",
+      "target": "source:docs/CONTINUITY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:derived-not-declared",
+      "target": "source:docs/CONCEPTS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:semantic-retrieval",
       "target": "source:docs/CONTINUITY.md",
       "kind": "specified_by"
@@ -1400,11 +1421,6 @@
     {
       "source": "claim:prompt-assets",
       "target": "impl:lib/prompt.sh",
-      "kind": "implemented_by"
-    },
-    {
-      "source": "claim:catalogue-resolves",
-      "target": "impl:lib/doctor.sh",
       "kind": "implemented_by"
     },
     {
@@ -1583,6 +1599,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:derived-not-declared",
+      "target": "impl:lib/doctor.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:worktree-ownership",
       "target": "impl:lib/check.sh",
       "kind": "implemented_by"
@@ -1685,11 +1706,6 @@
     {
       "source": "claim:prompt-assets",
       "target": "test:test/cases/24_prompt_search.sh",
-      "kind": "proved_by"
-    },
-    {
-      "source": "claim:catalogue-resolves",
-      "target": "test:test/cases/28_catalogue.sh",
       "kind": "proved_by"
     },
     {
@@ -1865,6 +1881,11 @@
     {
       "source": "claim:continuity-reachable",
       "target": "test:test/cases/25_continuity_lifecycle.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:derived-not-declared",
+      "target": "test:test/cases/28_no_hardcoded_values.sh",
       "kind": "proved_by"
     },
     {

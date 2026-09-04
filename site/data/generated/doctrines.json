@@ -295,6 +295,28 @@
       "test": "test/cases/25_continuity_lifecycle.sh"
     },
     {
+      "id": "policy_completeness",
+      "slug": "policy-completeness",
+      "title": "Policy completeness",
+      "class": "blocking",
+      "principle": 1,
+      "summary": "Every policy value the code reads is declared in the skeleton policy, and no reader carries its own default for one.",
+      "validator": "policy_defaults",
+      "validator_function": "mj_validate_policy_defaults",
+      "defined_in": "lib/doctor.sh",
+      "category": "policy",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "policy-parse"
+      ],
+      "test": "test/cases/28_no_hardcoded_values.sh"
+    },
+    {
       "id": "layout_integrity",
       "slug": "layout-integrity",
       "title": "Layout integrity",
@@ -432,28 +454,6 @@
       "test": "test/cases/02_doctor_basic.sh"
     },
     {
-      "id": "catalogue_integrity",
-      "slug": "catalogue-integrity",
-      "title": "Catalogue integrity",
-      "class": "blocking",
-      "principle": 2,
-      "summary": "Every use case and application describes the tool in terms the tool has — each command, doctrine and claim it names exists, and the two catalogues reference each other in both directions.",
-      "validator": "catalogue",
-      "validator_function": "mj_validate_catalogue",
-      "defined_in": "lib/doctor.sh",
-      "category": "catalogue",
-      "enforced_by": [
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "catalogue-resolves"
-      ],
-      "test": "test/cases/28_catalogue.sh"
-    },
-    {
       "id": "doctrine_wiring_integrity",
       "slug": "doctrine-wiring-integrity",
       "title": "Doctrine wiring integrity",
@@ -542,13 +542,13 @@
     "prompt_integrity": 10,
     "handover_integrity": 11,
     "task_continuity": 12,
-    "layout_integrity": 13,
-    "policy_integrity": 14,
-    "projection_integrity": 15,
-    "enforcement_wiring": 16,
-    "context_budget": 17,
-    "retention_caps": 18,
-    "catalogue_integrity": 19,
+    "policy_completeness": 13,
+    "layout_integrity": 14,
+    "policy_integrity": 15,
+    "projection_integrity": 16,
+    "enforcement_wiring": 17,
+    "context_budget": 18,
+    "retention_caps": 19,
     "doctrine_wiring_integrity": 20,
     "project_integrity": 21,
     "dag_integrity": 22

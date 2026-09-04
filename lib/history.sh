@@ -84,7 +84,7 @@ mj_history_validate() {
 
 mj_history_rotate() {
   local led="$1" cap have keep_from archive
-  cap="$(mj_pol ledger.retention_max_lines)"; [ -n "$cap" ] || cap=5000
+  cap="$(mj_pol_req ledger.retention_max_lines)"
   have="$(mj_lines "$led")"
   if [ "$have" -le "$cap" ]; then
     printf 'nothing to rotate: %s lines, cap %s\n' "$have" "$cap"; return 0
