@@ -35,7 +35,9 @@ done
 "$MJ" update >/dev/null
 sed -i.bak '/^  builder_budget_lines:/d' .majordomus/policy.yaml; rm -f .majordomus/policy.yaml.bak
 expect_exit 10 "$MJ" context
-expect_grep "missing required key 'context.builder_budget_lines'"
+# the key is named; how the message punctuates it is not the contract, and asserting the
+# quotes is what made this case fail when the reporting changed and the behaviour did not
+expect_grep "missing required key.*context\\.builder_budget_lines"
 git checkout -q -- . 2>/dev/null || true
 "$MJ" init --force >/dev/null; "$MJ" update >/dev/null
 
