@@ -229,6 +229,18 @@ doctrines:
     claims: [policy-parse, profile-validate]
     test: test/cases/02_doctor_basic.sh
 
+  - id: bootstrap_integrity
+    title: Bootstrap integrity
+    class: blocking
+    principle: 2
+    summary: The path from a human reader to the AI layer is unbroken — README.md names AGENTS.md, every generated instruction file points at .ai/README.md, and none of them carries a rule of its own.
+    validator: bootstrap
+    category: bootstrap
+    enforced_by: [doctor, watch]
+    exit_code: 10
+    claims: [projection-generation, context-budget]
+    test: test/cases/03_update.sh
+
   - id: projection_integrity
     title: Projection integrity
     class: blocking

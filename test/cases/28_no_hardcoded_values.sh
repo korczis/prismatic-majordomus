@@ -131,6 +131,7 @@ for id in $resp_ids; do
     || { echo "    responsibility $id names README row '$rk', which the table does not have"; exit 1; }
   # files: is a flow list; implementation: is a single path. Both must resolve.
   for p in $(resp_field "$id" files | tr -d '[],') $(resp_field "$id" implementation); do
+    case "$p" in .ai/local/*) continue ;; esac   # checkout-local; absent on a fresh clone by design
     [ -e "$ROOT/$p" ] || { echo "    responsibility $id names missing path $p"; exit 1; }
   done
   for pair in "cli_anchor docs/CLI.md" "schema_anchor docs/SCHEMAS.md"; do

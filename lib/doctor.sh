@@ -180,6 +180,29 @@ mj_validate_projection() {
   return 0
 }
 
+# The chain from a person to the layer: README.md names AGENTS.md, every generated target
+# names .ai/README.md, and no generated target carries what the layer is for. A rule that
+# exists in one provider's file and nowhere else is the two-rulebooks failure this tool was
+# distilled from, so a generated target that holds a rule corpus fails here.
+mj_validate_bootstrap() {
+  local j=0 tgt bad=0
+  if [ -f "$MJ_ROOT/README.md" ]; then
+    if grep -q 'AGENTS\.md' "$MJ_ROOT/README.md"; then mj_doctrine_ok bootstrap "README.md" "names AGENTS.md"
+    else mj_doctrine_fail bootstrap "README.md" "does not name AGENTS.md; a reader cannot find the agent bootstrap" "grep -n AGENTS.md README.md"; bad=1; fi
+  fi
+  while [ -n "$(mj_pol "projections.$j.target")" ]; do
+    tgt="$(mj_pol "projections.$j.target")"; j=$((j+1))
+    [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
+    if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
+      mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
+    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
+      mj_doctrine_fail bootstrap "$tgt" "carries a rule corpus of its own (a profile table, rule bullets or a rules section); rules live under .ai/repo/rules/" "grep -nE '^- \*\*|^### ' $tgt"; bad=1
+    fi
+  done
+  [ "$bad" = 0 ] && [ "$j" -gt 0 ] && mj_doctrine_ok bootstrap "$j projection(s)" "each points at .ai/README.md and carries no rule of its own"
+  return 0
+}
+
 mj_validate_budget() {
   # Two budgets, one rule: the context a worker is given must fit what was budgeted for
   # it. doctor measures the always-loaded projection and the builder; watch measures only

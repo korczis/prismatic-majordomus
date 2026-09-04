@@ -383,6 +383,29 @@
       "test": "test/cases/02_doctor_basic.sh"
     },
     {
+      "id": "bootstrap_integrity",
+      "slug": "bootstrap-integrity",
+      "title": "Bootstrap integrity",
+      "class": "blocking",
+      "principle": 2,
+      "summary": "The path from a human reader to the AI layer is unbroken — README.md names AGENTS.md, every generated instruction file points at .ai/README.md, and none of them carries a rule of its own.",
+      "validator": "bootstrap",
+      "validator_function": "mj_validate_bootstrap",
+      "defined_in": "lib/doctor.sh",
+      "category": "bootstrap",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "projection-generation",
+        "context-budget"
+      ],
+      "test": "test/cases/03_update.sh"
+    },
+    {
       "id": "projection_integrity",
       "slug": "projection-integrity",
       "title": "Projection integrity",
@@ -590,8 +613,8 @@
     }
   ],
   "counts": {
-    "declared": 26,
-    "blocking": 22,
+    "declared": 27,
+    "blocking": 23,
     "advisory": 4
   },
   "index": {
@@ -612,14 +635,15 @@
     "ai_layout_integrity": 14,
     "layout_integrity": 15,
     "policy_integrity": 16,
-    "projection_integrity": 17,
-    "enforcement_wiring": 18,
-    "context_budget": 19,
-    "retention_caps": 20,
-    "catalogue_integrity": 21,
-    "doctrine_wiring_integrity": 22,
-    "project_integrity": 23,
-    "dag_integrity": 24,
-    "roadmap_integrity": 25
+    "bootstrap_integrity": 17,
+    "projection_integrity": 18,
+    "enforcement_wiring": 19,
+    "context_budget": 20,
+    "retention_caps": 21,
+    "catalogue_integrity": 22,
+    "doctrine_wiring_integrity": 23,
+    "project_integrity": 24,
+    "dag_integrity": 25,
+    "roadmap_integrity": 26
   }
 }

@@ -160,6 +160,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/providers",
+      "kind": "artifact",
+      "label": "repo/providers",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/profiles",
       "kind": "artifact",
       "label": "repo/profiles",
@@ -530,16 +540,6 @@
       "external": false
     },
     {
-      "id": ".ai/repo/providers/body.md",
-      "kind": "artifact",
-      "label": "repo/providers/body.md",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": "lib/watch.sh",
       "kind": "module",
       "label": "watch",
@@ -569,6 +569,11 @@
     {
       "source": "lib/common.sh",
       "target": ".ai/repo/profiles",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/repo/providers",
       "kind": "reads"
     },
     {
@@ -1012,6 +1017,11 @@
       "kind": "uses"
     },
     {
+      "source": "lib/doctor.sh",
+      "target": ".ai/repo/providers",
+      "kind": "uses"
+    },
+    {
       "source": "lib/finish.sh",
       "target": ".ai/local/state/decisions.md",
       "kind": "uses"
@@ -1078,6 +1088,11 @@
     },
     {
       "source": "lib/init.sh",
+      "target": ".ai/repo/providers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
       "target": ".ai/repo/rules/README.md",
       "kind": "uses"
     },
@@ -1139,6 +1154,11 @@
     {
       "source": "lib/migrate.sh",
       "target": ".ai/repo/prompts",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/migrate.sh",
+      "target": ".ai/repo/providers",
       "kind": "uses"
     },
     {
@@ -1258,7 +1278,7 @@
     },
     {
       "source": "lib/update.sh",
-      "target": ".ai/repo/providers/body.md",
+      "target": ".ai/repo/providers",
       "kind": "uses"
     },
     {

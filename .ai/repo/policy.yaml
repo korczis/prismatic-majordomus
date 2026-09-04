@@ -48,8 +48,8 @@ enforcement:
     wired_by: git-hook:pre-push
 
 projections:
+  - provider: agents
+    target: AGENTS.md
+    always_loaded: true
   - provider: claude-code
     target: CLAUDE.md
-    always_loaded: true
-  - provider: codex
-    target: AGENTS.md

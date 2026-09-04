@@ -128,7 +128,9 @@ H
   printf 'generated %s target(s) from policy %s; each carries its own stamp\n' "$i" "${psha:0:12}"
 }
 
-# builds multi-line fragment files in $1: PROFILE_TABLE, FINISH_CONTRACT, REQUIRED_SECTIONS
+# builds multi-line fragment files in $1: PROFILE_TABLE, FINISH_CONTRACT, REQUIRED_SECTIONS.
+# A template may include one as a line of its own, {{PROFILE_TABLE}}; the shipped
+# bootstraps include none, because a generated instruction file carries no rule of its own.
 mj_build_fragments() {
   local d="$1" pf n
   {
@@ -156,9 +158,11 @@ mj_build_fragments() {
     done
   } > "$d/FINISH_CONTRACT"
   mj_ylist "$MJ_POL_FLAT" handover.required_sections | sed 's/^/`# /; s/$/`/' | paste -sd, - | sed 's/,/, /g' > "$d/REQUIRED_SECTIONS"
+}
+# the policy values a template or body may name inline
+mj_render_tokens() {
   sed -e "s|{{CHECKPOINT_DEFAULT}}|$(mj_pol profiles.checkpoint_interval_default)|g" \
-      -e "s|{{DEFAULT_PROFILE}}|$(mj_pol profiles.default)|g" "$MJ_PROVIDERS_DIR/body.md" \
-    | mj_expand_blocks "$d" > "$d/BODY"
+      -e "s|{{DEFAULT_PROFILE}}|$(mj_pol profiles.default)|g" "$1"
 }
 # replace lines that are exactly {{TOKEN}} with the file $d/TOKEN; inline {{REQUIRED_SECTIONS}} too
 mj_expand_blocks() {
@@ -172,7 +176,7 @@ mj_expand_blocks() {
       print line }'
 }
 mj_render() { # template, fragment dir, policy sha
-  sed -e "s|{{POLICY_SHA}}|${3:0:12}|g" "$1" | mj_expand_blocks "$2"
+  mj_render_tokens "$1" | sed -e "s|{{POLICY_SHA}}|${3:0:12}|g" | mj_expand_blocks "$2"
 }
 
 # Bring an installation created by an older version up to the current layout: create the

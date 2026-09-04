@@ -8,8 +8,8 @@ git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 sed -i.bak 's/^MJ_VERSION="0.1.0"/MJ_VERSION="9.9.9"/' "$T/bin/majordomus"; rm -f "$T/bin/majordomus.bak"
 # 2. a profile description and effort
 sed -i.bak 's/^description: .*/description: CHANGED DESCRIPTION/; s/^effort: low$/effort: max/' "$T/share/skeleton/profiles/routine.yaml"; rm -f "$T/share/skeleton/profiles/routine.yaml.bak"
-# 3. a principle label
-sed -i.bak 's/Sessions are workers, not memory\./Sessions are CHANGED PRINCIPLE./' "$T/share/skeleton/providers/body.md"; rm -f "$T/share/skeleton/providers/body.md.bak"
+# 3. a principle label (the title of the rule tagged principle in the standard package)
+sed -i.bak 's/^title: Sessions are workers, not memory$/title: Sessions are CHANGED PRINCIPLE/' "$T/share/standard/majordomus/rules/principle-01-sessions-are-workers.v1.md"; rm -f "$T/share/standard/majordomus/rules/principle-01-sessions-are-workers.v1.md.bak"
 # 4. a policy value
 sed -i.bak 's/always_loaded_budget_lines: 150/always_loaded_budget_lines: 42/' "$T/share/skeleton/policy.yaml"; rm -f "$T/share/skeleton/policy.yaml.bak"
 # 5. a claim status
@@ -23,7 +23,7 @@ G="$T/site/data/generated"
 [ "$(jq -r .version "$G/project.json")" = "9.9.9" ]
 [ "$(jq -r '.profiles[] | select(.slug=="routine") | .description' "$G/profiles.json")" = "CHANGED DESCRIPTION" ]
 [ "$(jq -r '.profiles[] | select(.slug=="routine") | .effort' "$G/profiles.json")" = "max" ]
-jq -e '.principles | index("Sessions are CHANGED PRINCIPLE.")' "$G/lifecycle.json" >/dev/null
+jq -e '.principles | index("Sessions are CHANGED PRINCIPLE")' "$G/lifecycle.json" >/dev/null
 [ "$(jq -r .context.always_loaded_budget_lines "$G/policy.json")" = 42 ]
 [ "$(jq -r '.claims[] | select(.id=="init-refuses") | .claim' "$G/capabilities.json")" = "CHANGED CLAIM TEXT" ]
 expect_grep '^title = "Concepts CHANGED"' "$T/site/content/docs/concepts.md"

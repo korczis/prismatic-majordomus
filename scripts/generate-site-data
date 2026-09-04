@@ -7,7 +7,8 @@
 #   share/skeleton/policy.yaml         ->  policy.json
 #   docs/CLAIMS.yaml                   ->  capabilities.json
 #   lib/finish.sh + share/skeleton     ->  lifecycle.json (outcome vocabulary, commands)
-#   share/skeleton/providers/body.md   ->  principles (the ten rules workers actually read)
+#   share/standard/majordomus/         ->  principles (the rules tagged principle, in package order)
+#   share/skeleton/ai/repo/workflows/  ->  lifecycle steps and the worker sequence
 #   docs/*.md                          ->  docs index
 #   git                                ->  source.json (commit, input hash, generator version)
 #
@@ -39,7 +40,7 @@ MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VER
 # The repository layout, resolved once by the tool itself: which directory holds the plan and
 # which holds the AI layer are facts of the checkout, never spelled out here.
 MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
-PJ="$(mj_rel "$MJ_PROJECT_DIR")"; AI="$(mj_rel "$MJ_AI_DIR")"
+PJ="$(mj_rel "$MJ_PROJECT_DIR")"; AI="$(mj_rel "$MJ_AI_DIR")"; LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 # common.sh installs its own EXIT trap, so the staging cleanup is chained after sourcing it
 # rather than before, or the later trap would silently replace this one and leak the directory.
 trap 'rm -rf "$STAGE"; mj_cleanup' EXIT
@@ -52,7 +53,9 @@ share/doctrines.yaml
 share/use-cases.yaml
 share/applications.yaml
 share/skeleton/policy.yaml
-share/skeleton/providers/body.md
+share/skeleton/ai/repo/workflows/task-lifecycle.md
+share/skeleton/ai/repo/workflows/plan.md
+share/standard/majordomus/manifest.yaml
 docs/CLAIMS.yaml
 docs/RESPONSIBILITIES.yaml
 README.md
@@ -66,7 +69,7 @@ LICENSE"
 # uppercase and lowercase names has the same effect; this one merely reached that state
 # first.
 LC_ALL=C; export LC_ALL
-for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
+for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/share/standard/majordomus/rules/*.md "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
          "$ROOT/$PJ"/project.yaml "$ROOT/$PJ"/milestones/*.yaml \
          "$ROOT/$PJ"/issues/*.yaml; do
   case "$f" in */docs/SITE_CLAIMS.md|*/docs/PLAN_STATUS.md) continue ;; esac   # written by this script; never its own input
@@ -195,18 +198,29 @@ LABELS="$(awk '/^mj_git_label\(\)/ { f = 1 } f && /printf/ { if (match($0, /prin
            f && /^}/ { exit }' "$ROOT/lib/common.sh" | jq -R . | jq -sc .)"
 [ "$(printf '%s' "$LABELS" | jq length)" -ge 2 ] \
   || { echo "generate-site-data: no divergence labels in lib/common.sh mj_git_label" >&2; exit 10; }
-# The lifecycle is the block the canonical worker instructions carry, in the order they carry
-# it; what each command does is the CLI's own one-line summary. Neither is written here.
+# The lifecycle is the block the seeded task-lifecycle workflow carries, in the order it
+# carries it; what each command does is the CLI's own one-line summary. Neither is written here.
 STEPS="$(awk '/^```$/ { n++; next } n == 1 && /^majordomus [a-z]+/ { print $2 }' \
-             "$ROOT/share/skeleton/providers/body.md" \
+             "$ROOT/share/skeleton/ai/repo/workflows/task-lifecycle.md" \
   | while read -r c; do
       printf '%s\t%s\n' "$c" "$(awk -v c="$c" '$1 == c && NF > 1 { $1 = ""; sub(/^ +/, ""); sub(/ +\(read-only\)$/, ""); sub(/ +$/, ""); print; exit }' \
         <(sed -n '/^usage()/,/^USAGE$/p' "$ROOT/bin/majordomus" | sed -E 's/^  ([a-z]+)( <[^>]*>)?  +/\1 /'))"
     done | jq -Rn '[inputs | split("\t") | {command: .[0], what: .[1]}]')"
 [ "$(printf '%s' "$STEPS" | jq length)" -ge 4 ] \
-  || { echo "generate-site-data: no lifecycle block in share/skeleton/providers/body.md" >&2; exit 10; }
-PRINCIPLES="$(awk '/^### Ten rules/{f=1;next} /^### /{if(f)exit} f && /^[0-9]+\. \*\*/{sub(/^[0-9]+\. \*\*/,""); sub(/\*\*.*$/,""); print}' "$ROOT/share/skeleton/providers/body.md" | jq -R . | jq -sc .)"
-[ "$(printf '%s' "$PRINCIPLES" | jq length)" -ge 8 ] || { echo "generate-site-data: expected the ten rules in providers/body.md" >&2; exit 10; }
+  || { echo "generate-site-data: no lifecycle block in share/skeleton/ai/repo/workflows/task-lifecycle.md" >&2; exit 10; }
+# The principles are the rules of the standard package tagged principle, in the order the
+# package manifest lists them; the title of each is the sentence a worker reads.
+PRINCIPLES="$(
+  Mf="$(flat "$ROOT/share/standard/majordomus/manifest.yaml")"; k=0
+  while [ -n "$(yv "$Mf" "rules.$k.file")" ]; do
+    rf="$ROOT/share/standard/majordomus/$(yv "$Mf" "rules.$k.file")"
+    fm="$(mktemp "${TMPDIR:-/tmp}/mj.pf.XXXXXX")"; mj_record_front "$rf" > "$fm"; Ff="$(flat "$fm")"
+    if mj_ylist "$Ff" tags | grep -qx principle; then yv "$Ff" title; fi
+    rm -f "$fm" "$Ff"; k=$((k+1))
+  done; rm -f "$Mf"
+)"
+PRINCIPLES="$(printf '%s\n' "$PRINCIPLES" | jq -R . | jq -sc .)"
+[ "$(printf '%s' "$PRINCIPLES" | jq length)" -ge 8 ] || { echo "generate-site-data: expected the principle rules in share/standard/majordomus" >&2; exit 10; }
 jq -n --argjson outcomes "$OUTCOMES" --argjson labels "$LABELS" --argjson steps "$STEPS" --argjson principles "$PRINCIPLES" \
   '{schema:1, outcomes:$outcomes, divergence_labels:$labels, steps:$steps, principles:$principles}' > "$OUT/lifecycle.json"
 
@@ -288,7 +302,9 @@ while [ -n "$(yv "$Rf" "responsibilities.$i.id")" ]; do
     # policy.yaml is what `init` writes, so it marks an initialised repository. Testing for
     # the directory instead would be wrong: the project directory is a canonical generator
     # input, so the directory exists wherever those files were copied, initialised or not.
-    case "$p" in "$AI"/*) [ -f "$MJ_POLICY_FILE" ] || continue ;; esac
+    # the local half is this checkout's own and absent on a fresh clone by design: a path
+    # under it is named, never required
+    case "$p" in "$LOCAL"/*) continue ;; "$AI"/*) [ -f "$MJ_POLICY_FILE" ] || continue ;; esac
     [ -e "$ROOT/$p" ] || { echo "generate-site-data: responsibility $rid names missing path $p" >&2; exit 10; }
   done
   for a in cli_anchor:docs/CLI.md schema_anchor:docs/SCHEMAS.md; do
@@ -788,13 +804,11 @@ if mj_project_load; then
   WV="$(mj_pj_rows W | jq -Rn '[inputs | split("\t") | {wave: (.[1]|tonumber), issues: (.[2]|split(" "))}]')"
   EG="$(mj_pj_rows G | jq -Rn '[inputs | split("\t") | {from: .[1], to: .[2]}]')"
   FD="$(mj_pj_findings | jq -Rn '[inputs | split("\t") | {level: .[1], code: .[2], subject: .[3], message: .[4]}]')"
-  # The sequence a worker runs is not typed into a template: it is the table the canonical
-  # worker instructions already carry, in share/skeleton/providers/body.md, parsed into data.
-  # One source, so the page and the file every worker loads cannot describe different work.
+  # The sequence a worker runs is not typed into a template: it is the table the seeded
+  # plan workflow carries, parsed into data. One source, so the page and the file every
+  # worker loads cannot describe different work.
   WS="$(awk '
-      /^### Take work from the plan/ { f = 1; next }
-      /^### / { if (f) exit }
-      f && /^\| / && $0 !~ /^\| *When *\|/ && $0 !~ /^\|-/ {
+      /^\| / && $0 !~ /^\| *When *\|/ && $0 !~ /^\|-/ {
         line = $0
         sub(/^\| */, "", line)
         i = index(line, "|"); when = substr(line, 1, i - 1); run = substr(line, i + 1)
@@ -806,10 +820,10 @@ if mj_project_load; then
           sub(/^ *(—|--) */, "", note); sub(/ *\|? *$/, "", note); sub(/ *\| *$/, "", note)
           printf "%s\t%s\t%s\n", when, cmd, note
         }
-      }' "$ROOT/share/skeleton/providers/body.md" \
+      }' "$ROOT/share/skeleton/ai/repo/workflows/plan.md" \
     | jq -Rn '[inputs | split("\t") | {when: .[0], command: .[1], note: .[2]}]')"
   [ "$(printf '%s' "$WS" | jq length)" -gt 0 ] \
-    || { echo "generate-site-data: no worker sequence in share/skeleton/providers/body.md" >&2; exit 10; }
+    || { echo "generate-site-data: no worker sequence in share/skeleton/ai/repo/workflows/plan.md" >&2; exit 10; }
 
   # The status vocabulary travels with the data. Every page that shows a status or a count
   # loops over this rather than naming done, ready, active, verify and blocked itself, so

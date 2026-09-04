@@ -52,10 +52,10 @@ enforcement:
 # leaves the rest of the file alone, which is how a repository that already has a
 # hand-written CLAUDE.md adopts Majordomus without losing it.
 projections:
+  - provider: agents
+    target: AGENTS.md
+    always_loaded: true
   - provider: claude-code
     target: CLAUDE.md
-    always_loaded: true
-  - provider: codex
-    target: AGENTS.md
   - provider: gemini
     target: GEMINI.md
