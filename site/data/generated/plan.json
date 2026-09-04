@@ -71,7 +71,7 @@
           "covers": "suite",
           "type": "test",
           "command": "bash test/run.sh",
-          "result": "41 passed, 0 failed — every case in test/cases, each in a disposable repository",
+          "result": "every case in test/cases passed and none failed, each in a disposable repository",
           "artifact": "",
           "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
           "recorded_at": "2026-09-04T05:15:40Z"
@@ -89,7 +89,7 @@
           "covers": "mutation",
           "type": "test",
           "command": "bash test/run.sh 47_mutation",
-          "result": "1 passed — five canonical mutations, every surface moves with each",
+          "result": "1 passed — every canonical mutation the case makes moves every surface",
           "artifact": "",
           "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
           "recorded_at": "2026-09-04T05:15:41Z"
@@ -98,7 +98,7 @@
           "covers": "github",
           "type": "manual",
           "command": "scripts/github-sync --apply && scripts/github-sync --check",
-          "result": "eight milestones and nineteen issues on korczis/prismatic-majordomus, states matching derived status, check exits 0",
+          "result": "every milestone and issue the model held at this commit existed on korczis/prismatic-majordomus with its state matching the derived status; check exited 0 with no drift",
           "artifact": "https://github.com/korczis/prismatic-majordomus/milestone/1",
           "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
           "recorded_at": "2026-09-04T05:15:42Z"
@@ -1014,7 +1014,7 @@
           "covers": "github",
           "type": "manual",
           "command": "scripts/github-sync --apply && scripts/github-sync --check",
-          "result": "created milestone M000 and 15 issues on korczis/prismatic-majordomus, 10 closed and 5 open matching derived status; check exits 0 with no drift. A hand edit inside a generated region was detected (exit 11), refused by --apply, and overwritten only under --force",
+          "result": "created milestone M000 and every issue belonging to it on korczis/prismatic-majordomus, each open or closed according to its derived status; check exited 0 with no drift. A hand edit inside a generated region was detected (exit 11), refused by --apply, and overwritten only under --force",
           "artifact": "https://github.com/korczis/prismatic-majordomus/milestone/1",
           "commit": "82f23ef82836f8360b302ec2af1d38a665b4ec65",
           "recorded_at": "2026-09-04T04:08:50Z"
@@ -1131,7 +1131,7 @@
           "covers": "suite",
           "type": "test",
           "command": "bash test/run.sh",
-          "result": "41 passed, 0 failed — every case in test/cases, each in a disposable repository",
+          "result": "every case in test/cases passed and none failed, each in a disposable repository",
           "artifact": "",
           "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
           "recorded_at": "2026-09-04T05:14:45Z"
@@ -1200,7 +1200,7 @@
           "covers": "mutation",
           "type": "test",
           "command": "bash test/run.sh 47_mutation",
-          "result": "1 passed — five canonical mutations each move every surface: an added edge, a completed dependency, a deleted evidence record, a prose-only change, and an induced cycle reaching plan validate, doctor and watch",
+          "result": "1 passed — every canonical mutation the case makes moves every surface: an added edge, a completed dependency, a deleted evidence record, a prose-only change, and an induced cycle reaching plan validate, doctor and watch",
           "artifact": "",
           "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
           "recorded_at": "2026-09-04T05:14:50Z"
@@ -1372,7 +1372,7 @@
           "covers": "projection_fresh",
           "type": "build",
           "command": "bin/majordomus update && bin/majordomus doctor && bin/majordomus watch",
-          "result": "CLAUDE.md 132 lines within the 150 budget; links resolve; no hardcoded counts; doctor 0 failures; watch reports no projection drift",
+          "result": "CLAUDE.md within the projected line budget; links resolve; no hardcoded counts; doctor 0 failures; watch reports no projection drift",
           "artifact": "",
           "commit": "ee0a128498e3935cbc91509f3c49ccf286948110",
           "recorded_at": "2026-09-04T03:59:22Z"
@@ -1537,7 +1537,7 @@
           "covers": "decision_recorded",
           "type": "manual",
           "command": "bin/majordomus decision list",
-          "result": "four entries: the choice (a question blocks a completed finish anywhere in its branch), the two rejected alternatives each with the case it gets wrong, and the two conditions the choice imposes on I0103 — skip the template comment block, and let any question be resolved",
+          "result": "the choice (a question blocks a completed finish anywhere in its branch), the two rejected alternatives each with the case it gets wrong, and the two conditions the choice imposes on I0103 — skip the template comment block, and let any question be resolved",
           "artifact": "",
           "commit": "41d0b364f2c21e6ea00f225f806f51c62b1e609b",
           "recorded_at": "2026-09-04T06:59:46Z"

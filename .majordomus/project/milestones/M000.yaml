@@ -53,7 +53,7 @@ evidence:
   - covers: suite
     type: test
     command: "bash test/run.sh"
-    result: "41 passed, 0 failed — every case in test/cases, each in a disposable repository"
+    result: "every case in test/cases passed and none failed, each in a disposable repository"
     commit: 05423af4606587fa58db1ee1dadb4d31847cfa0c
     recorded_at: 2026-09-04T05:15:40Z
   - covers: cross_surface
@@ -65,13 +65,13 @@ evidence:
   - covers: mutation
     type: test
     command: "bash test/run.sh 47_mutation"
-    result: "1 passed — five canonical mutations, every surface moves with each"
+    result: "1 passed — every canonical mutation the case makes moves every surface"
     commit: 05423af4606587fa58db1ee1dadb4d31847cfa0c
     recorded_at: 2026-09-04T05:15:41Z
   - covers: github
     type: manual
     command: "scripts/github-sync --apply && scripts/github-sync --check"
-    result: "eight milestones and nineteen issues on korczis/prismatic-majordomus, states matching derived status, check exits 0"
+    result: "every milestone and issue the model held at this commit existed on korczis/prismatic-majordomus with its state matching the derived status; check exited 0 with no drift"
     artifact: "https://github.com/korczis/prismatic-majordomus/milestone/1"
     commit: 05423af4606587fa58db1ee1dadb4d31847cfa0c
     recorded_at: 2026-09-04T05:15:42Z
