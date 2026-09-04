@@ -29,12 +29,12 @@ done
 tmpcase="$ROOT/test/cases/zz_ci_wiring_probe.sh"
 cleanup() { rm -f "$tmpcase"; }
 trap cleanup EXIT
-printf '# deliberately failing probe, created and removed by 19_ci_wiring\nexit 1\n' > "$tmpcase"
+printf '# deliberately failing probe, created and removed by 26_ci_wiring\nexit 1\n' > "$tmpcase"
 if ( cd "$ROOT" && bash test/run.sh zz_ci_wiring_probe >/dev/null 2>&1 ); then
   echo "    test/run.sh reported success while a case failed"; exit 1
 fi
 # ... and passes when it passes, so the check above is not vacuous
-printf '# probe, created and removed by 19_ci_wiring\nexit 0\n' > "$tmpcase"
+printf '# probe, created and removed by 26_ci_wiring\nexit 0\n' > "$tmpcase"
 ( cd "$ROOT" && bash test/run.sh zz_ci_wiring_probe >/dev/null 2>&1 ) || {
   echo "    test/run.sh reported failure while a case passed"; exit 1; }
 cleanup; trap - EXIT
