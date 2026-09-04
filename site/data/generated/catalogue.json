@@ -1,0 +1,412 @@
+{
+  "schema": 1,
+  "use_cases": [
+    {
+      "id": "adopt-an-existing-repository",
+      "title": "Adopt a repository that already has its own rules",
+      "weight": 1,
+      "summary": "Install the supervisory layer into a repository with a hand-written CLAUDE.md, without the tool taking ownership of a file somebody else wrote.",
+      "situation": "The repository already has a governance root — a CLAUDE.md, an AGENTS.md, a contributing guide people actually follow. A tool that regenerates that file wholesale would overwrite months of authored judgement, so the usual answer is to not adopt the tool at all.",
+      "outcome": "The authored text stays authoritative and the generated section sits inside it, fingerprinted like any other projection. An edit outside the markers is never drift; an edit inside them is caught.",
+      "steps": [
+        {
+          "command": "init",
+          "note": "writes .majordomus/ and refuses if an installation is already there"
+        },
+        {
+          "command": "update",
+          "note": "renders the projection into the region between the markers, leaving the rest of the file alone"
+        },
+        {
+          "command": "doctor",
+          "note": "proves the projection matches its fingerprint and the declared enforcement is actually invoked"
+        }
+      ],
+      "commands": [
+        "init",
+        "update",
+        "doctor"
+      ],
+      "doctrines": [
+        "projection_integrity",
+        "enforcement_wiring",
+        "policy_integrity"
+      ],
+      "claims": [
+        "region-projection",
+        "no-silent-overwrite",
+        "projection-fingerprint",
+        "dispatcher-wiring"
+      ],
+      "responsibilities": [
+        "projection",
+        "policy",
+        "doctor"
+      ],
+      "applications": [
+        "repository-with-authored-governance"
+      ]
+    },
+    {
+      "id": "hand-work-between-sessions",
+      "title": "Hand unfinished work to the next session",
+      "weight": 2,
+      "summary": "Stop mid-task and leave the next worker something to act on that is not a transcript.",
+      "situation": "A session ends with the work half done. The usual handover is a paste of the conversation, which the next worker has to read in full to find the three facts that matter, and which is stale the moment the branch moves.",
+      "outcome": "The next worker starts from durable state with the git position it was written at, and is told how far the repository has moved since.",
+      "steps": [
+        {
+          "command": "checkpoint",
+          "note": "a short progress record inside the active task, refused if it grows into a report"
+        },
+        {
+          "command": "handover",
+          "note": "an append-only record with computed front matter and the sections the policy requires"
+        },
+        {
+          "command": "context",
+          "note": "the next session reads this instead of the transcript, within a line budget"
+        }
+      ],
+      "commands": [
+        "checkpoint",
+        "handover",
+        "context",
+        "check"
+      ],
+      "doctrines": [
+        "handover_integrity",
+        "note_integrity",
+        "task_continuity",
+        "context_budget"
+      ],
+      "claims": [
+        "handover-record",
+        "no-transcripts",
+        "divergence-label",
+        "minimum-context"
+      ],
+      "responsibilities": [
+        "handover",
+        "state"
+      ],
+      "applications": [
+        "several-agents-one-repository",
+        "long-running-work"
+      ]
+    },
+    {
+      "id": "prove-a-rule-is-enforced",
+      "title": "Prove a rule is actually enforced, not merely written down",
+      "weight": 3,
+      "summary": "Answer \"is this rule real?\" with a command rather than a reading of the source.",
+      "situation": "A repository says a rule is enforced. A script exists, a test exists, and nothing invokes the script. Every artifact of enforcement is present and the enforcement is fiction — and no amount of reading the files tells you, because each one looks right.",
+      "outcome": "Every link of the chain is resolved from the source rather than from the registry's description of itself, and a break is named. A validator no rule declares fails too.",
+      "steps": [
+        {
+          "command": "doctrine",
+          "note": "list what is declared, its class, and the validator that decides it"
+        },
+        {
+          "command": "doctor",
+          "note": "walks declaration to validator to dispatch to exit code to test to CI, from the source"
+        },
+        {
+          "command": "check",
+          "note": "run one rule against the current task with --rule"
+        }
+      ],
+      "commands": [
+        "doctrine",
+        "doctor",
+        "check"
+      ],
+      "doctrines": [
+        "doctrine_wiring_integrity",
+        "enforcement_wiring"
+      ],
+      "claims": [
+        "doctrine-registry",
+        "doctrine-class-decides",
+        "wiring-reconciliation",
+        "reproduce-command"
+      ],
+      "responsibilities": [
+        "doctor",
+        "policy"
+      ],
+      "applications": [
+        "repository-with-authored-governance",
+        "ci-gated-project"
+      ]
+    },
+    {
+      "id": "run-several-workers-at-once",
+      "title": "Run several workers in one repository without them colliding",
+      "weight": 4,
+      "summary": "Give each worker a declared scope, and find out immediately when two of them claim the same paths.",
+      "situation": "Two agents work the same repository at the same time. Each is individually reasonable; together they edit the same file from different assumptions, and the conflict surfaces as a merge, long after the decision that caused it.",
+      "outcome": "Overlap is reported when the task starts rather than when the branches merge, and a task record belonging to another checkout is reported as foreign rather than enforced against yours.",
+      "steps": [
+        {
+          "command": "start",
+          "note": "takes the paths this task may touch, and refuses a second active task in one checkout"
+        },
+        {
+          "command": "check",
+          "note": "--overlap reports other worktrees whose claims intersect yours"
+        },
+        {
+          "command": "finish",
+          "note": "refuses to accept work outside the claimed paths"
+        }
+      ],
+      "commands": [
+        "start",
+        "check",
+        "finish"
+      ],
+      "doctrines": [
+        "scope_integrity",
+        "state_consistency"
+      ],
+      "claims": [
+        "scope-enforcement",
+        "scoped-task",
+        "overlap-report",
+        "git-identity"
+      ],
+      "responsibilities": [
+        "scope",
+        "state"
+      ],
+      "applications": [
+        "several-agents-one-repository"
+      ]
+    },
+    {
+      "id": "accept-or-refuse-finished-work",
+      "title": "Decide whether finished work is actually finished",
+      "weight": 5,
+      "summary": "Evaluate a contract line by line instead of accepting a sentence that says the work is done.",
+      "situation": "A worker reports success. The report is a paragraph, the evidence is the paragraph, and accepting it is a matter of trust rather than of checking.",
+      "outcome": "A refusal names the rules that refused. An outcome is typed — completed, partial, blocked, no_match, failed — so \"the thing does not exist\" and \"I could not do it\" stay different facts.",
+      "steps": [
+        {
+          "command": "question",
+          "note": "anything unresolved is recorded as state, and refuses completion while it stands"
+        },
+        {
+          "command": "finish",
+          "note": "--verify-command runs the project's own verification and records its exit code and duration"
+        }
+      ],
+      "commands": [
+        "finish",
+        "question",
+        "check"
+      ],
+      "doctrines": [
+        "verification_integrity",
+        "blocker_resolution",
+        "profile_requirements",
+        "note_integrity"
+      ],
+      "claims": [
+        "finish-contract",
+        "typed-outcome",
+        "consistency-check"
+      ],
+      "responsibilities": [
+        "finish",
+        "scope"
+      ],
+      "applications": [
+        "ci-gated-project",
+        "long-running-work"
+      ]
+    },
+    {
+      "id": "find-out-what-drifted",
+      "title": "Find out what has drifted since anyone last looked",
+      "weight": 6,
+      "summary": "Ask what has moved, rather than whether anything is wrong.",
+      "situation": "The policy changed but the projections did not. A generated file was hand-edited. A task record describes a commit the branch no longer contains. Each is invisible until something downstream behaves oddly.",
+      "outcome": "Every finding carries the command that reproduces it, and the same rules produce it as produce the failures — one vocabulary, one registry, a different question.",
+      "steps": [
+        {
+          "command": "watch",
+          "note": "reports drift across policy, projections, state, scope, records and retention"
+        },
+        {
+          "command": "update",
+          "note": "--dry-run shows what regeneration would change before it changes it"
+        }
+      ],
+      "commands": [
+        "watch",
+        "update",
+        "history"
+      ],
+      "doctrines": [
+        "projection_integrity",
+        "policy_integrity",
+        "ledger_integrity",
+        "retention_caps"
+      ],
+      "claims": [
+        "drift-watch",
+        "projection-fingerprint",
+        "reproduce-command"
+      ],
+      "responsibilities": [
+        "watch",
+        "projection"
+      ],
+      "applications": [
+        "repository-with-authored-governance",
+        "long-running-work"
+      ]
+    }
+  ],
+  "applications": [
+    {
+      "id": "repository-with-authored-governance",
+      "title": "A repository whose rules were written by people",
+      "weight": 1,
+      "summary": "There is already a CLAUDE.md, an AGENTS.md or an equivalent that somebody wrote and others follow.",
+      "context": "The governance root is authored, not generated. It carries judgement that no tool produced and none should overwrite. Adoption usually stalls here, because the obvious integration is for the tool to own the file.",
+      "fits_when": [
+        "The authored text should stay authoritative and a generated section can sit inside it",
+        "Enforcement already exists as git hooks, including dispatchers over a hook.d directory",
+        "Rules are written down and nobody can currently prove which of them run"
+      ],
+      "does_not_fit_when": [
+        "The repository wants a single generated instruction file and is happy to hand ownership over",
+        "There is no governance to supervise yet, in which case start with the shipped skeleton instead"
+      ],
+      "use_cases": [
+        "adopt-an-existing-repository",
+        "prove-a-rule-is-enforced",
+        "find-out-what-drifted"
+      ],
+      "doctrines": [
+        "projection_integrity",
+        "enforcement_wiring"
+      ],
+      "responsibilities": [
+        "projection",
+        "policy",
+        "doctor"
+      ]
+    },
+    {
+      "id": "several-agents-one-repository",
+      "title": "Several workers in one repository at once",
+      "weight": 2,
+      "summary": "More than one agent or person is changing the same repository in the same period, in worktrees or in sequence.",
+      "context": "Each worker is individually reasonable. The cost appears between them: two tasks touching one file from different assumptions, a task record that travels with a branch into a checkout that never claimed it, a handover nobody can tell is stale.",
+      "fits_when": [
+        "Work is divided by paths and it matters that the division is checked rather than agreed",
+        "Sessions hand work to each other and the handover has to survive the branch moving",
+        "You need to know which checkout a task record belongs to"
+      ],
+      "does_not_fit_when": [
+        "One person works one repository at a time and nothing is ever handed over",
+        "Coordination is the point and you want a scheduler; this tool reports overlap, it does not resolve it"
+      ],
+      "use_cases": [
+        "run-several-workers-at-once",
+        "hand-work-between-sessions"
+      ],
+      "doctrines": [
+        "scope_integrity",
+        "state_consistency",
+        "handover_integrity"
+      ],
+      "responsibilities": [
+        "scope",
+        "state",
+        "handover"
+      ]
+    },
+    {
+      "id": "ci-gated-project",
+      "title": "A project where CI decides what is acceptable",
+      "weight": 3,
+      "summary": "Integration is gated, and a claim about the code is expected to have a test and a pipeline behind it.",
+      "context": "The team already believes that a rule without a blocking check is a suggestion. What is usually missing is the same standard applied to the rules governing the work itself, rather than only to the code.",
+      "fits_when": [
+        "A completion claim should require verification that actually ran, with its exit code recorded",
+        "Public capability claims are expected to name their implementation and their test",
+        "The pipeline must fail when a declared rule stops being invoked"
+      ],
+      "does_not_fit_when": [
+        "Checks are advisory by policy and a red pipeline is routinely merged past",
+        "There is no CI, in which case the lifecycle commands still work but the last link of every chain is missing"
+      ],
+      "use_cases": [
+        "accept-or-refuse-finished-work",
+        "prove-a-rule-is-enforced"
+      ],
+      "doctrines": [
+        "verification_integrity",
+        "doctrine_wiring_integrity"
+      ],
+      "responsibilities": [
+        "finish",
+        "doctor"
+      ]
+    },
+    {
+      "id": "long-running-work",
+      "title": "Work that outlives the session doing it",
+      "weight": 4,
+      "summary": "A task spans days, several sessions, or several people, and the reasoning has to survive the gaps.",
+      "context": "The decisions are made once and needed repeatedly. Kept in a transcript they are unfindable; kept in prose they go stale silently; kept nowhere they are made again, differently.",
+      "fits_when": [
+        "Decisions need to be findable later by the task and commit that made them",
+        "Progress must be quotable without reading everything that led to it",
+        "Something unresolved should block acceptance until it is answered"
+      ],
+      "does_not_fit_when": [
+        "The work is a single sitting and nothing needs to be recalled afterwards",
+        "You want a knowledge base; this keeps operational state, not documentation"
+      ],
+      "use_cases": [
+        "hand-work-between-sessions",
+        "find-out-what-drifted",
+        "accept-or-refuse-finished-work"
+      ],
+      "doctrines": [
+        "ledger_integrity",
+        "decision_records",
+        "blocker_resolution",
+        "task_continuity"
+      ],
+      "responsibilities": [
+        "state",
+        "handover",
+        "finish"
+      ]
+    }
+  ],
+  "counts": {
+    "use_cases": 6,
+    "applications": 4
+  },
+  "uc_index": {
+    "adopt-an-existing-repository": 0,
+    "hand-work-between-sessions": 1,
+    "prove-a-rule-is-enforced": 2,
+    "run-several-workers-at-once": 3,
+    "accept-or-refuse-finished-work": 4,
+    "find-out-what-drifted": 5
+  },
+  "ap_index": {
+    "repository-with-authored-governance": 0,
+    "several-agents-one-repository": 1,
+    "ci-gated-project": 2,
+    "long-running-work": 3
+  }
+}

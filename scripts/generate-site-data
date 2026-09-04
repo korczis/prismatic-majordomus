@@ -45,6 +45,8 @@ GEN_VERSION=1
 # ---------------------------------------------------------------- inputs
 INPUTS="bin/majordomus
 share/doctrines.yaml
+share/use-cases.yaml
+share/applications.yaml
 share/skeleton/policy.yaml
 share/skeleton/providers/body.md
 docs/CLAIMS.yaml
@@ -373,6 +375,82 @@ jq '{schema: 1,
              + [.moments[] | . as $m | $m.responsibilities[] | {source: ("moment:" + $m.slug), target: ("responsibility:" + .), kind: "supervises"}]
              | unique)}' "$OUT/why.json" > "$OUT/why-graph.json"
 
+
+# ---------------------------------------------------------------- catalogue.json
+# Use cases and applications, with every reference resolved here rather than in a
+# template. A dangling reference refuses the build, so a page cannot describe a command,
+# rule or promise the tool does not have — the same rule doctor applies, applied again
+# where the pages are made.
+UCf="$(flat "$ROOT/share/use-cases.yaml")"; APf="$(flat "$ROOT/share/applications.yaml")"
+[ "$(yv "$UCf" version)" = 1 ] || { echo "generate-site-data: share/use-cases.yaml must be version 1" >&2; exit 10; }
+[ "$(yv "$APf" version)" = 1 ] || { echo "generate-site-data: share/applications.yaml must be version 1" >&2; exit 10; }
+cat_list() { # flat, prefix -> JSON array of strings
+  local f="$1" pre="$2" k=0 out=""
+  while [ -n "$(yv "$f" "$pre.$k")" ]; do out="$out$(jstr "$(yv "$f" "$pre.$k")")," ; k=$((k+1)); done
+  printf '[%s]' "${out%,}"
+}
+cat_ids() { local f="$1" kind="$2" k=0; while [ -n "$(yv "$f" "$kind.$k.id")" ]; do printf '%s\n' "$(yv "$f" "$kind.$k.id")"; k=$((k+1)); done; }
+cat_resolve() { # id must exist in the other catalogue
+  printf '%s\n' "$2" | grep -qx "$1"
+}
+UC_IDS="$(cat_ids "$UCf" use_cases)"; AP_IDS="$(cat_ids "$APf" applications)"
+DOC_IDS="$(jq -r '.doctrines[].id' "$OUT/doctrines.json")"
+CLAIM_IDS="$(jq -r '.claims[].id' "$OUT/capabilities.json")"
+CMD_IDS="$(jq -r '.commands[].name' "$OUT/commands.json")"
+RESP_IDS="$(jq -r '.does[].slug' "$OUT/readme.json")"
+i=0
+while [ -n "$(yv "$UCf" "use_cases.$i.id")" ]; do
+  id="$(yv "$UCf" "use_cases.$i.id")"
+  for r in $(mj_ylist "$UCf" "use_cases.$i.commands"); do cat_resolve "$r" "$CMD_IDS" || { echo "generate-site-data: use case $id names command '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(mj_ylist "$UCf" "use_cases.$i.doctrines"); do cat_resolve "$r" "$DOC_IDS" || { echo "generate-site-data: use case $id names doctrine '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(mj_ylist "$UCf" "use_cases.$i.claims"); do cat_resolve "$r" "$CLAIM_IDS" || { echo "generate-site-data: use case $id names claim '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(mj_ylist "$UCf" "use_cases.$i.responsibilities"); do cat_resolve "$r" "$RESP_IDS" || { echo "generate-site-data: use case $id names responsibility '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(mj_ylist "$UCf" "use_cases.$i.applications"); do cat_resolve "$r" "$AP_IDS" || { echo "generate-site-data: use case $id names application '$r', which does not exist" >&2; exit 10; }; done
+  [ -n "$(yv "$UCf" "use_cases.$i.steps.0.command")" ] || { echo "generate-site-data: use case $id has no steps" >&2; exit 10; }
+  i=$((i+1))
+done
+j=0
+while [ -n "$(yv "$APf" "applications.$j.id")" ]; do
+  id="$(yv "$APf" "applications.$j.id")"
+  for r in $(mj_ylist "$APf" "applications.$j.use_cases"); do cat_resolve "$r" "$UC_IDS" || { echo "generate-site-data: application $id names use case '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(mj_ylist "$APf" "applications.$j.doctrines"); do cat_resolve "$r" "$DOC_IDS" || { echo "generate-site-data: application $id names doctrine '$r', which does not exist" >&2; exit 10; }; done
+  [ -n "$(yv "$APf" "applications.$j.does_not_fit_when.0")" ] || { echo "generate-site-data: application $id declares no does_not_fit_when" >&2; exit 10; }
+  j=$((j+1))
+done
+{
+  printf '{"schema":1,"use_cases":['
+  i=0; first=1
+  while [ -n "$(yv "$UCf" "use_cases.$i.id")" ]; do
+    [ "$first" = 1 ] || printf ','; first=0
+    steps=""; k=0
+    while [ -n "$(yv "$UCf" "use_cases.$i.steps.$k.command")" ]; do
+      steps="$steps{\"command\":$(jstr "$(yv "$UCf" "use_cases.$i.steps.$k.command")"),\"note\":$(jstr "$(yv "$UCf" "use_cases.$i.steps.$k.note")")}," ; k=$((k+1)); done
+    printf '{"id":%s,"title":%s,"weight":%s,"summary":%s,"situation":%s,"outcome":%s,"steps":[%s],"commands":%s,"doctrines":%s,"claims":%s,"responsibilities":%s,"applications":%s}' \
+      "$(jstr "$(yv "$UCf" "use_cases.$i.id")")" "$(jstr "$(yv "$UCf" "use_cases.$i.title")")" \
+      "$(jnum_or_str "$(yv "$UCf" "use_cases.$i.weight")")" "$(jstr "$(yv "$UCf" "use_cases.$i.summary")")" \
+      "$(jstr "$(yv "$UCf" "use_cases.$i.situation")")" "$(jstr "$(yv "$UCf" "use_cases.$i.outcome")")" \
+      "${steps%,}" "$(cat_list "$UCf" "use_cases.$i.commands")" "$(cat_list "$UCf" "use_cases.$i.doctrines")" \
+      "$(cat_list "$UCf" "use_cases.$i.claims")" "$(cat_list "$UCf" "use_cases.$i.responsibilities")" \
+      "$(cat_list "$UCf" "use_cases.$i.applications")"
+    i=$((i+1))
+  done
+  printf '],"applications":['
+  j=0; first=1
+  while [ -n "$(yv "$APf" "applications.$j.id")" ]; do
+    [ "$first" = 1 ] || printf ','; first=0
+    printf '{"id":%s,"title":%s,"weight":%s,"summary":%s,"context":%s,"fits_when":%s,"does_not_fit_when":%s,"use_cases":%s,"doctrines":%s,"responsibilities":%s}' \
+      "$(jstr "$(yv "$APf" "applications.$j.id")")" "$(jstr "$(yv "$APf" "applications.$j.title")")" \
+      "$(jnum_or_str "$(yv "$APf" "applications.$j.weight")")" "$(jstr "$(yv "$APf" "applications.$j.summary")")" \
+      "$(jstr "$(yv "$APf" "applications.$j.context")")" "$(cat_list "$APf" "applications.$j.fits_when")" \
+      "$(cat_list "$APf" "applications.$j.does_not_fit_when")" "$(cat_list "$APf" "applications.$j.use_cases")" \
+      "$(cat_list "$APf" "applications.$j.doctrines")" "$(cat_list "$APf" "applications.$j.responsibilities")"
+    j=$((j+1))
+  done
+  printf ']}'
+} | jq '. + {counts:{use_cases:(.use_cases|length), applications:(.applications|length)},
+             uc_index:(reduce (.use_cases|to_entries[]) as $e ({}; . + {($e.value.id): $e.key})),
+             ap_index:(reduce (.applications|to_entries[]) as $e ({}; . + {($e.value.id): $e.key}))}' > "$OUT/catalogue.json"
+
 # ---------------------------------------------------------------- diagrams.json (Mermaid source from data, never hand-drawn)
 LIFECYCLE_MMD="$(printf 'stateDiagram-v2\n    [*] --> active: start\n    active --> active: check --checkpoint\n    active --> handed_over: handover --close\n    handed_over --> [*]: next start archives the record\n'; for o in $(printf '%s' "$OUTCOMES" | jq -r '.[]'); do printf '    active --> %s: finish --outcome %s\n    %s --> [*]\n' "$o" "$o" "$o"; done)"
 PIPELINE_MMD="$(printf 'flowchart LR\n    subgraph canonical\n        A[share/skeleton]\n        B[docs + README]\n        C[docs/CLAIMS.yaml]\n    end\n    G[scripts/generate-site-data]\n    D[(site/data/generated)]\n    Z[Zola]\n    F[Tailwind + Flowbite + Alpine]\n    P[GitHub Pages]\n    A --> G\n    B --> G\n    C --> G\n    G --> D --> Z --> F --> P\n')"
@@ -677,7 +755,7 @@ mk_section() { # dir, title, description, section template, page template, weigh
   printf -- '+++\ntitle = %s\ndescription = %s\nsort_by = "weight"\ntemplate = "%s"\npage_template = "%s"\nweight = %s\n+++\n' "$(jstr "$2")" "$(jstr "$3")" "$4" "$5" "$6" > "$d/_index.md"
 }
 CONTENT_ROOT="$STAGE/content"
-rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/plan"
+rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/use-cases" "$CONTENT_ROOT/applications" "$CONTENT_ROOT/plan"
 mk_section profiles "Execution profiles" "Capability class, reasoning effort, output verbosity, presentation, context toggles and verification are independent fields. Rendered from the profile files a fresh install writes." profiles.html profile.html 30
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jq -Rn 'input')" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
@@ -711,6 +789,12 @@ for iid in $(jq -r '.issues[].id' "$OUT/plan.json"); do i=$((i+1))
     "$(jstr "$iid — $(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .title' "$OUT/plan.json")")" \
     "$(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .objective' "$OUT/plan.json" | jq -Rn 'input')" \
     "$i" "$(jstr "$iid")" "$iid" > "$CONTENT_ROOT/plan/$iid.md"; done
+mk_section use-cases "Use cases" "What people do with it: a situation, the commands that answer it, and what you are left holding. Every step names a real command and every promise a real claim." use-cases-section.html use-case.html 12
+i=0; jq -r '.use_cases[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$(printf '\t')" read -r id title summary; do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/use-cases.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/use-cases/$id.md"; done
+mk_section applications "Applications" "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description." applications-section.html application.html 14
+i=0; jq -r '.applications[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$(printf '\t')" read -r id title summary; do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/applications.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/applications/$id.md"; done
 mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jq -Rn 'input')" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done

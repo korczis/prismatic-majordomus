@@ -1,0 +1,128 @@
+# What people actually do with Majordomus, as data.
+#
+# A use case is a task shape: a situation, the sequence of commands that answers it, and
+# what you are left holding. It is not a tutorial and not a feature list — every step
+# names a real command, every rule it relies on names a real doctrine, and every promise
+# it makes names a real claim. `majordomus doctor` refuses a reference that does not
+# resolve, so a use case cannot describe a workflow the tool does not have.
+#
+# Distinct from the other three catalogues, deliberately:
+#   why/          a moment you recognise      "I have had this problem"
+#   use-cases/    a task you perform          "here is how the tool answers it"
+#   applications/ a context it suits          "does this fit my repository"
+#   commands/     one command's surface       "what does this flag do"
+#
+# Extending this file is the whole extension mechanism: add an entry, run
+# scripts/generate-site-data, and the route, the cross-links and the checks appear.
+version: 1
+
+use_cases:
+  - id: adopt-an-existing-repository
+    title: Adopt a repository that already has its own rules
+    weight: 1
+    summary: Install the supervisory layer into a repository with a hand-written CLAUDE.md, without the tool taking ownership of a file somebody else wrote.
+    situation: "The repository already has a governance root — a CLAUDE.md, an AGENTS.md, a contributing guide people actually follow. A tool that regenerates that file wholesale would overwrite months of authored judgement, so the usual answer is to not adopt the tool at all."
+    steps:
+      - command: init
+        note: writes .majordomus/ and refuses if an installation is already there
+      - command: update
+        note: renders the projection into the region between the markers, leaving the rest of the file alone
+      - command: doctor
+        note: proves the projection matches its fingerprint and the declared enforcement is actually invoked
+    outcome: The authored text stays authoritative and the generated section sits inside it, fingerprinted like any other projection. An edit outside the markers is never drift; an edit inside them is caught.
+    commands: [init, update, doctor]
+    doctrines: [projection_integrity, enforcement_wiring, policy_integrity]
+    claims: [region-projection, no-silent-overwrite, projection-fingerprint, dispatcher-wiring]
+    responsibilities: [projection, policy, doctor]
+    applications: [repository-with-authored-governance]
+
+  - id: hand-work-between-sessions
+    title: Hand unfinished work to the next session
+    weight: 2
+    summary: Stop mid-task and leave the next worker something to act on that is not a transcript.
+    situation: "A session ends with the work half done. The usual handover is a paste of the conversation, which the next worker has to read in full to find the three facts that matter, and which is stale the moment the branch moves."
+    steps:
+      - command: checkpoint
+        note: a short progress record inside the active task, refused if it grows into a report
+      - command: handover
+        note: an append-only record with computed front matter and the sections the policy requires
+      - command: context
+        note: the next session reads this instead of the transcript, within a line budget
+    outcome: The next worker starts from durable state with the git position it was written at, and is told how far the repository has moved since.
+    commands: [checkpoint, handover, context, check]
+    doctrines: [handover_integrity, note_integrity, task_continuity, context_budget]
+    claims: [handover-record, no-transcripts, divergence-label, minimum-context]
+    responsibilities: [handover, state]
+    applications: [several-agents-one-repository, long-running-work]
+
+  - id: prove-a-rule-is-enforced
+    title: Prove a rule is actually enforced, not merely written down
+    weight: 3
+    summary: Answer "is this rule real?" with a command rather than a reading of the source.
+    situation: "A repository says a rule is enforced. A script exists, a test exists, and nothing invokes the script. Every artifact of enforcement is present and the enforcement is fiction — and no amount of reading the files tells you, because each one looks right."
+    steps:
+      - command: doctrine
+        note: list what is declared, its class, and the validator that decides it
+      - command: doctor
+        note: walks declaration to validator to dispatch to exit code to test to CI, from the source
+      - command: check
+        note: run one rule against the current task with --rule
+    outcome: Every link of the chain is resolved from the source rather than from the registry's description of itself, and a break is named. A validator no rule declares fails too.
+    commands: [doctrine, doctor, check]
+    doctrines: [doctrine_wiring_integrity, enforcement_wiring]
+    claims: [doctrine-registry, doctrine-class-decides, wiring-reconciliation, reproduce-command]
+    responsibilities: [doctor, policy]
+    applications: [repository-with-authored-governance, ci-gated-project]
+
+  - id: run-several-workers-at-once
+    title: Run several workers in one repository without them colliding
+    weight: 4
+    summary: Give each worker a declared scope, and find out immediately when two of them claim the same paths.
+    situation: "Two agents work the same repository at the same time. Each is individually reasonable; together they edit the same file from different assumptions, and the conflict surfaces as a merge, long after the decision that caused it."
+    steps:
+      - command: start
+        note: takes the paths this task may touch, and refuses a second active task in one checkout
+      - command: check
+        note: --overlap reports other worktrees whose claims intersect yours
+      - command: finish
+        note: refuses to accept work outside the claimed paths
+    outcome: Overlap is reported when the task starts rather than when the branches merge, and a task record belonging to another checkout is reported as foreign rather than enforced against yours.
+    commands: [start, check, finish]
+    doctrines: [scope_integrity, state_consistency]
+    claims: [scope-enforcement, scoped-task, overlap-report, git-identity]
+    responsibilities: [scope, state]
+    applications: [several-agents-one-repository]
+
+  - id: accept-or-refuse-finished-work
+    title: Decide whether finished work is actually finished
+    weight: 5
+    summary: Evaluate a contract line by line instead of accepting a sentence that says the work is done.
+    situation: "A worker reports success. The report is a paragraph, the evidence is the paragraph, and accepting it is a matter of trust rather than of checking."
+    steps:
+      - command: question
+        note: anything unresolved is recorded as state, and refuses completion while it stands
+      - command: finish
+        note: --verify-command runs the project's own verification and records its exit code and duration
+    outcome: A refusal names the rules that refused. An outcome is typed — completed, partial, blocked, no_match, failed — so "the thing does not exist" and "I could not do it" stay different facts.
+    commands: [finish, question, check]
+    doctrines: [verification_integrity, blocker_resolution, profile_requirements, note_integrity]
+    claims: [finish-contract, typed-outcome, consistency-check]
+    responsibilities: [finish, scope]
+    applications: [ci-gated-project, long-running-work]
+
+  - id: find-out-what-drifted
+    title: Find out what has drifted since anyone last looked
+    weight: 6
+    summary: Ask what has moved, rather than whether anything is wrong.
+    situation: "The policy changed but the projections did not. A generated file was hand-edited. A task record describes a commit the branch no longer contains. Each is invisible until something downstream behaves oddly."
+    steps:
+      - command: watch
+        note: reports drift across policy, projections, state, scope, records and retention
+      - command: update
+        note: --dry-run shows what regeneration would change before it changes it
+    outcome: Every finding carries the command that reproduces it, and the same rules produce it as produce the failures — one vocabulary, one registry, a different question.
+    commands: [watch, update, history]
+    doctrines: [projection_integrity, policy_integrity, ledger_integrity, retention_caps]
+    claims: [drift-watch, projection-fingerprint, reproduce-command]
+    responsibilities: [watch, projection]
+    applications: [repository-with-authored-governance, long-running-work]
