@@ -1,0 +1,30 @@
+id: I0403
+milestone: cost-per-accepted-outcome
+title: Make a thin denominator say so rather than average it away
+slug: thin-denominator
+priority: p2
+profile: debugging
+parallel_safe: false
+objective: "Make every reported figure carry the number of accepted outcomes it rests on, refuse to present a single observation as an average, and prove both with cases."
+why: "Early on there will be very few accepted outcomes, and a mean over one of them looks exactly like a mean over many. The report has to make the difference impossible to miss."
+current_state: "The command reports figures from whatever measured, accepted outcomes exist, however few."
+desired_state: "Each figure states its denominator, and below the threshold the output presents observations rather than a summary statistic."
+scope:
+  - lib
+  - test/cases
+non_scope:
+  - A confidence interval or any statistical model beyond stating the denominator
+depends_on:
+  - I0402
+acceptance_criteria:
+  - Every reported figure carries the count of accepted outcomes behind it
+  - Below the declared threshold the output presents observations and no average
+  - The threshold is declared as data, not written into the code path
+  - Cases cover the thin case and the sufficient case
+validation:
+  - bash test/run.sh
+evidence_required:
+  - suite
+risk: "Any threshold is arbitrary; declaring it as data and printing it beside the figure is what keeps it honest rather than hidden."
+created_at: 2026-09-04
+updated_at: 2026-09-04

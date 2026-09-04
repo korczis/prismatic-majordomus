@@ -6,8 +6,8 @@
     "default_branch": "master"
   },
   "active_milestone": "runtime-adapters",
-  "next_ready": "",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "next_ready": "I0201",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0206 --> I0301\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0305 --> I0401\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0404 --> I0501\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0504 --> I0601\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "milestones": [
     {
       "id": "M000",
@@ -235,7 +235,11 @@
       "current_state": "Not started, and not startable: it needs execution telemetry underneath it.",
       "desired_state": "A completed, accepted task can state what it cost, from measurement rather than estimate.",
       "scope": [
-        "lib"
+        "bin",
+        "lib",
+        "test/cases",
+        "docs",
+        "site/data/generated"
       ],
       "non_scope": [
         "Any figure derived from elapsed time or token count as a proxy for progress"
@@ -255,13 +259,18 @@
         "Accepted outcomes are rare enough early on that the number is noisy; it must say so."
       ],
       "evidence": [],
-      "issues": [],
-      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "issues": [
+        "I0401",
+        "I0402",
+        "I0403",
+        "I0404"
+      ],
+      "mermaid": "flowchart LR\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 0,
+        "total": 4,
         "done": 0,
         "ready": 0,
-        "blocked": 0,
+        "blocked": 4,
         "active": 0,
         "verify": 0,
         "cancelled": 0
@@ -279,8 +288,12 @@
       "current_state": "Not started. docs/ECONOMICS.md states what it would take and deliberately claims nothing.",
       "desired_state": "A completed task carries measured execution facts, or an explicit record that the provider did not supply them.",
       "scope": [
+        "bin",
         "lib",
-        "share"
+        "share",
+        "test/cases",
+        "docs",
+        "site/data/generated"
       ],
       "non_scope": [
         "Estimating a number a provider does not report"
@@ -300,13 +313,19 @@
         "A provider's self-reported usage may itself be unreliable; the record must say who reported it."
       ],
       "evidence": [],
-      "issues": [],
-      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "issues": [
+        "I0301",
+        "I0302",
+        "I0303",
+        "I0304",
+        "I0305"
+      ],
+      "mermaid": "flowchart LR\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 0,
+        "total": 5,
         "done": 0,
         "ready": 0,
-        "blocked": 0,
+        "blocked": 5,
         "active": 0,
         "verify": 0,
         "cancelled": 0
@@ -385,7 +404,11 @@
       "current_state": "Not started, and gated on cost per accepted outcome existing at all.",
       "desired_state": "A worker can ask which profile a class of task should use and get an answer traceable to measurements.",
       "scope": [
-        "lib"
+        "bin",
+        "lib",
+        "test/cases",
+        "docs",
+        "site/data/generated"
       ],
       "non_scope": [
         "Automatic routing without a person's decision"
@@ -405,13 +428,18 @@
         "A recommendation that is followed becomes a cause of the data that justifies it."
       ],
       "evidence": [],
-      "issues": [],
-      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "issues": [
+        "I0501",
+        "I0502",
+        "I0503",
+        "I0504"
+      ],
+      "mermaid": "flowchart LR\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 0,
+        "total": 4,
         "done": 0,
         "ready": 0,
-        "blocked": 0,
+        "blocked": 4,
         "active": 0,
         "verify": 0,
         "cancelled": 0
@@ -429,8 +457,12 @@
       "current_state": "Not started. The profiles exist and project correctly; nothing derives a runtime limit from them.",
       "desired_state": "Starting a task under a profile constrains what the worker may do, and the constraint is visible in the same place the profile is.",
       "scope": [
+        "bin",
         "lib",
-        "share"
+        "share",
+        "test/cases",
+        "docs",
+        "site/data/generated"
       ],
       "non_scope": [
         "Provider-specific behaviour that cannot be verified from this repository"
@@ -450,13 +482,20 @@
         "Only providers that expose a real knob can be clamped honestly; the rest would be theatre."
       ],
       "evidence": [],
-      "issues": [],
-      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "issues": [
+        "I0201",
+        "I0202",
+        "I0203",
+        "I0204",
+        "I0205",
+        "I0206"
+      ],
+      "mermaid": "flowchart LR\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 0,
+        "total": 6,
         "done": 0,
-        "ready": 0,
-        "blocked": 0,
+        "ready": 1,
+        "blocked": 5,
         "active": 0,
         "verify": 0,
         "cancelled": 0
@@ -474,8 +513,12 @@
       "current_state": "Not started. Everything the tool does today is scoped to a single checkout.",
       "desired_state": "One policy statement governs many repositories, and every deviation from it is visible rather than assumed.",
       "scope": [
+        "bin",
         "lib",
-        "share"
+        "share",
+        "test/cases",
+        "docs",
+        "site/data/generated"
       ],
       "non_scope": [
         "A hosted service, a registry, or any component that must be running for the tool to work"
@@ -495,13 +538,19 @@
         "Shared policy is where a local tool becomes a distributed one; the offline guarantee has to survive it."
       ],
       "evidence": [],
-      "issues": [],
-      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "issues": [
+        "I0601",
+        "I0602",
+        "I0603",
+        "I0604",
+        "I0605"
+      ],
+      "mermaid": "flowchart LR\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 0,
+        "total": 5,
         "done": 0,
         "ready": 0,
-        "blocked": 0,
+        "blocked": 5,
         "active": 0,
         "verify": 0,
         "cancelled": 0
@@ -1613,6 +1662,1194 @@
       "started_at": "2026-09-04T07:32:26Z",
       "verified_at": "2026-09-04T07:34:55Z",
       "completed_at": "2026-09-04T07:34:58Z"
+    },
+    {
+      "id": "I0201",
+      "slug": "declare-limit-mapping",
+      "milestone": "runtime-adapters",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Declare which profile axis may become which runtime limit",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I0202"
+      ],
+      "scope": [
+        "share",
+        "lib"
+      ],
+      "non_scope": [
+        "Applying any limit; this issue only declares what may be applied",
+        "Any axis whose enforcement could not be observed from this repository"
+      ],
+      "objective": "Add one canonical file beside the profiles that maps a profile axis to the runtime limit it may derive, so that a limit has a single source, an axis nobody can enforce cannot be listed, and a limit no adapter applies is a validation error rather than a comment.",
+      "why": "The implementation studied before this one was rolled back because its limits were global constants. A constant is not derived from a profile, and nothing in the repository could tell the difference. The mapping has to exist as data before anything can be clamped honestly.",
+      "current_state": "A profile declares capability, effort, verbosity, presentation, context depth, verification requirements and a checkpoint interval. Every one of them is projected as prose and none of them constrains anything. There is no file that says which of them could.",
+      "desired_state": "One file declares each enforceable axis, the limit it derives, and how the limit is computed from the axis value. An unknown axis, an unknown limit, or a limit no adapter implements is refused by name.",
+      "acceptance_criteria": [
+        "The mapping is one canonical file, read by the tool and written by hand nowhere else",
+        "Every declared axis exists on every profile, and an axis that does not is refused by name",
+        "A declared limit whose adapter does not exist is refused, and an adapter for an undeclared limit is refused",
+        "Every profile resolves to a complete set of limits, printed as data rather than prose"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "Declaring an axis enforceable before an adapter can apply it is how the previous attempt became theatre; the reconciliation in both directions is the guard against repeating it.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0202",
+      "slug": "resolve-effective-limits",
+      "milestone": "runtime-adapters",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Resolve a task's effective limits and print them as data",
+      "depends_on": [
+        "I0201"
+      ],
+      "blocked_by": [
+        "I0201"
+      ],
+      "dependents": [
+        "I0203"
+      ],
+      "scope": [
+        "lib",
+        "bin"
+      ],
+      "non_scope": [
+        "Enforcing any limit",
+        "Caching the resolved values anywhere; resolution is cheap and stays derived"
+      ],
+      "objective": "Add a read-only command that resolves the limits the active task's profile derives and prints them, in text and as JSON, so that a worker, a wrapper or a test can read the same numbers the enforcement will use.",
+      "why": "A limit that cannot be read before it bites is a limit nobody can test, and a limit computed twice is a limit that will disagree with itself. One resolver, one output, consumed by everything downstream.",
+      "current_state": "The mapping declares what a limit is. Nothing computes the limits for a given task, and the task record carries no way to ask.",
+      "desired_state": "Running one command inside a task prints every limit the profile derives and the axis each came from. With no active task it resolves the default profile and says so.",
+      "acceptance_criteria": [
+        "The command prints every declared limit, its value, and the profile axis it was derived from",
+        "JSON output carries the same set the text output does",
+        "With no active task the default profile is resolved and named as the default",
+        "The resolver is the only place a limit value is computed"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "A second computation of a limit anywhere else silently forks the contract; the case has to compare the enforced value against this command's output rather than against a constant.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0203",
+      "slug": "opt-in-enforcement",
+      "milestone": "runtime-adapters",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Make enforcement opt-in, and prove a repository that declines is unaffected",
+      "depends_on": [
+        "I0202"
+      ],
+      "blocked_by": [
+        "I0202"
+      ],
+      "dependents": [
+        "I0204"
+      ],
+      "scope": [
+        "lib",
+        "share"
+      ],
+      "non_scope": [
+        "Any default that enables enforcement",
+        "Per-command overrides; the choice is the repository's, once"
+      ],
+      "objective": "Add one policy key that turns runtime enforcement on, default it to off, and prove with a case that a repository which never sets it behaves exactly as it does today.",
+      "why": "Clamping what a worker may read or emit changes how every session behaves. A change of that size cannot arrive with an update; it has to be chosen, and the choice has to be visible in the policy the repository already reviews.",
+      "current_state": "Nothing is enforced, so nothing needs an opt-in. Adding the adapter without one would enforce limits in every repository that updates.",
+      "desired_state": "The policy carries an explicit enforcement key. Absent or false, the tool behaves as it did before the adapter existed, and a case demonstrates that rather than asserting it.",
+      "acceptance_criteria": [
+        "The key is declared in the policy allowlist and rejected when it holds anything but a boolean",
+        "Default and absent both mean off, and the projections say so where a worker reads them",
+        "A case runs the full lifecycle in a repository that never sets the key and shows unchanged behaviour",
+        "Doctor reports whether enforcement is on, without turning it on"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "An opt-in that defaults to on in the skeleton is not an opt-in; the skeleton has to be covered by the same case.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0204",
+      "slug": "first-real-clamp",
+      "milestone": "runtime-adapters",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p1",
+      "profile": "debugging",
+      "parallel_safe": false,
+      "title": "Apply one derived limit for real and prove it changes what happens",
+      "depends_on": [
+        "I0203"
+      ],
+      "blocked_by": [
+        "I0203"
+      ],
+      "dependents": [
+        "I0205"
+      ],
+      "scope": [
+        "lib",
+        "share",
+        "test/cases"
+      ],
+      "non_scope": [
+        "A second provider; one honest adapter first",
+        "Any provider knob whose effect cannot be observed from a test in this repository"
+      ],
+      "objective": "Implement the first adapter: one limit, derived from the profile through the resolver, applied where a provider can honestly apply it, with a behavioural case that fails if the limit stops being applied.",
+      "why": "The milestone's whole distinction is between a limit that is printed and a limit that is applied. One limit that genuinely bites is worth more than a full set that is advisory, and it is the only thing that makes the claim publishable.",
+      "current_state": "The mapping exists, the resolver prints the numbers, and the opt-in exists. Nothing anywhere applies a value to anything.",
+      "desired_state": "With enforcement on, one provider's execution is constrained by a value derived from the active profile, and turning the profile from one value to another changes the observed outcome.",
+      "acceptance_criteria": [
+        "The applied value comes from the resolver, and no constant appears in the adapter",
+        "A case changes only the profile and observes a different outcome",
+        "A case with enforcement off observes the unconstrained outcome",
+        "Removing the application makes a case fail rather than a document go stale"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite",
+        "profile_changes_outcome"
+      ],
+      "evidence": [],
+      "risk": "The only honest adapters are for knobs a provider exposes and documents; if the chosen knob turns out to be advisory on the provider's side, the issue closes as no_match rather than shipping a clamp that does not clamp.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0205",
+      "slug": "clamp-doctrine",
+      "milestone": "runtime-adapters",
+      "status": "BLOCKED",
+      "wave": 4,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Declare the clamp as a doctrine so the mapping and the adapter cannot drift",
+      "depends_on": [
+        "I0204"
+      ],
+      "blocked_by": [
+        "I0204"
+      ],
+      "dependents": [
+        "I0206"
+      ],
+      "scope": [
+        "share",
+        "lib",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Blocking on anything a worker cannot fix from inside the repository"
+      ],
+      "objective": "Declare the rule that every applied limit is derived from the declared mapping as a doctrine with its own validator, dispatched from the registry, reaching the command that claims to run it, covered by a case and run in CI.",
+      "why": "A new enforced rule that lives as an inline check inside a command is invisible to doctor and to the doctrine list, and drifts the first time somebody edits the adapter. The registry is the only place a rule can be proven to be wired.",
+      "current_state": "One adapter applies one derived limit. Nothing refuses an adapter that stops consulting the mapping, and nothing lists this rule among the rules the repository enforces.",
+      "desired_state": "The rule appears in the doctrine list, a refusal names it, doctor proves it reaches its command and that a case covers it, and CI runs that case.",
+      "acceptance_criteria": [
+        "The doctrine is declared in the registry with its validator, and doctor fails if either half is missing",
+        "An adapter that applies a value the mapping does not derive is refused, and the refusal names the doctrine",
+        "A case covers the refusal and CI runs it"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "suite",
+        "doctor"
+      ],
+      "evidence": [],
+      "risk": "A blocking doctrine over a provider-specific adapter can refuse work in a repository whose provider changed underneath it; whether it blocks or advises is decided against that, and recorded.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0206",
+      "slug": "publish-runtime-adapters-claim",
+      "milestone": "runtime-adapters",
+      "status": "BLOCKED",
+      "wave": 5,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Publish the runtime-adapters claim with the test that proves it and the limits it does not cover",
+      "depends_on": [
+        "I0205"
+      ],
+      "blocked_by": [
+        "I0205"
+      ],
+      "dependents": [
+        "I0301"
+      ],
+      "scope": [
+        "docs",
+        "site/data/generated"
+      ],
+      "non_scope": [
+        "Any behaviour change",
+        "Widening the claim beyond the limits an adapter applies"
+      ],
+      "objective": "Move the runtime-adapters row from planned to guaranteed, citing the adapter and the case, and state on its detail page which axes remain advisory and why, so that the guarantee is narrower than the milestone title rather than as wide as it.",
+      "why": "A claim promoted to the width of its milestone title overstates what one adapter does. The matrix is where the difference between what is enforced and what is described is either kept honest or lost.",
+      "current_state": "The claim is planned, with no implementation and no test, and its note describes the rolled-back attempt.",
+      "desired_state": "The claim is guaranteed for the limits that are actually applied, names the file and the case, and says plainly which axes are still advice.",
+      "acceptance_criteria": [
+        "The claim cites an implementation path and a test path that both exist",
+        "The detail page names the axes that remain advisory",
+        "The generated site data regenerates with no stale file"
+      ],
+      "validation": [
+        "scripts/generate-site-data --check",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "docs_build"
+      ],
+      "evidence": [],
+      "risk": "This is the moment the repository starts being believed about runtime enforcement; a claim wider than the adapter is worse than no claim.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0301",
+      "slug": "telemetry-record-schema",
+      "milestone": "execution-telemetry",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p2",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Define the execution record, including what an absence looks like",
+      "depends_on": [
+        "I0206"
+      ],
+      "blocked_by": [
+        "I0206"
+      ],
+      "dependents": [
+        "I0302"
+      ],
+      "scope": [
+        "share",
+        "lib",
+        "docs"
+      ],
+      "non_scope": [
+        "Collecting anything; this issue defines what would be stored",
+        "Any field the tool would have to estimate to populate"
+      ],
+      "objective": "Define the durable shape of a task's execution facts: which fields exist, who reported each one, and how a provider that reported nothing is recorded, so that absence is a value with a reason rather than a missing key or a zero.",
+      "why": "Every economic statement this repository could make rests on this record. If absence is representable only as a gap, the first report that reads it will treat a gap as a zero and the whole layer becomes an estimate wearing a measurement's clothes.",
+      "current_state": "Nothing measures a session. The economics document states what measurement would take and deliberately claims nothing, and no schema exists to be filled.",
+      "desired_state": "One schema, with an allowlist like every other record here, in which each measured field names its reporter, and not_reported is a first-class value carrying why it is absent.",
+      "acceptance_criteria": [
+        "Every field names the reporter it came from, and a record without a reporter is refused",
+        "not_reported is representable with a reason, and is distinguishable from zero everywhere it is read",
+        "Unknown keys are refused like every other record in this repository",
+        "The schema is documented where the other file formats are"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "A schema designed around one provider's numbers becomes that provider's schema; the reporter field is what keeps a second provider from having to lie to fit.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0302",
+      "slug": "record-reported-telemetry",
+      "milestone": "execution-telemetry",
+      "status": "BLOCKED",
+      "wave": 7,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Record telemetry a provider reports, and refuse anything it did not",
+      "depends_on": [
+        "I0301"
+      ],
+      "blocked_by": [
+        "I0301"
+      ],
+      "dependents": [
+        "I0303"
+      ],
+      "scope": [
+        "lib",
+        "bin"
+      ],
+      "non_scope": [
+        "Any network call, poll, or background collection",
+        "Deriving one field from another to fill a gap"
+      ],
+      "objective": "Add the command that attaches measured execution facts to the active task, accepting only values a provider actually reported and refusing any field the caller cannot attribute to a reporter.",
+      "why": "The tool never invokes a model, so it cannot measure a session itself; the numbers have to be handed to it. The boundary where they arrive is the only place their provenance can still be checked.",
+      "current_state": "The record has a shape and nothing writes one.",
+      "desired_state": "A worker or a wrapper hands measured facts to one command, they are validated and stored against the task, and a value with no reporter is refused with a finding that names the field.",
+      "acceptance_criteria": [
+        "Measured facts attach to the active task and survive into the completed record",
+        "A field without a reporter, or with a reporter that is not named, is refused",
+        "No code path fabricates, interpolates or defaults a measured value",
+        "The command works with no network and leaves no background process"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "A provider's self-reported usage may itself be wrong; the record says who reported it so that a later correction has something to correct.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0303",
+      "slug": "absence-not-estimate",
+      "milestone": "execution-telemetry",
+      "status": "BLOCKED",
+      "wave": 8,
+      "priority": "p2",
+      "profile": "debugging",
+      "parallel_safe": false,
+      "title": "Prove a silent provider produces an explicit absence, never a guess",
+      "depends_on": [
+        "I0302"
+      ],
+      "blocked_by": [
+        "I0302"
+      ],
+      "dependents": [
+        "I0304"
+      ],
+      "scope": [
+        "test/cases"
+      ],
+      "non_scope": [
+        "Any change to the recording path; if the case fails, the fix belongs to the issue that owns that code"
+      ],
+      "objective": "Write the case that runs a whole task under a provider that reports nothing and asserts that the completed record carries an explicit absence with a reason, and that no field anywhere in the surfaces shows an estimated number.",
+      "why": "The failure this milestone exists to avoid is not a missing feature, it is a plausible number nobody measured. Only a case that looks for the absence can keep that from creeping back in through a convenience default.",
+      "current_state": "The recording path exists. What happens when nobody reports anything is untested.",
+      "desired_state": "A case demonstrates the silent path end to end, and a grep-like assertion over the reporting surfaces shows no estimated value is ever printed as measured.",
+      "acceptance_criteria": [
+        "The case runs start to finish with no telemetry reported and reaches a completed outcome",
+        "The stored record carries not_reported with a reason naming the provider",
+        "No surface prints a number for a task that reported none"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "absence_proved"
+      ],
+      "evidence": [],
+      "risk": "A case that only checks the stored file misses a surface that fills a gap on its way to the screen; it has to assert on what is printed as well.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0304",
+      "slug": "telemetry-in-history",
+      "milestone": "execution-telemetry",
+      "status": "BLOCKED",
+      "wave": 9,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Read the measurements back through the history surface, under a bound",
+      "depends_on": [
+        "I0303"
+      ],
+      "blocked_by": [
+        "I0303"
+      ],
+      "dependents": [
+        "I0305"
+      ],
+      "scope": [
+        "lib",
+        "docs"
+      ],
+      "non_scope": [
+        "Aggregation, averages or any figure derived across tasks; that is the next milestone"
+      ],
+      "objective": "Make recorded execution facts readable through the surface that already answers questions about past tasks, with the same retention bound the other durable stores carry.",
+      "why": "A measurement that can only be read by opening a file is a measurement nobody reads. It also has to be bounded, because an unbounded append-only store is exactly what this repository refuses everywhere else.",
+      "current_state": "Facts are recorded against tasks and can be read only from the record itself.",
+      "desired_state": "History reports the measured facts alongside the task they belong to, says not_reported where that is what happened, and the store is capped like the ledger.",
+      "acceptance_criteria": [
+        "History shows measured facts and explicit absences for past tasks",
+        "The store has a declared retention bound and the bound is enforced by a case",
+        "No aggregate figure appears at this layer"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "Showing per-task numbers invites reading a trend into them; the surface has to present facts without implying a series.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0305",
+      "slug": "publish-telemetry-claim",
+      "milestone": "execution-telemetry",
+      "status": "BLOCKED",
+      "wave": 10,
+      "priority": "p3",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Publish the telemetry claim and record what remains unmeasured",
+      "depends_on": [
+        "I0304"
+      ],
+      "blocked_by": [
+        "I0304"
+      ],
+      "dependents": [
+        "I0401"
+      ],
+      "scope": [
+        "docs",
+        "site/data/generated"
+      ],
+      "non_scope": [
+        "Any figure derived from the measurements"
+      ],
+      "objective": "Move the telemetry claim to guaranteed for the providers that report honestly, name the implementation and the case, and state in the economics document which providers report nothing and what that costs the analysis.",
+      "why": "The value of this milestone is as much in what it refuses to claim as in what it measures. A reader has to be able to see which sessions are measured and which are not before believing any number built on top.",
+      "current_state": "The claim is planned and the economics document claims nothing on purpose.",
+      "desired_state": "The claim is guaranteed with its narrow scope stated, and the economics document says which providers are measured, which are not, and what follows from that.",
+      "acceptance_criteria": [
+        "The claim cites an implementation path and a test path that both exist",
+        "The economics document names the measured and unmeasured cases",
+        "The generated site data regenerates with no stale file"
+      ],
+      "validation": [
+        "scripts/generate-site-data --check",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "docs_build"
+      ],
+      "evidence": [],
+      "risk": "Publishing measurement invites treating partial coverage as full coverage; the coverage statement has to sit next to the claim, not in a footnote.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0401",
+      "slug": "define-accepted-outcome",
+      "milestone": "cost-per-accepted-outcome",
+      "status": "BLOCKED",
+      "wave": 11,
+      "priority": "p2",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Define an accepted outcome, and join it to its measurements without storing the join",
+      "depends_on": [
+        "I0305"
+      ],
+      "blocked_by": [
+        "I0305"
+      ],
+      "dependents": [
+        "I0402"
+      ],
+      "scope": [
+        "lib",
+        "docs"
+      ],
+      "non_scope": [
+        "Any stored aggregate",
+        "Counting a completed finish that the contract did not accept"
+      ],
+      "objective": "Define precisely which finishes count as accepted outcomes, and derive the join between an accepted outcome and the execution facts of the work that produced it from records that already exist, storing no third record.",
+      "why": "Cost per outcome is a ratio, and both halves of it are already recorded: the finish contract decides acceptance and telemetry measures consumption. Storing the join would be a third place for them to disagree.",
+      "current_state": "The finish contract evaluates acceptance and records the outcome. Telemetry records what a session consumed. Nothing connects them, and the word outcome is used loosely across the documents.",
+      "desired_state": "One written definition of an accepted outcome, matching what the finish contract actually enforces, and a derivation that produces the set of accepted outcomes with their measurements, computed on demand.",
+      "acceptance_criteria": [
+        "The definition matches what the finish contract enforces, and a case fails if the two drift apart",
+        "The join is derived from existing records, with nothing new persisted",
+        "An outcome whose work reported no telemetry appears in the set with an explicit absence"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "The tempting definition is the one that produces more data points; the correct one is the one the finish contract already enforces, even when that is a smaller set.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0402",
+      "slug": "report-measured-cost",
+      "milestone": "cost-per-accepted-outcome",
+      "status": "BLOCKED",
+      "wave": 12,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Report cost only where measurement and acceptance both exist",
+      "depends_on": [
+        "I0401"
+      ],
+      "blocked_by": [
+        "I0401"
+      ],
+      "dependents": [
+        "I0403"
+      ],
+      "scope": [
+        "lib",
+        "bin"
+      ],
+      "non_scope": [
+        "Elapsed time or token count used as a proxy for progress",
+        "Any projection of a future cost"
+      ],
+      "objective": "Add the command that reports what accepted outcomes cost, computed only from measured facts, and reports no figure at all where either half is missing, saying which half.",
+      "why": "A cost report that fills gaps is worse than no cost report, because it is believed. The command has to be as willing to answer nothing as to answer a number.",
+      "current_state": "The join exists as a derivation. Nothing reports it.",
+      "desired_state": "One command answers what an accepted outcome cost, in text and as JSON, and where it cannot answer, it names whether acceptance or measurement was missing.",
+      "acceptance_criteria": [
+        "A figure is reported only where a measured record and an accepted outcome both exist",
+        "Where no figure is reported, the output names which half was missing",
+        "JSON and text agree on the set of outcomes and the figures reported"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "The first number this command prints will be quoted somewhere; its units and its denominator have to be in the output itself, not only in the documentation.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0403",
+      "slug": "thin-denominator",
+      "milestone": "cost-per-accepted-outcome",
+      "status": "BLOCKED",
+      "wave": 13,
+      "priority": "p2",
+      "profile": "debugging",
+      "parallel_safe": false,
+      "title": "Make a thin denominator say so rather than average it away",
+      "depends_on": [
+        "I0402"
+      ],
+      "blocked_by": [
+        "I0402"
+      ],
+      "dependents": [
+        "I0404"
+      ],
+      "scope": [
+        "lib",
+        "test/cases"
+      ],
+      "non_scope": [
+        "A confidence interval or any statistical model beyond stating the denominator"
+      ],
+      "objective": "Make every reported figure carry the number of accepted outcomes it rests on, refuse to present a single observation as an average, and prove both with cases.",
+      "why": "Early on there will be very few accepted outcomes, and a mean over one of them looks exactly like a mean over many. The report has to make the difference impossible to miss.",
+      "current_state": "The command reports figures from whatever measured, accepted outcomes exist, however few.",
+      "desired_state": "Each figure states its denominator, and below the threshold the output presents observations rather than a summary statistic.",
+      "acceptance_criteria": [
+        "Every reported figure carries the count of accepted outcomes behind it",
+        "Below the declared threshold the output presents observations and no average",
+        "The threshold is declared as data, not written into the code path",
+        "Cases cover the thin case and the sufficient case"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "Any threshold is arbitrary; declaring it as data and printing it beside the figure is what keeps it honest rather than hidden.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0404",
+      "slug": "publish-cost-claim",
+      "milestone": "cost-per-accepted-outcome",
+      "status": "BLOCKED",
+      "wave": 14,
+      "priority": "p3",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Publish the cost-per-outcome claim with its unit defined beside it",
+      "depends_on": [
+        "I0403"
+      ],
+      "blocked_by": [
+        "I0403"
+      ],
+      "dependents": [
+        "I0501"
+      ],
+      "scope": [
+        "docs",
+        "site/data/generated"
+      ],
+      "non_scope": [
+        "Any comparison against another tool or another team"
+      ],
+      "objective": "Move the cost-per-outcome claim to guaranteed, define the unit and the denominator where a reader meets the figure, and state what the number cannot be used to compare.",
+      "why": "Cost per accepted outcome is the one figure this project argues is the right unit. Publishing it without saying what it excludes would repeat the mistake the economics document was written to avoid.",
+      "current_state": "The claim is planned. The economics document argues for the unit and reports nothing.",
+      "desired_state": "The claim is guaranteed, the unit and denominator are defined next to the reported figure, and the limits of comparison are stated.",
+      "acceptance_criteria": [
+        "The claim cites an implementation path and a test path that both exist",
+        "The unit and denominator are defined where the figure is presented",
+        "The document states what the figure cannot be used to compare",
+        "The generated site data regenerates with no stale file"
+      ],
+      "validation": [
+        "scripts/generate-site-data --check",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "docs_build"
+      ],
+      "evidence": [],
+      "risk": "A published cost figure is the most quotable thing this repository will produce and the most easily stripped of its qualifiers.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0501",
+      "slug": "comparable-work-classes",
+      "milestone": "routing-recommendations",
+      "status": "BLOCKED",
+      "wave": 15,
+      "priority": "p3",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Group comparable work from what the records already carry",
+      "depends_on": [
+        "I0404"
+      ],
+      "blocked_by": [
+        "I0404"
+      ],
+      "dependents": [
+        "I0502"
+      ],
+      "scope": [
+        "lib",
+        "docs"
+      ],
+      "non_scope": [
+        "A hand-written taxonomy of task types",
+        "Any new noun; the grouping is a derivation, not a record"
+      ],
+      "objective": "Derive the grouping that makes two pieces of work comparable from facts the records already hold, so that a recommendation compares like with like without anybody inventing a taxonomy of task types.",
+      "why": "A recommendation is only meaningful within a class of comparable work, and the obvious way to get one is to invent categories. Invented categories are a new vocabulary nobody validates, which this repository refuses on principle and would regret in practice.",
+      "current_state": "Records carry a profile, a declared scope, a verification result and an outcome. Nothing groups them, and nothing says what makes two tasks comparable.",
+      "desired_state": "A derivation produces groups from recorded facts alone, states what it grouped on, and refuses to group where the facts are too thin to support it.",
+      "acceptance_criteria": [
+        "Grouping uses only fields already recorded, and names them in its output",
+        "No new record type or vocabulary is introduced",
+        "Work that cannot be grouped is reported as ungrouped rather than forced into a group"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "A grouping that is too coarse makes every recommendation the same one; too fine and no group ever reaches a usable denominator. Whichever is chosen has to be visible in the output.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0502",
+      "slug": "recommend-from-measurements",
+      "milestone": "routing-recommendations",
+      "status": "BLOCKED",
+      "wave": 16,
+      "priority": "p3",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Recommend a profile from measured cost, naming the measurements",
+      "depends_on": [
+        "I0501"
+      ],
+      "blocked_by": [
+        "I0501"
+      ],
+      "dependents": [
+        "I0503"
+      ],
+      "scope": [
+        "lib",
+        "bin"
+      ],
+      "non_scope": [
+        "Invoking a model, or choosing a provider on a worker's behalf"
+      ],
+      "objective": "Add the command that recommends a profile for a class of work from measured cost per accepted outcome, and prints the measurements the recommendation was derived from alongside it.",
+      "why": "A recommendation whose basis is not printed is an opinion with a command around it. Naming the measurements is what makes it checkable, and being checkable is the only thing that separates this from advice.",
+      "current_state": "Cost per accepted outcome is reported per outcome. Nothing recommends anything.",
+      "desired_state": "Asking which profile a class of work should use returns a profile, the measurements behind it, and the group they came from.",
+      "acceptance_criteria": [
+        "Every recommendation lists the accepted outcomes and figures it was derived from",
+        "The recommendation names the group and how the group was derived",
+        "The command reads records and computes nothing that the cost layer already computes"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "Following a recommendation produces the data that justifies it; the output has to record that the measurements postdate earlier recommendations.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0503",
+      "slug": "no-weak-recommendation",
+      "milestone": "routing-recommendations",
+      "status": "BLOCKED",
+      "wave": 17,
+      "priority": "p3",
+      "profile": "debugging",
+      "parallel_safe": false,
+      "title": "Return no recommendation where the data is too thin, and say why",
+      "depends_on": [
+        "I0502"
+      ],
+      "blocked_by": [
+        "I0502"
+      ],
+      "dependents": [
+        "I0504"
+      ],
+      "scope": [
+        "lib",
+        "test/cases"
+      ],
+      "non_scope": [
+        "A weaker recommendation with a caveat attached"
+      ],
+      "objective": "Make insufficient data produce no recommendation rather than a weak one, with the threshold declared as data and the reason printed, proved by cases on both sides of it.",
+      "why": "The failure mode of every routing feature is a confident answer from three data points. Refusing to answer is the behaviour that has to be tested, because it is the one that will be pressured away.",
+      "current_state": "The command recommends from whatever measurements exist.",
+      "desired_state": "Below the threshold the command returns no recommendation and names what it would take to have one; above it, the recommendation carries its denominator.",
+      "acceptance_criteria": [
+        "The threshold is declared as data and printed with every answer and every refusal",
+        "Below it, no profile is named at all",
+        "Cases cover both sides of the threshold"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "A threshold nobody can reach makes the whole command dead code; if the case shows the bar is unreachable in practice, that is a finding about the milestone, not a reason to lower it quietly.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0504",
+      "slug": "advisory-not-routing",
+      "milestone": "routing-recommendations",
+      "status": "BLOCKED",
+      "wave": 18,
+      "priority": "p3",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Prove the recommendation is advisory and publish it as such",
+      "depends_on": [
+        "I0503"
+      ],
+      "blocked_by": [
+        "I0503"
+      ],
+      "dependents": [
+        "I0601"
+      ],
+      "scope": [
+        "test/cases",
+        "docs",
+        "site/data/generated"
+      ],
+      "non_scope": [
+        "Any automatic application of a recommendation, behind a flag or otherwise"
+      ],
+      "objective": "Prove with a case that a recommendation never changes the profile a task runs under, and publish the routing claim stating that Majordomus recommends and does not route.",
+      "why": "The distance between recommending a profile and selecting one is one convenience commit wide. A case is the only thing that keeps it, and the claim is where a reader is told which side of the line the tool is on.",
+      "current_state": "The command answers with a profile and a basis. Nothing proves it cannot act on its own answer.",
+      "desired_state": "A case starts a task after a recommendation and shows the profile is whatever the worker asked for, and the claim says recommendations only.",
+      "acceptance_criteria": [
+        "A case shows a task starting under a profile different from the recommended one, unimpeded",
+        "The claim cites an implementation path and a test path that both exist and says recommendations only",
+        "The generated site data regenerates with no stale file"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "scripts/generate-site-data --check"
+      ],
+      "evidence_required": [
+        "suite",
+        "docs_build"
+      ],
+      "evidence": [],
+      "risk": "A tool that recommends is one flag away from a tool that decides; the case is the record of the decision not to add the flag.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0601",
+      "slug": "name-shared-source",
+      "milestone": "shared-policy",
+      "status": "BLOCKED",
+      "wave": 19,
+      "priority": "p3",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Let a policy name a shared source it does not copy",
+      "depends_on": [
+        "I0504"
+      ],
+      "blocked_by": [
+        "I0504"
+      ],
+      "dependents": [
+        "I0602"
+      ],
+      "scope": [
+        "lib",
+        "share",
+        "docs"
+      ],
+      "non_scope": [
+        "Fetching a policy over a network, from a registry, or from any service",
+        "A hosted component that must be running for the tool to work"
+      ],
+      "objective": "Let a repository's policy name a shared policy source and resolve it offline from the filesystem, so that one statement of a rule can govern more than one repository without being pasted into each.",
+      "why": "Copying is what makes organisational policy drift: every repository holds a fork of the rule and nobody can see which forks moved. A named source is the smallest change that makes drift detectable at all.",
+      "current_state": "Policy is per repository and entirely local. Nothing refers to anything outside the checkout.",
+      "desired_state": "A policy names a shared source, the tool resolves it without a network call, and every command that reads policy reads the resolved result.",
+      "acceptance_criteria": [
+        "A shared source is resolved from the filesystem with no network access",
+        "Every policy reader sees the resolved policy, and no reader bypasses resolution",
+        "An unresolvable source is a named finding that stops the command, never a silent fallback to local",
+        "A repository that names no shared source behaves exactly as it does today"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "This is where a local-first tool grows a dependency outside its checkout; keeping resolution to the filesystem is what preserves the offline guarantee.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0602",
+      "slug": "explicit-override",
+      "milestone": "shared-policy",
+      "status": "BLOCKED",
+      "wave": 20,
+      "priority": "p3",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Make a local override explicit and prove it survives an update of the shared source",
+      "depends_on": [
+        "I0601"
+      ],
+      "blocked_by": [
+        "I0601"
+      ],
+      "dependents": [
+        "I0603"
+      ],
+      "scope": [
+        "lib",
+        "share",
+        "docs"
+      ],
+      "non_scope": [
+        "Overriding a rule the shared policy declares non-overridable, if such a class is introduced later"
+      ],
+      "objective": "Define how a repository overrides part of a shared policy, require the override to be declared rather than inferred from a value differing, and prove with a case that updating the shared source leaves the override standing.",
+      "why": "An override that looks like an ordinary key is indistinguishable from a stale copy. Declaring it is what lets the drift report tell a deliberate exception from an accident.",
+      "current_state": "A shared source can be named and resolved. Anything a repository writes locally either wins or loses by a rule nobody has written down.",
+      "desired_state": "Overrides are declared, the merge order is documented and tested, and a shared source that changes underneath a repository does not silently take an override away.",
+      "acceptance_criteria": [
+        "An override is a declaration, and a local value that differs without one is a finding",
+        "The merge order is documented and covered by a case",
+        "A case updates the shared source and shows the override still applies"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "Merge semantics are where shared configuration usually becomes unexplainable; the documented order and its case are the whole defence.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0603",
+      "slug": "report-policy-drift",
+      "milestone": "shared-policy",
+      "status": "BLOCKED",
+      "wave": 21,
+      "priority": "p3",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Report drift from the shared policy in one command",
+      "depends_on": [
+        "I0602"
+      ],
+      "blocked_by": [
+        "I0602"
+      ],
+      "dependents": [
+        "I0604"
+      ],
+      "scope": [
+        "lib",
+        "bin"
+      ],
+      "non_scope": [
+        "Changing anybody's policy; the command reports and never writes"
+      ],
+      "objective": "Report, in one command, every way a repository's effective policy differs from the shared source it names, separating declared overrides from undeclared divergence.",
+      "why": "The point of naming a shared source is being able to see where it is not being followed. Without one command that answers that, shared policy is just a longer path to the same drift.",
+      "current_state": "A shared source is resolved and overrides are declared. Nothing summarises the difference.",
+      "desired_state": "One command lists each difference, says whether it is a declared override or undeclared divergence, and names the reproduce command for each.",
+      "acceptance_criteria": [
+        "Every difference is listed with the key, both values, and whether it is declared",
+        "Undeclared divergence exits non-zero and declared overrides do not",
+        "Every finding carries a reproduce command",
+        "The command writes nothing"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "suite"
+      ],
+      "evidence": [],
+      "risk": "A drift report that is noisy is a drift report nobody runs; declared overrides have to be quiet by default.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0604",
+      "slug": "offline-survives-sharing",
+      "milestone": "shared-policy",
+      "status": "BLOCKED",
+      "wave": 22,
+      "priority": "p3",
+      "profile": "debugging",
+      "parallel_safe": false,
+      "title": "Prove the offline guarantee survives sharing",
+      "depends_on": [
+        "I0603"
+      ],
+      "blocked_by": [
+        "I0603"
+      ],
+      "dependents": [
+        "I0605"
+      ],
+      "scope": [
+        "share",
+        "lib",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Any offline cache of a remote source, which would be a fetch with extra steps"
+      ],
+      "objective": "Prove with cases and a doctrine that no path introduced by shared policy reaches a network, and that an unavailable shared source degrades to a named refusal rather than a fetch or a silent local fallback.",
+      "why": "Every guarantee this tool makes rests on it being local and offline. Sharing policy across repositories is the exact feature that historically converts a local tool into a client of something, and it has to be refused structurally rather than by intention.",
+      "current_state": "Resolution, override and drift reporting all exist and are documented as filesystem-only. Nothing enforces that they stay so.",
+      "desired_state": "A doctrine refuses a network call in the policy resolution path, cases cover an unavailable source, and the refusal names the doctrine.",
+      "acceptance_criteria": [
+        "A doctrine declares the rule, its validator exists, and doctor proves it reaches the command that runs it",
+        "A case shows an unavailable shared source producing a named refusal, with nothing fetched and no fallback",
+        "CI runs the case"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "suite",
+        "doctor"
+      ],
+      "evidence": [],
+      "risk": "The pressure to add a remote source arrives with the first user who has repositories on two machines; the doctrine is what makes that a decision rather than a patch.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0605",
+      "slug": "publish-shared-policy-claim",
+      "milestone": "shared-policy",
+      "status": "BLOCKED",
+      "wave": 23,
+      "priority": "p3",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Publish the shared-policy claim and what sharing still cannot do",
+      "depends_on": [
+        "I0604"
+      ],
+      "blocked_by": [
+        "I0604"
+      ],
+      "dependents": [],
+      "scope": [
+        "docs",
+        "site/data/generated"
+      ],
+      "non_scope": [
+        "Any claim about repositories that have not adopted the shared source"
+      ],
+      "objective": "Move the shared-policy claim to guaranteed, cite the implementation and the cases, and state plainly what a shared policy does not provide: no service, no registry, no cross-machine visibility, and no enforcement of a repository that never adopts it.",
+      "why": "Shared policy is the version most easily read as an organisational control plane. The claim has to name the boundary in the same place it names the capability, or the boundary will be assumed away.",
+      "current_state": "The claim is planned, and the design document places multi-repository policy outside the local-first scope with a note that it returns here.",
+      "desired_state": "The claim is guaranteed for what is implemented, the limitations page names what it is not, and the design document's deferral is reconciled with what now exists.",
+      "acceptance_criteria": [
+        "The claim cites an implementation path and a test path that both exist",
+        "The limitations page names what shared policy does not do",
+        "The design document no longer defers what has shipped, and still refuses what has not",
+        "The generated site data regenerates with no stale file"
+      ],
+      "validation": [
+        "scripts/generate-site-data --check",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "docs_build"
+      ],
+      "evidence": [],
+      "risk": "This claim is the one a reader will most want to be wider than it is.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
     }
   ],
   "waves": [
@@ -1620,28 +2857,32 @@
       "wave": 0,
       "issues": [
         "I0001",
-        "I0101"
+        "I0101",
+        "I0201"
       ]
     },
     {
       "wave": 1,
       "issues": [
         "I0002",
-        "I0102"
+        "I0102",
+        "I0202"
       ]
     },
     {
       "wave": 2,
       "issues": [
         "I0003",
-        "I0103"
+        "I0103",
+        "I0203"
       ]
     },
     {
       "wave": 3,
       "issues": [
         "I0004",
-        "I0104"
+        "I0104",
+        "I0204"
       ]
     },
     {
@@ -1649,7 +2890,8 @@
       "issues": [
         "I0005",
         "I0006",
-        "I0010"
+        "I0010",
+        "I0205"
       ]
     },
     {
@@ -1658,26 +2900,120 @@
         "I0007",
         "I0008",
         "I0009",
-        "I0013"
+        "I0013",
+        "I0206"
       ]
     },
     {
       "wave": 6,
       "issues": [
         "I0011",
-        "I0014"
+        "I0014",
+        "I0301"
       ]
     },
     {
       "wave": 7,
       "issues": [
-        "I0012"
+        "I0012",
+        "I0302"
       ]
     },
     {
       "wave": 8,
       "issues": [
-        "I0015"
+        "I0015",
+        "I0303"
+      ]
+    },
+    {
+      "wave": 9,
+      "issues": [
+        "I0304"
+      ]
+    },
+    {
+      "wave": 10,
+      "issues": [
+        "I0305"
+      ]
+    },
+    {
+      "wave": 11,
+      "issues": [
+        "I0401"
+      ]
+    },
+    {
+      "wave": 12,
+      "issues": [
+        "I0402"
+      ]
+    },
+    {
+      "wave": 13,
+      "issues": [
+        "I0403"
+      ]
+    },
+    {
+      "wave": 14,
+      "issues": [
+        "I0404"
+      ]
+    },
+    {
+      "wave": 15,
+      "issues": [
+        "I0501"
+      ]
+    },
+    {
+      "wave": 16,
+      "issues": [
+        "I0502"
+      ]
+    },
+    {
+      "wave": 17,
+      "issues": [
+        "I0503"
+      ]
+    },
+    {
+      "wave": 18,
+      "issues": [
+        "I0504"
+      ]
+    },
+    {
+      "wave": 19,
+      "issues": [
+        "I0601"
+      ]
+    },
+    {
+      "wave": 20,
+      "issues": [
+        "I0602"
+      ]
+    },
+    {
+      "wave": 21,
+      "issues": [
+        "I0603"
+      ]
+    },
+    {
+      "wave": 22,
+      "issues": [
+        "I0604"
+      ]
+    },
+    {
+      "wave": 23,
+      "issues": [
+        "I0605"
       ]
     }
   ],
@@ -1769,14 +3105,99 @@
     {
       "from": "I0103",
       "to": "I0104"
+    },
+    {
+      "from": "I0201",
+      "to": "I0202"
+    },
+    {
+      "from": "I0202",
+      "to": "I0203"
+    },
+    {
+      "from": "I0203",
+      "to": "I0204"
+    },
+    {
+      "from": "I0204",
+      "to": "I0205"
+    },
+    {
+      "from": "I0205",
+      "to": "I0206"
+    },
+    {
+      "from": "I0206",
+      "to": "I0301"
+    },
+    {
+      "from": "I0301",
+      "to": "I0302"
+    },
+    {
+      "from": "I0302",
+      "to": "I0303"
+    },
+    {
+      "from": "I0303",
+      "to": "I0304"
+    },
+    {
+      "from": "I0304",
+      "to": "I0305"
+    },
+    {
+      "from": "I0305",
+      "to": "I0401"
+    },
+    {
+      "from": "I0401",
+      "to": "I0402"
+    },
+    {
+      "from": "I0402",
+      "to": "I0403"
+    },
+    {
+      "from": "I0403",
+      "to": "I0404"
+    },
+    {
+      "from": "I0404",
+      "to": "I0501"
+    },
+    {
+      "from": "I0501",
+      "to": "I0502"
+    },
+    {
+      "from": "I0502",
+      "to": "I0503"
+    },
+    {
+      "from": "I0503",
+      "to": "I0504"
+    },
+    {
+      "from": "I0504",
+      "to": "I0601"
+    },
+    {
+      "from": "I0601",
+      "to": "I0602"
+    },
+    {
+      "from": "I0602",
+      "to": "I0603"
+    },
+    {
+      "from": "I0603",
+      "to": "I0604"
+    },
+    {
+      "from": "I0604",
+      "to": "I0605"
     }
   ],
-  "findings": [
-    {
-      "level": "WARN",
-      "code": "empty_milestone",
-      "subject": "runtime-adapters",
-      "message": "is reachable and has no issues; it is an outcome nobody is executing"
-    }
-  ]
+  "findings": []
 }

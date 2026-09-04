@@ -1,0 +1,30 @@
+id: I0501
+milestone: routing-recommendations
+title: Group comparable work from what the records already carry
+slug: comparable-work-classes
+priority: p3
+profile: deep-work
+parallel_safe: false
+objective: "Derive the grouping that makes two pieces of work comparable from facts the records already hold, so that a recommendation compares like with like without anybody inventing a taxonomy of task types."
+why: "A recommendation is only meaningful within a class of comparable work, and the obvious way to get one is to invent categories. Invented categories are a new vocabulary nobody validates, which this repository refuses on principle and would regret in practice."
+current_state: "Records carry a profile, a declared scope, a verification result and an outcome. Nothing groups them, and nothing says what makes two tasks comparable."
+desired_state: "A derivation produces groups from recorded facts alone, states what it grouped on, and refuses to group where the facts are too thin to support it."
+scope:
+  - lib
+  - docs
+non_scope:
+  - A hand-written taxonomy of task types
+  - Any new noun; the grouping is a derivation, not a record
+depends_on:
+  - I0404
+acceptance_criteria:
+  - Grouping uses only fields already recorded, and names them in its output
+  - No new record type or vocabulary is introduced
+  - Work that cannot be grouped is reported as ungrouped rather than forced into a group
+validation:
+  - bash test/run.sh
+evidence_required:
+  - suite
+risk: "A grouping that is too coarse makes every recommendation the same one; too fine and no group ever reaches a usable denominator. Whichever is chosen has to be visible in the output."
+created_at: 2026-09-04
+updated_at: 2026-09-04

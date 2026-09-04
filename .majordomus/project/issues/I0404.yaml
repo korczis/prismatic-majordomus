@@ -1,0 +1,31 @@
+id: I0404
+milestone: cost-per-accepted-outcome
+title: Publish the cost-per-outcome claim with its unit defined beside it
+slug: publish-cost-claim
+priority: p3
+profile: implementation
+parallel_safe: false
+objective: "Move the cost-per-outcome claim to guaranteed, define the unit and the denominator where a reader meets the figure, and state what the number cannot be used to compare."
+why: "Cost per accepted outcome is the one figure this project argues is the right unit. Publishing it without saying what it excludes would repeat the mistake the economics document was written to avoid."
+current_state: "The claim is planned. The economics document argues for the unit and reports nothing."
+desired_state: "The claim is guaranteed, the unit and denominator are defined next to the reported figure, and the limits of comparison are stated."
+scope:
+  - docs
+  - site/data/generated
+non_scope:
+  - Any comparison against another tool or another team
+depends_on:
+  - I0403
+acceptance_criteria:
+  - The claim cites an implementation path and a test path that both exist
+  - The unit and denominator are defined where the figure is presented
+  - The document states what the figure cannot be used to compare
+  - The generated site data regenerates with no stale file
+validation:
+  - scripts/generate-site-data --check
+  - bash test/run.sh
+evidence_required:
+  - docs_build
+risk: "A published cost figure is the most quotable thing this repository will produce and the most easily stripped of its qualifiers."
+created_at: 2026-09-04
+updated_at: 2026-09-04

@@ -1,0 +1,29 @@
+id: I0304
+milestone: execution-telemetry
+title: Read the measurements back through the history surface, under a bound
+slug: telemetry-in-history
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Make recorded execution facts readable through the surface that already answers questions about past tasks, with the same retention bound the other durable stores carry."
+why: "A measurement that can only be read by opening a file is a measurement nobody reads. It also has to be bounded, because an unbounded append-only store is exactly what this repository refuses everywhere else."
+current_state: "Facts are recorded against tasks and can be read only from the record itself."
+desired_state: "History reports the measured facts alongside the task they belong to, says not_reported where that is what happened, and the store is capped like the ledger."
+scope:
+  - lib
+  - docs
+non_scope:
+  - Aggregation, averages or any figure derived across tasks; that is the next milestone
+depends_on:
+  - I0303
+acceptance_criteria:
+  - History shows measured facts and explicit absences for past tasks
+  - The store has a declared retention bound and the bound is enforced by a case
+  - No aggregate figure appears at this layer
+validation:
+  - bash test/run.sh
+evidence_required:
+  - suite
+risk: "Showing per-task numbers invites reading a trend into them; the surface has to present facts without implying a series."
+created_at: 2026-09-04
+updated_at: 2026-09-04

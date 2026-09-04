@@ -1,0 +1,32 @@
+id: I0203
+milestone: runtime-adapters
+title: Make enforcement opt-in, and prove a repository that declines is unaffected
+slug: opt-in-enforcement
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add one policy key that turns runtime enforcement on, default it to off, and prove with a case that a repository which never sets it behaves exactly as it does today."
+why: "Clamping what a worker may read or emit changes how every session behaves. A change of that size cannot arrive with an update; it has to be chosen, and the choice has to be visible in the policy the repository already reviews."
+current_state: "Nothing is enforced, so nothing needs an opt-in. Adding the adapter without one would enforce limits in every repository that updates."
+desired_state: "The policy carries an explicit enforcement key. Absent or false, the tool behaves as it did before the adapter existed, and a case demonstrates that rather than asserting it."
+scope:
+  - lib
+  - share
+non_scope:
+  - Any default that enables enforcement
+  - Per-command overrides; the choice is the repository's, once
+depends_on:
+  - I0202
+acceptance_criteria:
+  - The key is declared in the policy allowlist and rejected when it holds anything but a boolean
+  - Default and absent both mean off, and the projections say so where a worker reads them
+  - A case runs the full lifecycle in a repository that never sets the key and shows unchanged behaviour
+  - Doctor reports whether enforcement is on, without turning it on
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+evidence_required:
+  - suite
+risk: "An opt-in that defaults to on in the skeleton is not an opt-in; the skeleton has to be covered by the same case."
+created_at: 2026-09-04
+updated_at: 2026-09-04

@@ -1,0 +1,33 @@
+id: I0204
+milestone: runtime-adapters
+title: Apply one derived limit for real and prove it changes what happens
+slug: first-real-clamp
+priority: p1
+profile: debugging
+parallel_safe: false
+objective: "Implement the first adapter: one limit, derived from the profile through the resolver, applied where a provider can honestly apply it, with a behavioural case that fails if the limit stops being applied."
+why: "The milestone's whole distinction is between a limit that is printed and a limit that is applied. One limit that genuinely bites is worth more than a full set that is advisory, and it is the only thing that makes the claim publishable."
+current_state: "The mapping exists, the resolver prints the numbers, and the opt-in exists. Nothing anywhere applies a value to anything."
+desired_state: "With enforcement on, one provider's execution is constrained by a value derived from the active profile, and turning the profile from one value to another changes the observed outcome."
+scope:
+  - lib
+  - share
+  - test/cases
+non_scope:
+  - A second provider; one honest adapter first
+  - Any provider knob whose effect cannot be observed from a test in this repository
+depends_on:
+  - I0203
+acceptance_criteria:
+  - The applied value comes from the resolver, and no constant appears in the adapter
+  - A case changes only the profile and observes a different outcome
+  - A case with enforcement off observes the unconstrained outcome
+  - Removing the application makes a case fail rather than a document go stale
+validation:
+  - bash test/run.sh
+evidence_required:
+  - suite
+  - profile_changes_outcome
+risk: "The only honest adapters are for knobs a provider exposes and documents; if the chosen knob turns out to be advisory on the provider's side, the issue closes as no_match rather than shipping a clamp that does not clamp."
+created_at: 2026-09-04
+updated_at: 2026-09-04
