@@ -113,6 +113,18 @@ H
       else mj_fail decisions "$id" "profile $profile requires an entry 'Task: $id' in decisions.md" "grep -n 'Task:' .majordomus/state/decisions.md"; unmet=$((unmet+1)); fi
     fi
   fi
+  # continuity requirements for outcomes that are not `completed`: whatever stops here must
+  # leave the next worker something to act on. `note_present` already requires the section;
+  # this requires that a task claiming to be handed over actually has a handover record.
+  case "$outcome" in
+    partial|blocked)
+      if mj_resolve_latest "$MJ_DIR/state/handovers" "$id"; then
+        mj_ok continuity "$id" "handover $(basename "$MJ_RES_PATH") carries the next action"
+      else
+        mj_warn continuity "$id" "no handover for this task; the note's Next Action is the only continuation record" "majordomus handover < note.md"
+      fi ;;
+  esac
+
   contract="{${contract%,}}"
   if [ "$unmet" -gt 0 ]; then
     [ "$MJ_JSON" = 1 ] || printf 'finish: refused, %s unmet\n' "$unmet"; exit "$MJ_EX_CONTRACT"; fi
@@ -121,6 +133,7 @@ H
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
   [ -n "$note" ] && { mkdir -p "$MJ_DIR/state/completed"; cp "$note" "$MJ_DIR/state/completed/$id.md"; }
   local vj=null; [ -n "$vexit" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$vexit,\"seconds\":$vsecs}"
-  mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj"
+  local cps=0; cps="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
 }

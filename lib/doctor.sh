@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 # doctor — is Majordomus itself healthy and actually wired here? Read-only.
+# shellcheck source=question.sh
+. "$MJ_LIB_DIR/question.sh"
+# shellcheck source=decision.sh
+. "$MJ_LIB_DIR/decision.sh"
+# shellcheck source=prompt.sh
+. "$MJ_LIB_DIR/prompt.sh"
+# shellcheck source=context.sh
+. "$MJ_LIB_DIR/context.sh"
 mj_cmd_doctor() {
   local a
   for a in "$@"; do case "$a" in
@@ -154,14 +162,22 @@ mj_cmd_doctor() {
   elif [ -z "$always" ]; then mj_warn budget "policy" "no projection is marked always_loaded: true"; fi
   rm -f "$owned"
 
-  # 8. retention
+  # 8. the continuity subsystem: reachable through the CLI, not merely present on disk.
+  #    A directory full of records that no command reads is the failure mode this whole
+  #    tool exists to catch, so doctor proves each store is readable by the command that
+  #    owns it rather than checking that the files exist.
+  mj_doctor_continuity
+
+  # 9. retention
   local cap ll hc
   cap="$(mj_pol ledger.retention_max_lines)"; ll=0; [ -f "$MJ_DIR/state/ledger.jsonl" ] && ll="$(mj_lines "$MJ_DIR/state/ledger.jsonl")"
   if [ "$ll" -le "${cap:-5000}" ]; then mj_ok retention "ledger" "$ll lines, cap ${cap:-5000}"; else mj_fail retention "ledger" "$ll lines over cap $cap" "wc -l .majordomus/state/ledger.jsonl"; fi
   cap="$(mj_pol handover.retention_max_files)"; hc="$(find "$MJ_DIR/state/handovers" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$hc" -le "${cap:-200}" ]; then mj_ok retention "handovers" "$hc files, cap ${cap:-200}"; else mj_fail retention "handovers" "$hc files over cap $cap" "ls .majordomus/state/handovers | wc -l"; fi
+  cap="$(mj_pol checkpoint.retention_max_files)"; hc="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$hc" -le "${cap:-500}" ]; then mj_ok retention "checkpoints" "$hc files, cap ${cap:-500}"; else mj_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi
 
-  # 9. environment
+  # 10. environment
   local env="bash ${BASH_VERSION%%(*}"; env="$env, git $(git --version | awk '{print $3}')"
   mj_has jq && env="$env, jq $(jq --version 2>/dev/null | sed 's/jq-//')" || env="$env, jq absent"
   mj_has shellcheck && env="$env, shellcheck present"
@@ -199,4 +215,54 @@ mj_finish_doctor() {
   [ "$MJ_JSON" = 1 ] || printf 'doctor: %s failure(s)\n' "$MJ_FAILS"
   if [ "$missing" = 1 ]; then exit "$MJ_EX_MISSING"; fi
   [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
+}
+
+# Prove the continuity subsystem is wired, not merely installed. Each check runs the real
+# code path a worker would run; a store that cannot be read is a failure, because a record
+# nothing reads is indistinguishable from no record at all.
+mj_doctor_continuity() {
+  local d bad
+
+  # directories the commands write into
+  for d in state/handovers state/checkpoints prompts; do
+    if [ -d "$MJ_DIR/$d" ]; then mj_ok layout ".majordomus/$d" "present"
+    else mj_fail layout ".majordomus/$d" "missing; the command that writes it will create it, but update installs it" "majordomus update"; fi
+  done
+
+  # the two stores the finish contract reads must parse, or a gate can be bypassed by a typo
+  bad="$(mj_question_malformed "$MJ_DIR/state/open-questions.md")"
+  if [ -n "$bad" ]; then mj_fail records "open-questions.md" "line(s) $(printf '%s' "$bad" | sed 's/ $//') do not parse; an unreadable entry cannot block acceptance" "majordomus question list --all"
+  else mj_ok records "open-questions.md" "every entry parses"; fi
+  bad="$(mj_ledger_bad_lines "$MJ_DIR/state/ledger.jsonl")"
+  if [ -n "$bad" ]; then mj_fail records "ledger.jsonl" "line(s) $(printf '%s' "$bad" | sed 's/ $//') are not well-formed events" "majordomus history --validate"
+  else mj_ok records "ledger.jsonl" "every line carries ts and event"; fi
+  bad="$(mj_decision_malformed "$MJ_DIR/state/decisions.md")"
+  [ -n "$bad" ] && mj_warn records "decisions.md" "entry at line(s) $(printf '%s' "$bad" | sed 's/ $//') lacks Task, Head or Why" "majordomus decision list"
+
+  # every prompt asset renders, and every token in it is one the renderer knows
+  local f n=0 reason
+  if [ -d "$MJ_DIR/prompts" ]; then
+    for f in "$MJ_DIR"/prompts/*.md; do
+      [ -f "$f" ] || continue; n=$((n + 1))
+      reason="$(mj_prompt_validate "$f")" || mj_fail prompt "$(basename "$f" .md)" "$(printf '%s' "$reason" | tr '\n' ';' | sed 's/;$//')" "majordomus prompt show $(basename "$f" .md)"
+    done
+    [ "$n" -gt 0 ] && mj_ok prompt "$n asset(s)" "front matter valid, every token known"
+  fi
+
+  # the resolver runs and reports either a record or its absence; both are healthy
+  if mj_resolve_latest "$MJ_DIR/state/handovers" ""; then
+    mj_ok resolver "handovers" "$MJ_RES_MATCH, $(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" "majordomus handover --resolve"
+  else mj_ok resolver "handovers" "no record for this worktree and branch (absence, not a stale match)" "majordomus handover --resolve"; fi
+  [ "$MJ_RES_SKIPPED" -gt 0 ] && mj_fail resolver "handovers" "$MJ_RES_SKIPPED record(s) skipped as malformed" "majordomus handover --list"
+
+  # the context builder produces output within its own budget through the real command path
+  local budget out lines
+  budget="$(mj_pol context.builder_budget_lines)"; [ -n "$budget" ] || budget=300
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.dc.XXXXXX")"
+  if ( MJ_JSON=0; mj_cmd_context ) > "$out" 2>/dev/null; then
+    lines="$(mj_lines "$out")"
+    if [ "$lines" -le "$budget" ]; then mj_ok context "builder" "$lines lines, budget $budget" "majordomus context"
+    else mj_fail context "builder" "$lines lines over budget $budget" "majordomus context"; fi
+  else mj_fail context "builder" "majordomus context failed" "majordomus context"; fi
+  rm -f "$out"
 }

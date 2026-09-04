@@ -1,26 +1,35 @@
 #!/usr/bin/env bash
+# sourced by several commands; guard against re-sourcing
+[ -n "${MJ_LIB_handover:-}" ] && return 0 || MJ_LIB_handover=1
 # handover — write an append-only continuation record (body on stdin), or --resolve the most
 # relevant prior one. Never stages, commits, or modifies any other file.
 mj_cmd_handover() {
-  local resolve=0 path_only=0 close=0 no_task=0
+  local resolve=0 path_only=0 close=0 no_task=0 list=0 want_task=""
   while [ $# -gt 0 ]; do case "$1" in
     --resolve) resolve=1; shift ;; --path) path_only=1; shift ;; --close) close=1; shift ;; --no-task) no_task=1; shift ;;
+    --list) list=1; shift ;;
+    --task) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--task needs a task id"; want_task="$2"; shift 2 ;;
+    --task=*) want_task="${1#--task=}"; shift ;;
     --help|-h) cat <<H
 usage: majordomus handover [--close] [--no-task] < body.md
-       majordomus handover --resolve [--path]
+       majordomus handover --resolve [--task <id>] [--path]
+       majordomus handover --list
   writes .majordomus/state/handovers/<ts>--<branch>--<head>--<rand>.md (mode 0600, atomic, never staged)
   body needs these non-empty level-one headings: the policy's handover.required_sections
   --close     also mark the active task handed_over so a new task may start
   --no-task   allow writing without an active task
   --resolve   print the most relevant prior handover for this worktree and branch (never repo-wide)
+  --task ID   with --resolve, consider only handovers written for that task
   --path      with --resolve, print only the path
+  --list      list this worktree's handovers, newest first
 H
       return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "handover: unknown option $1" ;;
   esac; done
   mj_require_installed
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
-  if [ "$resolve" = 1 ]; then mj_handover_resolve "$path_only"; return; fi
+  if [ "$list" = 1 ]; then mj_record_list "$MJ_DIR/state/handovers" handover; return; fi
+  if [ "$resolve" = 1 ]; then mj_handover_resolve "$path_only" "$want_task"; return; fi
 
   local task_id="" profile="" owner=""
   if mj_load_current; then task_id="$(mj_cur id)"; profile="$(mj_cur profile)"; owner="$(mj_cur owner)"
@@ -28,28 +37,18 @@ H
 
   local body; body="$(mktemp "${TMPDIR:-/tmp}/mj.hb.XXXXXX")"; cat > "$body"
   [ -s "$body" ] || { rm -f "$body"; mj_die "$MJ_EX_CONTRACT" "handover: empty body on stdin"; }
-  if grep -qE '^(schema_version|created_at|task_id|repository_id|worktree|branch|head|working_tree|changed_files):' "$body"; then
+  if mj_reject_identity "$body"; then
     rm -f "$body"; mj_die "$MJ_EX_CONTRACT" "handover: body must not contain identity fields; they are computed"
   fi
   local missing; missing="$(mj_check_sections "$body" "$(mj_ylist "$MJ_POL_FLAT" handover.required_sections | tr '\n' '|')")"
   [ -z "$missing" ] || { rm -f "$body"; mj_die "$MJ_EX_CONTRACT" "handover: missing or empty section(s): $missing"; }
 
-  local dir="$MJ_DIR/state/handovers" head; mkdir -p "$dir"; head="$(mj_git_head)"
-  local tmp; tmp="$(mktemp "$dir/.tmp.XXXXXX")"; chmod 600 "$tmp"
-  {
-    printf -- '---\nschema_version: 1\ncreated_at: %s\ntask_id: %s\nprofile: %s\nowner: "%s"\n' "$(mj_now)" "${task_id:-none}" "${profile:-none}" "$owner"
-    printf 'repository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
-      "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$head" "$(mj_git_dirty)"
-    mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' | sed 's/^/  - /'
-    printf -- '---\n\n'; cat "$body"
-  } > "$tmp"
-  local final n=0
-  while :; do
-    final="$dir/$(mj_now_compact)--$(mj_branch_key)--${head:0:7}--$(mj_rand16).md"
-    ln "$tmp" "$final" 2>/dev/null && break
-    n=$((n+1)); [ "$n" -lt 10 ] || { rm -f "$tmp" "$body"; mj_die "$MJ_EX_INTERNAL" "could not create a unique handover file"; }
-  done
-  rm -f "$tmp" "$body"
+  local rec; rec="$(mktemp "${TMPDIR:-/tmp}/mj.hr.XXXXXX")"
+  { mj_record_front_matter "${task_id:-none}" "${profile:-none}" "$owner"; cat "$body"; } > "$rec"
+  local final; final="$(mj_publish_record "$MJ_DIR/state/handovers" "" "$rec")" \
+    || { rm -f "$rec" "$body"; mj_die "$MJ_EX_INTERNAL" "could not create a unique handover file"; }
+  rm -f "$rec" "$body"
+
   if [ -n "$task_id" ]; then
     local now; now="$(mj_now)"
     if [ "$close" = 1 ]; then
@@ -71,32 +70,29 @@ mj_check_sections() {
 }
 
 mj_handover_resolve() {
-  local path_only="$1" dir="$MJ_DIR/state/handovers" f fm flat tier best="" best_key="" key
-  local my_id my_branch; my_id="$(mj_git_repo_id)"; my_branch="$(mj_git_branch)"
-  [ -d "$dir" ] || { echo "No relevant handover."; return 0; }
-  for f in "$dir"/*.md; do
-    [ -f "$f" ] || continue
-    fm="$(mktemp "${TMPDIR:-/tmp}/mj.fm.XXXXXX")"; awk 'NR==1&&$0!="---"{exit 2} NR>1&&$0=="---"{exit} NR>1' "$f" > "$fm" || { rm -f "$fm"; mj_err "warning: skipped $f: no front matter"; continue; }
-    flat="$(mktemp "${TMPDIR:-/tmp}/mj.fl.XXXXXX")"; mj_yaml_flatten "$fm" > "$flat" 2>/dev/null || { rm -f "$fm" "$flat"; mj_err "warning: skipped $f: malformed front matter"; continue; }
-    if [ "$(mj_yget "$flat" schema_version)" != 1 ] || [ -z "$(mj_yget "$flat" head)" ] || [ -z "$(mj_yget "$flat" created_at)" ]; then
-      rm -f "$fm" "$flat"; mj_err "warning: skipped $f: missing required fields"; continue; fi
-    tier=""
-    if [ "$(mj_yget "$flat" repository_id)" = "$my_id" ]; then
-      if [ "$(mj_yget "$flat" worktree)" = "$MJ_ROOT" ] && [ "$(mj_yget "$flat" branch)" = "$my_branch" ]; then tier=0
-      elif [ "$my_branch" != DETACHED ] && [ "$(mj_yget "$flat" branch)" = "$my_branch" ]; then tier=1; fi
-    fi
-    if [ -n "$tier" ]; then
-      key="$tier|$(mj_yget "$flat" created_at)"   # lower tier wins; then newest
-      if [ -z "$best" ] || [ "${key%%|*}" -lt "${best_key%%|*}" ] || { [ "${key%%|*}" = "${best_key%%|*}" ] && [ "${key#*|}" \> "${best_key#*|}" ]; }; then
-        best="$f"; best_key="$key"; BEST_HEAD="$(mj_yget "$flat" head)"; BEST_BRANCH="$(mj_yget "$flat" branch)"; BEST_DIRTY="$(mj_yget "$flat" working_tree)"
-      fi
-    fi
+  local path_only="$1" want_task="${2:-}"
+  if ! mj_resolve_latest "$MJ_DIR/state/handovers" "$want_task"; then echo "No relevant handover."; return 0; fi
+  if [ "$path_only" = 1 ]; then printf '%s\n' "${MJ_RES_PATH#"$MJ_ROOT/"}"; return 0; fi
+  printf 'Handover: %s\nMatch: %s\nGit state: %s\nCreated: %s (%s)\nTask: %s\n' \
+    "${MJ_RES_PATH#"$MJ_ROOT/"}" "$MJ_RES_MATCH" "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" \
+    "$MJ_RES_CREATED" "$(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")" "$MJ_RES_TASK"
+  [ "$MJ_RES_DIRTY" != "$(mj_git_dirty)" ] && printf 'Divergence: working tree was %s, now %s\n' "$MJ_RES_DIRTY" "$(mj_git_dirty)"
+  printf -- '---\n'; mj_record_body "$MJ_RES_PATH"
+}
+
+# list records in a directory, newest first: created_at, task, git label, path
+mj_record_list() {
+  local dir="$1" kind="$2" f fm flat n=0
+  [ -d "$dir" ] || { printf 'no %s records\n' "$kind"; return 0; }
+  for f in $(ls -1 "$dir"/*.md 2>/dev/null | sort -r); do
+    fm="$(mktemp "${TMPDIR:-/tmp}/mj.lf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.lg.XXXXXX")"
+    if mj_record_front "$f" > "$fm" 2>/dev/null && mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
+      printf '%s  %-24s %-18s %s\n' "$(mj_yget "$flat" created_at)" "$(mj_yget "$flat" task_id)" \
+        "$(mj_git_label "$(mj_yget "$flat" head)" "$(mj_yget "$flat" branch)")" "${f#"$MJ_ROOT/"}"
+      n=$((n + 1))
+    else mj_err "warning: skipped ${f#"$MJ_ROOT/"}: malformed record"; fi
     rm -f "$fm" "$flat"
   done
-  [ -n "$best" ] || { echo "No relevant handover."; return 0; }
-  if [ "$path_only" = 1 ]; then printf '%s\n' "${best#"$MJ_ROOT/"}"; return 0; fi
-  printf 'Handover: %s\nMatch: %s\nGit state: %s\n' "${best#"$MJ_ROOT/"}" \
-    "$([ "${best_key%%|*}" = 0 ] && echo same_worktree_same_branch || echo same_branch)" "$(mj_git_label "$BEST_HEAD" "$BEST_BRANCH")"
-  [ "$BEST_DIRTY" != "$(mj_git_dirty)" ] && printf 'Divergence: working tree was %s, now %s\n' "$BEST_DIRTY" "$(mj_git_dirty)"
-  printf -- '---\n'; awk 'c>=2{print} /^---$/{c++}' "$best"
+  [ "$n" = 0 ] && printf 'no %s records for this worktree\n' "$kind"
+  return 0
 }

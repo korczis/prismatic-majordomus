@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# sourced by several commands; guard against re-sourcing
+[ -n "${MJ_LIB_check:-}" ] && return 0 || MJ_LIB_check=1
 # shellcheck disable=SC2034  # MJ_LABEL, MJ_TOUCHED_IN, MJ_BLOCKED are read by finish.sh and watch.sh
 # check — is the current task consistent with policy, scope, and state? Read-only,
 # except --checkpoint which updates checkpoint_at (the one documented write).
@@ -76,12 +78,28 @@ mj_run_task_checks() {
     else mj_warn checkpoint "$id" "$((age/60))m ago, interval $(mj_pro checkpoint_interval) — run: majordomus check --checkpoint" "majordomus check --checkpoint"; fi
   fi
 
-  # blockers
-  local q="$MJ_DIR/state/open-questions.md"
-  if [ -f "$q" ] && grep -qE "^\- \[unresolved\] $id " "$q"; then
-    mj_fail blockers "$id" "unresolved: $(grep -E "^\- \[unresolved\] $id " "$q" | head -n1 | sed "s/^- \[unresolved\] $id — //" | cut -c1-80)" "grep -n 'unresolved' .majordomus/state/open-questions.md"
+  # blockers, and the integrity of the two stores the gates read
+  local q="$MJ_DIR/state/open-questions.md" bad
+  MJ_BLOCKED=0
+  bad="$(mj_question_malformed "$q")"
+  if [ -n "$bad" ]; then
+    mj_fail blockers "open-questions.md" "line(s) $(printf '%s' "$bad" | sed 's/ $//') do not parse; an unreadable entry cannot block acceptance" "majordomus question list --all"
     MJ_BLOCKED=1
-  else mj_ok blockers "$id" "none open"; MJ_BLOCKED=0; fi
+  elif grep -qE "^\- \[unresolved\] $id " "$q" 2>/dev/null; then
+    mj_fail blockers "$id" "unresolved: $(grep -E "^\- \[unresolved\] $id " "$q" | head -n1 | sed "s/^- \[unresolved\] $id — //" | cut -c1-80)" "majordomus question list"
+    MJ_BLOCKED=1
+  else mj_ok blockers "$id" "none open"; fi
+  # decisions.md is hand-editable by design, so an unattributable entry is reported rather
+  # than blocking; finish still refuses when a profile requires a record it cannot find.
+  bad="$(mj_decision_malformed "$MJ_DIR/state/decisions.md")"
+  [ -n "$bad" ] && mj_warn records "decisions.md" "entry at line(s) $(printf '%s' "$bad" | sed 's/ $//') lacks Task, Head or Why; nothing will find it" "majordomus decision list"
+  bad="$(mj_ledger_bad_lines "$MJ_DIR/state/ledger.jsonl")"
+  [ -n "$bad" ] && mj_fail records "ledger.jsonl" "line(s) $(printf '%s' "$bad" | sed 's/ $//') are not well-formed events" "majordomus history --validate"
+
+  # continuity: where the next worker would resume from
+  if mj_resolve_latest "$MJ_DIR/state/checkpoints" "$id"; then
+    mj_info checkpoint "${MJ_RES_PATH#"$MJ_ROOT/"}" "newest record, $(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")" "majordomus checkpoint --show"
+  fi
 }
 mj_projection_targets() { local j=0; while [ -n "$(mj_pol "projections.$j.target")" ]; do printf '%s\n' "$(mj_pol "projections.$j.target")"; j=$((j+1)); done; }
 mj_report_overlap_from_current() {
@@ -89,6 +107,10 @@ mj_report_overlap_from_current() {
   mj_report_overlap "$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ')"
   [ "$MJ_FINDINGS" = 0 ] && mj_info overlap "$(mj_cur id)" "no other worktree claims an overlapping path"
 }
-# start.sh defines mj_report_overlap; check needs it too
+# start.sh defines mj_report_overlap; question.sh and decision.sh define the store validators
 # shellcheck source=start.sh
 . "$MJ_LIB_DIR/start.sh"
+# shellcheck source=question.sh
+. "$MJ_LIB_DIR/question.sh"
+# shellcheck source=decision.sh
+. "$MJ_LIB_DIR/decision.sh"

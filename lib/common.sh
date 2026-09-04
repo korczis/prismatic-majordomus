@@ -304,3 +304,127 @@ mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
 mj_cleanup() { rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" 2>/dev/null; }
 trap mj_cleanup EXIT
+
+# ---------------------------------------------------------------- records
+# A record is a Markdown file with computed YAML front matter and an authored body.
+# Handovers and checkpoints share this shape; only the directory and the caller's
+# extra front-matter lines differ.
+
+# front matter of a record (between the first --- and the next ---), empty if malformed
+mj_record_front() { awk 'NR==1&&$0!="---"{exit 2} NR>1&&$0=="---"{exit} NR>1' "$1"; }
+# body of a record: everything after the second ---
+mj_record_body()  { awk 'c>=2{print} /^---$/{c++}' "$1"; }
+
+# refuse a body that carries fields Majordomus computes: prose must not forge identity
+mj_reject_identity() {
+  grep -qE '^(schema_version|created_at|task_id|repository_id|worktree|branch|head|working_tree|changed_files):' "$1"
+}
+
+# publish content as a new file in a directory, atomically, mode 0600, never overwriting.
+# mj_publish_record DIR NAME_PREFIX CONTENT_FILE -> prints the final path
+mj_publish_record() {
+  local dir="$1" prefix="$2" src="$3" tmp final n=0 head
+  mkdir -p "$dir"
+  tmp="$(mktemp "$dir/.tmp.XXXXXX")"; chmod 600 "$tmp"; cat "$src" > "$tmp"
+  head="$(mj_git_head)"
+  while :; do
+    final="$dir/$(mj_now_compact)--${prefix:+$prefix--}$(mj_branch_key)--${head:0:7}--$(mj_rand16).md"
+    ln "$tmp" "$final" 2>/dev/null && break
+    n=$((n + 1)); [ "$n" -lt 10 ] || { rm -f "$tmp"; return 1; }
+  done
+  rm -f "$tmp"
+  printf '%s\n' "$final"
+}
+
+# write the computed front matter of a record to stdout. $1 = task id or "none", $2 = profile,
+# $3 = owner, remaining args are extra "key: value" lines appended verbatim.
+mj_record_front_matter() {
+  local task_id="${1:-none}" profile="${2:-none}" owner="${3:-}"; shift 3 2>/dev/null || true
+  printf -- '---\nschema_version: 1\ncreated_at: %s\ntask_id: %s\nprofile: %s\nowner: "%s"\n' \
+    "$(mj_now)" "$task_id" "$profile" "$(printf '%s' "$owner" | sed 's/"/\\"/g')"
+  printf 'repository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
+    "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
+  mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' | sed 's/^/  - /'
+  local extra; for extra in "$@"; do printf '%s\n' "$extra"; done
+  printf -- '---\n\n'
+}
+
+# ---------------------------------------------------------------- resolution
+# Resolve the most relevant record in a directory for this worktree and branch.
+# Tier 0: same repository, same worktree, same branch. Tier 1: same repository, same
+# non-detached branch. Never repository-wide: an unrelated worktree's record must not
+# become current context. Newest wins within a tier.
+# mj_resolve_latest DIR [TASK_ID]  ->  0 and sets MJ_RES_*, or 1 when nothing matches.
+# Malformed records are skipped with a warning on stderr, never silently.
+MJ_RES_PATH=""; MJ_RES_TIER=""; MJ_RES_MATCH=""; MJ_RES_HEAD=""; MJ_RES_BRANCH=""
+MJ_RES_DIRTY=""; MJ_RES_CREATED=""; MJ_RES_TASK=""; MJ_RES_SKIPPED=0
+mj_resolve_latest() {
+  local dir="$1" want_task="${2:-}" f fm flat tier key best="" best_key=""
+  local my_id my_branch; my_id="$(mj_git_repo_id)"; my_branch="$(mj_git_branch)"
+  MJ_RES_PATH=""; MJ_RES_SKIPPED=0
+  [ -d "$dir" ] || return 1
+  for f in "$dir"/*.md; do
+    [ -f "$f" ] || continue
+    fm="$(mktemp "${TMPDIR:-/tmp}/mj.fm.XXXXXX")"
+    mj_record_front "$f" > "$fm" || { rm -f "$fm"; mj_err "warning: skipped $f: no front matter"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; }
+    flat="$(mktemp "${TMPDIR:-/tmp}/mj.fl.XXXXXX")"
+    if ! mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
+      rm -f "$fm" "$flat"; mj_err "warning: skipped $f: malformed front matter"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
+    if [ "$(mj_yget "$flat" schema_version)" != 1 ] || [ -z "$(mj_yget "$flat" head)" ] || [ -z "$(mj_yget "$flat" created_at)" ]; then
+      rm -f "$fm" "$flat"; mj_err "warning: skipped $f: missing required fields"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
+    if [ -n "$want_task" ] && [ "$(mj_yget "$flat" task_id)" != "$want_task" ]; then rm -f "$fm" "$flat"; continue; fi
+    tier=""
+    if [ "$(mj_yget "$flat" repository_id)" = "$my_id" ]; then
+      if [ "$(mj_yget "$flat" worktree)" = "$MJ_ROOT" ] && [ "$(mj_yget "$flat" branch)" = "$my_branch" ]; then tier=0
+      elif [ "$my_branch" != DETACHED ] && [ "$(mj_yget "$flat" branch)" = "$my_branch" ]; then tier=1; fi
+    fi
+    if [ -n "$tier" ]; then
+      key="$tier|$(mj_yget "$flat" created_at)"
+      if [ -z "$best" ] || [ "${key%%|*}" -lt "${best_key%%|*}" ] || { [ "${key%%|*}" = "${best_key%%|*}" ] && [ "${key#*|}" \> "${best_key#*|}" ]; }; then
+        best="$f"; best_key="$key"
+        MJ_RES_HEAD="$(mj_yget "$flat" head)"; MJ_RES_BRANCH="$(mj_yget "$flat" branch)"
+        MJ_RES_DIRTY="$(mj_yget "$flat" working_tree)"; MJ_RES_CREATED="$(mj_yget "$flat" created_at)"
+        MJ_RES_TASK="$(mj_yget "$flat" task_id)"
+      fi
+    fi
+    rm -f "$fm" "$flat"
+  done
+  [ -n "$best" ] || return 1
+  MJ_RES_PATH="$best"; MJ_RES_TIER="${best_key%%|*}"
+  [ "$MJ_RES_TIER" = 0 ] && MJ_RES_MATCH=same_worktree_same_branch || MJ_RES_MATCH=same_branch
+  return 0
+}
+
+# age of an ISO timestamp in whole minutes; empty when unparseable
+mj_age_minutes() {
+  local e; e="$(mj_epoch "$1")"; [ -n "$e" ] || return 1
+  printf '%s' $(( ( $(mj_epoch "$(mj_now)") - e ) / 60 ))
+}
+# "18" -> "18m ago"; "1500" -> "25h ago"
+mj_age_human() {
+  local m="$1"
+  if [ -z "$m" ]; then printf 'unknown'
+  elif [ "$m" -lt 90 ]; then printf '%sm ago' "$m"
+  elif [ "$m" -lt 2880 ]; then printf '%sh ago' $((m/60))
+  else printf '%sd ago' $((m/1440)); fi
+}
+
+# value of a flat JSON key on one ledger line: mj_json_field LINE KEY
+mj_json_field() {
+  printf '%s' "$1" | awk -v k="$2" '
+    { s=$0
+      if (match(s, "\"" k "\":\"")) { r=substr(s, RSTART+length(k)+4); sub(/".*/,"",r); print r; exit }
+      if (match(s, "\"" k "\":")) { r=substr(s, RSTART+length(k)+3); sub(/[,}].*/,"",r); print r; exit } }'
+}
+
+# line numbers of ledger lines that are not well-formed events (need ts and event)
+mj_ledger_bad_lines() {
+  [ -f "$1" ] || return 0
+  awk '{ if ($0 !~ /^\{/ || $0 !~ /"ts":"/ || $0 !~ /"event":"/ || $0 !~ /\}$/) printf "%s ", NR }' "$1"
+}
+
+# Does a string contain a newline? Written as a function because the obvious inline form,
+# case "$v" in *"$(printf '\n')"*), can never match: command substitution strips the
+# trailing newline, leaving an empty pattern that matches everything.
+mj_is_multiline() { case "$1" in *"$(printf 'x\ny')"*) return 0 ;; esac
+  [ "$(printf '%s' "$1" | wc -l | tr -d ' ')" != 0 ]; }
