@@ -59,7 +59,7 @@ Better prompts do not fix any of this.
 | **Projection** | `update` generates `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any target you name, deterministically, and fingerprints them; a hand edit is detected and never silently overwritten |
 | **State** | one active task per checkout in `current.yaml`, with `branch`, `head`, and `working_tree` computed from git, never authored |
 | **Scope** | `start` takes the paths a task may touch; `check` and `finish` fail on files outside them; other worktrees' overlapping claims are reported |
-| **Profiles** | four bundles that set capability class, reasoning effort, verbosity, presentation, context toggles, verification, and checkpoint interval independently |
+| **Profiles** | one bundle per task class, each setting capability class, reasoning effort, verbosity, presentation, context toggles, verification, and checkpoint interval independently |
 | **Handover** | append-only records with computed front matter and required sections, created atomically, never staged; `--resolve` finds the right one for this worktree and branch and labels how far git has moved since |
 | **Finish** | a typed outcome and a contract evaluated line by line; nothing written when any line fails |
 | **Doctor** | proves the installation is real: policy parses, every declared enforcement is actually invoked by the hook it names without a swallowed exit code, projections match fingerprints, the always-loaded file is under budget |
