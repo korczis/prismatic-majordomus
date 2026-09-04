@@ -6,7 +6,7 @@ A profile sets five things separately: which capability class of model the task 
 
 ## How it works
 
-Each axis is a distinct key in `share/skeleton/profiles/<name>.yaml`, validated against the allowlist. `majordomus update` renders the profile table into every generated instruction file, so the worker reads the axes for the profile its task names. `check --explain` prints the effective values for the active task.
+Each axis is a distinct key in `share/skeleton/profiles/<name>.yaml`, seeded into `.ai/repo/profiles/` by `init` and validated against the allowlist. The generated bootstraps name the default profile and point at the layer; the axes themselves are read from the profile file by `check --explain`, which prints the effective values for the active task, and by `context`, which lets the profile's context block decide what the briefing offers.
 
 ## How to see it
 

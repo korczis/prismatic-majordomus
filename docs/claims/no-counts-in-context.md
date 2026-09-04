@@ -11,10 +11,13 @@ The always-loaded instruction file must not contain sentences like "14 agents", 
 ## How to see it
 
 ```bash
-echo "This repository has 12 agents." >> .ai/repo/providers/body.md && majordomus update --force
+printf '\nThis repository has 12 agents.\n' >> AGENTS.md
 majordomus doctor
-# FAIL counts      CLAUDE.md — hardcoded count in always-loaded context
+# FAIL projection  AGENTS.md — content differs from its own stamp (hand-edited?)
+# FAIL counts      AGENTS.md — hardcoded count in always-loaded context  [reproduce: grep -nE '[0-9]+ (agents|files|apps|commands|skills|rules)' AGENTS.md]
 ```
+
+The generated file is a bootstrap, so the count has to be introduced by hand or through a repository override of the adapter under its providers section; either way the check reads the file on disk and reports the count on its own line, beside the stamp mismatch.
 
 ## What it does not cover
 
