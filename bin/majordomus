@@ -36,6 +36,9 @@ MEMORY
   search <text>        find durable records without reading all of them          (read-only)
   knowledge            the compiled index over what this repository states       (read-only)
 
+RULES
+  rules                the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)
+
 PLAN
   plan                 the milestone and issue model: validate, read, and move an issue
 
@@ -72,7 +75,7 @@ set -- "${pre[@]+"${pre[@]}"}" "$@"
 case "$cmd" in
   -h|--help|help) usage; exit 0 ;;
   version|--version) echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session|knowledge|migrate)
+  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session|knowledge|migrate|rules)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"

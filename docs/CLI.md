@@ -695,6 +695,69 @@ document    shared      document   9b1e2d4f8c3a  docs/CONTINUITY.md
 knowledge sources: 169 file(s) in scope shared
 ```
 
+## `majordomus rules`
+
+The effective rule set: every active rule vendored under the repository's rules section
+plus every active rule the repository wrote, resolved as a dependency graph. Read-only in
+every subcommand except `vendor update`.
+
+A rule is a Markdown file with YAML front matter. Its identity is the front matter's `id`
+and `version`, never the file name. `docs/DOCTRINE.md` describes the format, the
+`x-majordomus` block that binds a rule to a validator, and what is authoritative today.
+
+```
+$ majordomus rules list
+majordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch
+majordomus.sessions-are-workers            v1  advisory  vendor:majordomus not machine-enforced
+project.english-only                       v1  blocking  project          not machine-enforced
+```
+
+- `list [--json]` prints the effective set in resolved order: identity, class, provenance
+  (`vendor:<name>` or `project`), and whether the tool enforces it. A rule without an
+  `x-majordomus` block is normative for whoever reads it and enforced by nobody, and the
+  listing says `not machine-enforced` rather than hiding it.
+- `show <id>` prints one rule, front matter and body, with the repository-relative path it
+  was read from as the first line. An id outside the effective set exits 12.
+- `vendor status` compares the vendored baseline with the package the running executable
+  ships. It prints both revisions, then the manifest integrity of the vendored copy, then
+  whether the two packages are the same.
+- `vendor diff` is the reviewable difference between the two, as a unified diff of the two
+  directories. It exits 0 whether or not they differ; `vendor status` carries the exit code.
+- `vendor update [--force]` replaces the vendored baseline with the executable's package.
+  The write is atomic: the new package is staged beside the target and swapped in. It never
+  touches `rules/project/`.
+
+**Resolution fails closed.** A missing dependency, a dependency on a deprecated rule, a
+cycle, one `id@version` claimed by two files, a project rule in the vendor namespace,
+malformed or incomplete front matter, an unknown front-matter key, or an `x-majordomus`
+block that names no validator, no enforcing command or no test — each stops `list`, `show`
+and every command that reads the set, with exit 10 and the reason. Nothing is applied
+partially. The order is deterministic: two runs agree, and every dependency is listed before
+the rule that depends on it.
+
+**The repository's vendored copy is authoritative.** A newer executable reports a newer
+baseline through `vendor status` and `vendor diff`; it never applies one. `update`,
+`doctor` and `check` leave the vendored directory alone. The baseline changes only when
+`vendor update` is asked for.
+
+**A hand edit under `vendor/` is detected.** The package manifest names every rule file
+with its hash. A file whose hash no longer matches, a listed file that is absent, or a file
+present beside the manifest that it does not list, is reported by `vendor status` and
+refused by `vendor update` until `--force`.
+
+| exit | meaning |
+|---|---|
+| 0 | the set resolves; the vendored baseline is current |
+| 10 | the set does not resolve, or the vendored copy fails its manifest |
+| 11 | `vendor status`: the executable ships a different package than the one vendored |
+| 12 | no rule with that id; nothing vendored yet; no rules section in this layout |
+| 15 | `vendor update` refused over a hand-edited vendor directory (`--force` overrides) |
+
+`test/cases/67_rule_dag.sh` proves each refusal by mutation, and proves that a newer
+distribution's package is not applied until asked, that `vendor update` leaves
+`rules/project/` byte for byte what it was, and that the resolved order is the same across
+runs.
+
 ## `majordomus finish`
 
 Evaluate the finish contract. Refuse if unmet.

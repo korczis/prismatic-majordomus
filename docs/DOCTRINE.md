@@ -53,6 +53,110 @@ Each entry carries:
 | `claims` | the claim ids in `docs/CLAIMS.yaml` this doctrine backs |
 | `test` | the case that proves it |
 
+## Rule objects
+
+The registry above is one YAML file shipped with the tool, readable only by the tool. The
+`.ai/` layout carries the same rules as portable **rule objects**: one Markdown file per
+rule, YAML front matter on the machine side, prose on the human side, under the
+repository's rules section.
+
+```text
+.ai/repo/rules/
+├── README.md                  the format, for whoever writes a project rule
+├── vendor/majordomus/         the pinned Majordomus baseline; do not edit, upgrade explicitly
+│   ├── manifest.yaml          every rule file, its identity and its content hash
+│   └── rules/*.md
+└── project/*.md               rules this repository wrote
+```
+
+### Front matter
+
+Identity is `id` and `version`, never the file name. The generic fields are the ones any
+reader of the format understands; the `x-majordomus` block is the tool's binding and is
+present only on a rule the tool enforces.
+
+```yaml
+---
+id: majordomus.scope-integrity      # namespaced by origin; project rules use another prefix
+version: 1                          # an exact integer
+kind: rule
+title: Scope integrity
+description: One sentence.
+statement: The normative sentence a worker follows.
+status: active                      # active | deprecated
+class: blocking                     # blocking | advisory — the same two classes, no third
+depends_on: [majordomus.state-consistency@1]   # exact id@version references, or []
+tags: [scope, verification]
+x-majordomus:
+  validator: scope                  # mj_validate_<validator>
+  category: scope                   # the finding category
+  enforced_by: [check, finish, watch]
+  policy_key: scope_respected       # finish doctrines only
+  exit_code: 10
+  claims: [scope-enforcement]       # ids in docs/CLAIMS.yaml
+  tests: [test/cases/04_start_check.sh]
+---
+```
+
+The allowed keys are listed in `share/allow/rule.txt`; a key outside that list is an
+error, not a silent extra. A generic reader may ignore `x-majordomus` and still understand
+the rule. A rule without the block is normative for whoever reads it and enforced by
+nobody, and `majordomus rules list` says `not machine-enforced` for it rather than
+implying otherwise. The class still says what a violation means.
+
+### Resolution
+
+`majordomus rules list` resolves the effective set as a dependency graph, deterministically:
+the vendored package in its manifest order, then project rules in file-name order, ordered
+so that every dependency precedes the rule that depends on it. Each of these stops the
+resolution with exit 10 and the reason, and nothing is applied partially:
+
+- a dependency no rule provides, or one provided only by a deprecated rule,
+- a dependency cycle,
+- one `id@version` claimed by two files,
+- a project rule whose id is in the `majordomus.` namespace,
+- front matter that is absent, does not parse, lacks a required field, or carries an
+  unknown key,
+- an `x-majordomus` block with no validator, no enforcing command, or no test.
+
+### Vendoring
+
+The baseline under `vendor/majordomus/` is a copy of the package the executable ships in
+`share/standard/majordomus/`, written by `init` and afterwards only by
+`majordomus rules vendor update`. The repository's copy is authoritative for that
+repository: a newer executable reports a newer baseline through `rules vendor status` and
+`rules vendor diff`, and never applies it. The manifest names every rule file with its
+hash, so a hand edit under `vendor/` is detected by `rules vendor status` and refused by
+`rules vendor update` until `--force`. The update is atomic and never touches
+`rules/project/`.
+
+### Composition: additive, no override
+
+The effective set is every active vendored rule plus every active project rule. A project
+rule may add a constraint. There is no override mechanism: nothing disables or weakens a
+vendored rule, and a project rule may not reuse a vendored identity or its namespace. A
+repository that needs a vendored rule gone changes the baseline explicitly, in the open,
+with `rules vendor update`, or does not use the tool.
+
+### What is authoritative today
+
+Two descriptions of the same rules exist during the transformation, and only one of them
+drives enforcement:
+
+| surface | read by | authority today |
+|---|---|---|
+| `share/doctrines.yaml` | the dispatcher, `doctor`, `doctrine list`, the site | **authoritative**: what `check`, `finish`, `watch` and `doctor` enforce |
+| rule objects under `rules/` | `majordomus rules`, `init`, humans and other tools | resolved and verified, not yet dispatched |
+
+The target is that the dispatcher and `doctor` read the resolved rule objects and the
+registry is retired, with the same chain — declared, validator exists, commands dispatch
+it, blocking failure propagates, test exists, CI runs it — recreated against the objects
+and the reverse check (every validator is declared by an effective rule) kept. Until that
+lands, a rule object and its registry entry describe one rule, and the registry decides.
+
+`test/cases/67_rule_dag.sh` proves the resolution refusals, the vendoring guarantees and
+the deterministic order by mutation.
+
 ## Two classes, and no third
 
 - **blocking** — a violation stops the command with a non-zero exit.
