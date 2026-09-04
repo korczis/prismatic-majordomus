@@ -222,7 +222,7 @@ mj_context_sections() {
     local depth; depth="$(mj_pro context.recent_history_depth)"; [ -n "$depth" ] || depth=0
     if [ "$depth" -gt 0 ] && [ -f "$MJ_DIR/state/ledger.jsonl" ]; then
       { printf '## RECENT HISTORY (last %s events)\n' "$depth"
-        ( MJ_JSON=0; mj_cmd_history --limit "$depth" 2>/dev/null | sed '/^(/d' ); } > "$MJ_CTX_TMP/90.history"
+        ( export MJ_JSON=0; mj_cmd_history --limit "$depth" 2>/dev/null | sed '/^(/d' ); } > "$MJ_CTX_TMP/90.history"
     else
       mj_ctx_excl "history" "profile $profile sets context.recent_history_depth: $depth"
     fi

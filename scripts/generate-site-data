@@ -629,7 +629,7 @@ if mj_project_load; then
   # command cannot disagree about what is blocked. Calling the CLI instead would need an
   # installed .majordomus/ that a disposable test repository does not have — that mistake
   # cost every site case an hour ago.
-  ( MJ_JSON=1; mj_plan_roadmap ) > "$OUT/roadmap.json"
+  ( export MJ_JSON=1; mj_plan_roadmap ) > "$OUT/roadmap.json"
   # The milestone graph in the shape site/graph.js renders, so the roadmap reuses the runtime
   # /map/ and /evidence/ already use rather than adding a third picture of a dependency graph.
   jq '{schema: 1,
