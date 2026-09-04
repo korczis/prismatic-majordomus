@@ -11,20 +11,16 @@
 {%- set plan = load_data(path="data/generated/plan.json") -%}
 {%- set repo = "https://github.com/korczis/prismatic-majordomus/blob/master/" -%}
 {%- set issues = plan.issues -%}
-{%- set ready = [i for i in issues if i.status == "READY"] -%}
-{%- set blocked = [i for i in issues if i.status == "BLOCKED"] -%}
-{%- set active = [i for i in issues if i.status == "ACTIVE"] -%}
-{%- set verify = [i for i in issues if i.status == "VERIFY"] -%}
-{%- set done = [i for i in issues if i.status == "DONE"] -%}
+{#- The vocabulary comes from the engine, not from this file: plan.json carries the statuses
+    project.awk declares, so a status added there gets a tile here without an edit. -#}
+{%- set statuses = plan.statuses.issue -%}
 <div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
-  <dl class="grid max-w-3xl grid-cols-2 gap-4 border-b border-default pb-8 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ done | length }}</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ ready | length }}</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ active | length }}</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ verify | length }}</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ blocked | length }}</dd></div>
+  <dl class="grid max-w-3xl grid-cols-2 gap-4 border-b border-default pb-8 sm:grid-cols-3 lg:grid-cols-6">
+    {%- for st in statuses %}
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ st | lower }}</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ [i for i in issues if i.status == st] | length }}</dd></div>
+    {%- endfor %}
   </dl>
   <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/.majordomus/project" class="text-fg-brand hover:underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand hover:underline">How that works</a>.</p>
 
@@ -47,7 +43,9 @@
         <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">{{ ms.id }}</span>{{ <plan_status status={ms.status} /> }}{% if ms.id == plan.active_milestone %}<span class="rounded bg-brand-softer px-1.5 py-0.5 font-mono text-xs text-fg-brand-strong">active</span>{% endif %}</span>
         <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ ms.title }}</h3>
         <p class="text-sm leading-relaxed text-body">{{ ms.outcome }}</p>
-        <p class="mt-4 font-mono text-xs text-body-subtle">{{ ms.counts.done }} of {{ ms.counts.total }} done · {{ ms.counts.ready }} ready · {{ ms.counts.active }} active · {{ ms.counts.verify }} verify · {{ ms.counts.blocked }} blocked</p>
+        {#- required, not total: it is the denominator the engine derives DONE from, so a
+            milestone with a cancelled issue cannot read "3 of 4" while the engine calls it done. -#}
+        <p class="mt-4 font-mono text-xs text-body-subtle">{{ ms.counts.by_status.DONE }} of {{ ms.counts.required }} done{% for st in statuses %}{% if st != "DONE" and ms.counts.by_status[st] > 0 %} · {{ ms.counts.by_status[st] }} {{ st | lower }}{% endif %}{% endfor %}</p>
       </a>
     </li>
     {%- endfor %}
@@ -86,12 +84,12 @@
 
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">How to work through it</h2>
   <div class="mt-4 max-w-3xl">
+  {#- the sequence is the table in the canonical worker instructions, carried through
+      plan.json; this page and the file every worker loads cannot describe different work -#}
   {% <code label="a worker with no conversation history"> %}
-majordomus plan next
-majordomus plan show <id>
-majordomus plan start <id>
-majordomus plan evidence <id> --covers <token> --type test --command "bash test/run.sh" --result "what it showed"
-majordomus plan done <id>
+{#- safe: the component escapes the body once; escaping here too would print &amp;lt; -#}
+{% for s in plan.worker_sequence %}{{ s.command | safe }}{% if not loop.last %}
+{% endif %}{% endfor %}
 {% </code> %}
   </div>
   <p class="mt-4 max-w-3xl text-sm text-body">Read <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand hover:underline">the planning model</a> for what the terms mean, and <a href="{{ get_url(path="/docs/dogfooding/", trailing_slash=true) }}" class="text-fg-brand hover:underline">dogfooding</a> for why this repository holds itself to it. The release roadmap — what each version adds — is <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand hover:underline">a separate page</a>.</p>

@@ -180,8 +180,24 @@ done
 
 # ---------------------------------------------------------------- lifecycle.json
 OUTCOMES="$(grep -oE 'completed\|partial\|blocked\|no_match\|failed' "$ROOT/lib/finish.sh" | head -1 | tr '|' '\n' | jq -R . | jq -sc .)"
-LABELS='["exact","advanced","diverged","different_context"]'
-STEPS='[{"command":"start","what":"declare scope and profile; identity computed from git"},{"command":"check","what":"state, scope, checkpoint age, blockers"},{"command":"handover","what":"append-only continuation record, never staged"},{"command":"finish","what":"the contract, line by line; refused if any line fails"}]'
+# The labels are the ones mj_git_label can actually print, read out of the function that
+# prints them. A label listed here that the function cannot produce would be a vocabulary
+# the site teaches and the tool never uses.
+LABELS="$(awk '/^mj_git_label\(\)/ { f = 1 } f && /printf/ { if (match($0, /printf '"'"'[a-z_]+'"'"'/)) {
+             lbl = substr($0, RSTART + 8, RLENGTH - 9); if (!(lbl in seen)) { seen[lbl] = 1; print lbl } } }
+           f && /^}/ { exit }' "$ROOT/lib/common.sh" | jq -R . | jq -sc .)"
+[ "$(printf '%s' "$LABELS" | jq length)" -ge 2 ] \
+  || { echo "generate-site-data: no divergence labels in lib/common.sh mj_git_label" >&2; exit 10; }
+# The lifecycle is the block the canonical worker instructions carry, in the order they carry
+# it; what each command does is the CLI's own one-line summary. Neither is written here.
+STEPS="$(awk '/^```$/ { n++; next } n == 1 && /^majordomus [a-z]+/ { print $2 }' \
+             "$ROOT/share/skeleton/providers/body.md" \
+  | while read -r c; do
+      printf '%s\t%s\n' "$c" "$(awk -v c="$c" '$1 == c && NF > 1 { $1 = ""; sub(/^ +/, ""); sub(/ +\(read-only\)$/, ""); sub(/ +$/, ""); print; exit }' \
+        <(sed -n '/^usage()/,/^USAGE$/p' "$ROOT/bin/majordomus" | sed -E 's/^  ([a-z]+)( <[^>]*>)?  +/\1 /'))"
+    done | jq -Rn '[inputs | split("\t") | {command: .[0], what: .[1]}]')"
+[ "$(printf '%s' "$STEPS" | jq length)" -ge 4 ] \
+  || { echo "generate-site-data: no lifecycle block in share/skeleton/providers/body.md" >&2; exit 10; }
 PRINCIPLES="$(awk '/^### Ten rules/{f=1;next} /^### /{if(f)exit} f && /^[0-9]+\. \*\*/{sub(/^[0-9]+\. \*\*/,""); sub(/\*\*.*$/,""); print}' "$ROOT/share/skeleton/providers/body.md" | jq -R . | jq -sc .)"
 [ "$(printf '%s' "$PRINCIPLES" | jq length)" -ge 8 ] || { echo "generate-site-data: expected the ten rules in providers/body.md" >&2; exit 10; }
 jq -n --argjson outcomes "$OUTCOMES" --argjson labels "$LABELS" --argjson steps "$STEPS" --argjson principles "$PRINCIPLES" \
@@ -658,17 +674,16 @@ if mj_project_load; then
       --argjson acceptance "$(pj_list "$id" acceptance_criteria)" --argjson validation "$(pj_list "$id" validation)" \
       --argjson need "$(pj_list "$id" evidence_required)" --argjson risks "$(pj_list "$id" risks)" \
       --argjson evidence "$(pj_ev "$id")" \
-      --argjson total "$(printf '%s' "$row" | cut -f8)" --argjson done_n "$(printf '%s' "$row" | cut -f9)" \
-      --argjson ready "$(printf '%s' "$row" | cut -f10)" --argjson blocked "$(printf '%s' "$row" | cut -f11)" \
-      --argjson active "$(printf '%s' "$row" | cut -f12)" --argjson verify "$(printf '%s' "$row" | cut -f13)" \
-      --argjson cancelled "$(printf '%s' "$row" | cut -f14)" \
+      --argjson counts "$(printf '%s' "$row" | cut -f8 | tr ',' '\n' \
+        | jq -Rn '[inputs | split("=") | {key: .[0], value: (.[1] | tonumber)}] | from_entries
+                  | {total, required, by_status: (del(.total, .required))}')" \
       --argjson issues "$(mj_pj_of_milestone "$id" | jq -R . | jq -sc .)" \
       --arg mermaid "$(mj_project_mermaid "$id")" \
       '{id:$id,slug:$slug,status:$status,order:$order,priority:$priority,title:$title,
         problem:$problem,outcome:$outcome,current_state:$current,desired_state:$desired,
         scope:$scope,non_scope:$non_scope,acceptance_criteria:$acceptance,validation:$validation,
         evidence_required:$need,risks:$risks,evidence:$evidence,issues:$issues,mermaid:$mermaid,
-        counts:{total:$total,done:$done_n,ready:$ready,blocked:$blocked,active:$active,verify:$verify,cancelled:$cancelled}}'
+        counts:$counts}'
   done; printf ']')"
   IS="$(first=1; printf '['; for id in $(mj_pj_issue_ids); do
     [ "$first" = 1 ] || printf ','; first=0
@@ -697,11 +712,42 @@ if mj_project_load; then
   WV="$(mj_pj_rows W | jq -Rn '[inputs | split("\t") | {wave: (.[1]|tonumber), issues: (.[2]|split(" "))}]')"
   EG="$(mj_pj_rows G | jq -Rn '[inputs | split("\t") | {from: .[1], to: .[2]}]')"
   FD="$(mj_pj_findings | jq -Rn '[inputs | split("\t") | {level: .[1], code: .[2], subject: .[3], message: .[4]}]')"
+  # The sequence a worker runs is not typed into a template: it is the table the canonical
+  # worker instructions already carry, in share/skeleton/providers/body.md, parsed into data.
+  # One source, so the page and the file every worker loads cannot describe different work.
+  WS="$(awk '
+      /^### Take work from the plan/ { f = 1; next }
+      /^### / { if (f) exit }
+      f && /^\| / && $0 !~ /^\| *When *\|/ && $0 !~ /^\|-/ {
+        line = $0
+        sub(/^\| */, "", line)
+        i = index(line, "|"); when = substr(line, 1, i - 1); run = substr(line, i + 1)
+        sub(/ *$/, "", when)
+        # the command is the first backticked span; anything after it is the note
+        if (match(run, /`[^`]+`/)) {
+          cmd = substr(run, RSTART + 1, RLENGTH - 2)
+          note = substr(run, RSTART + RLENGTH)
+          sub(/^ *(—|--) */, "", note); sub(/ *\|? *$/, "", note); sub(/ *\| *$/, "", note)
+          printf "%s\t%s\t%s\n", when, cmd, note
+        }
+      }' "$ROOT/share/skeleton/providers/body.md" \
+    | jq -Rn '[inputs | split("\t") | {when: .[0], command: .[1], note: .[2]}]')"
+  [ "$(printf '%s' "$WS" | jq length)" -gt 0 ] \
+    || { echo "generate-site-data: no worker sequence in share/skeleton/providers/body.md" >&2; exit 10; }
+
+  # The status vocabulary travels with the data. Every page that shows a status or a count
+  # loops over this rather than naming done, ready, active, verify and blocked itself, so
+  # the engine adding a status changes the pages and the documentation without an edit.
+  ST="$(jq -n --argjson i "$(mj_pj_statuses issue | tr ' ' '\n' | jq -R . | jq -sc .)" \
+             --argjson m "$(mj_pj_statuses milestone | tr ' ' '\n' | jq -R . | jq -sc .)" \
+             '{issue:$i, milestone:$m}')"
   jq -n --arg name "$(mj_pj_project_name)" --arg repo "$(mj_pj_repository)" --arg branch "$(mj_pj_default_branch)" \
     --arg active "$(mj_pj_active)" --arg next "$(mj_pj_next_ready)" --arg mermaid "$(mj_project_mermaid)" \
+    --argjson statuses "$ST" --argjson worker_sequence "$WS" \
     --argjson milestones "$MS" --argjson issues "$IS" --argjson waves "$WV" --argjson edges "$EG" --argjson findings "$FD" \
     '{schema:1, project:{name:$name, repository:$repo, default_branch:$branch},
-      active_milestone:$active, next_ready:$next, mermaid:$mermaid,
+      active_milestone:$active, next_ready:$next, mermaid:$mermaid, statuses:$statuses,
+      worker_sequence:$worker_sequence,
       milestones:$milestones, issues:$issues, waves:$waves, edges:$edges, findings:$findings}' > "$OUT/plan.json"
 # Refuse an invalid model rather than project it. A cycle makes every milestone BLOCKED with
 # no rank, and without this the generator published that roadmap and exited 0 — a page saying
@@ -833,8 +879,15 @@ PS="$STAGE/PLAN_STATUS.md"
   # matters and the thing --check actually compares; it moves when the canonical data moves
   # and not when anything else does.
   printf 'Generated from canonical inputs `%s`.\n\n' "$(printf '%s' "$HASH" | cut -c1-12)"
-  printf '## Milestones\n\n| milestone | status | issues done | ready | active | verify | blocked | outcome |\n|---|---|---|---|---|---|---|---|\n'
-  jq -r '.milestones[] | "| [\(.id)](https://korczis.github.io/prismatic-majordomus/plan/\(.id | ascii_downcase)/) | \(.status) | \(.counts.done)/\(.counts.total) | \(.counts.ready) | \(.counts.active) | \(.counts.verify) | \(.counts.blocked) | \(.outcome) |"' "$OUT/plan.json"
+  # The columns are the status vocabulary the engine declared, not a list typed here: DONE
+  # against the denominator the engine derives status from, then one column per remaining
+  # status. A status added to the engine adds a column to this table by existing.
+  jq -r '(.statuses.issue - ["DONE"]) as $sv
+         | ([ "milestone", "status", "done of required" ] + ($sv | map(ascii_downcase)) + [ "outcome" ]) as $head
+         | "## Milestones\n\n| " + ($head | join(" | ")) + " |\n|" + ($head | map("---") | join("|")) + "|"' "$OUT/plan.json"
+  jq -r '(.statuses.issue - ["DONE"]) as $sv | .milestones[] | . as $m
+         | "| [\(.id)](https://korczis.github.io/prismatic-majordomus/plan/\(.id | ascii_downcase)/) | \(.status) | \(.counts.by_status.DONE)/\(.counts.required) | "
+           + (($sv | map($m.counts.by_status[.] | tostring)) | join(" | ")) + " | \(.outcome) |"' "$OUT/plan.json"
   printf '\n## Issues\n\n| issue | milestone | status | wave | depends on | title |\n|---|---|---|---|---|---|\n'
   jq -r '.issues[] | "| [\(.id)](https://korczis.github.io/prismatic-majordomus/plan/\(.id | ascii_downcase)/) | \(.milestone) | \(.status) | \(.wave) | \(if (.depends_on | length) == 0 then "—" else (.depends_on | join(", ")) end) | \(.title) |"' "$OUT/plan.json"
   printf '\n## Execution waves\n\n'

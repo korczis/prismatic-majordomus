@@ -152,7 +152,7 @@ majordomus finish --outcome completed --verify-command "make test"
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="05" kicker="how it works" title="A task is bounded by start and by finish or handover" /> }}
-    <ol class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <ol class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {%- for step in lifecycle.steps -%}
       <li><a href="{{ get_url(path="/commands/" ~ step.command ~ "/", trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium">
         <span class="font-mono text-xs uppercase tracking-wide text-fg-brand">step {{ loop.index }}</span>
@@ -161,7 +161,7 @@ majordomus finish --outcome completed --verify-command "make test"
       </a></li>
       {%- endfor -%}
     </ol>
-    <p class="mt-6 text-sm text-body">{{ readme.does | length }} responsibilities sit behind those four commands — <a href="{{ get_url(path="/supervises/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">what Majordomus supervises →</a>. Outcomes are a closed vocabulary: {% for o in lifecycle.outcomes %}<code class="font-mono text-heading">{{ o }}</code>{% if not loop.last %}, {% endif %}{% endfor %}. State read back is labelled {% for l in lifecycle.divergence_labels %}<code class="font-mono text-heading">{{ l }}</code>{% if not loop.last %}, {% endif %}{% endfor %} against git.</p>
+    <p class="mt-6 text-sm text-body">{{ readme.does | length }} responsibilities sit behind the {{ lifecycle.steps | length }} commands of that lifecycle — <a href="{{ get_url(path="/supervises/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">what Majordomus supervises →</a>. Outcomes are a closed vocabulary: {% for o in lifecycle.outcomes %}<code class="font-mono text-heading">{{ o }}</code>{% if not loop.last %}, {% endif %}{% endfor %}. State read back is labelled {% for l in lifecycle.divergence_labels %}<code class="font-mono text-heading">{{ l }}</code>{% if not loop.last %}, {% endif %}{% endfor %} against git.</p>
   </div>
 </section>
 

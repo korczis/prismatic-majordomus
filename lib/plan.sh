@@ -112,7 +112,20 @@ mj_plan_roadmap() {
         for (i = 1; i <= n; i++) o = o (i > 1 ? "," : "") "\"" esc(a[i]) "\""
         return "[" o "]"
       }
-      $1 == "M" { r[++n] = $16 + 0 "\t" $4 + 0 "\t" $0 }
+      # total and required are the denominators; everything else is a status the engine
+      # declared, kept under by_status so a reader can loop the statuses without having to
+      # know which keys are not one.
+      function counts(x,   n, a, i, kv, o, t, r) {
+        n = split(x, a, ","); o = ""
+        for (i = 1; i <= n; i++) {
+          split(a[i], kv, "=")
+          if (kv[1] == "total") { t = kv[2] + 0; continue }
+          if (kv[1] == "required") { r = kv[2] + 0; continue }
+          o = o (o == "" ? "" : ",") "\"" kv[1] "\":" (kv[2] + 0)
+        }
+        return "{\"total\":" t ",\"required\":" r ",\"by_status\":{" o "}}"
+      }
+      $1 == "M" { r[++n] = $10 + 0 "\t" $4 + 0 "\t" $0 }
       END {
         for (i = 1; i < n; i++) for (j = i + 1; j <= n; j++) {
           split(r[i], x, "\t"); split(r[j], y, "\t")
@@ -121,10 +134,9 @@ mj_plan_roadmap() {
         printf "{\"schema\":1,\"milestones\":["
         for (i = 1; i <= n; i++) {
           sub(/^[^\t]*\t[^\t]*\t/, "", r[i]); split(r[i], f, "\t")
-          printf "%s{\"id\":\"%s\",\"version\":\"%s\",\"title\":\"%s\",\"status\":\"%s\",\"rank\":%d,\"order\":%d,\"issues\":{\"total\":%d,\"done\":%d,\"ready\":%d,\"blocked\":%d,\"active\":%d,\"verify\":%d,\"cancelled\":%d},\"depends_on\":%s,\"blocked_by\":%s,\"dependents\":%s,\"claims\":%s}", \
-            (i > 1 ? "," : ""), esc(f[2]), esc(f[15]), esc(f[6]), esc(f[3]), f[16], f[4], \
-            f[8], f[9], f[10], f[11], f[12], f[13], f[14], \
-            lst(f[17]), lst(f[18]), lst(f[19]), lst(f[20])
+          printf "%s{\"id\":\"%s\",\"version\":\"%s\",\"title\":\"%s\",\"status\":\"%s\",\"rank\":%d,\"order\":%d,\"issues\":%s,\"depends_on\":%s,\"blocked_by\":%s,\"dependents\":%s,\"claims\":%s}", \
+            (i > 1 ? "," : ""), esc(f[2]), esc(f[9]), esc(f[6]), esc(f[3]), f[10], f[4], \
+            counts(f[8]), lst(f[11]), lst(f[12]), lst(f[13]), lst(f[14])
         }
         printf "]}\n"
       }' "$MJ_PJ/model.tsv"
@@ -184,17 +196,27 @@ mj_plan_status() {
   local only="${1:-}" id row active nxt
   active="$(mj_pj_active)"
   if [ "$MJ_JSON" = 1 ]; then
-    printf '{"active_milestone":"%s","next_ready":"%s","milestones":[' "$active" "$(mj_pj_next_ready "$active")"
+    # the vocabulary travels with the counts: a reader of this output never has to know
+    # which statuses exist, and a status added to the engine appears here by existing
+    printf '{"active_milestone":"%s","next_ready":"%s","statuses":[%s],"milestones":[' \
+      "$active" "$(mj_pj_next_ready "$active")" \
+      "$(mj_pj_statuses issue | tr ' ' '\n' | awk '{ printf "%s\"%s\"", (NR > 1 ? "," : ""), $0 }')"
     local first=1
     mj_pj_milestone_ids | while read -r id; do
       [ -n "$only" ] && [ "$id" != "$only" ] && continue
       [ "$first" = 1 ] || printf ','; first=0
-      row="$(mj_pj_row M "$id")"
-      printf '{"id":"%s","status":"%s","title":"%s","total":%s,"done":%s,"ready":%s,"blocked":%s,"active":%s,"verify":%s,"cancelled":%s}' \
-        "$id" "$(printf '%s' "$row" | cut -f3)" "$(mj_json_esc "$(printf '%s' "$row" | cut -f6)")" \
-        "$(printf '%s' "$row" | cut -f8)" "$(printf '%s' "$row" | cut -f9)" "$(printf '%s' "$row" | cut -f10)" \
-        "$(printf '%s' "$row" | cut -f11)" "$(printf '%s' "$row" | cut -f12)" "$(printf '%s' "$row" | cut -f13)" \
-        "$(printf '%s' "$row" | cut -f14)"
+      # counts are emitted as the engine keyed them: total, required, then one entry per
+      # declared status. Nothing here names a status, so a new one appears by existing.
+      printf '{"id":"%s","status":"%s","title":"%s","counts":%s}' \
+        "$id" "$(mj_pj_m_status "$id")" "$(mj_json_esc "$(mj_pj_m_title "$id")")" \
+        "$(mj_pj_m_counts "$id" | awk -F, '
+           function emit(x,   kv) { split(x, kv, "="); return "\"" kv[1] "\":" (kv[2] + 0) }
+           { t = ""; r = ""; o = ""
+             for (i = 1; i <= NF; i++) {
+               split($i, kv, "=")
+               if (kv[1] == "total") { t = kv[2] + 0 } else if (kv[1] == "required") { r = kv[2] + 0 }
+               else o = o (o == "" ? "" : ",") emit($i) }
+             printf "{\"total\":%d,\"required\":%d,\"by_status\":{%s}}", t, r, o }')"
     done
     printf ']}\n'
     return 0
@@ -202,9 +224,8 @@ mj_plan_status() {
   printf '%-6s %-8s %-5s %s\n' ID STATUS DONE TITLE
   mj_pj_milestone_ids | while read -r id; do
     [ -n "$only" ] && [ "$id" != "$only" ] && continue
-    row="$(mj_pj_row M "$id")"
-    printf '%-6s %-8s %2s/%-2s %s\n' "$id" "$(printf '%s' "$row" | cut -f3)" \
-      "$(printf '%s' "$row" | cut -f9)" "$(printf '%s' "$row" | cut -f8)" "$(printf '%s' "$row" | cut -f6)"
+    printf '%-6s %-8s %2s/%-2s %s\n' "$id" "$(mj_pj_m_status "$id")" \
+      "$(mj_pj_m_count "$id" DONE)" "$(mj_pj_m_count "$id" required)" "$(mj_pj_m_title "$id")"
   done
   printf '\nactive milestone: %s\n' "${active:-none}"
   nxt="$(mj_pj_next_ready "$active")"

@@ -87,20 +87,26 @@ mj_pj_is_milestone()   { case " $MJ_PJ_MILESTONES " in *" $1 "*) return 0 ;; *) 
 mj_pj_issue_ids()      { mj_pj_rows I | cut -f2; }
 
 # milestone columns: 2 id · 3 status · 4 order · 5 priority · 6 title · 7 slug
-#                    8 total · 9 done · 10 ready · 11 blocked · 12 active · 13 verify · 14 cancelled
-#                    15 version · 16 rank · 17 depends · 18 blocked_by · 19 dependents · 20 claims
+#                    8 counts (name=value, comma separated, keyed by the status vocabulary)
+#                    9 version · 10 rank · 11 depends · 12 blocked_by · 13 dependents · 14 claims
 mj_pj_m_status()  { mj_pj_col M "$1" 3; }
 mj_pj_m_title()   { mj_pj_col M "$1" 6; }
-mj_pj_m_version() { mj_pj_col M "$1" 15; }
-mj_pj_m_rank()    { mj_pj_col M "$1" 16; }
-mj_pj_m_deps()    { mj_pj_col M "$1" 17; }
-mj_pj_m_blocked() { mj_pj_col M "$1" 18; }
-mj_pj_m_claims()  { mj_pj_col M "$1" 20; }
+mj_pj_m_counts()  { mj_pj_col M "$1" 8; }
+mj_pj_m_version() { mj_pj_col M "$1" 9; }
+mj_pj_m_rank()    { mj_pj_col M "$1" 10; }
+mj_pj_m_deps()    { mj_pj_col M "$1" 11; }
+mj_pj_m_blocked() { mj_pj_col M "$1" 12; }
+mj_pj_m_claims()  { mj_pj_col M "$1" 14; }
+# One count out of a milestone's counts field, by name: total, required, or any status the
+# vocabulary declares. Nothing outside project.awk decides which counts exist.
+mj_pj_m_count()   { mj_pj_m_counts "$1" | tr ',' '\n' | sed -n "s/^$2=//p"; }
+# The declared status vocabulary for issues or for milestones, space separated.
+mj_pj_statuses()  { mj_pj_rows S | awk -F'\t' -v k="$1" '$2 == k { print $3 }'; }
 
 # milestone ids in roadmap order: rank, then order, then id. This is the roadmap sequence,
 # derived from the graph; no list of versions is maintained anywhere.
 mj_pj_roadmap() {
-  awk -F'\t' '$1=="M" { printf "%s\t%s\t%s\n", $16+0, $4+0, $2 }' "$MJ_PJ/model.tsv" \
+  awk -F'\t' '$1=="M" { printf "%s\t%s\t%s\n", $10+0, $4+0, $2 }' "$MJ_PJ/model.tsv" \
     | sort -k1,1n -k2,2n -k3,3 | cut -f3
 }
 # milestone ids in one derived state

@@ -12,8 +12,9 @@
 #
 # output (tab separated, first field is the record type):
 #   P  name  repository  default_branch  active_milestone
-#   M  id  status  order  priority  title  slug  total  done  ready  blocked  active  verify  cancelled \
-#      version  rank  depends  blocked_by  dependents  claims
+#   M  id  status  order  priority  title  slug  counts  version  rank  depends  blocked_by \
+#      dependents  claims
+#   S  kind  status...                  the status vocabulary, one record per record kind
 #   R  from  to                          one record per milestone dependency edge, sorted
 #   I  id  milestone  status  wave  priority  profile  parallel_safe  title  slug \
 #      deps  blocked_by  dependents  scope  evidence_have  evidence_need
@@ -21,15 +22,25 @@
 #   G  from  to                          one record per dependency edge, in sorted order
 #   V  level  code  subject  message     validation findings
 #
-# Statuses. Issue: BLOCKED READY ACTIVE VERIFY DONE CANCELLED. Milestone: PLANNED
-# BLOCKED ACTIVE VERIFY DONE CANCELLED SUPERSEDED. Both are derived here and stored nowhere.
+# The status vocabulary is declared once, in BEGIN, and emitted as S records. Statuses are
+# derived here and stored nowhere, and no surface downstream names one: the counts field is
+# keyed by the declared vocabulary, so a status added here reaches the CLI, the site and the
+# documentation without anybody editing them. A status this file assigns that the
+# declaration does not carry is a finding, not a silent extra column.
 #
 # Two graphs, deliberately not one. The issue graph inside a milestone decides what a worker
 # may execute next; the milestone graph above it decides which outcomes are reachable at all.
 # A milestone is gated by its dependencies being DONE, which is what makes "each step is gated
 # by the previous one being real" an invariant rather than a sentence.
 
-BEGIN { FS = "\t"; OFS = "\t" }
+BEGIN { FS = "\t"; OFS = "\t"
+  # Declared in derivation order — the order the tests below assign them in, which is also
+  # the order every surface displays them in. Adding a status here without assigning it, or
+  # assigning one without declaring it, is caught: at runtime by the reconciliation in the
+  # emit block, and at rest by the case that reads the assignments out of this file.
+  ISTATUS = "READY BLOCKED ACTIVE VERIFY DONE CANCELLED"
+  MSTATUS = "PLANNED BLOCKED ACTIVE VERIFY DONE CANCELLED SUPERSEDED"
+}
 
 function clean(s) { gsub(/\t/, " ", s); return s }
 
@@ -199,15 +210,16 @@ END {
   # --- milestone status
   for (i = 1; i <= mn; i++) {
     id = mids[i]
-    tot = 0; nd = 0; nr = 0; nb = 0; na = 0; nv = 0; nc = 0
+    tot = 0
+    delete cnt
     for (j = 1; j <= inum; j++) {
       iid = iids[j]
       if (it[iid, "milestone"] != id) continue
       tot++
-      s = status[iid]
-      if (s == "DONE") nd++; else if (s == "READY") nr++; else if (s == "BLOCKED") nb++
-      else if (s == "ACTIVE") na++; else if (s == "VERIFY") nv++; else if (s == "CANCELLED") nc++
+      cnt[status[iid]]++
     }
+    nd = cnt["DONE"] + 0; nr = cnt["READY"] + 0; na = cnt["ACTIVE"] + 0
+    nv = cnt["VERIFY"] + 0; nc = cnt["CANCELLED"] + 0
     mcov = 1
     for (k = 1; k <= mneedn[id]; k++) if (!((id, mneed[id, k]) in mev)) mcov = 0
     req = tot - nc
@@ -221,7 +233,12 @@ END {
     else if (nr == 0)                                       ms = "BLOCKED"
     else                                                    ms = "PLANNED"
     mstatus[id] = ms
-    mrow[id] = tot "\t" nd "\t" nr "\t" nb "\t" na "\t" nv "\t" nc
+    # total is every issue; required is the denominator the derivation above uses, so a
+    # page can never print "n of total done" for a milestone the engine calls DONE.
+    cstr = "total=" tot ",required=" req
+    nsv = split(ISTATUS, sv, " ")
+    for (v = 1; v <= nsv; v++) cstr = cstr "," sv[v] "=" (cnt[sv[v]] + 0)
+    mrow[id] = cstr
     mempty[id] = (tot == 0)
     if (req > 0 && nd == req && !mcov) {
       miss = ""
@@ -278,8 +295,24 @@ END {
     if (best != "") break
   }
 
+  # --- reconciliation: a status this file assigned but did not declare would reach a
+  #     surface as a count nobody renders and a label nobody has a colour for. Reported by
+  #     name rather than tolerated, in both directions the data can show.
+  nsv = split(ISTATUS, sv, " "); delete decl
+  for (v = 1; v <= nsv; v++) decl[sv[v]] = 1
+  for (i = 1; i <= inum; i++)
+    if (!(status[iids[i]] in decl))
+      finding("FAIL", "undeclared_status", iids[i], "is " status[iids[i]] ", which the issue status vocabulary does not declare")
+  nsv = split(MSTATUS, sv, " "); delete decl
+  for (v = 1; v <= nsv; v++) decl[sv[v]] = 1
+  for (i = 1; i <= mn; i++)
+    if (!(mstatus[mids[i]] in decl))
+      finding("FAIL", "undeclared_status", mids[i], "is " mstatus[mids[i]] ", which the milestone status vocabulary does not declare")
+
   # ---------------------------------------------------------------- emit
   print "P", clean(pkey["name"]), clean(pkey["repository"]), clean(pkey["default_branch"]), best
+  print "S", "issue", ISTATUS
+  print "S", "milestone", MSTATUS
   for (i = 1; i <= mn; i++) {
     id = mids[i]
     mdl = ""; for (k = 1; k <= mdepn[id]; k++) if ((id SUBSEP mdep[id, k]) in medge) mdl = mdl (mdl == "" ? "" : ",") mdep[id, k]

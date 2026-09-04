@@ -79,11 +79,20 @@ for id in $(canonical_ids); do
     || { echo "    $id is $st canonically; the diagram styles it differently"; exit 1; }
 done
 
-# --- the milestone's counts are the sum of the issue statuses, not an independent tally
+# --- the milestone's counts are the sum of the issue statuses, not an independent tally.
+# Every status the engine declares is checked, and the list comes from the output itself, so
+# a status added to the engine is covered here without this case being edited.
 tot="$(canonical_ids | wc -l | tr -d ' ')"
-done_n="$(cli_ids | while read -r i; do pj_status "$i"; done | grep -c '^DONE$' || true)"
-"$MJ" --json plan status | grep -qF "\"total\":$tot,\"done\":$done_n" \
-  || { echo "    the milestone counts do not match the issue statuses"; "$MJ" --json plan status; exit 1; }
+st_json="$("$MJ" --json plan status)"
+printf '%s' "$st_json" | grep -qF "\"total\":$tot" \
+  || { echo "    the milestone total does not match the issue set"; printf '%s\n' "$st_json"; exit 1; }
+vocab="$(printf '%s' "$st_json" | sed -n 's/.*"statuses":\[\([^]]*\)\].*/\1/p' | tr -d '"' | tr ',' ' ')"
+[ -n "$vocab" ] || { echo "    plan status does not carry the status vocabulary"; exit 1; }
+for st in $vocab; do
+  n="$(cli_ids | while read -r i; do pj_status "$i"; done | grep -c "^$st\$" || true)"
+  printf '%s' "$st_json" | grep -qF "\"$st\":$n" \
+    || { echo "    the milestone count for $st does not match the issue statuses"; printf '%s\n' "$st_json"; exit 1; }
+done
 
 # --- one engine: no surface implements a status rule of its own
 for f in "$ROOT/lib/plan.sh" "$ROOT/scripts/github-sync" "$ROOT/scripts/generate-site-data" "$ROOT/lib/doctor.sh"; do

@@ -522,7 +522,7 @@ mj_validate_roadmap() {
     mj_doctrine_ok roadmap "README.md" "no authored roadmap section; the roadmap is only a projection"
     return 0
   fi
-  canon="$(awk -F'\t' '$1=="M" && $15!="" { print $15 }' "$MJ_PJ/model.tsv" | sort -u)"
+  canon="$(awk -F'\t' '$1=="M" && $9!="" { print $9 }' "$MJ_PJ/model.tsv" | sort -u)"
   doc="$(awk '/^## Roadmap/{f=1;next} /^## /{f=0} f' "$readme" \
          | sed -n 's/^| *\**\([0-9][0-9.]*\)\** *|.*/\1/p' | sort -u)"
   # A section that lists no versions is prose pointing at the projection, not a second

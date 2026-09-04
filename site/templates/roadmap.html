@@ -30,7 +30,8 @@
 
     {%- if m.issues.total > 0 %}
     <dl class="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-body-subtle">
-      {%- for k, v in m.issues %}{% if v > 0 %}<div class="flex gap-1"><dt>{{ k }}</dt><dd class="text-heading">{{ v }}</dd></div>{% endif %}{% endfor %}
+      <div class="flex gap-1"><dt>done</dt><dd class="text-heading">{{ m.issues.by_status.DONE }} of {{ m.issues.required }}</dd></div>
+      {%- for k, v in m.issues.by_status %}{% if v > 0 and k != "DONE" %}<div class="flex gap-1"><dt>{{ k | lower }}</dt><dd class="text-heading">{{ v }}</dd></div>{% endif %}{% endfor %}
     </dl>
     {%- else %}
     <p class="mt-3 font-mono text-xs text-body-subtle">no issues written yet — the outcome is specified, the work is not</p>

@@ -8,27 +8,35 @@
     "failed"
   ],
   "divergence_labels": [
+    "different_context",
     "exact",
     "advanced",
-    "diverged",
-    "different_context"
+    "diverged"
   ],
   "steps": [
     {
       "command": "start",
-      "what": "declare scope and profile; identity computed from git"
+      "what": "begin a scoped task under a profile"
+    },
+    {
+      "command": "context",
+      "what": "what the next worker needs to know now, within budget"
+    },
+    {
+      "command": "checkpoint",
+      "what": "record compact progress inside the active task"
     },
     {
       "command": "check",
-      "what": "state, scope, checkpoint age, blockers"
+      "what": "is the current task consistent with policy, scope, state?"
     },
     {
       "command": "handover",
-      "what": "append-only continuation record, never staged"
+      "what": "write an append-only continuation record (body on stdin)"
     },
     {
       "command": "finish",
-      "what": "the contract, line by line; refused if any line fails"
+      "what": "evaluate the finish contract; refuse if unmet"
     }
   ],
   "principles": [

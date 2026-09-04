@@ -8,16 +8,16 @@ Generated from canonical inputs `bc998cd0b7b8`.
 
 ## Milestones
 
-| milestone | status | issues done | ready | active | verify | blocked | outcome |
-|---|---|---|---|---|---|---|---|
-| [M000](https://korczis.github.io/prismatic-majordomus/plan/m000/) | DONE | 15/15 | 0 | 0 | 0 | 0 | Every non-trivial change in this repository belongs to a milestone specification and to one dependency-linked issue execution contract, validated as a DAG, with status derived rather than asserted, and projected to GitHub and to the website from that one canonical model. |
-| [M001](https://korczis.github.io/prismatic-majordomus/plan/m001/) | DONE | 4/4 | 0 | 0 | 0 | 0 | An unresolved question keeps refusing a completed finish after the work moves to a new task, or the alternative is chosen deliberately and the reason is recorded where the next worker will read it. |
-| [cost-per-accepted-outcome](https://korczis.github.io/prismatic-majordomus/plan/cost-per-accepted-outcome/) | BLOCKED | 0/4 | 0 | 0 | 0 | 4 | The cost of an accepted outcome is computed from measured telemetry and the finish contract that accepted it, and is reported only where both exist. |
-| [execution-telemetry](https://korczis.github.io/prismatic-majordomus/plan/execution-telemetry/) | BLOCKED | 0/5 | 0 | 0 | 0 | 5 | Execution telemetry is recorded for providers that report it truthfully, and absence is recorded as absence rather than estimated. |
-| [foundation](https://korczis.github.io/prismatic-majordomus/plan/foundation/) | DONE | 0/0 | 0 | 0 | 0 | 0 | A repository carries one policy, a small set of profiles, durable task state, and a set of commands that refuse work which does not meet a declared contract — with every rule dispatched from a registry that proves it reaches the command claiming to run it. |
-| [routing-recommendations](https://korczis.github.io/prismatic-majordomus/plan/routing-recommendations/) | BLOCKED | 0/4 | 0 | 0 | 0 | 4 | The profile a task should run under is recommended from measured cost per accepted outcome, and the recommendation names the data it came from. |
-| [runtime-adapters](https://korczis.github.io/prismatic-majordomus/plan/runtime-adapters/) | PLANNED | 0/6 | 1 | 0 | 0 | 5 | A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice. |
-| [shared-policy](https://korczis.github.io/prismatic-majordomus/plan/shared-policy/) | BLOCKED | 0/5 | 0 | 0 | 0 | 5 | A policy can be shared across repositories and workers, with local override remaining explicit and drift from the shared source detectable in one command. |
+| milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
+|---|---|---|---|---|---|---|---|---|
+| [M000](https://korczis.github.io/prismatic-majordomus/plan/m000/) | DONE | 15/15 | 0 | 0 | 0 | 0 | 0 | Every non-trivial change in this repository belongs to a milestone specification and to one dependency-linked issue execution contract, validated as a DAG, with status derived rather than asserted, and projected to GitHub and to the website from that one canonical model. |
+| [M001](https://korczis.github.io/prismatic-majordomus/plan/m001/) | DONE | 4/4 | 0 | 0 | 0 | 0 | 0 | An unresolved question keeps refusing a completed finish after the work moves to a new task, or the alternative is chosen deliberately and the reason is recorded where the next worker will read it. |
+| [cost-per-accepted-outcome](https://korczis.github.io/prismatic-majordomus/plan/cost-per-accepted-outcome/) | BLOCKED | 0/4 | 0 | 4 | 0 | 0 | 0 | The cost of an accepted outcome is computed from measured telemetry and the finish contract that accepted it, and is reported only where both exist. |
+| [execution-telemetry](https://korczis.github.io/prismatic-majordomus/plan/execution-telemetry/) | BLOCKED | 0/5 | 0 | 5 | 0 | 0 | 0 | Execution telemetry is recorded for providers that report it truthfully, and absence is recorded as absence rather than estimated. |
+| [foundation](https://korczis.github.io/prismatic-majordomus/plan/foundation/) | DONE | 0/0 | 0 | 0 | 0 | 0 | 0 | A repository carries one policy, a small set of profiles, durable task state, and a set of commands that refuse work which does not meet a declared contract — with every rule dispatched from a registry that proves it reaches the command claiming to run it. |
+| [routing-recommendations](https://korczis.github.io/prismatic-majordomus/plan/routing-recommendations/) | BLOCKED | 0/4 | 0 | 4 | 0 | 0 | 0 | The profile a task should run under is recommended from measured cost per accepted outcome, and the recommendation names the data it came from. |
+| [runtime-adapters](https://korczis.github.io/prismatic-majordomus/plan/runtime-adapters/) | PLANNED | 0/6 | 1 | 5 | 0 | 0 | 0 | A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice. |
+| [shared-policy](https://korczis.github.io/prismatic-majordomus/plan/shared-policy/) | BLOCKED | 0/5 | 0 | 5 | 0 | 0 | 0 | A policy can be shared across repositories and workers, with local override remaining explicit and drift from the shared source detectable in one command. |
 
 ## Issues
 
