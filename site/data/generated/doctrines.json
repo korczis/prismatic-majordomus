@@ -20,7 +20,11 @@
       "exit_code": 10,
       "policy_key": "",
       "claims": [
-        "init-refuses"
+        "init-refuses",
+        "ai-layer-manifest",
+        "local-state-ignored",
+        "legacy-migration",
+        "tool-location-independent"
       ],
       "test": "test/cases/01_init.sh",
       "depends_on": [
@@ -156,7 +160,8 @@
       "policy_key": "",
       "claims": [
         "projection-generation",
-        "context-budget"
+        "context-budget",
+        "bootstrap-chain"
       ],
       "test": "test/cases/03_update.sh",
       "depends_on": [
@@ -654,7 +659,9 @@
       "exit_code": 10,
       "policy_key": "",
       "claims": [
-        "doctrine-registry"
+        "doctrine-registry",
+        "vendored-rule-package",
+        "rule-resolution"
       ],
       "test": "test/cases/67_rule_dag.sh",
       "depends_on": [

@@ -15,7 +15,7 @@ x-majordomus:
   category: layout
   enforced_by: [doctor, watch]
   exit_code: 10
-  claims: [init-refuses]
+  claims: [init-refuses, ai-layer-manifest, local-state-ignored, legacy-migration, tool-location-independent]
   tests: [test/cases/01_init.sh]
 ---
 

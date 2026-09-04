@@ -15,7 +15,7 @@ x-majordomus:
   category: rules
   enforced_by: [doctor, watch]
   exit_code: 10
-  claims: [doctrine-registry]
+  claims: [doctrine-registry, vendored-rule-package, rule-resolution]
   tests: [test/cases/67_rule_dag.sh]
 ---
 

@@ -15,7 +15,7 @@ x-majordomus:
   category: bootstrap
   enforced_by: [doctor, watch]
   exit_code: 10
-  claims: [projection-generation, context-budget]
+  claims: [projection-generation, context-budget, bootstrap-chain]
   tests: [test/cases/03_update.sh]
 ---
 
