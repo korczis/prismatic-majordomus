@@ -37,8 +37,51 @@ expect_exit 10 "$T/scripts/generate-site-data"
 expect_grep "no heading '## The problem'"
 [ "$(cat "$T/site/data/generated/project.json")" = "$before_project" ]
 
-# restored input regenerates cleanly and --check agrees
+# a third failure class: the README table and docs/RESPONSIBILITIES.yaml are joined by row
+# title, and a join that misses is silent. Each direction is broken separately, because a
+# check that only looks one way passes while half the correspondence is already gone.
 sed -i.bak 's/^## The problems$/## The problem/' "$T/README.md"; rm -f "$T/README.md.bak"
+expect_exit 0 "$T/scripts/generate-site-data"
+
+# an entry pointing at a README row that no longer exists
+first_key="$(awk '/^responsibilities:/{c=1} c&&/^    readme_key: /{print $2; exit}' "$T/docs/RESPONSIBILITIES.yaml")"
+[ -n "$first_key" ] || { echo "    could not read a readme_key from the fixture"; exit 1; }
+sed -i.bak "s/^    readme_key: $first_key\$/    readme_key: Nonexistent/" "$T/docs/RESPONSIBILITIES.yaml"; rm -f "$T/docs/RESPONSIBILITIES.yaml.bak"
+expect_exit 10 "$T/scripts/generate-site-data"
+expect_grep "names README row 'Nonexistent'"
+[ "$(cat "$T/site/data/generated/project.json")" = "$before_project" ]
+sed -i.bak "s/^    readme_key: Nonexistent\$/    readme_key: $first_key/" "$T/docs/RESPONSIBILITIES.yaml"; rm -f "$T/docs/RESPONSIBILITIES.yaml.bak"
+
+# and the far side: a README row that no entry claims. A row is added rather than renamed,
+# because renaming one breaks both directions at once and the entry-side check would refuse
+# first, leaving this direction unproven.
+awk 'BEGIN{d=0} {print} !d && /^\| \*\*/{print "| **Telemetry** | a row no responsibility claims |"; d=1}' \
+  "$T/README.md" > "$T/README.next" && mv "$T/README.next" "$T/README.md"
+expect_exit 10 "$T/scripts/generate-site-data"
+expect_grep "README row 'Telemetry' has no entry"
+grep -v '^| \*\*Telemetry\*\* |' "$T/README.md" > "$T/README.next" && mv "$T/README.next" "$T/README.md"
+
+# a path an entry names but the repository does not have. The declaration is repointed rather
+# than the file moved: every implementation the entries name is also read by an earlier stage
+# of the generator, so moving one would refuse for that reason instead of this one.
+impl="$(awk '/^responsibilities:/{c=1} c&&/^    implementation: /{print $2; exit}' "$T/docs/RESPONSIBILITIES.yaml")"
+[ -n "$impl" ] || { echo "    could not read an implementation path from the fixture"; exit 1; }
+sed -i.bak "s|^    implementation: $impl\$|    implementation: lib/does-not-exist.sh|" "$T/docs/RESPONSIBILITIES.yaml"; rm -f "$T/docs/RESPONSIBILITIES.yaml.bak"
+expect_exit 10 "$T/scripts/generate-site-data"
+expect_grep "names missing path lib/does-not-exist.sh"
+sed -i.bak "s|^    implementation: lib/does-not-exist.sh\$|    implementation: $impl|" "$T/docs/RESPONSIBILITIES.yaml"; rm -f "$T/docs/RESPONSIBILITIES.yaml.bak"
+
+# an anchor that is not a heading in the document it names. Again the declaration moves, not
+# the heading: renaming a `## majordomus <cmd>` section trips the command-documentation check
+# first, which is a different refusal about a different fact.
+anchor="$(awk '/^responsibilities:/{c=1} c&&/^    cli_anchor: /{sub(/^    cli_anchor: /,"");print;exit}' "$T/docs/RESPONSIBILITIES.yaml")"
+[ -n "$anchor" ] || { echo "    could not read a cli_anchor from the fixture"; exit 1; }
+sed -i.bak "s|^    cli_anchor: $anchor\$|    cli_anchor: majordomus nowhere|" "$T/docs/RESPONSIBILITIES.yaml"; rm -f "$T/docs/RESPONSIBILITIES.yaml.bak"
+expect_exit 10 "$T/scripts/generate-site-data"
+expect_grep "cli_anchor 'majordomus nowhere'"
+sed -i.bak "s|^    cli_anchor: majordomus nowhere\$|    cli_anchor: $anchor|" "$T/docs/RESPONSIBILITIES.yaml"; rm -f "$T/docs/RESPONSIBILITIES.yaml.bak"
+
+# every input restored: generation succeeds again and --check agrees
 expect_exit 0 "$T/scripts/generate-site-data"
 expect_exit 0 "$T/scripts/generate-site-data" --check
 [ -z "$(find "$T" -maxdepth 1 -name '.mj-stage.*' 2>/dev/null)" ]

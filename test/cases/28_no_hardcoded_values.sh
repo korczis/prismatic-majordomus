@@ -113,6 +113,49 @@ for st in $(grep -E '^    status:' "$ROOT/docs/CLAIMS.yaml" | sed 's/^    status
     | grep -qx "$st" || { echo "    a claim uses status '$st', which the matrix does not declare"; exit 1; }
 done
 
+# ---------------------------------------------------------------- responsibilities
+# The README "What it does" table is the prose; docs/RESPONSIBILITIES.yaml is the machine
+# side of the same fact. They are joined by row title, and a join is silent when it misses:
+# an entry whose readme_key no longer matches renders a page with no command and no claims,
+# which is indistinguishable from a responsibility that genuinely has none. So the
+# correspondence is asserted in both directions, and every path and heading an entry names
+# is resolved. Nothing here enumerates a responsibility; the list is read from the file.
+resp_field() { awk -v i="  - id: $1" -v k="    $2:" '$0==i{f=1;next} f&&/^  - id: /{exit} f&&index($0,k)==1{sub(k" *","");print;exit}' "$ROOT/docs/RESPONSIBILITIES.yaml"; }
+resp_ids="$(awk '/^responsibilities:/{c=1;next} c&&/^  - id: /{print $3}' "$ROOT/docs/RESPONSIBILITIES.yaml")"
+[ -n "$resp_ids" ] || { echo "    docs/RESPONSIBILITIES.yaml declared no responsibilities"; exit 1; }
+readme_titles="$(awk '/^## What it does/{f=1;next} f&&/^## /{exit} f' "$ROOT/README.md" \
+                 | grep -E '^\| \*\*' | sed -E 's/^\| \*\*([^*]+)\*\*.*/\1/')"
+[ -n "$readme_titles" ] || { echo "    the README 'What it does' table produced no rows"; exit 1; }
+for id in $resp_ids; do
+  rk="$(resp_field "$id" readme_key)"
+  printf '%s\n' "$readme_titles" | grep -qxF "$rk" \
+    || { echo "    responsibility $id names README row '$rk', which the table does not have"; exit 1; }
+  # files: is a flow list; implementation: is a single path. Both must resolve.
+  for p in $(resp_field "$id" files | tr -d '[],') $(resp_field "$id" implementation); do
+    [ -e "$ROOT/$p" ] || { echo "    responsibility $id names missing path $p"; exit 1; }
+  done
+  for pair in "cli_anchor docs/CLI.md" "schema_anchor docs/SCHEMAS.md"; do
+    fld="${pair% *}"; doc="${pair#* }"; val="$(resp_field "$id" "$fld")"
+    [ -n "$val" ] || { echo "    responsibility $id has an empty $fld"; exit 1; }
+    grep -qxF "## $val" "$ROOT/$doc" || grep -qxF "## \`$val\`" "$ROOT/$doc" \
+      || { echo "    responsibility $id names $fld '$val', which is not a heading in $doc"; exit 1; }
+  done
+done
+# the other direction: a README row with no entry is the same silence seen from the far side.
+# Read line by line rather than word-splitting: a row title is free text and may hold spaces.
+while IFS= read -r t; do
+  [ -n "$t" ] || continue
+  found=0
+  for id in $resp_ids; do [ "$(resp_field "$id" readme_key)" = "$t" ] && { found=1; break; }; done
+  [ "$found" = 1 ] || { echo "    README row '$t' has no entry in docs/RESPONSIBILITIES.yaml"; exit 1; }
+done <<EOF
+$readme_titles
+EOF
+# and the generator must not have reintroduced a default for the missing case: a fallback
+# there restores exactly the silence these checks exist to remove
+grep -q 'r_by_key\[\$row.title\] // {}' "$ROOT/scripts/generate-site-data" \
+  && { echo "    generate-site-data defaults a missing responsibility instead of refusing"; exit 1; }
+
 # ---------------------------------------------------------------- vocabulary
 # Every bold term in the concepts table is a word the tool actually uses: it appears in the
 # CLI reference, in a schema, or in the source. A vocabulary entry nothing implements is
@@ -178,6 +221,29 @@ done
   || { echo "    the concepts table derived no terms"; exit 1; }
 if [ -f "$ROOT/share/doctrines.yaml" ]; then
   [ -n "$(grep -E '^  - id:' "$ROOT/share/doctrines.yaml")" ] || { echo "    the doctrine registry derived no ids"; exit 1; }
+fi
+
+# ---------------------------------------------------------------- argv limits
+# The same shape of fault as the locale check below: correct on the machine everyone develops
+# on, broken on every runner. Linux caps a SINGLE argv entry at MAX_ARG_STRLEN, 131072 bytes,
+# independently of the much larger total ARG_MAX; execve then fails with E2BIG and the shell
+# reports exit 126. macOS has no per-argument cap of that shape. A model collection passed as
+# one --argjson argument therefore grows quietly until a deploy goes red, which is what
+# happened once the plan reached sixty-odd issue contracts.
+#
+# The margin is measured against the real model rather than a list of field names, so a
+# collection that grows into the danger zone joins this check by growing, not by being added
+# here. --slurpfile reads a file and has no ceiling at all.
+plan="$ROOT/site/data/generated/plan.json"
+if [ -f "$plan" ]; then
+  arrays="$(jq -r 'to_entries[] | select(.value | type == "array") | .key' "$plan")"
+  [ -n "$arrays" ] || { echo "    plan.json declares no collections; the argv check is vacuous"; exit 1; }
+  for k in $arrays; do
+    n="$(jq -c --arg k "$k" '.[$k]' "$plan" | wc -c | tr -d ' ')"
+    [ "$n" -lt 100000 ] && continue
+    grep -qE -- "--slurpfile $k " "$ROOT/scripts/generate-site-data" \
+      || { echo "    plan.json .$k is $n bytes and reaches jq through argv; Linux refuses one argument over 131072"; exit 1; }
+  done
 fi
 
 # ---------------------------------------------------------------- locale independence
