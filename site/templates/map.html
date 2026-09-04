@@ -1,0 +1,22 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set graph = load_data(path="data/generated/architecture.json") -%}
+{%- set graph_id = "architecture" -%}
+{%- set graph_label = "Modules of the CLI and the files under .majordomus/ they touch. Solid arrows are reads and writes the scan could place; dashed arrows are references it would not claim a direction for." -%}
+<article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
+{% include "partials/graph.html" %}
+<div class="mt-10 grid gap-4 sm:grid-cols-3">
+  {%- set modules = [n for n in graph.nodes if n.kind == "module"] -%}
+  {%- set artifacts = [n for n in graph.nodes if n.kind == "artifact"] -%}
+  {%- set writes = [e for e in graph.edges if e.kind == "writes"] -%}
+  <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><span class="font-mono text-2xl font-semibold text-heading">{{ modules | length }}</span><span class="mt-1 block font-mono text-xs uppercase tracking-wide text-body-subtle">modules</span></div>
+  <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><span class="font-mono text-2xl font-semibold text-heading">{{ artifacts | length }}</span><span class="mt-1 block font-mono text-xs uppercase tracking-wide text-body-subtle">state files</span></div>
+  <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><span class="font-mono text-2xl font-semibold text-heading">{{ writes | length }}</span><span class="mt-1 block font-mono text-xs uppercase tracking-wide text-body-subtle">write paths</span></div>
+</div>
+<p class="mt-6 text-sm text-body-subtle">
+  Every number above is counted from the scan at build time. The scanner is
+  <a class="underline" href="{{ project.repository_url }}/blob/master/scripts/lib/architecture-scan.awk">scripts/lib/architecture-scan.awk</a>;
+  the data it produced for this build is <a class="underline" href="{{ get_url(path='data/generated/architecture.json') }}">architecture.json</a>.
+</p>
+{% endblock body %}
+{% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}

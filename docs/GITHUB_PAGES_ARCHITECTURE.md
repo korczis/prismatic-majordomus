@@ -71,8 +71,9 @@ flowchart LR
 | `source.json` | git and the inputs | version, commit, input hash, generator version, input list |
 
 `site/content/docs/*.md` is written from `docs/*.md` with a generated front matter, links
-rewritten to site routes, and the whole body wrapped in `{% raw %}` so Tera never templates
-canonical Markdown.
+rewritten to site routes, and the whole body wrapped in a Tera `raw` block so that Tera never
+templates canonical Markdown. The tag itself cannot be written out here: a literal closing
+`raw` tag in a canonical document would end the wrapper the projection puts around it.
 
 ## Markdown rendering
 

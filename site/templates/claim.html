@@ -47,6 +47,7 @@ bash test/run.sh {{ c.test_case }}
     <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">{{ c.status }} claims</h2>
     <ul class="space-y-1 text-sm">{% for x in [y for y in caps.claims if y.status == c.status] %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 {% if x.id == c.id %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if x.id == c.id %} aria-current="page"{% endif %}>{{ x.claim }}</a></li>{% endfor %}</ul>
     <p class="mt-4 text-xs"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The full matrix →</a></p>
+    <p class="mt-1 text-xs"><a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand hover:underline">This claim in the evidence graph →</a></p>
   </div></aside>
 </div>
 {% endblock body %}

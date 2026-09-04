@@ -1,0 +1,885 @@
+{
+  "schema": 1,
+  "source": "static reference scan of bin/majordomus and lib/*.sh",
+  "generator": "scripts/lib/architecture-scan.awk",
+  "edge_kinds": {
+    "sources": "the first module sources the second",
+    "reads": "named behind a reading command or a redirection from the file",
+    "writes": "named behind a redirection into the file, or a command that creates or replaces it",
+    "uses": "named, but handed to a helper — the scan does not claim a direction"
+  },
+  "nodes": [
+    {
+      "id": "bin/majordomus",
+      "kind": "entry",
+      "label": "majordomus",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/common.sh",
+      "kind": "module",
+      "label": "common",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/check.sh",
+      "kind": "module",
+      "label": "check",
+      "command": "check",
+      "summary": "is the current task consistent with policy, scope, state?",
+      "read_only": true,
+      "route": "/commands/check/",
+      "external": false
+    },
+    {
+      "id": "lib/doctrine.sh",
+      "kind": "module",
+      "label": "doctrine",
+      "command": "doctrine",
+      "summary": "what rules are enforced, by what, and whether they are wired",
+      "read_only": true,
+      "route": "/commands/doctrine/",
+      "external": false
+    },
+    {
+      "id": ".majordomus/state/current.yaml",
+      "kind": "artifact",
+      "label": "state/current.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".majordomus/state/checkpoints",
+      "kind": "artifact",
+      "label": "state/checkpoints",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".majordomus/state/open-questions.md",
+      "kind": "artifact",
+      "label": "state/open-questions.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".majordomus/state/ledger.jsonl",
+      "kind": "artifact",
+      "label": "state/ledger.jsonl",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".majordomus/state/decisions.md",
+      "kind": "artifact",
+      "label": "state/decisions.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/start.sh",
+      "kind": "module",
+      "label": "start",
+      "command": "start",
+      "summary": "begin a scoped task under a profile",
+      "read_only": null,
+      "route": "/commands/start/",
+      "external": false
+    },
+    {
+      "id": "lib/question.sh",
+      "kind": "module",
+      "label": "question",
+      "command": "question",
+      "summary": "open, resolve and list questions that block acceptance",
+      "read_only": null,
+      "route": "/commands/question/",
+      "external": false
+    },
+    {
+      "id": "lib/decision.sh",
+      "kind": "module",
+      "label": "decision",
+      "command": "decision",
+      "summary": "record or read durable decisions",
+      "read_only": null,
+      "route": "/commands/decision/",
+      "external": false
+    },
+    {
+      "id": "lib/checkpoint.sh",
+      "kind": "module",
+      "label": "checkpoint",
+      "command": "checkpoint",
+      "summary": "record compact progress inside the active task",
+      "read_only": null,
+      "route": "/commands/checkpoint/",
+      "external": false
+    },
+    {
+      "id": "lib/handover.sh",
+      "kind": "module",
+      "label": "handover",
+      "command": "handover",
+      "summary": "write an append-only continuation record (body on stdin)",
+      "read_only": null,
+      "route": "/commands/handover/",
+      "external": false
+    },
+    {
+      "id": ".majordomus/policy.yaml",
+      "kind": "artifact",
+      "label": "policy.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".majordomus/profiles",
+      "kind": "artifact",
+      "label": "profiles",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/context.sh",
+      "kind": "module",
+      "label": "context",
+      "command": "context",
+      "summary": "what the next worker needs to know now, within budget",
+      "read_only": true,
+      "route": "/commands/context/",
+      "external": false
+    },
+    {
+      "id": "lib/history.sh",
+      "kind": "module",
+      "label": "history",
+      "command": "history",
+      "summary": "read the append-only ledger back",
+      "read_only": true,
+      "route": "/commands/history/",
+      "external": false
+    },
+    {
+      "id": "lib/prompt.sh",
+      "kind": "module",
+      "label": "prompt",
+      "command": "prompt",
+      "summary": "list, show and render repository-local prompt assets",
+      "read_only": true,
+      "route": "/commands/prompt/",
+      "external": false
+    },
+    {
+      "id": ".majordomus/state/handovers",
+      "kind": "artifact",
+      "label": "state/handovers",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".majordomus/prompts",
+      "kind": "artifact",
+      "label": "prompts",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/doctor.sh",
+      "kind": "module",
+      "label": "doctor",
+      "command": "doctor",
+      "summary": "is Majordomus itself healthy and actually wired here?",
+      "read_only": true,
+      "route": "/commands/doctor/",
+      "external": false
+    },
+    {
+      "id": ".majordomus/generated/fingerprints.yaml",
+      "kind": "artifact",
+      "label": "generated/fingerprints.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/finish.sh",
+      "kind": "module",
+      "label": "finish",
+      "command": "finish",
+      "summary": "evaluate the finish contract; refuse if unmet",
+      "read_only": null,
+      "route": "/commands/finish/",
+      "external": false
+    },
+    {
+      "id": ".majordomus/state/completed",
+      "kind": "artifact",
+      "label": "state/completed",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/init.sh",
+      "kind": "module",
+      "label": "init",
+      "command": "init",
+      "summary": "set up .majordomus/ in this repository (refuses to overwrite)",
+      "read_only": null,
+      "route": "/commands/init/",
+      "external": false
+    },
+    {
+      "id": ".majordomus/templates",
+      "kind": "artifact",
+      "label": "templates",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/search.sh",
+      "kind": "module",
+      "label": "search",
+      "command": "search",
+      "summary": "find durable records without reading all of them",
+      "read_only": true,
+      "route": "/commands/search/",
+      "external": false
+    },
+    {
+      "id": ".majordomus/state/archive",
+      "kind": "artifact",
+      "label": "state/archive",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/update.sh",
+      "kind": "module",
+      "label": "update",
+      "command": "update",
+      "summary": "regenerate provider projections from policy",
+      "read_only": null,
+      "route": "/commands/update/",
+      "external": false
+    },
+    {
+      "id": ".majordomus/providers/body.md",
+      "kind": "artifact",
+      "label": "providers/body.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/watch.sh",
+      "kind": "module",
+      "label": "watch",
+      "command": "watch",
+      "summary": "what has drifted: state, policy, projections, retention",
+      "read_only": true,
+      "route": "/commands/watch/",
+      "external": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "lib/common.sh",
+      "target": ".majordomus/policy.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".majordomus/profiles",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".majordomus/state/current.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": ".majordomus/prompts",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": ".majordomus/state/decisions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": ".majordomus/state/ledger.jsonl",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": ".majordomus/state/open-questions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": ".majordomus/generated/fingerprints.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": ".majordomus/profiles",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": ".majordomus/prompts",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": ".majordomus/state/checkpoints",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": ".majordomus/state/handovers",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": ".majordomus/state/ledger.jsonl",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/finish.sh",
+      "target": ".majordomus/state/checkpoints",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/state/decisions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/state/open-questions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/prompt.sh",
+      "target": ".majordomus/state/decisions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/prompt.sh",
+      "target": ".majordomus/state/open-questions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": ".majordomus/prompts",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": ".majordomus/prompts",
+      "kind": "reads"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/check.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/checkpoint.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/common.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/context.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/decision.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/doctor.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/doctrine.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/finish.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/history.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/init.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/prompt.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/question.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/search.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/start.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/update.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/watch.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": "lib/decision.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": "lib/doctrine.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": "lib/question.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": "lib/start.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/checkpoint.sh",
+      "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": "lib/decision.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": "lib/history.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": "lib/prompt.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/check.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/context.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/decision.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/doctrine.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/prompt.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/question.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/finish.sh",
+      "target": "lib/check.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/finish.sh",
+      "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/prompt.sh",
+      "target": "lib/context.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/prompt.sh",
+      "target": "lib/decision.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/prompt.sh",
+      "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/start.sh",
+      "target": "lib/check.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/start.sh",
+      "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": "lib/check.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": "lib/context.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": "lib/decision.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": "lib/doctor.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": "lib/prompt.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": "lib/question.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": ".majordomus/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": ".majordomus/state/decisions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": ".majordomus/state/ledger.jsonl",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": ".majordomus/state/open-questions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/checkpoint.sh",
+      "target": ".majordomus/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": ".majordomus/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": ".majordomus/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/decision.sh",
+      "target": ".majordomus/state/decisions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": ".majordomus/policy.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": ".majordomus/state/open-questions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/finish.sh",
+      "target": ".majordomus/state/decisions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/finish.sh",
+      "target": ".majordomus/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/handover.sh",
+      "target": ".majordomus/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/policy.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/prompts",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/templates",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/prompt.sh",
+      "target": ".majordomus/prompts",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/prompt.sh",
+      "target": ".majordomus/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/prompt.sh",
+      "target": ".majordomus/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/question.sh",
+      "target": ".majordomus/state/open-questions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/search.sh",
+      "target": ".majordomus/prompts",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/search.sh",
+      "target": ".majordomus/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/search.sh",
+      "target": ".majordomus/state/decisions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/search.sh",
+      "target": ".majordomus/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/search.sh",
+      "target": ".majordomus/state/ledger.jsonl",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/search.sh",
+      "target": ".majordomus/state/open-questions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/start.sh",
+      "target": ".majordomus/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": ".majordomus/providers/body.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": ".majordomus/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": ".majordomus/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/watch.sh",
+      "target": ".majordomus/state/ledger.jsonl",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": ".majordomus/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/checkpoint.sh",
+      "target": ".majordomus/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".majordomus/state/ledger.jsonl",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/finish.sh",
+      "target": ".majordomus/state/completed",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/finish.sh",
+      "target": ".majordomus/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/handover.sh",
+      "target": ".majordomus/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/history.sh",
+      "target": ".majordomus/state/ledger.jsonl",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".majordomus/profiles",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/start.sh",
+      "target": ".majordomus/state/archive",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/start.sh",
+      "target": ".majordomus/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": ".majordomus/generated/fingerprints.yaml",
+      "kind": "writes"
+    }
+  ]
+}

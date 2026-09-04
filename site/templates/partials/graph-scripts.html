@@ -1,0 +1,5 @@
+{#- Cytoscape is not loaded here. graph.js reads this attribute and fetches the library the
+    first time a graph scrolls into view, so a reader who never reaches the figure never pays
+    for it, and a page without a figure never loads either file. -#}
+<script>document.body.setAttribute('data-cytoscape-src', '{{ get_url(path="js/cytoscape.min.js") }}');</script>
+<script defer src="{{ get_url(path="js/graph.js") }}"></script>

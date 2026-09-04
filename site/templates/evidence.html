@@ -1,0 +1,23 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set graph = load_data(path="data/generated/claims-graph.json") -%}
+{%- set graph_id = "claims" -%}
+{%- set graph_label = "Every claim and the evidence attached to it. Evidence nodes are shared, so a file carrying several claims appears once." -%}
+<article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
+{% include "partials/graph.html" %}
+<div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  {%- for status, meaning in graph.statuses %}
+  {%- set of_status = [n for n in graph.nodes if n.kind == "claim" and n.status == status] %}
+  <a class="block rounded-base border border-default bg-neutral-primary-soft p-5 hover:border-strong" href="{{ get_url(path='@/guarantees/' ~ status ~ '.md', trailing_slash=true) }}">
+    <span class="font-mono text-2xl font-semibold text-heading">{{ of_status | length }}</span>
+    <span class="mt-1 block font-mono text-xs uppercase tracking-wide text-body-subtle">{{ status }}</span>
+    <span class="mt-2 block text-sm text-body">{{ meaning }}</span>
+  </a>
+  {%- endfor %}
+</div>
+<p class="mt-6 text-sm text-body-subtle">
+  The canonical source is <a class="underline" href="{{ project.repository_url }}/blob/master/docs/CLAIMS.yaml">docs/CLAIMS.yaml</a>;
+  the full table with sources, implementations and tests is on <a class="underline" href="{{ get_url(path='@/guarantees/_index.md', trailing_slash=true) }}">guarantees</a>.
+</p>
+{% endblock body %}
+{% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}
