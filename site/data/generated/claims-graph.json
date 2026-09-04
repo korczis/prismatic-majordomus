@@ -537,6 +537,60 @@
       "note": "No use case in the evidence justified a dependency graph. Listed so that the omission is visible rather than assumed to be an oversight. Revisited only when a real case appears."
     },
     {
+      "id": "claim:project-schema",
+      "kind": "claim",
+      "label": "Milestones and issues are canonical repository files, and a key nobody reads is an error",
+      "status": "guaranteed",
+      "route": "/guarantees/project-schema/",
+      "external": false,
+      "note": "The same allowlist rule the policy and the profiles live under. The filename is the id; a record that disagrees with its own filename is refused rather than reconciled."
+    },
+    {
+      "id": "claim:project-status-derived",
+      "kind": "claim",
+      "label": "Issue and milestone status is derived from recorded facts and is stored nowhere",
+      "status": "guaranteed",
+      "route": "/guarantees/project-status-derived/",
+      "external": false,
+      "note": "An issue records started_at, verified_at, completed_at, cancelled and its evidence. BLOCKED, READY, ACTIVE, VERIFY, DONE and CANCELLED follow from those and from the state of its dependencies. `status` is not a field, so writing one is an unknown key."
+    },
+    {
+      "id": "claim:dag-validation",
+      "kind": "claim",
+      "label": "A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name",
+      "status": "guaranteed",
+      "route": "/guarantees/dag-validation/",
+      "external": false,
+      "note": "Kahn layering; the issues that never leave the graph are the ones reported. A malformed graph fails doctor and is reported by watch as drift."
+    },
+    {
+      "id": "claim:execution-waves",
+      "kind": "claim",
+      "label": "Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised",
+      "status": "guaranteed",
+      "route": "/guarantees/execution-waves/",
+      "external": false,
+      "note": "Sharing a wave is necessary for concurrency, not sufficient. Overlapping declared scope serialises conservatively, because a false serialisation costs time and a false parallel costs a conflict."
+    },
+    {
+      "id": "claim:evidence-gates-done",
+      "kind": "claim",
+      "label": "An issue cannot be completed while a required piece of evidence is missing",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-gates-done/",
+      "external": false,
+      "note": "Evidence is a command and its result, or an artifact. Narrative is refused. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE."
+    },
+    {
+      "id": "claim:github-projection",
+      "kind": "claim",
+      "label": "GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten",
+      "status": "guaranteed",
+      "route": "/guarantees/github-projection/",
+      "external": false,
+      "note": "The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit."
+    },
+    {
       "id": "impl:bin/majordomus",
       "kind": "implementation",
       "label": "bin/majordomus",
@@ -621,6 +675,27 @@
       "external": false
     },
     {
+      "id": "impl:lib/plan.sh",
+      "kind": "implementation",
+      "label": "lib/plan.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/project.awk",
+      "kind": "implementation",
+      "label": "lib/project.awk",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/project.sh",
+      "kind": "implementation",
+      "label": "lib/project.sh",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:lib/prompt.sh",
       "kind": "implementation",
       "label": "lib/prompt.sh",
@@ -663,6 +738,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/github-sync",
+      "kind": "implementation",
+      "label": "scripts/github-sync",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:docs/CLI.md",
       "kind": "source",
       "label": "docs/CLI.md",
@@ -688,6 +770,13 @@
       "kind": "source",
       "label": "docs/DOCTRINE.md",
       "route": "/docs/doctrine/",
+      "external": false
+    },
+    {
+      "id": "source:docs/PLANNING.md",
+      "kind": "source",
+      "label": "docs/PLANNING.md",
+      "route": "/docs/planning/",
       "external": false
     },
     {
@@ -871,6 +960,34 @@
       "label": "test/cases/27_foreign_task.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/27_foreign_task.sh"
+    },
+    {
+      "id": "test:test/cases/40_project_model.sh",
+      "kind": "test",
+      "label": "test/cases/40_project_model.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/40_project_model.sh"
+    },
+    {
+      "id": "test:test/cases/41_project_status.sh",
+      "kind": "test",
+      "label": "test/cases/41_project_status.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/41_project_status.sh"
+    },
+    {
+      "id": "test:test/cases/42_dag_waves.sh",
+      "kind": "test",
+      "label": "test/cases/42_dag_waves.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/42_dag_waves.sh"
+    },
+    {
+      "id": "test:test/cases/45_github_projection.sh",
+      "kind": "test",
+      "label": "test/cases/45_github_projection.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/45_github_projection.sh"
     }
   ],
   "edges": [
@@ -1165,6 +1282,36 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:project-schema",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:project-status-derived",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:dag-validation",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:execution-waves",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-gates-done",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:github-projection",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -1415,6 +1562,36 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:project-schema",
+      "target": "impl:lib/project.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:project-status-derived",
+      "target": "impl:lib/project.awk",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:dag-validation",
+      "target": "impl:lib/project.awk",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:execution-waves",
+      "target": "impl:lib/project.awk",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-gates-done",
+      "target": "impl:lib/plan.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:github-projection",
+      "target": "impl:scripts/github-sync",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "test:test/cases/00_yaml_flatten.sh",
       "kind": "proved_by"
@@ -1662,6 +1839,36 @@
     {
       "source": "claim:worktree-ownership",
       "target": "test:test/cases/27_foreign_task.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:project-schema",
+      "target": "test:test/cases/40_project_model.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:project-status-derived",
+      "target": "test:test/cases/41_project_status.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:dag-validation",
+      "target": "test:test/cases/42_dag_waves.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:execution-waves",
+      "target": "test:test/cases/42_dag_waves.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-gates-done",
+      "target": "test:test/cases/41_project_status.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:github-projection",
+      "target": "test:test/cases/45_github_projection.sh",
       "kind": "proved_by"
     }
   ]

@@ -581,6 +581,61 @@ majordomus doctrine show <id>    the full record for one doctrine
   enforcement is actually *reached* is a stronger question, and `majordomus doctor`
   answers it.
 
+## `majordomus plan`
+
+Read the canonical project model, and move one issue through its lifecycle. A milestone is
+an executable specification of an outcome; an issue is a bounded execution contract; the
+dependency graph between the issues decides what may be executed next. See
+[`docs/PLANNING.md`](PLANNING.md) for the semantics.
+
+**Reads:** `.majordomus/project/project.yaml`, `.majordomus/project/milestones/*.yaml`,
+`.majordomus/project/issues/*.yaml`, `share/allow/{project,milestone,issue}.txt`.
+**Writes:** one lifecycle field in one issue file, and one ledger event — `start`, `verify`,
+`evidence` and `done` only. Every other subcommand writes nothing.
+
+```
+majordomus plan validate         schemas, references, the DAG, status consistency
+majordomus plan status           milestone progress and the next executable issue
+majordomus plan list             one line per issue: id, status, wave, milestone, title
+majordomus plan show <id>        the full record of one milestone or issue
+majordomus plan ready            issues whose dependencies are all satisfied
+majordomus plan blocked          issues waiting on a dependency, and on which one
+majordomus plan waves            topological execution waves, derived from the graph
+majordomus plan graph            the dependency DAG as Mermaid
+majordomus plan next             the one issue a worker should take now
+majordomus plan body <id>        the provider-neutral projection body for one record
+majordomus plan start <id>       record that execution began
+majordomus plan verify <id>      record that implementation is complete, evidence pending
+majordomus plan evidence <id>    attach one piece of evidence
+majordomus plan done <id>        record completion
+```
+
+**Options:** `--json` on the read subcommands a surface consumes; `--milestone <id>` to
+restrict `list`, `ready`, `blocked`, `waves` and `graph`; `--covers`, `--type`, `--command`,
+`--result` and `--artifact` on `evidence`.
+
+**Behaviour:**
+- No status is stored anywhere. `BLOCKED`, `READY`, `ACTIVE`, `VERIFY`, `DONE` and
+  `CANCELLED` are derived from what an issue records about itself and from the state of its
+  dependencies, by `lib/project.awk`. Writing a `status:` field is an unknown key.
+- `validate` reports unknown keys, unknown and self dependencies, duplicate ids, cycles,
+  issues executing ahead of a dependency, and issues with no acceptance criteria. It exits
+  `10` when any finding is a failure, `0` when only warnings remain.
+- `start` refuses (`15`) an issue that is not `READY`, naming what it waits on. `verify`
+  refuses an issue that is not `ACTIVE`.
+- `evidence` refuses (`15`) a token the issue does not declare, and refuses (`2`) without a
+  `--command` or an `--artifact`: narrative is not evidence. It appends to the issue's own
+  file with the commit and the timestamp.
+- `done` refuses (`10`) while any declared evidence token is uncovered, and refuses (`15`)
+  while a dependency is not `DONE`. Every writing subcommand prints the next ready issue
+  after the graph has been recomputed.
+- Exits `12` when the record named does not exist, or when the repository has no canonical
+  project model at all — the model is opt-in, and `doctor` skips it rather than failing
+  where it is absent.
+
+The same model is projected to GitHub by `scripts/github-sync` and to the website by
+`scripts/generate-site-data`. Neither re-derives a status; both read this engine.
+
 ## `majordomus version`
 
 Print the version and exit. `--version` is accepted as a synonym, and `version` works

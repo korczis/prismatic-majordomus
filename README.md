@@ -285,7 +285,7 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 
 | version | adds |
 |---|---|
-| **0.1** | one policy, four profiles, durable state, the eight commands, doctor with wiring reconciliation, projections for four providers, behavioural tests |
+| **0.1** | one policy, four profiles, durable state, the command surface `majordomus --help` lists, milestone and issue execution contracts with a validated dependency graph, doctor with wiring reconciliation, projections for four providers, behavioural tests |
 | 0.2 | opt-in runtime adapters: read-size clamp, output condensation, subagent budget, with limits derived from the profile |
 | 0.3 | execution telemetry, only from providers that expose it honestly |
 | 0.4 | cost per accepted outcome, only on measured data |

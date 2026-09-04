@@ -62,7 +62,7 @@ projections of `share/skeleton/providers/body.md`.
 ## Validation performed
 
 ```
-bash test/run.sh                    13 cases, disposable repositories
+bash test/run.sh                    every case in test/cases, each in a disposable repository
 scripts/generate-site-data --check  derived data matches canonical inputs
 scripts/site-build                  Zola + Tailwind + vendored JS
 scripts/site-check                  sync, schema, promo budget, routes, prefix, links, assets,

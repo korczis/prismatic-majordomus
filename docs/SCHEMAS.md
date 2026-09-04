@@ -198,6 +198,115 @@ doctrines:
 `majordomus doctor` verifies every one of those constraints against the source, and
 additionally that no `mj_validate_*` function exists which no doctrine declares.
 
+## `.majordomus/project/project.yaml`
+
+The canonical project model's root. Present only in a repository that plans through
+milestones and issues; the model is opt-in and `doctor` skips it where it is absent.
+
+```yaml
+schema_version: 1
+name: Prismatic Majordomus
+repository: korczis/prismatic-majordomus     # owner/name; the projection target
+default_branch: master
+```
+
+Nothing derived is stored here. There is no `active_milestone` field: the active milestone
+is the lowest-ordered one that is `ACTIVE`, or failing that the lowest-ordered one that is
+not finished, computed on every read.
+
+---
+
+## `.majordomus/project/milestones/<ID>.yaml`
+
+One executable specification of an outcome. The filename is the id; a record whose `id`
+disagrees with its filename is refused rather than reconciled.
+
+```yaml
+id: M000
+title: Milestone and DAG driven development
+slug: milestone-dag-driven-development
+order: 0                              # integer; decides which milestone is active
+priority: p0                          # p0 | p1 | p2 | p3
+problem: "What is wrong today."       # single-line scalars; the YAML subset has no folding
+outcome: "What is true when it ends."
+current_state: "Where it stands."
+desired_state: "Where it is going."
+scope: [...]                          # what this outcome covers
+non_scope: [...]                      # what it deliberately does not
+acceptance_criteria: [...]            # what would make the outcome true
+validation: [...]                     # commands that demonstrate it
+evidence_required: [...]              # tokens gating milestone acceptance
+risks: [...]
+cancelled: false                      # optional
+evidence:                             # appended; each entry covers one required token
+  - covers: suite
+    type: test                        # test | build | ci | artifact | manual
+    command: "bash test/run.sh"
+    result: "every case passed"
+    artifact: "…"                     # optional: a path, URL or hash
+    commit: 60f83e3…                  # written by the tool
+    recorded_at: 2026-09-04T03:14:00Z # written by the tool
+created_at: 2026-09-04
+updated_at: 2026-09-04
+```
+
+There is no `issues:` list. An issue names its milestone and the relation is read in that
+one direction, so the two records cannot disagree about which issues belong to the outcome.
+There is no `status:` field; see below.
+
+---
+
+## `.majordomus/project/issues/<ID>.yaml`
+
+One bounded execution contract, carrying enough for a worker with no conversation history.
+
+```yaml
+id: I0007
+milestone: M000
+title: Enforce the canonical model as doctrine
+slug: model-doctrine
+priority: p1
+profile: implementation               # which execution profile suits this work
+parallel_safe: true                   # false forces serialisation regardless of the graph
+objective: "What this issue produces."
+why: "Why it exists."
+current_state: "…"
+desired_state: "…"
+scope: [...]                          # the paths this issue may touch
+non_scope: [...]
+depends_on: [I0005]                   # issue ids; the edges of the DAG
+acceptance_criteria: [...]            # required; an issue without one is a placeholder
+validation: [...]                     # required; the commands that demonstrate it
+evidence_required: [...]              # tokens that gate completion
+risk: "…"
+owner: alice                          # optional
+completion: "…"                       # optional one-line completion report
+
+# lifecycle markers — written only by `majordomus plan`, never by hand
+started_at: 2026-09-04T03:00:00Z
+verified_at: 2026-09-04T03:20:00Z
+completed_at: 2026-09-04T03:31:00Z
+cancelled: false
+evidence:                             # same shape as a milestone's
+  - covers: doctrine_test
+    type: test
+    command: "bash test/run.sh 44_model_doctrine"
+    result: "1 passed, 0 failed"
+    commit: aa90a8b…
+    recorded_at: 2026-09-04T03:30:11Z
+```
+
+**There is no `status` field on either record.** `BLOCKED`, `READY`, `ACTIVE`, `VERIFY`,
+`DONE` and `CANCELLED` are derived by `lib/project.awk` from the lifecycle markers, the
+evidence coverage, and the state of the issue's dependencies; a milestone's status is
+derived from its issues and its own evidence. Writing `status:` into either file is an
+unknown key and fails `majordomus plan validate` and `majordomus doctor`.
+
+Unknown keys are checked against `share/allow/project.txt`, `share/allow/milestone.txt` and
+`share/allow/issue.txt`, the same mechanism the policy and the profiles use.
+
+---
+
 ## `.majordomus/state/current.yaml`
 
 The one active task. Absent when nothing is active.
