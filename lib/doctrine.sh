@@ -29,7 +29,7 @@ export MJ_DOCTRINE_ID MJ_DOCTRINE_CLASS MJ_DOCTRINE_CMD
 # Derive the registry from the effective rules. A set that does not resolve is a failure
 # of the command that needed it, named by the loader; there is no partial registry.
 mj_doctrine_load() {
-  [ -n "$MJ_DOC_FLAT" ] && [ -f "$MJ_DOC_FLAT" ] && return 0
+  [ -n "$MJ_DOC_FLAT" ] && [ -f "$MJ_DOC_FLAT" ] && { [ "${#MJ_DOC_ROW[@]}" -gt 0 ] || mj_doctrine_rows; return 0; }
   mj_rules_load || mj_die "$MJ_EX_CONTRACT" "the rules do not resolve, so nothing can be enforced: $MJ_RULES_ERROR (see: majordomus rules list)"
   MJ_DOC_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.doc.XXXXXX")"
   # one pass over the effective set: every enforced rule becomes doctrines.N.*, with the
@@ -57,6 +57,7 @@ mj_doctrine_load() {
       if (!tset && f ~ /^tests\.[0-9]+$/) { t = v; tset = 1 }
     }
     END { flush() }' "$MJ_RULES_FLAT" > "$MJ_DOC_FLAT"
+  mj_doctrine_rows
   return 0
 }
 
@@ -64,30 +65,71 @@ mj_doctrine_load() {
 mj_doc() { mj_yget "$MJ_DOC_FLAT" "doctrines.$1.$2"; }
 # mj_doc_list <index> <field>       -> one element per line
 mj_doc_list() { mj_ylist "$MJ_DOC_FLAT" "doctrines.$1.$2"; }
+# ---------------------------------------------------------------- doctrine rows
+# The registry, one row per doctrine, built once from the flat file and kept in memory:
+# index, id, validator, class, file, first test, policy_key, and the enforced_by, tests
+# and claims lists comma-joined. The dispatcher and the wiring verifier read these rows
+# with builtins, so a doctor run no longer pays a process per field per doctrine. The
+# separator is a control character no flattened value can carry.
+MJ_DOC_ROW=()
+MJ_DOC_SEP=$'\037'
+mj_doctrine_rows() {
+  local line
+  MJ_DOC_ROW=()
+  while IFS= read -r line; do MJ_DOC_ROW[${#MJ_DOC_ROW[@]}]="$line"; done < <(awk '
+    function flush() { if (!have) return; printf "%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\n", cur, s["id"], s["validator"], s["class"], s["file"], s["test"], s["policy_key"], eb, ts, cl }
+    BEGIN { have = 0 }
+    { eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
+      if (split(k, p, ".") < 3 || p[1] != "doctrines") next
+      i = p[2]; f = substr(k, length("doctrines." i ".") + 1)
+      if (!have || i != cur) { flush(); for (kk in s) delete s[kk]; eb = ""; ts = ""; cl = ""; cur = i; have = 1 }
+      if (!(f in s)) s[f] = v
+      if (f ~ /^enforced_by\.[0-9]+$/) eb = (eb == "" ? v : eb "," v)
+      else if (f ~ /^tests\.[0-9]+$/) ts = (ts == "" ? v : ts "," v)
+      else if (f ~ /^claims\.[0-9]+$/) cl = (cl == "" ? v : cl "," v) }
+    END { flush() }' "$MJ_DOC_FLAT")
+}
+# mj_doc_row <index> -> MJ_DR_ID MJ_DR_VAL MJ_DR_CLASS MJ_DR_FILE MJ_DR_TEST MJ_DR_KEY
+#                       MJ_DR_EB MJ_DR_TESTS MJ_DR_CLAIMS, or 1 past the last row
+MJ_DR_ID=""; MJ_DR_VAL=""; MJ_DR_CLASS=""; MJ_DR_FILE=""; MJ_DR_TEST=""; MJ_DR_KEY=""; MJ_DR_EB=""; MJ_DR_TESTS=""; MJ_DR_CLAIMS=""
+mj_doc_row() {
+  [ "$1" -lt "${#MJ_DOC_ROW[@]}" ] || return 1
+  local IFS="$MJ_DOC_SEP" _i
+  # shellcheck disable=SC2034  # the row fields are read by the dispatcher and by doctor
+  read -r _i MJ_DR_ID MJ_DR_VAL MJ_DR_CLASS MJ_DR_FILE MJ_DR_TEST MJ_DR_KEY MJ_DR_EB MJ_DR_TESTS MJ_DR_CLAIMS <<< "${MJ_DOC_ROW[$1]}"
+}
+# mj_doc_field <index> <n> -> field n of the row (1 index, 2 id, 3 validator, 4 class,
+# 5 file, 6 test, 7 policy_key, 8 enforced_by, 9 tests, 10 claims), by expansion alone
+mj_doc_field() {
+  [ "$1" -lt "${#MJ_DOC_ROW[@]}" ] || return 1
+  local row="${MJ_DOC_ROW[$1]}" n=1
+  while [ "$n" -lt "$2" ]; do row="${row#*"$MJ_DOC_SEP"}"; n=$((n+1)); done
+  printf '%s' "${row%%"$MJ_DOC_SEP"*}"
+}
 # mj_doc_index <id>                 -> index, or empty
 mj_doc_index() {
-  local i=0
-  while [ -n "$(mj_doc "$i" id)" ]; do [ "$(mj_doc "$i" id)" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i+1)); done
+  local i=0 row rest
+  while [ "$i" -lt "${#MJ_DOC_ROW[@]}" ]; do
+    row="${MJ_DOC_ROW[$i]}"; rest="${row#*"$MJ_DOC_SEP"}"
+    [ "${rest%%"$MJ_DOC_SEP"*}" = "$1" ] && { printf '%s' "$i"; return 0; }
+    i=$((i+1))
+  done
   return 1
 }
-mj_doc_count() { local i=0; while [ -n "$(mj_doc "$i" id)" ]; do i=$((i+1)); done; printf '%s' "$i"; }
-mj_doc_ids() { local i=0; while [ -n "$(mj_doc "$i" id)" ]; do mj_doc "$i" id; i=$((i+1)); done; }
+mj_doc_count() { printf '%s' "${#MJ_DOC_ROW[@]}"; }
+mj_doc_ids() { local i=0; while [ "$i" -lt "${#MJ_DOC_ROW[@]}" ]; do mj_doc_field "$i" 2; printf '\n'; i=$((i+1)); done; }
 
 mj_is_function() { type "$1" 2>/dev/null | head -n1 | grep -q 'function'; }
 # `doctrine status` reports on the installation, not on this process — it must read the
 # source. Only the dispatcher, which has the libraries loaded, asks the live process.
 mj_validator_defined() { grep -rqE "^mj_validate_$1\(\)" "$MJ_LIB_DIR"; }
 
-# does doctrine <index> apply to command <name>?
 mj_doctrine_applies() {
-  local c
-  for c in $(mj_doc_list "$1" enforced_by); do [ "$c" = "$2" ] && return 0; done
+  local eb; eb="$(mj_doc_field "$1" 8)" || return 1
+  case ",$eb," in *",$2,"*) return 0 ;; esac
   return 1
 }
 
-# A validator reports a violation through this, never through mj_fail directly, so the
-# registry's class is what decides whether the command stops. An advisory doctrine that
-# is mislabelled blocking changes behaviour here and a test sees it.
 # watch answers a different question with the same doctrines — what has drifted, not
 # what is wrong — so its findings carry DRIFT and its exit code is 11. The rule, the
 # validator and the message are the same; only the level differs.
@@ -105,41 +147,41 @@ mj_doctrine_fail() {
 mj_doctrine_ok() { mj_ok "$@"; }
 mj_doctrine_skip() { mj_info "$@"; }
 
+
 # mj_doctrine_dispatch <command>
-# Runs every applicable doctrine's validator. Returns 0 always; the outcome is in
-# MJ_FAILS and MJ_DOCTRINE_ERRORS, which the calling command turns into an exit code.
+# Runs every doctrine that names <command> in enforced_by. Records which ran, and how
+# each ended, so that a command can report doctrines that were never reached.
 mj_doctrine_dispatch() {
-  local cmd="$1" i=0 id val cls fn rc f0
+  local cmd="$1" i=0 id val cls file fn rc f0
   mj_doctrine_load
   MJ_DOCTRINE_RAN=""; MJ_DOCTRINE_RESULTS=""; MJ_DOCTRINE_CMD="$cmd"
-  while [ -n "$(mj_doc "$i" id)" ]; do
-    if mj_doctrine_applies "$i" "$cmd"; then
-      id="$(mj_doc "$i" id)"; val="$(mj_doc "$i" validator)"; cls="$(mj_doc "$i" class)"
-      case "$cls" in
-        blocking|advisory) ;;
-        *) mj_fail doctrine "$id" "unknown class '$cls' (blocking | advisory)" "grep -n '^class:' $(mj_doc "$i" file)"
-           MJ_DOCTRINE_ERRORS=$((MJ_DOCTRINE_ERRORS+1)); i=$((i+1)); continue ;;
-      esac
-      fn="mj_validate_$val"
-      if ! mj_is_function "$fn"; then
-        mj_fail doctrine "$id" "declares validator '$val' but no function $fn exists" "grep -rn 'mj_validate_$val' lib/"
-        MJ_DOCTRINE_ERRORS=$((MJ_DOCTRINE_ERRORS+1)); i=$((i+1)); continue
-      fi
-      MJ_DOCTRINE_ID="$id"; MJ_DOCTRINE_CLASS="$cls"; MJ_DOCTRINE_SKIPPED=0; f0="$MJ_FAILS"
-      rc=0; "$fn" || rc=$?
-      if [ "$MJ_DOCTRINE_SKIPPED" = 1 ]; then MJ_DOCTRINE_RESULTS="$MJ_DOCTRINE_RESULTS $id:skipped"
-      elif [ "$MJ_FAILS" -gt "$f0" ]; then MJ_DOCTRINE_RESULTS="$MJ_DOCTRINE_RESULTS $id:fail"
-      else MJ_DOCTRINE_RESULTS="$MJ_DOCTRINE_RESULTS $id:pass"; fi
-      MJ_DOCTRINE_ID=""; MJ_DOCTRINE_CLASS=""
-      # A validator signals a rule violation with mj_doctrine_fail, not with its exit
-      # status. A non-zero return therefore means the validator itself broke, which is
-      # a different fact and must not be reported as a clean run.
-      if [ "$rc" != 0 ]; then
-        mj_fail doctrine "$id" "validator $val exited $rc; this is a validator failure, not a rule result" "bash -x bin/majordomus $cmd"
-        MJ_DOCTRINE_ERRORS=$((MJ_DOCTRINE_ERRORS+1))
-      fi
-      MJ_DOCTRINE_RAN="$MJ_DOCTRINE_RAN $id"
+  while mj_doc_row "$i"; do
+    case ",$MJ_DR_EB," in *",$cmd,"*) ;; *) i=$((i+1)); continue ;; esac
+    id="$MJ_DR_ID"; val="$MJ_DR_VAL"; cls="$MJ_DR_CLASS"; file="$MJ_DR_FILE"
+    case "$cls" in
+      blocking|advisory) ;;
+      *) mj_fail doctrine "$id" "unknown class '$cls' (blocking | advisory)" "grep -n '^class:' $file"
+         MJ_DOCTRINE_ERRORS=$((MJ_DOCTRINE_ERRORS+1)); i=$((i+1)); continue ;;
+    esac
+    fn="mj_validate_$val"
+    if ! mj_is_function "$fn"; then
+      mj_fail doctrine "$id" "declares validator '$val' but no function $fn exists" "grep -rn 'mj_validate_$val' lib/"
+      MJ_DOCTRINE_ERRORS=$((MJ_DOCTRINE_ERRORS+1)); i=$((i+1)); continue
     fi
+    MJ_DOCTRINE_ID="$id"; MJ_DOCTRINE_CLASS="$cls"; MJ_DOCTRINE_SKIPPED=0; f0="$MJ_FAILS"
+    rc=0; "$fn" || rc=$?
+    if [ "$MJ_DOCTRINE_SKIPPED" = 1 ]; then MJ_DOCTRINE_RESULTS="$MJ_DOCTRINE_RESULTS $id:skipped"
+    elif [ "$MJ_FAILS" -gt "$f0" ]; then MJ_DOCTRINE_RESULTS="$MJ_DOCTRINE_RESULTS $id:fail"
+    else MJ_DOCTRINE_RESULTS="$MJ_DOCTRINE_RESULTS $id:pass"; fi
+    MJ_DOCTRINE_ID=""; MJ_DOCTRINE_CLASS=""
+    # A validator signals a rule violation with mj_doctrine_fail, not with its exit
+    # status. A non-zero return therefore means the validator itself broke, which is
+    # a different fact and must not be reported as a clean run.
+    if [ "$rc" != 0 ]; then
+      mj_fail doctrine "$id" "validator $val exited $rc; this is a validator failure, not a rule result" "bash -x bin/majordomus $cmd"
+      MJ_DOCTRINE_ERRORS=$((MJ_DOCTRINE_ERRORS+1))
+    fi
+    MJ_DOCTRINE_RAN="$MJ_DOCTRINE_RAN $id"
     i=$((i+1))
   done
   MJ_DOCTRINE_CMD=""
@@ -173,13 +215,13 @@ H
   mj_require_installed
   mj_doctrine_load
   [ "$sub" = list ] && { mj_doctrine_list; return 0; }
-  local n bl ad un uc i id
-  n="$(mj_doc_count)"; bl=0; ad=0; un=0; uc=0; i=0
-  while [ -n "$(mj_doc "$i" id)" ]; do
-    id="$(mj_doc "$i" id)"
-    case "$(mj_doc "$i" class)" in blocking) bl=$((bl+1)) ;; advisory) ad=$((ad+1)) ;; esac
-    mj_validator_defined "$(mj_doc "$i" validator)" || un=$((un+1))
-    [ -f "$MJ_HOME/$(mj_doc "$i" test)" ] || uc=$((uc+1))
+  local n bl ad un uc i defined
+  n="${#MJ_DOC_ROW[@]}"; bl=0; ad=0; un=0; uc=0; i=0
+  defined=" $(mj_validators_defined) "
+  while mj_doc_row "$i"; do
+    case "$MJ_DR_CLASS" in blocking) bl=$((bl+1)) ;; advisory) ad=$((ad+1)) ;; esac
+    case "$defined" in *" $MJ_DR_VAL "*) ;; *) un=$((un+1)) ;; esac
+    [ -f "$MJ_HOME/$MJ_DR_TEST" ] || uc=$((uc+1))
     i=$((i+1))
   done
   if [ "$MJ_JSON" = 1 ]; then
@@ -194,11 +236,12 @@ H
   fi
   [ "$un" = 0 ] && [ "$uc" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
 }
+# every validator name lib/ defines, one scan, space-separated
+mj_validators_defined() { grep -rhoE '^mj_validate_[A-Za-z0-9_-]+\(\)' "$MJ_LIB_DIR" | sed -e 's/^mj_validate_//' -e 's/()$//' | paste -sd' ' -; }
 mj_doctrine_list() {
   local i=0
-  while [ -n "$(mj_doc "$i" id)" ]; do
-    printf '%-38s %-9s %-24s %s\n' "$(mj_doc "$i" id)" "$(mj_doc "$i" class)" \
-      "mj_validate_$(mj_doc "$i" validator)" "$(mj_doc_list "$i" enforced_by | paste -sd, -)"
+  while mj_doc_row "$i"; do
+    printf '%-38s %-9s %-24s %s\n' "$MJ_DR_ID" "$MJ_DR_CLASS" "mj_validate_$MJ_DR_VAL" "$MJ_DR_EB"
     i=$((i+1))
   done
 }
