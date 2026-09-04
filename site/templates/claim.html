@@ -1,6 +1,7 @@
 {% extends "page.html" %}
 {% block body %}
 {%- set why = load_data(path="data/generated/why.json") -%}
+{%- set roadmap = load_data(path="data/generated/roadmap.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 {%- set c = [x for x in caps.claims if x.id == page.extra.claim_id][0] -%}
@@ -43,6 +44,26 @@ bash test/run.sh {{ c.test_case }}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related claims <span class="font-mono text-sm font-normal text-body-subtle">same implementation</span></h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in related %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={x.status} /> }}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
     {% endif %}
+    {#- Which milestone would move this claim out of planned. The edge is declared once, in
+        milestone.claims, and read here by inversion — a claim naming its own milestone would
+        be the same edge written twice in opposite directions. -#}
+    {%- set owning = [m for m in roadmap.milestones if c.id in m.claims] %}
+    {%- if owning | length > 0 %}{% set m = owning[0] %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What would make this guaranteed</h2>
+    <a href="{{ get_url(path='/roadmap/', trailing_slash=true) }}" class="mt-4 flex min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+      <span class="flex flex-wrap items-baseline gap-2">
+        {%- if m.version %}<span class="font-mono text-base font-semibold text-heading">{{ m.version }}</span>{% endif %}
+        <span class="text-sm font-medium text-heading">{{ m.title }}</span>
+        <span class="ms-auto rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ m.status }}</span>
+      </span>
+      {%- if m.blocked_by | length > 0 %}
+      <span class="text-sm text-body">Blocked by
+        {%- for b in m.blocked_by %} <span class="font-mono text-heading">{{ b }}</span>{% if not loop.last %},{% endif %}{% endfor %}, so this claim cannot move yet.</span>
+      {%- endif %}
+      <span class="text-xs text-body-subtle">Shipping the milestone does not promote the claim: it reaches <span class="font-mono">guaranteed</span> when an implementation, a behavioural test and a blocking CI job exist for it.</span>
+    </a>
+    {%- endif %}
+
     {%- set why_key = c.id -%}{%- set why_field = "claims" -%}
     {% include "partials/why-backlinks.html" %}
   </div>
