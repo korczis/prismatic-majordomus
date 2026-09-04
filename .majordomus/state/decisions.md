@@ -137,3 +137,11 @@ Why: A person reprioritised, which the contract allows as a reason to work outsi
 Rejected: -
 Evidence: -
 Supersedes: -
+
+## 2026-09-04 — Execute the operator-approved .ai transformation pack outside the issue plan, as one task
+Task: t-20260904191148-fde2
+Head: e8526942232f6b8cea08f9d1cc14f3c0965f8116
+Why: A person reprioritised with an explicit pack (tmp/transform); the pack is the contract, its migration DAG is the plan, and every phase lands as its own commit with tests
+Rejected: Filing thirteen plan issues first, which would duplicate the pack's DAG into records that would themselves be moved by the migration
+Evidence: tmp/transform/09_MIGRATION_DAG.md; tmp/transform/_run/BASELINE.md
+Supersedes: -
