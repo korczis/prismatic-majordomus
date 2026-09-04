@@ -6,8 +6,8 @@
     "default_branch": "master"
   },
   "active_milestone": "M003",
-  "next_ready": "I0808",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::ready\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::blocked\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::ready\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::blocked\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::blocked\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "next_ready": "I0806",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::ready\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "statuses": {
     "issue": [
       "READY",
@@ -422,16 +422,16 @@
         "I0815",
         "I0816"
       ],
-      "mermaid": "flowchart LR\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::ready\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::blocked\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::ready\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::blocked\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::blocked\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "mermaid": "flowchart LR\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::ready\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
         "total": 16,
         "required": 16,
         "by_status": {
           "READY": 2,
-          "BLOCKED": 9,
+          "BLOCKED": 6,
           "ACTIVE": 0,
           "VERIFY": 0,
-          "DONE": 5,
+          "DONE": 8,
           "CANCELLED": 0
         }
       }
@@ -3528,7 +3528,7 @@
       "id": "I0805",
       "slug": "session-read-divergence",
       "milestone": "M003",
-      "status": "READY",
+      "status": "DONE",
       "wave": 3,
       "priority": "p1",
       "profile": "implementation",
@@ -3567,18 +3567,28 @@
       "evidence_required": [
         "divergence_labelled"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "divergence_labelled",
+          "type": "test",
+          "command": "test/run.sh 62_session_divergence",
+          "result": "one case passed, and the mutation that removes the ledger tiebreak fails it. The case proves absence is answered on all three views; that a record reads exact then advanced as history moves forward; that a rewritten history makes list, show and latest all say diverged and print a warning; that a session from another branch is never offered as this branch's latest while --all shows it labelled different_context; that a malformed record is skipped with a warning and not fatally; and that every view leaves the working tree byte-identical. Ordering comes from the record and the ledger rather than the filesystem: touching an old record does not reorder the list, and the two close events are swapped in the ledger so filename order and ledger order disagree",
+          "artifact": "",
+          "commit": "4fd808379e9842aa342bb470b98de4f318dd25d6",
+          "recorded_at": "2026-09-04T18:10:40Z"
+        }
+      ],
       "risk": "Reusing mj_resolve_latest requires the session record to have the same front-matter shape as a checkpoint. If the record is pure YAML instead, a second resolver appears, and two resolution rules is exactly the thing the resolution section of the documentation refuses.",
       "completion": "",
-      "started_at": "",
+      "started_at": "2026-09-04T18:01:49Z",
       "verified_at": "",
-      "completed_at": ""
+      "completed_at": "2026-09-04T18:10:47Z"
     },
     {
       "id": "I0806",
       "slug": "session-doctrines-retention",
       "milestone": "M003",
-      "status": "BLOCKED",
+      "status": "READY",
       "wave": 4,
       "priority": "p1",
       "profile": "implementation",
@@ -3587,9 +3597,7 @@
       "depends_on": [
         "I0805"
       ],
-      "blocked_by": [
-        "I0805"
-      ],
+      "blocked_by": [],
       "dependents": [
         "I0813"
       ],
@@ -3699,7 +3707,7 @@
       "id": "I0808",
       "slug": "knowledge-nodes",
       "milestone": "M003",
-      "status": "READY",
+      "status": "DONE",
       "wave": 2,
       "priority": "p1",
       "profile": "deep-work",
@@ -3715,7 +3723,7 @@
       "scope": [
         "lib/knowledge.sh",
         "lib/knowledge.awk",
-        "test/cases/65_knowledge_nodes.sh"
+        "test/cases/73_knowledge_nodes.sh"
       ],
       "non_scope": [
         "Edges",
@@ -3734,24 +3742,43 @@
         "Extraction from a generic Markdown document takes only the path, the first heading and explicit links"
       ],
       "validation": [
-        "bash test/run.sh 65_knowledge_nodes"
+        "bash test/run.sh 73_knowledge_nodes"
       ],
       "evidence_required": [
         "node_identity_stable",
         "unknown_stays_unknown"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "node_identity_stable",
+          "type": "test",
+          "command": "test/run.sh 73_knowledge_nodes",
+          "result": "1 passed. Two runs produce identical bytes; editing a document keeps its node id and moves only its own hash; renaming one is a delete and an add that disturbs no other id; answering a question leaves its identity unchanged. The last of those was a real defect: keying a question on its whole line changed the identity the moment somebody answered it, and the mutation that restores that behaviour fails the case",
+          "artifact": "",
+          "commit": "2e9621547ae3dfe01d7d76ca3436c970227e6808",
+          "recorded_at": "2026-09-04T17:59:19Z"
+        },
+        {
+          "covers": "unknown_stays_unknown",
+          "type": "test",
+          "command": "test/run.sh 73_knowledge_nodes",
+          "result": "1 passed. A document whose body discusses roadmaps, milestones and policies is a document; a source class declaring a kind the extractor has no rule for yields a node of kind unknown plus one WARN naming the class, rather than being dropped or guessed at; a document with no heading gets an empty title rather than its filename. Two further defects surfaced while proving it: the extractor keyed sources by path, so two classes discovering one file overwrote each other's kind, and the reader handed a Markdown file to the YAML flattener and complained that it was not YAML",
+          "artifact": "",
+          "commit": "2e9621547ae3dfe01d7d76ca3436c970227e6808",
+          "recorded_at": "2026-09-04T17:59:29Z"
+        }
+      ],
       "risk": "Deriving a document id from its path means a rename is a delete and an add, which is correct and will look like churn. The alternative, a content hash identity, makes an edit a delete and an add, which is worse.",
       "completion": "",
-      "started_at": "",
+      "started_at": "2026-09-04T17:46:56Z",
       "verified_at": "",
-      "completed_at": ""
+      "completed_at": "2026-09-04T17:59:30Z"
     },
     {
       "id": "I0809",
       "slug": "knowledge-edges-provenance",
       "milestone": "M003",
-      "status": "BLOCKED",
+      "status": "DONE",
       "wave": 3,
       "priority": "p1",
       "profile": "deep-work",
@@ -3760,17 +3787,15 @@
       "depends_on": [
         "I0808"
       ],
-      "blocked_by": [
-        "I0808"
-      ],
+      "blocked_by": [],
       "dependents": [
         "I0810"
       ],
       "scope": [
         "lib/knowledge.sh",
         "lib/knowledge.awk",
-        "test/cases/66_knowledge_edges.sh",
-        "test/cases/67_knowledge_mutation.sh"
+        "test/cases/74_knowledge_edges.sh",
+        "test/cases/75_knowledge_mutation.sh"
       ],
       "non_scope": [
         "Inferring a relationship from prose",
@@ -3789,25 +3814,44 @@
         "No edge is produced from a Markdown link whose target is outside the repository"
       ],
       "validation": [
-        "bash test/run.sh 66_knowledge_edges",
-        "bash test/run.sh 67_knowledge_mutation"
+        "bash test/run.sh 74_knowledge_edges",
+        "bash test/run.sh 75_knowledge_mutation"
       ],
       "evidence_required": [
         "provenance_required",
         "mutation_propagates"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "provenance_required",
+          "type": "test",
+          "command": "test/run.sh 74_knowledge_edges",
+          "result": "one case passed. Every edge carries the file and the field or line it was observed in; the case asserts the provenance string of each of the six declared relationship kinds and then checks that no emitted row has fewer than four columns. Two guards are mutation-tested against a copy of the extractor: blanking a provenance argument makes the edge refused with a FAIL rather than emitted with an empty source, and renaming an edge type to one the closed set does not declare is an error rather than a new vocabulary word",
+          "artifact": "",
+          "commit": "4a7c934eb496b19925500730d9f2a5c4bbaecfe9",
+          "recorded_at": "2026-09-04T18:30:53Z"
+        },
+        {
+          "covers": "mutation_propagates",
+          "type": "test",
+          "command": "test/run.sh 75_knowledge_mutation",
+          "result": "one case passed. Each mutation edits exactly one canonical file and the case asserts both what moved and what did not: redirecting a dependency moves that edge and leaves every other edge byte-identical; moving an issue to another milestone moves its part_of edge; repointing a claim's implementation repoints that edge; adding a claim adds its node and exactly its three declared edges and disturbs nothing else; deleting an issue removes its node and makes what pointed at it a reported dangling edge. Nothing generated is edited to make any of it happen, and the working tree is byte-identical afterwards",
+          "artifact": "",
+          "commit": "4a7c934eb496b19925500730d9f2a5c4bbaecfe9",
+          "recorded_at": "2026-09-04T18:31:04Z"
+        }
+      ],
       "risk": "Markdown links are the one edge source that is not curated. Treating a broken external link as the same severity as a broken claim-to-test reference would make a permanent red gate out of an intentional outbound link; ownership and severity have to be distinguished.",
       "completion": "",
-      "started_at": "",
+      "started_at": "2026-09-04T18:14:13Z",
       "verified_at": "",
-      "completed_at": ""
+      "completed_at": "2026-09-04T18:31:05Z"
     },
     {
       "id": "I0810",
       "slug": "knowledge-manifest",
       "milestone": "M003",
-      "status": "BLOCKED",
+      "status": "READY",
       "wave": 4,
       "priority": "p1",
       "profile": "implementation",
@@ -3816,9 +3860,7 @@
       "depends_on": [
         "I0809"
       ],
-      "blocked_by": [
-        "I0809"
-      ],
+      "blocked_by": [],
       "dependents": [
         "I0811"
       ],

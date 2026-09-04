@@ -99,13 +99,13 @@ Move a repository's project data from the pre-`.ai` layout under `.majordomus/` 
 portable AI layer under `.ai/`, once and explicitly. No ordinary command migrates: `check`,
 `doctor`, `start` and the rest refuse (`12`) a legacy layout and name this command.
 
-**Markers:** legacy is `.majordomus/policy.yaml`; new is `.ai/manifest.yaml`; a
+**Markers:** legacy is `.ai/repo/policy.yaml`; new is `.ai/manifest.yaml`; a
 `.majordomus/bin/majordomus` is a tool installation and never project data.
 
 **Reads:** every file under `.majordomus/`, the skeleton manifest (the destinations come
 from it), the tool's templates (to tell an unchanged template from a customised one).
 **Writes:** `.ai/README.md`, `.ai/manifest.yaml`; the canonical files moved into
-`.ai/repo/` (`git mv` where tracked, so history follows); `.majordomus/state/` moved to
+`.ai/repo/` (`git mv` where tracked, so history follows); `.ai/local/state/` moved to
 `.ai/local/state/` and taken out of the index; the rest of the layer seeded from the
 skeleton without overwriting anything that moved; one `.ai/local/` line in `.gitignore`;
 a byte-for-byte copy of the state under `tmp/majordomus-migrate-backup/<utc>/state/`,
@@ -141,9 +141,9 @@ reported on its own line.
 ```
 $ majordomus migrate --dry-run
 migrate: .majordomus/ (pre-.ai layout) -> .ai/ (ai-repository/v1)
-  move  .majordomus/policy.yaml -> .ai/repo/policy.yaml
-  move  .majordomus/profiles/debugging.yaml -> .ai/repo/profiles/debugging.yaml
-  state .majordomus/state/current.yaml -> .ai/local/state/current.yaml
+  move  .ai/repo/policy.yaml -> .ai/repo/policy.yaml
+  move  .ai/repo/profiles/debugging.yaml -> .ai/repo/profiles/debugging.yaml
+  state .ai/local/state/current.yaml -> .ai/local/state/current.yaml
   drop  .majordomus/templates/handover.md    (identical to the tool's template)
   ...
 dry run: nothing written
@@ -505,6 +505,32 @@ incomplete" is the one thing about an ended session that changes what somebody d
 Exit `12` with no open session, `10` when the summary carries identity fields, `15` when
 the open record belongs to another checkout.
 
+- `list [--all]` prints closed episodes, newest first, with each one's divergence label.
+- `show <session-id>` prints one record whole.
+- `latest [--path]` prints the newest record that resolves for this worktree and branch.
+
+All three are read-only, and all three print the record's divergence label — `exact`,
+`advanced`, `diverged`, `different_context`. No second vocabulary for staleness is invented,
+because a session written before a branch was rewritten, handed to the next worker as though
+it still described this history, is exactly what those four words exist to prevent.
+
+Resolution is the rule every other record follows: same repository, same worktree and
+branch, then same branch, then nothing. A record from an unrelated worktree is never
+offered — borrowed context cannot be recognised as wrong until it has been acted on.
+`--all` lifts the rule explicitly and shows each record's branch, because a record from
+elsewhere is worth seeing when you asked for everything and is never worth being handed
+silently.
+
+**Ordering is by the recorded timestamp, with ledger position breaking a tie inside one
+second.** Filesystem modification time is never read: it does not survive a clone and it is
+not the time the record asserts, so touching an old record does not make it the newest.
+Filename order normally agrees with ledger order, which makes an implementation that fell
+through to the filename look correct; `test/cases/62_session_divergence.sh` makes the two
+disagree on purpose and fails when the ledger is not what decides.
+
+A malformed record is skipped with a warning on stderr and never silently, and never
+fatally: one unreadable file must not cost the whole listing.
+
 **Writes:** `state/session-current.yaml`, mode `0600`, written atomically, and one
 `session.started` line in the ledger. `session_id`, `repository_id`, `worktree`, `branch`,
 `start_head` and `start_working_tree` are computed from git and are never authored.
@@ -728,6 +754,78 @@ changes the other.
 - `sources [--scope shared|operational|all]` lists the curated source classes and the
   files each one discovers, with the class, the scope, the kind, a content hash and the
   repository-relative path.
+- `nodes [--scope ...] [--kind <k>]` derives one node per canonical object: its identity,
+  its kind, the source it came from and that source's hash. Exits `10` when two objects
+  claim one identity.
+- `edges [--scope ...] [--type <t>]` derives one edge per stated relationship, with the file
+  and the field or line it was observed in.
+
+**No edge without provenance.** Every edge names where the relationship was stated, and an
+edge missing any of from, to, type or provenance is refused rather than emitted with a
+blank — a blank source reads as "unknown" and is indistinguishable from one nobody recorded.
+An edge nobody can trace to a line is not a fact, it is a guess wearing a fact's clothes, and
+it is a guess the person best placed to notice it is wrong will never see.
+
+**Nothing is inferred from prose.** The repository already states its relationships
+explicitly, in fields somebody maintains, and those are both free and correct. The edge
+types are a closed set; an undeclared one is an error rather than a new vocabulary word:
+
+| type | from → to | stated in |
+|---|---|---|
+| `part_of` | issue → milestone | the issue's `milestone` |
+| `depends_on` | issue → issue, milestone → milestone | the record's `depends_on` |
+| `declares` | milestone → claim | the milestone's `claims` |
+| `specified_by` | claim → document | `docs/CLAIMS.yaml`'s `source` |
+| `implemented_by` | claim → implementation | its `implementation` |
+| `tested_by` | claim → test, doctrine → test | its `test` |
+| `supports` | doctrine → claim | the doctrine's `claims` |
+| `references` | document → document | an inline Markdown link |
+
+Links are the one edge source that is not curated, and they are read conservatively. Fenced
+code is dropped first, because a path inside a code sample is an example of a path and not a
+reference to one. A target with a scheme, a protocol-relative target and an absolute path are
+all skipped; a fragment is trimmed, because `docs/CLI.md#session` refers to `docs/CLI.md`.
+
+**Severity distinguishes what Majordomus owns from what an author wrote.** A declared
+relationship pointing at a file the repository does not contain is a `FAIL`: it is a broken
+promise. A link in a document pointing at nothing is a `WARN`: a document may deliberately
+point outside the repository and the target alone cannot tell the two apart. A relationship
+pointing at a real file that this compiler does not model as one node — a container of many
+objects, or something outside the curated set — is silent, because a report that is large by
+design is a report people stop reading.
+
+`nodes` and `edges` are two views of one derivation, so a defect in either exits `10` on
+both. There is no clean node listing over a graph that is broken.
+
+**A node's identity is never its content hash.** It is the object's own canonical id where
+it has one — `claim:policy-parse`, `issue:I0801`, `milestone:M003`, `profile:debugging` —
+and its repository path where it does not, as in `document:docs/CONTINUITY.md`. A hash says
+whether something *changed*; it can never say what something *is*, because then every edit
+would delete a node and create a stranger, and every reference to it would point at nothing
+without anything saying so. The hash rides along on the node and is what freshness is
+measured with.
+
+The consequence is deliberate: editing a document keeps its node and moves its hash;
+renaming one is a delete and an add, and disturbs no other node.
+
+**A kind comes from structure, never from prose.** It is decided by the source class the
+file was discovered in and by fields the file itself declares. Nothing reads a body looking
+for a word that suggests a type: a document that discusses roadmaps and milestones is a
+document that discusses them. Where no rule applies the kind is `unknown` and the node is
+still emitted, with one finding naming the class — an explicit unknown is information, and a
+confident wrong answer is not.
+
+**A title is taken or left empty, never invented.** From the record's own `title` or
+`description`, or from a document's first level-one heading. A document with no heading gets
+no title rather than its filename, because a filename standing in for a title reads like a
+fact and is a guess.
+
+Two stores have no id field of their own. A decision is keyed by its title and a question by
+its text — in both cases exactly what the ledger records and what a session envelope
+references, so three places name the same thing the same way and nothing maps between them.
+Answering a question rewrites the line it lives on, and the identity survives that: the
+appended answer is stripped, and only when what remains ends in the entry's opening date, so
+a question whose own text contains a dash is left whole rather than cut at a guess.
 
 **Discovery is driven by the repository index, not by a filesystem walk.** A walk returns
 build output, vendored trees and editor droppings; it returns them in an order that

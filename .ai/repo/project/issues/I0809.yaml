@@ -12,8 +12,8 @@ desired_state: "An edge is a from, a to, a type and a provenance, and the graph 
 scope:
   - lib/knowledge.sh
   - lib/knowledge.awk
-  - test/cases/66_knowledge_edges.sh
-  - test/cases/67_knowledge_mutation.sh
+  - test/cases/74_knowledge_edges.sh
+  - test/cases/75_knowledge_mutation.sh
 non_scope:
   - Inferring a relationship from prose
   - Any similarity, clustering or taxonomy generation
@@ -27,11 +27,26 @@ acceptance_criteria:
   - A dangling edge is reported and names both ends
   - No edge is produced from a Markdown link whose target is outside the repository
 validation:
-  - bash test/run.sh 66_knowledge_edges
-  - bash test/run.sh 67_knowledge_mutation
+  - bash test/run.sh 74_knowledge_edges
+  - bash test/run.sh 75_knowledge_mutation
 evidence_required:
   - provenance_required
   - mutation_propagates
 risk: "Markdown links are the one edge source that is not curated. Treating a broken external link as the same severity as a broken claim-to-test reference would make a permanent red gate out of an intentional outbound link; ownership and severity have to be distinguished."
 created_at: 2026-09-04
-updated_at: 2026-09-04
+updated_at: 2026-09-04T18:31:05Z
+started_at: 2026-09-04T18:14:13Z
+completed_at: 2026-09-04T18:31:05Z
+evidence:
+  - covers: provenance_required
+    type: test
+    command: "test/run.sh 74_knowledge_edges"
+    result: "one case passed. Every edge carries the file and the field or line it was observed in; the case asserts the provenance string of each of the six declared relationship kinds and then checks that no emitted row has fewer than four columns. Two guards are mutation-tested against a copy of the extractor: blanking a provenance argument makes the edge refused with a FAIL rather than emitted with an empty source, and renaming an edge type to one the closed set does not declare is an error rather than a new vocabulary word"
+    commit: 4a7c934eb496b19925500730d9f2a5c4bbaecfe9
+    recorded_at: 2026-09-04T18:30:53Z
+  - covers: mutation_propagates
+    type: test
+    command: "test/run.sh 75_knowledge_mutation"
+    result: "one case passed. Each mutation edits exactly one canonical file and the case asserts both what moved and what did not: redirecting a dependency moves that edge and leaves every other edge byte-identical; moving an issue to another milestone moves its part_of edge; repointing a claim's implementation repoints that edge; adding a claim adds its node and exactly its three declared edges and disturbs nothing else; deleting an issue removes its node and makes what pointed at it a reported dangling edge. Nothing generated is edited to make any of it happen, and the working tree is byte-identical afterwards"
+    commit: 4a7c934eb496b19925500730d9f2a5c4bbaecfe9
+    recorded_at: 2026-09-04T18:31:04Z

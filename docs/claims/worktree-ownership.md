@@ -35,7 +35,7 @@ majordomus --repo ../second finish --outcome completed; echo $?   # 15, "finish 
 
 One checkout still holds one record. Two people working in the same working directory share it, and the second `start` replaces the first; nothing about the field tells two workers in one checkout apart, because to git they are one.
 
-It does not attribute commits. A task records the commit it started at, and every file changed since counts as its work regardless of who changed it — see the limitation in [`CONTINUITY.md`](CONTINUITY.md).
+It does not attribute commits. A task records the commit it started at, and every file changed since counts as its work regardless of who changed it — see the limitation in [`CONTINUITY.md`](../CONTINUITY.md).
 
 ## Why it exists
 
