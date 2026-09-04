@@ -61,6 +61,7 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name](https://korczis.github.io/prismatic-majordomus/guarantees/dag-validation/) | `docs/PLANNING.md` | `lib/project.awk` | `test/cases/42_dag_waves.sh` |
 | [Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised](https://korczis.github.io/prismatic-majordomus/guarantees/execution-waves/) | `docs/PLANNING.md` | `lib/project.awk` | `test/cases/42_dag_waves.sh` |
 | [An issue cannot be completed while a required piece of evidence is missing](https://korczis.github.io/prismatic-majordomus/guarantees/evidence-gates-done/) | `docs/PLANNING.md` | `lib/plan.sh` | `test/cases/41_project_status.sh` |
+| [The roadmap is derived from milestone state, and no document may be a second authority for it](https://korczis.github.io/prismatic-majordomus/guarantees/roadmap-derived/) | `docs/ROADMAP.md` | `lib/doctor.sh` | `test/cases/49_roadmap_doctrine.sh` |
 | [GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten](https://korczis.github.io/prismatic-majordomus/guarantees/github-projection/) | `docs/PLANNING.md` | `scripts/github-sync` | `test/cases/45_github_projection.sh` |
 
 ## advisory

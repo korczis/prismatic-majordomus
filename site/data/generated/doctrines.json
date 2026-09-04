@@ -454,28 +454,6 @@
       "test": "test/cases/02_doctor_basic.sh"
     },
     {
-      "id": "catalogue_integrity",
-      "slug": "catalogue-integrity",
-      "title": "Catalogue integrity",
-      "class": "blocking",
-      "principle": 2,
-      "summary": "Every use case and application describes the tool in terms the tool has — each command, doctrine and claim it names exists, and the two catalogues reference each other in both directions.",
-      "validator": "catalogue",
-      "validator_function": "mj_validate_catalogue",
-      "defined_in": "lib/doctor.sh",
-      "category": "catalogue",
-      "enforced_by": [
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "catalogue-resolves"
-      ],
-      "test": "test/cases/28_catalogue.sh"
-    },
-    {
       "id": "doctrine_wiring_integrity",
       "slug": "doctrine-wiring-integrity",
       "title": "Doctrine wiring integrity",
@@ -543,6 +521,28 @@
         "execution-waves"
       ],
       "test": "test/cases/44_model_doctrine.sh"
+    },
+    {
+      "id": "roadmap_integrity",
+      "slug": "roadmap-integrity",
+      "title": "The roadmap is a projection, never a document",
+      "class": "blocking",
+      "principle": 4,
+      "summary": "No document is a second authority for the roadmap. While a hand-written roadmap table exists, it can neither list a version no milestone declares nor hide one the model does.",
+      "validator": "roadmap",
+      "validator_function": "mj_validate_roadmap",
+      "defined_in": "lib/doctor.sh",
+      "category": "roadmap",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "roadmap-derived"
+      ],
+      "test": "test/cases/49_roadmap_doctrine.sh"
     }
   ],
   "counts": {
@@ -571,9 +571,9 @@
     "enforcement_wiring": 17,
     "context_budget": 18,
     "retention_caps": 19,
-    "catalogue_integrity": 20,
-    "doctrine_wiring_integrity": 21,
-    "project_integrity": 22,
-    "dag_integrity": 23
+    "doctrine_wiring_integrity": 20,
+    "project_integrity": 21,
+    "dag_integrity": 22,
+    "roadmap_integrity": 23
   }
 }

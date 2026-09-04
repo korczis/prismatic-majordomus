@@ -502,6 +502,45 @@ mj_validate_project() {
 # The graph rules, reported through the dispatcher so that watch sees the same violations
 # as drift. A warning from the model is a warning here: work in progress is reported, not
 # blocked, and only a graph that cannot be executed is a failure.
+# The roadmap is a projection of milestone state, so no document may be a second authority
+# for it. While a hand-written roadmap table survives anywhere, every version it lists has to
+# be a canonical milestone's version and every canonical version has to appear in it — a table
+# that can neither invent a release nor hide one. When the table is gone the check holds
+# trivially, which is the point: this refuses the regression, it does not require the table.
+mj_validate_roadmap() {
+  local readme canon doc missing extra
+  mj_project_doctrine_load || return 0
+  readme="$MJ_ROOT/README.md"
+  [ -f "$readme" ] || { mj_doctrine_ok roadmap "README.md" "absent; nothing can duplicate the roadmap"; return 0; }
+  if ! grep -q '^## Roadmap' "$readme"; then
+    mj_doctrine_ok roadmap "README.md" "no authored roadmap section; the roadmap is only a projection"
+    return 0
+  fi
+  canon="$(awk -F'\t' '$1=="M" && $15!="" { print $15 }' "$MJ_PJ/model.tsv" | sort -u)"
+  doc="$(awk '/^## Roadmap/{f=1;next} /^## /{f=0} f' "$readme" \
+         | sed -n 's/^| *\**\([0-9][0-9.]*\)\** *|.*/\1/p' | sort -u)"
+  # A section that lists no versions is prose pointing at the projection, not a second
+  # authority. The rule is about an authored version list, not about the heading: a partial
+  # list is the dangerous case, and no list at all is the intended end state.
+  if [ -z "$doc" ]; then
+    mj_doctrine_ok roadmap "README.md" "the roadmap section lists no versions; it points at the projection rather than restating it"
+    return 0
+  fi
+  missing="$(comm -23 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
+  extra="$(comm -13 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
+  missing="${missing% }"; extra="${extra% }"
+  if [ -n "$extra" ]; then
+    mj_doctrine_fail roadmap "README.md" "lists version(s) no milestone declares: $extra" "majordomus plan roadmap"
+    return 0
+  fi
+  if [ -n "$missing" ]; then
+    mj_doctrine_fail roadmap "README.md" "omits milestone version(s) the model declares: $missing" "majordomus plan roadmap"
+    return 0
+  fi
+  mj_doctrine_ok roadmap "README.md" "every version it lists is a milestone, and no milestone is hidden from it"
+  return 0
+}
+
 mj_validate_dag() {
   local lvl subj msg n
   mj_project_doctrine_load || return 0

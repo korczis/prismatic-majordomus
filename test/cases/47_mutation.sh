@@ -111,3 +111,103 @@ expect_grep 'DRIFT dag'
 "$GEN" --out "$T/gen2" >/dev/null 2>&1 \
   && jq -e '[.findings[] | select(.level=="FAIL")] | length > 0' "$T/gen2/plan.json" >/dev/null \
   || true
+
+# ---------------------------------------------------------------- mutation 6: one milestone edge
+# The roadmap graph is a second graph over the same model, so it needs its own propagation
+# proof: one edge between milestones has to move the roadmap sequence, the roadmap diagram,
+# the gate and the GitHub projection, and it must not be satisfiable by finishing work.
+rm -f .majordomus/project/issues/I0002.yaml   # undo mutation 5; the model is legal again
+pj_issue I0002 M000
+expect_exit 0 "$MJ" plan validate
+
+rm_milestone() { # ID VERSION ORDER [DEP ...]
+  local id="$1" ver="$2" ord="$3"; shift 3
+  { cat <<Y
+id: $id
+title: Milestone $id
+slug: $id
+version: "$ver"
+order: $ord
+priority: p1
+problem: "A problem worth solving."
+outcome: "The outcome once it is solved."
+acceptance_criteria:
+  - The outcome is reached
+validation:
+  - true
+evidence_required:
+  - proof
+Y
+    if [ $# -gt 0 ]; then printf 'depends_on:\n'; for d in "$@"; do printf -- '  - %s\n' "$d"; done; fi
+  } > ".majordomus/project/milestones/$id.yaml"
+}
+rmsnap() { "$MJ" plan roadmap; "$MJ" plan rgraph; "$MJ" --json plan roadmap; "$SYNC" --plan; }
+mstat()  { "$MJ" plan roadmap | awk -v i="$1" '$3==i{print $2}'; }
+
+# a second milestone with no dependency: reachable, and the roadmap shows it
+before_rm="$(rmsnap)"
+rm_milestone LATER 0.2 20
+expect_exit 0 "$MJ" plan validate
+moved "adding a milestone" "$before_rm" "$(rmsnap)"
+[ "$(mstat LATER)" = PLANNED ] || { echo "    a milestone with no dependency is $(mstat LATER), expected PLANNED"; exit 1; }
+
+# now one edge, and one edge only: LATER requires M000, which is not DONE
+before_edge="$(rmsnap)"
+before_gh="$("$SYNC" --plan)"
+printf 'depends_on:\n  - M000\n' >> .majordomus/project/milestones/LATER.yaml
+expect_exit 0 "$MJ" plan validate
+moved "one milestone edge" "$before_edge" "$(rmsnap)"
+moved "one milestone edge, in the GitHub projection" "$before_gh" "$("$SYNC" --plan)"
+[ "$(mstat LATER)" = BLOCKED ] || { echo "    LATER is $(mstat LATER) behind an unfinished M000, expected BLOCKED"; exit 1; }
+"$MJ" plan rgraph | grep -q 'M000 --> LATER' || { echo "    the milestone edge is not in the roadmap diagram"; exit 1; }
+[ "$("$MJ" --json plan roadmap | jq -r '.milestones[]|select(.id=="LATER")|.blocked_by[0]')" = M000 ] \
+  || { echo "    the JSON does not name what blocks LATER"; exit 1; }
+
+# the gate is not satisfiable by finishing work inside the blocked milestone
+pj_issue W1 LATER
+"$MJ" plan start W1 >/dev/null || true
+"$MJ" plan verify W1 >/dev/null || true
+"$MJ" plan evidence W1 --covers proof --type test --command true --result ok >/dev/null
+expect_exit 0 "$MJ" plan 'done' W1
+[ "$(mstat LATER)" = BLOCKED ] \
+  || { echo "    finishing every issue carried LATER past an unmet dependency; the gate is not a gate"; exit 1; }
+# Work finished inside a milestone that is not reachable yet is a contradiction, not a
+# state to display: the model is invalid until either the dependency is met or the work
+# is not claimed as complete.
+expect_exit 10 "$MJ" plan validate
+expect_grep 'milestone_premature'
+
+# Withdrawing the premature claim restores a legal model. A transition is refused while the
+# model is invalid, which is itself the gate doing its job: no work may be recorded inside a
+# contradiction.
+expect_exit 15 "$MJ" plan start I0001
+expect_grep 'BLOCKED, not READY'
+rm -f .majordomus/project/issues/W1.yaml
+expect_exit 0 "$MJ" plan validate
+
+# completing the dependency releases it, with nothing edited by hand
+before_release="$(rmsnap)"
+# Earlier mutations left some of these part-way through their lifecycle, so each step is
+# allowed to be a no-op; what matters is that all three end DONE.
+for i in I0002 I0001 I0003; do
+  "$MJ" plan start "$i"    >/dev/null 2>&1 || true
+  "$MJ" plan verify "$i"   >/dev/null 2>&1 || true
+  "$MJ" plan evidence "$i" --covers proof --type test --command true --result ok >/dev/null 2>&1 || true
+  "$MJ" plan 'done' "$i"   >/dev/null 2>&1 || true
+done
+for i in I0002 I0001 I0003; do
+  [ "$(pj_status "$i")" = DONE ] || { echo "    $i is $(pj_status "$i") after its full lifecycle, expected DONE"; exit 1; }
+done
+printf 'evidence:\n  - covers: proof\n    type: test\n    command: "true"\n    result: "ok"\n    recorded_at: 2026-09-04\n' \
+  >> .majordomus/project/milestones/M000.yaml
+[ "$(mstat M000)"  = DONE   ] || { echo "    M000 is $(mstat M000), expected DONE"; exit 1; }
+[ "$(mstat LATER)" != BLOCKED ] || { echo "    LATER is still BLOCKED after its dependency reached DONE"; exit 1; }
+moved "completing a milestone dependency" "$before_release" "$(rmsnap)"
+
+# a milestone cycle is refused by every command that claims to validate the model
+printf 'depends_on:\n  - LATER\n' >> .majordomus/project/milestones/M000.yaml
+expect_exit 10 "$MJ" plan validate
+expect_grep 'milestone_cycle'
+expect_exit 12 "$MJ" doctor
+expect_grep 'milestone dependencies form a cycle'
+expect_exit 11 "$MJ" watch

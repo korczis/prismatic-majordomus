@@ -596,6 +596,15 @@ claims:
     responsibility: plan
     note: Evidence is a command and its result, or an artifact. Narrative is refused. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE.
 
+  - id: roadmap-derived
+    claim: The roadmap is derived from milestone state, and no document may be a second authority for it
+    source: docs/ROADMAP.md
+    implementation: lib/doctor.sh
+    test: test/cases/49_roadmap_doctrine.sh
+    status: guaranteed
+    responsibility: plan
+    note: The sequence is the topological rank of the milestone graph, so no list of versions exists anywhere. While a hand-written roadmap table survives, the doctrine holds it to the model in both directions; once it is gone the check holds trivially, which is the regression it exists to refuse.
+
   - id: github-projection
     claim: GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten
     source: docs/PLANNING.md
