@@ -462,6 +462,15 @@ claims:
     responsibility: scope
     note: The record is tracked, so it travels with the branch. check, finish --check and watch report a foreign record and enforce nothing from it; finish refuses to write to it. A record from before the field existed is treated as local, so upgrading does not turn an installation red.
 
+  - id: blocker-survives-handover
+    claim: A blocking question will keep blocking after the work is handed to a new task
+    source: docs/CONTINUITY.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: finish
+    note: Today a question is attached to the task that opened it, so handing over and starting a new task leaves it unresolved and no longer blocking. Found by running the documented end-to-end sequence rather than by review. Needs a decision about whether questions transfer with a handover or the gate widens; both are wrong in some case, so it is published as unfixed rather than guessed at.
+
   - id: runtime-adapters
     claim: Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits
     source: docs/DESIGN.md

@@ -205,6 +205,13 @@ scope. The report is correct about the files and wrong about the author, and Maj
 has no way to tell the difference. Close the task with a handover and start a new one at
 the current commit.
 
+**A blocking question outlives the task that opened it, and stops blocking.** `question add`
+attaches the question to the active task, and the gate refuses `finish --outcome completed`
+only for that task. Hand the work over, start a new task, and the question is still
+unresolved but no longer refuses anything — the blocker is laundered by the handover. It is
+visible in `question list --all` and nothing else notices. Until this is decided, resolve
+open questions before handing over, or re-open them against the new task.
+
 It does not measure tokens, context savings, or cost. The budget is lines, because lines
 are what it can count. See [`ECONOMICS.md`](ECONOMICS.md).
 
