@@ -382,6 +382,32 @@ incomplete" is the one thing about an ended session that changes what somebody d
 Exit `12` with no open session, `10` when the summary carries identity fields, `15` when
 the open record belongs to another checkout.
 
+- `list [--all]` prints closed episodes, newest first, with each one's divergence label.
+- `show <session-id>` prints one record whole.
+- `latest [--path]` prints the newest record that resolves for this worktree and branch.
+
+All three are read-only, and all three print the record's divergence label — `exact`,
+`advanced`, `diverged`, `different_context`. No second vocabulary for staleness is invented,
+because a session written before a branch was rewritten, handed to the next worker as though
+it still described this history, is exactly what those four words exist to prevent.
+
+Resolution is the rule every other record follows: same repository, same worktree and
+branch, then same branch, then nothing. A record from an unrelated worktree is never
+offered — borrowed context cannot be recognised as wrong until it has been acted on.
+`--all` lifts the rule explicitly and shows each record's branch, because a record from
+elsewhere is worth seeing when you asked for everything and is never worth being handed
+silently.
+
+**Ordering is by the recorded timestamp, with ledger position breaking a tie inside one
+second.** Filesystem modification time is never read: it does not survive a clone and it is
+not the time the record asserts, so touching an old record does not make it the newest.
+Filename order normally agrees with ledger order, which makes an implementation that fell
+through to the filename look correct; `test/cases/62_session_divergence.sh` makes the two
+disagree on purpose and fails when the ledger is not what decides.
+
+A malformed record is skipped with a warning on stderr and never silently, and never
+fatally: one unreadable file must not cost the whole listing.
+
 **Writes:** `state/session-current.yaml`, mode `0600`, written atomically, and one
 `session.started` line in the ledger. `session_id`, `repository_id`, `worktree`, `branch`,
 `start_head` and `start_working_tree` are computed from git and are never authored.

@@ -44,7 +44,7 @@ mj_cmd_session() {
   local sub="${1:-status}"
   case "$sub" in
     --help|-h|help) mj_session_usage; return 0 ;;
-    start|status|close) shift || true ;;
+    start|status|close|list|show|latest) shift || true ;;
     *) mj_die "$MJ_EX_USAGE" "session: unknown subcommand '$sub' (see: majordomus session --help)" ;;
   esac
   mj_require_installed
@@ -52,6 +52,9 @@ mj_cmd_session() {
     start)  mj_session_start "$@" ;;
     status) mj_session_status "$@" ;;
     close)  mj_session_close "$@" ;;
+    list)   mj_session_list "$@" ;;
+    show)   mj_session_show "$@" ;;
+    latest) mj_session_latest "$@" ;;
   esac
 }
 
@@ -62,6 +65,9 @@ usage: majordomus session <subcommand> [options]
   start [--owner <who>] [--worker <id>]   open an execution episode in this worktree
   status [--json]                         the open session, or absence          (read-only)
   close [--outcome closed|interrupted]    close it into an immutable record; summary on stdin
+  list [--all] [--json]                   closed episodes, newest first            (read-only)
+  show <session-id> [--json]              one closed record, whole                 (read-only)
+  latest [--path] [--json]                the newest that resolves here            (read-only)
 
   One open session per worktree. start refuses (15) while one is open.
   A session is not a task: it claims no paths, gates no acceptance, and is optional.
@@ -368,4 +374,154 @@ mj_session_milestones_of() {
   fi
   mj_session_emit_list milestones "$tmp"
   rm -f "$tmp"
+}
+
+# ---------------------------------------------------------------- reading back
+# Three read-only views over the closed records. All of them print the record's divergence
+# label, and none of them invents a fourth vocabulary for staleness: `exact`, `advanced`,
+# `diverged` and `different_context` already mean something everywhere else in this tool.
+#
+# Ordering is by the recorded timestamp, with ledger position breaking a tie inside one
+# second. Filesystem modification time is never read: it does not survive a clone and it is
+# not the time the record asserts.
+
+# One sort key per record: "<created_at>|<ledger rank>|<path>", newest first.
+mj_session_keys() {
+  local dir f fm flat created
+  dir="$(mj_session_dir)"
+  [ -d "$dir" ] || return 0
+  for f in "$dir"/*.md; do
+    [ -f "$f" ] || continue
+    fm="$(mktemp "${TMPDIR:-/tmp}/mj.slf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.slg.XXXXXX")"
+    if mj_record_front "$f" > "$fm" 2>/dev/null && mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
+      created="$(mj_yget "$flat" created_at)"
+      if [ -n "$created" ]; then printf '%s|%s|%s\n' "$created" "$(mj_record_rank "$f")" "$f"
+      else mj_err "warning: skipped ${f#"$MJ_ROOT/"}: no created_at"; fi
+    else
+      mj_err "warning: skipped ${f#"$MJ_ROOT/"}: malformed record"
+    fi
+    rm -f "$fm" "$flat"
+  done | LC_ALL=C sort -r
+}
+
+# Read one record's front matter into MJ_SREC_* . Returns 1 when it does not parse.
+MJ_SREC_ID=""; MJ_SREC_CREATED=""; MJ_SREC_STARTED=""; MJ_SREC_OUTCOME=""
+MJ_SREC_HEAD=""; MJ_SREC_BRANCH=""; MJ_SREC_WORKER=""; MJ_SREC_REPO=""
+mj_session_read() {
+  local f="$1" fm flat rc=0
+  fm="$(mktemp "${TMPDIR:-/tmp}/mj.srf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.srg.XXXXXX")"
+  if mj_record_front "$f" > "$fm" 2>/dev/null && mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
+    MJ_SREC_ID="$(mj_yget "$flat" session_id)"; MJ_SREC_CREATED="$(mj_yget "$flat" created_at)"
+    MJ_SREC_STARTED="$(mj_yget "$flat" started_at)"; MJ_SREC_OUTCOME="$(mj_yget "$flat" outcome)"
+    MJ_SREC_HEAD="$(mj_yget "$flat" head)"; MJ_SREC_BRANCH="$(mj_yget "$flat" branch)"
+    MJ_SREC_WORKER="$(mj_yget "$flat" worker)"
+    MJ_SREC_REPO="$(mj_yget "$flat" repository_id)"
+  else rc=1; fi
+  rm -f "$fm" "$flat"
+  return $rc
+}
+
+mj_session_list() {
+  local a scope_all=0
+  for a in "$@"; do case "$a" in
+    --all) scope_all=1 ;;
+    --help|-h) mj_session_usage; return 0 ;;
+    *) mj_die "$MJ_EX_USAGE" "session list: unknown option $a" ;;
+  esac; done
+
+  local key f n=0 first=1 label mine
+  mine="$(mj_git_repo_id)"
+  [ "$MJ_JSON" = 1 ] && printf '{"schema":1,"sessions":['
+  for key in $(mj_session_keys); do
+    f="${key#*|}"; f="${f#*|}"
+    mj_session_read "$f" || continue
+    # Same rule as every other record: this repository, this worktree and branch, then this
+    # branch. --all lifts it and says so, because a record from elsewhere is worth seeing
+    # when you asked for everything and is never worth being handed silently.
+    if [ "$scope_all" = 0 ]; then
+      [ "$MJ_SREC_REPO" = "$mine" ] || continue
+      [ "$MJ_SREC_BRANCH" = "$(mj_git_branch)" ] || continue
+    fi
+    label="$(mj_git_label "$MJ_SREC_HEAD" "$MJ_SREC_BRANCH")"
+    if [ "$MJ_JSON" = 1 ]; then
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"session_id":"%s","closed_at":"%s","started_at":"%s","outcome":"%s","branch":"%s","label":"%s","path":"%s"}' \
+        "$MJ_SREC_ID" "$MJ_SREC_CREATED" "$MJ_SREC_STARTED" "$MJ_SREC_OUTCOME" \
+        "$(mj_json_esc "$MJ_SREC_BRANCH")" "$label" "$(mj_json_esc "${f#"$MJ_ROOT/"}")"
+    else
+      printf '%s  %-24s %-12s %-18s %s\n' "$MJ_SREC_CREATED" "$MJ_SREC_ID" "$MJ_SREC_OUTCOME" "$label" "${f#"$MJ_ROOT/"}"
+    fi
+    n=$((n + 1))
+  done
+  if [ "$MJ_JSON" = 1 ]; then printf ']}\n'; return 0; fi
+  [ "$n" = 0 ] && printf 'No closed sessions for this worktree and branch.\n'
+  return 0
+}
+
+mj_session_latest() {
+  local path_only=0 a
+  for a in "$@"; do case "$a" in
+    --path) path_only=1 ;;
+    --help|-h) mj_session_usage; return 0 ;;
+    *) mj_die "$MJ_EX_USAGE" "session latest: unknown option $a" ;;
+  esac; done
+  # The shared resolver, not a second rule: same repository, same worktree, same branch,
+  # then same branch, then nothing. A record from an unrelated worktree is never offered,
+  # because borrowed context cannot be recognised as wrong until it has been acted on.
+  if ! mj_resolve_latest "$(mj_session_dir)" ""; then
+    if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"latest":null}\n'
+    else printf 'No closed session for this worktree and branch.\n'; fi
+    return 0
+  fi
+  [ "$path_only" = 1 ] && { printf '%s\n' "${MJ_RES_PATH#"$MJ_ROOT/"}"; return 0; }
+  mj_session_show_file "$MJ_RES_PATH" "$MJ_RES_MATCH"
+}
+
+mj_session_show() {
+  local want="" a
+  for a in "$@"; do case "$a" in
+    --help|-h) mj_session_usage; return 0 ;;
+    -*) mj_die "$MJ_EX_USAGE" "session show: unknown option $a" ;;
+    *) [ -z "$want" ] || mj_die "$MJ_EX_USAGE" "session show: one session id only"; want="$a" ;;
+  esac; done
+  [ -n "$want" ] || mj_die "$MJ_EX_USAGE" "session show needs a session id (see: majordomus session list)"
+
+  local key f hit=""
+  for key in $(mj_session_keys); do
+    f="${key#*|}"; f="${f#*|}"
+    mj_session_read "$f" || continue
+    [ "$MJ_SREC_ID" = "$want" ] || continue
+    hit="$f"; break
+  done
+  [ -n "$hit" ] || mj_die "$MJ_EX_MISSING" "no closed session '$want' (see: majordomus session list)"
+  mj_session_read "$hit" >/dev/null 2>&1 || true
+  mj_session_show_file "$hit" ""
+}
+
+# Print one record whole, headed by the facts a reader needs before believing any of it.
+mj_session_show_file() {
+  local f="$1" match="$2" label
+  mj_session_read "$f" || mj_die "$MJ_EX_CONTRACT" "session record does not parse: ${f#"$MJ_ROOT/"}"
+  label="$(mj_git_label "$MJ_SREC_HEAD" "$MJ_SREC_BRANCH")"
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"schema":1,"session":{"session_id":"%s","started_at":"%s","closed_at":"%s","outcome":"%s","branch":"%s","label":"%s","match":"%s","path":"%s"}}\n' \
+      "$MJ_SREC_ID" "$MJ_SREC_STARTED" "$MJ_SREC_CREATED" "$MJ_SREC_OUTCOME" \
+      "$(mj_json_esc "$MJ_SREC_BRANCH")" "$label" "$match" "$(mj_json_esc "${f#"$MJ_ROOT/"}")"
+    return 0
+  fi
+  printf 'Session:   %s\n' "$MJ_SREC_ID"
+  printf 'Record:    %s\n' "${f#"$MJ_ROOT/"}"
+  [ -n "$match" ] && printf 'Match:     %s\n' "$match"
+  printf 'Episode:   %s .. %s\n' "$MJ_SREC_STARTED" "$MJ_SREC_CREATED"
+  printf 'Outcome:   %s\n' "$MJ_SREC_OUTCOME"
+  [ -n "$MJ_SREC_WORKER" ] && printf 'Worker:    %s\n' "$MJ_SREC_WORKER"
+  printf 'Git state: %s (closed at %s)\n' "$label" "$(printf '%s' "$MJ_SREC_HEAD" | cut -c1-7)"
+  case "$label" in
+    diverged|different_context)
+      printf 'WARNING    this record describes a history this checkout no longer has; trust git, not it\n' ;;
+  esac
+  printf -- '---\n'
+  mj_record_front "$f" | sed -n '/^session_id:/,$p'
+  printf -- '---\n'
+  mj_record_body "$f"
 }
