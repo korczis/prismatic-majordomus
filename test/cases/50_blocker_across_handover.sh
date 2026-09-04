@@ -17,7 +17,7 @@ mkdir -p lib
 expect_exit 0 "$MJ" question list
 expect_grep 'which of the two callback URLs'
 expect_exit 10 "$MJ" finish --outcome completed
-expect_grep 'blocker_resolution'
+expect_grep 'majordomus.blocker-resolution'
 
 # --- the same task can still be finished as blocked, which is the documented escape hatch
 printf '# Objective\n\nfirst piece\n\n# Current State\n\nblocked on a person\n\n# Next Action\n\nask them\n' > note.md
@@ -39,7 +39,7 @@ printf '# Objective\n\nsecond piece\n\n# Current State\n\ndone\n\n# Next Action\
 expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
 expect_grep '1 unresolved question\(s\) on this branch'
 expect_grep 'which of the two callback URLs'
-expect_grep 'blocker_resolution'
+expect_grep 'majordomus.blocker-resolution'
 
 # --- and the second task can clear it, though it did not open it. A gate nobody can clear
 #     is a gate that gets worked around.

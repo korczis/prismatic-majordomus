@@ -30,11 +30,11 @@ PY
 expect_exit 10 "$T/scripts/generate-site-data"
 expect_grep 'guaranteed claim .* has no test'
 
-# --- doctrines.json: the chain is resolved from the source, not copied from the registry
+# --- doctrines.json: the chain is resolved from the source, not copied from the rule objects
 git -C "$T" checkout -q -- docs share
 "$T/scripts/generate-site-data" >/dev/null
 D="$T/site/data/generated/doctrines.json"
-[ "$(jq '.doctrines | length' "$D")" = "$(grep -c '^  - id:' "$ROOT/share/doctrines.yaml")" ]
+[ "$(jq '.doctrines | length' "$D")" = "$(grep -l '^  validator:' "$ROOT"/share/standard/majordomus/rules/*.md | wc -l | tr -d ' ')" ]
 [ "$(jq '.counts.declared' "$D")" = "$(jq '.doctrines | length' "$D")" ]
 [ "$(jq '.counts.blocking + .counts.advisory' "$D")" = "$(jq '.counts.declared' "$D")" ]
 # every doctrine names the file that actually defines its validator
@@ -42,14 +42,15 @@ jq -r '.doctrines[] | [.validator_function, .defined_in] | @tsv' "$D" | while IF
   grep -qE "^$fn\(\)" "$T/$file" || { echo "    $file does not define $fn"; exit 1; }
 done
 # every URL slug is derived from the id, and every class is one of two
-jq -e '.doctrines | all(.slug == (.id | gsub("_"; "-")))' "$D" >/dev/null
+jq -e '.doctrines | all(.slug == (.id | ltrimstr("majordomus.")))' "$D" >/dev/null
 jq -e '.doctrines | all(.class == "blocking" or .class == "advisory")' "$D" >/dev/null
 # a doctrine naming a validator nobody wrote does not reach the site
-sed 's/^    validator: scope$/    validator: not_implemented/' "$ROOT/share/doctrines.yaml" > "$T/share/doctrines.yaml"
+sed 's/^  validator: scope$/  validator: not_implemented/' "$ROOT/share/standard/majordomus/rules/scope-integrity.v1.md" > "$T/share/standard/majordomus/rules/scope-integrity.v1.md"
 expect_exit 10 "$T/scripts/generate-site-data"
 expect_grep "names validator 'not_implemented'"
 # nor does one declared for a command that never dispatches
-sed 's/^    enforced_by: \[doctor\]$/    enforced_by: [update]/' "$ROOT/share/doctrines.yaml" > "$T/share/doctrines.yaml"
+git -C "$T" checkout -q -- share
+sed 's/^  enforced_by: \[doctor\]$/  enforced_by: [update]/' "$ROOT/share/standard/majordomus/rules/enforcement-wiring.v1.md" > "$T/share/standard/majordomus/rules/enforcement-wiring.v1.md"
 expect_exit 10 "$T/scripts/generate-site-data"
 expect_grep "declared for 'update', which does not dispatch"
 # nor a validator in lib/ that no doctrine declares

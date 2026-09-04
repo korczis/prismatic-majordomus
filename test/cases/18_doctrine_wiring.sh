@@ -8,9 +8,8 @@ fixture_repo "$T/tool" docs
 cp -R "$ROOT/test" "$T/tool/"
 cp "$ROOT/.github/workflows/validate.yml" "$T/tool/.github/workflows/"
 MJ="$T/tool/bin/majordomus"
-REG="$T/tool/share/doctrines.yaml"; LIBD="$T/tool/lib"
+LIBD="$T/tool/lib"
 CI="$T/tool/.github/workflows/validate.yml"; RUN="$T/tool/test/run.sh"
-cp "$REG" "$REG.orig"
 # The two declared enforcement hooks: a fresh checkout has none, and their absence is a
 # real doctor failure that would mask the one this case is about.
 wire() {
@@ -34,12 +33,17 @@ gone() { # file, text the mutation must have removed
   return 0
 }
 restore() {
-  cp "$REG.orig" "$REG"
+  cp "$T/rules.orig"/*.md "$RULES/"
   cp "$ROOT/lib/check.sh" "$LIBD/check.sh"
   cp "$ROOT/.github/workflows/validate.yml" "$CI"
   cp "$ROOT/test/run.sh" "$RUN"
 }
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
+# the registry is the vendored rule package of the repository under test; every mutation
+# below edits one rule file there. A hand-edited vendored file is also a rule_package
+# finding, which is expected: the assertion is about the wiring line each break produces.
+RULES="$T/.ai/repo/rules/vendor/majordomus/rules"
+cp -R "$RULES" "$T/rules.orig"
 wire
 
 # a healthy tree passes, and says so in one line naming a derived count
@@ -51,15 +55,15 @@ expect_exit 0 "$MJ" doctrine status
 expect_grep 'missing validators:   0'
 expect_grep 'without a test file:  0'
 expect_exit 0 "$MJ" doctrine list
-expect_grep 'scope_integrity +blocking +mj_validate_scope'
-expect_exit 0 "$MJ" doctrine show scope_integrity
+expect_grep 'majordomus.scope-integrity +blocking +mj_validate_scope'
+expect_exit 0 "$MJ" doctrine show majordomus.scope-integrity
 expect_grep 'wired       yes'
 expect_exit 12 "$MJ" doctrine show no_such_doctrine
 
 
 # 1. declared doctrine, no validator function
-sed 's/^    validator: scope$/    validator: nothing_implements_this/' "$REG.orig" > "$REG"
-took "$REG" "validator: nothing_implements_this"
+sed 's/^  validator: scope$/  validator: nothing_implements_this/' "$T/rules.orig/scope-integrity.v1.md" > "$RULES/scope-integrity.v1.md"
+took "$RULES/scope-integrity.v1.md" "validator: nothing_implements_this"
 expect_exit 10 "$MJ" doctor
 expect_grep 'FAIL doctrine .* validator function mj_validate_nothing_implements_this is defined nowhere'
 restore
@@ -80,15 +84,15 @@ expect_grep 'FAIL doctrine .* never turns a failing finding into a non-zero exit
 restore
 
 # 4. the test that proves a doctrine does not exist
-sed 's#^    test: test/cases/04_start_check.sh$#    test: test/cases/99_absent.sh#' "$REG.orig" > "$REG"
-took "$REG" "test: test/cases/99_absent.sh"
+sed 's#^  tests: \[test/cases/04_start_check.sh\]$#  tests: [test/cases/99_absent.sh]#' "$T/rules.orig/scope-integrity.v1.md" > "$RULES/scope-integrity.v1.md"
+took "$RULES/scope-integrity.v1.md" "tests: [test/cases/99_absent.sh]"
 expect_exit 10 "$MJ" doctor
 expect_grep 'FAIL doctrine .* test test/cases/99_absent.sh does not exist'
 restore
 
 # 5. a doctrine naming a claim that is not in the claims file
-sed 's/^    claims: \[scope-enforcement, scoped-task\]$/    claims: [scope-enforcement, invented-claim]/' "$REG.orig" > "$REG"
-took "$REG" "invented-claim"
+sed 's/^  claims: \[scope-enforcement, scoped-task\]$/  claims: [scope-enforcement, invented-claim]/' "$T/rules.orig/scope-integrity.v1.md" > "$RULES/scope-integrity.v1.md"
+took "$RULES/scope-integrity.v1.md" "invented-claim"
 expect_exit 10 "$MJ" doctor
 expect_grep "FAIL doctrine .* names claim 'invented-claim'"
 restore
@@ -97,7 +101,7 @@ restore
 printf '\nmj_validate_orphan_rule() { return 0; }\n' >> "$LIBD/check.sh"
 took "$LIBD/check.sh" "mj_validate_orphan_rule"
 expect_exit 10 "$MJ" doctor
-expect_grep 'FAIL doctrine +mj_validate_orphan_rule .* no doctrine declares it'
+expect_grep 'FAIL doctrine +mj_validate_orphan_rule .* no rule declares it'
 restore
 
 # 7. CI stops running the suite

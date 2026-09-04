@@ -157,47 +157,69 @@ The four shipped profiles:
 
 ---
 
-## `share/doctrines.yaml`
+## `.ai/repo/rules/**/*.md` — rule objects
 
-Ships with the tool, not with a repository. A repository configures Majordomus in
-`.majordomus/policy.yaml`; it does not declare doctrines, because a doctrine is a
-statement about how the tool behaves and every user of the tool is entitled to the same
-behaviour. See [`DOCTRINE.md`](DOCTRINE.md) for the model.
+A rule is a Markdown file with YAML front matter. The baseline the tool ships lives in
+`share/standard/majordomus/` and is vendored into the repository under
+`.ai/repo/rules/vendor/majordomus/` (a `manifest.yaml` naming every file with its hash,
+and `rules/*.md`); the repository's own rules live under `.ai/repo/rules/project/`. See
+[`DOCTRINE.md`](DOCTRINE.md) for the model and `.ai/repo/rules/README.md` for the format
+as a repository reads it.
 
-```yaml
+```markdown
+---
+id: majordomus.scope-integrity        # identity, with version; never the file name
 version: 1
-doctrines:
-  - id: scope_integrity          # stable; used by --rule, by refusal messages, and by the site
-    title: Scope integrity
-    class: blocking              # blocking | advisory — nothing else parses
-    principle: 4                 # 1-10, into the operating principles
-    summary: A task touches only the paths it claimed; work found elsewhere is not accepted as done.
-    validator: scope             # runs mj_validate_scope; a name with no function is a failure
-    category: scope              # the finding category a violation is reported under
-    enforced_by: [check, finish, watch]
-    exit_code: 10                # from the existing contract; a doctrine invents no code
-    policy_key: scope_respected  # finish doctrines only: the name used in verification.finish_requires
-    claims: [scope-enforcement, scoped-task]   # ids in docs/CLAIMS.yaml
-    test: test/cases/04_start_check.sh
+kind: rule
+title: Scope integrity
+description: A task touches only the paths it claimed; work found elsewhere is not accepted as done.
+statement: Work outside the paths a task claimed is not accepted as that task's work.
+status: active                        # active | deprecated
+class: blocking                       # blocking | advisory — nothing else parses
+depends_on: [majordomus.one-worker-one-scope@1]   # exact id@version references, or []
+tags: [scope, verification]
+
+x-majordomus:                         # present only on a rule the tool enforces
+  validator: scope                    # runs mj_validate_scope; a name with no function is a failure
+  category: scope                     # the finding category a violation is reported under
+  enforced_by: [check, finish, watch]
+  policy_key: scope_respected         # finish doctrines only: the name used in verification.finish_requires
+  exit_code: 10                       # from the existing contract; a rule invents no code
+  claims: [scope-enforcement, scoped-task]   # ids in docs/CLAIMS.yaml
+  tests: [test/cases/04_start_check.sh]
+---
+
+# Rationale
+...
+# Required behaviour
+...
+# Failure behaviour
+...
+# Verification
+...
 ```
 
 | field | required | meaning |
 |---|---|---|
-| `id` | yes | unique; `[a-z_]+`. The URL slug on the site is the id with `_` replaced by `-` |
-| `title`, `summary` | yes | one line each, rendered verbatim |
-| `class` | yes | `blocking` stops the command; `advisory` reports and lets it pass. Any other value is a configuration error and fails closed |
-| `principle` | yes | index into the ten principles in the provider body |
-| `validator` | yes | the suffix of `mj_validate_<validator>`; the function must exist in `lib/` |
-| `category` | yes | the finding category, so output stays one vocabulary |
-| `enforced_by` | yes | commands that dispatch it; each must exist and call `mj_doctrine_dispatch` |
-| `exit_code` | yes | `0` for advisory, otherwise a code from the exit-code contract |
-| `policy_key` | no | present only on doctrines a repository can select in `verification.finish_requires` |
-| `claims` | no | claim ids this doctrine backs; each must exist in `docs/CLAIMS.yaml` |
-| `test` | yes | the case that proves the behaviour; the file must exist |
+| `id`, `version` | yes | identity; a project rule may not use the `majordomus.` namespace. The URL slug on the site is the id without its namespace |
+| `kind` | yes | `rule` |
+| `title`, `description`, `statement` | yes | one line each, rendered verbatim |
+| `status` | yes | `active` or `deprecated`; a deprecated rule is not in the effective set and may not be depended on |
+| `class` | yes | `blocking` stops the command; `advisory` reports and lets it pass. Any other value fails the whole set closed |
+| `depends_on` | yes | exact `id@version` references; a missing one or a cycle fails the set |
+| `tags` | no | free labels; `principle` marks the ten principles |
+| `x-majordomus.validator` | with the block | the suffix of `mj_validate_<validator>`; the function must exist in `lib/` |
+| `x-majordomus.category` | with the block | the finding category, so output stays one vocabulary |
+| `x-majordomus.enforced_by` | with the block | commands that dispatch it; each must exist and call `mj_doctrine_dispatch` |
+| `x-majordomus.exit_code` | with the block | `0` for advisory, otherwise a code from the exit-code contract |
+| `x-majordomus.policy_key` | no | present only on doctrines a repository can select in `verification.finish_requires` |
+| `x-majordomus.claims` | no | claim ids this doctrine backs; each must exist in `docs/CLAIMS.yaml` |
+| `x-majordomus.tests` | with the block | the cases that prove the behaviour; each file must exist |
 
-`majordomus doctor` verifies every one of those constraints against the source, and
-additionally that no `mj_validate_*` function exists which no doctrine declares.
-
+The allowed keys are `share/allow/rule.txt`; any other key is an error. `majordomus doctor`
+verifies every one of those constraints against the source, that the vendored package
+matches its manifest, and additionally that no `mj_validate_*` function exists which no
+rule declares.
 ## `.ai/repo/project/project.yaml`
 
 The canonical project model's root. Present only in a repository that plans through
@@ -631,7 +653,7 @@ correct answer rather than a gap — sessions are optional, and work done outsid
 attributed to nobody instead of to whoever happened to have a session open nearby.
 
 The cost is that the ledger becomes load-bearing for a second purpose. It is append-only,
-written only by Majordomus, and already validated by `ledger_integrity`, which is what
+written only by Majordomus, and already validated by `majordomus.ledger-integrity`, which is what
 makes it a safe thing to derive from. Ledger line order is preserved, so two events
 written inside the same second need no tiebreak at all.
 

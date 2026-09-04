@@ -29,7 +29,7 @@ expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
 expect_grep 'OK +regression'
 expect_grep 'finish: t-.* completed'
 expect_grep '^outcome: completed$' .ai/local/state/current.yaml
-expect_grep '"event":"task.finished".*"outcome":"completed".*"verification_integrity":"pass".*"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
+expect_grep '"event":"task.finished".*"outcome":"completed".*"majordomus.verification-integrity":"pass".*"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
 # finishing twice is refused; --check on a finished task passes
 expect_exit 15 "$MJ" finish --outcome completed
 expect_exit 0 "$MJ" finish --check

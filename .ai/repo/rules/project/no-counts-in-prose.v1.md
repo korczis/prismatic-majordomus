@@ -25,4 +25,4 @@ No command decides this rule; a reviewer does, and a change that violates it is 
 
 # Verification
 
-Review. test/cases/28_no_hardcoded_values.sh proves that every list the tool knows about itself is derived, and the context_budget doctrine fails on a hardcoded count in the always-loaded projection.
+Review. test/cases/28_no_hardcoded_values.sh proves that every list the tool knows about itself is derived, and the majordomus.context-budget doctrine fails on a hardcoded count in the always-loaded projection.

@@ -13,13 +13,13 @@ chmod +x .git/hooks/pre-commit .git/hooks/pre-push
 PATH="$(dirname "$MJ"):$PATH"; export PATH
 
 # --- both doctrines are declared and both resolve to a validator that exists
-expect_exit 0 "$MJ" doctrine show project_integrity
+expect_exit 0 "$MJ" doctrine show majordomus.project-integrity
 expect_grep 'wired       yes'
-expect_exit 0 "$MJ" doctrine show dag_integrity
+expect_exit 0 "$MJ" doctrine show majordomus.dag-integrity
 expect_grep 'wired       yes'
 expect_exit 0 "$MJ" doctrine list
-expect_grep '^project_integrity +blocking'
-expect_grep '^dag_integrity +blocking'
+expect_grep '^majordomus.project-integrity +blocking'
+expect_grep '^majordomus.dag-integrity +blocking'
 
 # --- a repository with no canonical model is healthy, not red: the model is opt-in
 expect_exit 0 "$MJ" doctor
@@ -46,7 +46,7 @@ expect_grep 'DRIFT project'
 sed '$d' .ai/repo/project/issues/I0001.yaml > /tmp/i.$$ && mv /tmp/i.$$ .ai/repo/project/issues/I0001.yaml
 expect_exit 0 "$MJ" doctor
 
-# --- a cycle fails doctor through dag_integrity, and the failure reaches the exit code
+# --- a cycle fails doctor through majordomus.dag-integrity, and the failure reaches the exit code
 pj_issue I0003 M000 I0004
 pj_issue I0004 M000 I0003
 expect_exit 10 "$MJ" doctor

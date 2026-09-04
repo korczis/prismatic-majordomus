@@ -807,7 +807,7 @@ FAIL blockers      open-questions.md: "token refresh window — needs product de
 OK   note          handover 20260903T201455Z--main--9b1e2d4--c0ffee.md
 finish: refused, 1 unmet
 blocking doctrines:
-- blocker_resolution
+- majordomus.blocker-resolution
 $ echo $?
 10
 ```
@@ -824,13 +824,15 @@ reported and refuses, rather than being ignored. See
 
 Report what rules are enforced here, by what, and whether they are wired. Read-only.
 
-**Reads:** `share/doctrines.yaml` (shipped with the tool), `lib/`, `docs/CLAIMS.yaml`.
+**Reads:** the repository's effective rule set (`.ai/repo/rules/vendor/majordomus/` and
+`.ai/repo/rules/project/`, resolved as `majordomus rules list` resolves it), `lib/`,
+`docs/CLAIMS.yaml`.
 **Writes:** nothing.
 
 ```
 majordomus doctrine [status]     derived counts
 majordomus doctrine list         id, class, validator, enforcing commands
-majordomus doctrine show <id>    the full record for one doctrine
+majordomus doctrine show <id>    the full record for one doctrine, and the rule file it lives in
 ```
 
 **Behaviour:**
@@ -838,8 +840,12 @@ majordomus doctrine show <id>    the full record for one doctrine
   how many name a validator that does not exist, and how many name a test file that does
   not exist. Every number is derived on the spot; none is stored.
 - `list` prints one line per doctrine.
-- `show <id>` prints the record, including which claims it backs, the test that proves it,
-  and which file defines its validator. An unknown id exits `12`.
+- `show <id>` prints the record, including which claims it backs, the tests that prove it,
+  the rules it depends on, the rule file it lives in, and which file defines its
+  validator. An unknown id exits `12`. A doctrine's id is its rule id,
+  `majordomus.<name>` for the baseline.
+- A rule set that does not resolve exits `10` with the reason; nothing is listed
+  partially.
 - Exits `0` when no validator and no test file is missing, `10` otherwise. Whether the
   enforcement is actually *reached* is a stronger question, and `majordomus doctor`
   answers it.

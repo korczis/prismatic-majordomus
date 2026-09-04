@@ -6,7 +6,7 @@ A repository can keep prompt assets under `.ai/repo/prompts/`, and the generated
 
 ## How it works
 
-`mj_prompt_validate` in `lib/prompt.sh` parses an asset's front matter and scans its body for template tokens, checking each against the set the renderer knows. `mj_validate_prompts` runs it over every asset; the doctrine `prompt_integrity` is blocking and enforced by `doctor` and `watch`, so the same rule produces `FAIL` in one and `DRIFT` in the other without a second implementation. `watch` additionally reports an installation with no assets at all, because the projected instructions tell workers the assets exist.
+`mj_prompt_validate` in `lib/prompt.sh` parses an asset's front matter and scans its body for template tokens, checking each against the set the renderer knows. `mj_validate_prompts` runs it over every asset; the doctrine `majordomus.prompt-integrity` is blocking and enforced by `doctor` and `watch`, so the same rule produces `FAIL` in one and `DRIFT` in the other without a second implementation. `watch` additionally reports an installation with no assets at all, because the projected instructions tell workers the assets exist.
 
 Covered: a name that does not match its filename, an empty description, an unknown front-matter key, missing front matter, a block token used inline, and any token the renderer does not define.
 

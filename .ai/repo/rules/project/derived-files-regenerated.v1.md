@@ -25,4 +25,4 @@ No command decides this rule; a reviewer does, and a change that violates it is 
 
 # Verification
 
-Review. scripts/generate-site-data --check runs in CI; test/cases/51_derived_artifacts_committed.sh proves the committed derived files match their sources; the projection_integrity rule covers the generated instruction files.
+Review. scripts/generate-site-data --check runs in CI; test/cases/51_derived_artifacts_committed.sh proves the committed derived files match their sources; the majordomus.projection-integrity rule covers the generated instruction files.

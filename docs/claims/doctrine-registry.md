@@ -2,7 +2,7 @@
 
 ## What it means
 
-`share/doctrines.yaml` is the only place a rule is declared. Every command that enforces rules dispatches from it rather than naming checks by hand, and `majordomus doctor` walks the chain from the declaration to the CI job for each one, reading the source rather than the registry's description of itself.
+The rule objects under the repository's rules section — the vendored baseline (`.ai/repo/rules/vendor/majordomus/`, a copy of the package the tool ships in `share/standard/majordomus/`) plus the repository's own rules — are the only place a rule is declared. Every command that enforces rules dispatches from it rather than naming checks by hand, and `majordomus doctor` walks the chain from the declaration to the CI job for each one, reading the source rather than the registry's description of itself.
 
 ## How it works
 
@@ -20,7 +20,7 @@
 
 ```bash
 majordomus doctrine status
-majordomus doctrine show scope_integrity
+majordomus doctrine show majordomus.scope-integrity
 majordomus doctor        # OK doctrine  <n> doctrines — validator, dispatch, propagation, test and CI resolve for every one
 ```
 

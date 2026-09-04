@@ -11,7 +11,7 @@ exists to know the difference, and to say so in one command.
 ```
 principle          why the rule exists at all
   ↓
-doctrine           what must be true          share/doctrines.yaml
+doctrine           what must be true          share/standard/majordomus/
   ↓
 validator          whether it is true          mj_validate_<name> in lib/
   ↓
@@ -32,33 +32,35 @@ that lies about what it enforces fails here rather than in production.
 
 ## The registry
 
-`share/doctrines.yaml` ships with the tool. A repository configures Majordomus in
-`.majordomus/policy.yaml`; it does not invent doctrines, because a doctrine is a
-statement about how the tool behaves and every user of the tool is entitled to the
-same behaviour.
+The registry is derived, never written: it is every rule of the repository's effective
+set whose `x-majordomus` block names a validator, in resolved dependency order. The
+effective set is the package the tool ships (`share/standard/majordomus/`), vendored into
+the repository under `.ai/repo/rules/vendor/majordomus/`, plus the repository's own rules
+under `.ai/repo/rules/project/`. A repository does not invent Majordomus doctrines,
+because a doctrine is a statement about how the tool behaves and every user of the tool
+is entitled to the same behaviour; it may add rules of its own, and it may enforce them
+with a validator of its own, in the same format.
 
-Each entry carries:
+Each doctrine, read from its rule object, carries:
 
 | field | meaning |
 |---|---|
-| `id` | stable name, used by `--rule`, by the site, and by refusal messages |
-| `title`, `summary` | what it means in a sentence |
+| `id` | the rule id, `majordomus.<name>` for the baseline; used by `--rule`, by the site, and by refusal messages |
+| `title`, `description`, `statement` | what it means, in a sentence each |
 | `class` | `blocking` or `advisory` — see below |
-| `principle` | which of the ten operating principles it serves |
-| `validator` | the suffix of the `mj_validate_<validator>` function that decides it |
-| `category` | the finding category a violation is reported under |
-| `enforced_by` | the commands that dispatch it |
-| `exit_code` | the exit code a violation produces (from the existing contract; no doctrine invents one) |
-| `policy_key` | for finish doctrines, the name a repository uses in `verification.finish_requires` |
-| `claims` | the claim ids in `docs/CLAIMS.yaml` this doctrine backs |
-| `test` | the case that proves it |
-
+| `depends_on` | the rules it rests on, the principle it serves among them |
+| `x-majordomus.validator` | the suffix of the `mj_validate_<validator>` function that decides it |
+| `x-majordomus.category` | the finding category a violation is reported under |
+| `x-majordomus.enforced_by` | the commands that dispatch it |
+| `x-majordomus.exit_code` | the exit code a violation produces (from the existing contract; no doctrine invents one) |
+| `x-majordomus.policy_key` | for finish doctrines, the name a repository uses in `verification.finish_requires` |
+| `x-majordomus.claims` | the claim ids in `docs/CLAIMS.yaml` this doctrine backs |
+| `x-majordomus.tests` | the cases that prove it |
 ## Rule objects
 
-The registry above is one YAML file shipped with the tool, readable only by the tool. The
-`.ai/` layout carries the same rules as portable **rule objects**: one Markdown file per
-rule, YAML front matter on the machine side, prose on the human side, under the
-repository's rules section.
+The rules are portable **rule objects**: one Markdown file per rule, YAML front matter on
+the machine side, prose on the human side, under the repository's rules section. They are
+readable without the tool, and the tool reads nothing else.
 
 ```text
 .ai/repo/rules/
@@ -138,25 +140,18 @@ vendored rule, and a project rule may not reuse a vendored identity or its names
 repository that needs a vendored rule gone changes the baseline explicitly, in the open,
 with `rules vendor update`, or does not use the tool.
 
-### What is authoritative today
+### What is authoritative
 
-Two descriptions of the same rules exist during the transformation, and only one of them
-drives enforcement:
-
-| surface | read by | authority today |
-|---|---|---|
-| `share/doctrines.yaml` | the dispatcher, `doctor`, `doctrine list`, the site | **authoritative**: what `check`, `finish`, `watch` and `doctor` enforce |
-| rule objects under `rules/` | `majordomus rules`, `init`, humans and other tools | resolved by `rules list` and checked by `rules vendor status` only; `doctor` does not read them yet, so a hand-edited vendor file or an unresolvable set is not a `doctor` failure |
-
-The target is that the dispatcher and `doctor` read the resolved rule objects and the
-registry is retired, with the same chain — declared, validator exists, commands dispatch
-it, blocking failure propagates, test exists, CI runs it — recreated against the objects
-and the reverse check (every validator is declared by an effective rule) kept. Until that
-lands, a rule object and its registry entry describe one rule, and the registry decides.
-
-`test/cases/67_rule_dag.sh` proves the resolution refusals, the vendoring guarantees and
-the deterministic order by mutation.
-
+The rule objects, and nothing else. The dispatcher in `lib/doctrine.sh` loads the
+repository's effective set through `lib/rules.sh` and treats every rule with an
+`x-majordomus` block as a doctrine; `doctor`, `doctrine list`, `check --rule` and the site
+read the same set. A set that does not resolve — a missing dependency, a cycle, two files
+claiming one identity, a malformed file — stops the command that needed it with exit 10
+and the reason, and nothing is enforced partially. The wiring chain — declared, validator
+exists, the commands it names dispatch it, a blocking failure propagates, every test it
+names exists, CI runs the suite — is recreated against the objects, and the reverse check
+(every `mj_validate_*` function is declared by an effective rule) is kept. A hand-edited
+vendored file is a `doctor` failure through `majordomus.rule-package-integrity`.
 ## Two classes, and no third
 
 - **blocking** — a violation stops the command with a non-zero exit.
@@ -229,7 +224,7 @@ A refusal names the doctrines responsible:
 ```
 finish: refused, 1 unmet
 blocking doctrines:
-- blocker_resolution
+- majordomus.blocker-resolution
 ```
 
 ## Reading it from the command line

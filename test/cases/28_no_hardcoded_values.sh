@@ -52,31 +52,37 @@ for c in $COMMANDS; do
 done
 
 # ---------------------------------------------------------------- doctrines
-# Derived from the registry: every doctrine's validator exists, every command it names
-# dispatches, and every test it names is a file. No list of doctrines appears here.
-reg="$ROOT/share/doctrines.yaml"
-[ -f "$reg" ] && {
-  ids="$(grep -E '^  - id:' "$reg" | sed 's/^  - id: //')"
-  [ -n "$ids" ] || { echo "    the doctrine registry declares nothing"; exit 1; }
-  n=0
-  for id in $ids; do
-    n=$((n + 1))
-    val="$(awk -v i="  - id: $id" '$0==i{f=1} f&&/^    validator:/{print $2; exit}' "$reg")"
-    tst="$(awk -v i="  - id: $id" '$0==i{f=1} f&&/^    test:/{print $2; exit}' "$reg")"
-    cls="$(awk -v i="  - id: $id" '$0==i{f=1} f&&/^    class:/{print $2; exit}' "$reg")"
-    grep -rqE "^mj_validate_$val\(\)" "$ROOT/lib" || { echo "    doctrine $id names validator $val, which no lib/ file defines"; exit 1; }
-    [ -f "$ROOT/$tst" ] || { echo "    doctrine $id names test $tst, which does not exist"; exit 1; }
-    case "$cls" in blocking|advisory) ;; *) echo "    doctrine $id has class '$cls'"; exit 1 ;; esac
-    for cmd in $(awk -v i="  - id: $id" '$0==i{f=1} f&&/^    enforced_by:/{gsub(/[][,]/," ");sub(/enforced_by:/,"");print;exit}' "$reg"); do
-      grep -q 'mj_doctrine_dispatch' "$ROOT/lib/$cmd.sh" 2>/dev/null \
-        || { echo "    doctrine $id is enforced_by '$cmd', which does not dispatch"; exit 1; }
-    done
+# Derived from the standard rule package: every enforced rule's validator exists, every
+# command it names dispatches, and every test it names is a file. No list of rules
+# appears here; the package manifest is read, and the package is the one the tool vendors.
+PKG="$ROOT/share/standard/majordomus"
+[ -f "$PKG/manifest.yaml" ] || { echo "    the distribution ships no standard rule package"; exit 1; }
+rule_files="$(sed -n 's/^    file: //p' "$PKG/manifest.yaml")"
+[ -n "$rule_files" ] || { echo "    the package manifest lists no rules"; exit 1; }
+declared=" "
+for rf in $rule_files; do
+  f="$PKG/$rf"; [ -f "$f" ] || { echo "    the manifest lists $rf, which does not exist"; exit 1; }
+  front="$(awk 'NR==1&&$0!="---"{exit 2} NR>1&&$0=="---"{exit} NR>1' "$f")"
+  id="$(printf '%s\n' "$front" | sed -n 's/^id: //p')"
+  cls="$(printf '%s\n' "$front" | sed -n 's/^class: //p')"
+  case "$cls" in blocking|advisory) ;; *) echo "    rule $id has class '$cls'"; exit 1 ;; esac
+  val="$(printf '%s\n' "$front" | sed -n 's/^  validator: //p')"
+  [ -n "$val" ] || continue   # a principle: normative, enforced by nobody, and says so
+  declared="$declared$val "
+  grep -rqE "^mj_validate_$val\(\)" "$ROOT/lib" || { echo "    rule $id names validator $val, which no lib/ file defines"; exit 1; }
+  for tst in $(printf '%s\n' "$front" | sed -n 's/^  tests: \[\(.*\)\]/\1/p' | tr ',' ' '); do
+    [ -f "$ROOT/$tst" ] || { echo "    rule $id names test $tst, which does not exist"; exit 1; }
   done
-  # and no validator exists that no doctrine declares
-  for fn in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$ROOT/lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
-    grep -qE "^    validator: $fn$" "$reg" || { echo "    lib/ defines mj_validate_$fn, which no doctrine declares"; exit 1; }
+  for cmd in $(printf '%s\n' "$front" | sed -n 's/^  enforced_by: \[\(.*\)\]/\1/p' | tr ',' ' '); do
+    grep -q 'mj_doctrine_dispatch' "$ROOT/lib/$cmd.sh" 2>/dev/null \
+      || { echo "    rule $id is enforced_by '$cmd', which does not dispatch"; exit 1; }
   done
-}
+done
+[ "$declared" != " " ] || { echo "    no rule in the package names a validator"; exit 1; }
+# and no validator exists that no rule declares
+for fn in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$ROOT/lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
+  case "$declared" in *" $fn "*) ;; *) echo "    lib/ defines mj_validate_$fn, which no rule declares"; exit 1 ;; esac
+done
 
 # ---------------------------------------------------------------- claims
 # Derived from the matrix: every claim has a detail page, every guaranteed one has a test
@@ -219,9 +225,7 @@ done
 [ -n "$(claim_ids)" ] || { echo "    the claims section derived no ids"; exit 1; }
 [ -n "$(grep -oE '^\| \*\*[a-z ]+\*\*' "$ROOT/docs/CONCEPTS.md")" ] \
   || { echo "    the concepts table derived no terms"; exit 1; }
-if [ -f "$ROOT/share/doctrines.yaml" ]; then
-  [ -n "$(grep -E '^  - id:' "$ROOT/share/doctrines.yaml")" ] || { echo "    the doctrine registry derived no ids"; exit 1; }
-fi
+[ -n "$(sed -n 's/^  - id: //p' "$ROOT/share/standard/majordomus/manifest.yaml")" ] || { echo "    the rule package manifest derived no ids"; exit 1; }
 
 # ---------------------------------------------------------------- argv limits
 # The same shape of fault as the locale check below: correct on the machine everyone develops

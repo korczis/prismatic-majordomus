@@ -5,10 +5,10 @@
 # check — is the current task consistent with policy, scope, and state? Read-only,
 # except --checkpoint which updates checkpoint_at (the one documented write).
 #
-# check runs no validator by name. It asks the doctrine dispatcher for everything
-# share/doctrines.yaml declares for this command, so a doctrine added to the registry is
+# check runs no validator by name. It asks the doctrine dispatcher for everything the
+# effective rule set declares for this command, so a rule added to the package is
 # enforced here without this file changing, and a check that exists here without a
-# doctrine declaring it is a failure doctor reports.
+# rule declaring it is a failure doctor reports.
 # shellcheck source=doctrine.sh
 . "$MJ_LIB_DIR/doctrine.sh"
 mj_cmd_check() {

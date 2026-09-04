@@ -6,7 +6,7 @@
 
 ## How it works
 
-`mj_decision_malformed` in `lib/decision.sh` returns the line numbers of entries missing `Task`, `Head` or `Why`. `mj_validate_decisions` reports them. The doctrine `decision_records` is declared **advisory**, which is what makes the finding a `WARN` and leaves the exit code at 0 — the class is read by `mj_doctrine_fail` at dispatch time, so the level is not a choice made inside the validator.
+`mj_decision_malformed` in `lib/decision.sh` returns the line numbers of entries missing `Task`, `Head` or `Why`. `mj_validate_decisions` reports them. The doctrine `majordomus.decision-records` is declared **advisory**, which is what makes the finding a `WARN` and leaves the exit code at 0 — the class is read by `mj_doctrine_fail` at dispatch time, so the level is not a choice made inside the validator.
 
 The file is deliberately hand-editable: `majordomus decision` writes well-formed entries, and a person editing it directly is a supported way to work. `finish` is where it stops being advisory — a profile that requires a decision record refuses completion when it cannot find one for the task.
 

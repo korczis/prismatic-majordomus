@@ -423,6 +423,32 @@ mj_context_builder_check() {
   rm -f "$out"
   return 0
 }
+# ---------------------------------------------------------------- rule package
+# The effective rule set is real: the vendored baseline matches its manifest file for file,
+# every rule resolves with its dependencies, and a project rule claims no vendored identity.
+# The dispatcher already refused to run at all if the set did not resolve, so what this
+# adds is the vendor evidence and the report; a newer package in the distribution is
+# information, never an action.
+mj_validate_rule_package() {
+  local vend probs n
+  vend="$(mj_rules_vendor_dir)"
+  if [ ! -f "$vend/manifest.yaml" ]; then
+    mj_doctrine_fail rules "$(mj_rel "$vend")" "no vendored baseline; the repository enforces nothing of the standard package" "majordomus rules vendor update"
+    return 0
+  fi
+  probs="$(mj_rules_manifest_check "$vend" || true)"
+  if [ -n "$probs" ]; then
+    mj_doctrine_fail rules "$(mj_rel "$vend")" "$(printf '%s' "$probs" | head -n 1)" "majordomus rules vendor status"
+  else mj_doctrine_ok rules "$(mj_rel "$vend")" "every file matches the manifest ($(mj_rules_manifest_rev "$vend"))"; fi
+  if [ -f "$MJ_STD_RULES_DIR/manifest.yaml" ] && ! diff -rq "$vend" "$MJ_STD_RULES_DIR" >/dev/null 2>&1; then
+    mj_info rules "distribution" "ships a different package ($(mj_rules_manifest_rev "$MJ_STD_RULES_DIR")); the vendored one stays authoritative until updated" "majordomus rules vendor diff"
+  fi
+  mj_rules_load || { mj_doctrine_fail rules "effective set" "$MJ_RULES_ERROR" "majordomus rules list"; return 0; }
+  n="$(mj_rule_count)"
+  mj_doctrine_ok rules "$n rule(s)" "resolve in one deterministic order; vendored baseline plus project rules, no override"
+  return 0
+}
+
 # ---------------------------------------------------------------- doctrine wiring
 # The imported idea this whole layer exists for: a rule is not enforced because it is
 # written down. Every link below is read out of the source, never out of the registry's
@@ -440,7 +466,7 @@ mj_validate_doctrine_wiring() {
   # 1. every declared doctrine resolves, end to end
   while [ -n "$(mj_doc "$i" id)" ]; do
     n=$((n+1)); id="$(mj_doc "$i" id)"; val="$(mj_doc "$i" validator)"; cls="$(mj_doc "$i" class)"; fn="mj_validate_$val"
-    case "$cls" in blocking|advisory) ;; *) mj_doctrine_fail doctrine "$id" "class '$cls' is neither blocking nor advisory" "grep -n 'id: $id' share/doctrines.yaml"; bad=1 ;; esac
+    case "$cls" in blocking|advisory) ;; *) mj_doctrine_fail doctrine "$id" "class '$cls' is neither blocking nor advisory" "grep -n '^class:' $(mj_doc "$i" file)"; bad=1 ;; esac
     if ! grep -rqE "^$fn\(\)" "$lib"; then
       mj_doctrine_fail doctrine "$id" "validator function $fn is defined nowhere in lib/" "grep -rn '$fn' lib/"; bad=1
     fi
@@ -460,10 +486,12 @@ mj_validate_doctrine_wiring() {
           || { mj_doctrine_fail doctrine "$id" "blocking, but lib/$cmd.sh never turns a failing finding into a non-zero exit" "grep -n 'MJ_FAILS' lib/$cmd.sh"; bad=1; }
       done
     fi
-    # the test that proves it must exist and must name it
+    # the tests that prove it must exist
     t="$(mj_doc "$i" test)"
-    if [ -z "$t" ]; then mj_doctrine_fail doctrine "$id" "declares no test" "grep -n 'id: $id' share/doctrines.yaml"; bad=1
-    elif [ ! -f "$root/$t" ]; then mj_doctrine_fail doctrine "$id" "test $t does not exist" "ls $t"; bad=1; fi
+    if [ -z "$t" ]; then mj_doctrine_fail doctrine "$id" "declares no test" "grep -n 'tests:' $(mj_doc "$i" file)"; bad=1; fi
+    for t in $(mj_doc_list "$i" tests); do
+      [ -f "$root/$t" ] || { mj_doctrine_fail doctrine "$id" "test $t does not exist" "ls $t"; bad=1; }
+    done
     # every claim it carries must be a real claim
     local c
     for c in $(mj_doc_list "$i" claims); do
@@ -477,7 +505,7 @@ mj_validate_doctrine_wiring() {
   local f declared=" "
   i=0; while [ -n "$(mj_doc "$i" id)" ]; do declared="$declared$(mj_doc "$i" validator) "; i=$((i+1)); done
   for f in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
-    case "$declared" in *" $f "*) ;; *) mj_doctrine_fail doctrine "mj_validate_$f" "validator exists but no doctrine declares it; it runs under no rule" "grep -rn 'mj_validate_$f' lib/ share/doctrines.yaml"; bad=1 ;; esac
+    case "$declared" in *" $f "*) ;; *) mj_doctrine_fail doctrine "mj_validate_$f" "validator exists but no rule declares it; it runs under no rule" "grep -rn 'validator: $f' $(mj_rel "$MJ_RULES_DIR")"; bad=1 ;; esac
   done
 
   # 3. CI must run the test runner, without swallowing it

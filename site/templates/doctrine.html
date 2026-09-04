@@ -12,7 +12,7 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The chain</h2>
     <p class="mt-2 text-sm text-body">A rule is enforced only when every link below holds. <a href="{{ get_url(path="/docs/doctrine/", trailing_slash=true) }}" class="text-fg-brand hover:underline">majordomus doctor</a> resolves each one from the source on every run; this page shows what it resolved.</p>
     <ol class="mt-4 list-none rounded-base border border-default bg-neutral-primary-soft px-5 py-2">
-      {{ <chain_link step="1" label="Declared" detail={d.id} href={repo ~ "share/doctrines.yaml"} /> }}
+      {{ <chain_link step="1" label="Declared" detail={d.id} href={repo ~ d.source} /> }}
       {{ <chain_link step="2" label="Validator" detail={d.validator_function} href={repo ~ d.defined_in} /> }}
       {{ <chain_link step="3" label="Runs under" detail={d.enforced_by | join(sep=", ")} /> }}
       {%- if d.class == "blocking" -%}{{ <chain_link step="4" label="On violation" detail={"exit " ~ d.exit_code} /> }}{%- else -%}{{ <chain_link step="4" label="On violation" detail="reported; the command still exits 0" /> }}{%- endif -%}
@@ -54,7 +54,7 @@ majordomus check --rule {{ d.id }}
     <div class="mt-4 rounded-base border border-default bg-neutral-primary-soft p-5">
       <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">principle</h2>
       {%- set life = load_data(path="data/generated/lifecycle.json") -%}
-      <p class="text-sm text-body">{{ life.principles[d.principle - 1] }}</p>
+      <p class="text-sm text-body">{{ d.principle }}</p>
     </div>
   </aside>
 </div>

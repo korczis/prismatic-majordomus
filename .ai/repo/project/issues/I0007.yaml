@@ -8,9 +8,9 @@ parallel_safe: true
 objective: "Add the project model to the doctrine registry so that doctor reports a broken model and watch reports a model that has drifted, through the same dispatcher every other rule uses."
 why: "A rule enforced by a script nobody runs is documentation. The doctrine registry is how this repository makes enforcement verifiable end to end."
 current_state: "The registry covered policy, profiles, scope, state, notes, projections and retention. Nothing covered the plan."
-desired_state: "project_integrity and dag_integrity are declared, have validator functions, are dispatched by doctor and watch, and each has a test."
+desired_state: "majordomus.project-integrity and majordomus.dag-integrity are declared, have validator functions, are dispatched by doctor and watch, and each has a test."
 scope:
-  - share/doctrines.yaml
+  - share/standard/majordomus/
   - lib/doctor.sh
 non_scope:
   - Blocking a commit on a work-in-progress issue; progress is reported, not blocked

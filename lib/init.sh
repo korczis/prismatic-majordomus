@@ -59,8 +59,6 @@ H
   mj_init_tree "$skel/ai/repo/skills" "$MJ_SKILLS_DIR" '*.md'
   mj_init_tree "$skel/ai/repo/adrs" "$MJ_ADRS_DIR" '*.md'
   mkdir -p "$MJ_PROJECT_DIR"
-  # provider adapters and the shared body the projections render; repository-owned copies
-  mj_init_tree "$skel/providers" "$MJ_PROVIDERS_DIR" '*'
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \

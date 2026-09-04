@@ -23,7 +23,7 @@ checkable and all of it rots quietly, because nothing executes documentation.
 
 Written as data, all of it is checked. `mj_validate_catalogue` in `lib/doctor.sh`
 resolves every reference against the thing that defines it — commands against the
-dispatch table in `bin/majordomus`, doctrines against `share/doctrines.yaml`, claims
+dispatch table in `bin/majordomus`, doctrines against the resolved rule set, claims
 against `docs/CLAIMS.yaml` — and `scripts/generate-site-data` repeats the resolution when
 it builds the pages, so a dangling reference cannot reach the published site.
 
@@ -42,7 +42,7 @@ use_cases:
         note: what this step does here
     outcome: what you are left holding
     commands: [init, update, doctor]   # every one must exist
-    doctrines: [projection_integrity]  # every one must be in the registry
+    doctrines: [majordomus.projection-integrity]  # every one must be in the registry
     claims: [region-projection]        # every one must be in docs/CLAIMS.yaml
     responsibilities: [projection]     # every one must be a README row
     applications: [repository-with-authored-governance]   # must name this back

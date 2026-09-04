@@ -3,7 +3,7 @@
 # finish — evaluate the finish contract; refuse if unmet. --check evaluates without writing.
 #
 # The contract is a doctrine bundle, not a list in this file. Every line comes from
-# share/doctrines.yaml (the doctrines whose enforced_by names finish), and the policy's
+# the effective rule set (the rules whose enforced_by names finish), and the policy's
 # verification.finish_requires selects which of them this repository applies. A refusal
 # names the doctrines that caused it.
 # shellcheck source=check.sh

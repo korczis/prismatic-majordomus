@@ -31,7 +31,7 @@ use_cases:
         note: proves the projection matches its own stamp and the declared enforcement is actually invoked
     outcome: The authored text stays authoritative and the generated section sits inside it, stamped like any other projection. An edit outside the markers is never drift; an edit inside them is caught.
     commands: [init, update, doctor]
-    doctrines: [projection_integrity, enforcement_wiring, policy_integrity]
+    doctrines: [majordomus.projection-integrity, majordomus.enforcement-wiring, majordomus.policy-integrity]
     claims: [region-projection, no-silent-overwrite, projection-fingerprint, dispatcher-wiring]
     responsibilities: [projection, policy, doctor]
     applications: [repository-with-authored-governance]
@@ -50,7 +50,7 @@ use_cases:
         note: the next session reads this instead of the transcript, within a line budget
     outcome: The next worker starts from durable state with the git position it was written at, and is told how far the repository has moved since.
     commands: [checkpoint, handover, context, check]
-    doctrines: [handover_integrity, note_integrity, task_continuity, context_budget]
+    doctrines: [majordomus.handover-integrity, majordomus.note-integrity, majordomus.task-continuity, majordomus.context-budget]
     claims: [handover-record, no-transcripts, divergence-label, minimum-context]
     responsibilities: [handover, state]
     applications: [several-agents-one-repository, long-running-work]
@@ -69,7 +69,7 @@ use_cases:
         note: run one rule against the current task with --rule
     outcome: Every link of the chain is resolved from the source rather than from the registry's description of itself, and a break is named. A validator no rule declares fails too.
     commands: [doctrine, doctor, check]
-    doctrines: [doctrine_wiring_integrity, enforcement_wiring]
+    doctrines: [majordomus.doctrine-wiring-integrity, majordomus.enforcement-wiring]
     claims: [doctrine-registry, doctrine-class-decides, wiring-reconciliation, reproduce-command]
     responsibilities: [doctor, policy]
     applications: [repository-with-authored-governance, ci-gated-project]
@@ -88,7 +88,7 @@ use_cases:
         note: refuses to accept work outside the claimed paths
     outcome: Overlap is reported when the task starts rather than when the branches merge, and a task record belonging to another checkout is reported as foreign rather than enforced against yours.
     commands: [start, check, finish]
-    doctrines: [scope_integrity, state_consistency]
+    doctrines: [majordomus.scope-integrity, majordomus.state-consistency]
     claims: [scope-enforcement, scoped-task, overlap-report, git-identity]
     responsibilities: [scope, state]
     applications: [several-agents-one-repository]
@@ -105,7 +105,7 @@ use_cases:
         note: --verify-command runs the project's own verification and records its exit code and duration
     outcome: A refusal names the rules that refused. An outcome is typed — completed, partial, blocked, no_match, failed — so "the thing does not exist" and "I could not do it" stay different facts.
     commands: [finish, question, check]
-    doctrines: [verification_integrity, blocker_resolution, profile_requirements, note_integrity]
+    doctrines: [majordomus.verification-integrity, majordomus.blocker-resolution, majordomus.profile-requirements, majordomus.note-integrity]
     claims: [finish-contract, typed-outcome, consistency-check]
     responsibilities: [finish, scope]
     applications: [ci-gated-project, long-running-work]
@@ -122,7 +122,7 @@ use_cases:
         note: --dry-run shows what regeneration would change before it changes it
     outcome: Every finding carries the command that reproduces it, and the same rules produce it as produce the failures — one vocabulary, one registry, a different question.
     commands: [watch, update, history]
-    doctrines: [projection_integrity, policy_integrity, ledger_integrity, retention_caps]
+    doctrines: [majordomus.projection-integrity, majordomus.policy-integrity, majordomus.ledger-integrity, majordomus.retention-caps]
     claims: [drift-watch, projection-fingerprint, reproduce-command]
     responsibilities: [watch, projection]
     applications: [repository-with-authored-governance, long-running-work]

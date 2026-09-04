@@ -8,7 +8,7 @@ Four kinds of fact are covered today: the values in the policy, the set of statu
 
 ## How it works
 
-**Policy values have no reader-side defaults.** `mj_pol_req` returns a value or refuses, naming the missing key. There is deliberately no `|| cap=200` beside the reader: that is a second source of truth for the same number, nothing keeps the two in step, and a reader that substitutes its own value enforces something the configuration does not say. The `policy_completeness` doctrine derives the key list by scanning `lib/` for `mj_pol_req` calls, so a key joins the check by being read.
+**Policy values have no reader-side defaults.** `mj_pol_req` returns a value or refuses, naming the missing key. There is deliberately no `|| cap=200` beside the reader: that is a second source of truth for the same number, nothing keeps the two in step, and a reader that substitutes its own value enforces something the configuration does not say. The `majordomus.policy-completeness` doctrine derives the key list by scanning `lib/` for `mj_pol_req` calls, so a key joins the check by being read.
 
 The check compares full key paths rather than last segments, which is not fussiness: `checkpoint.retention_max_files` and `handover.retention_max_files` are different keys with different values, and a comparison on the tail reports a drift between two settings that are each correct.
 

@@ -6,9 +6,9 @@
 
 ## How it works
 
-`mj_validate_catalogue` in `lib/doctor.sh` flattens both registries with the tool's own YAML reader and resolves each reference against the thing that defines it: commands against `docs/CLI.md`, doctrines against `share/doctrines.yaml` through `mj_doc_index`, claims against `docs/CLAIMS.yaml`. Cross-references between the two catalogues are checked in both directions by `mj_cat_has` and `mj_cat_back`. An application that declares no `does_not_fit_when` is refused outright.
+`mj_validate_catalogue` in `lib/doctor.sh` flattens both registries with the tool's own YAML reader and resolves each reference against the thing that defines it: commands against `docs/CLI.md`, doctrines against the resolved rule set through `mj_doc_index`, claims against `docs/CLAIMS.yaml`. Cross-references between the two catalogues are checked in both directions by `mj_cat_has` and `mj_cat_back`. An application that declares no `does_not_fit_when` is refused outright.
 
-The doctrine `catalogue_integrity` is blocking and enforced by `doctor` and `watch`, so the same rule answers "is this catalogue sound" and "has it drifted" without a second implementation. `scripts/generate-site-data` repeats the resolution when it builds the pages, and refuses to emit if anything dangles — a broken reference cannot reach the published site.
+The doctrine `majordomus.catalogue-integrity` is blocking and enforced by `doctor` and `watch`, so the same rule answers "is this catalogue sound" and "has it drifted" without a second implementation. `scripts/generate-site-data` repeats the resolution when it builds the pages, and refuses to emit if anything dangles — a broken reference cannot reach the published site.
 
 ## How to see it
 

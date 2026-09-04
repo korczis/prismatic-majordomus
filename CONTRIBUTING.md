@@ -48,7 +48,9 @@ arbitrary. Most of them were paid for.
    commit. `scripts/site-build` then `scripts/site-check` reproduces what CI does, and
    needs `zola`, `jq` and `npm ci`.
 6. **A new rule the tool enforces is a doctrine, not an inline check.** Add an entry to
-   [`share/doctrines.yaml`](share/doctrines.yaml) and write its `mj_validate_<name>`
+   the rule package ([`share/standard/majordomus/`](share/standard/majordomus/), which
+   `majordomus rules vendor update` copies into `.ai/repo/rules/vendor/majordomus/`)
+   as a rule object with an `x-majordomus` block, and write its `mj_validate_<name>`
    function in `lib/`; no command may select checks by name. `majordomus doctor` refuses
    a doctrine whose validator does not exist, a doctrine declared for a command that does
    not dispatch, a blocking doctrine whose command cannot exit non-zero, a doctrine with

@@ -5,12 +5,12 @@ slug: session-doctrines-retention
 priority: p1
 profile: implementation
 parallel_safe: false
-objective: "Declare the session rules in share/doctrines.yaml with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites."
+objective: "Declare the session rules in share/standard/majordomus/ with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites."
 why: "A rule enforced by an inline check in one command is the declared-but-not-wired failure this tool measures in other people's repositories. Every enforced rule here is declared in the registry and dispatched from it, or it is not enforced."
 current_state: "The doctrine registry declares every enforced rule with a validator, the commands that dispatch it, a claim and a test. history --rotate is the existing precedent for retention that archives rather than deletes and refuses to overwrite an existing archive."
-desired_state: "session_record_integrity and session_reference_integrity are declared and dispatched. The policy carries a session block with the retention cap and whether archiving is enabled, its keys are in the policy allowlist, and retention_caps reports sessions alongside checkpoints and handovers. Archiving happens only when a command asks for it."
+desired_state: "session_record_integrity and session_reference_integrity are declared and dispatched. The policy carries a session block with the retention cap and whether archiving is enabled, its keys are in the policy allowlist, and majordomus.retention-caps reports sessions alongside checkpoints and handovers. Archiving happens only when a command asks for it."
 scope:
-  - share/doctrines.yaml
+  - share/standard/majordomus/
   - share/allow/policy.txt
   - share/skeleton
   - lib/session.sh

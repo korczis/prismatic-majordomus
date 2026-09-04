@@ -2,82 +2,39 @@
   "schema": 1,
   "doctrines": [
     {
-      "id": "scope_integrity",
-      "slug": "scope-integrity",
-      "title": "Scope integrity",
+      "id": "majordomus.ai-layout-integrity",
+      "slug": "ai-layout-integrity",
+      "title": "AI layer integrity",
       "class": "blocking",
-      "principle": 4,
-      "summary": "A task touches only the paths it claimed; work found elsewhere is not accepted as done.",
-      "validator": "scope",
-      "validator_function": "mj_validate_scope",
-      "defined_in": "lib/check.sh",
-      "category": "scope",
+      "principle": "Sessions are workers, not memory",
+      "statement": "The repository's AI layer is real: the manifest declares a format this executable reads and names sections that exist, the local half is ignored by git with nothing under it tracked, and no project data remains under the pre-.ai path.",
+      "summary": "The repository's AI layer is real: the manifest declares a format this executable reads and every section it names exists, the checkout-local half is ignored by git and nothing under it is tracked, and no project data remains under the pre-.ai .majordomus/ path.",
+      "validator": "ai_layout",
+      "validator_function": "mj_validate_ai_layout",
+      "defined_in": "lib/doctor.sh",
+      "category": "layout",
       "enforced_by": [
-        "check",
-        "finish",
+        "doctor",
         "watch"
       ],
       "exit_code": 10,
-      "policy_key": "scope_respected",
+      "policy_key": "",
       "claims": [
-        "scope-enforcement",
-        "scoped-task"
+        "init-refuses"
       ],
-      "test": "test/cases/04_start_check.sh"
+      "test": "test/cases/01_init.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/ai-layout-integrity.v1.md"
     },
     {
-      "id": "state_consistency",
-      "slug": "state-consistency",
-      "title": "State consistency",
-      "class": "blocking",
-      "principle": 1,
-      "summary": "The task record still describes this checkout — same branch, and HEAD at or ahead of the recorded commit.",
-      "validator": "state",
-      "validator_function": "mj_validate_state",
-      "defined_in": "lib/check.sh",
-      "category": "state",
-      "enforced_by": [
-        "check",
-        "finish",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "state_updated",
-      "claims": [
-        "git-identity",
-        "divergence-label",
-        "consistency-check"
-      ],
-      "test": "test/cases/04_start_check.sh"
-    },
-    {
-      "id": "blocker_resolution",
-      "slug": "blocker-resolution",
-      "title": "Blocker resolution",
-      "class": "blocking",
-      "principle": 3,
-      "summary": "No task can be completed while any question on this branch is unresolved; it can still be finished as blocked, partial, no_match or failed.",
-      "validator": "blockers",
-      "validator_function": "mj_validate_blockers",
-      "defined_in": "lib/check.sh",
-      "category": "blockers",
-      "enforced_by": [
-        "check",
-        "finish"
-      ],
-      "exit_code": 10,
-      "policy_key": "no_open_blockers",
-      "claims": [
-        "finish-contract"
-      ],
-      "test": "test/cases/17_doctrine_enforcement.sh"
-    },
-    {
-      "id": "checkpoint_freshness",
+      "id": "majordomus.checkpoint-freshness",
       "slug": "checkpoint-freshness",
       "title": "Checkpoint freshness",
       "class": "advisory",
-      "principle": 1,
+      "principle": "Sessions are workers, not memory",
+      "statement": "A task whose newest checkpoint is older than its profile's interval is reported as stale, and the report does not stop the work.",
       "summary": "A task whose last checkpoint is older than its profile's interval is reported, not stopped.",
       "validator": "checkpoint",
       "validator_function": "mj_validate_checkpoint",
@@ -92,80 +49,45 @@
       "claims": [
         "checkpoint-interval"
       ],
-      "test": "test/cases/04_start_check.sh"
+      "test": "test/cases/04_start_check.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/checkpoint-freshness.v1.md"
     },
     {
-      "id": "verification_integrity",
-      "slug": "verification-integrity",
-      "title": "Verification integrity",
-      "class": "blocking",
-      "principle": 8,
-      "summary": "Completion requires a verification command that actually ran and exited 0; its exit code and duration are recorded.",
-      "validator": "verification",
-      "validator_function": "mj_validate_verification",
-      "defined_in": "lib/finish.sh",
-      "category": "verification",
+      "id": "majordomus.layout-integrity",
+      "slug": "layout-integrity",
+      "title": "Layout integrity",
+      "class": "advisory",
+      "principle": "Sessions are workers, not memory",
+      "statement": "The directories the durable commands write into are installed rather than created on first use.",
+      "summary": "The directories the durable commands write into are installed rather than created on first use.",
+      "validator": "layout",
+      "validator_function": "mj_validate_layout",
+      "defined_in": "lib/doctor.sh",
+      "category": "layout",
       "enforced_by": [
-        "finish"
+        "doctor"
       ],
-      "exit_code": 10,
-      "policy_key": "verification_ran",
-      "claims": [
-        "finish-contract",
-        "typed-outcome"
-      ],
-      "test": "test/cases/19_end_to_end.sh"
-    },
-    {
-      "id": "note_integrity",
-      "slug": "note-integrity",
-      "title": "Note integrity",
-      "class": "blocking",
-      "principle": 10,
-      "summary": "Every outcome needs a note carrying the sections that outcome requires, and no transcript.",
-      "validator": "note",
-      "validator_function": "mj_validate_note",
-      "defined_in": "lib/finish.sh",
-      "category": "note",
-      "enforced_by": [
-        "finish"
-      ],
-      "exit_code": 10,
-      "policy_key": "note_present",
-      "claims": [
-        "handover-record",
-        "no-transcripts"
-      ],
-      "test": "test/cases/06_finish.sh"
-    },
-    {
-      "id": "profile_requirements",
-      "slug": "profile-requirements",
-      "title": "Profile requirements",
-      "class": "blocking",
-      "principle": 5,
-      "summary": "A profile may demand more than the shared contract — a regression test, a decision record — and finish refuses without it.",
-      "validator": "profile_requirements",
-      "validator_function": "mj_validate_profile_requirements",
-      "defined_in": "lib/finish.sh",
-      "category": "regression",
-      "enforced_by": [
-        "finish"
-      ],
-      "exit_code": 10,
+      "exit_code": 0,
       "policy_key": "",
       "claims": [
-        "profile-axes",
-        "profile-validate"
+        "retention-caps"
       ],
-      "test": "test/cases/16_profiles.sh"
+      "test": "test/cases/25_continuity_lifecycle.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/layout-integrity.v1.md"
     },
     {
-      "id": "ledger_integrity",
+      "id": "majordomus.ledger-integrity",
       "slug": "ledger-integrity",
       "title": "Ledger integrity",
       "class": "blocking",
-      "principle": 1,
+      "principle": "Sessions are workers, not memory",
+      "statement": "Every line of the append-only ledger is a well-formed event.",
       "summary": "Every line of the append-only ledger is a well-formed event; the one durable record nothing else can reconstruct stays readable.",
       "validator": "ledger",
       "validator_function": "mj_validate_ledger",
@@ -181,125 +103,19 @@
       "claims": [
         "ledger-integrity"
       ],
-      "test": "test/cases/22_history.sh"
+      "test": "test/cases/22_history.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/ledger-integrity.v1.md"
     },
     {
-      "id": "decision_records",
-      "slug": "decision-records",
-      "title": "Decision records",
-      "class": "advisory",
-      "principle": 3,
-      "summary": "Every entry in decisions.md carries the task, the head and the reason, so a decision can be found by the worker who needs it.",
-      "validator": "decisions",
-      "validator_function": "mj_validate_decisions",
-      "defined_in": "lib/check.sh",
-      "category": "records",
-      "enforced_by": [
-        "check",
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 0,
-      "policy_key": "",
-      "claims": [
-        "decision-attribution"
-      ],
-      "test": "test/cases/21_decision_question.sh"
-    },
-    {
-      "id": "questions_store_integrity",
-      "slug": "questions-store-integrity",
-      "title": "Questions store integrity",
-      "class": "blocking",
-      "principle": 3,
-      "summary": "Every entry in open-questions.md parses, because a gate that cannot read an entry can be bypassed by mistyping one.",
-      "validator": "questions_store",
-      "validator_function": "mj_validate_questions_store",
-      "defined_in": "lib/doctor.sh",
-      "category": "records",
-      "enforced_by": [
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "blocker-store"
-      ],
-      "test": "test/cases/21_decision_question.sh"
-    },
-    {
-      "id": "prompt_integrity",
-      "slug": "prompt-integrity",
-      "title": "Prompt integrity",
-      "class": "blocking",
-      "principle": 2,
-      "summary": "Every repository-local prompt asset renders, and every token in it is one the renderer knows.",
-      "validator": "prompts",
-      "validator_function": "mj_validate_prompts",
-      "defined_in": "lib/doctor.sh",
-      "category": "prompt",
-      "enforced_by": [
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "prompt-assets"
-      ],
-      "test": "test/cases/24_prompt_search.sh"
-    },
-    {
-      "id": "handover_integrity",
-      "slug": "handover-integrity",
-      "title": "Handover integrity",
-      "class": "blocking",
-      "principle": 10,
-      "summary": "The resolver runs and reports either the record for this worktree and branch or its clean absence; a malformed record is never silently skipped, and a record describing a history this checkout no longer has is reported.",
-      "validator": "resolver",
-      "validator_function": "mj_validate_resolver",
-      "defined_in": "lib/doctor.sh",
-      "category": "resolver",
-      "enforced_by": [
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "handover-record",
-        "divergence-label"
-      ],
-      "test": "test/cases/23_context.sh"
-    },
-    {
-      "id": "task_continuity",
-      "slug": "task-continuity",
-      "title": "Task continuity",
-      "class": "advisory",
-      "principle": 10,
-      "summary": "A task finished as partial or blocked should leave a handover record, not only a note section.",
-      "validator": "continuity",
-      "validator_function": "mj_validate_continuity",
-      "defined_in": "lib/finish.sh",
-      "category": "continuity",
-      "enforced_by": [
-        "finish"
-      ],
-      "exit_code": 0,
-      "policy_key": "",
-      "claims": [
-        "handover-record"
-      ],
-      "test": "test/cases/25_continuity_lifecycle.sh"
-    },
-    {
-      "id": "policy_completeness",
+      "id": "majordomus.policy-completeness",
       "slug": "policy-completeness",
       "title": "Policy completeness",
       "class": "blocking",
-      "principle": 1,
+      "principle": "Sessions are workers, not memory",
+      "statement": "Every policy value the code reads is declared in the skeleton policy, and no reader carries a default of its own.",
       "summary": "Every policy value the code reads is declared in the skeleton policy, and no reader carries its own default for one.",
       "validator": "policy_defaults",
       "validator_function": "mj_validate_policy_defaults",
@@ -314,80 +130,19 @@
       "claims": [
         "policy-parse"
       ],
-      "test": "test/cases/28_no_hardcoded_values.sh"
+      "test": "test/cases/28_no_hardcoded_values.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/policy-completeness.v1.md"
     },
     {
-      "id": "ai_layout_integrity",
-      "slug": "ai-layout-integrity",
-      "title": "AI layer integrity",
-      "class": "blocking",
-      "principle": 1,
-      "summary": "The repository's AI layer is real: the manifest declares a format this executable reads and every section it names exists, the checkout-local half is ignored by git and nothing under it is tracked, and no project data remains under the pre-.ai .majordomus/ path.",
-      "validator": "ai_layout",
-      "validator_function": "mj_validate_ai_layout",
-      "defined_in": "lib/doctor.sh",
-      "category": "layout",
-      "enforced_by": [
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "init-refuses"
-      ],
-      "test": "test/cases/01_init.sh"
-    },
-    {
-      "id": "layout_integrity",
-      "slug": "layout-integrity",
-      "title": "Layout integrity",
-      "class": "advisory",
-      "principle": 1,
-      "summary": "The directories the durable commands write into are installed rather than created on first use.",
-      "validator": "layout",
-      "validator_function": "mj_validate_layout",
-      "defined_in": "lib/doctor.sh",
-      "category": "layout",
-      "enforced_by": [
-        "doctor"
-      ],
-      "exit_code": 0,
-      "policy_key": "",
-      "claims": [
-        "retention-caps"
-      ],
-      "test": "test/cases/25_continuity_lifecycle.sh"
-    },
-    {
-      "id": "policy_integrity",
-      "slug": "policy-integrity",
-      "title": "Policy integrity",
-      "class": "blocking",
-      "principle": 2,
-      "summary": "The policy and every profile parse, declare version 1, and carry no key the schema does not define.",
-      "validator": "policy",
-      "validator_function": "mj_validate_policy",
-      "defined_in": "lib/doctor.sh",
-      "category": "policy",
-      "enforced_by": [
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "policy-parse",
-        "profile-validate"
-      ],
-      "test": "test/cases/02_doctor_basic.sh"
-    },
-    {
-      "id": "bootstrap_integrity",
+      "id": "majordomus.bootstrap-integrity",
       "slug": "bootstrap-integrity",
       "title": "Bootstrap integrity",
       "class": "blocking",
-      "principle": 2,
+      "principle": "Load minimum sufficient context",
+      "statement": "A person reaches the AI layer through README.md and AGENTS.md, every generated instruction file points at .ai/README.md, and none of them carries a rule of its own.",
       "summary": "The path from a human reader to the AI layer is unbroken — README.md names AGENTS.md, every generated instruction file points at .ai/README.md, and none of them carries a rule of its own.",
       "validator": "bootstrap",
       "validator_function": "mj_validate_bootstrap",
@@ -403,14 +158,322 @@
         "projection-generation",
         "context-budget"
       ],
-      "test": "test/cases/03_update.sh"
+      "test": "test/cases/03_update.sh",
+      "depends_on": [
+        "majordomus.minimum-sufficient-context@1"
+      ],
+      "source": "share/standard/majordomus/rules/bootstrap-integrity.v1.md"
     },
     {
-      "id": "projection_integrity",
+      "id": "majordomus.catalogue-integrity",
+      "slug": "catalogue-integrity",
+      "title": "Catalogue integrity",
+      "class": "blocking",
+      "principle": "Load minimum sufficient context",
+      "statement": "Every use case and application names only commands, rules and claims that exist, and the two catalogues reference each other in both directions.",
+      "summary": "Every use case and application describes the tool in terms the tool has — each command, doctrine and claim it names exists, and the two catalogues reference each other in both directions.",
+      "validator": "catalogue",
+      "validator_function": "mj_validate_catalogue",
+      "defined_in": "lib/doctor.sh",
+      "category": "catalogue",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "catalogue-resolves"
+      ],
+      "test": "test/cases/28_catalogue.sh",
+      "depends_on": [
+        "majordomus.minimum-sufficient-context@1"
+      ],
+      "source": "share/standard/majordomus/rules/catalogue-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.policy-integrity",
+      "slug": "policy-integrity",
+      "title": "Policy integrity",
+      "class": "blocking",
+      "principle": "Load minimum sufficient context",
+      "statement": "The policy and every profile parse, declare a supported version, and carry no key the schema does not define.",
+      "summary": "The policy and every profile parse, declare version 1, and carry no key the schema does not define.",
+      "validator": "policy",
+      "validator_function": "mj_validate_policy",
+      "defined_in": "lib/doctor.sh",
+      "category": "policy",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "policy-parse",
+        "profile-validate"
+      ],
+      "test": "test/cases/02_doctor_basic.sh",
+      "depends_on": [
+        "majordomus.minimum-sufficient-context@1"
+      ],
+      "source": "share/standard/majordomus/rules/policy-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.blocker-resolution",
+      "slug": "blocker-resolution",
+      "title": "Blocker resolution",
+      "class": "blocking",
+      "principle": "Externalise decisions and durable state",
+      "statement": "No task is accepted as completed while any question on the branch is unresolved.",
+      "summary": "No task can be completed while any question on this branch is unresolved; it can still be finished as blocked, partial, no_match or failed.",
+      "validator": "blockers",
+      "validator_function": "mj_validate_blockers",
+      "defined_in": "lib/check.sh",
+      "category": "blockers",
+      "enforced_by": [
+        "check",
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "no_open_blockers",
+      "claims": [
+        "finish-contract"
+      ],
+      "test": "test/cases/17_doctrine_enforcement.sh",
+      "depends_on": [
+        "majordomus.externalise-decisions@1"
+      ],
+      "source": "share/standard/majordomus/rules/blocker-resolution.v1.md"
+    },
+    {
+      "id": "majordomus.decision-records",
+      "slug": "decision-records",
+      "title": "Decision records",
+      "class": "advisory",
+      "principle": "Externalise decisions and durable state",
+      "statement": "Every recorded decision carries the task, the head and the reason, so the worker who needs it can find it.",
+      "summary": "Every entry in decisions.md carries the task, the head and the reason, so a decision can be found by the worker who needs it.",
+      "validator": "decisions",
+      "validator_function": "mj_validate_decisions",
+      "defined_in": "lib/check.sh",
+      "category": "records",
+      "enforced_by": [
+        "check",
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 0,
+      "policy_key": "",
+      "claims": [
+        "decision-attribution"
+      ],
+      "test": "test/cases/21_decision_question.sh",
+      "depends_on": [
+        "majordomus.externalise-decisions@1"
+      ],
+      "source": "share/standard/majordomus/rules/decision-records.v1.md"
+    },
+    {
+      "id": "majordomus.dag-integrity",
+      "slug": "dag-integrity",
+      "title": "Dependency graph integrity",
+      "class": "blocking",
+      "principle": "One worker, one clear scope",
+      "statement": "The issue dependency graph is acyclic, every edge names an issue that exists, and no issue executes ahead of a dependency that is not done.",
+      "summary": "The issue dependency graph is acyclic, every edge names an issue that exists, and no issue is executing ahead of a dependency that is not done.",
+      "validator": "dag",
+      "validator_function": "mj_validate_dag",
+      "defined_in": "lib/doctor.sh",
+      "category": "dag",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "dag-validation",
+        "execution-waves"
+      ],
+      "test": "test/cases/44_model_doctrine.sh",
+      "depends_on": [
+        "majordomus.one-worker-one-scope@1"
+      ],
+      "source": "share/standard/majordomus/rules/dag-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.doctrine-wiring-integrity",
+      "slug": "doctrine-wiring-integrity",
+      "title": "Doctrine wiring integrity",
+      "class": "blocking",
+      "principle": "Define done before executing",
+      "statement": "Every enforced rule resolves to a validator that exists, is reached from every command it names, propagates failure, is proved by a test that CI runs; and every validator is declared by a rule.",
+      "summary": "Every doctrine in this registry resolves to a validator that exists, is reached from every command it names, propagates failure, is proved by a test, and is run by CI — and every validator in the source is declared here.",
+      "validator": "doctrine_wiring",
+      "validator_function": "mj_validate_doctrine_wiring",
+      "defined_in": "lib/doctor.sh",
+      "category": "doctrine",
+      "enforced_by": [
+        "doctor"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "wiring-reconciliation",
+        "doctrine-registry",
+        "doctrine-class-decides"
+      ],
+      "test": "test/cases/18_doctrine_wiring.sh",
+      "depends_on": [
+        "majordomus.define-done-first@1"
+      ],
+      "source": "share/standard/majordomus/rules/doctrine-wiring-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.enforcement-wiring",
+      "slug": "enforcement-wiring",
+      "title": "Enforcement wiring",
+      "class": "blocking",
+      "principle": "Define done before executing",
+      "statement": "Every enforcement the policy declares is invoked by the hook it names, from a file the dispatcher executes, without a swallowed exit code.",
+      "summary": "Every enforcement the policy declares is invoked by the hook it names, from a file the dispatcher will actually execute, without swallowing the exit code.",
+      "validator": "wiring",
+      "validator_function": "mj_validate_wiring",
+      "defined_in": "lib/doctor.sh",
+      "category": "wiring",
+      "enforced_by": [
+        "doctor"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "wiring-reconciliation",
+        "dispatcher-wiring"
+      ],
+      "test": "test/cases/14_wiring_dispatcher.sh",
+      "depends_on": [
+        "majordomus.define-done-first@1"
+      ],
+      "source": "share/standard/majordomus/rules/enforcement-wiring.v1.md"
+    },
+    {
+      "id": "majordomus.handover-integrity",
+      "slug": "handover-integrity",
+      "title": "Handover integrity",
+      "class": "blocking",
+      "principle": "Handovers transfer state, not transcripts",
+      "statement": "The record resolver reports the handover for this worktree and branch or its clean absence; a malformed record is never skipped silently.",
+      "summary": "The resolver runs and reports either the record for this worktree and branch or its clean absence; a malformed record is never silently skipped, and a record describing a history this checkout no longer has is reported.",
+      "validator": "resolver",
+      "validator_function": "mj_validate_resolver",
+      "defined_in": "lib/doctor.sh",
+      "category": "resolver",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "handover-record",
+        "divergence-label"
+      ],
+      "test": "test/cases/23_context.sh",
+      "depends_on": [
+        "majordomus.handovers-carry-state@1"
+      ],
+      "source": "share/standard/majordomus/rules/handover-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.note-integrity",
+      "slug": "note-integrity",
+      "title": "Note integrity",
+      "class": "blocking",
+      "principle": "Handovers transfer state, not transcripts",
+      "statement": "Every outcome needs a note carrying the sections that outcome requires, and never a transcript.",
+      "summary": "Every outcome needs a note carrying the sections that outcome requires, and no transcript.",
+      "validator": "note",
+      "validator_function": "mj_validate_note",
+      "defined_in": "lib/finish.sh",
+      "category": "note",
+      "enforced_by": [
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "note_present",
+      "claims": [
+        "handover-record",
+        "no-transcripts"
+      ],
+      "test": "test/cases/06_finish.sh",
+      "depends_on": [
+        "majordomus.handovers-carry-state@1"
+      ],
+      "source": "share/standard/majordomus/rules/note-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.profile-requirements",
+      "slug": "profile-requirements",
+      "title": "Profile requirements",
+      "class": "blocking",
+      "principle": "Escalate capability and effort only when justified",
+      "statement": "A profile may require more than the shared contract, and finish refuses a completed outcome that lacks it.",
+      "summary": "A profile may demand more than the shared contract — a regression test, a decision record — and finish refuses without it.",
+      "validator": "profile_requirements",
+      "validator_function": "mj_validate_profile_requirements",
+      "defined_in": "lib/finish.sh",
+      "category": "regression",
+      "enforced_by": [
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "profile-axes",
+        "profile-validate"
+      ],
+      "test": "test/cases/16_profiles.sh",
+      "depends_on": [
+        "majordomus.justified-escalation@1"
+      ],
+      "source": "share/standard/majordomus/rules/profile-requirements.v1.md"
+    },
+    {
+      "id": "majordomus.project-integrity",
+      "slug": "project-integrity",
+      "title": "Project model integrity",
+      "class": "blocking",
+      "principle": "Sessions are workers, not memory",
+      "statement": "Every milestone and issue file parses, carries the id its filename claims, and contains no key nobody reads.",
+      "summary": "Every milestone and issue file parses, carries the id its filename claims, and contains no key nobody reads.",
+      "validator": "project",
+      "validator_function": "mj_validate_project",
+      "defined_in": "lib/doctor.sh",
+      "category": "project",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "project-schema",
+        "project-status-derived"
+      ],
+      "test": "test/cases/44_model_doctrine.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/project-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.projection-integrity",
       "slug": "projection-integrity",
       "title": "Projection integrity",
       "class": "blocking",
-      "principle": 1,
+      "principle": "Sessions are workers, not memory",
+      "statement": "Every generated instruction file exists, matches the content it declares, and is never silently overwritten after a hand edit.",
       "summary": "Every generated instruction file exists, matches the stamp it carries, and is never silently overwritten after a hand edit.",
       "validator": "projection",
       "validator_function": "mj_validate_projection",
@@ -428,36 +491,19 @@
         "region-projection",
         "projection-generation"
       ],
-      "test": "test/cases/03_update.sh"
+      "test": "test/cases/03_update.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/projection-integrity.v1.md"
     },
     {
-      "id": "enforcement_wiring",
-      "slug": "enforcement-wiring",
-      "title": "Enforcement wiring",
-      "class": "blocking",
-      "principle": 7,
-      "summary": "Every enforcement the policy declares is invoked by the hook it names, from a file the dispatcher will actually execute, without swallowing the exit code.",
-      "validator": "wiring",
-      "validator_function": "mj_validate_wiring",
-      "defined_in": "lib/doctor.sh",
-      "category": "wiring",
-      "enforced_by": [
-        "doctor"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "wiring-reconciliation",
-        "dispatcher-wiring"
-      ],
-      "test": "test/cases/14_wiring_dispatcher.sh"
-    },
-    {
-      "id": "context_budget",
+      "id": "majordomus.context-budget",
       "slug": "context-budget",
       "title": "Context budget",
       "class": "blocking",
-      "principle": 2,
+      "principle": "Load minimum sufficient context",
+      "statement": "The always-loaded projection stays within its budget, every reference in it resolves, it states no count that will go stale, and the assembled context fits its own budget.",
       "summary": "The always-loaded projection stays within its line budget, every reference in it resolves, it states no count that will go stale, and the assembled context fits the builder's own budget.",
       "validator": "budget",
       "validator_function": "mj_validate_budget",
@@ -474,14 +520,74 @@
         "pointer-integrity",
         "no-counts-in-context"
       ],
-      "test": "test/cases/02_doctor_basic.sh"
+      "test": "test/cases/02_doctor_basic.sh",
+      "depends_on": [
+        "majordomus.minimum-sufficient-context@1",
+        "majordomus.projection-integrity@1"
+      ],
+      "source": "share/standard/majordomus/rules/context-budget.v1.md"
     },
     {
-      "id": "retention_caps",
+      "id": "majordomus.prompt-integrity",
+      "slug": "prompt-integrity",
+      "title": "Prompt integrity",
+      "class": "blocking",
+      "principle": "Load minimum sufficient context",
+      "statement": "Every reusable prompt asset renders, and every token in it is one the renderer knows.",
+      "summary": "Every repository-local prompt asset renders, and every token in it is one the renderer knows.",
+      "validator": "prompts",
+      "validator_function": "mj_validate_prompts",
+      "defined_in": "lib/doctor.sh",
+      "category": "prompt",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "prompt-assets"
+      ],
+      "test": "test/cases/24_prompt_search.sh",
+      "depends_on": [
+        "majordomus.minimum-sufficient-context@1"
+      ],
+      "source": "share/standard/majordomus/rules/prompt-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.questions-store-integrity",
+      "slug": "questions-store-integrity",
+      "title": "Questions store integrity",
+      "class": "blocking",
+      "principle": "Externalise decisions and durable state",
+      "statement": "Every entry in the questions store parses, because a gate that cannot read an entry can be bypassed by mistyping one.",
+      "summary": "Every entry in open-questions.md parses, because a gate that cannot read an entry can be bypassed by mistyping one.",
+      "validator": "questions_store",
+      "validator_function": "mj_validate_questions_store",
+      "defined_in": "lib/doctor.sh",
+      "category": "records",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "blocker-store"
+      ],
+      "test": "test/cases/21_decision_question.sh",
+      "depends_on": [
+        "majordomus.externalise-decisions@1"
+      ],
+      "source": "share/standard/majordomus/rules/questions-store-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.retention-caps",
       "slug": "retention-caps",
       "title": "Retention caps",
       "class": "blocking",
-      "principle": 1,
+      "principle": "Sessions are workers, not memory",
+      "statement": "The ledger, the handovers and the checkpoints stay under the caps the policy sets.",
       "summary": "The ledger and the handover directory stay under the caps the policy sets, so durable state does not grow without bound.",
       "validator": "retention",
       "validator_function": "mj_validate_retention",
@@ -496,105 +602,19 @@
       "claims": [
         "retention-caps"
       ],
-      "test": "test/cases/02_doctor_basic.sh"
+      "test": "test/cases/02_doctor_basic.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/retention-caps.v1.md"
     },
     {
-      "id": "catalogue_integrity",
-      "slug": "catalogue-integrity",
-      "title": "Catalogue integrity",
-      "class": "blocking",
-      "principle": 2,
-      "summary": "Every use case and application describes the tool in terms the tool has — each command, doctrine and claim it names exists, and the two catalogues reference each other in both directions.",
-      "validator": "catalogue",
-      "validator_function": "mj_validate_catalogue",
-      "defined_in": "lib/doctor.sh",
-      "category": "catalogue",
-      "enforced_by": [
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "catalogue-resolves"
-      ],
-      "test": "test/cases/28_catalogue.sh"
-    },
-    {
-      "id": "doctrine_wiring_integrity",
-      "slug": "doctrine-wiring-integrity",
-      "title": "Doctrine wiring integrity",
-      "class": "blocking",
-      "principle": 7,
-      "summary": "Every doctrine in this registry resolves to a validator that exists, is reached from every command it names, propagates failure, is proved by a test, and is run by CI — and every validator in the source is declared here.",
-      "validator": "doctrine_wiring",
-      "validator_function": "mj_validate_doctrine_wiring",
-      "defined_in": "lib/doctor.sh",
-      "category": "doctrine",
-      "enforced_by": [
-        "doctor"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "wiring-reconciliation",
-        "doctrine-registry",
-        "doctrine-class-decides"
-      ],
-      "test": "test/cases/18_doctrine_wiring.sh"
-    },
-    {
-      "id": "project_integrity",
-      "slug": "project-integrity",
-      "title": "Project model integrity",
-      "class": "blocking",
-      "principle": 1,
-      "summary": "Every milestone and issue file parses, carries the id its filename claims, and contains no key nobody reads.",
-      "validator": "project",
-      "validator_function": "mj_validate_project",
-      "defined_in": "lib/doctor.sh",
-      "category": "project",
-      "enforced_by": [
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "project-schema",
-        "project-status-derived"
-      ],
-      "test": "test/cases/44_model_doctrine.sh"
-    },
-    {
-      "id": "dag_integrity",
-      "slug": "dag-integrity",
-      "title": "Dependency graph integrity",
-      "class": "blocking",
-      "principle": 4,
-      "summary": "The issue dependency graph is acyclic, every edge names an issue that exists, and no issue is executing ahead of a dependency that is not done.",
-      "validator": "dag",
-      "validator_function": "mj_validate_dag",
-      "defined_in": "lib/doctor.sh",
-      "category": "dag",
-      "enforced_by": [
-        "doctor",
-        "watch"
-      ],
-      "exit_code": 10,
-      "policy_key": "",
-      "claims": [
-        "dag-validation",
-        "execution-waves"
-      ],
-      "test": "test/cases/44_model_doctrine.sh"
-    },
-    {
-      "id": "roadmap_integrity",
+      "id": "majordomus.roadmap-integrity",
       "slug": "roadmap-integrity",
       "title": "The roadmap is a projection, never a document",
       "class": "blocking",
-      "principle": 4,
+      "principle": "Define done before executing",
+      "statement": "No document is a second authority for the roadmap; a hand-written table can neither list a version no milestone declares nor hide one the model does.",
       "summary": "No document is a second authority for the roadmap. While a hand-written roadmap table exists, it can neither list a version no milestone declares nor hide one the model does.",
       "validator": "roadmap",
       "validator_function": "mj_validate_roadmap",
@@ -609,41 +629,185 @@
       "claims": [
         "roadmap-derived"
       ],
-      "test": "test/cases/49_roadmap_doctrine.sh"
+      "test": "test/cases/49_roadmap_doctrine.sh",
+      "depends_on": [
+        "majordomus.define-done-first@1"
+      ],
+      "source": "share/standard/majordomus/rules/roadmap-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.rule-package-integrity",
+      "slug": "rule-package-integrity",
+      "title": "Rule package integrity",
+      "class": "blocking",
+      "principle": "Define done before executing",
+      "statement": "The vendored baseline matches its manifest file for file, every effective rule resolves with its dependencies, no two rules claim one identity, and no project rule reuses the vendored namespace.",
+      "summary": "The repository's effective rule set is real: the vendored baseline matches its manifest file for file, every rule resolves with its dependencies and no two claim one identity, and no project rule reuses the vendored namespace.",
+      "validator": "rule_package",
+      "validator_function": "mj_validate_rule_package",
+      "defined_in": "lib/doctor.sh",
+      "category": "rules",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "doctrine-registry"
+      ],
+      "test": "test/cases/67_rule_dag.sh",
+      "depends_on": [
+        "majordomus.define-done-first@1"
+      ],
+      "source": "share/standard/majordomus/rules/rule-package-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.scope-integrity",
+      "slug": "scope-integrity",
+      "title": "Scope integrity",
+      "class": "blocking",
+      "principle": "One worker, one clear scope",
+      "statement": "Work outside the paths a task claimed is not accepted as that task's work.",
+      "summary": "A task touches only the paths it claimed; work found elsewhere is not accepted as done.",
+      "validator": "scope",
+      "validator_function": "mj_validate_scope",
+      "defined_in": "lib/check.sh",
+      "category": "scope",
+      "enforced_by": [
+        "check",
+        "finish",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "scope_respected",
+      "claims": [
+        "scope-enforcement",
+        "scoped-task"
+      ],
+      "test": "test/cases/04_start_check.sh",
+      "depends_on": [
+        "majordomus.one-worker-one-scope@1"
+      ],
+      "source": "share/standard/majordomus/rules/scope-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.state-consistency",
+      "slug": "state-consistency",
+      "title": "State consistency",
+      "class": "blocking",
+      "principle": "Sessions are workers, not memory",
+      "statement": "A task record is trusted only while it still describes this checkout: same branch, HEAD at or ahead of the recorded commit.",
+      "summary": "The task record still describes this checkout — same branch, and HEAD at or ahead of the recorded commit.",
+      "validator": "state",
+      "validator_function": "mj_validate_state",
+      "defined_in": "lib/check.sh",
+      "category": "state",
+      "enforced_by": [
+        "check",
+        "finish",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "state_updated",
+      "claims": [
+        "git-identity",
+        "divergence-label",
+        "consistency-check"
+      ],
+      "test": "test/cases/04_start_check.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/state-consistency.v1.md"
+    },
+    {
+      "id": "majordomus.task-continuity",
+      "slug": "task-continuity",
+      "title": "Task continuity",
+      "class": "advisory",
+      "principle": "Handovers transfer state, not transcripts",
+      "statement": "A task finished as partial or blocked leaves a handover record, not only a note section.",
+      "summary": "A task finished as partial or blocked should leave a handover record, not only a note section.",
+      "validator": "continuity",
+      "validator_function": "mj_validate_continuity",
+      "defined_in": "lib/finish.sh",
+      "category": "continuity",
+      "enforced_by": [
+        "finish"
+      ],
+      "exit_code": 0,
+      "policy_key": "",
+      "claims": [
+        "handover-record"
+      ],
+      "test": "test/cases/25_continuity_lifecycle.sh",
+      "depends_on": [
+        "majordomus.handovers-carry-state@1"
+      ],
+      "source": "share/standard/majordomus/rules/task-continuity.v1.md"
+    },
+    {
+      "id": "majordomus.verification-integrity",
+      "slug": "verification-integrity",
+      "title": "Verification integrity",
+      "class": "blocking",
+      "principle": "Verify outcomes, not activity",
+      "statement": "A completed outcome requires a verification command that ran and exited zero, with its exit code and duration recorded.",
+      "summary": "Completion requires a verification command that actually ran and exited 0; its exit code and duration are recorded.",
+      "validator": "verification",
+      "validator_function": "mj_validate_verification",
+      "defined_in": "lib/finish.sh",
+      "category": "verification",
+      "enforced_by": [
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "verification_ran",
+      "claims": [
+        "finish-contract",
+        "typed-outcome"
+      ],
+      "test": "test/cases/19_end_to_end.sh",
+      "depends_on": [
+        "majordomus.verify-outcomes@1"
+      ],
+      "source": "share/standard/majordomus/rules/verification-integrity.v1.md"
     }
   ],
   "counts": {
-    "declared": 27,
-    "blocking": 23,
+    "declared": 28,
+    "blocking": 24,
     "advisory": 4
   },
   "index": {
-    "scope_integrity": 0,
-    "state_consistency": 1,
-    "blocker_resolution": 2,
-    "checkpoint_freshness": 3,
-    "verification_integrity": 4,
-    "note_integrity": 5,
-    "profile_requirements": 6,
-    "ledger_integrity": 7,
-    "decision_records": 8,
-    "questions_store_integrity": 9,
-    "prompt_integrity": 10,
-    "handover_integrity": 11,
-    "task_continuity": 12,
-    "policy_completeness": 13,
-    "ai_layout_integrity": 14,
-    "layout_integrity": 15,
-    "policy_integrity": 16,
-    "bootstrap_integrity": 17,
-    "projection_integrity": 18,
-    "enforcement_wiring": 19,
-    "context_budget": 20,
-    "retention_caps": 21,
-    "catalogue_integrity": 22,
-    "doctrine_wiring_integrity": 23,
-    "project_integrity": 24,
-    "dag_integrity": 25,
-    "roadmap_integrity": 26
+    "majordomus.ai-layout-integrity": 0,
+    "majordomus.checkpoint-freshness": 1,
+    "majordomus.layout-integrity": 2,
+    "majordomus.ledger-integrity": 3,
+    "majordomus.policy-completeness": 4,
+    "majordomus.bootstrap-integrity": 5,
+    "majordomus.catalogue-integrity": 6,
+    "majordomus.policy-integrity": 7,
+    "majordomus.blocker-resolution": 8,
+    "majordomus.decision-records": 9,
+    "majordomus.dag-integrity": 10,
+    "majordomus.doctrine-wiring-integrity": 11,
+    "majordomus.enforcement-wiring": 12,
+    "majordomus.handover-integrity": 13,
+    "majordomus.note-integrity": 14,
+    "majordomus.profile-requirements": 15,
+    "majordomus.project-integrity": 16,
+    "majordomus.projection-integrity": 17,
+    "majordomus.context-budget": 18,
+    "majordomus.prompt-integrity": 19,
+    "majordomus.questions-store-integrity": 20,
+    "majordomus.retention-caps": 21,
+    "majordomus.roadmap-integrity": 22,
+    "majordomus.rule-package-integrity": 23,
+    "majordomus.scope-integrity": 24,
+    "majordomus.state-consistency": 25,
+    "majordomus.task-continuity": 26,
+    "majordomus.verification-integrity": 27
   }
 }

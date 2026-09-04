@@ -7,7 +7,7 @@ description: The always-loaded projection stays within its line budget, every re
 statement: The always-loaded projection stays within its budget, every reference in it resolves, it states no count that will go stale, and the assembled context fits its own budget.
 status: active
 class: blocking
-depends_on: [majordomus.minimum-sufficient-context@1]
+depends_on: [majordomus.minimum-sufficient-context@1, majordomus.projection-integrity@1]
 tags: [context, budget]
 
 x-majordomus:

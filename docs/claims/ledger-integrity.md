@@ -6,7 +6,7 @@
 
 ## How it works
 
-`mj_ledger_bad_lines` in `lib/common.sh` reads the file and returns the numbers of lines that are not JSON objects carrying a `ts` and an `event`. `mj_validate_ledger` turns that into a finding; the doctrine `ledger_integrity` is declared blocking and enforced by `check`, `doctor` and `watch`, so the class is what makes it stop a command rather than a decision inside the validator. The readers — `history`, `search` — skip a malformed line and keep going rather than crashing, so a damaged ledger degrades into a shorter one instead of an unusable one.
+`mj_ledger_bad_lines` in `lib/common.sh` reads the file and returns the numbers of lines that are not JSON objects carrying a `ts` and an `event`. `mj_validate_ledger` turns that into a finding; the doctrine `majordomus.ledger-integrity` is declared blocking and enforced by `check`, `doctor` and `watch`, so the class is what makes it stop a command rather than a decision inside the validator. The readers — `history`, `search` — skip a malformed line and keep going rather than crashing, so a damaged ledger degrades into a shorter one instead of an unusable one.
 
 ## How to see it
 

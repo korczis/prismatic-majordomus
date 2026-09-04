@@ -25,4 +25,4 @@ No command decides this rule; a reviewer does, and a change that violates it is 
 
 # Verification
 
-Review. The doctrine_wiring_integrity rule proves the chain both ways; test/cases/18_doctrine_wiring.sh mutation-tests it.
+Review. The majordomus.doctrine-wiring-integrity rule proves the chain both ways; test/cases/18_doctrine_wiring.sh mutation-tests it.

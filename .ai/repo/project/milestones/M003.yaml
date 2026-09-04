@@ -10,7 +10,7 @@ desired_state: "A session lifecycle exists with one active session per worktree 
 scope:
   - lib
   - bin/majordomus
-  - share/doctrines.yaml
+  - share/standard/majordomus/
   - share/allow
   - share/skeleton
   - docs
@@ -56,7 +56,7 @@ evidence_required:
 risks:
   - "A knowledge index is a second thing that can be believed. Every mitigation is the same one: the index is a pointer, it carries the source path and hash of what it points at, and it is reported stale rather than silently rebuilt by a query."
   - "A curated source list is a place where something can be forgotten. The alternative — indexing everything git tracks — imports generated files, vendored trees and site output, and was rejected; the cost is that adding a canonical file kind is an explicit edit, and the validator names a declared source class whose discovery returns nothing."
-  - "Deriving a session's references from the ledger makes the ledger load-bearing for a second thing. It is already append-only, machine-written and validated by ledger_integrity, and the alternative — accumulating references into a mutable session file on every command — puts a write on the hot path of every other command and creates the second store this milestone exists to avoid."
+  - "Deriving a session's references from the ledger makes the ledger load-bearing for a second thing. It is already append-only, machine-written and validated by majordomus.ledger-integrity, and the alternative — accumulating references into a mutable session file on every command — puts a write on the hot path of every other command and creates the second store this milestone exists to avoid."
   - "The Clean Extraction Boundary currently forbids graph semantics without qualification. Narrowing it is a deliberate change to a published boundary, and it must be narrowed precisely — a generic provenance graph over this repository's own artifacts — or it stops being a boundary."
 created_at: 2026-09-04
 updated_at: 2026-09-04

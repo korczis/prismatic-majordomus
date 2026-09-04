@@ -24,7 +24,7 @@ applications:
       - The repository wants a single generated instruction file and is happy to hand ownership over
       - There is no governance to supervise yet, in which case start with the shipped skeleton instead
     use_cases: [adopt-an-existing-repository, prove-a-rule-is-enforced, find-out-what-drifted]
-    doctrines: [projection_integrity, enforcement_wiring]
+    doctrines: [majordomus.projection-integrity, majordomus.enforcement-wiring]
     responsibilities: [projection, policy, doctor]
 
   - id: several-agents-one-repository
@@ -40,7 +40,7 @@ applications:
       - One person works one repository at a time and nothing is ever handed over
       - Coordination is the point and you want a scheduler; this tool reports overlap, it does not resolve it
     use_cases: [run-several-workers-at-once, hand-work-between-sessions]
-    doctrines: [scope_integrity, state_consistency, handover_integrity]
+    doctrines: [majordomus.scope-integrity, majordomus.state-consistency, majordomus.handover-integrity]
     responsibilities: [scope, state, handover]
 
   - id: ci-gated-project
@@ -56,7 +56,7 @@ applications:
       - Checks are advisory by policy and a red pipeline is routinely merged past
       - There is no CI, in which case the lifecycle commands still work but the last link of every chain is missing
     use_cases: [accept-or-refuse-finished-work, prove-a-rule-is-enforced]
-    doctrines: [verification_integrity, doctrine_wiring_integrity]
+    doctrines: [majordomus.verification-integrity, majordomus.doctrine-wiring-integrity]
     responsibilities: [finish, doctor]
 
   - id: long-running-work
@@ -72,5 +72,5 @@ applications:
       - The work is a single sitting and nothing needs to be recalled afterwards
       - You want a knowledge base; this keeps operational state, not documentation
     use_cases: [hand-work-between-sessions, find-out-what-drifted, accept-or-refuse-finished-work]
-    doctrines: [ledger_integrity, decision_records, blocker_resolution, task_continuity]
+    doctrines: [majordomus.ledger-integrity, majordomus.decision-records, majordomus.blocker-resolution, majordomus.task-continuity]
     responsibilities: [state, handover, finish]

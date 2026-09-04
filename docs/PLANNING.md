@@ -190,4 +190,4 @@ different word on it.
 - [`docs/DOGFOODING.md`](DOGFOODING.md) — why this repository uses the model on itself
 - [`docs/SCHEMAS.md`](SCHEMAS.md) — the fields of each file
 - [`docs/CLI.md`](CLI.md) — `majordomus plan`, subcommand by subcommand
-- [`docs/DOCTRINE.md`](DOCTRINE.md) — how `project_integrity` and `dag_integrity` are enforced
+- [`docs/DOCTRINE.md`](DOCTRINE.md) — how `majordomus.project-integrity` and `majordomus.dag-integrity` are enforced

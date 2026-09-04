@@ -32,7 +32,7 @@ expect_grep 'OK +scope'
 # --- the profile and the effective policy are readable without reading the repository
 expect_exit 0 "$MJ" check --explain
 expect_grep 'doctrines enforced by check'
-expect_grep 'checkpoint_freshness \(advisory\)'
+expect_grep 'majordomus.checkpoint-freshness \(advisory\)'
 
 # --- work inside scope; checkpoint
 echo 'y' >> src/a.py
@@ -46,10 +46,10 @@ printf 'Task: %s\n\nChose an in-band retry seam over a wrapper: the wrapper dupl
 "$MJ" question add "does the upstream rate limit reset per minute or per hour?" >/dev/null
 expect_exit 10 "$MJ" check
 expect_grep 'FAIL blockers'
-expect_exit 10 "$MJ" check --rule blocker_resolution
+expect_exit 10 "$MJ" check --rule majordomus.blocker-resolution
 expect_grep 'FAIL blockers'
 # a doctrine that this command does not enforce is a usage error, not a silent pass
-expect_exit 2 "$MJ" check --rule verification_integrity
+expect_exit 2 "$MJ" check --rule majordomus.verification-integrity
 expect_grep 'is not enforced by check'
 
 # --- resolve it; check passes again
@@ -81,7 +81,7 @@ printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover
 expect_exit 10 "$MJ" finish --outcome completed
 expect_grep 'FAIL verification .* requires --verify-command'
 expect_grep 'blocking doctrines:'
-expect_grep 'verification_integrity'
+expect_grep 'majordomus.verification-integrity'
 
 # --- a verification that fails is a failure, recorded as one
 expect_exit 10 "$MJ" finish --outcome completed --verify-command "exit 3"
@@ -100,8 +100,8 @@ expect_grep '^outcome: completed$' .ai/local/state/current.yaml
 
 # --- the ledger records the contract line by line, under doctrine ids
 expect_grep '"event":"task.finished"' .ai/local/state/ledger.jsonl
-expect_grep '"scope_integrity":"pass"' .ai/local/state/ledger.jsonl
-expect_grep '"verification_integrity":"pass"' .ai/local/state/ledger.jsonl
+expect_grep '"majordomus.scope-integrity":"pass"' .ai/local/state/ledger.jsonl
+expect_grep '"majordomus.verification-integrity":"pass"' .ai/local/state/ledger.jsonl
 expect_grep '"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
 
 # --- and the installation is still healthy at the end of it

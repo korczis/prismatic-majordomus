@@ -33,7 +33,7 @@ expect_grep "FAIL catalogue .* names command 'no_such_command', which bin/majord
 restore
 
 # 2. a rule that is not in the doctrine registry
-sed 's/scope_integrity, state_consistency/scope_integrity, no_such_doctrine/' "$UC.orig" > "$UC"
+sed 's/majordomus.scope-integrity, majordomus.state-consistency/majordomus.scope-integrity, no_such_doctrine/' "$UC.orig" > "$UC"
 took "$UC" "no_such_doctrine"
 expect_exit 10 "$MJ" doctor
 expect_grep "FAIL catalogue .* names doctrine 'no_such_doctrine', which is not in the registry"

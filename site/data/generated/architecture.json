@@ -270,6 +270,26 @@
       "external": false
     },
     {
+      "id": ".ai/repo/rules/vendor",
+      "kind": "artifact",
+      "label": "repo/rules/vendor",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/rules.sh",
+      "kind": "module",
+      "label": "rules",
+      "command": "rules",
+      "summary": "the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)",
+      "read_only": true,
+      "route": "/commands/rules/",
+      "external": false
+    },
+    {
       "id": "lib/finish.sh",
       "kind": "module",
       "label": "finish",
@@ -300,16 +320,6 @@
       "external": false
     },
     {
-      "id": "lib/rules.sh",
-      "kind": "module",
-      "label": "rules",
-      "command": "rules",
-      "summary": "the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)",
-      "read_only": true,
-      "route": "/commands/rules/",
-      "external": false
-    },
-    {
       "id": ".ai/repo/README.md",
       "kind": "artifact",
       "label": "repo/README.md",
@@ -333,16 +343,6 @@
       "id": ".ai/repo/rules/project",
       "kind": "artifact",
       "label": "repo/rules/project",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/repo/rules/vendor",
-      "kind": "artifact",
-      "label": "repo/rules/vendor",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -882,6 +882,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/doctrine.sh",
+      "target": "lib/rules.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/finish.sh",
       "target": "lib/check.sh",
       "kind": "sources"
@@ -1027,6 +1032,11 @@
       "kind": "uses"
     },
     {
+      "source": "lib/doctor.sh",
+      "target": ".ai/repo/rules/vendor",
+      "kind": "uses"
+    },
+    {
       "source": "lib/finish.sh",
       "target": ".ai/local/state/decisions.md",
       "kind": "uses"
@@ -1089,11 +1099,6 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/prompts",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".ai/repo/providers",
       "kind": "uses"
     },
     {

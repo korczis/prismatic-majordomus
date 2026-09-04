@@ -39,7 +39,7 @@ H
 chmod +x .git/hooks/pre-commit .git/hooks/pre-push
 expect_exit 0 "$MJ" doctor
 expect_grep 'doctor: 0 failure'
-# bootstrap_integrity: a person reaches the layer through README.md and AGENTS.md
+# majordomus.bootstrap-integrity: a person reaches the layer through README.md and AGENTS.md
 printf '# Fixture\n\nSee AGENTS.md for how AI workers operate here.\n' > README.md
 expect_exit 0 "$MJ" doctor
 expect_grep 'OK +bootstrap +README.md — names AGENTS.md'

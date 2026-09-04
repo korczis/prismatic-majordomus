@@ -8,16 +8,19 @@ fixture_repo "$T/tool" docs
 cp -R "$ROOT/test" "$T/tool/"
 cp "$ROOT/.github/workflows/validate.yml" "$T/tool/.github/workflows/"
 MJ="$T/tool/bin/majordomus"
-REG="$T/tool/share/doctrines.yaml"; LIBD="$T/tool/lib"
+LIBD="$T/tool/lib"
 CI="$T/tool/.github/workflows/validate.yml"; RUN="$T/tool/test/run.sh"
-cp "$REG" "$REG.orig"
+"$MJ" init >/dev/null; "$MJ" update >/dev/null
+# the registry is the vendored rule package of the repository under test; a mutation edits
+# one rule file there and a restore puts the original back
+RULES="$T/.ai/repo/rules/vendor/majordomus/rules"
+cp -R "$RULES" "$T/rules.orig"
 restore() {
-  cp "$REG.orig" "$REG"
+  cp "$T/rules.orig"/*.md "$RULES/"
   cp "$ROOT/lib/check.sh" "$LIBD/check.sh"
   cp "$ROOT/.github/workflows/validate.yml" "$CI"
   cp "$ROOT/test/run.sh" "$RUN"
 }
-"$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib test && echo a > lib/a && echo t > test/a_test && git add . && git commit -qm base
 
 # --- blocking: an unresolved question refuses completion (blocker_resolution)
@@ -28,7 +31,7 @@ printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover
 expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
 expect_grep 'FAIL blockers'
 expect_grep 'blocking doctrines:'
-expect_grep 'blocker_resolution'
+expect_grep 'majordomus.blocker-resolution'
 # the same open question is expected when the outcome is blocked, and does not refuse
 expect_exit 0 "$MJ" finish --outcome blocked
 expect_grep 'INFO blockers .* outcome is blocked'
@@ -46,24 +49,25 @@ expect_grep 'WARN checkpoint'
 expect_no_grep '^FAIL'
 
 # --- the class is what does it: flip checkpoint_freshness to blocking and check fails
-awk '/^  - id: checkpoint_freshness$/{f=1} f&&/^    class: advisory$/{sub(/advisory/,"blocking"); f=0} {print}' "$REG.orig" > "$REG"
+sed 's/^class: advisory$/class: blocking/' "$T/rules.orig/checkpoint-freshness.v1.md" > "$RULES/checkpoint-freshness.v1.md"
 expect_exit 10 "$MJ" check
 expect_grep 'FAIL checkpoint'
-cp "$REG.orig" "$REG"
+restore
 expect_exit 0 "$MJ" check
 
 
 # --- a doctrine whose validator does not exist is a failure, never a silent skip
-awk '/^  - id: scope_integrity$/{f=1} f&&/^    validator: scope$/{sub(/scope$/,"scope_that_does_not_exist"); f=0} {print}' "$REG.orig" > "$REG"
+sed 's/^  validator: scope$/  validator: scope_that_does_not_exist/' "$T/rules.orig/scope-integrity.v1.md" > "$RULES/scope-integrity.v1.md"
 expect_exit 10 "$MJ" check
 expect_grep 'FAIL doctrine .* no function mj_validate_scope_that_does_not_exist exists'
-cp "$REG.orig" "$REG"
+restore
 
-# --- an unknown class fails closed rather than defaulting to advisory
-awk '/^  - id: scope_integrity$/{f=1} f&&/^    class: blocking$/{sub(/blocking/,"informational"); f=0} {print}' "$REG.orig" > "$REG"
+# --- an unknown class fails closed rather than defaulting to advisory: the rule set does
+# not resolve, and nothing is enforced partially
+sed 's/^class: blocking$/class: informational/' "$T/rules.orig/scope-integrity.v1.md" > "$RULES/scope-integrity.v1.md"
 expect_exit 10 "$MJ" check
-expect_grep "FAIL doctrine .* unknown class 'informational'"
-cp "$REG.orig" "$REG"
+expect_grep "rules do not resolve.*class 'informational' is neither blocking nor advisory"
+restore
 
 # --- the policy may not name a finish requirement no doctrine defines
 NOTE="$(mktemp "${TMPDIR:-/tmp}/mj.note.XXXXXX")"; printf '# Reason\nnothing to find\n' > "$NOTE"

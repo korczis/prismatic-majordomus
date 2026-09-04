@@ -14,7 +14,7 @@ A validator never calls `mj_fail` directly. It calls `mj_doctrine_fail`, which r
 
 ```bash
 majordomus check                       # WARN checkpoint  … 40m ago, interval 15m   → exit 0
-# change class: advisory to class: blocking for checkpoint_freshness
+# change class: advisory to class: blocking for majordomus.checkpoint-freshness
 majordomus check                       # FAIL checkpoint  … 40m ago, interval 15m   → exit 10
 ```
 

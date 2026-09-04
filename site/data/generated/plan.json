@@ -349,7 +349,7 @@
       "scope": [
         "lib",
         "bin/majordomus",
-        "share/doctrines.yaml",
+        "share/standard/majordomus/",
         "share/allow",
         "share/skeleton",
         "docs",
@@ -400,7 +400,7 @@
       "risks": [
         "A knowledge index is a second thing that can be believed. Every mitigation is the same one: the index is a pointer, it carries the source path and hash of what it points at, and it is reported stale rather than silently rebuilt by a query.",
         "A curated source list is a place where something can be forgotten. The alternative — indexing everything git tracks — imports generated files, vendored trees and site output, and was rejected; the cost is that adding a canonical file kind is an explicit edit, and the validator names a declared source class whose discovery returns nothing.",
-        "Deriving a session's references from the ledger makes the ledger load-bearing for a second thing. It is already append-only, machine-written and validated by ledger_integrity, and the alternative — accumulating references into a mutable session file on every command — puts a write on the hot path of every other command and creates the second store this milestone exists to avoid.",
+        "Deriving a session's references from the ledger makes the ledger load-bearing for a second thing. It is already append-only, machine-written and validated by majordomus.ledger-integrity, and the alternative — accumulating references into a mutable session file on every command — puts a write on the hot path of every other command and creates the second store this milestone exists to avoid.",
         "The Clean Extraction Boundary currently forbids graph semantics without qualification. Narrowing it is a deliberate change to a published boundary, and it must be narrowed precisely — a generic provenance graph over this repository's own artifacts — or it stops being a boundary."
       ],
       "evidence": [],
@@ -1151,7 +1151,7 @@
       "blocked_by": [],
       "dependents": [],
       "scope": [
-        "share/doctrines.yaml",
+        "share/standard/majordomus/",
         "lib/doctor.sh"
       ],
       "non_scope": [
@@ -1160,7 +1160,7 @@
       "objective": "Add the project model to the doctrine registry so that doctor reports a broken model and watch reports a model that has drifted, through the same dispatcher every other rule uses.",
       "why": "A rule enforced by a script nobody runs is documentation. The doctrine registry is how this repository makes enforcement verifiable end to end.",
       "current_state": "The registry covered policy, profiles, scope, state, notes, projections and retention. Nothing covered the plan.",
-      "desired_state": "project_integrity and dag_integrity are declared, have validator functions, are dispatched by doctor and watch, and each has a test.",
+      "desired_state": "majordomus.project-integrity and majordomus.dag-integrity are declared, have validator functions, are dispatched by doctor and watch, and each has a test.",
       "acceptance_criteria": [
         "A repository with no canonical model skips both doctrines rather than failing",
         "An invalid model is a blocking doctor failure with a reproduce command",
@@ -1832,7 +1832,7 @@
           "recorded_at": "2026-09-04T07:32:13Z"
         }
       ],
-      "risk": "The question store's line format is machine-written and read by three commands; a change to it has to keep every existing entry parseable, which questions_store_integrity checks.",
+      "risk": "The question store's line format is machine-written and read by three commands; a change to it has to keep every existing entry parseable, which majordomus.questions-store-integrity checks.",
       "completion": "",
       "started_at": "2026-09-04T07:05:35Z",
       "verified_at": "2026-09-04T07:32:11Z",
@@ -3594,7 +3594,7 @@
         "I0813"
       ],
       "scope": [
-        "share/doctrines.yaml",
+        "share/standard/majordomus/",
         "share/allow/policy.txt",
         "share/skeleton",
         "lib/session.sh",
@@ -3607,10 +3607,10 @@
         "Any background or automatic maintenance",
         "Deleting a record under any circumstance"
       ],
-      "objective": "Declare the session rules in share/doctrines.yaml with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites.",
+      "objective": "Declare the session rules in share/standard/majordomus/ with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites.",
       "why": "A rule enforced by an inline check in one command is the declared-but-not-wired failure this tool measures in other people's repositories. Every enforced rule here is declared in the registry and dispatched from it, or it is not enforced.",
       "current_state": "The doctrine registry declares every enforced rule with a validator, the commands that dispatch it, a claim and a test. history --rotate is the existing precedent for retention that archives rather than deletes and refuses to overwrite an existing archive.",
-      "desired_state": "session_record_integrity and session_reference_integrity are declared and dispatched. The policy carries a session block with the retention cap and whether archiving is enabled, its keys are in the policy allowlist, and retention_caps reports sessions alongside checkpoints and handovers. Archiving happens only when a command asks for it.",
+      "desired_state": "session_record_integrity and session_reference_integrity are declared and dispatched. The policy carries a session block with the retention cap and whether archiving is enabled, its keys are in the policy allowlist, and majordomus.retention-caps reports sessions alongside checkpoints and handovers. Archiving happens only when a command asks for it.",
       "acceptance_criteria": [
         "Both doctrines appear in doctrine list with a validator that exists, and doctor proves each reaches the command that claims to run it",
         "A malformed closed record fails doctor and drifts watch, and the finding carries a reproduce command",

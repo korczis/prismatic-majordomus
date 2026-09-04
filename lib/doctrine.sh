@@ -1,17 +1,22 @@
 #!/usr/bin/env bash
 # doctrine — the registry, the dispatcher, and the wiring verifier.
 #
-# The registry (share/doctrines.yaml) says what must be true. A validator function
-# named mj_validate_<validator> determines whether it is true. This dispatcher decides
-# when a validator runs: it iterates the registry and calls every doctrine that names
-# the running command. Nothing here selects validators by hand, so a doctrine added to
-# the registry runs from that moment, and a doctrine whose validator does not exist is
-# a reported failure rather than a silent skip.
+# The registry is the repository's effective rule set: every rule under its rules section
+# (the vendored Majordomus baseline plus its own project rules) whose x-majordomus block
+# names a validator, in resolved dependency order. A validator function named
+# mj_validate_<validator> determines whether the rule holds. This dispatcher decides when a
+# validator runs: it iterates the registry and calls every doctrine that names the running
+# command. Nothing here selects validators by hand, so a rule added to the package runs
+# from that moment, and a rule whose validator does not exist is a reported failure rather
+# than a silent skip.
 #
-# Fail-closed: a missing validator, an unknown class, and a validator that crashes are
-# all failures of the command, and each is a different message.
+# Fail-closed: a set of rules that does not resolve, a missing validator, an unknown class,
+# and a validator that crashes are all failures of the command, and each is a different
+# message.
+# shellcheck source=rules.sh
+. "$MJ_LIB_DIR/rules.sh"
 
-MJ_DOC_FLAT=""            # flattened registry
+MJ_DOC_FLAT=""            # the registry, flattened: doctrines.N.<field>
 MJ_DOCTRINE_ID=""         # the doctrine currently executing
 MJ_DOCTRINE_CLASS=""      # its class; mj_doctrine_fail routes on this
 MJ_DOCTRINE_CMD=""        # the command the dispatcher is running for
@@ -21,15 +26,30 @@ MJ_DOCTRINE_RESULTS=""    # "<id>:pass|fail|skipped" per dispatched doctrine
 MJ_DOCTRINE_ERRORS=0      # validator-execution and configuration errors, not rule violations
 export MJ_DOCTRINE_ID MJ_DOCTRINE_CLASS MJ_DOCTRINE_CMD
 
-mj_doctrine_registry() { printf '%s\n' "$MJ_SHARE_DIR/doctrines.yaml"; }
-
+# Derive the registry from the effective rules. A set that does not resolve is a failure
+# of the command that needed it, named by the loader; there is no partial registry.
 mj_doctrine_load() {
   [ -n "$MJ_DOC_FLAT" ] && [ -f "$MJ_DOC_FLAT" ] && return 0
-  local reg; reg="$(mj_doctrine_registry)"
-  [ -f "$reg" ] || mj_die "$MJ_EX_INTERNAL" "doctrine registry missing: $reg"
+  mj_rules_load || mj_die "$MJ_EX_CONTRACT" "the rules do not resolve, so nothing can be enforced: $MJ_RULES_ERROR (see: majordomus rules list)"
   MJ_DOC_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.doc.XXXXXX")"
-  mj_yaml_flatten "$reg" > "$MJ_DOC_FLAT" 2>/dev/null || mj_die "$MJ_EX_INTERNAL" "doctrine registry does not parse: $reg"
-  [ "$(mj_yget "$MJ_DOC_FLAT" version)" = 1 ] || mj_die "$MJ_EX_INTERNAL" "doctrine registry version must be 1"
+  local i=0 n=0 k
+  printf 'version=1\n' > "$MJ_DOC_FLAT"
+  while [ -n "$(mj_rule "$i" id)" ]; do
+    if [ "$(mj_rule "$i" enforced)" = 1 ]; then
+      {
+        for k in id title class validator category policy_key exit_code file provenance; do
+          [ -n "$(mj_rule "$i" "$k")" ] && printf 'doctrines.%s.%s=%s\n' "$n" "$k" "$(mj_rule "$i" "$k")"
+        done
+        printf 'doctrines.%s.summary=%s\n' "$n" "$(mj_rule "$i" description)"
+        printf 'doctrines.%s.statement=%s\n' "$n" "$(mj_rule "$i" statement)"
+        sed -n "s/^rules\.$i\.enforced_by\./doctrines.$n.enforced_by./p; s/^rules\.$i\.claims\./doctrines.$n.claims./p; s/^rules\.$i\.tests\./doctrines.$n.tests./p; s/^rules\.$i\.depends_on\./doctrines.$n.depends_on./p" "$MJ_RULES_FLAT"
+        printf 'doctrines.%s.test=%s\n' "$n" "$(mj_rule_list "$i" tests | head -n 1)"
+      } >> "$MJ_DOC_FLAT"
+      n=$((n+1))
+    fi
+    i=$((i+1))
+  done
+  return 0
 }
 
 # mj_doc <index> <field>            -> value
@@ -89,7 +109,7 @@ mj_doctrine_dispatch() {
       id="$(mj_doc "$i" id)"; val="$(mj_doc "$i" validator)"; cls="$(mj_doc "$i" class)"
       case "$cls" in
         blocking|advisory) ;;
-        *) mj_fail doctrine "$id" "unknown class '$cls' (blocking | advisory)" "grep -n 'id: $id' share/doctrines.yaml"
+        *) mj_fail doctrine "$id" "unknown class '$cls' (blocking | advisory)" "grep -n '^class:' $(mj_doc "$i" file)"
            MJ_DOCTRINE_ERRORS=$((MJ_DOCTRINE_ERRORS+1)); i=$((i+1)); continue ;;
       esac
       fn="mj_validate_$val"
@@ -132,15 +152,17 @@ mj_cmd_doctrine() {
   case "$sub" in
     --help|-h|help) cat <<H
 usage: majordomus doctrine [status|list|show <id>] [--json]
+  a doctrine is a rule of the effective set (majordomus rules list) that names a validator
   status   declared, blocking, advisory, unwired and uncovered counts, all derived
   list     one line per doctrine: id, class, validator, the commands that enforce it
-  show     the full record for one doctrine, including its claims and test
+  show     the full record for one doctrine: claims, tests, dependencies, the rule file
 H
       return 0 ;;
     status|list) shift || true ;;
     show) shift; mj_doctrine_show "${1:-}"; return ;;
     *) mj_die "$MJ_EX_USAGE" "doctrine: unknown subcommand '$sub'" ;;
   esac
+  mj_require_installed
   mj_doctrine_load
   [ "$sub" = list ] && { mj_doctrine_list; return 0; }
   local n bl ad un uc i id
@@ -160,22 +182,23 @@ H
     printf 'advisory:             %s\n' "$ad"
     printf 'missing validators:   %s\n' "$un"
     printf 'without a test file:  %s\n' "$uc"
-    printf '\nwiring is verified by: majordomus doctor\n'
+    printf '\nthe registry is the effective rule set: majordomus rules list\nwiring is verified by: majordomus doctor\n'
   fi
   [ "$un" = 0 ] && [ "$uc" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
 }
 mj_doctrine_list() {
   local i=0
   while [ -n "$(mj_doc "$i" id)" ]; do
-    printf '%-26s %-9s %-20s %s\n' "$(mj_doc "$i" id)" "$(mj_doc "$i" class)" \
+    printf '%-38s %-9s %-24s %s\n' "$(mj_doc "$i" id)" "$(mj_doc "$i" class)" \
       "mj_validate_$(mj_doc "$i" validator)" "$(mj_doc_list "$i" enforced_by | paste -sd, -)"
     i=$((i+1))
   done
 }
 mj_doctrine_show() {
   local id="$1" i
-  mj_doctrine_load
+  mj_require_installed
   [ -n "$id" ] || mj_die "$MJ_EX_USAGE" "doctrine show needs an id (see: majordomus doctrine list)"
+  mj_doctrine_load
   i="$(mj_doc_index "$id")" || mj_die "$MJ_EX_MISSING" "no doctrine '$id' (see: majordomus doctrine list)"
   printf 'id          %s\n' "$id"
   printf 'title       %s\n' "$(mj_doc "$i" title)"
@@ -186,7 +209,9 @@ mj_doctrine_show() {
   printf 'enforced by %s\n' "$(mj_doc_list "$i" enforced_by | paste -sd, -)"
   printf 'exit code   %s\n' "$(mj_doc "$i" exit_code)"
   printf 'claims      %s\n' "$(mj_doc_list "$i" claims | paste -sd, -)"
-  printf 'test        %s\n' "$(mj_doc "$i" test)"
+  printf 'tests       %s\n' "$(mj_doc_list "$i" tests | paste -sd, -)"
+  printf 'depends on  %s\n' "$(mj_doc_list "$i" depends_on | paste -sd, -)"
+  printf 'rule        %s (%s)\n' "$(mj_doc "$i" file)" "$(mj_doc "$i" provenance)"
   mj_validator_defined "$(mj_doc "$i" validator)" \
     && printf 'wired       yes (%s defines it)\n' "$(grep -rlE "^mj_validate_$(mj_doc "$i" validator)\(\)" "$MJ_LIB_DIR" | sed "s#.*/lib/#lib/#" | head -1)" \
     || printf 'wired       NO — validator function does not exist\n'

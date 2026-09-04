@@ -3,7 +3,7 @@ id: majordomus.projection-integrity
 version: 1
 kind: rule
 title: Projection integrity
-description: Every generated instruction file exists, matches its fingerprint, and is never silently overwritten after a hand edit.
+description: Every generated instruction file exists, matches the stamp it carries, and is never silently overwritten after a hand edit.
 statement: Every generated instruction file exists, matches the content it declares, and is never silently overwritten after a hand edit.
 status: active
 class: blocking
@@ -21,7 +21,7 @@ x-majordomus:
 
 # Rationale
 
-Every generated instruction file exists, matches its fingerprint, and is never silently overwritten after a hand edit.
+Every generated instruction file exists, matches the stamp it carries, and is never silently overwritten after a hand edit.
 
 # Required behaviour
 

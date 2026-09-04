@@ -40,7 +40,7 @@ Y
 readme() { # write a README with the given version rows
   { printf '# Fixture\n\n## Roadmap\n\n| version | adds |\n|---|---|\n'
     for v in "$@"; do printf '| %s | something |\n' "$v"; done
-    printf '\n## Contributing\n\nRead it.\n'
+    printf '\n## Contributing\n\nRead it, and AGENTS.md.\n'
   } > README.md
 }
 
@@ -76,18 +76,18 @@ expect_grep 'omits milestone version\(s\) the model declares: 0.3'
 # --- a roadmap section that lists no versions is prose pointing at the projection, not a
 #     second authority. This is the intended end state once the table is replaced by a link.
 { printf '# Fixture\n\n## Roadmap\n\nThe roadmap is not written here; run `majordomus plan roadmap`.\n\n'
-  printf '## Contributing\n\nRead it.\n'; } > README.md
+  printf '## Contributing\n\nRead it, and AGENTS.md.\n'; } > README.md
 expect_exit 0 "$MJ" doctor
 expect_grep 'lists no versions'
 
 # --- with no roadmap section the check holds trivially: the doctrine refuses the
 #     regression, it does not require the table
-printf '# Fixture\n\nNo roadmap here.\n' > README.md
+printf '# Fixture\n\nNo roadmap here. See AGENTS.md.\n' > README.md
 expect_exit 0 "$MJ" doctor
 expect_grep 'no authored roadmap section'
 
 # --- the doctrine is declared, dispatched, and names a claim that exists
-"$MJ" doctrine list | grep -q '^roadmap_integrity ' || { echo "    roadmap_integrity is not in the registry"; exit 1; }
-"$MJ" doctrine list | grep -qE '^roadmap_integrity +blocking' || { echo "    roadmap_integrity is not blocking"; exit 1; }
+"$MJ" doctrine list | grep -q '^majordomus.roadmap-integrity ' || { echo "    majordomus.roadmap-integrity is not in the registry"; exit 1; }
+"$MJ" doctrine list | grep -qE '^majordomus.roadmap-integrity +blocking' || { echo "    majordomus.roadmap-integrity is not blocking"; exit 1; }
 grep -q '^  - id: roadmap-derived$' "$ROOT/docs/CLAIMS.yaml" || { echo "    the claim it names is not in CLAIMS.yaml"; exit 1; }
 [ -f "$ROOT/docs/claims/roadmap-derived.md" ] || { echo "    the claim has no detail page"; exit 1; }

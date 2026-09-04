@@ -139,19 +139,23 @@ same ten sentences.
 
 A principle is a sentence a worker reads. A **doctrine** is the part of a principle a
 machine can decide, and it names the code that decides it. Every rule Majordomus
-enforces is declared once in [`share/doctrines.yaml`](share/doctrines.yaml), and no
-command selects checks by hand — `check`, `finish`, `doctor` and `watch` each ask the
-registry what applies to them, so a rule added to the registry is enforced from that
-moment.
+enforces is a portable rule object — one Markdown file with YAML front matter — in the
+package the tool ships under [`share/standard/majordomus/`](share/standard/majordomus/)
+and vendors into every repository under `.ai/repo/rules/vendor/majordomus/`; the ten
+principles are rule objects too, and every enforced rule names the principle it rests on
+in `depends_on`. No command selects checks by hand: `check`, `finish`, `doctor` and
+`watch` each ask the resolved rule set what applies to them, so a rule added to the
+package is enforced from the moment it is vendored, and a repository's own rules under
+`.ai/repo/rules/project/` join the same set.
 
 A doctrine is either **blocking** (a violation stops the command with a non-zero exit)
 or **advisory** (reported, and the command still succeeds). There is no third class, no
 severity ladder, no baseline, and no override. The class is read at dispatch time and is
-what routes the finding, so changing one word in the registry changes whether
+what routes the finding, so changing one word in a rule file changes whether
 `majordomus check` exits 0 — and a test asserts exactly that.
 
 The point of declaring rules is being able to check the declaration. `majordomus doctor`
-walks the chain for each one, reading the source rather than the registry's description
+walks the chain for each one, reading the source rather than the rule's description
 of itself:
 
 ```
@@ -165,9 +169,10 @@ breaks each link in a throwaway copy and fails unless `doctor` goes red, because
 verifier that survives broken wiring proves nothing.
 
 ```bash
+majordomus rules list          # the effective set, resolved: vendored baseline plus project rules
 majordomus doctrine status     # declared, blocking, advisory, missing validators — all derived
 majordomus doctrine list       # id, class, validator, the commands that enforce it
-majordomus doctrine show <id>  # one rule, with its claims and its test
+majordomus doctrine show <id>  # one rule, with its claims, its tests and the file it lives in
 majordomus check --rule <id>   # run one rule
 ```
 

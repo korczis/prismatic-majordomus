@@ -43,13 +43,12 @@ MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
 PJ="$(mj_rel "$MJ_PROJECT_DIR")"; AI="$(mj_rel "$MJ_AI_DIR")"; LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 # common.sh installs its own EXIT trap, so the staging cleanup is chained after sourcing it
 # rather than before, or the later trap would silently replace this one and leak the directory.
-trap 'rm -rf "$STAGE"; mj_cleanup' EXIT
+trap 'rm -rf "$STAGE" "${RULES_TMP:-}"; mj_cleanup' EXIT
 command -v jq >/dev/null || { echo "generate-site-data: jq is required" >&2; exit 12; }
 GEN_VERSION=1
 
 # ---------------------------------------------------------------- inputs
 INPUTS="bin/majordomus
-share/doctrines.yaml
 share/use-cases.yaml
 share/applications.yaml
 share/skeleton/policy.yaml
@@ -354,11 +353,34 @@ jq --argjson resps "$RESPONSIBILITIES_JSON" --slurpfile caps "$OUT/capabilities.
              claim_ids: [ $caps[0].claims[] | select(.responsibility == $r.id) | .id ]})' "$OUT/readme.json" > "$OUT/readme.json.tmp" && mv "$OUT/readme.json.tmp" "$OUT/readme.json"
 
 # ---------------------------------------------------------------- doctrines.json
-# Every field the site shows about a doctrine is either in the registry or resolved from
+# Every field the site shows about a doctrine is either in the rule object or resolved from
 # the source here — which file defines the validator, which commands dispatch it, which
 # claims it backs. The site never states that something is enforced; it shows the chain.
-Df="$(flat "$ROOT/share/doctrines.yaml")"
-[ "$(yv "$Df" version)" = 1 ] || { echo "generate-site-data: share/doctrines.yaml must be version 1" >&2; exit 10; }
+# The registry is the standard rule package the distribution ships, loaded through the
+# tool's own loader as the one vendored package of an otherwise empty rules section, so
+# the site and `majordomus doctrine list` in a fresh repository describe the same set.
+# shellcheck source=../lib/doctrine.sh
+. "$ROOT/lib/doctrine.sh"
+RULES_TMP="$(mktemp -d "${TMPDIR:-/tmp}/mj.gr.XXXXXX")"
+mkdir -p "$RULES_TMP/vendor"; cp -R "$ROOT/share/standard/majordomus" "$RULES_TMP/vendor/majordomus"
+# the loader reads MJ_RULES_DIR; it is pointed at the temporary section for the load only
+# and restored afterwards, because the layout table the architecture scan takes must
+# describe the repository, not a temporary directory
+SAVED_RULES_DIR="$MJ_RULES_DIR"
+MJ_RULES_DIR="$RULES_TMP"; MJ_RULES_LOADED=0; MJ_DOC_FLAT=""; export MJ_RULES_DIR MJ_RULES_LOADED MJ_DOC_FLAT
+mj_rules_load || { echo "generate-site-data: the standard rule package does not resolve: $MJ_RULES_ERROR" >&2; exit 10; }
+mj_doctrine_load
+MJ_RULES_DIR="$SAVED_RULES_DIR"
+Df="$MJ_DOC_FLAT"
+# the principle a doctrine rests on: the rule tagged principle among its dependencies
+principle_of() { # doctrine index -> title of the principle rule it depends on
+  local d k
+  for d in $(mj_ylist "$Df" "doctrines.$1.depends_on"); do
+    k="$(mj_rule_index "${d%@*}")" || continue
+    if mj_rule_list "$k" tags | grep -qx principle; then mj_rule "$k" title; return 0; fi
+  done
+  return 0
+}
 # Validate the whole registry before emitting anything. A check inside the emitting
 # pipeline runs in a subshell and would leave a half-written file behind.
 # The three facts every doctrine is checked against are properties of the tree, not of the
@@ -372,10 +394,12 @@ has() { case "$2" in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 i=0
 while [ -n "$(yv "$Df" "doctrines.$i.id")" ]; do
   id="$(yv "$Df" "doctrines.$i.id")"; val="$(yv "$Df" "doctrines.$i.validator")"
-  cls="$(yv "$Df" "doctrines.$i.class")"; tst="$(yv "$Df" "doctrines.$i.test")"
+  cls="$(yv "$Df" "doctrines.$i.class")"
   has "$val" "$DEFINED_VALIDATORS" \
     || { echo "generate-site-data: doctrine $id names validator '$val' but no lib/ file defines mj_validate_$val" >&2; exit 10; }
-  [ -f "$ROOT/$tst" ] || { echo "generate-site-data: doctrine $id names test $tst, which does not exist" >&2; exit 10; }
+  for tst in $(mj_ylist "$Df" "doctrines.$i.tests"); do
+    [ -f "$ROOT/$tst" ] || { echo "generate-site-data: doctrine $id names test $tst, which does not exist" >&2; exit 10; }
+  done
   case "$cls" in blocking|advisory) ;; *) echo "generate-site-data: doctrine $id has class '$cls' (blocking | advisory)" >&2; exit 10 ;; esac
   j=0; while c="$(yv "$Df" "doctrines.$i.enforced_by.$j")"; [ -n "$c" ]; do
     has "$c" "$DISPATCHING" \
@@ -404,13 +428,16 @@ done
     cl=""; j=0
     while [ -n "$(yv "$Df" "doctrines.$i.claims.$j")" ]; do cl="$cl$(jstr "$(yv "$Df" "doctrines.$i.claims.$j")")," ; j=$((j+1)); done
     [ "$first" = 1 ] || printf ','; first=0
-    printf '{"id":%s,"slug":%s,"title":%s,"class":%s,"principle":%s,"summary":%s,"validator":%s,"validator_function":%s,"defined_in":%s,"category":%s,"enforced_by":[%s],"exit_code":%s,"policy_key":%s,"claims":[%s],"test":%s}' \
-      "$(jstr "$id")" "$(jstr "$(printf '%s' "$id" | tr '_' '-')")" "$(jstr "$(yv "$Df" "doctrines.$i.title")")" \
-      "$(jstr "$(yv "$Df" "doctrines.$i.class")")" "$(jnum_or_str "$(yv "$Df" "doctrines.$i.principle")")" \
+    dep=""; j=0
+    while [ -n "$(yv "$Df" "doctrines.$i.depends_on.$j")" ]; do dep="$dep$(jstr "$(yv "$Df" "doctrines.$i.depends_on.$j")")," ; j=$((j+1)); done
+    rulefile="share/standard/majordomus/$(printf '%s' "$(yv "$Df" "doctrines.$i.file")" | sed 's#^.*/vendor/majordomus/##')"
+    printf '{"id":%s,"slug":%s,"title":%s,"class":%s,"principle":%s,"statement":%s,"summary":%s,"validator":%s,"validator_function":%s,"defined_in":%s,"category":%s,"enforced_by":[%s],"exit_code":%s,"policy_key":%s,"claims":[%s],"test":%s,"depends_on":[%s],"source":%s}' \
+      "$(jstr "$id")" "$(jstr "${id#majordomus.}")" "$(jstr "$(yv "$Df" "doctrines.$i.title")")" \
+      "$(jstr "$(yv "$Df" "doctrines.$i.class")")" "$(jstr "$(principle_of "$i")")" "$(jstr "$(yv "$Df" "doctrines.$i.statement")")" \
       "$(jstr "$(yv "$Df" "doctrines.$i.summary")")" "$(jstr "$val")" "$(jstr "mj_validate_$val")" "$(jstr "$defined_in")" \
       "$(jstr "$(yv "$Df" "doctrines.$i.category")")" "${cmds%,}" \
       "$(jnum_or_str "$(yv "$Df" "doctrines.$i.exit_code")")" "$(jstr "$(yv "$Df" "doctrines.$i.policy_key")")" \
-      "${cl%,}" "$(jstr "$(yv "$Df" "doctrines.$i.test")")"
+      "${cl%,}" "$(jstr "$(yv "$Df" "doctrines.$i.test")")" "${dep%,}" "$(jstr "$rulefile")"
     i=$((i+1))
   done
   printf ']}'
@@ -934,7 +961,7 @@ i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while 
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$text" | sed -E 's/`([^`]*)`/\1/g' | jq -Rn 'input')" "$i" "$(jstr "$slug")" > "$CONTENT_ROOT/supervises/$slug.md"; done
 mk_section doctrines "Doctrine" "A rule is enforced when it is declared, implemented, wired, executed, failure-propagating, tested and CI-blocking. Each one below shows its whole chain." doctrines-section.html doctrine.html 22
 i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrines.json" | while IFS="$(printf '\t')" read -r id slug title summary; do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/doctrines.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/doctrines/$slug.md"; done
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" "$(jq -r --arg id "$id" '.doctrines[] | select(.id==$id) | .source' "$OUT/doctrines.json" | jq -Rn 'input')" > "$CONTENT_ROOT/doctrines/$slug.md"; done
 mk_section plan "The plan" "Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .majordomus/project." plan-section.html issue.html 21
 printf -- '+++\ntitle = "Dependency graph"\ndescription = "Every issue, every dependency, and the execution waves the graph implies — drawn from the canonical edges, never by hand."\nweight = 1\ntemplate = "dag.html"\n+++\n' > "$CONTENT_ROOT/plan/dag.md"
 i=1; for mid in $(jq -r '.milestones | sort_by(.order) | .[].id' "$OUT/plan.json"); do i=$((i+1))
