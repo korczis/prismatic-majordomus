@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # MJ_DOCTRINE_SKIPPED is read by the dispatcher in doctrine.sh
 # sourced by watch as well as run directly; guard against re-sourcing
 [ -n "${MJ_LIB_doctor:-}" ] && return 0 || MJ_LIB_doctor=1
 # doctor — is Majordomus itself healthy and actually wired here? Read-only.
@@ -21,6 +22,9 @@
 . "$MJ_LIB_DIR/prompt.sh"
 # shellcheck source=context.sh
 . "$MJ_LIB_DIR/context.sh"
+# the project-model validators read the one engine, not a copy of its rules
+# shellcheck source=project.sh
+. "$MJ_LIB_DIR/project.sh"
 
 MJ_DOCTOR_MISSING=0
 mj_cmd_doctor() {
@@ -435,5 +439,52 @@ mj_watch_policy() {
   elif [ "$(mj_yget "$fpflat" policy_sha256)" = "$psha" ]; then mj_doctrine_ok policy "policy+profiles" "match last update (${psha:0:12})"
   else mj_doctrine_fail policy ".majordomus/policy.yaml" "policy or profiles changed after the last update" "majordomus update --dry-run"; fi
   [ -n "$fpflat" ] && rm -f "$fpflat"
+  return 0
+}
+
+# ---------------------------------------------------------------- project model validators
+# A repository is not obliged to have a canonical project model; most installations will
+# not. Both validators therefore skip cleanly when .majordomus/project/ is absent, so
+# adopting Majordomus does not turn an installation red for a feature nobody opted into.
+mj_project_doctrine_load() {
+  mj_project_present || { MJ_DOCTRINE_SKIPPED=1; mj_doctrine_skip project ".majordomus/project" "no canonical project model here; nothing to validate"; return 1; }
+  local rc=0; mj_project_load || rc=$?
+  [ "$rc" = 0 ] && return 0
+  mj_doctrine_fail project ".majordomus/project" "the canonical model does not load; a file does not parse or two records claim one id" "majordomus plan validate"
+  return 1
+}
+
+mj_validate_project() {
+  local unk rec keys
+  mj_project_doctrine_load || return 0
+  unk="$(mj_project_unknown_keys || true)"
+  if [ -n "$unk" ]; then
+    # read from a redirect rather than a pipe: a validator that reports its violations
+    # inside a subshell raises nothing, and the command it runs in would exit 0
+    while read -r rec keys; do
+      mj_doctrine_fail project "$rec" "unknown keys: $keys" "majordomus plan validate"
+    done < <(printf '%s\n' "$unk")
+    return 0
+  fi
+  mj_doctrine_ok project ".majordomus/project" "$(mj_pj_milestone_ids | wc -l | tr -d ' ') milestone(s), $(mj_pj_issue_ids | wc -l | tr -d ' ') issue(s), every key read by something"
+  return 0
+}
+
+# The graph rules, reported through the dispatcher so that watch sees the same violations
+# as drift. A warning from the model is a warning here: work in progress is reported, not
+# blocked, and only a graph that cannot be executed is a failure.
+mj_validate_dag() {
+  local lvl subj msg n
+  mj_project_doctrine_load || return 0
+  mj_pj_findings | while IFS="$(printf '\t')" read -r _ lvl _ subj msg; do
+    case "$lvl" in
+      FAIL) mj_doctrine_fail dag "$subj" "$msg" "majordomus plan validate" ;;
+      *)    mj_warn dag "$subj" "$msg" "majordomus plan show $subj" ;;
+    esac
+  done
+  n="$(mj_pj_fail_count)"
+  [ "$n" = 0 ] && mj_doctrine_ok dag "$(mj_pj_rows W | wc -l | tr -d ' ') wave(s)" "acyclic, every edge resolves, nothing running ahead of a dependency"
+  # The findings above were printed in a subshell, so the failure has to be raised here.
+  [ "$n" = 0 ] || mj_doctrine_fail dag "graph" "$n dependency-graph failure(s)" "majordomus plan validate"
   return 0
 }

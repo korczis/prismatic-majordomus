@@ -1,0 +1,14 @@
+# The canonical project model. Milestones are outcomes, issues are execution contracts,
+# and the dependency graph between the issues decides what may be executed next.
+#
+# Nothing in this directory is generated. Everything downstream of it is: the CLI's ready
+# set, the Mermaid diagrams, the GitHub issues and milestones, and the website's roadmap
+# all come from `majordomus plan`, which reads these files and nothing else.
+#
+# No status is stored anywhere here. An issue records what happened to it — started_at,
+# verified_at, completed_at, evidence — and lib/project.awk derives BLOCKED, READY,
+# ACTIVE, VERIFY, DONE or CANCELLED from those facts and from its dependencies.
+schema_version: 1
+name: Prismatic Majordomus
+repository: korczis/prismatic-majordomus
+default_branch: master

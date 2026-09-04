@@ -1,0 +1,51 @@
+id: M000
+title: Milestone and DAG driven development
+slug: milestone-dag-driven-development
+order: 0
+priority: p0
+problem: "Work in this repository was planned in conversation and in task records that describe one session at a time. There was no executable specification of an outcome, no dependency graph between pieces of work, and no way for a fresh worker to ask the repository what to do next. The tool supervises a task; nothing supervised the plan the task belonged to."
+outcome: "Every non-trivial change in this repository belongs to a milestone specification and to one dependency-linked issue execution contract, validated as a DAG, with status derived rather than asserted, and projected to GitHub and to the website from that one canonical model."
+current_state: "The canonical model, its engine, its CLI, its projections, its doctrines and its tests exist and are exercised by this milestone's own issues. GitHub carried no issues and no milestones before this work."
+desired_state: "A fresh worker with no conversation history runs `majordomus plan next`, receives one issue, executes it inside its declared scope, attaches evidence, and the graph recomputes what is ready without anybody editing a status field."
+scope:
+  - .majordomus/project
+  - lib/project.sh
+  - lib/project.awk
+  - lib/plan.sh
+  - share/allow
+  - share/doctrines.yaml
+  - scripts/github-sync
+  - scripts/generate-site-data
+  - site
+  - test/cases
+  - docs
+non_scope:
+  - A hosted planning backend or database
+  - A second project-management vocabulary; milestones and issues are the only new nouns
+  - Bidirectional GitHub write-back into the canonical files
+  - Estimation, burndown, velocity or any scheduling model
+acceptance_criteria:
+  - The canonical model parses, rejects unknown keys, and refuses a duplicate id
+  - A dependency cycle, a self-dependency and an unknown dependency are each rejected with a named finding
+  - READY, BLOCKED, ACTIVE, VERIFY, DONE and CANCELLED are derived from recorded facts and stored nowhere
+  - Execution waves are computed from the graph, and overlapping scope inside one wave is reported
+  - The Mermaid DAG is generated from the same graph the CLI reads
+  - GitHub milestones and issues are created and updated from the canonical model, and drift between them is reported
+  - The website renders the roadmap, every milestone, every issue and the DAG from generated data
+  - Every surface agrees: the CLI, the site data and the GitHub projection report the same issue set and the same READY set
+  - Changing one dependency changes every surface
+  - CI refuses a push whose canonical model is invalid or whose generated artifacts are stale
+validation:
+  - bash test/run.sh
+  - bin/majordomus plan validate
+  - scripts/generate-site-data --check
+evidence_required:
+  - suite
+  - cross_surface
+  - mutation
+  - github
+risks:
+  - "The engine is shell and awk; a graph large enough to make that slow would need a different implementation. Measured, not assumed."
+  - "GitHub is a projection. If a human edits a generated issue body, the next sync reports drift rather than silently overwriting it, which means drift can accumulate unattended."
+created_at: 2026-09-04
+updated_at: 2026-09-04
