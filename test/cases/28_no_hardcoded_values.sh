@@ -177,3 +177,14 @@ done
 if [ -f "$ROOT/share/doctrines.yaml" ]; then
   [ -n "$(grep -E '^  - id:' "$ROOT/share/doctrines.yaml")" ] || { echo "    the doctrine registry derived no ids"; exit 1; }
 fi
+
+# ---------------------------------------------------------------- locale independence
+# The generator hashes its input list, so the order of that list is part of the output. A
+# glob expands in the collation order of whoever runs it: a locale that ignores punctuation
+# when sorting puts docs/claims/blocker-store.md and blocker-survives-handover.md in a
+# different order than a byte-sorting one. That made the committed hash differ between a
+# developer's machine and CI, and CI was right — the tool declares byte-identical output
+# for identical input, and "identical input" cannot mean "on the same machine".
+a="$(LC_ALL=C "$ROOT/scripts/generate-site-data" --inputs)"
+b="$(LC_ALL=en_US.UTF-8 "$ROOT/scripts/generate-site-data" --inputs 2>/dev/null || printf '%s' "$a")"
+[ "$a" = "$b" ] || { echo "    the generator's input order depends on the locale; it must expand its globs in byte order"; exit 1; }
