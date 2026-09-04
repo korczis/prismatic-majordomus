@@ -5,7 +5,7 @@ template = "evidence.html"
 [extra]
 graph = "claims-graph"
 +++
-Each claim is one node. Around it sit the three kinds of evidence that can back it: the
+Each claim is one node. Around it sit the kinds of evidence that can back it: the
 document that specifies it, the file that implements it, and the behavioural test that
 proves it. Evidence nodes are shared, so a file that carries several claims is one node with
 several edges, and a claim standing on nothing is visible as a dot with nothing attached.

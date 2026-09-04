@@ -6,6 +6,7 @@
 {% block content %}
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
 {%- set doc = load_data(path="data/generated/doctrines.json") -%}
+{%- set lifecycle = load_data(path="data/generated/lifecycle.json") -%}
 <div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
@@ -45,7 +46,7 @@
 
   <div class="mt-12 max-w-3xl">
     <h2 class="text-xl font-semibold tracking-tight text-heading">Principle, doctrine, guarantee</h2>
-    <p class="mt-3 text-body">A <strong class="text-heading">principle</strong> says why work is organised this way — the ten rules a worker reads. A <strong class="text-heading">doctrine</strong> is the part of a principle a machine can decide, and it names the validator that decides it. A <strong class="text-heading">guarantee</strong> is what may then be promised in public, and it is only listed as guaranteed once a test proves it and CI runs that test.</p>
+    <p class="mt-3 text-body">A <strong class="text-heading">principle</strong> says why work is organised this way — the {{ lifecycle.principles | length }} rules a worker reads. A <strong class="text-heading">doctrine</strong> is the part of a principle a machine can decide, and it names the validator that decides it. A <strong class="text-heading">guarantee</strong> is what may then be promised in public, and it is only listed as guaranteed once a test proves it and CI runs that test.</p>
     <p class="mt-3 text-body">The distinction matters because the failure it prevents is invisible: a rule that is written down, has a script, has a test, and is invoked by nothing at all. <a href="{{ get_url(path="/docs/doctrine/", trailing_slash=true) }}" class="text-fg-brand hover:underline">How the wiring is verified</a> · <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">What is guaranteed</a></p>
   </div>
 </div>
