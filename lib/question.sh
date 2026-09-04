@@ -29,7 +29,7 @@ H
   esac
 }
 
-mj_question_file() { printf '%s' "$MJ_DIR/state/open-questions.md"; }
+mj_question_file() { printf '%s' "$MJ_STATE_DIR/open-questions.md"; }
 mj_question_require() {
   mj_require_installed
   MJ_Q="$(mj_question_file)"

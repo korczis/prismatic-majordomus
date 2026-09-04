@@ -30,7 +30,7 @@ H
   esac; done
   mj_require_installed
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
-  mj_load_current || mj_die "$MJ_EX_MISSING" "no active task (.majordomus/state/current.yaml); run: majordomus start"
+  mj_load_current || mj_die "$MJ_EX_MISSING" "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
   local id profile; id="$(mj_cur id)"; profile="$(mj_cur profile)"
   mj_load_profile "$profile" || mj_die "$MJ_EX_MISSING" "task references profile '$profile' which has no file"
 
@@ -89,7 +89,7 @@ mj_task_is_foreign() {
 mj_run_task_checks() {
   if mj_task_is_foreign; then
     MJ_FOREIGN=1; MJ_LABEL=exact; MJ_TOUCHED_IN=0; MJ_BLOCKED=0
-    mj_info task "$(mj_cur id)" "belongs to $(mj_cur worktree), not this checkout; nothing enforced here" "cat .majordomus/state/current.yaml"
+    mj_info task "$(mj_cur id)" "belongs to $(mj_cur worktree), not this checkout; nothing enforced here" "cat $(mj_rel "$MJ_STATE_DIR")/current.yaml"
     return 0
   fi
   MJ_FOREIGN=0
@@ -145,7 +145,7 @@ mj_validate_scope() {
   local id f inside n_out=0 n_in=0 s allow_gen
   id="$(mj_cur id)"; allow_gen="$(mj_projection_targets | tr '\n' ' ')"
   for f in $(mj_git_touched "$(mj_cur head)"); do
-    case "$f" in .majordomus/*) continue ;; esac
+    mj_is_ai_path "$f" && continue
     case " $allow_gen " in *" $f "*) continue ;; esac
     inside=0
     for s in $(mj_ylist "$MJ_CUR_FLAT" scope); do mj_path_contains "$s" "$f" && { inside=1; break; }; done
@@ -171,14 +171,14 @@ mj_validate_checkpoint() {
   cp="$(mj_cur checkpoint_at)"; interval="$(mj_duration_secs "$(mj_pro checkpoint_interval)")" || interval=900
   now_e="$(mj_epoch "$(mj_now)")"; cp_e="$(mj_epoch "$cp")"
   if [ -z "$cp_e" ]; then
-    mj_doctrine_fail checkpoint "$id" "checkpoint_at '$cp' is missing or is not a timestamp this platform can read" "grep -n checkpoint_at .majordomus/state/current.yaml"
+    mj_doctrine_fail checkpoint "$id" "checkpoint_at '$cp' is missing or is not a timestamp this platform can read" "grep -n checkpoint_at $(mj_rel "$MJ_STATE_DIR")/current.yaml"
   else
     age=$((now_e - cp_e))
     if [ "$age" -le "$interval" ]; then mj_doctrine_ok checkpoint "$id" "$((age/60))m ago, interval $(mj_pro checkpoint_interval)"
     else mj_doctrine_fail checkpoint "$id" "$((age/60))m ago, interval $(mj_pro checkpoint_interval) — run: majordomus check --checkpoint" "majordomus check --checkpoint"; fi
   fi
   # where the next worker would resume from; informational, never a finding
-  if mj_resolve_latest "$MJ_DIR/state/checkpoints" "$id"; then
+  if mj_resolve_latest "$MJ_STATE_DIR/checkpoints" "$id"; then
     mj_info checkpoint "${MJ_RES_PATH#"$MJ_ROOT/"}" "newest record, $(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")" "majordomus checkpoint --show"
   fi
   return 0
@@ -190,7 +190,7 @@ mj_validate_checkpoint() {
 mj_validate_blockers() {
   mj_task_gate blockers || return 0
   mj_finish_gate blockers || return 0
-  local id q bad; id="$(mj_cur id)"; q="$MJ_DIR/state/open-questions.md"
+  local id q bad; id="$(mj_cur id)"; q="$MJ_STATE_DIR/open-questions.md"
   MJ_BLOCKED=0
   bad="$(mj_question_malformed "$q")"
   if [ -n "$bad" ]; then
@@ -225,14 +225,14 @@ mj_validate_blockers() {
 # blocks. decisions.md is hand-editable by design, so an unattributable entry is reported
 # and does not block — that difference is the two classes, declared in the registry.
 mj_validate_ledger() {
-  local bad; bad="$(mj_ledger_bad_lines "$MJ_DIR/state/ledger.jsonl")"
+  local bad; bad="$(mj_ledger_bad_lines "$MJ_STATE_DIR/ledger.jsonl")"
   if [ -n "$bad" ]; then mj_doctrine_fail records "ledger.jsonl" "line(s) $(printf '%s' "$bad" | sed 's/ $//') are not well-formed events" "majordomus history --validate"
   else mj_doctrine_ok records "ledger.jsonl" "every line is a well-formed event"; fi
   return 0
 }
 
 mj_validate_decisions() {
-  local bad; bad="$(mj_decision_malformed "$MJ_DIR/state/decisions.md")"
+  local bad; bad="$(mj_decision_malformed "$MJ_STATE_DIR/decisions.md")"
   if [ -n "$bad" ]; then mj_doctrine_fail records "decisions.md" "entry at line(s) $(printf '%s' "$bad" | sed 's/ $//') lacks Task, Head or Why; nothing will find it" "majordomus decision list"
   else mj_doctrine_ok records "decisions.md" "every entry is attributable"; fi
   return 0

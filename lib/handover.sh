@@ -28,7 +28,7 @@ H
   esac; done
   mj_require_installed
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
-  if [ "$list" = 1 ]; then mj_record_list "$MJ_DIR/state/handovers" handover; return; fi
+  if [ "$list" = 1 ]; then mj_record_list "$MJ_STATE_DIR/handovers" handover; return; fi
   if [ "$resolve" = 1 ]; then mj_handover_resolve "$path_only" "$want_task"; return; fi
 
   local task_id="" profile="" owner=""
@@ -45,7 +45,7 @@ H
 
   local rec; rec="$(mktemp "${TMPDIR:-/tmp}/mj.hr.XXXXXX")"
   { mj_record_front_matter "${task_id:-none}" "${profile:-none}" "$owner"; cat "$body"; } > "$rec"
-  local final; final="$(mj_publish_record "$MJ_DIR/state/handovers" "" "$rec")" \
+  local final; final="$(mj_publish_record "$MJ_STATE_DIR/handovers" "" "$rec")" \
     || { rm -f "$rec" "$body"; mj_die "$MJ_EX_INTERNAL" "could not create a unique handover file"; }
   rm -f "$rec" "$body"
 
@@ -71,7 +71,7 @@ mj_check_sections() {
 
 mj_handover_resolve() {
   local path_only="$1" want_task="${2:-}"
-  if ! mj_resolve_latest "$MJ_DIR/state/handovers" "$want_task"; then echo "No relevant handover."; return 0; fi
+  if ! mj_resolve_latest "$MJ_STATE_DIR/handovers" "$want_task"; then echo "No relevant handover."; return 0; fi
   if [ "$path_only" = 1 ]; then printf '%s\n' "${MJ_RES_PATH#"$MJ_ROOT/"}"; return 0; fi
   printf 'Handover: %s\nMatch: %s\nGit state: %s\nCreated: %s (%s)\nTask: %s\n' \
     "${MJ_RES_PATH#"$MJ_ROOT/"}" "$MJ_RES_MATCH" "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" \

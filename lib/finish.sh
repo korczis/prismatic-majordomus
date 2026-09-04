@@ -38,12 +38,12 @@ H
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
   if ! mj_load_current; then
     [ "$check" = 1 ] && { mj_info finish "-" "no active task; nothing to enforce"; return 0; }
-    mj_die "$MJ_EX_MISSING" "no active task (.majordomus/state/current.yaml); run: majordomus start"
+    mj_die "$MJ_EX_MISSING" "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
   fi
   local id profile; id="$(mj_cur id)"; profile="$(mj_cur profile)"
   # another checkout's record: report it, enforce nothing, and never write to it
   if mj_task_is_foreign; then
-    mj_info finish "$id" "belongs to $(mj_cur worktree), not this checkout; nothing enforced here" "cat .majordomus/state/current.yaml"
+    mj_info finish "$id" "belongs to $(mj_cur worktree), not this checkout; nothing enforced here" "cat $(mj_rel "$MJ_STATE_DIR")/current.yaml"
     [ "$check" = 1 ] && return 0
     mj_die "$MJ_EX_REFUSED" "task $id belongs to $(mj_cur worktree); finish it there"
   fi
@@ -90,9 +90,9 @@ H
 
   local now; now="$(mj_now)"
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
-  [ -n "$note" ] && { mkdir -p "$MJ_DIR/state/completed"; cp "$note" "$MJ_DIR/state/completed/$id.md"; }
+  [ -n "$note" ] && { mkdir -p "$MJ_STATE_DIR/completed"; cp "$note" "$MJ_STATE_DIR/completed/$id.md"; }
   local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS}"
-  local cps=0; cps="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  local cps=0; cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
 }
@@ -143,7 +143,7 @@ mj_validate_note() {
     *) need_sec="Reason|" ;;
   esac
   if [ -n "$MJ_FINISH_NOTE" ]; then nf="$MJ_FINISH_NOTE"
-  else nf="$(grep -l "^task_id: $id$" "$MJ_DIR"/state/handovers/*.md 2>/dev/null | sort | tail -n1)"; fi
+  else nf="$(grep -l "^task_id: $id$" "$MJ_STATE_DIR"/handovers/*.md 2>/dev/null | sort | tail -n1)"; fi
   if [ -z "$nf" ] || [ ! -f "$nf" ]; then
     mj_doctrine_fail note "$id" "no --note file and no handover for this task" "majordomus handover < note.md"; return 0; fi
   miss="$(mj_check_sections "$nf" "$need_sec")"
@@ -164,8 +164,8 @@ mj_validate_profile_requirements() {
   fi
   if [ "$(mj_pro verification.decision_record_required)" = true ]; then
     any=1
-    if grep -q "^Task: $id" "$MJ_DIR/state/decisions.md" 2>/dev/null; then mj_doctrine_ok decisions "$id" "decision record present"
-    else mj_doctrine_fail decisions "$id" "profile $profile requires an entry 'Task: $id' in decisions.md" "grep -n 'Task:' .majordomus/state/decisions.md"; fi
+    if grep -q "^Task: $id" "$MJ_STATE_DIR/decisions.md" 2>/dev/null; then mj_doctrine_ok decisions "$id" "decision record present"
+    else mj_doctrine_fail decisions "$id" "profile $profile requires an entry 'Task: $id' in decisions.md" "grep -n 'Task:' $(mj_rel "$MJ_STATE_DIR")/decisions.md"; fi
   fi
   [ "$any" = 0 ] && { mj_doctrine_skip regression "$id" "profile $profile adds no requirement beyond the shared contract"; MJ_DOCTRINE_SKIPPED=1; }
   return 0
@@ -181,7 +181,7 @@ mj_validate_continuity() {
     partial|blocked) ;;
     *) mj_doctrine_skip continuity "$id" "applies to partial and blocked"; MJ_DOCTRINE_SKIPPED=1; return 0 ;;
   esac
-  if mj_resolve_latest "$MJ_DIR/state/handovers" "$id"; then
+  if mj_resolve_latest "$MJ_STATE_DIR/handovers" "$id"; then
     mj_doctrine_ok continuity "$id" "handover $(basename "$MJ_RES_PATH") carries the next action"
   else
     mj_doctrine_fail continuity "$id" "no handover for this task; the note's Next Action is the only continuation record" "majordomus handover < note.md"

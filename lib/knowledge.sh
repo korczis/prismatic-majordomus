@@ -18,7 +18,7 @@
 
 MJ_KSRC_FLAT=""
 
-mj_knowledge_sources_file() { printf '%s' "$MJ_BIN_DIR/../share/knowledge-sources.yaml"; }
+mj_knowledge_sources_file() { printf '%s' "$MJ_SHARE_DIR/knowledge-sources.yaml"; }
 
 mj_ksrc_load() {
   [ -n "$MJ_KSRC_FLAT" ] && [ -f "$MJ_KSRC_FLAT" ] && return 0

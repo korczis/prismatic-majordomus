@@ -11,7 +11,7 @@ chk '(^|[^a-zA-Z_])eval[[:space:]]'                       'eval'
 chk '(^|[^a-zA-Z_./-])(curl|wget|nc|ssh|scp)[[:space:]]'  'network client'
 chk '/dev/(tcp|udp)/'                                       'bash network redirection'
 chk 'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f?[[:space:]]+"?\$MJ_ROOT'  'recursive delete of the repository'
-chk 'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f?[[:space:]]+"?\$MJ_DIR'   'recursive delete of .majordomus'
+chk 'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f?[[:space:]]+"?\$MJ_(AI_DIR|AI_REPO_DIR|AI_LOCAL_DIR|STATE_DIR|HOME|SHARE_DIR)'   'recursive delete of the AI layer or the distribution'
 chk 'rm[[:space:]]+-rf[[:space:]]+/[^t]'                    'recursive delete of an absolute path outside tmp'
 [ "$bad" = 0 ]
 # every rm -rf that does exist targets a mktemp path
@@ -22,7 +22,8 @@ for v in MJ_CTX_TMP MJ_PJ; do
     printf '    %s is assigned from something other than mktemp\n' "$v"; exit 1
   fi
 done
-# the tool writes only under .majordomus/ or to projection targets: every redirect into a
-# path variable names MJ_DIR, MJ_ROOT/<projection>, or a temp file
-grep -nE '> *"?\$[A-Z_]+' $files | grep -vE 'MJ_DIR|MJ_CUR|MJ_ROOT/\$tgt|MJ_ROOT/\$always|\$tmp|\$body|\$fm|\$flat|\$oflat|\$out|\$fp|\$fpflat|\$COPY|/dev/null|\$d/|\$MJ_POL_FLAT|\$MJ_PRO_FLAT|\$MJ_CUR_FLAT|\$final|\$MJ_CTX_TMP|\$MJ_Q|\$rec|\$archive|\$led|\$tmpf|\$MJ_PJ/' | grep -vE '^[^:]+:[0-9]+:\s*#' && { echo "    write outside allowed paths"; exit 1; }
+# the tool writes only under the AI layer or to projection targets: every redirect into a
+# path variable names a layout path (MJ_STATE_DIR and the other MJ_*_DIR/FILE variables),
+# MJ_ROOT/<projection>, or a temp file
+grep -nE '> *"?\$[A-Z_]+' $files | grep -vE 'MJ_STATE_DIR|MJ_POLICY_FILE|MJ_PROFILES_DIR|MJ_PROMPTS_DIR|MJ_PROJECT_DIR|MJ_GENERATED_DIR|MJ_RULES_DIR|MJ_KNOWLEDGE_DIR|MJ_AI_DIR|MJ_AI_REPO_DIR|MJ_AI_LOCAL_DIR|MJ_CUR|MJ_ROOT/\$tgt|MJ_ROOT/\$always|\$tmp|\$body|\$fm|\$flat|\$oflat|\$out|\$fp|\$fpflat|\$COPY|/dev/null|\$d/|\$MJ_POL_FLAT|\$MJ_PRO_FLAT|\$MJ_CUR_FLAT|\$final|\$MJ_CTX_TMP|\$MJ_Q|\$rec|\$archive|\$led|\$tmpf|\$MJ_PJ/' | grep -vE '^[^:]+:[0-9]+:\s*#' && { echo "    write outside allowed paths"; exit 1; }
 exit 0

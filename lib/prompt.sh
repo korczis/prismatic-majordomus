@@ -42,7 +42,7 @@ H
   esac
 }
 
-mj_prompt_dir() { printf '%s' "$MJ_DIR/prompts"; }
+mj_prompt_dir() { printf '%s' "$MJ_PROMPTS_DIR"; }
 mj_prompt_path() {
   case "$1" in *[!A-Za-z0-9._-]*|""|.*) mj_die "$MJ_EX_USAGE" "prompt: '$1' is not a valid asset name" ;; esac
   printf '%s/%s.md' "$(mj_prompt_dir)" "$1"
@@ -56,7 +56,7 @@ mj_prompt_validate() {
   if ! mj_record_front "$f" > "$fm" 2>/dev/null; then rm -f "$fm"; printf 'no front matter\n'; return 1; fi
   flat="$(mktemp "${TMPDIR:-/tmp}/mj.pg.XXXXXX")"
   if ! mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then rm -f "$fm" "$flat"; printf 'malformed front matter\n'; return 1; fi
-  local unk; unk="$(mj_yaml_unknown_keys "$flat" "$MJ_BIN_DIR/../share/allow/prompt.txt" || true)"
+  local unk; unk="$(mj_yaml_unknown_keys "$flat" "$MJ_ALLOW_DIR/prompt.txt" || true)"
   [ -n "$unk" ] && { printf 'unknown front-matter key(s): %s\n' "$(printf '%s' "$unk" | tr '\n' ' ')"; rc=1; }
   [ "$(mj_yget "$flat" name)" = "$name" ] || { printf 'name field "%s" does not match filename %s.md\n' "$(mj_yget "$flat" name)" "$name"; rc=1; }
   [ -n "$(mj_yget "$flat" description)" ] || { printf 'description is empty\n'; rc=1; }
@@ -79,7 +79,7 @@ mj_prompt_list() {
   mj_require_installed
   local dir f n=0 desc fm flat
   dir="$(mj_prompt_dir)"
-  [ -d "$dir" ] || { printf 'no prompt assets (.majordomus/prompts/ does not exist; run: majordomus update)\n'; return 0; }
+  [ -d "$dir" ] || { printf 'no prompt assets ($(mj_rel "$MJ_PROMPTS_DIR")/ does not exist; run: majordomus update)\n'; return 0; }
   for f in "$dir"/*.md; do
     [ -f "$f" ] || continue
     n=$((n + 1))
@@ -88,21 +88,21 @@ mj_prompt_list() {
     rm -f "$fm" "$flat"
     printf '%-22s %s\n' "$(basename "$f" .md)" "$desc"
   done
-  [ "$n" = 0 ] && printf 'no prompt assets in .majordomus/prompts/\n'
+  [ "$n" = 0 ] && printf 'no prompt assets in $(mj_rel "$MJ_PROMPTS_DIR")/\n'
   return 0
 }
 
 mj_prompt_show() {
   mj_require_installed
   local f; f="$(mj_prompt_path "$1")"
-  [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no prompt asset '$1' (.majordomus/prompts/$1.md); try: majordomus prompt list"
+  [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no prompt asset '$1' ($(mj_rel "$MJ_PROMPTS_DIR")/$1.md); try: majordomus prompt list"
   cat "$f"
 }
 
 mj_prompt_render() {
   local name="$1" f reason
   f="$(mj_prompt_path "$name")"
-  [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no prompt asset '$name' (.majordomus/prompts/$name.md); try: majordomus prompt list"
+  [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no prompt asset '$name' ($(mj_rel "$MJ_PROMPTS_DIR")/$name.md); try: majordomus prompt list"
   reason="$(mj_prompt_validate "$f")" || mj_die "$MJ_EX_CONTRACT" "prompt $name: $(printf '%s' "$reason" | tr '\n' ';')"
 
   local have_task=0 id="(no active task)" task="(no active task)" profile="(none)" scope="(none)" owner="(none)"
@@ -116,23 +116,23 @@ mj_prompt_render() {
   # block fragments, built only when the body asks for them
   local body; body="$(mktemp "$tmp/body.XXXXXX")"; mj_record_body "$f" > "$body"
   if grep -q '{{OPEN_QUESTIONS}}' "$body"; then
-    if [ "$have_task" = 1 ] && [ -f "$MJ_DIR/state/open-questions.md" ]; then
-      grep -E "^- \[unresolved\] $id " "$MJ_DIR/state/open-questions.md" | sed -e "s/^- \[unresolved\] $id — /- /" > "$tmp/OPEN_QUESTIONS" || true
+    if [ "$have_task" = 1 ] && [ -f "$MJ_STATE_DIR/open-questions.md" ]; then
+      grep -E "^- \[unresolved\] $id " "$MJ_STATE_DIR/open-questions.md" | sed -e "s/^- \[unresolved\] $id — /- /" > "$tmp/OPEN_QUESTIONS" || true
     fi
     [ -s "$tmp/OPEN_QUESTIONS" ] || printf -- '- none\n' > "$tmp/OPEN_QUESTIONS"
   fi
   if grep -q '{{DECISIONS}}' "$body"; then
     local dmax; dmax="$(mj_pol_req context.recent_decisions)"
-    if [ -f "$MJ_DIR/state/decisions.md" ]; then mj_decision_entries "$MJ_DIR/state/decisions.md" "$([ "$have_task" = 1 ] && printf '%s' "$id")" "$dmax" > "$tmp/DECISIONS"
+    if [ -f "$MJ_STATE_DIR/decisions.md" ]; then mj_decision_entries "$MJ_STATE_DIR/decisions.md" "$([ "$have_task" = 1 ] && printf '%s' "$id")" "$dmax" > "$tmp/DECISIONS"
     else printf '(none)\n' > "$tmp/DECISIONS"; fi
   fi
   if grep -q '{{CHECKPOINT}}' "$body"; then
-    if [ "$have_task" = 1 ] && mj_resolve_latest "$MJ_DIR/state/checkpoints" "$id"; then mj_record_body "$MJ_RES_PATH" | sed '/^$/d' > "$tmp/CHECKPOINT"
+    if [ "$have_task" = 1 ] && mj_resolve_latest "$MJ_STATE_DIR/checkpoints" "$id"; then mj_record_body "$MJ_RES_PATH" | sed '/^$/d' > "$tmp/CHECKPOINT"
     else printf '(none)\n' > "$tmp/CHECKPOINT"; fi
   fi
   if grep -q '{{HANDOVER}}' "$body"; then
-    if mj_resolve_latest "$MJ_DIR/state/handovers" "$([ "$have_task" = 1 ] && printf '%s' "$id")" ||
-       mj_resolve_latest "$MJ_DIR/state/handovers" ""; then mj_record_body "$MJ_RES_PATH" | sed '/^$/d' > "$tmp/HANDOVER"
+    if mj_resolve_latest "$MJ_STATE_DIR/handovers" "$([ "$have_task" = 1 ] && printf '%s' "$id")" ||
+       mj_resolve_latest "$MJ_STATE_DIR/handovers" ""; then mj_record_body "$MJ_RES_PATH" | sed '/^$/d' > "$tmp/HANDOVER"
     else printf '(none)\n' > "$tmp/HANDOVER"; fi
   fi
   if grep -q '{{CONTEXT}}' "$body"; then

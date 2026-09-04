@@ -72,7 +72,7 @@ mj_cmd_plan() {
   mj_require_installed
   local rc=0; mj_project_load || rc=$?
   case "$rc" in
-    1) mj_die "$MJ_EX_MISSING" "no canonical project model here (.majordomus/project/project.yaml)" ;;
+    1) mj_die "$MJ_EX_MISSING" "no canonical project model here ($(mj_rel "$MJ_PROJECT_DIR")/project.yaml)" ;;
     2) mj_die "$MJ_EX_CONTRACT" "the canonical project model does not parse; see the errors above" ;;
   esac
   ids="${ids# }"
@@ -361,7 +361,7 @@ mj_plan_body_issue() {
   printf '| priority | %s |\n' "$(mj_pj_get "$id" priority)"
   printf '| profile | %s |\n' "$(mj_pj_get "$id" profile)"
   printf '| parallel safe | %s |\n' "$(mj_pj_col I "$id" 8)"
-  printf '| canonical | `.majordomus/project/issues/%s.yaml` |\n\n' "$id"
+  printf '| canonical | `%s/issues/%s.yaml` |\n\n' "$(mj_rel "$MJ_PROJECT_DIR")" "$id"
   mj_plan_sec Objective "$id" objective
   mj_plan_sec Why "$id" why
   mj_plan_sec 'Current State' "$id" current_state
@@ -396,7 +396,7 @@ mj_plan_body_milestone() {
   printf '| ready / blocked / active / verify | %s / %s / %s / %s |\n' \
     "$(printf '%s' "$row" | cut -f10)" "$(printf '%s' "$row" | cut -f11)" \
     "$(printf '%s' "$row" | cut -f12)" "$(printf '%s' "$row" | cut -f13)"
-  printf '| canonical | `.majordomus/project/milestones/%s.yaml` |\n\n' "$id"
+  printf '| canonical | `%s/milestones/%s.yaml` |\n\n' "$(mj_rel "$MJ_PROJECT_DIR")" "$id"
   mj_plan_sec Problem "$id" problem
   mj_plan_sec Outcome "$id" outcome
   mj_plan_sec 'Current State' "$id" current_state
@@ -437,7 +437,7 @@ mj_plan_evidence_table() {
 mj_plan_transition() {
   local id="$1" what="$2" st bb f
   [ -n "$id" ] || mj_die "$MJ_EX_USAGE" "plan $what needs an issue id"
-  f="$MJ_DIR/project/issues/$id.yaml"
+  f="$MJ_PROJECT_DIR/issues/$id.yaml"
   [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no issue '$id'"
   st="$(mj_pj_i_status "$id")"; bb="$(mj_pj_i_blocked "$id")"
   case "$what" in
@@ -494,8 +494,8 @@ mj_plan_evidence() {
   # A milestone is gated on evidence the same way an issue is — it reaches DONE only when
   # its own acceptance is proved, not when its issues run out — so the command writes to
   # either record rather than making milestone acceptance the one thing done by hand.
-  f="$MJ_DIR/project/issues/$id.yaml"
-  [ -f "$f" ] || f="$MJ_DIR/project/milestones/$id.yaml"
+  f="$MJ_PROJECT_DIR/issues/$id.yaml"
+  [ -f "$f" ] || f="$MJ_PROJECT_DIR/milestones/$id.yaml"
   [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no issue or milestone '$id'"
   mj_pj_list "$id" evidence_required | grep -qx -- "$covers" \
     || mj_die "$MJ_EX_REFUSED" "$id does not require evidence '$covers' (declared: $(mj_pj_list "$id" evidence_required | paste -sd, -))"

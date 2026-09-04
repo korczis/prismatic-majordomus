@@ -30,7 +30,7 @@ H
   mj_build_fragments "$tmp"
 
   # render every target first; write only if all pass
-  local i=0 tgt prov out gen mode rc fp="$MJ_DIR/generated/fingerprints.yaml" fpflat="" budget
+  local i=0 tgt prov out gen mode rc fp="$MJ_GENERATED_DIR/fingerprints.yaml" fpflat="" budget
   budget="$(mj_pol context.always_loaded_budget_lines)"
   [ -f "$fp" ] && { fpflat="$tmp/fp.flat"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || fpflat=""; }
   local plan="" refuse=0
@@ -40,10 +40,11 @@ H
     case "$mode" in file|region) ;;
       *) rm -rf "$tmp"; mj_die "$MJ_EX_CONTRACT" "projection $tgt: unknown mode '$mode' (file | region)" ;;
     esac
-    [ -f "$MJ_DIR/providers/$prov.tmpl" ] || { rm -rf "$tmp"; mj_die "$MJ_EX_MISSING" "no template for provider '$prov' (.majordomus/providers/$prov.tmpl)"; }
+    local tpl
+    tpl="$(mj_provider_template "$prov")" || { rm -rf "$tmp"; mj_die "$MJ_EX_MISSING" "no template for provider '$prov' ($(mj_rel "$MJ_PROVIDERS_DIR")/$prov.tmpl, or one shipped in $MJ_PROVIDERS_DEFAULT_DIR/)"; }
     # gen is the generated content this projection owns; out is the whole file to write
     gen="$tmp/gen.$i"; out="$tmp/out.$i"
-    mj_render "$MJ_DIR/providers/$prov.tmpl" "$tmp" "$psha" > "$gen"
+    mj_render "$tpl" "$tmp" "$psha" > "$gen"
 
     # the budget measures what Majordomus generates, which for a region is the region
     # and not the host document it was appended to
@@ -117,10 +118,10 @@ H
       i=$((i+1))
     done
   } > "$fp.mj-tmp" && mv "$fp.mj-tmp" "$fp"
-  mkdir -p "$MJ_DIR/state"
+  mkdir -p "$MJ_STATE_DIR"
   mj_ledger_append projections.updated "\"policy_sha256\":\"$psha\",\"targets\":$i"
   rm -rf "$tmp"
-  printf 'fingerprints: .majordomus/generated/fingerprints.yaml (policy %s)\n' "${psha:0:12}"
+  printf 'fingerprints: %s/fingerprints.yaml (policy %s)\n' "$(mj_rel "$MJ_GENERATED_DIR")" "${psha:0:12}"
 }
 
 mj_fp_sha_u() { local f="$1" t="$2" k=0
@@ -132,7 +133,7 @@ mj_build_fragments() {
   local d="$1" pf n
   {
     printf '| profile | capability | effort | verbosity | checkpoint | verification |\n|---|---|---|---|---|---|\n'
-    for pf in "$MJ_DIR"/profiles/*.yaml; do
+    for pf in "$MJ_PROFILES_DIR"/*.yaml; do
       n="$(basename "$pf" .yaml)"; mj_load_profile "$n" || continue
       local v=""; [ "$(mj_pro verification.verify_command_required)" = true ] && v="verify command"
       [ "$(mj_pro verification.verify_command_required)" = if_files_changed ] && v="verify command if files changed"
@@ -156,7 +157,7 @@ mj_build_fragments() {
   } > "$d/FINISH_CONTRACT"
   mj_ylist "$MJ_POL_FLAT" handover.required_sections | sed 's/^/`# /; s/$/`/' | paste -sd, - | sed 's/,/, /g' > "$d/REQUIRED_SECTIONS"
   sed -e "s|{{CHECKPOINT_DEFAULT}}|$(mj_pol profiles.checkpoint_interval_default)|g" \
-      -e "s|{{DEFAULT_PROFILE}}|$(mj_pol profiles.default)|g" "$MJ_DIR/providers/body.md" \
+      -e "s|{{DEFAULT_PROFILE}}|$(mj_pol profiles.default)|g" "$MJ_PROVIDERS_DIR/body.md" \
     | mj_expand_blocks "$d" > "$d/BODY"
 }
 # replace lines that are exactly {{TOKEN}} with the file $d/TOKEN; inline {{REQUIRED_SECTIONS}} too
@@ -178,15 +179,15 @@ mj_render() { # template, fragment dir, policy sha
 # directories this version reads, and seed the skeleton prompt assets when the directory
 # is absent entirely. Never overwrites a file, never deletes, never touches state records.
 mj_ensure_layout() {
-  local skel="$MJ_BIN_DIR/../share/skeleton" d
-  for d in state/handovers state/checkpoints prompts; do
-    [ -d "$MJ_DIR/$d" ] || { mkdir -p "$MJ_DIR/$d"; printf 'create .majordomus/%s/\n' "$d"; }
+  local skel="$MJ_SKELETON_DIR" d
+  for d in "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_PROMPTS_DIR"; do
+    [ -d "$d" ] || { mkdir -p "$d"; printf 'create %s/\n' "$(mj_rel "$d")"; }
   done
-  if [ -d "$skel/prompts" ] && [ -z "$(ls -1 "$MJ_DIR/prompts" 2>/dev/null)" ]; then
-    cp "$skel"/prompts/*.md "$MJ_DIR/prompts/" 2>/dev/null || true
-    printf 'create .majordomus/prompts/ (%s asset(s))\n' "$(ls -1 "$MJ_DIR"/prompts/*.md 2>/dev/null | wc -l | tr -d ' ')"
+  if [ -d "$skel/prompts" ] && [ -z "$(ls -1 "$MJ_PROMPTS_DIR" 2>/dev/null)" ]; then
+    cp "$skel"/prompts/*.md "$MJ_PROMPTS_DIR/" 2>/dev/null || true
+    printf 'create %s/ (%s asset(s))\n' "$(mj_rel "$MJ_PROMPTS_DIR")" "$(ls -1 "$MJ_PROMPTS_DIR"/*.md 2>/dev/null | wc -l | tr -d ' ')"
   fi
   for d in decisions open-questions; do
-    [ -f "$MJ_DIR/state/$d.md" ] || { cp "$skel/templates/$d.md" "$MJ_DIR/state/$d.md" 2>/dev/null && printf 'create .majordomus/state/%s.md\n' "$d"; }
+    [ -f "$MJ_STATE_DIR/$d.md" ] || { cp "$skel/templates/$d.md" "$MJ_STATE_DIR/$d.md" 2>/dev/null && printf 'create %s/%s.md\n' "$(mj_rel "$MJ_STATE_DIR")" "$d"; }
   done
 }

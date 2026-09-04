@@ -65,14 +65,147 @@ mj_repo_root() {
 }
 mj_require_repo() {
   MJ_ROOT="$(mj_repo_root)" || mj_die "$MJ_EX_USAGE" "not inside a git repository (use --repo <path>)"
-  MJ_DIR="$MJ_ROOT/.majordomus"
-  export MJ_ROOT MJ_DIR
+  export MJ_ROOT
   # hooks inherited from a parent process must never redirect our git calls
   unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
+  mj_resolve_layout
 }
 mj_require_installed() {
   mj_require_repo
-  [ -f "$MJ_DIR/policy.yaml" ] || mj_die "$MJ_EX_MISSING" "no .majordomus/policy.yaml in $MJ_ROOT (run: majordomus init)"
+  case "$MJ_LAYOUT" in
+    ai) [ -f "$MJ_POLICY_FILE" ] || mj_die "$MJ_EX_MISSING" "no $(mj_rel "$MJ_POLICY_FILE") in $MJ_ROOT; the manifest names it (run: majordomus init)" ;;
+    legacy) [ -f "$MJ_POLICY_FILE" ] || mj_die "$MJ_EX_MISSING" "no $(mj_rel "$MJ_POLICY_FILE") in $MJ_ROOT (run: majordomus init)" ;;
+    *) mj_die "$MJ_EX_MISSING" "no .ai/manifest.yaml in $MJ_ROOT (run: majordomus init)" ;;
+  esac
+}
+
+# ---------------------------------------------------------------- paths
+# Two roots, never one variable. MJ_HOME is the tool distribution — bin, lib, share — and
+# is read-only: it may be a PATH install, a checkout under ~/tools, a package, or an
+# optional .majordomus/ submodule inside the managed repository, and every form behaves
+# the same because nothing below writes into it. MJ_ROOT is the managed repository, whose
+# AI layer lives under .ai/: repo/ is tracked canonical context, local/ is checkout-local
+# and ignored. Every path the commands read or write is resolved here and nowhere else.
+# a script that sources this file for its helpers alone (the test suite, the site generator)
+# need not have set MJ_BIN_DIR; the distribution is the directory this file lives under
+MJ_HOME="${MJ_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+MJ_SHARE_DIR="$MJ_HOME/share"
+MJ_SKELETON_DIR="$MJ_SHARE_DIR/skeleton"
+MJ_ALLOW_DIR="$MJ_SHARE_DIR/allow"
+MJ_STD_RULES_DIR="$MJ_SHARE_DIR/standard/rules"
+MJ_PROVIDERS_DEFAULT_DIR="$MJ_SHARE_DIR/providers"
+export MJ_HOME MJ_SHARE_DIR MJ_SKELETON_DIR MJ_ALLOW_DIR MJ_STD_RULES_DIR MJ_PROVIDERS_DEFAULT_DIR
+
+MJ_LAYOUT=""; MJ_AI_DIR=""; MJ_AI_MANIFEST=""; MJ_AI_REPO_DIR=""; MJ_AI_LOCAL_DIR=""
+MJ_STATE_DIR=""; MJ_POLICY_FILE=""; MJ_PROFILES_DIR=""; MJ_PROMPTS_DIR=""; MJ_PROJECT_DIR=""
+MJ_RULES_DIR=""; MJ_KNOWLEDGE_DIR=""; MJ_ADRS_DIR=""; MJ_SKILLS_DIR=""; MJ_WORKFLOWS_DIR=""
+MJ_PROVIDERS_DIR=""; MJ_TEMPLATES_DIR=""; MJ_GENERATED_DIR=""; MJ_CACHE_DIR=""
+
+# a repository path, relative to the repository root, for messages and records
+mj_rel() { printf '%s' "${1#"$MJ_ROOT/"}"; }
+# is repository-relative path $1 inside the AI layer (the tool's own files)?
+mj_is_ai_path() { case "$1" in "$(mj_rel "$MJ_AI_DIR")"|"$(mj_rel "$MJ_AI_DIR")"/*) return 0 ;; esac; return 1; }
+
+# Resolve the repository layout. Never fails: a repository with no AI layer resolves to
+# the paths init would create, so init and doctor can name them.
+#   ai      .ai/manifest.yaml exists; every section path is read from it
+#   legacy  the pre-.ai layout, .majordomus/policy.yaml; read-only compatibility during
+#           the migration, removed once `majordomus migrate` exists
+mj_resolve_layout() {
+  MJ_AI_DIR="$MJ_ROOT/.ai"; MJ_AI_MANIFEST="$MJ_AI_DIR/manifest.yaml"
+  if [ -f "$MJ_AI_MANIFEST" ]; then
+    MJ_LAYOUT=ai
+    mj_load_manifest || mj_die "$MJ_EX_CONTRACT" "$(mj_rel "$MJ_AI_MANIFEST") is not a manifest this version reads: $MJ_MANIFEST_ERROR"
+    MJ_AI_REPO_DIR="$MJ_AI_DIR/$(mj_man repo.path)"
+    MJ_AI_LOCAL_DIR="$MJ_AI_DIR/$(mj_man local.path)"
+    MJ_POLICY_FILE="$MJ_AI_DIR/$(mj_man sections.policy)"
+    MJ_PROFILES_DIR="$MJ_AI_DIR/$(mj_man sections.profiles)"
+    MJ_RULES_DIR="$MJ_AI_DIR/$(mj_man sections.rules)"
+    MJ_PROMPTS_DIR="$MJ_AI_DIR/$(mj_man sections.prompts)"
+    MJ_SKILLS_DIR="$MJ_AI_DIR/$(mj_man sections.skills)"
+    MJ_WORKFLOWS_DIR="$MJ_AI_DIR/$(mj_man sections.workflows)"
+    MJ_KNOWLEDGE_DIR="$MJ_AI_DIR/$(mj_man sections.knowledge)"
+    MJ_ADRS_DIR="$MJ_AI_DIR/$(mj_man sections.adrs)"
+    MJ_PROJECT_DIR="$MJ_AI_DIR/$(mj_man sections.project)"
+    MJ_PROVIDERS_DIR="$MJ_AI_REPO_DIR/providers"
+    MJ_TEMPLATES_DIR="$MJ_AI_REPO_DIR/templates"
+    MJ_STATE_DIR="$MJ_AI_LOCAL_DIR/state"
+    MJ_CACHE_DIR="$MJ_AI_LOCAL_DIR/cache"
+    MJ_GENERATED_DIR="$MJ_AI_REPO_DIR/generated"
+  elif [ -d "$MJ_ROOT/.majordomus" ] && [ ! -f "$MJ_ROOT/.majordomus/bin/majordomus" ]; then
+    # project data under .majordomus/, which is what the pre-.ai layout was; a directory
+    # holding a tool distribution (bin/majordomus) is an installation, never project data
+    MJ_LAYOUT=legacy
+    MJ_AI_DIR="$MJ_ROOT/.majordomus"; MJ_AI_MANIFEST=""
+    MJ_AI_REPO_DIR="$MJ_AI_DIR"; MJ_AI_LOCAL_DIR="$MJ_AI_DIR"
+    MJ_POLICY_FILE="$MJ_AI_DIR/policy.yaml"; MJ_PROFILES_DIR="$MJ_AI_DIR/profiles"
+    MJ_PROMPTS_DIR="$MJ_AI_DIR/prompts"; MJ_PROJECT_DIR="$MJ_AI_DIR/project"
+    MJ_PROVIDERS_DIR="$MJ_AI_DIR/providers"; MJ_TEMPLATES_DIR="$MJ_AI_DIR/templates"
+    MJ_GENERATED_DIR="$MJ_AI_DIR/generated"; MJ_STATE_DIR="$MJ_AI_DIR/state"
+    MJ_RULES_DIR=""; MJ_KNOWLEDGE_DIR=""; MJ_ADRS_DIR=""; MJ_SKILLS_DIR=""; MJ_WORKFLOWS_DIR=""; MJ_CACHE_DIR=""
+  else
+    MJ_LAYOUT=""
+    MJ_AI_REPO_DIR="$MJ_AI_DIR/repo"; MJ_AI_LOCAL_DIR="$MJ_AI_DIR/local"
+    MJ_POLICY_FILE="$MJ_AI_REPO_DIR/policy.yaml"; MJ_PROFILES_DIR="$MJ_AI_REPO_DIR/profiles"
+    MJ_RULES_DIR="$MJ_AI_REPO_DIR/rules"; MJ_PROMPTS_DIR="$MJ_AI_REPO_DIR/prompts"
+    MJ_SKILLS_DIR="$MJ_AI_REPO_DIR/skills"; MJ_WORKFLOWS_DIR="$MJ_AI_REPO_DIR/workflows"
+    MJ_KNOWLEDGE_DIR="$MJ_AI_REPO_DIR/knowledge"; MJ_ADRS_DIR="$MJ_AI_REPO_DIR/adrs"
+    MJ_PROJECT_DIR="$MJ_AI_REPO_DIR/project"; MJ_PROVIDERS_DIR="$MJ_AI_REPO_DIR/providers"
+    MJ_TEMPLATES_DIR="$MJ_AI_REPO_DIR/templates"; MJ_STATE_DIR="$MJ_AI_LOCAL_DIR/state"
+    MJ_CACHE_DIR="$MJ_AI_LOCAL_DIR/cache"; MJ_GENERATED_DIR="$MJ_AI_REPO_DIR/generated"
+  fi
+  export MJ_LAYOUT MJ_AI_DIR MJ_AI_MANIFEST MJ_AI_REPO_DIR MJ_AI_LOCAL_DIR MJ_STATE_DIR
+  export MJ_POLICY_FILE MJ_PROFILES_DIR MJ_PROMPTS_DIR MJ_PROJECT_DIR MJ_RULES_DIR MJ_KNOWLEDGE_DIR
+  export MJ_ADRS_DIR MJ_SKILLS_DIR MJ_WORKFLOWS_DIR MJ_PROVIDERS_DIR MJ_TEMPLATES_DIR MJ_GENERATED_DIR MJ_CACHE_DIR
+  return 0
+}
+
+# The manifest is the section registry of the AI layer: which format it is, where the
+# tracked and local halves are, and where each section lives. Nothing walks .ai/ to find
+# out. A manifest newer than this executable, or one with a key nothing reads, is refused
+# with the reason rather than read partially.
+MJ_MAN_FLAT=""; MJ_MANIFEST_ERROR=""
+MJ_MANIFEST_SCHEMA="ai-repository/v1"
+mj_load_manifest() {
+  local k
+  MJ_MANIFEST_ERROR=""
+  [ -n "$MJ_MAN_FLAT" ] && [ -f "$MJ_MAN_FLAT" ] && return 0
+  MJ_MAN_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.man.XXXXXX")"
+  if ! mj_yaml_flatten "$MJ_AI_MANIFEST" > "$MJ_MAN_FLAT" 2>/dev/null; then
+    MJ_MANIFEST_ERROR="does not parse"; return 1
+  fi
+  if [ "$(mj_yget "$MJ_MAN_FLAT" schema)" != "$MJ_MANIFEST_SCHEMA" ]; then
+    MJ_MANIFEST_ERROR="schema '$(mj_yget "$MJ_MAN_FLAT" schema)' is not $MJ_MANIFEST_SCHEMA (this executable reads $MJ_MANIFEST_SCHEMA)"; return 1
+  fi
+  k="$(mj_yaml_unknown_keys "$MJ_MAN_FLAT" "$MJ_ALLOW_DIR/manifest.txt" || true)"
+  [ -z "$k" ] || { MJ_MANIFEST_ERROR="unknown key(s): $(printf '%s' "$k" | tr '\n' ' ')"; return 1; }
+  for k in repo.path local.path sections.policy sections.profiles sections.rules sections.prompts \
+           sections.skills sections.workflows sections.knowledge sections.adrs sections.project; do
+    [ -n "$(mj_yget "$MJ_MAN_FLAT" "$k")" ] || { MJ_MANIFEST_ERROR="missing key $k"; return 1; }
+  done
+  return 0
+}
+mj_man() { [ -n "${MJ_MAN_FLAT:-}" ] || return 0; mj_yget "$MJ_MAN_FLAT" "$1"; }
+
+# The provider template for a projection: the repository's own override under its AI
+# layer when it has one, otherwise the adapter the distribution ships.
+mj_provider_template() {
+  if [ -f "$MJ_PROVIDERS_DIR/$1.tmpl" ]; then printf '%s' "$MJ_PROVIDERS_DIR/$1.tmpl"
+  elif [ -f "$MJ_PROVIDERS_DEFAULT_DIR/$1.tmpl" ]; then printf '%s' "$MJ_PROVIDERS_DEFAULT_DIR/$1.tmpl"
+  else return 1; fi
+}
+
+# The layout as data — one line per path variable, name then repository-relative path — for
+# whatever needs to name the files the commands touch without repeating this file.
+mj_layout_table() {
+  local v
+  for v in MJ_AI_DIR MJ_AI_REPO_DIR MJ_AI_LOCAL_DIR MJ_STATE_DIR MJ_POLICY_FILE MJ_PROFILES_DIR \
+           MJ_PROMPTS_DIR MJ_PROJECT_DIR MJ_RULES_DIR MJ_KNOWLEDGE_DIR MJ_ADRS_DIR MJ_SKILLS_DIR \
+           MJ_WORKFLOWS_DIR MJ_PROVIDERS_DIR MJ_TEMPLATES_DIR MJ_GENERATED_DIR MJ_CACHE_DIR; do
+    p="${!v}"
+    [ -n "$p" ] || continue
+    printf '%s\t%s\n' "$v" "$(mj_rel "$p")"
+  done
 }
 
 mj_git() { git -C "$MJ_ROOT" "$@"; }
@@ -119,8 +252,8 @@ mj_has()   { command -v "$1" >/dev/null 2>&1; }
 # error that doctor reports, not a cat(1) failure that aborts whoever asked for the hash.
 mj_policy_cat() {
   local pf
-  cat "$MJ_DIR/policy.yaml"
-  for pf in "$MJ_DIR"/profiles/*.yaml; do
+  cat "$MJ_POLICY_FILE"
+  for pf in "$MJ_PROFILES_DIR"/*.yaml; do
     if [ -f "$pf" ]; then cat "$pf"; fi
   done
   return 0
@@ -278,7 +411,7 @@ mj_ledger_append() {
   sid="$(mj_open_session_id)"
   [ -n "$sid" ] && line="$line,\"session\":\"$sid\""
   [ -n "$extra" ] && line="$line,$extra"
-  printf '%s}\n' "$line" >> "$MJ_DIR/state/ledger.jsonl"
+  printf '%s}\n' "$line" >> "$MJ_STATE_DIR/ledger.jsonl"
 }
 
 # The open session in THIS worktree, or nothing. Read with two seds rather than the YAML
@@ -293,7 +426,7 @@ mj_ledger_append() {
 # work done outside one: sessions are optional, and nothing is attributed by proximity.
 mj_open_session_id() {
   local f w
-  f="$MJ_DIR/state/session-current.yaml"
+  f="$MJ_STATE_DIR/session-current.yaml"
   [ -f "$f" ] || return 0
   w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
   [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && return 0
@@ -302,7 +435,7 @@ mj_open_session_id() {
 
 # ---------------------------------------------------------------- current task
 mj_load_current() {
-  MJ_CUR="$MJ_DIR/state/current.yaml"
+  MJ_CUR="$MJ_STATE_DIR/current.yaml"
   [ -f "$MJ_CUR" ] || return 1
   MJ_CUR_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.cur.XXXXXX")"
   mj_yaml_flatten "$MJ_CUR" > "$MJ_CUR_FLAT" || return 2
@@ -312,7 +445,7 @@ mj_cur() { [ -n "${MJ_CUR_FLAT:-}" ] || return 0; mj_yget "$MJ_CUR_FLAT" "$1"; }
 
 mj_load_policy() {
   MJ_POL_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.pol.XXXXXX")"
-  mj_yaml_flatten "$MJ_DIR/policy.yaml" > "$MJ_POL_FLAT" || return 1
+  mj_yaml_flatten "$MJ_POLICY_FILE" > "$MJ_POL_FLAT" || return 1
 }
 mj_pol() { [ -n "${MJ_POL_FLAT:-}" ] || return 0; mj_yget "$MJ_POL_FLAT" "$1"; }
 # A policy value the code depends on. There is no default here on purpose: a fallback
@@ -329,7 +462,7 @@ mj_pol() { [ -n "${MJ_POL_FLAT:-}" ] || return 0; mj_yget "$MJ_POL_FLAT" "$1"; }
 mj_pol_req() {
   local v; v="$(mj_pol "$1")"
   if [ -z "$v" ]; then
-    printf 'majordomus: policy is missing required key %s (.majordomus/policy.yaml)\n' "$1" >&2
+    printf 'majordomus: policy is missing required key %s (%s)\n' "$1" "$(mj_rel "$MJ_POLICY_FILE")" >&2
     return "$MJ_EX_CONTRACT"
   fi
   printf '%s' "$v"
@@ -338,9 +471,9 @@ mj_load_profile() {
   local name="$1"
   # cleared first: a failed load must not leave the previous profile readable as this one
   rm -f "${MJ_PRO_FLAT:-}" 2>/dev/null || true; MJ_PRO_FLAT=""
-  [ -f "$MJ_DIR/profiles/$name.yaml" ] || return 1
+  [ -f "$MJ_PROFILES_DIR/$name.yaml" ] || return 1
   MJ_PRO_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.pro.XXXXXX")"
-  mj_yaml_flatten "$MJ_DIR/profiles/$name.yaml" > "$MJ_PRO_FLAT" || return 2
+  mj_yaml_flatten "$MJ_PROFILES_DIR/$name.yaml" > "$MJ_PRO_FLAT" || return 2
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
@@ -445,7 +578,7 @@ mj_resolve_latest() {
 mj_record_rank() {
   local base n
   base="$(basename "$1")"
-  n="$(grep -n -F -- "$base" "$MJ_DIR/state/ledger.jsonl" 2>/dev/null | tail -n 1 | cut -d: -f1)"
+  n="$(grep -n -F -- "$base" "$MJ_STATE_DIR/ledger.jsonl" 2>/dev/null | tail -n 1 | cut -d: -f1)"
   printf '%06d' "${n:-0}"
 }
 

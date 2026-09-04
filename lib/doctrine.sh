@@ -21,7 +21,7 @@ MJ_DOCTRINE_RESULTS=""    # "<id>:pass|fail|skipped" per dispatched doctrine
 MJ_DOCTRINE_ERRORS=0      # validator-execution and configuration errors, not rule violations
 export MJ_DOCTRINE_ID MJ_DOCTRINE_CLASS MJ_DOCTRINE_CMD
 
-mj_doctrine_registry() { printf '%s\n' "$MJ_BIN_DIR/../share/doctrines.yaml"; }
+mj_doctrine_registry() { printf '%s\n' "$MJ_SHARE_DIR/doctrines.yaml"; }
 
 mj_doctrine_load() {
   [ -n "$MJ_DOC_FLAT" ] && [ -f "$MJ_DOC_FLAT" ] && return 0
@@ -48,7 +48,7 @@ mj_doc_ids() { local i=0; while [ -n "$(mj_doc "$i" id)" ]; do mj_doc "$i" id; i
 mj_is_function() { type "$1" 2>/dev/null | head -n1 | grep -q 'function'; }
 # `doctrine status` reports on the installation, not on this process — it must read the
 # source. Only the dispatcher, which has the libraries loaded, asks the live process.
-mj_validator_defined() { grep -rqE "^mj_validate_$1\(\)" "$MJ_BIN_DIR/../lib"; }
+mj_validator_defined() { grep -rqE "^mj_validate_$1\(\)" "$MJ_LIB_DIR"; }
 
 # does doctrine <index> apply to command <name>?
 mj_doctrine_applies() {
@@ -149,7 +149,7 @@ H
     id="$(mj_doc "$i" id)"
     case "$(mj_doc "$i" class)" in blocking) bl=$((bl+1)) ;; advisory) ad=$((ad+1)) ;; esac
     mj_validator_defined "$(mj_doc "$i" validator)" || un=$((un+1))
-    [ -f "$MJ_BIN_DIR/../$(mj_doc "$i" test)" ] || uc=$((uc+1))
+    [ -f "$MJ_HOME/$(mj_doc "$i" test)" ] || uc=$((uc+1))
     i=$((i+1))
   done
   if [ "$MJ_JSON" = 1 ]; then
@@ -188,6 +188,6 @@ mj_doctrine_show() {
   printf 'claims      %s\n' "$(mj_doc_list "$i" claims | paste -sd, -)"
   printf 'test        %s\n' "$(mj_doc "$i" test)"
   mj_validator_defined "$(mj_doc "$i" validator)" \
-    && printf 'wired       yes (%s defines it)\n' "$(grep -rlE "^mj_validate_$(mj_doc "$i" validator)\(\)" "$MJ_BIN_DIR/../lib" | sed "s#.*/lib/#lib/#" | head -1)" \
+    && printf 'wired       yes (%s defines it)\n' "$(grep -rlE "^mj_validate_$(mj_doc "$i" validator)\(\)" "$MJ_LIB_DIR" | sed "s#.*/lib/#lib/#" | head -1)" \
     || printf 'wired       NO — validator function does not exist\n'
 }

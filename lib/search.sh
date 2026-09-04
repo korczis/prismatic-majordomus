@@ -42,12 +42,12 @@ H
   MJ_SEARCH_HITS=0
   for k in $kinds; do
     case "$k" in
-      handover)   mj_search_records handover   "$MJ_DIR/state/handovers"   "$term" "$want_task" "$limit" ;;
-      checkpoint) mj_search_records checkpoint "$MJ_DIR/state/checkpoints" "$term" "$want_task" "$limit" ;;
-      decision)   mj_search_lines   decision   "$MJ_DIR/state/decisions.md" "$term" "$want_task" "$limit" ;;
-      question)   mj_search_lines   question   "$MJ_DIR/state/open-questions.md" "$term" "$want_task" "$limit" ;;
-      prompt)     mj_search_dir     prompt     "$MJ_DIR/prompts" "$term" "$limit" ;;
-      history)    mj_search_lines   history    "$MJ_DIR/state/ledger.jsonl" "$term" "$want_task" "$limit" ;;
+      handover)   mj_search_records handover   "$MJ_STATE_DIR/handovers"   "$term" "$want_task" "$limit" ;;
+      checkpoint) mj_search_records checkpoint "$MJ_STATE_DIR/checkpoints" "$term" "$want_task" "$limit" ;;
+      decision)   mj_search_lines   decision   "$MJ_STATE_DIR/decisions.md" "$term" "$want_task" "$limit" ;;
+      question)   mj_search_lines   question   "$MJ_STATE_DIR/open-questions.md" "$term" "$want_task" "$limit" ;;
+      prompt)     mj_search_dir     prompt     "$MJ_PROMPTS_DIR" "$term" "$limit" ;;
+      history)    mj_search_lines   history    "$MJ_STATE_DIR/ledger.jsonl" "$term" "$want_task" "$limit" ;;
     esac
   done
   if [ "$MJ_SEARCH_HITS" = 0 ]; then

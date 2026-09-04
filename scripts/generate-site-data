@@ -36,6 +36,10 @@ OUT="$STAGE/data"; mkdir -p "$OUT"
 MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../lib/common.sh
 . "$ROOT/lib/common.sh"
+# The repository layout, resolved once by the tool itself: which directory holds the plan and
+# which holds the AI layer are facts of the checkout, never spelled out here.
+MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
+PJ="$(mj_rel "$MJ_PROJECT_DIR")"; AI="$(mj_rel "$MJ_AI_DIR")"
 # common.sh installs its own EXIT trap, so the staging cleanup is chained after sourcing it
 # rather than before, or the later trap would silently replace this one and leak the directory.
 trap 'rm -rf "$STAGE"; mj_cleanup' EXIT
@@ -54,7 +58,7 @@ docs/RESPONSIBILITIES.yaml
 README.md
 LICENSE"
 # LC_ALL=C so the globs below expand in byte order rather than in the collation order of
-# whoever is running this. .majordomus/project/milestones/ holds both M000.yaml and
+# whoever is running this. The milestones directory holds both M000.yaml and
 # slug-named files: byte order puts uppercase M before every lowercase name, a
 # case-insensitive locale files it between "foundation" and "routing-". The input list then
 # differs by machine, and so does the hash computed from it — a portability failure in a
@@ -63,8 +67,8 @@ LICENSE"
 # first.
 LC_ALL=C; export LC_ALL
 for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
-         "$ROOT"/.majordomus/project/project.yaml "$ROOT"/.majordomus/project/milestones/*.yaml \
-         "$ROOT"/.majordomus/project/issues/*.yaml; do
+         "$ROOT/$PJ"/project.yaml "$ROOT/$PJ"/milestones/*.yaml \
+         "$ROOT/$PJ"/issues/*.yaml; do
   case "$f" in */docs/SITE_CLAIMS.md|*/docs/PLAN_STATUS.md) continue ;; esac   # written by this script; never its own input
   INPUTS="$INPUTS
 ${f#"$ROOT"/}"; done
@@ -274,7 +278,7 @@ while [ -n "$(yv "$Rf" "responsibilities.$i.id")" ]; do
   rk="$(yv "$Rf" "responsibilities.$i.readme_key")"
   printf '%s\n' "$README_TITLES" | grep -qxF "$rk" \
     || { echo "generate-site-data: responsibility $rid names README row '$rk', which the 'What it does' table does not have" >&2; exit 10; }
-  # .majordomus/ paths are runtime state that `init` creates in a consuming repository, not
+  # Paths under the AI layer are runtime state that `init` creates in a consuming repository, not
   # source files: a source-only checkout legitimately has none, and requiring them would make
   # the generator refuse to run there. They are checked whenever the directory exists at all,
   # which is every initialised repository including this one, so a moved or renamed runtime
@@ -282,9 +286,9 @@ while [ -n "$(yv "$Rf" "responsibilities.$i.id")" ]; do
   for p in $(mj_ylist "$Rf" "responsibilities.$i.files") "$(yv "$Rf" "responsibilities.$i.implementation")"; do
     [ -n "$p" ] || { echo "generate-site-data: responsibility $rid declares an empty path" >&2; exit 10; }
     # policy.yaml is what `init` writes, so it marks an initialised repository. Testing for
-    # the directory instead would be wrong: .majordomus/project/ is a canonical generator
+    # the directory instead would be wrong: the project directory is a canonical generator
     # input, so the directory exists wherever those files were copied, initialised or not.
-    case "$p" in .majordomus/*) [ -f "$ROOT/.majordomus/policy.yaml" ] || continue ;; esac
+    case "$p" in "$AI"/*) [ -f "$MJ_POLICY_FILE" ] || continue ;; esac
     [ -e "$ROOT/$p" ] || { echo "generate-site-data: responsibility $rid names missing path $p" >&2; exit 10; }
   done
   for a in cli_anchor:docs/CLI.md schema_anchor:docs/SCHEMAS.md; do
@@ -569,8 +573,8 @@ jq -n --arg l "$LIFECYCLE_MMD" --arg p "$PIPELINE_MMD" --arg j "$PROJECTION_MMD"
 SCAN="$ROOT/scripts/lib/architecture-scan.awk"
 [ -f "$SCAN" ] || { echo "generate-site-data: missing $SCAN" >&2; exit 12; }
 # two collecting passes, so a path accessor defined in a later file still resolves
-ARCH_TSV="$(cd "$ROOT" && awk -f "$SCAN" vars=1 bin/majordomus lib/*.sh vars=1 bin/majordomus lib/*.sh vars=0 bin/majordomus lib/*.sh)"
-printf '%s\n' "$ARCH_TSV" | jq -Rn --slurpfile proj "$OUT/project.json" '
+ARCH_TSV="$(cd "$ROOT" && awk -f "$SCAN" -v table="$(mj_layout_table | tr "\t" = | tr "\n" " ")" vars=1 bin/majordomus lib/*.sh vars=1 bin/majordomus lib/*.sh vars=0 bin/majordomus lib/*.sh)"
+printf '%s\n' "$ARCH_TSV" | jq -Rn --arg ai "$AI/" --slurpfile proj "$OUT/project.json" '
   [inputs | split("\t")] as $rows
   | ($proj[0].commands | map({key: .name, value: .})) as $cmds
   | ($rows | map(select(.[0]=="node") | {id: .[1], kind: .[2]})) as $raw_nodes
@@ -593,7 +597,7 @@ printf '%s\n' "$ARCH_TSV" | jq -Rn --slurpfile proj "$OUT/project.json" '
        | {id: $id, kind: .kind,
           label: (if .kind == "entry" then "majordomus"
                   elif .kind == "module" then $cmd
-                  else ($id | ltrimstr(".majordomus/")) end),
+                  else ($id | ltrimstr($ai)) end),
           command: (if .kind == "module" and $c then $cmd else null end),
           summary: ($c.summary // null),
           read_only: ($c.read_only // null),
@@ -712,7 +716,6 @@ page_template = "docs-page.html"
 # The canonical project model, projected for the website. Every value here comes from
 # lib/project.awk through lib/project.sh — the same engine `majordomus plan` reads, so the
 # roadmap cannot say one thing while the command says another. Nothing is recomputed here.
-MJ_ROOT="$ROOT"; MJ_DIR="$ROOT/.majordomus"; export MJ_ROOT MJ_DIR
 # shellcheck source=../lib/project.sh
 . "$ROOT/lib/project.sh"
 # shellcheck source=../lib/plan.sh
@@ -881,7 +884,7 @@ if [ "$PLAN_FAILS" != 0 ]; then
   exit 10
 fi
 else
-  echo "generate-site-data: no canonical project model in $ROOT/.majordomus/project" >&2; exit 12
+  echo "generate-site-data: no canonical project model in $ROOT/$PJ" >&2; exit 12
 fi
 
 # ---------------------------------------------------------------- source.json

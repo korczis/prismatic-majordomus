@@ -13,8 +13,10 @@ H
     *) mj_die "$MJ_EX_USAGE" "init: unknown option $a" ;;
   esac; done
   mj_require_repo
-  local skel="$MJ_BIN_DIR/../share/skeleton"
+  local skel="$MJ_SKELETON_DIR"
   [ -d "$skel" ] || mj_die "$MJ_EX_INTERNAL" "skeleton missing at $skel"
+  # the legacy layout; init learns the .ai layout in the next phase of the transformation
+  local MJ_DIR="$MJ_ROOT/.majordomus"
   if [ -e "$MJ_DIR" ] && [ "$force" != 1 ]; then
     mj_die "$MJ_EX_REFUSED" ".majordomus/ already exists in $MJ_ROOT (use --force to rewrite everything except state/)"
   fi
@@ -32,7 +34,7 @@ H
   fi
   local rel; rel="$(cd "$MJ_BIN_DIR" && pwd)"
   cat <<OUT
-created .majordomus/policy.yaml
+created $(mj_rel "$MJ_POLICY_FILE")
 created .majordomus/profiles/ (routine, implementation, debugging, deep-work)
 created .majordomus/templates/, .majordomus/providers/, .majordomus/prompts/, .majordomus/state/, .majordomus/generated/
 next: majordomus update      # generate the provider instruction files named in the policy

@@ -34,9 +34,9 @@ H
   esac; done
   case "$limit" in ''|*[!0-9]*) mj_die "$MJ_EX_USAGE" "history: --limit must be a number" ;; esac
   mj_require_installed
-  local led="$MJ_DIR/state/ledger.jsonl"
+  local led="$MJ_STATE_DIR/ledger.jsonl"
   if [ ! -f "$led" ]; then
-    [ "$MJ_JSON" = 1 ] || printf 'no ledger yet (.majordomus/state/ledger.jsonl)\n'
+    [ "$MJ_JSON" = 1 ] || printf 'no ledger yet ($(mj_rel "$MJ_STATE_DIR")/ledger.jsonl)\n'
     return 0
   fi
   if [ "$validate" = 1 ]; then mj_history_validate "$led"; return; fi
@@ -73,7 +73,7 @@ mj_history_validate() {
   bad="$(mj_ledger_bad_lines "$led")"
   if [ -n "$bad" ]; then
     local n; for n in $bad; do
-      mj_fail ledger "line $n" "not a well-formed ledger event (needs ts and event)" "sed -n '${n}p' .majordomus/state/ledger.jsonl"
+      mj_fail ledger "line $n" "not a well-formed ledger event (needs ts and event)" "sed -n '${n}p' $(mj_rel "$MJ_STATE_DIR")/ledger.jsonl"
     done
     [ "$MJ_JSON" = 1 ] || printf 'history --validate: %s malformed line(s)\n' "$(printf '%s\n' "$bad" | wc -w | tr -d ' ')"
     exit "$MJ_EX_CONTRACT"
@@ -89,7 +89,7 @@ mj_history_rotate() {
   if [ "$have" -le "$cap" ]; then
     printf 'nothing to rotate: %s lines, cap %s\n' "$have" "$cap"; return 0
   fi
-  archive="$MJ_DIR/state/ledger.$(mj_now_compact).jsonl.archived"
+  archive="$MJ_STATE_DIR/ledger.$(mj_now_compact).jsonl.archived"
   [ -e "$archive" ] && mj_die "$MJ_EX_REFUSED" "archive $archive already exists; nothing written"
   keep_from=$((have - cap + 1))
   head -n $((keep_from - 1)) "$led" > "$archive" || mj_die "$MJ_EX_INTERNAL" "could not write $archive"

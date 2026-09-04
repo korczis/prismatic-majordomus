@@ -39,7 +39,7 @@ mj_cmd_doctor() {
   # The policy has to parse before anything can be judged against it. This is the one
   # ordering doctor imposes; everything after it is the registry's order.
   if ! mj_load_policy 2>/dev/null; then
-    mj_fail policy ".majordomus/policy.yaml" "does not parse: $(mj_yaml_flatten "$MJ_DIR/policy.yaml" 2>&1 >/dev/null | sed 's/^ERROR://')" "majordomus doctor"
+    mj_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "does not parse: $(mj_yaml_flatten "$MJ_POLICY_FILE" 2>&1 >/dev/null | sed 's/^ERROR://')" "majordomus doctor"
     mj_finish_doctor; return
   fi
 
@@ -53,23 +53,23 @@ mj_validate_policy() {
   local unk
   [ "$MJ_DOCTRINE_CMD" = watch ] && { mj_watch_policy; return 0; }
   if [ "$(mj_pol version)" = 1 ]; then
-    unk="$(mj_yaml_unknown_keys "$MJ_POL_FLAT" "$MJ_BIN_DIR/../share/allow/policy.txt" || true)"
-      if [ -z "$unk" ]; then mj_doctrine_ok policy ".majordomus/policy.yaml" "parsed, version 1"
-      else mj_doctrine_fail policy ".majordomus/policy.yaml" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "grep -nE '$(printf '%s' "$unk" | sed 's/\..*//' | sort -u | tr '\n' '|' | sed 's/|$//')' .majordomus/policy.yaml"; fi
-  else mj_doctrine_fail policy ".majordomus/policy.yaml" "unsupported version '$(mj_pol version)' (want 1)"; fi
+    unk="$(mj_yaml_unknown_keys "$MJ_POL_FLAT" "$MJ_ALLOW_DIR/policy.txt" || true)"
+      if [ -z "$unk" ]; then mj_doctrine_ok policy "$(mj_rel "$MJ_POLICY_FILE")" "parsed, version 1"
+      else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "grep -nE '$(printf '%s' "$unk" | sed 's/\..*//' | sort -u | tr '\n' '|' | sed 's/|$//')' $(mj_rel "$MJ_POLICY_FILE")"; fi
+  else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unsupported version '$(mj_pol version)' (want 1)"; fi
 
   local pf n count=0
-  for pf in "$MJ_DIR"/profiles/*.yaml; do
+  for pf in "$MJ_PROFILES_DIR"/*.yaml; do
     [ -f "$pf" ] || continue; count=$((count+1)); n="$(basename "$pf" .yaml)"
     if mj_load_profile "$n" 2>/dev/null; then
-      unk="$(mj_yaml_unknown_keys "$MJ_PRO_FLAT" "$MJ_BIN_DIR/../share/allow/profile.txt" || true)"
-      [ -n "$unk" ] && mj_doctrine_fail profiles "$n" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "cat .majordomus/profiles/$n.yaml"
+      unk="$(mj_yaml_unknown_keys "$MJ_PRO_FLAT" "$MJ_ALLOW_DIR/profile.txt" || true)"
+      [ -n "$unk" ] && mj_doctrine_fail profiles "$n" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "cat $(mj_rel "$MJ_PROFILES_DIR")/$n.yaml"
       [ "$(mj_pro name)" = "$n" ] || mj_doctrine_fail profiles "$n" "name field '$(mj_pro name)' does not match filename"
-    else mj_doctrine_fail profiles "$n" "does not parse" "cat .majordomus/profiles/$n.yaml"; fi
+    else mj_doctrine_fail profiles "$n" "does not parse" "cat $(mj_rel "$MJ_PROFILES_DIR")/$n.yaml"; fi
   done
   local def; def="$(mj_pol profiles.default)"
-  if [ -f "$MJ_DIR/profiles/$def.yaml" ]; then mj_doctrine_ok profiles "$count files" "parsed; default '$def' exists"
-  else mj_doctrine_fail profiles "default" "profiles.default='$def' has no file .majordomus/profiles/$def.yaml"; fi
+  if [ -f "$MJ_PROFILES_DIR/$def.yaml" ]; then mj_doctrine_ok profiles "$count files" "parsed; default '$def' exists"
+  else mj_doctrine_fail profiles "default" "profiles.default='$def' has no file $(mj_rel "$MJ_PROFILES_DIR")/$def.yaml"; fi
 
   return 0
 }
@@ -132,7 +132,7 @@ mj_validate_wiring() {
 MJ_DOCTOR_ALWAYS=""; MJ_DOCTOR_ALWAYS_MODE="file"
 mj_validate_projection() {
   [ "$MJ_DOCTRINE_CMD" = watch ] && { mj_watch_projection; return 0; }
-  local fp="$MJ_DIR/generated/fingerprints.yaml" fpflat="" j=0 tgt want have always="" always_mode="file" budget
+  local fp="$MJ_GENERATED_DIR/fingerprints.yaml" fpflat="" j=0 tgt want have always="" always_mode="file" budget
   local mode prov owned rc
   owned="$(mktemp "${TMPDIR:-/tmp}/mj.own.XXXXXX")"
   if [ -f "$fp" ]; then fpflat="$(mktemp "${TMPDIR:-/tmp}/mj.fp.XXXXXX")"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || { rm -f "$fpflat"; fpflat=""; }; fi
@@ -142,10 +142,10 @@ mj_validate_projection() {
     if [ "$(mj_pol "projections.$j.always_loaded")" = true ]; then always="$tgt"; always_mode="$mode"; fi
     case "$mode" in
       file|region) ;;
-      *) mj_doctrine_fail projection "$tgt" "unknown mode '$mode' (file | region)" "grep -n 'mode:' .majordomus/policy.yaml"; j=$((j+1)); continue ;;
+      *) mj_doctrine_fail projection "$tgt" "unknown mode '$mode' (file | region)" "grep -n 'mode:' $(mj_rel "$MJ_POLICY_FILE")"; j=$((j+1)); continue ;;
     esac
     # update would die on this; doctor is the command that is supposed to say so first
-    [ -f "$MJ_DIR/providers/$prov.tmpl" ] || { mj_doctrine_fail projection "$tgt" "provider '$prov' has no template .majordomus/providers/$prov.tmpl" "ls .majordomus/providers/"; MJ_DOCTOR_MISSING=1; j=$((j+1)); continue; }
+    mj_provider_template "$prov" >/dev/null || { mj_doctrine_fail projection "$tgt" "provider '$prov' has no template $(mj_rel "$MJ_PROVIDERS_DIR")/$prov.tmpl, and the distribution ships none" "ls $(mj_rel "$MJ_PROVIDERS_DIR")/ $MJ_PROVIDERS_DEFAULT_DIR/"; MJ_DOCTOR_MISSING=1; j=$((j+1)); continue; }
     if [ ! -f "$MJ_ROOT/$tgt" ]; then mj_doctrine_fail projection "$tgt" "missing (run: majordomus update)" "majordomus update"; MJ_DOCTOR_MISSING=1
     elif [ -z "$fpflat" ]; then mj_doctrine_fail projection "$tgt" "no fingerprints recorded (run: majordomus update)" "majordomus update"; MJ_DOCTOR_MISSING=1
     else
@@ -219,14 +219,14 @@ mj_validate_budget() {
 
 mj_validate_retention() {
   local cap ll hc
-  if ! cap="$(mj_pol_req ledger.retention_max_lines)"; then mj_doctrine_fail retention "ledger" "policy declares no ledger.retention_max_lines" "add it under ledger: in .majordomus/policy.yaml; see share/skeleton/policy.yaml"; else
-  ll=0; [ -f "$MJ_DIR/state/ledger.jsonl" ] && ll="$(mj_lines "$MJ_DIR/state/ledger.jsonl")"
-  if [ "$ll" -le "$cap" ]; then mj_doctrine_ok retention "ledger" "$ll lines, cap $cap"; else mj_doctrine_fail retention "ledger" "$ll lines over cap $cap" "wc -l .majordomus/state/ledger.jsonl"; fi; fi
-  if ! cap="$(mj_pol_req handover.retention_max_files)"; then mj_doctrine_fail retention "handovers" "policy declares no handover.retention_max_files" "add it under handover: in .majordomus/policy.yaml; see share/skeleton/policy.yaml"; else
-  hc="$(find "$MJ_DIR/state/handovers" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  if ! cap="$(mj_pol_req ledger.retention_max_lines)"; then mj_doctrine_fail retention "ledger" "policy declares no ledger.retention_max_lines" "add it under ledger: in $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
+  ll=0; [ -f "$MJ_STATE_DIR/ledger.jsonl" ] && ll="$(mj_lines "$MJ_STATE_DIR/ledger.jsonl")"
+  if [ "$ll" -le "$cap" ]; then mj_doctrine_ok retention "ledger" "$ll lines, cap $cap"; else mj_doctrine_fail retention "ledger" "$ll lines over cap $cap" "wc -l $(mj_rel "$MJ_STATE_DIR")/ledger.jsonl"; fi; fi
+  if ! cap="$(mj_pol_req handover.retention_max_files)"; then mj_doctrine_fail retention "handovers" "policy declares no handover.retention_max_files" "add it under handover: in $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
+  hc="$(find "$MJ_STATE_DIR/handovers" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "handovers" "$hc files, cap $cap"; else mj_doctrine_fail retention "handovers" "$hc files over cap $cap" "majordomus handover --list | wc -l"; fi; fi
-  if ! cap="$(mj_pol_req checkpoint.retention_max_files)"; then mj_doctrine_fail retention "checkpoints" "policy declares no checkpoint.retention_max_files" "add a checkpoint: block to .majordomus/policy.yaml; see share/skeleton/policy.yaml"; else
-  hc="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  if ! cap="$(mj_pol_req checkpoint.retention_max_files)"; then mj_doctrine_fail retention "checkpoints" "policy declares no checkpoint.retention_max_files" "add a checkpoint: block to $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"; else
+  hc="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap $cap"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi; fi
 
   return 0
@@ -287,11 +287,11 @@ mj_finish_doctor() {
 # The key list is derived from the source, not written here, so a new mj_pol_req call is
 # covered the moment it is written.
 mj_validate_policy_defaults() {
-  local skel="$MJ_BIN_DIR/../share/skeleton/policy.yaml" k last bad=0 n=0 flat
+  local skel="$MJ_SKELETON_DIR/policy.yaml" k last bad=0 n=0 flat
   [ -f "$skel" ] || { mj_doctrine_skip policy "skeleton" "no skeleton policy to compare against"; MJ_DOCTRINE_SKIPPED=1; return 0; }
   flat="$(mktemp "${TMPDIR:-/tmp}/mj.sk.XXXXXX")"
   mj_yaml_flatten "$skel" > "$flat" 2>/dev/null || { rm -f "$flat"; mj_doctrine_fail policy "skeleton" "share/skeleton/policy.yaml does not parse" "majordomus doctor"; return 0; }
-  for k in $(grep -rhE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' "$MJ_BIN_DIR/../lib" | grep -v '^[[:space:]]*#' \
+  for k in $(grep -rhE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' "$MJ_LIB_DIR" | grep -v '^[[:space:]]*#' \
              | grep -oE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
     n=$((n + 1))
     if [ -z "$(mj_yget "$flat" "$k")" ] && ! grep -qE "^${k}\." "$flat"; then
@@ -300,7 +300,7 @@ mj_validate_policy_defaults() {
   done
   rm -f "$flat"
   # a reader that supplies its own default is the drift this check exists to prevent
-  for k in $(grep -rlnE 'mj_pol +[a-z_.]+\)"; \[ -n|:-[0-9]+\}' "$MJ_BIN_DIR/../lib" 2>/dev/null | grep -v common.sh || true); do
+  for k in $(grep -rlnE 'mj_pol +[a-z_.]+\)"; \[ -n|:-[0-9]+\}' "$MJ_LIB_DIR" 2>/dev/null | grep -v common.sh || true); do
     last="$(grep -nE 'mj_pol +[a-z_.]+\)"; \[ -n' "$k" | head -1 | cut -d: -f1)"
     [ -n "$last" ] && { mj_doctrine_fail policy "$(basename "$k"):$last" "a policy value is read with a default written beside it; use mj_pol_req" "grep -n 'mj_pol ' $k"; bad=1; }
   done
@@ -310,9 +310,9 @@ mj_validate_policy_defaults() {
 
 mj_validate_layout() {
   local d
-  for d in state/handovers state/checkpoints prompts; do
-    if [ -d "$MJ_DIR/$d" ]; then mj_doctrine_ok layout ".majordomus/$d" "present"
-    else mj_doctrine_fail layout ".majordomus/$d" "missing; the command that writes it will create it, but update installs it" "majordomus update"; fi
+  for d in "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_PROMPTS_DIR"; do
+    if [ -d "$d" ]; then mj_doctrine_ok layout "$(mj_rel "$d")" "present"
+    else mj_doctrine_fail layout "$(mj_rel "$d")" "missing; the command that writes it will create it, but update installs it" "majordomus update"; fi
   done
   return 0
 }
@@ -321,7 +321,7 @@ mj_validate_layout() {
 # check because doctor answers a different question — is the installation sound — and a
 # repository with no active task never reaches the check path at all.
 mj_validate_questions_store() {
-  local bad; bad="$(mj_question_malformed "$MJ_DIR/state/open-questions.md")"
+  local bad; bad="$(mj_question_malformed "$MJ_STATE_DIR/open-questions.md")"
   if [ -n "$bad" ]; then mj_doctrine_fail records "open-questions.md" "line(s) $(printf '%s' "$bad" | sed 's/ $//') do not parse; an unreadable entry cannot block acceptance" "majordomus question list --all"
   else mj_doctrine_ok records "open-questions.md" "every entry parses"; fi
   return 0
@@ -329,9 +329,9 @@ mj_validate_questions_store() {
 
 mj_validate_prompts() {
   local f n=0 reason bad=0
-  [ -d "$MJ_DIR/prompts" ] || return 0
+  [ -d "$MJ_PROMPTS_DIR" ] || return 0
   [ "$MJ_DOCTRINE_CMD" = watch ] && mj_watch_prompts_empty
-  for f in "$MJ_DIR"/prompts/*.md; do
+  for f in "$MJ_PROMPTS_DIR"/*.md; do
     [ -f "$f" ] || continue; n=$((n + 1))
     reason="$(mj_prompt_validate "$f")" || { mj_doctrine_fail prompt "$(basename "$f" .md)" "$(printf '%s' "$reason" | tr '\n' ';' | sed 's/;$//')" "majordomus prompt show $(basename "$f" .md)"; bad=1; }
   done
@@ -343,7 +343,7 @@ mj_validate_prompts() {
 # record; only a malformed record is a finding.
 mj_validate_resolver() {
   [ "$MJ_DOCTRINE_CMD" = watch ] && { mj_watch_resolver; return 0; }
-  if mj_resolve_latest "$MJ_DIR/state/handovers" ""; then
+  if mj_resolve_latest "$MJ_STATE_DIR/handovers" ""; then
     mj_doctrine_ok resolver "handovers" "$MJ_RES_MATCH, $(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" "majordomus handover --resolve"
   else mj_doctrine_ok resolver "handovers" "no record for this worktree and branch (absence, not a stale match)" "majordomus handover --resolve"; fi
   [ "$MJ_RES_SKIPPED" -gt 0 ] && mj_doctrine_fail resolver "handovers" "$MJ_RES_SKIPPED record(s) skipped as malformed" "majordomus handover --list"
@@ -355,7 +355,7 @@ mj_validate_resolver() {
 mj_context_builder_check() {
   local budget out lines
   if ! budget="$(mj_pol_req context.builder_budget_lines)"; then
-    mj_doctrine_fail context "builder" "policy declares no context.builder_budget_lines; this installation predates the key" "add it under context: in .majordomus/policy.yaml; see share/skeleton/policy.yaml"
+    mj_doctrine_fail context "builder" "policy declares no context.builder_budget_lines; this installation predates the key" "add it under context: in $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"
     return 0
   fi
   out="$(mktemp "${TMPDIR:-/tmp}/mj.dc.XXXXXX")"
@@ -378,7 +378,7 @@ mj_context_builder_check() {
 # It also runs the other direction: a mj_validate_* function that no doctrine declares
 # is an orphan validator, which is how a check quietly stops being governed.
 mj_validate_doctrine_wiring() {
-  local lib="$MJ_BIN_DIR/../lib" root="$MJ_BIN_DIR/.."
+  local lib="$MJ_LIB_DIR" root="$MJ_HOME"
   local i=0 id val cls fn cmd t bad=0 n=0
 
   # 1. every declared doctrine resolves, end to end
@@ -442,7 +442,7 @@ mj_validate_doctrine_wiring() {
 # watch's view of the same doctrine: the fingerprints are the record of what Majordomus
 # last generated, so drift is measured against them rather than against the policy.
 mj_watch_projection() {
-  local fp="$MJ_DIR/generated/fingerprints.yaml" fpflat="" owned k=0 tgt mode rc
+  local fp="$MJ_GENERATED_DIR/fingerprints.yaml" fpflat="" owned k=0 tgt mode rc
   [ -f "$fp" ] || return 0   # policy validator already reported "no projections generated yet"
   fpflat="$(mktemp "${TMPDIR:-/tmp}/mj.wf.XXXXXX")"
   mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || { rm -f "$fpflat"; return 0; }
@@ -467,12 +467,12 @@ mj_watch_projection() {
 # watch asks whether the policy has moved since the projections were generated; doctor
 # asks whether it is valid at all. Same doctrine, two questions.
 mj_watch_policy() {
-  local tmp psha fp="$MJ_DIR/generated/fingerprints.yaml" fpflat=""
+  local tmp psha fp="$MJ_GENERATED_DIR/fingerprints.yaml" fpflat=""
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.w.XXXXXX")"; mj_policy_cat > "$tmp"; psha="$(mj_sha256 "$tmp")"; rm -f "$tmp"
   if [ -f "$fp" ]; then fpflat="$(mktemp "${TMPDIR:-/tmp}/mj.wf.XXXXXX")"; mj_yaml_flatten "$fp" > "$fpflat" 2>/dev/null || { rm -f "$fpflat"; fpflat=""; }; fi
   if [ -z "$fpflat" ]; then mj_doctrine_fail policy "fingerprints" "no projections generated yet" "majordomus update"
   elif [ "$(mj_yget "$fpflat" policy_sha256)" = "$psha" ]; then mj_doctrine_ok policy "policy+profiles" "match last update (${psha:0:12})"
-  else mj_doctrine_fail policy ".majordomus/policy.yaml" "policy or profiles changed after the last update" "majordomus update --dry-run"; fi
+  else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "policy or profiles changed after the last update" "majordomus update --dry-run"; fi
   [ -n "$fpflat" ] && rm -f "$fpflat"
   return 0
 }
@@ -482,10 +482,10 @@ mj_watch_policy() {
 # not. Both validators therefore skip cleanly when .majordomus/project/ is absent, so
 # adopting Majordomus does not turn an installation red for a feature nobody opted into.
 mj_project_doctrine_load() {
-  mj_project_present || { MJ_DOCTRINE_SKIPPED=1; mj_doctrine_skip project ".majordomus/project" "no canonical project model here; nothing to validate"; return 1; }
+  mj_project_present || { MJ_DOCTRINE_SKIPPED=1; mj_doctrine_skip project "$(mj_rel "$MJ_PROJECT_DIR")" "no canonical project model here; nothing to validate"; return 1; }
   local rc=0; mj_project_load || rc=$?
   [ "$rc" = 0 ] && return 0
-  mj_doctrine_fail project ".majordomus/project" "the canonical model does not load; a file does not parse or two records claim one id" "majordomus plan validate"
+  mj_doctrine_fail project "$(mj_rel "$MJ_PROJECT_DIR")" "the canonical model does not load; a file does not parse or two records claim one id" "majordomus plan validate"
   return 1
 }
 
@@ -501,7 +501,7 @@ mj_validate_project() {
     done < <(printf '%s\n' "$unk")
     return 0
   fi
-  mj_doctrine_ok project ".majordomus/project" "$(mj_pj_milestone_ids | wc -l | tr -d ' ') milestone(s), $(mj_pj_issue_ids | wc -l | tr -d ' ') issue(s), every key read by something"
+  mj_doctrine_ok project "$(mj_rel "$MJ_PROJECT_DIR")" "$(mj_pj_milestone_ids | wc -l | tr -d ' ') milestone(s), $(mj_pj_issue_ids | wc -l | tr -d ' ') issue(s), every key read by something"
   return 0
 }
 
@@ -572,7 +572,7 @@ mj_validate_dag() {
 # This is the doctrine layer applied to prose: a catalogue entry that names a command
 # nobody wrote is the same defect as a rule nothing invokes, and it fails the same way.
 mj_validate_catalogue() {
-  local root="$MJ_BIN_DIR/.." uc="$MJ_BIN_DIR/../share/use-cases.yaml" ap="$MJ_BIN_DIR/../share/applications.yaml"
+  local root="$MJ_HOME" uc="$MJ_SHARE_DIR/use-cases.yaml" ap="$MJ_SHARE_DIR/applications.yaml"
   local ucf apf bad=0 i j k id ref n_uc=0 n_ap=0
   [ -f "$uc" ] && [ -f "$ap" ] || { mj_doctrine_skip catalogue "-" "no catalogue shipped with this installation"; MJ_DOCTRINE_SKIPPED=1; return 0; }
   ucf="$(mktemp "${TMPDIR:-/tmp}/mj.uc.XXXXXX")"; apf="$(mktemp "${TMPDIR:-/tmp}/mj.ap.XXXXXX")"

@@ -28,9 +28,9 @@ H
   esac; done
   mj_require_installed
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
-  local dir="$MJ_DIR/state/checkpoints"
+  local dir="$MJ_STATE_DIR/checkpoints"
   if [ "$list" = 1 ]; then mj_record_list "$dir" checkpoint; return; fi
-  mj_load_current || mj_die "$MJ_EX_MISSING" "no active task (.majordomus/state/current.yaml); run: majordomus start"
+  mj_load_current || mj_die "$MJ_EX_MISSING" "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
   local id profile owner; id="$(mj_cur id)"; profile="$(mj_cur profile)"; owner="$(mj_cur owner)"
 
   if [ "$show" = 1 ]; then

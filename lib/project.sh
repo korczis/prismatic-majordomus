@@ -22,8 +22,8 @@
 : "${MJ_PJ:=}"          # temp workspace: raw.tsv, model.tsv, flat/
 : "${MJ_PJ_LOADED:=0}"
 
-mj_project_dir() { printf '%s' "$MJ_DIR/project"; }
-mj_project_present() { [ -f "$MJ_DIR/project/project.yaml" ]; }
+mj_project_dir() { printf '%s' "$MJ_PROJECT_DIR"; }
+mj_project_present() { [ -f "$MJ_PROJECT_DIR/project.yaml" ]; }
 
 # Load the canonical model. 0 loaded · 1 no project here · 2 a canonical file does not parse.
 # Parse failures are reported on stderr with the file that caused them; nothing is guessed.
@@ -31,7 +31,7 @@ mj_project_load() {
   [ "$MJ_PJ_LOADED" = 1 ] && return 0
   mj_project_present || return 1
   local dir raw flat f id rc=0
-  dir="$MJ_DIR/project"
+  dir="$MJ_PROJECT_DIR"
   MJ_PJ="$(mktemp -d "${TMPDIR:-/tmp}/mj.pj.XXXXXX")"
   mkdir -p "$MJ_PJ/flat"
   raw="$MJ_PJ/raw.tsv"; : > "$raw"
@@ -169,7 +169,7 @@ mj_project_unknown_keys() {
     if [ "$id" = PROJECT ]; then allow="project"
     elif mj_pj_is_milestone "$id"; then allow="milestone"
     else allow="issue"; fi
-    out="$(mj_yaml_unknown_keys "$f" "$MJ_BIN_DIR/../share/allow/$allow.txt" || true)"
+    out="$(mj_yaml_unknown_keys "$f" "$MJ_ALLOW_DIR/$allow.txt" || true)"
     if [ -n "$out" ]; then
       printf '%s %s\n' "$id" "$(printf '%s' "$out" | tr '\n' ' ')"
       bad=1
@@ -235,8 +235,8 @@ mj_project_mermaid() {
 # mj_pj_set_field <issue> <key> <value>   — replaces or appends a top-level scalar
 mj_pj_set_field() {
   local id="$1" key="$2" val="$3" f tmp
-  f="$MJ_DIR/project/issues/$id.yaml"
-  [ -f "$f" ] || f="$MJ_DIR/project/milestones/$id.yaml"
+  f="$MJ_PROJECT_DIR/issues/$id.yaml"
+  [ -f "$f" ] || f="$MJ_PROJECT_DIR/milestones/$id.yaml"
   [ -f "$f" ] || return 1
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.set.XXXXXX")"
   if grep -qE "^$key:" "$f"; then

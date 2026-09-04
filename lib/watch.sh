@@ -22,7 +22,7 @@ mj_cmd_watch() {
   # A checkout with no active task still watches its policy, projections and stores.
   local have_task=0
   if mj_load_current && mj_task_is_foreign; then
-    mj_info state "$(mj_cur id)" "task belongs to $(mj_cur worktree), not this checkout" "cat .majordomus/state/current.yaml"
+    mj_info state "$(mj_cur id)" "task belongs to $(mj_cur worktree), not this checkout" "cat $(mj_rel "$MJ_STATE_DIR")/current.yaml"
   elif mj_load_current; then
     have_task=1
     mj_load_profile "$(mj_cur profile)" 2>/dev/null || mj_drift state "$(mj_cur id)" "profile '$(mj_cur profile)' has no file"
@@ -35,18 +35,18 @@ mj_cmd_watch() {
     case "$(mj_cur outcome)" in
       active) mj_ok state "$id" "active; scope, checkpoint, blockers and records reported above" ;;
       completed|partial|blocked|no_match|failed)
-        if grep -q "\"event\":\"task.finished\".*\"task_id\":\"$id\"" "$MJ_DIR/state/ledger.jsonl" 2>/dev/null; then mj_ok verification "$id" "$(mj_cur outcome) with a finish record"
-        else mj_drift verification "$id" "marked $(mj_cur outcome) but no task.finished record in the ledger" "grep task.finished .majordomus/state/ledger.jsonl"; fi ;;
+        if grep -q "\"event\":\"task.finished\".*\"task_id\":\"$id\"" "$MJ_STATE_DIR/ledger.jsonl" 2>/dev/null; then mj_ok verification "$id" "$(mj_cur outcome) with a finish record"
+        else mj_drift verification "$id" "marked $(mj_cur outcome) but no task.finished record in the ledger" "grep task.finished $(mj_rel "$MJ_STATE_DIR")/ledger.jsonl"; fi ;;
       handed_over)
-        local hv; hv="$(grep -l "^task_id: $id$" "$MJ_DIR"/state/handovers/*.md 2>/dev/null | sort | tail -n1)"
-        if [ -z "$hv" ]; then mj_drift handover "$id" "marked handed_over but no handover file names it" "ls .majordomus/state/handovers"
+        local hv; hv="$(grep -l "^task_id: $id$" "$MJ_STATE_DIR"/handovers/*.md 2>/dev/null | sort | tail -n1)"
+        if [ -z "$hv" ]; then mj_drift handover "$id" "marked handed_over but no handover file names it" "ls $(mj_rel "$MJ_STATE_DIR")/handovers"
         else local miss; miss="$(mj_check_sections "$hv" "$(mj_ylist "$MJ_POL_FLAT" handover.required_sections | tr '\n' '|')")"
           if [ -z "$miss" ]; then mj_ok handover "$id" "$(basename "$hv")"; else mj_drift handover "$(basename "$hv")" "missing section(s): $miss" "grep -n '^# ' $hv"; fi; fi ;;
-      *) mj_drift state "$id" "unknown outcome '$(mj_cur outcome)'" "cat .majordomus/state/current.yaml" ;;
+      *) mj_drift state "$id" "unknown outcome '$(mj_cur outcome)'" "cat $(mj_rel "$MJ_STATE_DIR")/current.yaml" ;;
     esac
     # a checkpoint record for the active task, distinct from checkpoint_at
     if [ "$(mj_cur outcome)" = active ]; then
-      if mj_resolve_latest "$MJ_DIR/state/checkpoints" "$id"; then
+      if mj_resolve_latest "$MJ_STATE_DIR/checkpoints" "$id"; then
         mj_ok checkpoint "$(basename "$MJ_RES_PATH")" "$(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")"
       else mj_info checkpoint "$id" "no checkpoint record; only checkpoint_at is set" "majordomus checkpoint"; fi
     fi
@@ -60,7 +60,7 @@ mj_cmd_watch() {
 # is the watch branch of handover_integrity: doctor asks whether the resolver works,
 # watch asks whether what it resolves to still describes this history.
 mj_watch_resolver() {
-  if mj_resolve_latest "$MJ_DIR/state/handovers" ""; then
+  if mj_resolve_latest "$MJ_STATE_DIR/handovers" ""; then
     local label; label="$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")"
     case "$label" in
       diverged|different_context)
@@ -76,9 +76,9 @@ mj_watch_resolver() {
 # has no assets at all is drift, not a broken asset — so it belongs to watch's branch.
 mj_watch_prompts_empty() {
   local f n=0
-  [ -d "$MJ_DIR/prompts" ] || return 0
-  for f in "$MJ_DIR"/prompts/*.md; do [ -f "$f" ] && n=$((n + 1)); done
-  [ "$n" = 0 ] && mj_doctrine_fail prompt ".majordomus/prompts" "no assets; the projected instructions point workers at prompt list" "majordomus update"
+  [ -d "$MJ_PROMPTS_DIR" ] || return 0
+  for f in "$MJ_PROMPTS_DIR"/*.md; do [ -f "$f" ] && n=$((n + 1)); done
+  [ "$n" = 0 ] && mj_doctrine_fail prompt "$(mj_rel "$MJ_PROMPTS_DIR")" "no assets; the projected instructions point workers at prompt list" "majordomus update"
   return 0
 }
 # handover.sh provides mj_check_sections; the rest provide the store validators and builder

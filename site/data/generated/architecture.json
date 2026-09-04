@@ -160,9 +160,9 @@
       "external": false
     },
     {
-      "id": ".majordomus/state/session-current.yaml",
+      "id": ".majordomus/profiles",
       "kind": "artifact",
-      "label": "state/session-current.yaml",
+      "label": "profiles",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -170,9 +170,9 @@
       "external": false
     },
     {
-      "id": ".majordomus/profiles",
+      "id": ".majordomus/state/session-current.yaml",
       "kind": "artifact",
-      "label": "profiles",
+      "label": "state/session-current.yaml",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -287,16 +287,6 @@
       "summary": "set up .majordomus/ in this repository (refuses to overwrite)",
       "read_only": null,
       "route": "/commands/init/",
-      "external": false
-    },
-    {
-      "id": ".majordomus/templates",
-      "kind": "artifact",
-      "label": "templates",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
       "external": false
     },
     {
@@ -494,16 +484,6 @@
     {
       "source": "lib/finish.sh",
       "target": ".majordomus/state/checkpoints",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".majordomus/state/decisions.md",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".majordomus/state/open-questions.md",
       "kind": "reads"
     },
     {
@@ -867,26 +847,6 @@
       "kind": "uses"
     },
     {
-      "source": "lib/init.sh",
-      "target": ".majordomus/prompts",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".majordomus/state/checkpoints",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".majordomus/state/handovers",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".majordomus/templates",
-      "kind": "uses"
-    },
-    {
       "source": "lib/plan.sh",
       "target": ".majordomus/project/issues",
       "kind": "uses"
@@ -953,12 +913,32 @@
     },
     {
       "source": "lib/start.sh",
+      "target": ".majordomus/profiles",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/start.sh",
       "target": ".majordomus/state/handovers",
       "kind": "uses"
     },
     {
       "source": "lib/update.sh",
+      "target": ".majordomus/profiles",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/update.sh",
       "target": ".majordomus/providers/body.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": ".majordomus/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": ".majordomus/state/handovers",
       "kind": "uses"
     },
     {
@@ -1009,11 +989,6 @@
     {
       "source": "lib/history.sh",
       "target": ".majordomus/state/ledger.jsonl",
-      "kind": "writes"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".majordomus/profiles",
       "kind": "writes"
     },
     {

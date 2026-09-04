@@ -137,7 +137,7 @@ mj_context_sections() {
   fi
 
   # 4. open questions — blockers are never dropped for budget
-  local qf="$MJ_DIR/state/open-questions.md" maxi
+  local qf="$MJ_STATE_DIR/open-questions.md" maxi
   maxi="$(mj_pol_req context.max_list_items)"
   if [ -f "$qf" ] && [ "$have_task" = 1 ]; then
     local qn; qn="$(grep -cE "^- \[unresolved\] $id " "$qf" 2>/dev/null || true)"
@@ -151,7 +151,7 @@ mj_context_sections() {
   fi
 
   # 5. decisions
-  local dfile="$MJ_DIR/state/decisions.md" dmax
+  local dfile="$MJ_STATE_DIR/decisions.md" dmax
   dmax="$(mj_pol_req context.recent_decisions)"
   if [ -z "$profile" ]; then :
   elif [ "$(mj_pro context.architecture_notes)" = true ]; then
@@ -168,7 +168,7 @@ mj_context_sections() {
 
   # 6. newest checkpoint for this task
   if [ "$have_task" = 1 ] && [ -n "$profile" ] && [ "$(mj_pro context.current_state)" != false ]; then
-    if mj_resolve_latest "$MJ_DIR/state/checkpoints" "$id"; then
+    if mj_resolve_latest "$MJ_STATE_DIR/checkpoints" "$id"; then
       {
         printf '## LATEST CHECKPOINT (%s, %s, %s)\n' "${MJ_RES_PATH#"$MJ_ROOT/"}" \
           "$(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")" "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")"
@@ -181,8 +181,8 @@ mj_context_sections() {
   # 7. most relevant handover — task-scoped first, then this worktree and branch
   if [ -z "$profile" ] || [ "$(mj_pro context.current_state)" != false ]; then
     local found=0
-    if [ "$have_task" = 1 ] && mj_resolve_latest "$MJ_DIR/state/handovers" "$id"; then found=1
-    elif mj_resolve_latest "$MJ_DIR/state/handovers" ""; then found=1; fi
+    if [ "$have_task" = 1 ] && mj_resolve_latest "$MJ_STATE_DIR/handovers" "$id"; then found=1
+    elif mj_resolve_latest "$MJ_STATE_DIR/handovers" ""; then found=1; fi
     if [ "$found" = 1 ]; then
       {
         printf '## LATEST COMPATIBLE HANDOVER (%s)\n' "${MJ_RES_PATH#"$MJ_ROOT/"}"
@@ -204,7 +204,7 @@ mj_context_sections() {
     if [ "$(mj_pro context.relevant_files)" = true ]; then
       local f s inside n=0 tmpf; tmpf="$MJ_CTX_TMP/files.tmp"; : > "$tmpf"
       for f in $(mj_git_touched "$(mj_cur head)"); do
-        case "$f" in .majordomus/*) continue ;; esac
+        mj_is_ai_path "$f" && continue
         inside=0; for s in $(mj_ylist "$MJ_CUR_FLAT" scope); do mj_path_contains "$s" "$f" && { inside=1; break; }; done
         [ "$inside" = 1 ] && { printf '%s\n' "$f" >> "$tmpf"; n=$((n + 1)); }
       done
@@ -220,7 +220,7 @@ mj_context_sections() {
   # 9. recent history
   if [ -n "$profile" ]; then
     local depth; depth="$(mj_pro context.recent_history_depth)"; [ -n "$depth" ] || depth=0
-    if [ "$depth" -gt 0 ] && [ -f "$MJ_DIR/state/ledger.jsonl" ]; then
+    if [ "$depth" -gt 0 ] && [ -f "$MJ_STATE_DIR/ledger.jsonl" ]; then
       { printf '## RECENT HISTORY (last %s events)\n' "$depth"
         ( export MJ_JSON=0; mj_cmd_history --limit "$depth" 2>/dev/null | sed '/^(/d' ); } > "$MJ_CTX_TMP/90.history"
     else
@@ -232,7 +232,7 @@ mj_context_sections() {
   #     rendered: the result would be this same context nested inside itself, which is
   #     duplication the budget then has to pay for twice.
   if [ -n "$prompt_name" ]; then
-    local pfile; pfile="$MJ_DIR/prompts/$prompt_name.md"
+    local pfile; pfile="$MJ_PROMPTS_DIR/$prompt_name.md"
     if [ "$no_prompt" = 1 ] || { [ -f "$pfile" ] && grep -q '^{{CONTEXT}}$' "$pfile"; }; then
       mj_ctx_excl "prompt $prompt_name" "a prompt asset cannot include the context it is being rendered into"
     else

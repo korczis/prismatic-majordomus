@@ -25,7 +25,7 @@ H
   esac
 }
 
-mj_decision_file() { printf '%s' "$MJ_DIR/state/decisions.md"; }
+mj_decision_file() { printf '%s' "$MJ_STATE_DIR/decisions.md"; }
 
 mj_decision_add() {
   local title="" why="" rejected="-" evidence="-" supersedes="-"

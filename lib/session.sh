@@ -16,8 +16,8 @@
 # shellcheck source=project.sh
 . "$MJ_LIB_DIR/project.sh"
 
-mj_session_file() { printf '%s' "$MJ_DIR/state/session-current.yaml"; }
-mj_session_dir()  { printf '%s' "$MJ_DIR/state/sessions"; }
+mj_session_file() { printf '%s' "$MJ_STATE_DIR/session-current.yaml"; }
+mj_session_dir()  { printf '%s' "$MJ_STATE_DIR/sessions"; }
 
 # Load the open session into MJ_SES_FLAT. 0 loaded · 1 none · 2 does not parse.
 mj_load_session() {
@@ -87,7 +87,7 @@ mj_session_start() {
   local rc=0; mj_load_session || rc=$?
   case "$rc" in
     0) if mj_session_is_foreign; then
-         mj_warn session "$(mj_ses session_id)" "the open record here belongs to $(mj_ses worktree); replacing it in this working copy only" "cat .majordomus/state/session-current.yaml"
+         mj_warn session "$(mj_ses session_id)" "the open record here belongs to $(mj_ses worktree); replacing it in this working copy only" "cat $(mj_rel "$MJ_STATE_DIR")/session-current.yaml"
        else
          mj_die "$MJ_EX_REFUSED" "session $(mj_ses session_id) is open here since $(mj_ses started_at); run majordomus session close first"
        fi ;;
@@ -123,7 +123,7 @@ mj_session_status() {
   local rc=0; mj_load_session || rc=$?
   if [ "$rc" = 2 ]; then
     if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"open":null,"error":"session-current.yaml does not parse"}\n'
-    else mj_fail session "session-current.yaml" "does not parse" "cat .majordomus/state/session-current.yaml"; fi
+    else mj_fail session "session-current.yaml" "does not parse" "cat $(mj_rel "$MJ_STATE_DIR")/session-current.yaml"; fi
     exit "$MJ_EX_CONTRACT"
   fi
   if [ "$rc" = 1 ]; then
@@ -152,7 +152,7 @@ mj_session_status() {
   printf 'Branch:     %s\n' "$(mj_ses branch)"
   printf 'Start head: %s (%s)\n' "$(mj_ses start_head | cut -c1-7)" "$label"
   if mj_session_is_foreign; then
-    mj_info session "$id" "belongs to $(mj_ses worktree), not this checkout; nothing here is about it" "cat .majordomus/state/session-current.yaml"
+    mj_info session "$id" "belongs to $(mj_ses worktree), not this checkout; nothing here is about it" "cat $(mj_rel "$MJ_STATE_DIR")/session-current.yaml"
   fi
   case "$label" in
     diverged|different_context)
@@ -260,7 +260,7 @@ mj_session_close() {
 # tiebreak: the file is append-only and written in the order the commands ran.
 mj_session_window() {
   local sid="$1" led
-  led="$MJ_DIR/state/ledger.jsonl"
+  led="$MJ_STATE_DIR/ledger.jsonl"
   [ -f "$led" ] || return 0
   awk -v s="$sid" '{ v = $0
       if (index(v, "\"session\":\"") == 0) next
