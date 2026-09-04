@@ -535,9 +535,26 @@ Prismatic Majordomus carries the Prismatic name. It carries nothing else from th
 Prismatic Platform.
 
 Excluded absolutely: domain intelligence, investigation workflows, OSINT adapters,
-inference machinery, graph semantics, agent societies, internal component names,
-internal paths, hostnames, customer or case material, audit contents, secrets, and the
-pillar and doctrine vocabulary of the source environment.
+inference machinery, semantic and domain graph machinery, agent societies, internal
+component names, internal paths, hostnames, customer or case material, audit contents,
+secrets, and the pillar and doctrine vocabulary of the source environment.
+
+One line in that list used to read "graph semantics" without qualification, and it was
+too blunt to apply. It forbade two different things at once: a system that infers what
+artefacts mean, and a table of the references those artefacts already state. The first
+stays out. The second is what `knowledge` is. The boundary is therefore stated as a test
+a reader can apply to a proposal:
+
+> Majordomus does not import Prismatic Platform domain, inference, intelligence or
+> semantic graph machinery. It may maintain a generic deterministic reference and
+> provenance graph derived from its own repository's artifacts, in which every edge
+> names the file it was observed in and no edge is inferred from prose.
+
+The test is provenance. An edge that can name the line that states it is a reference; an
+edge that exists because something looked related is a semantic claim, and semantic
+claims are outside the boundary regardless of how they are computed. Similarity,
+embedding, clustering and automatic taxonomy are excluded by the same sentence, because
+none of them can name a line.
 
 Direction of dependency is one-way. Prismatic Platform may adopt Majordomus. Majordomus
 never imports from, links to, or requires Prismatic Platform. There is no shared code.
@@ -554,6 +571,27 @@ What did cross the boundary, by abstraction and re-derivation only:
 - the exit-code contract and the ban on "warn and continue"
 - the self-disabling bootstrap hatch
 - the rule that numbers in prose are computed or forbidden
+
+A second pass over the same material, made when the session and knowledge layers were
+designed, added these:
+
+- identity derived from a stable source fact, and content hashes used only to detect
+  change — never the reverse
+- provenance as a required property of every edge, so that a relation nobody can trace
+  to a line cannot be constructed at all
+- classification from structure and declared metadata, never from prose, with `unknown`
+  as a first-class answer rather than a plausible default
+- gating only on defects the run itself caused, and reporting everything else, because a
+  permanently red report is one nobody reads
+- distinguishing an absent artefact, which is a legitimate first run, from a corrupt one,
+  which must fail loudly rather than be treated as absent
+- an ordered, de-duplicated generated artefact, so that what a rebuild changed is visible
+  in a diff
+- projecting a high-volume, low-durability record kind as one index rather than one node
+  each
+
+The full second-pass ledger, including what was refused and why, is
+[`EXTRACTION_REPORT.md`](EXTRACTION_REPORT.md) section 11.
 
 ## MVP
 

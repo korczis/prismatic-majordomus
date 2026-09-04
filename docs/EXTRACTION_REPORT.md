@@ -283,3 +283,79 @@ previous is reviewed.
    repository.
 
 Phase 3 is the next action.
+
+---
+
+## 11. Second pass — session records and a knowledge compiler
+
+The first pass studied instruction files, hooks, state stores and coordination. It did
+not study two subsystems that turn out to matter for the same problem: a file-based
+session-note discipline, and a stateless Markdown compiler that produced a browsable
+generated note vault from a repository's own documents.
+
+They were re-examined when [`M003`](../.majordomus/project/milestones/M003.yaml) was
+planned. The method is unchanged — study, abstract, challenge, synthesise — and so is the
+confidentiality rule: mechanisms and magnitudes are reported, code and vocabulary are not.
+
+The two are of very different quality, and the difference is itself the finding. The
+session-note discipline is filename-shaped: it enforces a naming grammar and has no model
+of what a record contains. The compiler is properly built, and nearly every guard in it
+carries a comment naming the failure it prevents.
+
+### What the evidence says
+
+| Observation | Magnitude | Consequence for this design |
+|---|---|---|
+| A session-note directory with a stated retention of "most recent 50 files" | roughly 10 GB across 585 entries at this pass; section 4 records 1,496 files at the first pass, and both are kept rather than reconciled — the count moved, the volume did not | The bloat was not a retention failure. A second producer wrote non-Markdown snapshots into a directory whose every tool filtered on one extension, so no threshold applied and no audit saw them. Retention has to be a property of a store, not of a file pattern. |
+| Its records | free text end to end; a machine-checkable field count of zero, including an identifier field labelled auto-generated that nothing generated | A record that asserts a commit hash nobody computed is worse than no record. Every identity field of a Majordomus session is computed from git and refused in an authored body. |
+| Its "compression" step | replaced the original in place with a `grep`-derived digest, keeping the only full copy untracked | Majordomus archives and never rewrites. Nothing summarises a record, because nothing here calls a model and a regex digest is a lossy model with worse failure modes. |
+| That step's file selector | a hardcoded year prefix that stopped matching when the year changed; it exits reporting success having done nothing | A maintenance command that can do nothing and report success is indistinguishable from one that works. |
+| Its ordering and selection | files selected by filesystem mtime, then grouped by the date parsed out of the filename | Two clocks in one loop, and mtime does not survive a clone. Majordomus orders by the recorded timestamp and breaks ties with the ledger. |
+| Its enforcement hook | documented as blocking; silently matched nothing on every platform because NUL-delimited input was piped into a line-oriented filter | The same failure class the first pass found seventeen times, found again in the subsystem meant to prevent it. |
+| Its retention numbers | four destination-and-threshold pairs for one dataset, across a policy, a README and two scripts, none reconciled, none with a stated derivation | Retention is one policy block, read by one command. |
+| Its compliance percentage | counted exempt files in the denominator | A number that systematically understates the thing it exists to report. |
+| The compiler's discovery | driven by `git ls-files`; a last recorded run classified 25,539 tracked Markdown files into 3,655 curated, 2,662 session logs and 19,222 excluded | Repository truth, no exclusion globs to maintain, no build output, no untracked files. Adopted directly. |
+| The compiler's edges | 7,731 edges, every one explicit, none inferred | The graph knows only what somebody typed. That is the property worth having first. |
+| Its broken links and orphans | roughly a third of its nodes | Reported, never gated, with the reasoning recorded: gating on a count that is large by design trains people to ignore the failure. |
+| Its cold run | about 2.1 seconds over 3,655 sources, with the manifest short-circuiting rendering but not analysis | A manifest that only skips writes is worth much less than one that skips work. Measure before believing. |
+
+### Adopted, by re-derivation
+
+Each of these is an idea, re-implemented from scratch in portable shell and awk against
+Majordomus's own records. No code, no schema and no vocabulary was carried across.
+
+| Idea | What it becomes here |
+|---|---|
+| Identity from a stable source fact; hashes only for change detection | A node id is a canonical id or a repository path. `source_hash` says whether it moved, never what it is. |
+| Provenance required on every edge | An edge carries the file it was observed in, and an edge without one is a validation failure rather than a silent drop. |
+| A confidence vocabulary whose "inferred" value is currently unused | The graph's trustworthiness becomes a checkable claim: the count of inferred edges is zero, and a command says so. |
+| Classify from structure and declared metadata, never from prose | A node's kind comes from its source class or an explicit field. A document containing the word "roadmap" does not become a roadmap. |
+| `unknown` as a first-class answer | An unrecognised source is a node of kind `unknown`, reported, not guessed at and not dropped. |
+| Never default a status to a plausible value | Already the rule for issue status, which is derived and has no stored field. Extended to node kind. |
+| Gate only on defects this run caused | A broken reference between two things Majordomus owns is a failure. A link to a deliberately external resource is not. |
+| Absent is not corrupt | A missing manifest is a first run. A manifest that does not parse fails loudly, because treating it as absent would silently disable the guarantee it exists to provide. |
+| Tag a link by the syntax it was written in, not by the shape of its target | An extension-less relative link is a link because of how it was written. |
+| Strip fenced code before scanning for links | A path inside a code sample is an example, not a reference. |
+| Order-independent, hash-backed collision disambiguation | A readable fragment is a hint; the hash is the guarantee. |
+| Record both values when two sources of one fact disagree | Report the drift rather than picking a winner and hiding it. |
+| A per-file failure is an error, not an aborted run | One malformed input must not cost the build. |
+| Sorted, de-duplicated generated output | The artefact is diffable, so a rebuild's effect is reviewable. |
+| Project a high-volume, low-durability corpus as one index | Checkpoints are referenced from their session, not made one node each. |
+| Filename-carried UTC timestamps for chronological records | Already the shape of a checkpoint and a handover here, and it already carries the sub-day resolution and the uniqueness component the studied grammar lacked. |
+| Skip the heavy runtime when the job does not need it | Already true by construction: there is no runtime to skip. |
+
+### Refused
+
+| Refused | Why |
+|---|---|
+| Any database — embedded, relational, columnar or graph | The corpus is a few thousand small files. A database is a dependency, a migration story and a second source of truth bought before anything measured a need for one. Measure first. |
+| Embeddings, vector search, similarity, clustering, automatic taxonomy | None can name the line that justifies the relation, which is the test the extraction boundary now uses. They are also unfalsifiable by the person best placed to notice they are wrong. |
+| Any generated summary of a session, by a model or by a regex | Majordomus calls no model, and the studied regex digest is the case study in why the cheap substitute is worse. A worker writes its own summary or the record has none. |
+| A note-vault renderer, and any dependency on a particular note-taking application | The graph is renderer-independent. A renderer can be added later against the same generated data; nothing in the core may assume one. |
+| Copying record bodies into a session note | The single most consequential defect of the studied session store. A session is an envelope of references. |
+| A mutable session file that other commands append references to as they run | It puts a write on the hot path of every command and recreates the second store. The envelope is derived from the ledger at close. |
+| Destructive compression or in-place rewriting of any record | Archiving moves; it never rewrites and never overwrites an archive. |
+| Filesystem mtime as an ordering or selection input | It does not survive a clone and it is not the time the record asserts. |
+| A retention rule that names a file pattern rather than a store | The 10 GB directory is what that costs. |
+| Bypass channels for an enforced rule | Two existed there, in a discipline whose own policy said it could not be bypassed. |
+| A second "search" whose contract quietly replaces the first | `search` stays a literal scan over durable records with no index. `knowledge search` is a different corpus with a different contract, and both say so. |
