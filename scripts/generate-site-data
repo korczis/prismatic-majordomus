@@ -53,11 +53,13 @@ docs/CLAIMS.yaml
 README.md
 LICENSE"
 # LC_ALL=C so the globs below expand in byte order rather than in the collation order of
-# whoever is running this. A locale that ignores punctuation when sorting puts
-# docs/claims/blocker-store.md and blocker-survives-handover.md in a different order than a
-# byte-sorting one, the input list changes order, and the hash computed from it differs
-# between a developer's machine and CI — which is a portability failure in a tool that
-# declares byte-identical output for identical input.
+# whoever is running this. .majordomus/project/milestones/ holds both M000.yaml and
+# slug-named files: byte order puts uppercase M before every lowercase name, a
+# case-insensitive locale files it between "foundation" and "routing-". The input list then
+# differs by machine, and so does the hash computed from it — a portability failure in a
+# tool that declares byte-identical output for identical input. Any directory mixing
+# uppercase and lowercase names has the same effect; this one merely reached that state
+# first.
 LC_ALL=C; export LC_ALL
 for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
          "$ROOT"/.majordomus/project/project.yaml "$ROOT"/.majordomus/project/milestones/*.yaml \
