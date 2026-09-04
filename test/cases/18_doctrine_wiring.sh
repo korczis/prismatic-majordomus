@@ -1,3 +1,5 @@
+# majordomus-covers: doctrine doctor
+# majordomus-negative: doctrine doctor
 # The wiring verifier is the reason this layer exists, so it is itself mutation-tested:
 # each link of the chain is broken in a throwaway copy and doctor must go red. A verifier
 # that survives broken wiring proves nothing.

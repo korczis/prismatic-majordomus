@@ -113,6 +113,23 @@ done. Different facts. Other outcomes need a note with `# Next Action` or `# Rea
 Body on stdin with non-empty {{REQUIRED_SECTIONS}}. Front matter is computed. No transcript,
 no diff, no narrative: what is true now, and the one next action.
 
+### Adding a public command
+
+A command is a product surface, not a shell function. `share/commands.yaml` declares what
+each one means; `bin/majordomus` decides what runs; neither derives from the other and
+`doctor` reconciles them. Adding one means, in any order:
+
+- the dispatch arm and the usage line in `bin/majordomus`, and `lib/<name>.sh`
+- the entry in `share/commands.yaml` and a `## \`majordomus <name>\`` section in `docs/CLI.md`
+- a case that declares `# majordomus-covers: <name>` and one that declares
+  `# majordomus-negative: <name>`
+- `test/fixtures/commands/<name>.json`, whose scenarios `test/cases/34_command_fixtures.sh`
+  executes against the real binary and the site renders as that command's demonstration
+
+Miss any of them and you are told which: the registry reconciliation, the coverage
+doctrine, and the site generator each refuse separately and name what is absent. Nothing
+here is a list to keep in step — every check reads the surface it validates.
+
 ### Working here
 
 Conventional commits, `type(scope): description`, with the co-author footer the

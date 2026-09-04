@@ -111,7 +111,7 @@
 
     {#- B, D, G, K. The authored reference: when to use it, its options, its output, examples -#}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Reference</h2>
-    <article class="format break-words [&_code]:break-words [&_code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ c.doc_md | markdown | safe }}</article>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ c.doc_md | markdown | safe }}</article>
 
     {#- M. Evidence. Generated from coverage metadata; nothing here is typed by hand. -#}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>

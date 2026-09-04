@@ -36,8 +36,11 @@ expect_exit 0 "$C/scripts/generate-site-data"
 # ---- add a public command and nothing else -------------------------------------------
 # The dispatcher gains an arm and the usage text gains a line. No registry entry, no
 # fixture, no test, no page.
-sed -i.bak 's/^  init|doctor|start|check|watch|update|handover|finish|context|checkpoint|history|decision|question|prompt|search)$/  init|doctor|start|check|watch|update|handover|finish|context|checkpoint|history|decision|question|prompt|search|futurecmd)/' "$C/bin/majordomus"
-sed -i.bak 's/^  version              print the version$/  version              print the version\n  futurecmd            a command added without any of its surfaces/' "$C/bin/majordomus"
+# The dispatch arm is matched by its shape, not by its current contents. A probe that
+# names today's command list stops mutating the day someone adds a command — which is the
+# same defect as a validator that stops running, and it passes silently.
+sed -i.bak 's/^\(  [a-z|][a-z|]*\))$/\1|futurecmd)/' "$C/bin/majordomus"
+sed -i.bak 's/^\(  version  *\)print the version$/\1print the version\n  futurecmd            a command added without any of its surfaces/' "$C/bin/majordomus"
 rm -f "$C/bin/majordomus.bak"
 printf 'mj_cmd_futurecmd() { printf "future\\n"; }\n' > "$C/lib/futurecmd.sh"
 grep -q 'futurecmd)' "$C/bin/majordomus" || { echo "    the dispatcher probe did not take"; exit 1; }

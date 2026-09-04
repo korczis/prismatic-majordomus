@@ -13,6 +13,9 @@
 # with check. Sourcing it is the dependency being honest rather than a second copy.
 # shellcheck source=check.sh
 . "$MJ_LIB_DIR/check.sh"
+# the command-surface doctrines: their validators read share/, not this repository's state
+# shellcheck source=commands.sh
+. "$MJ_LIB_DIR/commands.sh"
 # the continuity validators read these stores through their own commands' helpers
 # shellcheck source=question.sh
 . "$MJ_LIB_DIR/question.sh"

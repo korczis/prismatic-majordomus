@@ -157,6 +157,33 @@ and *then* fails, so the `|| printf 'NONE'` fallback appended to it and produced
 field with an embedded newline — a permanently corrupt line in an append-only ledger, for
 anyone who ran `init` and `update` before their first commit.
 
+## A mutation must prove it mutated
+
+A test that breaks something and then checks for the failure is only as good as the break.
+`sed` is silent when its pattern matches nothing: it exits 0 having changed nothing, and the
+case goes on to assert that a no-op produced no failure, which is trivially true. The case
+stays green and proves nothing, and it does so from the moment the code it was mutating
+changed shape.
+
+So every probe asserts it took effect before asserting what it caused:
+
+```sh
+sed 's/<pattern>/<replacement>/' "$SRC" > "$PROBE"
+grep -q '<the replacement>' "$PROBE" || { echo "    the probe did not take"; exit 1; }
+```
+
+Two refinements, both learned the hard way in this repository:
+
+- **An absence needs the inverted assertion.** `sed '/x/d'` leaves no replacement to find,
+  so the guard is that the thing is gone rather than that something new is there.
+- **Match by shape, not by contents.** A probe that names today's command list stops
+  mutating the day someone adds a command. That is the same defect as a validator that
+  silently stops running, and `35_future_command` had it within an hour of being written —
+  its guard is what caught it.
+
+A mutation that silently stops mutating and a rule that silently stops being enforced are
+the same failure, and this repository exists because of the second one.
+
 ## Self-governance
 
 Majordomus supervises this repository with the same registries it ships. There is no

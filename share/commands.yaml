@@ -205,7 +205,7 @@ commands:
     syntax: majordomus check [--explain] [--overlap] [--checkpoint] [--json]
     reads: [.majordomus/policy.yaml, .majordomus/profiles/, .majordomus/state/current.yaml, .majordomus/state/open-questions.md, git status, git diff]
     writes: []
-    exit_codes: [0, 2, 10, 12]
+    exit_codes: [0, 2, 10, 12, 13]
     demo: check-findings
     note: Read-only unless --checkpoint is given, which records a checkpoint after the checks run.
 
@@ -316,6 +316,24 @@ commands:
     exit_codes: [0, 2, 12]
     demo: search-kinds
     note: Literal search, not a regular expression. Exits 12 when nothing matches, so a caller can distinguish absence from failure.
+
+  - id: doctrine
+    title: doctrine
+    summary: What rules are enforced, by what, and whether each one is actually wired.
+    category: system
+    stage: inspect
+    visibility: public
+    class: read-only
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: true
+    syntax: majordomus doctrine [status|list|show <id>] [--json]
+    reads: [share/doctrines.yaml, lib/]
+    writes: []
+    exit_codes: [0, 2, 10, 12, 13]
+    demo: doctrine-registry
+    note: The registry ships with the tool rather than with a repository. A doctrine is a statement about how Majordomus behaves; a repository configures the tool without redefining it.
 
   - id: version
     title: version
