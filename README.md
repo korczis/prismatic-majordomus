@@ -240,7 +240,8 @@ CLAUDE.md   AGENTS.md   GEMINI.md   <any target named in the policy>  --+
 Adapters are thin bootstraps. Each generated file tells the worker where the
 repository's context lives — `README.md`, then `.ai/README.md` and its discovery
 protocol — and carries no rule of its own, so a rule that exists for one provider and
-not another cannot happen. `doctor` fails a generated file that carries a rule and a
+not another cannot happen. `doctor` fails a generated file that carries a rule corpus of its own — a profile
+table, rule bullets, a rules or lifecycle or finish-contract heading — and a
 `README.md` that does not name `AGENTS.md`. The templates ship with the tool under
 `share/providers/`; a repository that needs a different adapter puts its own at
 `.ai/repo/providers/<provider>.tmpl`, and the rules stay where they are.

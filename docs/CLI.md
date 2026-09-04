@@ -48,18 +48,20 @@ the tool stays wherever it was run from, no hook and no shell file is touched, a
 `share/standard/majordomus/`.
 **Writes:** `.ai/README.md` (the protocol, readable without the tool) and
 `.ai/manifest.yaml` (the section registry, `ai-repository/v1`); under `.ai/repo/`, the
-tracked half: `policy.yaml`, `profiles/`, `prompts/`, `rules/` with its `README.md`, the
-vendored baseline `rules/vendor/majordomus/` (manifest and rule files, byte for byte the
-package the tool ships) and an empty `rules/project/`, `knowledge/sources.yaml`,
-`workflows/`, `skills/`, `adrs/`, `project/`; under `.ai/local/`, the checkout's own
-half: `state/` seeded with `decisions.md` and `open-questions.md`, plus `cache/`,
-`prompts/` and `session-contexts/`; and one `.ai/local/` line in `.gitignore`, added
-once. Everything under `.ai/repo/` belongs to the repository from that moment; a newer
-tool does not rewrite it.
+tracked half: its `README.md`, `policy.yaml`, `profiles/`, `prompts/`, `rules/` with its
+`README.md`, the vendored baseline `rules/vendor/majordomus/` (manifest and rule files,
+byte for byte the package the tool ships) and an empty `rules/project/`,
+`knowledge/sources.yaml` beside an empty `knowledge/curated/`, `workflows/`, `skills/`,
+`adrs/`, `project/`; under `.ai/local/`, the checkout's own half: `state/` seeded with
+`decisions.md` and `open-questions.md` and the empty `state/handovers/` and
+`state/checkpoints/`, plus `cache/`, `prompts/` and `session-contexts/`; and one
+`.ai/local/` line in `.gitignore`, added once. Everything under `.ai/repo/` belongs to
+the repository from that moment; a newer tool does not rewrite it.
 
 **Refuses** (`15`) when `.ai/` already exists, unless `--extend`, which adds every file
-the skeleton ships and the repository lacks and overwrites nothing; and (`15`) when
-project data still lives under `.majordomus/`, the pre-`.ai` layout, naming
+the skeleton ships and the repository lacks and overwrites nothing; (`15`) when `.ai/`
+exists without a manifest, naming the choice between moving it aside and `--extend`; and
+(`15`) when project data still lives under `.majordomus/`, the pre-`.ai` layout, naming
 `majordomus migrate`.
 
 **Does not** install git hooks. It prints the two lines a hook needs and the command

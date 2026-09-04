@@ -462,7 +462,9 @@ CLAUDE.md   AGENTS.md    GEMINI.md   (+ .cursor/rules, generic)
   protocol — names the default profile and the task-lifecycle workflow, and carries no
   rule of its own. The rules are read from `.ai/repo/rules/` by every worker alike, so a
   rule that exists for one provider and not another cannot happen; `doctor` fails a
-  projection that carries one, and a `README.md` that does not name `AGENTS.md`.
+  projection that carries a rule corpus of its own (a profile table, rule bullets, a
+  rules, lifecycle or finish-contract heading), and a `README.md` that does not name
+  `AGENTS.md`.
 - Adapters translate that bootstrap into a provider's format and nothing more. The
   templates ship with the tool; a repository that needs a different adapter overrides
   one under `.ai/repo/providers/`, in the same thin shape. The generic adapter produces
