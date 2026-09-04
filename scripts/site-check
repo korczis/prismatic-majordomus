@@ -48,7 +48,7 @@ for l in $(grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PR
   t="$PUB$l"; [ -f "$t" ] || [ -f "$t/index.html" ] || [ -f "${t%/}/index.html" ] || { bad link "$l does not resolve"; missing=1; }
 done; [ "$missing" = 0 ] && ok link "every internal link resolves"
 # 7. assets present
-for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/social-card.png giallo-light.css giallo-dark.css; do
+for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/hero.js js/cytoscape.min.js images/logo-mark.svg images/social-card.png giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
 done; ok asset "css, flowbite, alpine, mermaid, cytoscape, theme, diagrams, graph, images, highlighting present"
 grep -qE '^[[:space:]]*\.dark ' "$PUB/giallo-dark.css" && ok darkcss "giallo-dark.css scoped under .dark" || bad darkcss "giallo-dark.css not scoped under .dark (site-build post-step)"

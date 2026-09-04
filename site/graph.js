@@ -58,12 +58,12 @@
         'border-color': function (n) { return p[KIND_COLOUR[n.data('kind')] || 'muted']; },
         'label': 'data(label)',
         'color': p.text,
-        'font-size': 11,
+        'font-size': 10,
         'font-family': 'ui-monospace, SFMono-Regular, Menlo, monospace',
         'text-valign': 'center',
         'text-halign': 'center',
         'text-wrap': 'wrap',
-        'text-max-width': 120,
+        'text-max-width': 100,
         'padding': 6,
         'shape': 'round-rectangle',
         'width': 'label',
@@ -105,28 +105,41 @@
       .concat(data.edges.filter(function (e) { return byId[e.source] && byId[e.target]; })
         .map(function (e) { return { group: 'edges', data: { id: e.source + '|' + e.target + '|' + e.kind, source: e.source, target: e.target, kind: e.kind } }; }));
 
+    // A layered layout where the data has a root (the entry point dispatches to modules, which
+    // name artifacts) and a force layout where it does not. Both run without animation:
+    // deterministic, cheap, and already what reduced motion asks for.
     var p = palette();
     var cy = cytoscape({
       container: canvas,
       elements: elements,
       style: stylesheet(p),
-      layout: {
-        name: 'cose',
-        animate: false,          // deterministic and cheap; also what reduced motion wants
-        randomize: false,        // same input, same picture, every build
-        idealEdgeLength: 90,
-        nodeOverlap: 12,
-        padding: 24,
-        componentSpacing: 80,
-        nestingFactor: 0.8,
-        gravity: 0.4,
-        numIter: reduced ? 400 : 1200
-      },
-      minZoom: 0.3,
-      maxZoom: 2.5,
+      layout: { name: 'preset' },   // the real layout is run below, once roots can be resolved
+      minZoom: 0.15,
+      maxZoom: 3,
       wheelSensitivity: 0.2,
       autoungrabify: false
     });
+
+    // Where the data has a natural depth — entry, then modules, then the artifacts they name —
+    // rings read far better in a wide short box than a three-row tree, which degenerates into
+    // one long line. Everything else gets a force layout. Neither animates: deterministic and
+    // cheap, and already what reduced motion asks for.
+    var order = (el.getAttribute('data-graph-rings') || '').split(',').filter(Boolean);
+    var opts = order.length
+      ? { name: 'concentric', animate: false, padding: 12, avoidOverlap: true,
+          minNodeSpacing: 14, equidistant: false, startAngle: -Math.PI / 2, fit: true,
+          concentric: function (n) { var i = order.indexOf(n.data('kind')); return i === -1 ? 0 : order.length - i; },
+          levelWidth: function () { return 1; } }
+      : { name: 'cose', animate: false, randomize: false, idealEdgeLength: 120,
+          nodeRepulsion: 9000, edgeElasticity: 60, nodeOverlap: 20, padding: 16,
+          componentSpacing: 110, gravity: 0.3, numIter: reduced ? 500 : 1500, fit: true };
+    cy.layout(opts).run();
+    cy.fit(undefined, 16);
+    // the canvas is inside a responsive grid; a resize that changes its box must re-fit
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(function () { cy.resize(); cy.fit(undefined, 16); });
+      ro.observe(canvas);
+    }
 
     function describe(node) {
       if (!detail) { return; }
@@ -175,7 +188,7 @@
     });
 
     var reset = el.querySelector('[data-graph-reset]');
-    if (reset) { reset.addEventListener('click', function () { cy.elements().unselect(); clearFocus(); cy.fit(undefined, 24); }); }
+    if (reset) { reset.addEventListener('click', function () { cy.elements().unselect(); clearFocus(); cy.fit(undefined, 16); }); }
 
     // the fallback list and the canvas are the same graph: clicking a name selects the node
     el.querySelectorAll('[data-graph-node]').forEach(function (a) {

@@ -24,11 +24,26 @@
       </dl>
     </div>
     <div class="min-w-0">
-      <figure class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
-        <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
-        <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
+      {#- The contract, drawn. The five checks and the outcome names come from the generated data,
+          so the picture cannot describe a program this repository does not have. The list below
+          the canvas is the same five checks and is what remains without JavaScript. -#}
+      <figure class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"
+              data-hero
+              data-hero-checks="{{ readme.finish_checks | json_encode() }}"
+              data-hero-outcomes="{{ lifecycle.outcomes | json_encode() }}">
+        <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">the finish contract</span>
+          <span class="font-mono text-xs text-body-subtle">{{ readme.finish_checks | length }} checks · {{ lifecycle.outcomes | length }} outcomes</span>
+        </figcaption>
+        <div class="relative h-64 w-full sm:h-72 lg:h-80"><canvas class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas></div>
+        <ol class="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-default px-4 py-3 sm:grid-cols-3">
+          {%- for c in readme.finish_checks %}
+          <li class="font-mono text-xs text-body-subtle"><span class="text-heading">{{ loop.index }}.</span> {{ c }}</li>
+          {%- endfor %}
+        </ol>
       </figure>
-      <p class="mt-3 text-sm text-body-subtle">{{ m.hero.transcript_caption }}</p>
+      <p class="mt-3 text-sm text-body-subtle">Work arrives from every session. It leaves as <span class="font-medium text-heading">completed</span> only when all {{ readme.finish_checks | length }} lines pass. Anything else gets a name, not a shrug.</p>
+      <p class="mt-2 text-sm"><a href="{{ get_url(path="/map/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">See the program these checks run in &rarr;</a></p>
     </div>
   </div>
 </section>
@@ -39,6 +54,23 @@
     <h2 class="text-2xl font-bold tracking-tight text-fg-brand-strong sm:text-3xl"><a href="{{ get_url(path="/why/", trailing_slash=true) }}" class="hover:underline">{{ m.recognise.title }}</a></h2>
     <div class="mt-6">{% include "partials/why-cards.html" %}</div>
     <p class="mt-6 max-w-3xl text-base font-medium text-fg-brand-strong">{{ m.recognise.closing }}</p>
+  </div>
+</section>
+
+{# 1c. the contract as it actually prints — moved below the fold on purpose: the hero shows what
+   it means, this shows what it looks like. Real output from the repository's own README. #}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto grid max-w-screen-xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-center lg:px-8">
+    <div class="min-w-0">
+      <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">What &ldquo;done&rdquo; looks like when it has to be earned</h2>
+      <p class="mt-4 text-body">{{ m.hero.transcript_caption }}</p>
+      <p class="mt-4 text-body">One line per check, each naming what it proved. A failing line carries the command that reproduces it, so the next thing to do is never a guess. Nothing is warned about and continued past: the run is refused, and the task stays open.</p>
+      <p class="mt-4 text-sm"><a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">The full contract, argument by argument &rarr;</a></p>
+    </div>
+    <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
+      <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
+      <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
+    </figure>
   </div>
 </section>
 
@@ -197,4 +229,5 @@ majordomus finish --outcome completed --verify-command "make test"
   </div>
 </section>
 {% endblock content %}
-{% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}
+{% block scripts %}{% include "partials/mermaid.html" %}
+<script defer src="{{ get_url(path="js/hero.js") }}"></script>{% endblock scripts %}
