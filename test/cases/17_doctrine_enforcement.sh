@@ -33,6 +33,9 @@ expect_grep 'blocker_resolution'
 expect_exit 0 "$MJ" finish --outcome blocked
 expect_grep 'INFO blockers .* outcome is blocked'
 expect_grep '^outcome: blocked$' .majordomus/state/current.yaml
+# answered before the next section, which is about the advisory class: an unresolved
+# question blocks every later task on this branch, and would mask what follows
+"$MJ" question resolve "right table" --answer "yes, sessions" >/dev/null
 
 # --- advisory: a stale checkpoint is reported by check and does not fail it
 "$MJ" start "t2" --scope lib --profile routine >/dev/null

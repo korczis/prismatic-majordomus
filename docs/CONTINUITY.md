@@ -156,7 +156,14 @@ existing archive.
 ## Blockers are state, not prose
 
 An unresolved question in a handover paragraph is a note. An entry in
-`state/open-questions.md` naming the active task **refuses `finish --outcome completed`**.
+`state/open-questions.md` **refuses `finish --outcome completed`** — any entry, not only one
+the active task opened. A question is a person owing an answer, and the work it blocks
+outlives the task that asked; a gate that forgot at the task boundary would be a gate a
+handover walks past. The store is tracked, so git is what scopes this to the branch.
+
+Only *completed* is refused. `blocked`, `partial`, `no_match` and `failed` are honest
+statements that the work did not finish, and refusing them would buy a green gate by forcing
+a mislabelled outcome.
 
 That gate is why the file has a machine-written line format, and why `check`, `doctor` and
 `watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate
@@ -205,12 +212,12 @@ scope. The report is correct about the files and wrong about the author, and Maj
 has no way to tell the difference. Close the task with a handover and start a new one at
 the current commit.
 
-**A blocking question outlives the task that opened it, and stops blocking.** `question add`
-attaches the question to the active task, and the gate refuses `finish --outcome completed`
-only for that task. Hand the work over, start a new task, and the question is still
-unresolved but no longer refuses anything — the blocker is laundered by the handover. It is
-visible in `question list --all` and nothing else notices. Until this is decided, resolve
-open questions before handing over, or re-open them against the new task.
+**A question blocks its whole branch, not the task that asked.** That is deliberate, and it
+is wrong in one case: a question about work that was abandoned, left unanswered, refuses
+completion of every later task on that branch until somebody writes an answer. The direction
+was chosen because it fails loudly — `question list` names it and `question resolve` clears
+it in one command — where the alternatives fail silently. See `M001` in
+`.majordomus/project/` for the alternatives that were rejected and the case each gets wrong.
 
 It does not measure tokens, context savings, or cost. The budget is lines, because lines
 are what it can count. See [`ECONOMICS.md`](ECONOMICS.md).

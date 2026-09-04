@@ -495,13 +495,13 @@ claims:
     note: The record is tracked, so it travels with the branch. check, finish --check and watch report a foreign record and enforce nothing from it; finish refuses to write to it. A record from before the field existed is treated as local, so upgrading does not turn an installation red.
 
   - id: blocker-survives-handover
-    claim: A blocking question will keep blocking after the work is handed to a new task
+    claim: A blocking question keeps blocking after the work is handed to a new task
     source: docs/CONTINUITY.md
-    implementation: '-'
-    test: '-'
-    status: planned
+    implementation: lib/check.sh
+    test: test/cases/50_blocker_across_handover.sh
+    status: guaranteed
     responsibility: finish
-    note: Today a question is attached to the task that opened it, so handing over and starting a new task leaves it unresolved and no longer blocking. Found by running the documented end-to-end sequence rather than by review. Needs a decision about whether questions transfer with a handover or the gate widens; both are wrong in some case, so it is published as unfixed rather than guessed at.
+    note: The gate reads every unresolved entry in the store rather than only the active task's, so a handover cannot launder a blocker. The store is tracked, so git scopes it to the branch. Only a completed finish is refused; blocked, partial, no_match and failed are honest non-completions and are not. Any task may resolve any question. The alternatives — transferring the question with the handover, or gating on scope overlap — were rejected in M001 with the case each gets wrong.
 
   - id: runtime-adapters
     claim: Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits

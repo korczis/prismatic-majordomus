@@ -45,7 +45,7 @@ expect_exit 10 "$MJ" finish --outcome blocked --note "$note"
 expect_grep 'lacks section\(s\): Next Action'
 printf '# Next Action\nask\n' >> "$note"
 expect_exit 0 "$MJ" finish --outcome blocked --note "$note"
-expect_grep 'INFO blockers .* open questions expected'
+expect_grep 'INFO blockers .* open questions do not refuse it'
 [ -f ".majordomus/state/completed/$id.md" ]
 # no_match needs # Reason; verification skipped
 "$MJ" start "t3" --scope lib >/dev/null

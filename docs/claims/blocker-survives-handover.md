@@ -1,40 +1,39 @@
-# A blocking question will keep blocking after the work is handed to a new task
+# A blocking question keeps blocking after the work is handed to a new task
 
 ## What it means
 
-**This is not implemented.** It is published so that the gap is visible rather than assumed to be covered.
+An unresolved entry in `state/open-questions.md` refuses `finish --outcome completed` — any entry, not only one the active task opened. Hand the work over, start a new task, and the question still refuses completion, because it is still unanswered.
 
-An unresolved question refuses `finish --outcome completed` for the task that opened it. Hand that work over, start a new task to continue it, and the question is still unresolved — and no longer refuses anything. The blocker is laundered by the handover.
+Only completion is refused. `blocked`, `partial`, `no_match` and `failed` are honest statements that the work did not finish, and none of them is gated: refusing them would buy a green gate by forcing somebody to mislabel an outcome.
 
-## How it works today
+## How it works
 
-`question add` writes the active task's id into the entry. `check` and `finish` match entries by that id. A new task has a new id, so the old entry matches nothing and the gate passes.
+`mj_question_unresolved_any` returns every unresolved line in the store, skipping the HTML comment block that carries the file's own example — every fresh install ships one, and a scan that did not skip it would refuse the first completed finish anybody attempted. `mj_validate_blockers` calls it, names how many are open and quotes the first, and `question resolve` searches the same list, so any task can clear any question. A gate nobody can clear is a gate that gets worked around.
 
-The question is not lost: `majordomus question list --all` shows it, and it stays in the file until someone resolves it. Nothing draws attention to it.
+Nothing new is stored. The store is tracked, so git is what decides which questions a branch can see, and the entry keeps the id of the task that asked — provenance survives the widening.
 
 ## How to see it
 
 ```bash
 majordomus question add "does the legacy client still need the plain method?"
-majordomus finish --outcome completed --verify-command true   # refused, correctly
-majordomus handover --close < note.md
+majordomus finish --outcome blocked                            # allowed; the question is the reason
 majordomus start "continue the same work" --scope lib/auth
-majordomus finish --outcome completed --verify-command true   # accepted, with the question still open
-majordomus question list --all                                # it is still there
+majordomus finish --outcome completed --verify-command true    # refused: 1 unresolved question(s) on this branch
+majordomus question list                                       # it is named, with a number
+majordomus question resolve 1 --answer "no; retired in 4.0"
+majordomus finish --outcome completed --verify-command true    # accepted
 ```
 
 ## What it does not cover
 
-Nothing, yet. Until it is fixed: resolve open questions before handing over, or re-open them against the new task. `question list --all` is the check a person can run.
+**A question about abandoned work blocks everything after it.** If the work an open question was about is dropped and nobody answers or retires the question, every later task on that branch is refused completion until somebody writes an answer. That is the case this behaviour is deliberately wrong in. It is loud — `question list` names it and one command clears it — which is why it was chosen over the alternatives, whose failure was silent.
 
-## Why it is not fixed yet
+It is scoped to a branch, not to a repository or a worktree: the store is a tracked file, so a question on another branch is invisible until the branches merge. Two workers sharing one branch share its blockers, which is the same coupling they already have on every other tracked record.
 
-Both obvious fixes are wrong in a case that matters.
+There is no withdrawal verb. A question that turns out not to need answering is resolved with an answer that says so; adding a second way to close one would be a second vocabulary for the same act.
 
-Transferring a task's questions to whichever task resumes from its handover makes a question follow work it may no longer be about, and requires the tool to decide that two tasks are the same work — which is exactly the kind of inference the rest of the design refuses to make.
+## Why it exists
 
-Widening the gate to any unresolved question in the repository makes one team's blocker refuse another's unrelated completion, in a tool whose scope model exists precisely so that concurrent work does not interfere.
+The gate is the only mechanism in the tool that stops work for a human reason, and it had an escape: the thing that was supposed to refuse acceptance stopped refusing the moment the work moved to a new task. It was found by running the documented end-to-end sequence, not by review, and published as a planned claim with no implementation and no test until `M001` decided between the alternatives.
 
-A third shape — reporting an unresolved question whose task is no longer active as drift — surfaces it without over-blocking, and is the likeliest answer. It is a decision, not a patch, so it is recorded here rather than guessed at.
-
-It was found by running the documented end-to-end sequence as a demonstration, not by review, which is the argument for demonstrating a workflow end to end rather than testing its parts.
+Two were rejected. **Transferring the question with the handover** needs either mutation of the store, which destroys the record of who asked, or a lineage field, which is new state; and it blocks unrelated work whenever a handover passes to something else. **Gating on scope overlap** between the asking task and the finishing one is a heuristic standing in for topical relevance, and it fails open when an archived task record is missing — the same class of defect being repaired. Both fail silently. This one fails loudly, and that was the deciding property.

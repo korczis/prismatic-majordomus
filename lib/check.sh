@@ -188,12 +188,25 @@ mj_validate_blockers() {
     mj_doctrine_fail blockers "open-questions.md" "line(s) $(printf '%s' "$bad" | sed 's/ $//') do not parse; an unreadable entry cannot block acceptance" "majordomus question list --all"
     MJ_BLOCKED=1; return 0
   fi
-  if [ "$MJ_DOCTRINE_CMD" = finish ] && [ "${MJ_FINISH_OUTCOME:-}" = blocked ]; then
-    grep -qE "^\- \[unresolved\] $id " "$q" 2>/dev/null && MJ_BLOCKED=1
-    mj_doctrine_skip blockers "$id" "outcome is blocked; open questions expected"; MJ_DOCTRINE_SKIPPED=1; return 0
+  # Every unresolved question refuses a completed finish, not only one this task opened.
+  # A question is a person owing an answer; the work it blocks outlives the task that
+  # asked, and a gate that forgets at the task boundary is a gate a handover walks past.
+  # The store is tracked, so git scopes this to the branch without anything being stored.
+  local open n first
+  open="$(mj_question_unresolved_any "$q")"
+  # Only a *completed* finish is refused. `blocked`, `partial`, `no_match` and `failed` are
+  # honest statements that the work did not complete, and refusing them would leave a worker
+  # with an open question able to record nothing but `blocked` — which buys a green gate by
+  # forcing a mislabelled outcome.
+  if [ "$MJ_DOCTRINE_CMD" = finish ] && [ -n "${MJ_FINISH_OUTCOME:-}" ] && [ "$MJ_FINISH_OUTCOME" != completed ]; then
+    [ -n "$open" ] && MJ_BLOCKED=1
+    mj_doctrine_skip blockers "$id" "outcome is $MJ_FINISH_OUTCOME, not completed; open questions do not refuse it"
+    MJ_DOCTRINE_SKIPPED=1; return 0
   fi
-  if grep -qE "^\- \[unresolved\] $id " "$q" 2>/dev/null; then
-    mj_doctrine_fail blockers "$id" "unresolved: $(grep -E "^\- \[unresolved\] $id " "$q" | head -n1 | sed "s/^- \[unresolved\] $id — //" | cut -c1-80)" "majordomus question list"
+  if [ -n "$open" ]; then
+    n="$(printf '%s\n' "$open" | wc -l | tr -d ' ')"
+    first="$(printf '%s\n' "$open" | head -n1 | sed -e 's/^[0-9]*:- \[unresolved\] //' -e 's/ ([0-9-]*)$//')"
+    mj_doctrine_fail blockers "$id" "$n unresolved question(s) on this branch; first: $(printf '%s' "$first" | cut -c1-80)" "majordomus question list"
     MJ_BLOCKED=1
   else mj_doctrine_ok blockers "$id" "none open"; fi
   return 0

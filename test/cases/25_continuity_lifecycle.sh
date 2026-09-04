@@ -69,9 +69,14 @@ expect_grep 'INFO handover +\.majordomus/state/handovers/.* prior record, same_w
 id2=$(sed -n 's/^id: //p' .majordomus/state/current.yaml)
 [ "$id1" != "$id2" ]
 
-# the earlier task's blocker is still open, and still visible, but scoped to its own task
-expect_exit 0 "$MJ" check
-expect_grep 'OK +blockers +'"$id2"' — none open'
+# the earlier task's blocker is still open, and it still blocks: the work moved to a new
+# task, the question did not stop being unanswered, and a gate that forgot at the task
+# boundary would be a gate a handover walks past. See M001 and docs/CONTINUITY.md.
+expect_exit 10 "$MJ" check
+expect_grep 'FAIL +blockers +'"$id2"' — 1 unresolved question\(s\) on this branch'
+expect_grep 'legacy mobile client'
+expect_exit 0 "$MJ" question list
+expect_grep 'legacy mobile client'
 expect_exit 0 "$MJ" question list --all
 expect_grep 'legacy mobile client'
 
@@ -81,7 +86,15 @@ printf 'test written and failing for the recorded reason\n' | "$MJ" checkpoint >
 "$MJ" question add "should the old URI form keep working after 4.2?" >/dev/null
 expect_exit 10 "$MJ" finish --outcome completed --verify-command true
 expect_grep 'FAIL blockers'
-"$MJ" question resolve "old URI form" --answer "no, it was retired in 4.2" >/dev/null
+# a selector that matches two open questions is refused rather than resolving the wrong one
+expect_exit 2 "$MJ" question resolve "old URI form" --answer "no"
+expect_grep 'matches more than one question'
+"$MJ" question resolve "keep working after 4.2" --answer "no, it was retired in 4.2" >/dev/null
+# the blocker the first task opened is still open, so completion is still refused: both have
+# to be answered, and the one inherited across the handover is not exempt for being older
+expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_grep 'legacy mobile client'
+"$MJ" question resolve "legacy mobile client" --answer "no; the 3.x client was retired before 4.0" >/dev/null
 printf '# Objective\nFix the OAuth callback.\n# Current State\nFixed and covered.\n# Next Action\nnone\n' | "$MJ" handover >/dev/null
 expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
 expect_grep 'OK +verification .* exit 0'
@@ -127,7 +140,7 @@ expect_exit 10 "$MJ" finish --outcome blocked --note "$note"
 expect_grep 'lacks section\(s\): Next Action'
 printf '# Next Action\nAsk in the platform channel.\n' >> "$note"
 expect_exit 0 "$MJ" finish --outcome blocked --note "$note"
-expect_grep 'INFO blockers .* open questions expected'
+expect_grep 'INFO blockers .* open questions do not refuse it'
 # with no handover for this task, the continuity finding says the note is the only record
 expect_grep 'WARN continuity .* the note.s Next Action is the only continuation record'
 expect_grep '^outcome: blocked$' .majordomus/state/current.yaml

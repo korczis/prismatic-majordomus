@@ -21,8 +21,8 @@ usage: majordomus question add "<question>"
   add       appends "- [unresolved] <task id> — <question> (<date>)" to open-questions.md
   resolve   rewrites that one line to "[resolved <date>]" with the answer; n is the number
             printed by \`question list\` for the active task
-  list      unresolved entries for the active task; --all includes resolved and other tasks
-  every unresolved entry for the active task refuses \`finish --outcome completed\`
+  list      every unresolved entry; --task narrows to one task, --all includes resolved
+  every unresolved entry on this branch refuses \`finish --outcome completed\`
 H
       [ "$sub" = "" ] && return "$MJ_EX_USAGE"; return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "question: unknown subcommand '$sub' (add|resolve|list)" ;;
@@ -56,6 +56,17 @@ mj_question_add() {
 # unresolved lines for a task, in file order
 mj_question_unresolved() { grep -nE "^- \[unresolved\] $1 " "$2" 2>/dev/null || true; }
 
+# Every unresolved entry, whoever opened it, with line numbers. A question refuses a
+# completed finish anywhere on this branch — the store is tracked, so git is what scopes
+# it — and this is the list that does the refusing. The file's own template lives in an
+# HTML comment and is not an entry; a fresh install ships one, so a scan that did not skip
+# it would block the first completed finish anybody attempted.
+mj_question_unresolved_any() {
+  [ -f "$1" ] || return 0
+  awk '/<!--/ { c=1 } /-->/ { c=0; next } c { next }
+       /^- \[unresolved\] / { printf "%d:%s\n", NR, $0 }' "$1" 2>/dev/null || true
+}
+
 mj_question_resolve() {
   local sel="" answer=""
   while [ $# -gt 0 ]; do case "$1" in
@@ -68,17 +79,19 @@ mj_question_resolve() {
   [ -n "$answer" ] || mj_die "$MJ_EX_USAGE" "question resolve: --answer is required (resolving without an answer loses the answer)"
   mj_is_multiline "$answer" && mj_die "$MJ_EX_USAGE" "question resolve: the answer must be single-line" 
   mj_question_require
-  mj_load_current || mj_die "$MJ_EX_MISSING" "no active task; a question is resolved against a task"
-  local id; id="$(mj_cur id)"
+  # Any unresolved question can be resolved, not only one the active task opened. The gate
+  # blocks on all of them, and a gate nobody can clear is a gate that gets worked around.
+  # The ledger still records which task did the resolving.
+  local id; if mj_load_current; then id="$(mj_cur id)"; else id="none"; fi
 
-  local open; open="$(mj_question_unresolved "$id" "$MJ_Q")"
-  [ -n "$open" ] || mj_die "$MJ_EX_MISSING" "no unresolved question for $id"
+  local open; open="$(mj_question_unresolved_any "$MJ_Q")"
+  [ -n "$open" ] || mj_die "$MJ_EX_MISSING" "no unresolved question"
   local hits line_no
   case "$sel" in
     ''|*[!0-9]*) hits="$(printf '%s\n' "$open" | grep -F -- "$sel" || true)" ;;
     *) hits="$(printf '%s\n' "$open" | sed -n "${sel}p")" ;;
   esac
-  [ -n "$hits" ] || mj_die "$MJ_EX_MISSING" "question resolve: '$sel' matches no unresolved question for $id"
+  [ -n "$hits" ] || mj_die "$MJ_EX_MISSING" "question resolve: '$sel' matches no unresolved question"
   [ "$(printf '%s\n' "$hits" | wc -l | tr -d ' ')" = 1 ] || mj_die "$MJ_EX_USAGE" "question resolve: '$sel' matches more than one question; be more specific"
   line_no="${hits%%:*}"
 
@@ -100,12 +113,13 @@ mj_question_list() {
     *) mj_die "$MJ_EX_USAGE" "question list: unknown option $1" ;;
   esac; done
   mj_question_require
-  if [ -z "$want" ] && [ "$all" != 1 ]; then
-    mj_load_current || mj_die "$MJ_EX_MISSING" "no active task; use --all or --task <id>"
-    want="$(mj_cur id)"
-  fi
+  # Default: every unresolved question, because every one of them refuses a completed
+  # finish here. --task narrows to what one task opened; --all adds the resolved ones.
+  # The numbering matches what `question resolve <n>` selects.
   local n=0 line
-  if [ "$all" = 1 ] && [ -z "$want" ]; then
+  if [ -z "$want" ] && [ "$all" != 1 ]; then
+    while IFS= read -r line; do n=$((n+1)); printf '%s  %s\n' "$n" "$(printf '%s' "$line" | sed 's/^- //')"; done < <(mj_question_unresolved_any "$MJ_Q" | sed 's/^[0-9]*://')
+  elif [ "$all" = 1 ] && [ -z "$want" ]; then
     # the file's own template lives in an HTML comment and is not an entry
     while IFS= read -r line; do n=$((n+1)); printf '%s\n' "$line"; done < <(awk '/<!--/{c=1} /-->/{c=0;next} !c && /^- \[(unresolved|resolved )/' "$MJ_Q" 2>/dev/null || true)
   else
