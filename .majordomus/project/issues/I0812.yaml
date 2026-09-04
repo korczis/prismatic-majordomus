@@ -1,0 +1,38 @@
+id: I0812
+milestone: M003
+title: Validate the graph, and let doctor and watch ask the same validator
+slug: knowledge-validation
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Implement `knowledge validate` detecting duplicate node ids, dangling explicit references, source paths that no longer exist, hash mismatches, edges with a missing end, edges without provenance and a stale generated index, each with a severity and a reproduce command, and declare the rule in the doctrine registry so doctor and watch dispatch the same validator rather than reimplementing it."
+why: "Validation logic that exists twice diverges, and the second copy is the one that stops being run. The registry is the mechanism that makes doctor, watch and the command itself provably the same rule."
+current_state: "Doctrines are declared with a validator, the commands that enforce it and its test; doctor proves each link of that chain from the source rather than from the declaration."
+desired_state: "knowledge_integrity is declared and dispatched from doctor and watch. Findings distinguish a broken Majordomus-owned reference, which is a failure, from a broken link to a deliberately external resource, which is not. Doctor also answers whether the index can be built at all in this checkout."
+scope:
+  - lib/knowledge.sh
+  - share/doctrines.yaml
+  - lib/doctor.sh
+  - lib/watch.sh
+  - test/cases
+non_scope:
+  - Repairing anything automatically
+  - Failing on a link to a resource outside the repository
+depends_on:
+  - I0811
+acceptance_criteria:
+  - Every listed condition is detected by a case that introduces exactly that fault
+  - The doctrine appears in doctrine list, doctor proves it reaches both commands, and its test is named
+  - Severity distinguishes an owned reference from an external one, and the rule for which is which is stated
+  - A stale index is drift under watch and a failure under the command, and neither rebuilds it
+  - doctor reports whether the index is buildable here without leaving one behind
+validation:
+  - bash test/run.sh 70_knowledge_validate
+  - bin/majordomus doctor
+  - bin/majordomus watch
+evidence_required:
+  - validation_detects
+  - doctrines_wired
+risk: "A validator that runs a full extraction inside doctor makes doctor slow enough to be skipped, and a check nobody runs is the failure this project measures. It has to compare hashes rather than rebuild."
+created_at: 2026-09-04
+updated_at: 2026-09-04

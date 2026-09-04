@@ -1,0 +1,36 @@
+id: I0803
+milestone: M003
+title: Open a session and report its status
+slug: session-start-status
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Implement lib/session.sh with `session start` and `session status`: one active session per worktree in .majordomus/state/session-current.yaml, its identity and git facts computed, a second start refused rather than silently replacing the first, and a status that reports the active session against current git or says plainly that none is open."
+why: "The active record is the anchor every later command reads. It has to refuse rather than overwrite, because an execution episode that silently replaces another one loses the boundary the whole object exists to draw."
+current_state: "There is no session command and no session state file. bin/majordomus dispatches its subcommands from a fixed case list."
+desired_state: "`majordomus session start` writes the active record atomically at mode 0600, records session_id, started_at, owner, an optionally supplied worker identity, and the computed repository_id, worktree, branch, start_head and start_working_tree. It refuses when a session is already open in this worktree and names the command that closes it. `session status` prints the open session with its divergence label, or reports absence. Both are dispatched from bin/majordomus and appear in its usage."
+scope:
+  - lib/session.sh
+  - bin/majordomus
+  - share/allow
+  - test/cases
+non_scope:
+  - Closing a session
+  - Any reading of the ledger
+  - Knowledge
+depends_on:
+  - I0802
+acceptance_criteria:
+  - A session starts, the active record exists, and its identity fields match git
+  - A second start is refused with a non-zero exit and names the closing command
+  - A session started in one worktree does not appear as active in another
+  - status reports absence as absence rather than as an error
+  - The active record's unknown keys are rejected by an allowlist like every other Majordomus YAML file
+validation:
+  - bash test/run.sh 60_session_lifecycle
+  - shellcheck -x -s bash lib/session.sh
+evidence_required:
+  - session_opens
+risk: "One active session per worktree is the same rule current.yaml already has, and current.yaml is tracked, so it travels with the branch and appears active in a checkout that never started it. The session record has to record its worktree and be read with the same foreign-record rule."
+created_at: 2026-09-04
+updated_at: 2026-09-04

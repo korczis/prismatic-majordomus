@@ -1,0 +1,32 @@
+id: I0801
+milestone: M003
+title: Narrow the Clean Extraction Boundary and record what was adopted
+slug: extraction-boundary-graph
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Rewrite the Clean Extraction Boundary in docs/DESIGN.md so that it permits a generic deterministic provenance graph derived from this repository's own artifacts while continuing to exclude everything it excludes today, and record in docs/EXTRACTION_REPORT.md which architectural ideas from the studied prior art were adopted by re-derivation and which were refused, each with its reason."
+why: "The boundary currently reads 'graph semantics' among the things excluded absolutely. The rest of this milestone builds a reference graph. Shipping that against a published boundary that forbids it would make the boundary decorative, which is precisely the failure mode this project was built to detect. The adoption record exists so that the next reader can tell a re-derived idea from a copied implementation."
+current_state: "docs/DESIGN.md lists 'graph semantics' in the absolute exclusion sentence and lists ten items that crossed the boundary by abstraction. docs/EXTRACTION_REPORT.md records the evidence behind the v0.1 decisions and says nothing about session or knowledge tooling."
+desired_state: "The exclusion sentence distinguishes the domain, inference and semantic machinery that stays out from the generic provenance graph over this repository's own files that is now in. The adopted list names the session and knowledge ideas taken by re-derivation. A refusal list names what was studied and deliberately not taken, each with the reason, including the database, the embedding layer, the vault renderer and the copied-narrative session note."
+scope:
+  - docs/DESIGN.md
+  - docs/EXTRACTION_REPORT.md
+non_scope:
+  - Any implementation
+  - Any change to the ten items already recorded as having crossed the boundary
+  - Naming any internal path, component or vocabulary of the studied material
+depends_on: []
+acceptance_criteria:
+  - The boundary states what kind of graph is permitted and what kind is still excluded, in one sentence a reader can apply to a proposed feature
+  - The adoption list names each adopted idea and the Majordomus object it becomes
+  - The refusal list names each refused idea and why, with the databases and the embedding layer among them
+  - No internal path, hostname, component name or quotation from the studied material appears anywhere in either document
+validation:
+  - bin/majordomus doctor
+  - bash test/run.sh 08_no_forbidden_constructs
+evidence_required:
+  - boundary_rewritten
+risk: "A boundary narrowed to fit the feature being built is not a boundary. The wording has to be one a reader could use to refuse a future proposal, not one that merely describes what is about to be committed."
+created_at: 2026-09-04
+updated_at: 2026-09-04

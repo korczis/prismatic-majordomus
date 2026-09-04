@@ -1,0 +1,40 @@
+id: I0806
+milestone: M003
+title: Make the session rules doctrines, with retention and archiving
+slug: session-doctrines-retention
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Declare the session rules in share/doctrines.yaml with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites."
+why: "A rule enforced by an inline check in one command is the declared-but-not-wired failure this tool measures in other people's repositories. Every enforced rule here is declared in the registry and dispatched from it, or it is not enforced."
+current_state: "The doctrine registry declares every enforced rule with a validator, the commands that dispatch it, a claim and a test. history --rotate is the existing precedent for retention that archives rather than deletes and refuses to overwrite an existing archive."
+desired_state: "session_record_integrity and session_reference_integrity are declared and dispatched. The policy carries a session block with the retention cap and whether archiving is enabled, its keys are in the policy allowlist, and retention_caps reports sessions alongside checkpoints and handovers. Archiving happens only when a command asks for it."
+scope:
+  - share/doctrines.yaml
+  - share/allow/policy.txt
+  - share/skeleton
+  - lib/session.sh
+  - lib/doctor.sh
+  - lib/watch.sh
+  - .majordomus/policy.yaml
+  - test/cases
+non_scope:
+  - Any background or automatic maintenance
+  - Deleting a record under any circumstance
+depends_on:
+  - I0805
+acceptance_criteria:
+  - Both doctrines appear in doctrine list with a validator that exists, and doctor proves each reaches the command that claims to run it
+  - A malformed closed record fails doctor and drifts watch, and the finding carries a reproduce command
+  - A session naming a checkpoint path that does not exist is reported, naming both
+  - Archiving moves records without deleting them and refuses to overwrite an existing archive
+  - A session left open longer than the policy allows is reported by watch and does not block anything
+validation:
+  - bash test/run.sh 63_session_doctrines
+  - bin/majordomus doctor
+  - bin/majordomus watch
+evidence_required:
+  - session_doctrines_wired
+risk: "An open session is normal for most of its life, so the staleness rule has to be advisory. A blocking check on an open session would refuse work during the episode it is meant to describe."
+created_at: 2026-09-04
+updated_at: 2026-09-04

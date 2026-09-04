@@ -5,9 +5,9 @@
     "repository": "korczis/prismatic-majordomus",
     "default_branch": "master"
   },
-  "active_milestone": "runtime-adapters",
-  "next_ready": "I0201",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "active_milestone": "M003",
+  "next_ready": "I0801",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::ready\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::ready\n    I0803[\"I0803<br/>Open a session and report its status\"]:::blocked\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::blocked\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::blocked\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::blocked\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::blocked\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::blocked\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::blocked\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::blocked\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "statuses": {
     "issue": [
       "READY",
@@ -271,6 +271,107 @@
           "ACTIVE": 0,
           "VERIFY": 0,
           "DONE": 4,
+          "CANCELLED": 0
+        }
+      }
+    },
+    {
+      "id": "M003",
+      "slug": "session-envelope-and-knowledge",
+      "status": "PLANNED",
+      "order": 3,
+      "priority": "p1",
+      "title": "A session is a durable envelope, and knowledge is compiled from what is already canonical",
+      "problem": "Continuity today is task-shaped. A task record says what one piece of work is, and checkpoints, handovers, decisions and questions hang off it. Nothing represents the execution episode itself — the worker sat down, touched three tasks, recorded two decisions, closed one issue, and stopped — so the causal question a later worker actually asks is unanswerable from the records: which work happened together, in what order, against which commits, and what did it decide. The second gap is retrieval. `search` is a literal scan over six operational record kinds, which is right for those files and blind to everything else: the claims matrix, the milestone and issue contracts, the policy, the profiles, the prompts and the documents already carry explicit, machine-readable relationships — claim to implementation to test, issue to milestone to dependency, evidence to issue — and no command can traverse one of them. A worker therefore reconstructs both from a conversation, which is the thing that does not survive.",
+      "outcome": "A worker with no conversation history can answer what happened, why, what was decided, which evidence supports it, where the canonical source lives, and what to do next — from records and a derived index, with git still the authority over both.",
+      "current_state": "There is no session concept: `.majordomus/state/` holds task, checkpoint, handover, decision, question and ledger, and the ledger is the only thing that knows two records were written by the same episode, which it knows only by adjacency in time. There is no index of any kind; docs/CONTINUITY.md states that as a deliberate choice for the record corpus and says nothing about the rest of the repository. docs/DESIGN.md's Clean Extraction Boundary excludes graph semantics absolutely, which forbids even a provenance graph derived from this repository's own files.",
+      "desired_state": "A session lifecycle exists with one active session per worktree and immutable closed records that reference authoritative records rather than copying them, and whose whole reference envelope is derived from the ledger instead of accumulated by hand. A knowledge compiler discovers curated sources through git, extracts nodes with identities that survive a rebuild, records edges only where an explicit relationship was observed, keeps a content-hash manifest that makes a no-op sync cheap, and answers read-only queries without mutating anything. `context` can select a bounded slice of it. Both are declared doctrines with validators that doctor and watch dispatch, and the boundary between shared and operational knowledge is a tested property rather than a convention.",
+      "scope": [
+        "lib",
+        "bin/majordomus",
+        "share/doctrines.yaml",
+        "share/allow",
+        "share/skeleton",
+        "docs",
+        "test/cases",
+        ".majordomus/policy.yaml",
+        ".majordomus/project"
+      ],
+      "non_scope": [
+        "Any database, embedding, vector store, or similarity ranking",
+        "Any model invocation, network call, or generated summary",
+        "A second mutable narrative store that copies decisions, questions or checkpoint bodies",
+        "Publishing operational records to the website",
+        "Renderer-specific knowledge output for any particular note-taking application",
+        "Inferring a relationship from prose that does not state it explicitly"
+      ],
+      "acceptance_criteria": [
+        "A session opens, closes, and its closed record is immutable, temporally ordered, and interpretable against current git through the existing divergence vocabulary",
+        "A closed session names the tasks, issues, checkpoints, handovers, decisions and questions of its episode by reference, and copies none of their bodies",
+        "Knowledge discovery is driven by git rather than by a filesystem walk, and an untracked file is not a source",
+        "A node identity survives a rebuild, and editing one source changes only the nodes derived from it",
+        "Every edge carries the file it was observed in; an edge without provenance is a validation failure",
+        "A second sync with no source change reports no work and is measurably cheaper than a cold one",
+        "Every read-only knowledge and session command leaves `git status` byte-identical",
+        "Shared and operational knowledge are separable, and a test proves the shared projection contains no operational record",
+        "`context` can carry a bounded knowledge section that is dropped before any immutable fact and is named under EXCLUDED when it is",
+        "Each new guarantee is a declared doctrine with a validator that doctor and watch dispatch, a claim, and a behavioural case",
+        "docs/CONTINUITY.md and docs/DESIGN.md state the new architecture precisely instead of contradicting it"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor",
+        "bin/majordomus watch",
+        "bin/majordomus plan validate",
+        "shellcheck -x -s bash bin/majordomus lib/*.sh"
+      ],
+      "evidence_required": [
+        "session_lifecycle",
+        "session_immutability",
+        "knowledge_determinism",
+        "knowledge_idempotence",
+        "provenance_required",
+        "readonly_proven",
+        "privacy_boundary",
+        "context_bounded",
+        "doctrines_wired",
+        "dogfood_loop"
+      ],
+      "risks": [
+        "A knowledge index is a second thing that can be believed. Every mitigation is the same one: the index is a pointer, it carries the source path and hash of what it points at, and it is reported stale rather than silently rebuilt by a query.",
+        "A curated source list is a place where something can be forgotten. The alternative — indexing everything git tracks — imports generated files, vendored trees and site output, and was rejected; the cost is that adding a canonical file kind is an explicit edit, and the validator names a declared source class whose discovery returns nothing.",
+        "Deriving a session's references from the ledger makes the ledger load-bearing for a second thing. It is already append-only, machine-written and validated by ledger_integrity, and the alternative — accumulating references into a mutable session file on every command — puts a write on the hot path of every other command and creates the second store this milestone exists to avoid.",
+        "The Clean Extraction Boundary currently forbids graph semantics without qualification. Narrowing it is a deliberate change to a published boundary, and it must be narrowed precisely — a generic provenance graph over this repository's own artifacts — or it stops being a boundary."
+      ],
+      "evidence": [],
+      "issues": [
+        "I0801",
+        "I0802",
+        "I0803",
+        "I0804",
+        "I0805",
+        "I0806",
+        "I0807",
+        "I0808",
+        "I0809",
+        "I0810",
+        "I0811",
+        "I0812",
+        "I0813",
+        "I0814",
+        "I0815",
+        "I0816"
+      ],
+      "mermaid": "flowchart LR\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::ready\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::ready\n    I0803[\"I0803<br/>Open a session and report its status\"]:::blocked\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::blocked\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::blocked\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::blocked\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::blocked\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::blocked\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::blocked\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::blocked\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 16,
+        "required": 16,
+        "by_status": {
+          "READY": 2,
+          "BLOCKED": 14,
+          "ACTIVE": 0,
+          "VERIFY": 0,
+          "DONE": 0,
           "CANCELLED": 0
         }
       }
@@ -2918,6 +3019,874 @@
       "started_at": "",
       "verified_at": "",
       "completed_at": ""
+    },
+    {
+      "id": "I0801",
+      "slug": "extraction-boundary-graph",
+      "milestone": "M003",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": true,
+      "title": "Narrow the Clean Extraction Boundary and record what was adopted",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I0807"
+      ],
+      "scope": [
+        "docs/DESIGN.md",
+        "docs/EXTRACTION_REPORT.md"
+      ],
+      "non_scope": [
+        "Any implementation",
+        "Any change to the ten items already recorded as having crossed the boundary",
+        "Naming any internal path, component or vocabulary of the studied material"
+      ],
+      "objective": "Rewrite the Clean Extraction Boundary in docs/DESIGN.md so that it permits a generic deterministic provenance graph derived from this repository's own artifacts while continuing to exclude everything it excludes today, and record in docs/EXTRACTION_REPORT.md which architectural ideas from the studied prior art were adopted by re-derivation and which were refused, each with its reason.",
+      "why": "The boundary currently reads 'graph semantics' among the things excluded absolutely. The rest of this milestone builds a reference graph. Shipping that against a published boundary that forbids it would make the boundary decorative, which is precisely the failure mode this project was built to detect. The adoption record exists so that the next reader can tell a re-derived idea from a copied implementation.",
+      "current_state": "docs/DESIGN.md lists 'graph semantics' in the absolute exclusion sentence and lists ten items that crossed the boundary by abstraction. docs/EXTRACTION_REPORT.md records the evidence behind the v0.1 decisions and says nothing about session or knowledge tooling.",
+      "desired_state": "The exclusion sentence distinguishes the domain, inference and semantic machinery that stays out from the generic provenance graph over this repository's own files that is now in. The adopted list names the session and knowledge ideas taken by re-derivation. A refusal list names what was studied and deliberately not taken, each with the reason, including the database, the embedding layer, the vault renderer and the copied-narrative session note.",
+      "acceptance_criteria": [
+        "The boundary states what kind of graph is permitted and what kind is still excluded, in one sentence a reader can apply to a proposed feature",
+        "The adoption list names each adopted idea and the Majordomus object it becomes",
+        "The refusal list names each refused idea and why, with the databases and the embedding layer among them",
+        "No internal path, hostname, component name or quotation from the studied material appears anywhere in either document"
+      ],
+      "validation": [
+        "bin/majordomus doctor",
+        "bash test/run.sh 08_no_forbidden_constructs"
+      ],
+      "evidence_required": [
+        "boundary_rewritten"
+      ],
+      "evidence": [],
+      "risk": "A boundary narrowed to fit the feature being built is not a boundary. The wording has to be one a reader could use to refuse a future proposal, not one that merely describes what is about to be committed.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0802",
+      "slug": "session-record-schema",
+      "milestone": "M003",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": true,
+      "title": "Specify the session record before writing one",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I0803"
+      ],
+      "scope": [
+        "docs/SCHEMAS.md",
+        "docs/CONTINUITY.md",
+        "docs/CONCEPTS.md"
+      ],
+      "non_scope": [
+        "Any implementation",
+        "The knowledge layer",
+        "Retention policy, which its own issue settles"
+      ],
+      "objective": "Define the session object in docs/SCHEMAS.md and docs/CONTINUITY.md: what a session is, how it differs from a task and from a handover, the filename grammar of a closed record, the exact field list, which fields are computed from git, and the rule that the reference envelope is derived rather than accumulated.",
+      "why": "Every other issue in this milestone writes or reads that file. Specifying it after implementing it is how a schema ends up describing one caller. The distinction that has to survive is the one the whole milestone rests on: a task is a unit of work, a session is an execution episode, and a handover is a deliberate package for whoever continues — three objects that are easy and expensive to conflate.",
+      "current_state": "docs/CONTINUITY.md names six kinds of durable record and no session among them. docs/SCHEMAS.md documents current.yaml, the checkpoint and handover record shape, decisions.md, open-questions.md and the ledger.",
+      "desired_state": "The session is the seventh kind, documented beside the others, with its mutable active record and its immutable closed record described separately, its field list given, and the derivation rule stated: the tasks, issues, checkpoints, handovers, decisions and questions of an episode are read out of the ledger between the session's own timestamps, never written into the session file by another command.",
+      "acceptance_criteria": [
+        "The three-way distinction between task, session and handover is stated with the case each one gets wrong if conflated",
+        "The closed record's filename grammar is given and shown to be lexicographically chronological, branch-safe and collision-safe",
+        "Every field is listed with its source, and the computed ones are marked as never authored",
+        "The derivation rule is stated, with the alternative it rejects and why"
+      ],
+      "validation": [
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "schema_specified"
+      ],
+      "evidence": [],
+      "risk": "A schema written before the implementation can specify something the portable-shell floor cannot express. Each field has to be one that git, the ledger or a single-line YAML scalar can carry.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0803",
+      "slug": "session-start-status",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Open a session and report its status",
+      "depends_on": [
+        "I0802"
+      ],
+      "blocked_by": [
+        "I0802"
+      ],
+      "dependents": [
+        "I0804"
+      ],
+      "scope": [
+        "lib/session.sh",
+        "bin/majordomus",
+        "share/allow",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Closing a session",
+        "Any reading of the ledger",
+        "Knowledge"
+      ],
+      "objective": "Implement lib/session.sh with `session start` and `session status`: one active session per worktree in .majordomus/state/session-current.yaml, its identity and git facts computed, a second start refused rather than silently replacing the first, and a status that reports the active session against current git or says plainly that none is open.",
+      "why": "The active record is the anchor every later command reads. It has to refuse rather than overwrite, because an execution episode that silently replaces another one loses the boundary the whole object exists to draw.",
+      "current_state": "There is no session command and no session state file. bin/majordomus dispatches its subcommands from a fixed case list.",
+      "desired_state": "`majordomus session start` writes the active record atomically at mode 0600, records session_id, started_at, owner, an optionally supplied worker identity, and the computed repository_id, worktree, branch, start_head and start_working_tree. It refuses when a session is already open in this worktree and names the command that closes it. `session status` prints the open session with its divergence label, or reports absence. Both are dispatched from bin/majordomus and appear in its usage.",
+      "acceptance_criteria": [
+        "A session starts, the active record exists, and its identity fields match git",
+        "A second start is refused with a non-zero exit and names the closing command",
+        "A session started in one worktree does not appear as active in another",
+        "status reports absence as absence rather than as an error",
+        "The active record's unknown keys are rejected by an allowlist like every other Majordomus YAML file"
+      ],
+      "validation": [
+        "bash test/run.sh 60_session_lifecycle",
+        "shellcheck -x -s bash lib/session.sh"
+      ],
+      "evidence_required": [
+        "session_opens"
+      ],
+      "evidence": [],
+      "risk": "One active session per worktree is the same rule current.yaml already has, and current.yaml is tracked, so it travels with the branch and appears active in a checkout that never started it. The session record has to record its worktree and be read with the same foreign-record rule.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0804",
+      "slug": "session-close-envelope",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Close a session into an envelope derived from the ledger",
+      "depends_on": [
+        "I0803"
+      ],
+      "blocked_by": [
+        "I0803"
+      ],
+      "dependents": [
+        "I0805"
+      ],
+      "scope": [
+        "lib/session.sh",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Reading a closed record back, which is its own issue",
+        "Retention and archiving",
+        "Any copying of a checkpoint, handover or decision body into the session file"
+      ],
+      "objective": "Implement `session close`: read the active record, derive the episode's references from the ledger between its start and now, write an immutable closed record with computed end-state git facts and an optional authored summary body, remove the active record, and append the close event to the ledger.",
+      "why": "This is the mechanism that makes the session an envelope rather than a narrative. Nothing accumulates references during the episode, so no command outside session pays for them; and because the ledger is append-only and machine-written, the envelope is a derivation of existing evidence rather than a second account of it.",
+      "current_state": "The ledger records task, checkpoint, handover, finish, decision, question, plan and maintenance events, each with a timestamp, a branch and a head. Nothing reads a time range out of it.",
+      "desired_state": "A closed record under .majordomus/state/sessions/ carries the computed identity, started_at and closed_at, start and end head and working tree, the outcome, and reference lists of task ids, issue ids, milestone ids, checkpoint paths, handover paths, decision entries and question ids observed in the ledger window. It copies no body. An authored summary on stdin is optional and is stored as the record body, subject to the identity-field refusal every other record uses.",
+      "acceptance_criteria": [
+        "Closing writes an immutable record, removes the active record, and appends one ledger event",
+        "The reference lists match the events the ledger holds in the window, and nothing outside the window appears",
+        "An episode that spans two tasks names both; a task that spans two sessions is named by both",
+        "No body of any referenced record appears in the session file, and a case asserts that",
+        "An authored summary containing an identity field is refused, as it is for a checkpoint"
+      ],
+      "validation": [
+        "bash test/run.sh 60_session_lifecycle",
+        "bash test/run.sh 61_session_envelope"
+      ],
+      "evidence_required": [
+        "session_closes",
+        "envelope_is_references"
+      ],
+      "evidence": [],
+      "risk": "The ledger window is bounded by timestamps with second resolution, so two episodes that abut within one second could each claim an event. The ledger's line order is the existing tiebreak for exactly this and has to be used rather than the timestamps alone.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0805",
+      "slug": "session-read-divergence",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Read sessions back with a divergence label",
+      "depends_on": [
+        "I0804"
+      ],
+      "blocked_by": [
+        "I0804"
+      ],
+      "dependents": [
+        "I0806"
+      ],
+      "scope": [
+        "lib/session.sh",
+        "bin/majordomus",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Knowledge",
+        "Any repository-wide resolution across worktrees"
+      ],
+      "objective": "Implement `session list`, `session show <id>` and `session latest`, each resolving with the established rule — same repository, same worktree, same branch, then same branch — and each printing the existing divergence label of the record against current git.",
+      "why": "A closed session from a rewritten branch that is presented as current knowledge is the failure the divergence vocabulary already exists to prevent. Reusing that vocabulary rather than inventing a second one is the whole point of having it.",
+      "current_state": "mj_resolve_latest implements the two-tier rule for checkpoints and handovers, and mj_git_label produces exact, advanced, diverged and different_context. No command reads a session.",
+      "desired_state": "list prints sessions newest first with their labels; show prints one record whole; latest prints the newest session that resolves for this worktree and branch, and reports absence as absence. A diverged or different_context record is labelled as such on every one of them.",
+      "acceptance_criteria": [
+        "Sessions list in chronological order, and the order is not taken from file modification time",
+        "Two sessions written inside the same second order deterministically",
+        "A record whose recorded head is not an ancestor of HEAD is labelled diverged wherever it is printed",
+        "A session from another branch is never offered as latest",
+        "Every one of these commands leaves git status byte-identical"
+      ],
+      "validation": [
+        "bash test/run.sh 62_session_divergence"
+      ],
+      "evidence_required": [
+        "divergence_labelled"
+      ],
+      "evidence": [],
+      "risk": "Reusing mj_resolve_latest requires the session record to have the same front-matter shape as a checkpoint. If the record is pure YAML instead, a second resolver appears, and two resolution rules is exactly the thing the resolution section of the documentation refuses.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0806",
+      "slug": "session-doctrines-retention",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 4,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Make the session rules doctrines, with retention and archiving",
+      "depends_on": [
+        "I0805"
+      ],
+      "blocked_by": [
+        "I0805"
+      ],
+      "dependents": [
+        "I0813"
+      ],
+      "scope": [
+        "share/doctrines.yaml",
+        "share/allow/policy.txt",
+        "share/skeleton",
+        "lib/session.sh",
+        "lib/doctor.sh",
+        "lib/watch.sh",
+        ".majordomus/policy.yaml",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Any background or automatic maintenance",
+        "Deleting a record under any circumstance"
+      ],
+      "objective": "Declare the session rules in share/doctrines.yaml with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites.",
+      "why": "A rule enforced by an inline check in one command is the declared-but-not-wired failure this tool measures in other people's repositories. Every enforced rule here is declared in the registry and dispatched from it, or it is not enforced.",
+      "current_state": "The doctrine registry declares every enforced rule with a validator, the commands that dispatch it, a claim and a test. history --rotate is the existing precedent for retention that archives rather than deletes and refuses to overwrite an existing archive.",
+      "desired_state": "session_record_integrity and session_reference_integrity are declared and dispatched. The policy carries a session block with the retention cap and whether archiving is enabled, its keys are in the policy allowlist, and retention_caps reports sessions alongside checkpoints and handovers. Archiving happens only when a command asks for it.",
+      "acceptance_criteria": [
+        "Both doctrines appear in doctrine list with a validator that exists, and doctor proves each reaches the command that claims to run it",
+        "A malformed closed record fails doctor and drifts watch, and the finding carries a reproduce command",
+        "A session naming a checkpoint path that does not exist is reported, naming both",
+        "Archiving moves records without deleting them and refuses to overwrite an existing archive",
+        "A session left open longer than the policy allows is reported by watch and does not block anything"
+      ],
+      "validation": [
+        "bash test/run.sh 63_session_doctrines",
+        "bin/majordomus doctor",
+        "bin/majordomus watch"
+      ],
+      "evidence_required": [
+        "session_doctrines_wired"
+      ],
+      "evidence": [],
+      "risk": "An open session is normal for most of its life, so the staleness rule has to be advisory. A blocking check on an open session would refuse work during the episode it is meant to describe.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0807",
+      "slug": "knowledge-discovery",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Discover knowledge sources from git, not from the filesystem",
+      "depends_on": [
+        "I0801"
+      ],
+      "blocked_by": [
+        "I0801"
+      ],
+      "dependents": [
+        "I0808"
+      ],
+      "scope": [
+        "lib/knowledge.sh",
+        "bin/majordomus",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Extraction, nodes, edges",
+        "Any recursive walk of a hidden directory",
+        "Indexing a path merely because it exists"
+      ],
+      "objective": "Implement the discovery stage of lib/knowledge.sh: a declared list of source classes, each with a scope of shared or operational, resolved through git ls-files for tracked repository artifacts and through the known state paths for operational records, producing a deterministic ordered list of sources with their content hashes.",
+      "why": "A recursive filesystem walk indexes vendored trees, build output, editor droppings and untracked files that were never meant to be knowledge, and it produces a different answer on two machines. git ls-files answers with repository truth, in a stable order, and is already the boundary this project treats as authoritative.",
+      "current_state": "Nothing in lib/ enumerates repository files. scripts/generate-site-data declares its canonical inputs, which is the precedent for a declared source list rather than a walk.",
+      "desired_state": "`knowledge sources` prints each discovered source with its class, its scope and its hash, in a deterministic order, and the same repository produces the same list twice. An untracked file is not a source. Operational state paths are added explicitly and are marked operational, never shared.",
+      "acceptance_criteria": [
+        "The source classes are declared in one place and each carries its scope",
+        "Discovery is driven by git for tracked sources, and a case proves an untracked file is excluded",
+        "The output order is deterministic and independent of filesystem order",
+        "A pathname containing a space or a non-ASCII character is handled without splitting",
+        "A declared source class that discovers nothing is reported, so a forgotten path is visible"
+      ],
+      "validation": [
+        "bash test/run.sh 64_knowledge_discovery",
+        "shellcheck -x -s bash lib/knowledge.sh"
+      ],
+      "evidence_required": [
+        "discovery_deterministic"
+      ],
+      "evidence": [],
+      "risk": "The historical whitespace bug class lives here. Every pathname read out of git has to be read NUL-safely or with an explicit field separator, never through unquoted word splitting.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0808",
+      "slug": "knowledge-nodes",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Extract nodes with identities that survive a rebuild",
+      "depends_on": [
+        "I0807"
+      ],
+      "blocked_by": [
+        "I0807"
+      ],
+      "dependents": [
+        "I0809"
+      ],
+      "scope": [
+        "lib/knowledge.sh",
+        "lib/knowledge.awk",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Edges",
+        "The manifest",
+        "Any full Markdown parser"
+      ],
+      "objective": "Implement the extract and normalise stages in lib/knowledge.awk: one node per canonical object, with an identity derived from its canonical id or its repository path, a kind that is only asserted when a structural fact establishes it, and a title taken from the record or from the document's first heading.",
+      "why": "Identity is what makes the index a pointer rather than a copy. An id derived from enumeration order or from a title changes when something unrelated changes, and every reference to it silently becomes wrong. Classification that guesses from prose is the same failure in another dimension: a confident wrong kind is worse than an honest unknown.",
+      "current_state": "The canonical objects already have identities — claims, milestones, issues, profiles, prompts and doctrines are all keyed — and lib/project.awk is the precedent for deriving a model in awk from flattened records.",
+      "desired_state": "Nodes are emitted in a stable order with ids of the form kind and canonical key, where the key is the object's own id for structured records and its repository path for documents. A kind is asserted from the source class or from an explicit field, never from a keyword found in prose, and an unrecognised source yields the unknown kind rather than a guess.",
+      "acceptance_criteria": [
+        "Two syncs of an unchanged repository produce byte-identical node output",
+        "Renaming a document changes that document's node id and no other",
+        "A node's kind comes from its source class or an explicit field, and a case proves prose containing a kind word does not change it",
+        "An unrecognisable source produces a node of kind unknown rather than being dropped or guessed at",
+        "Extraction from a generic Markdown document takes only the path, the first heading and explicit links"
+      ],
+      "validation": [
+        "bash test/run.sh 65_knowledge_nodes"
+      ],
+      "evidence_required": [
+        "node_identity_stable",
+        "unknown_stays_unknown"
+      ],
+      "evidence": [],
+      "risk": "Deriving a document id from its path means a rename is a delete and an add, which is correct and will look like churn. The alternative, a content hash identity, makes an edit a delete and an add, which is worse.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0809",
+      "slug": "knowledge-edges-provenance",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Record only edges that a file states, each with where it was observed",
+      "depends_on": [
+        "I0808"
+      ],
+      "blocked_by": [
+        "I0808"
+      ],
+      "dependents": [
+        "I0810"
+      ],
+      "scope": [
+        "lib/knowledge.sh",
+        "lib/knowledge.awk",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Inferring a relationship from prose",
+        "Any similarity, clustering or taxonomy generation",
+        "Session edges, which arrive with the session integration"
+      ],
+      "objective": "Implement the resolve and graph stages: edges derived from the explicit relationships the canonical files already declare — claim to source, implementation and test; issue to milestone and to its dependencies; evidence to issue; doctrine to validator, claim and test; record to task — each carrying the file and field it was observed in, and none carrying a relationship inferred from prose.",
+      "why": "The repository already contains a dense, hand-maintained, machine-readable graph that no command can traverse. Extracting it costs nothing in accuracy because every edge is stated. Heuristic extraction from prose would add edges nobody wrote, and an edge nobody wrote cannot be checked by the person who would notice it is wrong.",
+      "current_state": "docs/CLAIMS.yaml states three relationships per claim; the issue files state a milestone and a dependency list; share/doctrines.yaml states a validator, a claim list, a test and the commands that enforce it; every continuity record states its task. Nothing reads any of them as a graph.",
+      "desired_state": "An edge is a from, a to, a type and a provenance, and the graph stage rejects an edge missing any of the four. Edge types are a closed declared set. A dangling edge — one whose target is not a node — is retained and reported rather than dropped, because a broken reference is the finding.",
+      "acceptance_criteria": [
+        "Every edge carries the source file it was observed in, and an edge without provenance is a validation failure rather than a silent drop",
+        "The edge types are a declared closed set and an undeclared type is an error",
+        "Changing a dependency in an issue file changes the graph on the next sync with no generated file edited by hand",
+        "A dangling edge is reported and names both ends",
+        "No edge is produced from a Markdown link whose target is outside the repository"
+      ],
+      "validation": [
+        "bash test/run.sh 66_knowledge_edges",
+        "bash test/run.sh 67_knowledge_mutation"
+      ],
+      "evidence_required": [
+        "provenance_required",
+        "mutation_propagates"
+      ],
+      "evidence": [],
+      "risk": "Markdown links are the one edge source that is not curated. Treating a broken external link as the same severity as a broken claim-to-test reference would make a permanent red gate out of an intentional outbound link; ownership and severity have to be distinguished.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0810",
+      "slug": "knowledge-manifest",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 4,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "A content-hash manifest that makes a second sync cheap",
+      "depends_on": [
+        "I0809"
+      ],
+      "blocked_by": [
+        "I0809"
+      ],
+      "dependents": [
+        "I0811"
+      ],
+      "scope": [
+        "lib/knowledge.sh",
+        "lib/knowledge.awk",
+        ".gitignore",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Search",
+        "Any automatic rebuild triggered by a read"
+      ],
+      "objective": "Implement the manifest: one row per source with its path, content hash, extractor version and the node ids it produced, written beside the generated graph, compared on every sync, and used so that a sync with no source change does no extraction and says so.",
+      "why": "Without a manifest, every query is tempted to rebuild and every rebuild is a full one. The manifest is what makes staleness detectable without mutating anything, which is what lets the read-only commands stay read-only.",
+      "current_state": "Nothing is generated and nothing is cached. The site generator's --check mode is the precedent for a command that reports drift between canonical input and derived output without regenerating it.",
+      "desired_state": "`knowledge sync` writes the manifest with the graph. `knowledge sync --check` compares source hashes against the manifest and exits non-zero when they differ, writing nothing. `knowledge status` reports fresh or stale and names the sources that moved. A no-op sync is measurably cheaper than a cold one, and the measurement is recorded.",
+      "acceptance_criteria": [
+        "A second sync with no source change reports no work and leaves the generated files byte-identical",
+        "Editing one source changes that source's manifest row and the nodes derived from it, and no other row",
+        "sync --check writes nothing and exits non-zero when a source has moved",
+        "The extractor version is part of the manifest, so a change to the extractor invalidates it",
+        "The measured cost of a no-op sync and of a cold sync on this repository is recorded as evidence"
+      ],
+      "validation": [
+        "bash test/run.sh 68_knowledge_manifest"
+      ],
+      "evidence_required": [
+        "sync_idempotent",
+        "noop_is_cheaper"
+      ],
+      "evidence": [],
+      "risk": "If a no-op sync is not materially cheaper than a cold one, the manifest has failed and should be removed rather than kept as decoration. The measurement is the acceptance criterion, not the design.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0811",
+      "slug": "knowledge-query",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 5,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Read-only knowledge lookup with an ordering that can be explained",
+      "depends_on": [
+        "I0810"
+      ],
+      "blocked_by": [
+        "I0810"
+      ],
+      "dependents": [
+        "I0812",
+        "I0814"
+      ],
+      "scope": [
+        "lib/knowledge.sh",
+        "bin/majordomus",
+        "docs/CLI.md",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Any change to the existing search command's behaviour",
+        "Embeddings, similarity, or any opaque score",
+        "Rebuilding the index from a read"
+      ],
+      "objective": "Implement `knowledge search`, `knowledge show` and `knowledge related`: deterministic lookup over the generated index with a documented, tested match order, JSON output that names the field each result matched on, and no write of any kind.",
+      "why": "A query that rebuilds the index mutates the repository as a side effect of asking a question, which makes a read-only command a write and breaks every reproduce line that follows it. And a relevance order nobody can explain is one nobody can debug; the order has to be a rule, not a score.",
+      "current_state": "`majordomus search` is a literal grep over the six operational record kinds and must keep that contract unchanged. Nothing searches the repository's canonical artifacts.",
+      "desired_state": "`knowledge search` ranks by an explicit ladder — exact canonical id, exact title, title prefix, path, tag, then literal body match — and reports the matched field for every result. `knowledge show` prints one node with its source path and hash. `knowledge related` prints the edges into and out of one node with their provenance. A stale index is reported, never silently rebuilt.",
+      "acceptance_criteria": [
+        "The match ladder is documented and a case asserts the order for a query that matches at two levels",
+        "JSON output carries the id, kind, title, source and matched field of every result",
+        "Running every read-only knowledge command leaves git status byte-identical",
+        "A stale index is reported as stale by every read command, and none of them rebuilds it",
+        "The existing search command's output and exit codes are unchanged, proved by its own case still passing"
+      ],
+      "validation": [
+        "bash test/run.sh 69_knowledge_query",
+        "bash test/run.sh 24_prompt_search"
+      ],
+      "evidence_required": [
+        "query_explainable",
+        "readonly_proven"
+      ],
+      "evidence": [],
+      "risk": "Two commands now contain the word search with different corpora and different contracts. If the distinction is not stated where a worker reads it, the wrong one gets used and the answer looks like an absence.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0812",
+      "slug": "knowledge-validation",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Validate the graph, and let doctor and watch ask the same validator",
+      "depends_on": [
+        "I0811"
+      ],
+      "blocked_by": [
+        "I0811"
+      ],
+      "dependents": [
+        "I0813"
+      ],
+      "scope": [
+        "lib/knowledge.sh",
+        "share/doctrines.yaml",
+        "lib/doctor.sh",
+        "lib/watch.sh",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Repairing anything automatically",
+        "Failing on a link to a resource outside the repository"
+      ],
+      "objective": "Implement `knowledge validate` detecting duplicate node ids, dangling explicit references, source paths that no longer exist, hash mismatches, edges with a missing end, edges without provenance and a stale generated index, each with a severity and a reproduce command, and declare the rule in the doctrine registry so doctor and watch dispatch the same validator rather than reimplementing it.",
+      "why": "Validation logic that exists twice diverges, and the second copy is the one that stops being run. The registry is the mechanism that makes doctor, watch and the command itself provably the same rule.",
+      "current_state": "Doctrines are declared with a validator, the commands that enforce it and its test; doctor proves each link of that chain from the source rather than from the declaration.",
+      "desired_state": "knowledge_integrity is declared and dispatched from doctor and watch. Findings distinguish a broken Majordomus-owned reference, which is a failure, from a broken link to a deliberately external resource, which is not. Doctor also answers whether the index can be built at all in this checkout.",
+      "acceptance_criteria": [
+        "Every listed condition is detected by a case that introduces exactly that fault",
+        "The doctrine appears in doctrine list, doctor proves it reaches both commands, and its test is named",
+        "Severity distinguishes an owned reference from an external one, and the rule for which is which is stated",
+        "A stale index is drift under watch and a failure under the command, and neither rebuilds it",
+        "doctor reports whether the index is buildable here without leaving one behind"
+      ],
+      "validation": [
+        "bash test/run.sh 70_knowledge_validate",
+        "bin/majordomus doctor",
+        "bin/majordomus watch"
+      ],
+      "evidence_required": [
+        "validation_detects",
+        "doctrines_wired"
+      ],
+      "evidence": [],
+      "risk": "A validator that runs a full extraction inside doctor makes doctor slow enough to be skipped, and a check nobody runs is the failure this project measures. It has to compare hashes rather than rebuild.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0813",
+      "slug": "session-knowledge-integration",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 7,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "A closed session becomes a node that points at its episode",
+      "depends_on": [
+        "I0806",
+        "I0812"
+      ],
+      "blocked_by": [
+        "I0806",
+        "I0812"
+      ],
+      "dependents": [
+        "I0815"
+      ],
+      "scope": [
+        "lib/knowledge.sh",
+        "lib/knowledge.awk",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Any inference about why a session touched something",
+        "Copying a session summary into a node"
+      ],
+      "objective": "Extract closed sessions as knowledge nodes whose edges point at the tasks, issues, checkpoints, handovers, decisions and questions they name, so that the graph answers which sessions touched an issue, which decisions affected it, and which handover continued a task — without any session body being copied anywhere.",
+      "why": "This is what makes the two halves of the milestone one thing. Temporal and causal navigation is what a worker actually wants from a prior session, and it is exactly the part that does not require reading the prose.",
+      "current_state": "The knowledge graph covers repository artifacts. Sessions exist as records that nothing traverses.",
+      "desired_state": "A session node carries its id, its window and its outcome; its edges carry the relationship and the session record they were observed in. Checkpoints, which are numerous and individually low-value, are represented as references from the session rather than as one node each, so that a high-volume record kind does not dominate the graph.",
+      "acceptance_criteria": [
+        "A query for an issue names the sessions that touched it, and each answer carries the session record it came from",
+        "A session node holds no body text from any record it references",
+        "A high-volume record kind does not produce one node per file where a reference list is sufficient, and the reason is stated",
+        "Sessions are operational scope and never shared, proved by a case"
+      ],
+      "validation": [
+        "bash test/run.sh 71_session_knowledge"
+      ],
+      "evidence_required": [
+        "session_nodes_reference"
+      ],
+      "evidence": [],
+      "risk": "Every operational record kind added to the graph increases the chance one of them leaks into a shared projection. The scope field has to be the only thing that decides, and it has to be tested at the projection boundary rather than at each producer.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0814",
+      "slug": "context-knowledge-section",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Give the worker a bounded slice of knowledge, not the knowledge base",
+      "depends_on": [
+        "I0811"
+      ],
+      "blocked_by": [
+        "I0811"
+      ],
+      "dependents": [
+        "I0815"
+      ],
+      "scope": [
+        "lib/context.sh",
+        "share/skeleton",
+        "share/allow/profile.txt",
+        ".majordomus/profiles",
+        "docs",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Any similarity-based selection",
+        "Rebuilding the index from context",
+        "Raising the existing line budget"
+      ],
+      "objective": "Add a knowledge section to `majordomus context`, selected deterministically from what the active task and issue already reference, capped by a profile toggle and an item limit, dropped before any immutable fact when the budget is short, and named under EXCLUDED whenever it is dropped or switched off.",
+      "why": "A context builder that dumps an index has replaced a selection problem with a bigger one. The value is in choosing the few pointers a worker needs, from relationships that are already explicit, and in saying out loud what was left out.",
+      "current_state": "context assembles nine sections in authority order with a fixed drop order and names every exclusion. Its profile toggles decide what is asked for.",
+      "desired_state": "The profile carries a knowledge toggle and a maximum item count, both in the profile allowlist. The section lists pointers — id, kind, title and source path — for the current issue, its dependencies, the claims it names and the documents it references. It sits below every immutable fact in the drop order and above nothing that outranks it.",
+      "acceptance_criteria": [
+        "The section appears only when the profile asks for it, and its absence is named under EXCLUDED with the toggle that caused it",
+        "It is dropped before git, the task, the profile and open blockers under a tight budget, and the drop is named",
+        "Selection comes from explicit references only, and a case proves an unrelated document is not selected",
+        "A stale index makes the section report staleness rather than silently omit itself",
+        "The existing context case still passes unchanged"
+      ],
+      "validation": [
+        "bash test/run.sh 72_context_knowledge",
+        "bash test/run.sh 23_context"
+      ],
+      "evidence_required": [
+        "context_bounded"
+      ],
+      "evidence": [],
+      "risk": "The budget is already close to full on a rich task. If the knowledge section is added without measuring, it will be the section that always gets dropped, which is a feature nobody receives.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0815",
+      "slug": "claims-and-docs",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 8,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Say what is now true in the claims, the documentation and the worker instructions",
+      "depends_on": [
+        "I0813",
+        "I0814"
+      ],
+      "blocked_by": [
+        "I0813",
+        "I0814"
+      ],
+      "dependents": [
+        "I0816"
+      ],
+      "scope": [
+        "docs",
+        "share/skeleton/providers",
+        ".majordomus/providers",
+        "CLAUDE.md",
+        "AGENTS.md",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Any website change",
+        "A claim for a subcommand that has no behaviour of its own"
+      ],
+      "objective": "Add the behavioural claims this milestone earns to docs/CLAIMS.yaml with real implementation and test paths, document the commands in docs/CLI.md, correct the sentence in docs/CONTINUITY.md that says no index is maintained, write docs/KNOWLEDGE.md, and extend the provider-neutral instruction source so a fresh worker knows the session and knowledge steps of the lifecycle.",
+      "why": "A capability with no claim is invisible, a claim with no test is the failure this project measures in other people's repositories, and a document that contradicts the code teaches the wrong thing to every worker that reads it.",
+      "current_state": "docs/CONTINUITY.md states that search maintains no index because the corpus is a handful of files, which describes the record corpus correctly and the repository corpus not at all. The instruction source describes the task lifecycle with no session step.",
+      "desired_state": "The distinction is stated: record search is a direct literal scan with no index, knowledge search is a derived index over a broader corpus, and neither outranks git or the canonical files. Claims name behaviour rather than subcommands. The worker instructions describe the loop from session start to session close, and teach retrieval of what is needed rather than reading the whole base.",
+      "acceptance_criteria": [
+        "Every added claim has a source, an implementation and a test path that all exist, and no guaranteed claim lacks a test",
+        "docs/CONTINUITY.md distinguishes the two searches, and the old sentence no longer contradicts the code",
+        "The Clean Extraction Boundary and the continuity document agree with each other about the graph",
+        "The regenerated provider projections stay under the always-loaded budget",
+        "The instruction source teaches retrieval, not reading the whole base"
+      ],
+      "validation": [
+        "bin/majordomus doctor",
+        "bin/majordomus update",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "claims_added",
+        "docs_consistent"
+      ],
+      "evidence": [],
+      "risk": "The always-loaded budget is a hard cap with a failing check. Adding lifecycle steps to the instruction body can push it over, and the fix must be to say less rather than to raise the cap.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0816",
+      "slug": "dogfood-the-loop",
+      "milestone": "M003",
+      "status": "BLOCKED",
+      "wave": 9,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "Prove the loop on a real issue, without a transcript",
+      "depends_on": [
+        "I0815"
+      ],
+      "blocked_by": [
+        "I0815"
+      ],
+      "dependents": [],
+      "scope": [
+        "docs/DOGFOODING.md",
+        ".majordomus/project"
+      ],
+      "non_scope": [
+        "Any new capability",
+        "Any performance guarantee in README or claims that the measurement does not support"
+      ],
+      "objective": "Execute the whole lifecycle against a real issue of this repository — session start, plan next, plan show, context, knowledge retrieval, work, checkpoint and decision, evidence, plan done, session close, knowledge sync, watch — and record as evidence what a following session could determine from the records alone.",
+      "why": "The milestone is not finished when a command returns something. It is finished when a worker with no conversation history can say what happened, why, what was decided, which evidence supports it, where the canonical source lives and what to do next. That is a demonstration, not an assertion, and it is the only acceptance criterion that tests the parts against each other.",
+      "current_state": "The pieces are individually tested in disposable repositories. Nothing has run the assembled loop on this repository's own canonical model.",
+      "desired_state": "The loop has been run, its measurements recorded — discovery, cold sync, no-op sync, search, context assembly — and the questions a following worker can answer from records alone are listed with the command that answers each.",
+      "acceptance_criteria": [
+        "The loop ran on a real issue and the evidence names the commands and what each showed",
+        "Each of the six questions a following worker must answer is listed with the command that answers it",
+        "The measurements are recorded, and no number appears in README or claims that they do not support",
+        "A read-only pass over the whole surface leaves git status byte-identical"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor",
+        "bin/majordomus watch",
+        "bin/majordomus plan validate"
+      ],
+      "evidence_required": [
+        "dogfood_loop"
+      ],
+      "evidence": [],
+      "risk": "A dogfood run that is narrated rather than measured proves nothing. Every claim in the evidence has to name a command that produced it.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
     }
   ],
   "waves": [
@@ -2930,7 +3899,9 @@
         "I0301",
         "I0401",
         "I0501",
-        "I0601"
+        "I0601",
+        "I0801",
+        "I0802"
       ]
     },
     {
@@ -2942,7 +3913,9 @@
         "I0302",
         "I0402",
         "I0502",
-        "I0602"
+        "I0602",
+        "I0803",
+        "I0807"
       ]
     },
     {
@@ -2954,7 +3927,9 @@
         "I0303",
         "I0403",
         "I0503",
-        "I0603"
+        "I0603",
+        "I0804",
+        "I0808"
       ]
     },
     {
@@ -2966,7 +3941,9 @@
         "I0304",
         "I0404",
         "I0504",
-        "I0604"
+        "I0604",
+        "I0805",
+        "I0809"
       ]
     },
     {
@@ -2977,7 +3954,9 @@
         "I0010",
         "I0205",
         "I0305",
-        "I0605"
+        "I0605",
+        "I0806",
+        "I0810"
       ]
     },
     {
@@ -2987,26 +3966,37 @@
         "I0008",
         "I0009",
         "I0013",
-        "I0206"
+        "I0206",
+        "I0811"
       ]
     },
     {
       "wave": 6,
       "issues": [
         "I0011",
-        "I0014"
+        "I0014",
+        "I0812",
+        "I0814"
       ]
     },
     {
       "wave": 7,
       "issues": [
-        "I0012"
+        "I0012",
+        "I0813"
       ]
     },
     {
       "wave": 8,
       "issues": [
-        "I0015"
+        "I0015",
+        "I0815"
+      ]
+    },
+    {
+      "wave": 9,
+      "issues": [
+        "I0816"
       ]
     }
   ],
@@ -3174,6 +4164,70 @@
     {
       "from": "I0604",
       "to": "I0605"
+    },
+    {
+      "from": "I0801",
+      "to": "I0807"
+    },
+    {
+      "from": "I0802",
+      "to": "I0803"
+    },
+    {
+      "from": "I0803",
+      "to": "I0804"
+    },
+    {
+      "from": "I0804",
+      "to": "I0805"
+    },
+    {
+      "from": "I0805",
+      "to": "I0806"
+    },
+    {
+      "from": "I0806",
+      "to": "I0813"
+    },
+    {
+      "from": "I0807",
+      "to": "I0808"
+    },
+    {
+      "from": "I0808",
+      "to": "I0809"
+    },
+    {
+      "from": "I0809",
+      "to": "I0810"
+    },
+    {
+      "from": "I0810",
+      "to": "I0811"
+    },
+    {
+      "from": "I0811",
+      "to": "I0812"
+    },
+    {
+      "from": "I0811",
+      "to": "I0814"
+    },
+    {
+      "from": "I0812",
+      "to": "I0813"
+    },
+    {
+      "from": "I0813",
+      "to": "I0815"
+    },
+    {
+      "from": "I0814",
+      "to": "I0815"
+    },
+    {
+      "from": "I0815",
+      "to": "I0816"
     }
   ],
   "findings": []

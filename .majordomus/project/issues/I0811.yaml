@@ -1,0 +1,37 @@
+id: I0811
+milestone: M003
+title: Read-only knowledge lookup with an ordering that can be explained
+slug: knowledge-query
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Implement `knowledge search`, `knowledge show` and `knowledge related`: deterministic lookup over the generated index with a documented, tested match order, JSON output that names the field each result matched on, and no write of any kind."
+why: "A query that rebuilds the index mutates the repository as a side effect of asking a question, which makes a read-only command a write and breaks every reproduce line that follows it. And a relevance order nobody can explain is one nobody can debug; the order has to be a rule, not a score."
+current_state: "`majordomus search` is a literal grep over the six operational record kinds and must keep that contract unchanged. Nothing searches the repository's canonical artifacts."
+desired_state: "`knowledge search` ranks by an explicit ladder — exact canonical id, exact title, title prefix, path, tag, then literal body match — and reports the matched field for every result. `knowledge show` prints one node with its source path and hash. `knowledge related` prints the edges into and out of one node with their provenance. A stale index is reported, never silently rebuilt."
+scope:
+  - lib/knowledge.sh
+  - bin/majordomus
+  - docs/CLI.md
+  - test/cases
+non_scope:
+  - Any change to the existing search command's behaviour
+  - Embeddings, similarity, or any opaque score
+  - Rebuilding the index from a read
+depends_on:
+  - I0810
+acceptance_criteria:
+  - The match ladder is documented and a case asserts the order for a query that matches at two levels
+  - JSON output carries the id, kind, title, source and matched field of every result
+  - Running every read-only knowledge command leaves git status byte-identical
+  - A stale index is reported as stale by every read command, and none of them rebuilds it
+  - The existing search command's output and exit codes are unchanged, proved by its own case still passing
+validation:
+  - bash test/run.sh 69_knowledge_query
+  - bash test/run.sh 24_prompt_search
+evidence_required:
+  - query_explainable
+  - readonly_proven
+risk: "Two commands now contain the word search with different corpora and different contracts. If the distinction is not stated where a worker reads it, the wrong one gets used and the answer looks like an absence."
+created_at: 2026-09-04
+updated_at: 2026-09-04

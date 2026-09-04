@@ -1,0 +1,62 @@
+id: M003
+title: A session is a durable envelope, and knowledge is compiled from what is already canonical
+slug: session-envelope-and-knowledge
+order: 3
+priority: p1
+problem: "Continuity today is task-shaped. A task record says what one piece of work is, and checkpoints, handovers, decisions and questions hang off it. Nothing represents the execution episode itself — the worker sat down, touched three tasks, recorded two decisions, closed one issue, and stopped — so the causal question a later worker actually asks is unanswerable from the records: which work happened together, in what order, against which commits, and what did it decide. The second gap is retrieval. `search` is a literal scan over six operational record kinds, which is right for those files and blind to everything else: the claims matrix, the milestone and issue contracts, the policy, the profiles, the prompts and the documents already carry explicit, machine-readable relationships — claim to implementation to test, issue to milestone to dependency, evidence to issue — and no command can traverse one of them. A worker therefore reconstructs both from a conversation, which is the thing that does not survive."
+outcome: "A worker with no conversation history can answer what happened, why, what was decided, which evidence supports it, where the canonical source lives, and what to do next — from records and a derived index, with git still the authority over both."
+current_state: "There is no session concept: `.majordomus/state/` holds task, checkpoint, handover, decision, question and ledger, and the ledger is the only thing that knows two records were written by the same episode, which it knows only by adjacency in time. There is no index of any kind; docs/CONTINUITY.md states that as a deliberate choice for the record corpus and says nothing about the rest of the repository. docs/DESIGN.md's Clean Extraction Boundary excludes graph semantics absolutely, which forbids even a provenance graph derived from this repository's own files."
+desired_state: "A session lifecycle exists with one active session per worktree and immutable closed records that reference authoritative records rather than copying them, and whose whole reference envelope is derived from the ledger instead of accumulated by hand. A knowledge compiler discovers curated sources through git, extracts nodes with identities that survive a rebuild, records edges only where an explicit relationship was observed, keeps a content-hash manifest that makes a no-op sync cheap, and answers read-only queries without mutating anything. `context` can select a bounded slice of it. Both are declared doctrines with validators that doctor and watch dispatch, and the boundary between shared and operational knowledge is a tested property rather than a convention."
+scope:
+  - lib
+  - bin/majordomus
+  - share/doctrines.yaml
+  - share/allow
+  - share/skeleton
+  - docs
+  - test/cases
+  - .majordomus/policy.yaml
+  - .majordomus/project
+non_scope:
+  - Any database, embedding, vector store, or similarity ranking
+  - Any model invocation, network call, or generated summary
+  - A second mutable narrative store that copies decisions, questions or checkpoint bodies
+  - Publishing operational records to the website
+  - Renderer-specific knowledge output for any particular note-taking application
+  - Inferring a relationship from prose that does not state it explicitly
+acceptance_criteria:
+  - A session opens, closes, and its closed record is immutable, temporally ordered, and interpretable against current git through the existing divergence vocabulary
+  - A closed session names the tasks, issues, checkpoints, handovers, decisions and questions of its episode by reference, and copies none of their bodies
+  - Knowledge discovery is driven by git rather than by a filesystem walk, and an untracked file is not a source
+  - A node identity survives a rebuild, and editing one source changes only the nodes derived from it
+  - Every edge carries the file it was observed in; an edge without provenance is a validation failure
+  - A second sync with no source change reports no work and is measurably cheaper than a cold one
+  - Every read-only knowledge and session command leaves `git status` byte-identical
+  - Shared and operational knowledge are separable, and a test proves the shared projection contains no operational record
+  - `context` can carry a bounded knowledge section that is dropped before any immutable fact and is named under EXCLUDED when it is
+  - Each new guarantee is a declared doctrine with a validator that doctor and watch dispatch, a claim, and a behavioural case
+  - docs/CONTINUITY.md and docs/DESIGN.md state the new architecture precisely instead of contradicting it
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - bin/majordomus watch
+  - bin/majordomus plan validate
+  - shellcheck -x -s bash bin/majordomus lib/*.sh
+evidence_required:
+  - session_lifecycle
+  - session_immutability
+  - knowledge_determinism
+  - knowledge_idempotence
+  - provenance_required
+  - readonly_proven
+  - privacy_boundary
+  - context_bounded
+  - doctrines_wired
+  - dogfood_loop
+risks:
+  - "A knowledge index is a second thing that can be believed. Every mitigation is the same one: the index is a pointer, it carries the source path and hash of what it points at, and it is reported stale rather than silently rebuilt by a query."
+  - "A curated source list is a place where something can be forgotten. The alternative — indexing everything git tracks — imports generated files, vendored trees and site output, and was rejected; the cost is that adding a canonical file kind is an explicit edit, and the validator names a declared source class whose discovery returns nothing."
+  - "Deriving a session's references from the ledger makes the ledger load-bearing for a second thing. It is already append-only, machine-written and validated by ledger_integrity, and the alternative — accumulating references into a mutable session file on every command — puts a write on the hot path of every other command and creates the second store this milestone exists to avoid."
+  - "The Clean Extraction Boundary currently forbids graph semantics without qualification. Narrowing it is a deliberate change to a published boundary, and it must be narrowed precisely — a generic provenance graph over this repository's own artifacts — or it stops being a boundary."
+created_at: 2026-09-04
+updated_at: 2026-09-04

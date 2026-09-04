@@ -1,0 +1,33 @@
+id: I0805
+milestone: M003
+title: Read sessions back with a divergence label
+slug: session-read-divergence
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Implement `session list`, `session show <id>` and `session latest`, each resolving with the established rule — same repository, same worktree, same branch, then same branch — and each printing the existing divergence label of the record against current git."
+why: "A closed session from a rewritten branch that is presented as current knowledge is the failure the divergence vocabulary already exists to prevent. Reusing that vocabulary rather than inventing a second one is the whole point of having it."
+current_state: "mj_resolve_latest implements the two-tier rule for checkpoints and handovers, and mj_git_label produces exact, advanced, diverged and different_context. No command reads a session."
+desired_state: "list prints sessions newest first with their labels; show prints one record whole; latest prints the newest session that resolves for this worktree and branch, and reports absence as absence. A diverged or different_context record is labelled as such on every one of them."
+scope:
+  - lib/session.sh
+  - bin/majordomus
+  - test/cases
+non_scope:
+  - Knowledge
+  - Any repository-wide resolution across worktrees
+depends_on:
+  - I0804
+acceptance_criteria:
+  - Sessions list in chronological order, and the order is not taken from file modification time
+  - Two sessions written inside the same second order deterministically
+  - A record whose recorded head is not an ancestor of HEAD is labelled diverged wherever it is printed
+  - A session from another branch is never offered as latest
+  - Every one of these commands leaves git status byte-identical
+validation:
+  - bash test/run.sh 62_session_divergence
+evidence_required:
+  - divergence_labelled
+risk: "Reusing mj_resolve_latest requires the session record to have the same front-matter shape as a checkpoint. If the record is pure YAML instead, a second resolver appears, and two resolution rules is exactly the thing the resolution section of the documentation refuses."
+created_at: 2026-09-04
+updated_at: 2026-09-04

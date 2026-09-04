@@ -1,0 +1,35 @@
+id: I0810
+milestone: M003
+title: A content-hash manifest that makes a second sync cheap
+slug: knowledge-manifest
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Implement the manifest: one row per source with its path, content hash, extractor version and the node ids it produced, written beside the generated graph, compared on every sync, and used so that a sync with no source change does no extraction and says so."
+why: "Without a manifest, every query is tempted to rebuild and every rebuild is a full one. The manifest is what makes staleness detectable without mutating anything, which is what lets the read-only commands stay read-only."
+current_state: "Nothing is generated and nothing is cached. The site generator's --check mode is the precedent for a command that reports drift between canonical input and derived output without regenerating it."
+desired_state: "`knowledge sync` writes the manifest with the graph. `knowledge sync --check` compares source hashes against the manifest and exits non-zero when they differ, writing nothing. `knowledge status` reports fresh or stale and names the sources that moved. A no-op sync is measurably cheaper than a cold one, and the measurement is recorded."
+scope:
+  - lib/knowledge.sh
+  - lib/knowledge.awk
+  - .gitignore
+  - test/cases
+non_scope:
+  - Search
+  - Any automatic rebuild triggered by a read
+depends_on:
+  - I0809
+acceptance_criteria:
+  - A second sync with no source change reports no work and leaves the generated files byte-identical
+  - Editing one source changes that source's manifest row and the nodes derived from it, and no other row
+  - sync --check writes nothing and exits non-zero when a source has moved
+  - The extractor version is part of the manifest, so a change to the extractor invalidates it
+  - The measured cost of a no-op sync and of a cold sync on this repository is recorded as evidence
+validation:
+  - bash test/run.sh 68_knowledge_manifest
+evidence_required:
+  - sync_idempotent
+  - noop_is_cheaper
+risk: "If a no-op sync is not materially cheaper than a cold one, the manifest has failed and should be removed rather than kept as decoration. The measurement is the acceptance criterion, not the design."
+created_at: 2026-09-04
+updated_at: 2026-09-04

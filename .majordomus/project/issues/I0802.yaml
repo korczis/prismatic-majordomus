@@ -1,0 +1,32 @@
+id: I0802
+milestone: M003
+title: Specify the session record before writing one
+slug: session-record-schema
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Define the session object in docs/SCHEMAS.md and docs/CONTINUITY.md: what a session is, how it differs from a task and from a handover, the filename grammar of a closed record, the exact field list, which fields are computed from git, and the rule that the reference envelope is derived rather than accumulated."
+why: "Every other issue in this milestone writes or reads that file. Specifying it after implementing it is how a schema ends up describing one caller. The distinction that has to survive is the one the whole milestone rests on: a task is a unit of work, a session is an execution episode, and a handover is a deliberate package for whoever continues — three objects that are easy and expensive to conflate."
+current_state: "docs/CONTINUITY.md names six kinds of durable record and no session among them. docs/SCHEMAS.md documents current.yaml, the checkpoint and handover record shape, decisions.md, open-questions.md and the ledger."
+desired_state: "The session is the seventh kind, documented beside the others, with its mutable active record and its immutable closed record described separately, its field list given, and the derivation rule stated: the tasks, issues, checkpoints, handovers, decisions and questions of an episode are read out of the ledger between the session's own timestamps, never written into the session file by another command."
+scope:
+  - docs/SCHEMAS.md
+  - docs/CONTINUITY.md
+  - docs/CONCEPTS.md
+non_scope:
+  - Any implementation
+  - The knowledge layer
+  - Retention policy, which its own issue settles
+depends_on: []
+acceptance_criteria:
+  - The three-way distinction between task, session and handover is stated with the case each one gets wrong if conflated
+  - The closed record's filename grammar is given and shown to be lexicographically chronological, branch-safe and collision-safe
+  - Every field is listed with its source, and the computed ones are marked as never authored
+  - The derivation rule is stated, with the alternative it rejects and why
+validation:
+  - bin/majordomus doctor
+evidence_required:
+  - schema_specified
+risk: "A schema written before the implementation can specify something the portable-shell floor cannot express. Each field has to be one that git, the ledger or a single-line YAML scalar can carry."
+created_at: 2026-09-04
+updated_at: 2026-09-04

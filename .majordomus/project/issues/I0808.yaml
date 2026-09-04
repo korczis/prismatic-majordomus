@@ -1,0 +1,35 @@
+id: I0808
+milestone: M003
+title: Extract nodes with identities that survive a rebuild
+slug: knowledge-nodes
+priority: p1
+profile: deep-work
+parallel_safe: false
+objective: "Implement the extract and normalise stages in lib/knowledge.awk: one node per canonical object, with an identity derived from its canonical id or its repository path, a kind that is only asserted when a structural fact establishes it, and a title taken from the record or from the document's first heading."
+why: "Identity is what makes the index a pointer rather than a copy. An id derived from enumeration order or from a title changes when something unrelated changes, and every reference to it silently becomes wrong. Classification that guesses from prose is the same failure in another dimension: a confident wrong kind is worse than an honest unknown."
+current_state: "The canonical objects already have identities — claims, milestones, issues, profiles, prompts and doctrines are all keyed — and lib/project.awk is the precedent for deriving a model in awk from flattened records."
+desired_state: "Nodes are emitted in a stable order with ids of the form kind and canonical key, where the key is the object's own id for structured records and its repository path for documents. A kind is asserted from the source class or from an explicit field, never from a keyword found in prose, and an unrecognised source yields the unknown kind rather than a guess."
+scope:
+  - lib/knowledge.sh
+  - lib/knowledge.awk
+  - test/cases
+non_scope:
+  - Edges
+  - The manifest
+  - Any full Markdown parser
+depends_on:
+  - I0807
+acceptance_criteria:
+  - Two syncs of an unchanged repository produce byte-identical node output
+  - Renaming a document changes that document's node id and no other
+  - A node's kind comes from its source class or an explicit field, and a case proves prose containing a kind word does not change it
+  - An unrecognisable source produces a node of kind unknown rather than being dropped or guessed at
+  - Extraction from a generic Markdown document takes only the path, the first heading and explicit links
+validation:
+  - bash test/run.sh 65_knowledge_nodes
+evidence_required:
+  - node_identity_stable
+  - unknown_stays_unknown
+risk: "Deriving a document id from its path means a rename is a delete and an add, which is correct and will look like churn. The alternative, a content hash identity, makes an edit a delete and an add, which is worse."
+created_at: 2026-09-04
+updated_at: 2026-09-04
