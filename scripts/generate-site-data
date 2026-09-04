@@ -330,11 +330,13 @@ printf '%s\n' "$ARCH_TSV" | jq -Rn --slurpfile proj "$OUT/project.json" '
           read_only: ($c.read_only // null),
           route: (if .kind == "module" and $c then "/commands/" + $cmd + "/" else null end),
           external: false}],
-     edges: [$rows[] | select(.[0]=="edge") | {source: .[1], target: .[2], kind: .[3]}
+     # Parenthesised: a pipe in an object value is a syntax error in jq 1.7, which is what
+     # the CI image ships. jq 1.8 accepts it, so this only ever failed away from a laptop.
+     edges: ([$rows[] | select(.[0]=="edge") | {source: .[1], target: .[2], kind: .[3]}
        | select((.source | IN($keep[])) and (.target | IN($keep[])))]
      # the dispatcher sources lib/<command>.sh by name; that edge is dynamic in the shell
      | . + [$cmds[] | select(("lib/" + .key) as $m | ($keep | any(. == $m + ".sh")))
-            | {source: "bin/majordomus", target: ("lib/" + .key + ".sh"), kind: "sources"}]
+            | {source: "bin/majordomus", target: ("lib/" + .key + ".sh"), kind: "sources"}])
      | unique}' > "$OUT/architecture.json"
 [ "$(jq '.nodes | length' "$OUT/architecture.json")" -ge 20 ] || { echo "generate-site-data: architecture scan found almost nothing; the scanner or the sources moved" >&2; exit 10; }
 # every command that has a module on disk must appear as one in the scan; a command the
