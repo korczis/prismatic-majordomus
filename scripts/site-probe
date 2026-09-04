@@ -46,8 +46,22 @@ if [ "$QUICK" = 1 ]; then
     printf '%s\n' "$MAP" | cut -f1 | grep -qxF "$r" || missing="$missing $r"
   done
   [ -z "$missing" ] || { echo "site-probe: no template resolves for:$missing — the sample would not cover them" >&2; exit 12; }
-  routes="$(printf '%s\n' "$MAP" | awk -F'\t' '!seen[$2]++ { print $1 }' | sort)"
-  echo "site-probe: --quick, one route per template ($(printf '%s\n' "$routes" | wc -l | tr -d ' ') of $(printf '%s\n' "$MAP" | wc -l | tr -d ' '))"
+  # One route per template covers layout, and the widest page of each template is added on
+  # top of it — more coverage for a few seconds, not a guarantee. Be clear about what this
+  # does not do: it does not cover content. Every overflow this site has produced came from
+  # canonical data rendered into a shared template, and byte length does not predict which
+  # page that will be — the page that overflowed carried a 40-character token while a page
+  # that did not carries an 82-character one. What overflows depends on which element holds
+  # the token and what CSS reaches it. So --quick is for a local loop; CI runs the sweep.
+  SAMPLE="$(printf '%s\n' "$MAP" | awk -F'\t' -v out="$WORK/out" '
+    { r = $1; t = $2
+      cmd = "wc -c < \"" out r "index.html\" 2>/dev/null"; cmd | getline sz; close(cmd); sz = sz + 0
+      if (!(t in first)) { first[t] = r; order[++n] = t }
+      if (sz > big[t]) { big[t] = sz; widest[t] = r } }
+    END { for (i = 1; i <= n; i++) { print first[order[i]]
+            if (widest[order[i]] != "" && widest[order[i]] != first[order[i]]) print widest[order[i]] } }')"
+  routes="$(printf '%s\n' "$SAMPLE" | sort -u)"
+  echo "site-probe: --quick, one route per template plus each template's widest page ($(printf '%s\n' "$routes" | wc -l | tr -d ' ') of $(printf '%s\n' "$MAP" | wc -l | tr -d ' '))"
 fi
 n=0
 for r in $routes; do

@@ -54,15 +54,16 @@ jobs:
       # Browser-measured: no horizontal overflow at 320/390/1280, mobile menu, dropdowns, theme
       # toggle, Mermaid rendering. Skips with a notice when no Chrome is present.
       - name: probe the site in a browser
-        # One route per template, which covers every layout: pages sharing a template share
-        # their overflow behaviour, and the sample follows the template rather than the section
-        # name, which is only a proxy for it. The complete sweep of every route runs in
-        # validate.yml on the same push, in parallel, so the branch is still not green until
-        # every route has been measured — it just no longer sits between a green build and a
-        # published artifact. What that trades away, stated plainly: an overflow that only one
-        # page of a template exhibits, from its own data rather than its layout, can be live
-        # for minutes rather than hours. The full run in validate is what catches it.
-        run: CHROME_BIN=google-chrome scripts/site-probe --quick
+        # The full sweep, deliberately, after --quick was tried and measured against the
+        # failures it was meant to catch. Sampling one route per template covers layout, and
+        # every overflow this site has produced came from canonical data rendered into a
+        # shared template: a path in one claim's note, a link in one issue page. Sampling the
+        # widest page per template does not close it either — the page that overflowed carried
+        # a 40-character token while a page that did not carries an 82-character one, because
+        # what overflows depends on which element holds the token and what CSS applies to it,
+        # which no static proxy can see. Mobile-first is a stated hard requirement here, so the
+        # deploy waits for the measurement rather than for a heuristic that predicts it.
+        run: CHROME_BIN=google-chrome scripts/site-probe
       - name: manifest
         run: cat site/data/generated/source.json
       - uses: actions/configure-pages@v5
