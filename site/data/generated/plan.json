@@ -5,9 +5,9 @@
     "repository": "korczis/prismatic-majordomus",
     "default_branch": "master"
   },
-  "active_milestone": "M000",
+  "active_milestone": "M001",
   "next_ready": "I0102",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::active\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::blocked\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::blocked\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::blocked\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::ready\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::blocked\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::ready\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::blocked\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "milestones": [
     {
       "id": "cost-per-accepted-outcome",
@@ -162,7 +162,7 @@
     {
       "id": "M000",
       "slug": "milestone-dag-driven-development",
-      "status": "ACTIVE",
+      "status": "DONE",
       "order": 0,
       "priority": "p0",
       "title": "Milestone and DAG driven development",
@@ -216,7 +216,44 @@
         "The engine is shell and awk; a graph large enough to make that slow would need a different implementation. Measured, not assumed.",
         "GitHub is a projection. If a human edits a generated issue body, the next sync reports drift rather than silently overwriting it, which means drift can accumulate unattended."
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "suite",
+          "type": "test",
+          "command": "bash test/run.sh",
+          "result": "40 passed, 0 failed at 4427aee; case 51 added afterwards passes on its own",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:40Z"
+        },
+        {
+          "covers": "cross_surface",
+          "type": "test",
+          "command": "bash test/run.sh 46_cross_surface",
+          "result": "1 passed — the CLI, the JSON output, the Mermaid diagram, the GitHub projection and a freshly generated site-data file agree on every set they can be asked about",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:41Z"
+        },
+        {
+          "covers": "mutation",
+          "type": "test",
+          "command": "bash test/run.sh 47_mutation",
+          "result": "1 passed — five canonical mutations, every surface moves with each",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:41Z"
+        },
+        {
+          "covers": "github",
+          "type": "manual",
+          "command": "scripts/github-sync --apply && scripts/github-sync --check",
+          "result": "eight milestones and nineteen issues on korczis/prismatic-majordomus, states matching derived status, check exits 0",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/milestone/1",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:42Z"
+        }
+      ],
       "issues": [
         "I0001",
         "I0002",
@@ -234,13 +271,13 @@
         "I0014",
         "I0015"
       ],
-      "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::active\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::blocked\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::blocked\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
         "total": 15,
-        "done": 11,
+        "done": 15,
         "ready": 0,
-        "blocked": 3,
-        "active": 1,
+        "blocked": 0,
+        "active": 0,
         "verify": 0,
         "cancelled": 0
       }
@@ -977,7 +1014,7 @@
       "id": "I0010",
       "slug": "model-tests",
       "milestone": "M000",
-      "status": "ACTIVE",
+      "status": "DONE",
       "wave": 4,
       "priority": "p0",
       "profile": "debugging",
@@ -1012,18 +1049,28 @@
       "evidence_required": [
         "suite"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "suite",
+          "type": "test",
+          "command": "bash test/run.sh",
+          "result": "40 passed, 0 failed at 4427aee — every case, each in a disposable repository. Case 51 was added afterwards and passes on its own; a 41-case run is in flight",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:14:45Z"
+        }
+      ],
       "risk": "Low",
       "completion": "",
       "started_at": "2026-09-04T03:33:05Z",
-      "verified_at": "",
-      "completed_at": ""
+      "verified_at": "2026-09-04T05:14:43Z",
+      "completed_at": "2026-09-04T05:14:45Z"
     },
     {
       "id": "I0011",
       "slug": "consistency-and-mutation",
       "milestone": "M000",
-      "status": "BLOCKED",
+      "status": "DONE",
       "wave": 6,
       "priority": "p0",
       "profile": "debugging",
@@ -1034,9 +1081,7 @@
         "I0009",
         "I0010"
       ],
-      "blocked_by": [
-        "I0010"
-      ],
+      "blocked_by": [],
       "dependents": [
         "I0012"
       ],
@@ -1064,18 +1109,37 @@
         "cross_surface",
         "mutation"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "cross_surface",
+          "type": "test",
+          "command": "bash test/run.sh 46_cross_surface",
+          "result": "1 passed — the CLI, the JSON output, the Mermaid diagram, the GitHub projection and a freshly generated site-data file agree on the issue set, the READY set, the edge set and the next ready issue, across separate processes",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:14:49Z"
+        },
+        {
+          "covers": "mutation",
+          "type": "test",
+          "command": "bash test/run.sh 47_mutation",
+          "result": "1 passed — five canonical mutations each move every surface: an added edge, a completed dependency, a deleted evidence record, a prose-only change, and an induced cycle reaching plan validate, doctor and watch",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:14:50Z"
+        }
+      ],
       "risk": "Low",
       "completion": "",
-      "started_at": "",
-      "verified_at": "",
-      "completed_at": ""
+      "started_at": "2026-09-04T05:14:46Z",
+      "verified_at": "2026-09-04T05:14:48Z",
+      "completed_at": "2026-09-04T05:14:50Z"
     },
     {
       "id": "I0012",
       "slug": "ci-enforcement",
       "milestone": "M000",
-      "status": "BLOCKED",
+      "status": "DONE",
       "wave": 7,
       "priority": "p1",
       "profile": "implementation",
@@ -1084,9 +1148,7 @@
       "depends_on": [
         "I0011"
       ],
-      "blocked_by": [
-        "I0011"
-      ],
+      "blocked_by": [],
       "dependents": [
         "I0015"
       ],
@@ -1111,12 +1173,22 @@
       "evidence_required": [
         "ci_test"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "ci_test",
+          "type": "test",
+          "command": "bash test/run.sh 26_ci_wiring",
+          "result": "1 passed — validate.yml runs bin/majordomus plan validate as a blocking step and renders the whole GitHub projection offline, neither step reaches for a credential, and the adapter is shellchecked",
+          "artifact": "",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:03Z"
+        }
+      ],
       "risk": "Low",
       "completion": "",
-      "started_at": "",
-      "verified_at": "",
-      "completed_at": ""
+      "started_at": "2026-09-04T05:15:01Z",
+      "verified_at": "2026-09-04T05:15:02Z",
+      "completed_at": "2026-09-04T05:15:04Z"
     },
     {
       "id": "I0013",
@@ -1239,7 +1311,7 @@
       "id": "I0015",
       "slug": "dogfood-cutover",
       "milestone": "M000",
-      "status": "BLOCKED",
+      "status": "DONE",
       "wave": 8,
       "priority": "p0",
       "profile": "deep-work",
@@ -1249,9 +1321,7 @@
         "I0012",
         "I0014"
       ],
-      "blocked_by": [
-        "I0012"
-      ],
+      "blocked_by": [],
       "dependents": [],
       "scope": [
         ".majordomus/project"
@@ -1276,12 +1346,22 @@
       "evidence_required": [
         "lifecycle"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "lifecycle",
+          "type": "manual",
+          "command": "bin/majordomus plan start I0101 && plan verify I0101 && plan evidence I0101 --covers gap_reproduced ... && plan done I0101 && plan next",
+          "result": "M001 opened from docs/CLAIMS.yaml's blocker-survives-handover, a planned claim with no implementation and no test. I0101 went READY to ACTIVE to VERIFY to DONE through the command surface; its evidence is bash test/run.sh 50_blocker_across_handover with its result; the graph then derived I0102 as the next ready issue without anybody choosing it",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/milestone/9",
+          "commit": "05423af4606587fa58db1ee1dadb4d31847cfa0c",
+          "recorded_at": "2026-09-04T05:15:08Z"
+        }
+      ],
       "risk": "Choosing a milestone to make the demonstration easy would defeat the purpose.",
       "completion": "",
-      "started_at": "",
-      "verified_at": "",
-      "completed_at": ""
+      "started_at": "2026-09-04T05:15:05Z",
+      "verified_at": "2026-09-04T05:15:06Z",
+      "completed_at": "2026-09-04T05:15:08Z"
     },
     {
       "id": "I0101",

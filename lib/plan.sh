@@ -31,7 +31,7 @@ READ
 WRITE (one lifecycle marker each, into the issue's own file)
   start <id>           record that execution began
   verify <id>          record that implementation is complete, evidence pending
-  evidence <id>        attach one piece of evidence to an issue
+  evidence <id>        attach one piece of evidence to an issue or a milestone
   done <id>            record completion; refuses while required evidence is missing
 
 options:
@@ -465,13 +465,17 @@ mj_plan_has_evidence() {
 # without the other.
 mj_plan_evidence() {
   local id="$1" covers="$2" etype="$3" ecmd="$4" eres="$5" eart="$6" f tmp
-  [ -n "$id" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs an issue id"
+  [ -n "$id" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs an issue or milestone id"
   [ -n "$covers" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs --covers <token>"
   [ -n "$etype" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs --type <test|build|ci|artifact|manual>"
   case "$etype" in test|build|ci|artifact|manual) ;; *) mj_die "$MJ_EX_USAGE" "unknown evidence type '$etype'" ;; esac
   [ -n "$ecmd" ] || [ -n "$eart" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs --command or --artifact; narrative is not evidence"
+  # A milestone is gated on evidence the same way an issue is — it reaches DONE only when
+  # its own acceptance is proved, not when its issues run out — so the command writes to
+  # either record rather than making milestone acceptance the one thing done by hand.
   f="$MJ_DIR/project/issues/$id.yaml"
-  [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no issue '$id'"
+  [ -f "$f" ] || f="$MJ_DIR/project/milestones/$id.yaml"
+  [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no issue or milestone '$id'"
   mj_pj_list "$id" evidence_required | grep -qx -- "$covers" \
     || mj_die "$MJ_EX_REFUSED" "$id does not require evidence '$covers' (declared: $(mj_pj_list "$id" evidence_required | paste -sd, -))"
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ev.XXXXXX")"

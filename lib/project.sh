@@ -230,6 +230,7 @@ mj_project_mermaid() {
 mj_pj_set_field() {
   local id="$1" key="$2" val="$3" f tmp
   f="$MJ_DIR/project/issues/$id.yaml"
+  [ -f "$f" ] || f="$MJ_DIR/project/milestones/$id.yaml"
   [ -f "$f" ] || return 1
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.set.XXXXXX")"
   if grep -qE "^$key:" "$f"; then
