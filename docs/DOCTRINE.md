@@ -125,7 +125,10 @@ resolution with exit 10 and the reason, and nothing is applied partially:
 
 The baseline under `vendor/majordomus/` is a copy of the package the executable ships in
 `share/standard/majordomus/`, written by `init` and afterwards only by
-`majordomus rules vendor update`. The repository's copy is authoritative for that
+`majordomus rules vendor update`. The shipped package's own manifest is written by its
+maintainer with `scripts/rules-package write` and checked by `scripts/rules-package check`
+in the test suite; no command that runs in a managed repository writes into the
+distribution. The repository's copy is authoritative for that
 repository: a newer executable reports a newer baseline through `rules vendor status` and
 `rules vendor diff`, and never applies it. The manifest names every rule file with its
 hash, so a hand edit under `vendor/` is detected by `rules vendor status` and refused by

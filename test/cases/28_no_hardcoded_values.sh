@@ -79,6 +79,9 @@ for rf in $rule_files; do
   done
 done
 [ "$declared" != " " ] || { echo "    no rule in the package names a validator"; exit 1; }
+# the shipped manifest describes the shipped files: a rule edited without rewriting the
+# manifest would vendor a hash that fails every repository's doctor on the first init
+"$ROOT/scripts/rules-package" check >/dev/null || { echo "    share/standard/majordomus/manifest.yaml does not match its rule files (run: scripts/rules-package write)"; exit 1; }
 # and no validator exists that no rule declares
 for fn in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$ROOT/lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
   case "$declared" in *" $fn "*) ;; *) echo "    lib/ defines mj_validate_$fn, which no rule declares"; exit 1 ;; esac

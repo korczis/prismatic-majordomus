@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# rules-package — maintain the standard rule package the distribution ships.
+#
+#   scripts/rules-package check    every file under share/standard/majordomus/rules/ is listed
+#                                  in the manifest with its current hash (exit 10 otherwise)
+#   scripts/rules-package write    regenerate the manifest from the rule files, with the
+#                                  executable's version as source_revision
+#
+# The manifest is what a repository's vendored copy is compared against, so it is written
+# here, by the maintainer of the package, and never by a command that runs in a managed
+# repository: the distribution is read-only wherever it is installed. A rule file edited
+# without rewriting the manifest fails `check`, which the test suite runs.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+MJ_VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus")"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
+export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# shellcheck source=../lib/common.sh
+. "$ROOT/lib/common.sh"
+# shellcheck source=../lib/rules.sh
+. "$ROOT/lib/rules.sh"
+PKG="$ROOT/share/standard/majordomus"
+case "${1:-}" in
+  check)
+    probs="$(mj_rules_manifest_check "$PKG" || true)"
+    if [ -n "$probs" ]; then printf 'rules-package: %s\n' "$probs" >&2; printf 'rules-package: run scripts/rules-package write\n' >&2; exit 10; fi
+    printf 'rules-package: manifest matches %s rule file(s) (%s)\n' "$(ls "$PKG"/rules/*.md | wc -l | tr -d ' ')" "$(mj_rules_manifest_rev "$PKG")" ;;
+  write)
+    LC_ALL=C mj_rules_manifest_write "$PKG" "$MJ_VERSION"
+    printf 'rules-package: wrote %s (%s)\n' "${PKG#"$ROOT"/}/manifest.yaml" "$(mj_rules_manifest_rev "$PKG")" ;;
+  *) printf 'usage: scripts/rules-package check|write\n' >&2; exit 2 ;;
+esac
