@@ -223,6 +223,29 @@ if [ -f "$ROOT/share/doctrines.yaml" ]; then
   [ -n "$(grep -E '^  - id:' "$ROOT/share/doctrines.yaml")" ] || { echo "    the doctrine registry derived no ids"; exit 1; }
 fi
 
+# ---------------------------------------------------------------- argv limits
+# The same shape of fault as the locale check below: correct on the machine everyone develops
+# on, broken on every runner. Linux caps a SINGLE argv entry at MAX_ARG_STRLEN, 131072 bytes,
+# independently of the much larger total ARG_MAX; execve then fails with E2BIG and the shell
+# reports exit 126. macOS has no per-argument cap of that shape. A model collection passed as
+# one --argjson argument therefore grows quietly until a deploy goes red, which is what
+# happened once the plan reached sixty-odd issue contracts.
+#
+# The margin is measured against the real model rather than a list of field names, so a
+# collection that grows into the danger zone joins this check by growing, not by being added
+# here. --slurpfile reads a file and has no ceiling at all.
+plan="$ROOT/site/data/generated/plan.json"
+if [ -f "$plan" ]; then
+  arrays="$(jq -r 'to_entries[] | select(.value | type == "array") | .key' "$plan")"
+  [ -n "$arrays" ] || { echo "    plan.json declares no collections; the argv check is vacuous"; exit 1; }
+  for k in $arrays; do
+    n="$(jq -c --arg k "$k" '.[$k]' "$plan" | wc -c | tr -d ' ')"
+    [ "$n" -lt 100000 ] && continue
+    grep -qE -- "--slurpfile $k " "$ROOT/scripts/generate-site-data" \
+      || { echo "    plan.json .$k is $n bytes and reaches jq through argv; Linux refuses one argument over 131072"; exit 1; }
+  done
+fi
+
 # ---------------------------------------------------------------- locale independence
 # The generator hashes its input list, so the order of that list is part of the output. A
 # glob expands in the collation order of whoever runs it, and a directory holding both

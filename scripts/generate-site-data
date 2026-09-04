@@ -814,14 +814,27 @@ if mj_project_load; then
   ST="$(jq -n --argjson i "$(mj_pj_statuses issue | tr ' ' '\n' | jq -R . | jq -sc .)" \
              --argjson m "$(mj_pj_statuses milestone | tr ' ' '\n' | jq -R . | jq -sc .)" \
              '{issue:$i, milestone:$m}')"
+  # The model's collections reach jq through files, never through argv. Linux caps a SINGLE
+  # argv entry at MAX_ARG_STRLEN (131072 bytes) regardless of the much larger total ARG_MAX;
+  # execve then fails with E2BIG and the shell reports exit 126. macOS has no per-argument cap
+  # of that shape, so the whole class of failure is invisible on the machine this is developed
+  # on and appears only on a Linux runner, as a red deploy rather than a red test. The issues
+  # array crossed the limit as the plan grew and milestones was next. --slurpfile has no
+  # ceiling at all rather than a larger one, so growth cannot bring this back.
+  for pair in "milestones:$MS" "issues:$IS" "waves:$WV" "edges:$EG" "findings:$FD"; do
+    printf '%s' "${pair#*:}" > "$STAGE/plan-${pair%%:*}.json"
+  done
   jq -n --arg name "$(mj_pj_project_name)" --arg repo "$(mj_pj_repository)" --arg branch "$(mj_pj_default_branch)" \
     --arg active "$(mj_pj_active)" --arg next "$(mj_pj_next_ready)" --arg mermaid "$(mj_project_mermaid)" \
     --argjson statuses "$ST" --argjson worker_sequence "$WS" \
-    --argjson milestones "$MS" --argjson issues "$IS" --argjson waves "$WV" --argjson edges "$EG" --argjson findings "$FD" \
+    --slurpfile milestones "$STAGE/plan-milestones.json" --slurpfile issues "$STAGE/plan-issues.json" \
+    --slurpfile waves "$STAGE/plan-waves.json" --slurpfile edges "$STAGE/plan-edges.json" \
+    --slurpfile findings "$STAGE/plan-findings.json" \
     '{schema:1, project:{name:$name, repository:$repo, default_branch:$branch},
       active_milestone:$active, next_ready:$next, mermaid:$mermaid, statuses:$statuses,
       worker_sequence:$worker_sequence,
-      milestones:$milestones, issues:$issues, waves:$waves, edges:$edges, findings:$findings}' > "$OUT/plan.json"
+      milestones:$milestones[0], issues:$issues[0], waves:$waves[0], edges:$edges[0],
+      findings:$findings[0]}' > "$OUT/plan.json"
 # Refuse an invalid model rather than project it. A cycle makes every milestone BLOCKED with
 # no rank, and without this the generator published that roadmap and exited 0 — a page saying
 # nothing is reachable, with no reason given. The engine has already said so by this point:
