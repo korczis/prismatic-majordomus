@@ -70,6 +70,16 @@ than no declaration.** It produces a policy document, a compliance report, and a
 sense of coverage, and then it decays. Majordomus therefore treats "is this check
 actually wired?" as its primary deterministic guarantee, applied to itself first.
 
+## Optional Complexity
+
+Simple things trivial, complex things possible, weird things hackable, in that order. The
+core is the small set of concepts [`CONCEPTS.md`](CONCEPTS.md) names, and it stays closed;
+extension adds instances, validators, templates and integrations around those concepts, at
+the edges, and never a concept. Mechanisms stay stable and meaning may be data-driven,
+without becoming a framework for defining frameworks. The rule, with the review questions
+an architectural change must answer and the anti-patterns it refuses, is
+`.ai/repo/rules/project/optional-complexity.v1.md`; this document does not restate it.
+
 ## Users
 
 - An individual engineer running one or more AI coding tools against a repository,

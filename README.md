@@ -125,6 +125,22 @@ aid.** Identity fields on any record are computed from git, and a body that trie
 set them is rejected. **Numbers in prose are computed or forbidden.** `doctor` fails on
 a hardcoded count in the always-loaded file.
 
+## Philosophy
+
+Simple things should be trivial. Complex things should be possible. Weird things should
+be hackable. Majordomus is opinionated by default, programmable by design, and hackable
+at the edges: complexity is optional, not ambient.
+
+- Defaults work out of the box: `init`, `update`, `doctor`, `start`, `check`, `finish`,
+  and nothing about schemas.
+- The repository's policy, profiles, rules, prompts and workflows are inspectable and
+  customisable, declaratively, under `.ai/repo/`.
+- The internals stay open: validators, provider templates, projections and the rule
+  package are there to read and to extend.
+- Majordomus is not a universal agent framework; its extensibility lives inside its domain.
+
+The rule is `.ai/repo/rules/project/optional-complexity.v1.md`.
+
 ## Core principles
 
 - Sessions are workers, not memory.
