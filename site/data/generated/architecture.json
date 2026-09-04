@@ -340,6 +340,36 @@
       "external": false
     },
     {
+      "id": "lib/session.sh",
+      "kind": "module",
+      "label": "session",
+      "command": "session",
+      "summary": "open, inspect and close one execution episode",
+      "read_only": null,
+      "route": "/commands/session/",
+      "external": false
+    },
+    {
+      "id": ".majordomus/state/session-current.yaml",
+      "kind": "artifact",
+      "label": "state/session-current.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".majordomus/state/sessions",
+      "kind": "artifact",
+      "label": "state/sessions",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".majordomus/state/archive",
       "kind": "artifact",
       "label": "state/archive",
@@ -559,6 +589,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/search.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/session.sh",
       "kind": "sources"
     },
     {
@@ -879,6 +914,16 @@
     {
       "source": "lib/search.sh",
       "target": ".majordomus/state/open-questions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": ".majordomus/state/session-current.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": ".majordomus/state/sessions",
       "kind": "uses"
     },
     {

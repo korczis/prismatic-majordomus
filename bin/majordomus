@@ -23,6 +23,7 @@ TASK
   finish               evaluate the finish contract; refuse if unmet
 
 CONTEXT
+  session              open, inspect and close one execution episode
   context              what the next worker needs to know now, within budget    (read-only)
   checkpoint           record compact progress inside the active task
   handover             write an append-only continuation record (body on stdin)
@@ -69,7 +70,7 @@ set -- "${pre[@]+"${pre[@]}"}" "$@"
 case "$cmd" in
   -h|--help|help) usage; exit 0 ;;
   version|--version) echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan)
+  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"

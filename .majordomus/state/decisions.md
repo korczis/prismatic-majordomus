@@ -113,3 +113,11 @@ Why: the ledger is already append-only, already written only by Majordomus, alre
 Rejected: each of checkpoint, decision, question and plan appending its reference to the open session file as it runs — rejected because it creates a second mutable account of events the ledger already holds, which is the second source of truth the session record exists to avoid being, and because it makes four commands fail when a session file is malformed
 Evidence: docs/SCHEMAS.md session record section; the cost is stated: the ledger becomes load-bearing for a second purpose, and equal-second events are ordered by ledger line order, the tiebreak the resolver already uses
 Supersedes: -
+
+## 2026-09-04 — The open session record is untracked; closed session records are tracked
+Task: t-20260904153733-fc51
+Head: 9c13909cabeb1aeb70a058f3427489307a65571a
+Why: an open session carries nothing another checkout needs — unlike a task record, whose scope claim is read by other worktrees — so committing it would only make every checkout on the branch inherit an episode it did not open
+Rejected: tracking it for symmetry with current.yaml, which reproduces a hazard already observed in this repository: a stale committed task record blocked every worktree until somebody closed it by hand
+Evidence: .gitignore, and the foreign-record path in lib/session.sh with its case in test/cases/60_session_lifecycle.sh, which keeps the defence in place for anyone who commits one anyway
+Supersedes: -

@@ -514,7 +514,14 @@ unrecorded rather than becoming a plausible guess.
 
 Unknown keys are an error, as in every other Majordomus YAML file.
 
-A session record from another worktree is reported and is not treated as this checkout's
+This file is **not tracked**. The other state files are, because something outside the
+checkout reads them: a task record carries the scope claim other worktrees compare
+against, the question store is scoped to a branch by version control, and the append-only
+records have to travel. An open session carries none of that, so committing one would only
+make every checkout on the branch inherit an episode it did not open. Closed sessions are
+durable records and are tracked.
+
+The defence stays in place regardless: a session record from another worktree is reported and is not treated as this checkout's
 open session, exactly as a foreign task record is.
 
 ---

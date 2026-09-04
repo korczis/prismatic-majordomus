@@ -33,3 +33,10 @@ site/static/syntax-*.css
 
 # transient staging for scripts/generate-site-data (removed on exit)
 .mj-stage.*/
+
+# The open session record. Unlike current.yaml it is not tracked: a task record carries a
+# scope claim other checkouts read, and an open session carries nothing anyone else needs.
+# Committing one makes every other checkout on the branch inherit an episode it did not
+# open, which is a hazard the task record already has and this one does not need. Closed
+# sessions, under .majordomus/state/sessions/, are durable records and are tracked.
+.majordomus/state/session-current.yaml

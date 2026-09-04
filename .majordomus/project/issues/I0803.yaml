@@ -13,6 +13,7 @@ scope:
   - lib/session.sh
   - bin/majordomus
   - share/allow
+  - docs/CLI.md
   - test/cases
 non_scope:
   - Closing a session
@@ -21,6 +22,7 @@ non_scope:
 depends_on:
   - I0802
 acceptance_criteria:
+  - The command has a section in docs/CLI.md, because the site generator refuses a dispatched command with none, and it documents only what is implemented
   - A session starts, the active record exists, and its identity fields match git
   - A second start is refused with a non-zero exit and names the closing command
   - A session started in one worktree does not appear as active in another
@@ -33,4 +35,12 @@ evidence_required:
   - session_opens
 risk: "One active session per worktree is the same rule current.yaml already has, and current.yaml is tracked, so it travels with the branch and appears active in a checkout that never started it. The session record has to record its worktree and be read with the same foreign-record rule."
 created_at: 2026-09-04
-updated_at: 2026-09-04
+updated_at: 2026-09-04T16:29:23Z
+completed_at: 2026-09-04T16:29:23Z
+evidence:
+  - covers: session_opens
+    type: test
+    command: "test/run.sh 60_session_lifecycle"
+    result: "1 passed. The case proves identity is computed from git rather than authored, that absence is answered as absence and exit 0, that the record is mode 0600, that an unsupplied worker stays unrecorded rather than being invented, that a second open is refused with exit 15 and names the closing command, that a record whose worktree is another checkout is reported and does not block this one, that a corrupt record exits 10 rather than being read as no session, and that status writes nothing. The repository shellcheck gate passes at warning severity over the whole tree"
+    commit: 9c13909cabeb1aeb70a058f3427489307a65571a
+    recorded_at: 2026-09-04T15:58:01Z

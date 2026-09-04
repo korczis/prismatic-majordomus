@@ -332,6 +332,54 @@ scope        lib/auth
 41 of 300 lines
 ```
 
+## `majordomus session`
+
+Open, inspect and close one execution episode. A session is the seventh durable record and
+the only one that is not task-shaped.
+
+A task is a unit of work: it is scoped, it has a profile, and it can outlive the worker
+doing it. A session is one worker's sitting: it claims no paths, gates no acceptance, and
+may cross several tasks — while one task may be crossed by several sessions. Neither
+contains the other, which is why they are two records rather than one field.
+
+Sessions are optional. A worker that never opens one loses the episode boundary and
+nothing else; every other record is written exactly as before.
+
+- `start [--owner <who>] [--worker <id>]` opens the episode. One open session per
+  worktree: a second `start` is refused rather than replacing the first. `--worker` is a
+  free-form identity string, recorded only when supplied — an unrecorded worker stays
+  unrecorded, because a guessed one is indistinguishable from a recorded one the moment it
+  is written down.
+- `status` prints the open session with the divergence label of the commit it opened at,
+  or reports that there is none. Read-only. Absence is an answer, not a failure.
+
+**Writes:** `state/session-current.yaml`, mode `0600`, written atomically, and one
+`session.started` line in the ledger. `session_id`, `repository_id`, `worktree`, `branch`,
+`start_head` and `start_working_tree` are computed from git and are never authored.
+
+The open record is deliberately **not tracked**. Every other state file is, because
+something outside the checkout reads it; an open session carries nothing anyone else needs,
+and committing one would make every checkout on the branch inherit an episode it did not
+open. A record that names another worktree is reported and never obeyed, which keeps the
+defence in place for anyone who commits one anyway.
+
+Exit `15` when a session is already open here, `10` when the record does not parse — a
+corrupt record fails loudly rather than being read as "no session", because reading it as
+absent is exactly what would let a second `start` overwrite it.
+
+```
+$ majordomus session status
+No open session in this worktree.
+next: majordomus session start
+
+$ majordomus session start --worker some-provider/some-model
+session s-20260904153733-fc51 opened at 2026-09-04T15:37:33Z (head 9c13909)
+next: majordomus plan next; majordomus context; majordomus session close when the episode ends
+
+$ majordomus session start
+majordomus: session s-20260904153733-fc51 is open here since 2026-09-04T15:37:33Z; run majordomus session close first
+```
+
 ## `majordomus checkpoint`
 
 Record compact progress inside an active task. Append-only; the body arrives on stdin.
