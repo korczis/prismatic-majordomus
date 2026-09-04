@@ -219,12 +219,15 @@ mj_validate_budget() {
 
 mj_validate_retention() {
   local cap ll hc
-  cap="$(mj_pol_req ledger.retention_max_lines)"; ll=0; [ -f "$MJ_DIR/state/ledger.jsonl" ] && ll="$(mj_lines "$MJ_DIR/state/ledger.jsonl")"
-  if [ "$ll" -le "$cap" ]; then mj_doctrine_ok retention "ledger" "$ll lines, cap $cap"; else mj_doctrine_fail retention "ledger" "$ll lines over cap $cap" "wc -l .majordomus/state/ledger.jsonl"; fi
-  cap="$(mj_pol_req handover.retention_max_files)"; hc="$(find "$MJ_DIR/state/handovers" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
-  if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "handovers" "$hc files, cap $cap"; else mj_doctrine_fail retention "handovers" "$hc files over cap $cap" "majordomus handover --list | wc -l"; fi
-  cap="$(mj_pol_req checkpoint.retention_max_files)"; hc="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
-  if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap $cap"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi
+  if ! cap="$(mj_pol_req ledger.retention_max_lines)"; then mj_doctrine_fail retention "ledger" "policy declares no ledger.retention_max_lines" "add it under ledger: in .majordomus/policy.yaml; see share/skeleton/policy.yaml"; else
+  ll=0; [ -f "$MJ_DIR/state/ledger.jsonl" ] && ll="$(mj_lines "$MJ_DIR/state/ledger.jsonl")"
+  if [ "$ll" -le "$cap" ]; then mj_doctrine_ok retention "ledger" "$ll lines, cap $cap"; else mj_doctrine_fail retention "ledger" "$ll lines over cap $cap" "wc -l .majordomus/state/ledger.jsonl"; fi; fi
+  if ! cap="$(mj_pol_req handover.retention_max_files)"; then mj_doctrine_fail retention "handovers" "policy declares no handover.retention_max_files" "add it under handover: in .majordomus/policy.yaml; see share/skeleton/policy.yaml"; else
+  hc="$(find "$MJ_DIR/state/handovers" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "handovers" "$hc files, cap $cap"; else mj_doctrine_fail retention "handovers" "$hc files over cap $cap" "majordomus handover --list | wc -l"; fi; fi
+  if ! cap="$(mj_pol_req checkpoint.retention_max_files)"; then mj_doctrine_fail retention "checkpoints" "policy declares no checkpoint.retention_max_files" "add a checkpoint: block to .majordomus/policy.yaml; see share/skeleton/policy.yaml"; else
+  hc="$(find "$MJ_DIR/state/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap $cap"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi; fi
 
   return 0
 }
@@ -351,7 +354,10 @@ mj_validate_resolver() {
 # real command path rather than by re-implementing the builder here.
 mj_context_builder_check() {
   local budget out lines
-  budget="$(mj_pol_req context.builder_budget_lines)"
+  if ! budget="$(mj_pol_req context.builder_budget_lines)"; then
+    mj_doctrine_fail context "builder" "policy declares no context.builder_budget_lines; this installation predates the key" "add it under context: in .majordomus/policy.yaml; see share/skeleton/policy.yaml"
+    return 0
+  fi
   out="$(mktemp "${TMPDIR:-/tmp}/mj.dc.XXXXXX")"
   if ( export MJ_JSON=0; mj_cmd_context ) > "$out" 2>/dev/null; then
     lines="$(mj_lines "$out")"

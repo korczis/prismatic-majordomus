@@ -298,9 +298,19 @@ mj_pol() { [ -n "${MJ_POL_FLAT:-}" ] || return 0; mj_yget "$MJ_POL_FLAT" "$1"; }
 # written beside the reader is a second source of truth for the same number, and a reader
 # that silently substitutes its own value enforces something the configuration does not
 # say. A missing key is a policy error, and doctor names the key.
+# A required policy value. Almost every caller uses this inside a command substitution,
+# where mj_die can only exit the subshell — the parent then carries on with an empty
+# string, which is how an installation with an older policy produced
+# "[: : integer expected" and a finding that read "17 lines over budget " with no number.
+# A helper that is meant to fail closed and fails open in its usual position is worse
+# than no helper, so this returns non-zero and the caller decides: a command dies, a
+# validator reports. Callers must check, and mj_validate_policy_keys enforces that they do.
 mj_pol_req() {
   local v; v="$(mj_pol "$1")"
-  [ -n "$v" ] || mj_die "$MJ_EX_CONTRACT" "policy is missing required key '$1' (.majordomus/policy.yaml)"
+  if [ -z "$v" ]; then
+    printf 'majordomus: policy is missing required key %s (.majordomus/policy.yaml)\n' "$1" >&2
+    return "$MJ_EX_CONTRACT"
+  fi
   printf '%s' "$v"
 }
 mj_load_profile() {
