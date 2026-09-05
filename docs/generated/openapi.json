@@ -4,14 +4,47 @@
   "info": {
     "title": "Majordomus",
     "version": "0.1.0",
-    "description": "The read-only HTTP projection of the Majordomus capability registry. Every operation is a capability; operationId is its canonical id; the same capability is reachable through MCP and the command line where its exposure says so.",
+    "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
+    "description": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` lists the routes; `/docs` is Swagger UI over this document; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
-      "name": "MIT"
+      "name": "MIT",
+      "identifier": "MIT"
+    },
+    "contact": {
+      "name": "Majordomus",
+      "url": "https://github.com/korczis/prismatic-majordomus"
     }
+  },
+  "externalDocs": {
+    "description": "The API reference, rendered from this document.",
+    "url": "https://korczis.github.io/prismatic-majordomus/docs/api/"
   },
   "servers": [
     {
-      "url": "/"
+      "url": "/",
+      "description": "The shared server `majordomus mcp` binds, or `majordomus serve`; loopback, the port in its log."
+    }
+  ],
+  "tags": [
+    {
+      "name": "capabilities",
+      "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
+    },
+    {
+      "name": "objects",
+      "description": "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
+    },
+    {
+      "name": "peers",
+      "description": "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process."
+    },
+    {
+      "name": "perf",
+      "description": "This process's work counters and phase timings: what happened once at startup and what happens per call, for the structural tests and the benchmark evidence."
+    },
+    {
+      "name": "repository",
+      "description": "The repository this process serves: its layer, its git state, and the state of the index built from it."
     }
   ],
   "paths": {
@@ -29,31 +62,28 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ],
-              "default": null
+              "type": "string"
             },
-            "description": "Only capabilities of this kind: `query`, `command` or `resource`."
+            "description": "Only capabilities of this kind: `query`, `command` or `resource`.",
+            "examples": {
+              "queries": {
+                "value": "query"
+              }
+            }
           },
           {
             "name": "exposure",
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ],
-              "default": null
+              "type": "string"
             },
             "description": "Only capabilities exposed through this projection: `mcp`, `http` or `cli`."
           }
         ],
         "responses": {
           "200": {
-            "description": "List capabilities: the result",
+            "description": "List capabilities: the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -62,8 +92,38 @@
               }
             }
           },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
             "content": {
               "application/json": {
                 "schema": {
@@ -79,6 +139,13 @@
         "x-majordomus-provenance": {
           "source": "builtin",
           "module": "majordomus_cli::capability::builtin::capabilities"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 16
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_capabilities"
@@ -102,12 +169,17 @@
             "schema": {
               "type": "string"
             },
-            "description": "The canonical id, e.g. `repository.info` or `rule.majordomus.scope-integrity@1`."
+            "description": "The canonical id, e.g. `repository.info` or `rule.majordomus.scope-integrity@1`.",
+            "examples": {
+              "repository-info": {
+                "value": "repository.info"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Describe one capability: the result",
+            "description": "Describe one capability: the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -116,8 +188,38 @@
               }
             }
           },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
             "content": {
               "application/json": {
                 "schema": {
@@ -133,6 +235,12 @@
         "x-majordomus-provenance": {
           "source": "builtin",
           "module": "majordomus_cli::capability::builtin::capabilities"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_capability"
@@ -156,12 +264,20 @@
             "schema": {
               "type": "string"
             },
-            "description": "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`)."
+            "description": "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`).",
+            "examples": {
+              "first-object": {
+                "value": "majordomus://claim/ai-layer-manifest"
+              },
+              "repository": {
+                "value": "majordomus://repository"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Get one object: the result",
+            "description": "Get one object: the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -170,8 +286,38 @@
               }
             }
           },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
             "content": {
               "application/json": {
                 "schema": {
@@ -187,6 +333,12 @@
         "x-majordomus-provenance": {
           "source": "builtin",
           "module": "majordomus_cli::capability::builtin::objects"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_get"
@@ -207,31 +359,28 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ],
-              "default": null
+              "type": "string"
             },
-            "description": "Only objects of this kind; the kinds present are listed by `repository.info`. A kind\nthe repository does not have is an invalid input, not an empty answer."
+            "description": "Only objects of this kind; the kinds present are listed by `repository.info`. A kind\nthe repository does not have is an invalid input, not an empty answer.",
+            "examples": {
+              "first-kind": {
+                "value": "claim"
+              }
+            }
           },
           {
             "name": "tag",
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ],
-              "default": null
+              "type": "string"
             },
             "description": "Only objects whose metadata tags include this tag."
           }
         ],
         "responses": {
           "200": {
-            "description": "List objects: the result",
+            "description": "List objects: the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -240,8 +389,38 @@
               }
             }
           },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
             "content": {
               "application/json": {
                 "schema": {
@@ -257,6 +436,12 @@
         "x-majordomus-provenance": {
           "source": "builtin",
           "module": "majordomus_cli::capability::builtin::objects"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_list"
@@ -274,7 +459,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "List peers: the result",
+            "description": "List peers: the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -283,8 +468,38 @@
               }
             }
           },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
             "content": {
               "application/json": {
                 "schema": {
@@ -301,6 +516,12 @@
           "source": "builtin",
           "module": "majordomus_cli::capability::builtin::peers"
         },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
         "x-majordomus-mcp": {
           "tool": "majordomus_peers"
         }
@@ -316,17 +537,28 @@
         ],
         "requestBody": {
           "required": true,
+          "description": "The input of `peers.announce`.",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AnnounceInput"
+              },
+              "examples": {
+                "default": {
+                  "value": {
+                    "intent": "benchmark: announcing",
+                    "scope": [
+                      "apps/majordomus-cli"
+                    ]
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Announce what this peer is working on: the result",
+            "description": "Announce what this peer is working on: the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -335,8 +567,48 @@
               }
             }
           },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
             "content": {
               "application/json": {
                 "schema": {
@@ -352,6 +624,12 @@
         "x-majordomus-provenance": {
           "source": "builtin",
           "module": "majordomus_cli::capability::builtin::peers"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_announce"
@@ -369,7 +647,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Performance counters: the result",
+            "description": "Performance counters: the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -378,8 +656,38 @@
               }
             }
           },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
             "content": {
               "application/json": {
                 "schema": {
@@ -395,6 +703,12 @@
         "x-majordomus-provenance": {
           "source": "builtin",
           "module": "majordomus_cli::capability::builtin::perf"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_perf"
@@ -412,7 +726,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Repository and index state: the result",
+            "description": "Repository and index state: the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -421,8 +735,38 @@
               }
             }
           },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
             "content": {
               "application/json": {
                 "schema": {
@@ -438,6 +782,12 @@
         "x-majordomus-provenance": {
           "source": "builtin",
           "module": "majordomus_cli::capability::builtin::repository"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_repository",
@@ -464,18 +814,22 @@
             "schema": {
               "type": "string"
             },
-            "description": "Case-insensitive substring, matched against identity, title, description and content."
+            "description": "Case-insensitive substring, matched against identity, title, description and content.",
+            "examples": {
+              "common-word": {
+                "value": "the"
+              },
+              "no-hit": {
+                "value": "zqx-nothing-carries-this"
+              }
+            }
           },
           {
             "name": "kind",
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ],
-              "default": null
+              "type": "string"
             },
             "description": "Only objects of this kind; a kind the repository does not have is an invalid input."
           },
@@ -484,21 +838,22 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": "integer",
               "format": "uint64",
               "minimum": 1,
-              "default": null,
               "maximum": 200
             },
-            "description": "At most this many hits (default 20, at most 200)."
+            "description": "At most this many hits (default 20, at most 200).",
+            "examples": {
+              "no-hit": {
+                "value": 5
+              }
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Search objects: the result",
+            "description": "Search objects: the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -507,8 +862,38 @@
               }
             }
           },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
             "content": {
               "application/json": {
                 "schema": {
@@ -524,6 +909,13 @@
         "x-majordomus-provenance": {
           "source": "builtin",
           "module": "majordomus_cli::capability::builtin::objects"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 64
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_search"
@@ -2121,6 +2513,28 @@
       "/docs",
       "/mcp"
     ],
-    "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body"
+    "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
+    "errors": [
+      {
+        "status": "400",
+        "code": "invalid_input",
+        "reason": "The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+      },
+      {
+        "status": "404",
+        "code": "not_found",
+        "reason": "The input names something the repository does not hold."
+      },
+      {
+        "status": "422",
+        "code": "refused",
+        "reason": "The command was understood and turned down for the reason the message gives."
+      },
+      {
+        "status": "500",
+        "code": "internal",
+        "reason": "The capability failed for a reason of its own; the message names it."
+      }
+    ]
   }
 }

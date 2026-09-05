@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::capability::{CapabilityError, Context, HttpMethod};
+use crate::capability::{CapabilityError, CaseContext, Context, HttpMethod};
 
 use super::mcp::McpEndpoint;
 use super::{openapi, swagger};
@@ -59,6 +59,76 @@ impl Request {
             headers: Vec::new(),
             body,
         }
+    }
+
+    /// The request that carries `input` to a capability's route the way the binding says:
+    /// `GET` puts every top-level property that is not `null` on the query string (a
+    /// scalar as its text, anything else as JSON), `POST` sends the input as the body.
+    /// The inverse of the router's binding, so a benchmark case reaches the route as a
+    /// client would send it.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::HttpMethod;
+    /// use majordomus_cli::http::Request;
+    /// use serde_json::json;
+    /// let r = Request::bind(HttpMethod::Get, "/api/v1/search", &json!({ "query": "a b", "limit": 2, "kind": null }));
+    /// assert_eq!(r.path, "/api/v1/search");
+    /// assert_eq!(r.query, vec![("query".to_string(), "a b".to_string()), ("limit".to_string(), "2".to_string())]);
+    /// let p = Request::bind(HttpMethod::Post, "/api/v1/peers/announce", &json!({ "intent": "x" }));
+    /// assert_eq!(p.body, br#"{"intent":"x"}"#);
+    /// ```
+    pub fn bind(method: HttpMethod, path: &str, input: &Value) -> Self {
+        match method {
+            HttpMethod::Get => Request {
+                method: "GET".into(),
+                path: path.into(),
+                query: input
+                    .as_object()
+                    .map(|m| {
+                        m.iter()
+                            .filter(|(_, v)| !v.is_null())
+                            .map(|(k, v)| {
+                                let text = match v {
+                                    Value::String(s) => s.clone(),
+                                    other => other.to_string(),
+                                };
+                                (k.clone(), text)
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+                headers: Vec::new(),
+                body: Vec::new(),
+            },
+            HttpMethod::Post => Request {
+                method: "POST".into(),
+                path: path.into(),
+                query: Vec::new(),
+                headers: Vec::new(),
+                body: input.to_string().into_bytes(),
+            },
+        }
+    }
+
+    /// The request target this request would be sent as: the path with the query string,
+    /// percent-encoded.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::HttpMethod;
+    /// use majordomus_cli::http::Request;
+    /// let r = Request::bind(HttpMethod::Get, "/api/v1/search", &serde_json::json!({ "query": "a b&c" }));
+    /// assert_eq!(r.target(), "/api/v1/search?query=a%20b%26c");
+    /// ```
+    pub fn target(&self) -> String {
+        if self.query.is_empty() {
+            return self.path.clone();
+        }
+        let pairs: Vec<String> = self
+            .query
+            .iter()
+            .map(|(k, v)| format!("{}={}", percent_encode(k), percent_encode(v)))
+            .collect();
+        format!("{}?{}", self.path, pairs.join("&"))
     }
 
     /// The same request with its headers.
@@ -162,7 +232,11 @@ impl Router {
 
     fn openapi(&self) -> Response {
         let rendered = self.openapi.get_or_init(|| {
-            openapi::document(&self.ctx.registry, self.version).map(|d| openapi::render(&d))
+            let cases = CaseContext {
+                index: &self.ctx.index,
+            };
+            openapi::document(&self.ctx.registry, self.version, Some(&cases))
+                .map(|d| openapi::render(&d))
         });
         match rendered {
             Ok(text) => Response::new(200, "application/json", text.clone()),
@@ -177,6 +251,8 @@ impl Router {
                 let mut index = json!({
                     "name": "majordomus",
                     "version": self.version,
+                    "description": crate::about::SUMMARY,
+                    "reference": crate::about::REFERENCE_URL,
                     "root": self.ctx.index.repository.root,
                     "openapi": "/openapi.json",
                     "docs": swagger::DOCS_PATH,
@@ -321,6 +397,20 @@ fn error_response(status: u16, code: &str, message: &str) -> Response {
         "application/json",
         serde_json::to_string_pretty(&body).unwrap_or_default(),
     )
+}
+
+/// Percent-encode everything but the unreserved characters of RFC 3986.
+pub fn percent_encode(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for b in s.bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
+                out.push(b as char)
+            }
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
 }
 
 /// `%XX` and `+` decoding; a malformed escape is kept as it is.

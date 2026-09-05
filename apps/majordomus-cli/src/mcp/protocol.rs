@@ -309,7 +309,8 @@ impl Server {
         let index = self.surface.index();
         let summary = self.surface.registry().summary();
         let mut text = format!(
-            "Read-only view of a repository's AI layer: {} object(s), {} capabilities ({} tools, {} resources), index state {}. Resources are majordomus://<kind>/<identity>; majordomus://repository carries the diagnostics; majordomus_capabilities lists every capability with its projections. Nothing here writes to the repository.",
+            "{} This repository: {} object(s), {} capabilities ({} tools, {} resources), index state {}. Resources are majordomus://<kind>/<identity>; majordomus://repository carries the diagnostics; majordomus_capabilities lists every capability with its projections. Nothing here writes to the repository.",
+            crate::about::SUMMARY,
             index.objects.len(),
             summary.total,
             summary.mcp_tools,

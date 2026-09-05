@@ -906,6 +906,15 @@
       "note": "One executor for every transport; CachePolicy on the descriptor; bounded per capability; the key is the canonical id, the input in canonical form and a sha-256 fingerprint of the repository content and the descriptors. tests/executor.rs and the proptest harness in tests/properties.rs iterate every cached capability with every case and generated inputs."
     },
     {
+      "id": "claim:openapi-inferred",
+      "kind": "claim",
+      "label": "The OpenAPI document is inferred, the tags are the modules, the examples are the benchmark cases, the responses are the router's statuses by kind, the prose is the one text every projection shares, and the site's API reference is rendered from the committed document",
+      "status": "guaranteed",
+      "route": "/guarantees/openapi-inferred/",
+      "external": false,
+      "note": "Tags from registry.modules(), examples from the capabilities' BenchmarkCases against the repository's index, responses from one status table keyed by kind, info from about.rs and the crate manifest; benches/routes.rs times every route with the same cases; the site projects the committed document, renders /docs/api/ and serves /openapi.json raw, and site-check refuses a build without them."
+    },
+    {
       "id": "impl:.github/workflows/validate.yml",
       "kind": "implementation",
       "label": ".github/workflows/validate.yml",
@@ -1618,6 +1627,13 @@
       "label": "test/cases/91_canonical_architecture.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/91_canonical_architecture.sh"
+    },
+    {
+      "id": "test:test/cases/92_openapi_reference.sh",
+      "kind": "test",
+      "label": "test/cases/92_openapi_reference.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/92_openapi_reference.sh"
     }
   ],
   "edges": [
@@ -2117,6 +2133,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:openapi-inferred",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -2572,6 +2593,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:openapi-inferred",
+      "target": "impl:apps/majordomus-cli/src/http/openapi.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "test:test/cases/00_yaml_flatten.sh",
       "kind": "proved_by"
@@ -3024,6 +3050,11 @@
     {
       "source": "claim:execution-cache-equivalence",
       "target": "test:test/cases/91_canonical_architecture.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:openapi-inferred",
+      "target": "test:test/cases/92_openapi_reference.sh",
       "kind": "proved_by"
     }
   ]

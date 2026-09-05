@@ -1293,6 +1293,19 @@
       "source_route": "/docs/capabilities/",
       "command": null,
       "test_case": "91_canonical_architecture"
+    },
+    {
+      "id": "openapi-inferred",
+      "claim": "The OpenAPI document is inferred, the tags are the modules, the examples are the benchmark cases, the responses are the router's statuses by kind, the prose is the one text every projection shares, and the site's API reference is rendered from the committed document",
+      "source": "docs/CAPABILITIES.md",
+      "implementation": "apps/majordomus-cli/src/http/openapi.rs",
+      "test": "test/cases/92_openapi_reference.sh",
+      "status": "guaranteed",
+      "note": "Tags from registry.modules(), examples from the capabilities' BenchmarkCases against the repository's index, responses from one status table keyed by kind, info from about.rs and the crate manifest; benches/routes.rs times every route with the same cases; the site projects the committed document, renders /docs/api/ and serves /openapi.json raw, and site-check refuses a build without them.",
+      "responsibility": "none",
+      "source_route": "/docs/capabilities/",
+      "command": null,
+      "test_case": "92_openapi_reference"
     }
   ]
 }
