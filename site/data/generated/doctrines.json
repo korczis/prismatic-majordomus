@@ -838,6 +838,34 @@
       "source": "share/standard/majordomus/rules/task-continuity.v1.md"
     },
     {
+      "id": "majordomus.use-case-coverage",
+      "slug": "use-case-coverage",
+      "title": "Use-case coverage",
+      "class": "blocking",
+      "principle": "",
+      "statement": "A capability the policy requires coverage for is demonstrated by an executable use case, and a capability without one is a named gap.",
+      "summary": "Every public command, and every guaranteed claim and MCP tool the policy asks for, is named and run by at least one active use case whose scenario executes against the real tool; a gap is a failure or a report according to the policy, never silence.",
+      "validator": "use_case_coverage",
+      "validator_function": "mj_validate_use_case_coverage",
+      "defined_in": "lib/usecase.sh",
+      "category": "use-case",
+      "enforced_by": [
+        "doctor",
+        "check",
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "use_cases_covered",
+      "claims": [
+        "use-case-coverage"
+      ],
+      "test": "test/cases/94_use_cases.sh",
+      "depends_on": [
+        "majordomus.catalogue-integrity@1"
+      ],
+      "source": "share/standard/majordomus/rules/use-case-coverage.v1.md"
+    },
+    {
       "id": "majordomus.verification-integrity",
       "slug": "verification-integrity",
       "title": "Verification integrity",
@@ -866,8 +894,8 @@
     }
   ],
   "counts": {
-    "declared": 31,
-    "blocking": 27,
+    "declared": 32,
+    "blocking": 28,
     "advisory": 4
   },
   "index": {
@@ -901,6 +929,7 @@
     "majordomus.scope-integrity": 27,
     "majordomus.state-consistency": 28,
     "majordomus.task-continuity": 29,
-    "majordomus.verification-integrity": 30
+    "majordomus.use-case-coverage": 30,
+    "majordomus.verification-integrity": 31
   }
 }

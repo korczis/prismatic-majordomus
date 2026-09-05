@@ -74,6 +74,14 @@ kinds:
       field: version
       supported: [1]
 
+  scope:
+    format: yaml
+    schema: scope
+    identity: []
+    schema_version:
+      field: version
+      supported: [1]
+
   milestone:
     format: yaml
     schema: milestone
@@ -104,6 +112,33 @@ kinds:
     schema_version:
       field: schema
       supported: [context/v1]
+
+  use-case:
+    format: markdown
+    front_matter: required
+    schema: use-case
+    identity: [id]
+    title: title
+    description: summary
+
+  application:
+    format: markdown
+    front_matter: required
+    schema: application
+    identity: [id]
+    title: title
+    description: summary
+
+  taxonomy:
+    format: yaml
+    members: categories
+    schema: taxonomy
+    identity: [id]
+    title: title
+    description: summary
+    schema_version:
+      field: version
+      supported: [1]
 
   claim:
     format: yaml

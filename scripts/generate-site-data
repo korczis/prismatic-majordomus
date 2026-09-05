@@ -51,8 +51,6 @@ GEN_VERSION=1
 GEN_T0="$(mj_phase_begin "gen:inputs")"
 INPUTS="bin/majordomus
 share/commands.yaml
-share/use-cases.yaml
-share/applications.yaml
 share/skeleton/policy.yaml
 share/skeleton/ai/repo/workflows/task-lifecycle.md
 share/skeleton/ai/repo/workflows/plan.md
@@ -79,6 +77,8 @@ for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/share/standard/majordomu
          "$ROOT"/test/cases/*.sh \
          "$ROOT"/test/fixtures/commands/*.json "$ROOT"/test/fixtures/commands/setup/*.sh \
          "$ROOT"/test/fixtures/commands/stdin/* \
+         "$ROOT"/.ai/repo/use-cases/*.md "$ROOT"/.ai/repo/use-cases/taxonomy.yaml "$ROOT"/.ai/repo/applications/*.md \
+         "$ROOT"/lib/usecase.sh \
          "$ROOT/$PJ"/project.yaml "$ROOT/$PJ"/milestones/*.yaml \
          "$ROOT/$PJ"/issues/*.yaml; do
   case "$f" in */docs/SITE_CLAIMS.md|*/docs/PLAN_STATUS.md) continue ;; esac   # written by this script; never its own input
@@ -724,80 +724,124 @@ jq '{schema: 1,
 mj_phase_end "gen:why.json_the_moments_as" "$GEN_T0"
 # ---------------------------------------------------------------- catalogue.json
 GEN_T0="$(mj_phase_begin "gen:catalogue.json")"
-# Use cases and applications, with every reference resolved here rather than in a
-# template. A dangling reference refuses the build, so a page cannot describe a command,
-# rule or promise the tool does not have — the same rule doctor applies, applied again
-# where the pages are made.
-UCf="$(flat "$ROOT/share/use-cases.yaml")"; APf="$(flat "$ROOT/share/applications.yaml")"; yload "$UCf"; yload "$APf"
-[ "$(yv "$UCf" version)" = 1 ] || { echo "generate-site-data: share/use-cases.yaml must be version 1" >&2; exit 10; }
-[ "$(yv "$APf" version)" = 1 ] || { echo "generate-site-data: share/applications.yaml must be version 1" >&2; exit 10; }
-cat_list() { # flat, prefix -> JSON array of strings
-  local f="$1" pre="$2" k=0 out=""
-  while [ -n "$(yv "$f" "$pre.$k")" ]; do out="$out$(jstr "$(yv "$f" "$pre.$k")")," ; k=$((k+1)); done
-  printf '[%s]' "${out%,}"
+# Use cases, applications and the taxonomy are the repository's own objects under the
+# manifest's sections, one Markdown file each. The tool validates every reference
+# (`majordomus usecase validate` is what doctor runs), executes every scenario against
+# itself and records normalised evidence; this section embeds all of it, computes the
+# observed maturity, the related use cases and the coverage, and refuses the build on the
+# first thing that does not resolve. Nothing below is a second reading of the files: the
+# front matter becomes JSON through the same flattener every reader uses.
+UC_DIR="$ROOT/$(mj_rel "$MJ_AI_DIR")/$(mj_man sections.use-cases)"; AP_DIR="$ROOT/$(mj_rel "$MJ_AI_DIR")/$(mj_man sections.applications)"
+[ -n "$(mj_man sections.use-cases)" ] && [ -d "$UC_DIR" ] || { echo "generate-site-data: the manifest names no use-cases section, or $(mj_rel "$UC_DIR") is absent" >&2; exit 10; }
+[ -n "$(mj_man sections.applications)" ] && [ -d "$AP_DIR" ] || { echo "generate-site-data: the manifest names no applications section, or $(mj_rel "$AP_DIR") is absent" >&2; exit 10; }
+"$ROOT/bin/majordomus" --repo "$ROOT" usecase validate > "$STAGE/uc-validate.txt" 2>&1 || { echo "generate-site-data: the use cases do not validate:" >&2; grep '^FAIL' "$STAGE/uc-validate.txt" >&2; exit 10; }
+# a flattened front matter as nested JSON: numeric segments become arrays, scalars stay
+# strings except the integers a template compares (exit codes, weights, order, limits)
+front_json() { # markdown file -> JSON object of its front matter
+  local fm; fm="$(mktemp "${TMPDIR:-/tmp}/mj.fm.XXXXXX")"
+  mj_record_front "$1" > "$fm.yaml"; mj_yaml_flatten "$fm.yaml" > "$fm" || { echo "generate-site-data: $1: front matter does not parse" >&2; exit 10; }
+  jq -R -n '
+    def seg: if test("^[0-9]+$") then tonumber else . end;
+    reduce inputs as $l ({};
+      ($l | index("=")) as $i
+      | ($l[:$i] | split(".") | map(seg)) as $p
+      | ($l[$i+1:]) as $v
+      | setpath($p; if $v == "[]" then []
+                    elif ($p[-1] | type) == "string" and ($p[-1] | IN("exit","weight","order","max_bytes","budget_ms")) and ($v | test("^[0-9]+$")) then ($v | tonumber)
+                    else $v end))
+    | walk(if type == "object" and (keys | all(test("^[0-9]+$"))) and (keys | length) > 0 then to_entries | sort_by(.key | tonumber) | map(.value) else . end)' "$fm"
+  rm -f "$fm" "$fm.yaml"
 }
-cat_ids() { local f="$1" kind="$2" k=0; while [ -n "$(yv "$f" "$kind.$k.id")" ]; do printf '%s\n' "$(yv "$f" "$kind.$k.id")"; k=$((k+1)); done; }
-cat_resolve() { # id must exist in the other catalogue
-  printf '%s\n' "$2" | grep -qx "$1"
-}
-UC_IDS="$(cat_ids "$UCf" use_cases)"; AP_IDS="$(cat_ids "$APf" applications)"
-DOC_IDS="$(jq -r '.doctrines[].id' "$OUT/doctrines.json")"
-CLAIM_IDS="$(jq -r '.claims[].id' "$OUT/capabilities.json")"
-CMD_IDS="$(jq -r '.commands[].name' "$OUT/commands.json")"
-RESP_IDS="$(jq -r '.does[].slug' "$OUT/readme.json")"
-i=0
-while [ -n "$(yv "$UCf" "use_cases.$i.id")" ]; do
-  id="$(yv "$UCf" "use_cases.$i.id")"
-  for r in $(ylist "$UCf" "use_cases.$i.commands"); do cat_resolve "$r" "$CMD_IDS" || { echo "generate-site-data: use case $id names command '$r', which does not exist" >&2; exit 10; }; done
-  for r in $(ylist "$UCf" "use_cases.$i.doctrines"); do cat_resolve "$r" "$DOC_IDS" || { echo "generate-site-data: use case $id names doctrine '$r', which does not exist" >&2; exit 10; }; done
-  for r in $(ylist "$UCf" "use_cases.$i.claims"); do cat_resolve "$r" "$CLAIM_IDS" || { echo "generate-site-data: use case $id names claim '$r', which does not exist" >&2; exit 10; }; done
-  for r in $(ylist "$UCf" "use_cases.$i.responsibilities"); do cat_resolve "$r" "$RESP_IDS" || { echo "generate-site-data: use case $id names responsibility '$r', which does not exist" >&2; exit 10; }; done
-  for r in $(ylist "$UCf" "use_cases.$i.applications"); do cat_resolve "$r" "$AP_IDS" || { echo "generate-site-data: use case $id names application '$r', which does not exist" >&2; exit 10; }; done
-  [ -n "$(yv "$UCf" "use_cases.$i.steps.0.command")" ] || { echo "generate-site-data: use case $id has no steps" >&2; exit 10; }
-  i=$((i+1))
+body_of() { mj_record_body "$1"; }
+# every use case: front matter, body, and the evidence of its scenario
+: > "$STAGE/uc.jsonl"; : > "$STAGE/uc-bodies.tsv"
+for f in "$UC_DIR"/*.md; do
+  [ -f "$f" ] || continue
+  grep -q '^kind: context$' "$f" && continue
+  front_json "$f" | jq -c --arg path "$(mj_rel "$f")" '. + {path: $path}' >> "$STAGE/uc.jsonl"
+  mkdir -p "$STAGE/uc-bodies"; body_of "$f" > "$STAGE/uc-bodies/$(basename "$f")"
 done
-j=0
-while [ -n "$(yv "$APf" "applications.$j.id")" ]; do
-  id="$(yv "$APf" "applications.$j.id")"
-  for r in $(ylist "$APf" "applications.$j.use_cases"); do cat_resolve "$r" "$UC_IDS" || { echo "generate-site-data: application $id names use case '$r', which does not exist" >&2; exit 10; }; done
-  for r in $(ylist "$APf" "applications.$j.doctrines"); do cat_resolve "$r" "$DOC_IDS" || { echo "generate-site-data: application $id names doctrine '$r', which does not exist" >&2; exit 10; }; done
-  [ -n "$(yv "$APf" "applications.$j.does_not_fit_when.0")" ] || { echo "generate-site-data: application $id declares no does_not_fit_when" >&2; exit 10; }
-  j=$((j+1))
+: > "$STAGE/ap.jsonl"
+for f in "$AP_DIR"/*.md; do
+  [ -f "$f" ] || continue
+  grep -q '^kind: context$' "$f" && continue
+  front_json "$f" | jq -c --arg path "$(mj_rel "$f")" '. + {path: $path}' >> "$STAGE/ap.jsonl"
+  mkdir -p "$STAGE/ap-bodies"; body_of "$f" > "$STAGE/ap-bodies/$(basename "$f")"
 done
-{
-  printf '{"schema":1,"use_cases":['
-  i=0; first=1
-  while [ -n "$(yv "$UCf" "use_cases.$i.id")" ]; do
-    [ "$first" = 1 ] || printf ','; first=0
-    steps=""; k=0
-    while [ -n "$(yv "$UCf" "use_cases.$i.steps.$k.command")" ]; do
-      steps="$steps{\"command\":$(jstr "$(yv "$UCf" "use_cases.$i.steps.$k.command")"),\"note\":$(jstr "$(yv "$UCf" "use_cases.$i.steps.$k.note")")}," ; k=$((k+1)); done
-    printf '{"id":%s,"title":%s,"weight":%s,"summary":%s,"situation":%s,"outcome":%s,"steps":[%s],"commands":%s,"doctrines":%s,"claims":%s,"responsibilities":%s,"applications":%s}' \
-      "$(jstr "$(yv "$UCf" "use_cases.$i.id")")" "$(jstr "$(yv "$UCf" "use_cases.$i.title")")" \
-      "$(jnum_or_str "$(yv "$UCf" "use_cases.$i.weight")")" "$(jstr "$(yv "$UCf" "use_cases.$i.summary")")" \
-      "$(jstr "$(yv "$UCf" "use_cases.$i.situation")")" "$(jstr "$(yv "$UCf" "use_cases.$i.outcome")")" \
-      "${steps%,}" "$(cat_list "$UCf" "use_cases.$i.commands")" "$(cat_list "$UCf" "use_cases.$i.doctrines")" \
-      "$(cat_list "$UCf" "use_cases.$i.claims")" "$(cat_list "$UCf" "use_cases.$i.responsibilities")" \
-      "$(cat_list "$UCf" "use_cases.$i.applications")"
-    i=$((i+1))
-  done
-  printf '],"applications":['
-  j=0; first=1
-  while [ -n "$(yv "$APf" "applications.$j.id")" ]; do
-    [ "$first" = 1 ] || printf ','; first=0
-    printf '{"id":%s,"title":%s,"weight":%s,"summary":%s,"context":%s,"fits_when":%s,"does_not_fit_when":%s,"use_cases":%s,"doctrines":%s,"responsibilities":%s}' \
-      "$(jstr "$(yv "$APf" "applications.$j.id")")" "$(jstr "$(yv "$APf" "applications.$j.title")")" \
-      "$(jnum_or_str "$(yv "$APf" "applications.$j.weight")")" "$(jstr "$(yv "$APf" "applications.$j.summary")")" \
-      "$(jstr "$(yv "$APf" "applications.$j.context")")" "$(cat_list "$APf" "applications.$j.fits_when")" \
-      "$(cat_list "$APf" "applications.$j.does_not_fit_when")" "$(cat_list "$APf" "applications.$j.use_cases")" \
-      "$(cat_list "$APf" "applications.$j.doctrines")" "$(cat_list "$APf" "applications.$j.responsibilities")"
-    j=$((j+1))
-  done
-  printf ']}'
-} | jq '. + {counts:{use_cases:(.use_cases|length), applications:(.applications|length)},
-             uc_index:(reduce (.use_cases|to_entries[]) as $e ({}; . + {($e.value.id): $e.key})),
-             ap_index:(reduce (.applications|to_entries[]) as $e ({}; . + {($e.value.id): $e.key}))}' > "$OUT/catalogue.json"
-
+[ -s "$STAGE/uc.jsonl" ] || { echo "generate-site-data: no use case under $(mj_rel "$UC_DIR")" >&2; exit 10; }
+TAXf="$(flat "$UC_DIR/taxonomy.yaml")"
+jq -R -n '
+    def seg: if test("^[0-9]+$") then tonumber else . end;
+    reduce inputs as $l ({}; ($l | index("=")) as $i | ($l[:$i] | split(".") | map(seg)) as $p | ($l[$i+1:]) as $v
+      | setpath($p; if $p[-1] == "order" and ($v | test("^[0-9]+$")) then ($v | tonumber) else $v end))
+    | walk(if type == "object" and (keys | all(test("^[0-9]+$"))) and (keys | length) > 0 then to_entries | sort_by(.key | tonumber) | map(.value) else . end)' "$TAXf" > "$STAGE/taxonomy.json"
+# the scenarios, executed now, against this tree's own tool: what the pages show is what
+# the tool did, and --check proves it again; timings are dropped so the data is stable
+"$ROOT/bin/majordomus" --repo "$ROOT" usecase run --json > "$STAGE/uc-run.json" 2> "$STAGE/uc-run.err" || {
+  echo "generate-site-data: a use-case scenario failed; the site does not show a demonstration that does not hold:" >&2
+  jq -r '.results[] | select(.result != "pass") | "  \(.use_case): \(.steps | map(select(.result != "pass")) | .[0].reason // .reason // "setup failed")"' "$STAGE/uc-run.json" 2>/dev/null >&2 || cat "$STAGE/uc-run.err" >&2
+  exit 10; }
+"$ROOT/bin/majordomus" --repo "$ROOT" usecase coverage --json > "$STAGE/uc-coverage.json" 2>/dev/null || { echo "generate-site-data: usecase coverage failed" >&2; exit 10; }
+jq -n \
+  --slurpfile ucs <(jq -s . "$STAGE/uc.jsonl") \
+  --slurpfile aps <(jq -s . "$STAGE/ap.jsonl") \
+  --slurpfile tax "$STAGE/taxonomy.json" \
+  --slurpfile run "$STAGE/uc-run.json" \
+  --slurpfile cov "$STAGE/uc-coverage.json" \
+  --slurpfile claims <(jq '[.claims[] | {id, status}]' "$OUT/capabilities.json") \
+  --slurpfile docs <(jq '[.doctrines[].id]' "$OUT/doctrines.json") '
+  ($ucs[0]) as $u | ($aps[0]) as $a | ($tax[0]) as $t
+  | ($run[0].results | map(del(.steps[].timing)) | map({key: .use_case, value: .}) | from_entries) as $ev
+  | ($claims[0] | map({key: .id, value: .status}) | from_entries) as $cst
+  | ($docs[0]) as $enforced
+  | ($u | map(.id)) as $ids
+  # observed maturity: authored status and evidence, never a word somebody wrote
+  | ($u | map(
+      . as $x
+      | ($ev[$x.id]) as $e
+      | (if $x.status == "draft" then "draft"
+         elif $x.status == "deprecated" then "deprecated"
+         elif ($x.scenario == null) then "described"
+         elif ($e == null or $e.result != "pass") then "executable"
+         elif (($x.claims // []) | all(. as $c | $cst[$c] == "guaranteed")) and (($x.doctrines // []) | all(. as $d | $enforced | index($d) != null)) then "guaranteed"
+         else "verified" end) as $m
+      | . + {maturity: $m, evidence: $e})) as $u2
+  # related: a deterministic score over what two use cases share; overrides apply last
+  | ($u2 | map(
+      . as $x
+      | (
+        [ $u2[] | select(.id != $x.id) | . as $y
+          | ((($x.claims // []) - (($x.claims // []) - ($y.claims // []))) | length) * 5
+          + ((($x.doctrines // []) - (($x.doctrines // []) - ($y.doctrines // []))) | length) * 4
+          + ((($x.commands // []) - (($x.commands // []) - ($y.commands // []))) | length) * 3
+          + (if $x.category == $y.category then 2 else 0 end)
+          + ((($x.applications // []) - (($x.applications // []) - ($y.applications // []))) | length) * 2
+          + (if (($x.related.boost // []) | index($y.id)) != null then 100 else 0 end)
+          - (if (($x.related.suppress // []) | index($y.id)) != null then 1000 else 0 end)
+          | {id: $y.id, score: .}
+        ] | map(select(.score > 0)) | sort_by(-.score, .id) | .[:5] | map(.id)
+      ) as $rel
+      | . + {related_ids: $rel})) as $u3
+  | ($t.categories | sort_by(.order) | map(. as $c | . + {count: ([$u3[] | select(.category == $c.id and .status != "draft")] | length),
+        use_cases: [$u3[] | select(.category == $c.id) | .id],
+        maturity: ([$u3[] | select(.category == $c.id and .status != "draft")] | group_by(.maturity) | map({key: .[0].maturity, value: length}) | from_entries),
+        applications: ([$u3[] | select(.category == $c.id and .status != "draft") | .applications[]?] | unique)})) as $cats
+  | ({ actors: ([$u3[] | select(.status != "draft") | .actors[]?] | unique),
+       difficulties: ([$u3[] | select(.status != "draft") | .difficulty // empty] | unique),
+       maturities: ([$u3[] | select(.status != "draft") | .maturity] | unique) }) as $facets
+  | { schema: 1,
+      use_cases: ($u3 | sort_by(.weight // 1000, .id)),
+      applications: ($a | sort_by(.weight // 1000, .id)),
+      categories: $cats,
+      facets: $facets,
+      coverage: $cov[0],
+      counts: { use_cases: ($u3 | map(select(.status != "draft")) | length), drafts: ($u3 | map(select(.status == "draft")) | length),
+                applications: ($a | length), categories: ($cats | map(select(.count > 0)) | length),
+                maturity: ($u3 | group_by(.maturity) | map({key: .[0].maturity, value: length}) | from_entries) },
+      uc_index: (reduce (($u3 | sort_by(.weight // 1000, .id)) | to_entries[]) as $e ({}; . + {($e.value.id): $e.key})),
+      ap_index: (reduce (($a | sort_by(.weight // 1000, .id)) | to_entries[]) as $e ({}; . + {($e.value.id): $e.key})),
+      cat_index: (reduce ($cats | to_entries[]) as $e ({}; . + {($e.value.id): $e.key})) }' > "$OUT/catalogue.json"
+# the bodies travel with the pages, not the data: the content files carry the Markdown
 mj_phase_end "gen:catalogue.json" "$GEN_T0"
 # ---------------------------------------------------------------- diagrams.json (Mermaid source from data, never hand-drawn)
 GEN_T0="$(mj_phase_begin "gen:diagrams.json_Mermaid_source")"
@@ -1178,12 +1222,19 @@ for iid in $(jq -r '.issues[].id' "$OUT/plan.json"); do i=$((i+1))
     "$(jstr "$iid — $(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .title' "$OUT/plan.json")")" \
     "$(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .objective' "$OUT/plan.json" | jline)" \
     "$i" "$(jstr "$iid")" "$iid" > "$CONTENT_ROOT/plan/$iid.md"; done
-mk_section use-cases "Use cases" "What people do with it: a situation, the commands that answer it, and what you are left holding. Every step names a real command and every promise a real claim." use-cases-section.html use-case.html 12
-i=0; jq -r '.use_cases[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$MJ_TAB" read -r id title summary; do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/use-cases.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/use-cases/$id.md"; done
+mk_section use-cases "Use cases" "What people do with it: a task, the commands that answer it, and what you are left holding, each one proved against the tool. Every step is a real invocation, every rule and promise a real object, and every example below was executed to make this page." use-cases-section.html use-case.html 12
+# one page per use case, carrying its body; a draft is listed as such, never counted
+i=0; jq -r '.use_cases[] | [.id, .title, .summary, .path, .category, .maturity] | @tsv' "$OUT/catalogue.json" | while IFS="$MJ_TAB" read -r id title summary path category maturity; do i=$((i+1))
+  { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\ncategory = %s\nmaturity = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$i" "$(jstr "$id")" "$(jstr "$path")" "$(jstr "$category")" "$(jstr "$maturity")"
+    sed 's/^# /## /' "$STAGE/uc-bodies/$id.md"; } > "$CONTENT_ROOT/use-cases/$id.md"; done
+# one page per category the taxonomy declares, whether or not it holds a use case yet
+i=100; jq -r '.categories[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$MJ_TAB" read -r cid ctitle csummary; do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "use-case-category.html"\n[extra]\ncategory = %s\nsource = ".ai/repo/use-cases/taxonomy.yaml"\n+++\n' "$(jstr "$ctitle")" "$(printf '%s' "$csummary" | jline)" "$i" "$(jstr "$cid")" > "$CONTENT_ROOT/use-cases/$cid.md"; done
+printf -- '+++\ntitle = "Use-case coverage"\ndescription = "Every public command, guaranteed claim and MCP tool against the use cases that name it, run it and carry evidence for it; the policy says which gaps fail."\nweight = 1000\ntemplate = "use-case-coverage.html"\n[extra]\nsource = "majordomus usecase coverage"\n+++\n' > "$CONTENT_ROOT/use-cases/coverage.md"
 mk_section applications "Applications" "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description." applications-section.html application.html 14
-i=0; jq -r '.applications[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$MJ_TAB" read -r id title summary; do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/applications.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/applications/$id.md"; done
+i=0; jq -r '.applications[] | [.id, .title, .summary, .path] | @tsv' "$OUT/catalogue.json" | while IFS="$MJ_TAB" read -r id title summary path; do i=$((i+1))
+  { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$i" "$(jstr "$id")" "$(jstr "$path")"
+    sed 's/^# /## /' "$STAGE/ap-bodies/$id.md"; } > "$CONTENT_ROOT/applications/$id.md"; done
 mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jline)" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done

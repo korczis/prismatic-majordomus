@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/application.schema.json",
+  "title": "Application",
+  "description": "The front matter of an application under .ai/repo/applications/: a context the tool suits, when it fits, when it does not, and the use cases, rules and responsibilities it composes. The body carries the narrative (# Context).",
+  "x-majordomus-allow": "application",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "title", "summary", "fits_when", "does_not_fit_when", "use_cases"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "kind": { "const": "application" },
+    "title": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "weight": { "type": "integer", "minimum": 0 },
+    "status": { "enum": ["active", "draft", "deprecated"] },
+    "fits_when": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "does_not_fit_when": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "use_cases": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "doctrines": { "type": "array", "items": { "type": "string" } },
+    "responsibilities": { "type": "array", "items": { "type": "string" } }
+  }
+}

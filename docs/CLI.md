@@ -1081,6 +1081,56 @@ restrict `list`, `ready`, `blocked`, `waves` and `graph`; `--covers`, `--type`, 
 The same model is projected to GitHub by `scripts/github-sync` and to the website by
 `scripts/generate-site-data`. Neither re-derives a status; both read this engine.
 
+## `majordomus usecase`
+
+The executable use cases of the repository: the Markdown objects under the manifest's
+`use-cases` section, each a task somebody performs with the tool, the commands, rules,
+claims, responsibilities and applications it names, and a scenario that proves it against
+`bin/majordomus`. `docs/USE_CASES.md` is the contract; this section is the command.
+
+```
+majordomus usecase list [--json]
+majordomus usecase show <id>
+majordomus usecase validate [--json]
+majordomus usecase run [<id>...] [--json] [--out <dir>] [--keep]
+majordomus usecase coverage [--json] [--check]
+majordomus usecase impact [--base <ref>] [--json]
+majordomus usecase scaffold [--missing] [--for command:<name>] [--dry-run]
+```
+
+`list` prints every use case with its category, status, whether it has a scenario and the
+commands it names; `show` prints one file and the result of its last run. `validate`
+resolves every reference (a command against the dispatch table, a doctrine against the
+registry, a claim against `docs/CLAIMS.yaml`, a responsibility against
+`docs/RESPONSIBILITIES.yaml`, an application both ways, a category against
+`taxonomy.yaml`, a setup script and a stdin body against the fixtures, an MCP tool
+against the executable's registry), refuses a key the schema does not declare, an id that
+is not the file name, a duplicate, a body without its sections, a scenario step running a
+command the use case does not list, and an active use case targeting a guarantee with no
+scenario. `doctor` applies the same validation under `majordomus.catalogue-integrity`.
+
+`run` executes each scenario in a disposable repository prepared by its setup script:
+every step is one real invocation with argv from the file, its exit code and output are
+asserted, and the evidence, normalised (paths, timestamps, ids, hashes, durations), is
+written to `.ai/local/evidence/use-cases/<id>.json`; `--out` copies it elsewhere,
+`--keep` leaves the repository for inspection, and the event `use_cases.ran` is
+appended to the ledger. A use case without a scenario is reported as described, not run.
+
+`coverage` tallies every public command of the registry, every guaranteed claim with a
+responsibility and every MCP tool the executable projects against the active use cases
+that name it, run it, and have passing evidence; the policy's `use_cases.coverage` says,
+per class, whether a gap is `required`, `advisory` or `off`; `--check` exits 10 on a
+required gap, as `doctor`, `check` and `finish` do under `majordomus.use-case-coverage`.
+`impact` maps the files changed since `--base` (the upstream by default) and in the work
+tree to the commands, rules, use cases, scenarios and behavioural cases they reach, and
+names the run to do next. `scaffold` writes a draft use case for a gap from what the
+registry, the command's fixture and the claims already know; a draft validates and runs
+and never counts.
+
+Exit codes: 0; 2 for a usage error; 10 when validation, a scenario or a required coverage
+gap fails; 12 when the section, a use case or the registry is absent; 13 when a scenario
+repository cannot be created.
+
 ## `majordomus bench`
 
 Time every public command of the registry, cold and warm, and compare with the baseline.

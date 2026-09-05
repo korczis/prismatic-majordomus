@@ -28,6 +28,9 @@
 # the project-model validators read the one engine, not a copy of its rules
 # shellcheck source=project.sh
 . "$MJ_LIB_DIR/project.sh"
+# the use-case validators: the catalogue's references and the coverage tally
+# shellcheck source=usecase.sh
+. "$MJ_LIB_DIR/usecase.sh"
 
 MJ_DOCTOR_MISSING=0
 mj_cmd_doctor() {
@@ -347,6 +350,30 @@ mj_validate_ai_layout() {
   # the plan is the one section a repository may not have: an absent directory is a
   # repository without a plan, which `plan` says, not a broken layer
   [ -d "$MJ_PROJECT_DIR" ] || mj_info layout "$(mj_rel "$MJ_PROJECT_DIR")" "absent; this repository has no plan"
+  # the scope: what a worker reads of this repository. Named by the manifest, it must exist,
+  # carry only keys the schema declares (share/allow/scope.txt is generated from it) and be
+  # the version this distribution reads; unnamed, the executable's default applies, which is
+  # said rather than assumed
+  if [ -n "$MJ_SCOPE_FILE" ]; then
+    if [ ! -f "$MJ_SCOPE_FILE" ]; then
+      mj_doctrine_fail layout "$(mj_rel "$MJ_SCOPE_FILE")" "named by the manifest as section 'scope' but absent" "majordomus init --extend"; bad=1
+    else
+      local sflat sk
+      sflat="$(mktemp "${TMPDIR:-/tmp}/mj.scope.XXXXXX")"
+      if ! mj_yaml_flatten "$MJ_SCOPE_FILE" > "$sflat" 2>/dev/null; then
+        mj_doctrine_fail layout "$(mj_rel "$MJ_SCOPE_FILE")" "does not parse" "majordomus scope"; bad=1
+      elif [ "$(mj_yget "$sflat" version)" != "1" ]; then
+        mj_doctrine_fail layout "$(mj_rel "$MJ_SCOPE_FILE")" "version '$(mj_yget "$sflat" version)' is not 1" "majordomus scope"; bad=1
+      elif sk="$(mj_yaml_unknown_keys "$sflat" "$MJ_ALLOW_DIR/scope.txt")"; [ -n "$sk" ]; then
+        mj_doctrine_fail layout "$(mj_rel "$MJ_SCOPE_FILE")" "unknown key(s): $(printf '%s' "$sk" | tr '\n' ' ')" "majordomus scope"; bad=1
+      else
+        mj_doctrine_ok layout "$(mj_rel "$MJ_SCOPE_FILE")" "version 1; $(grep -c '^in\.' "$sflat") in pathspec(s); every key is one the schema declares"
+      fi
+      rm -f "$sflat"
+    fi
+  else
+    mj_info layout ".ai/repo/scope.yaml" "the manifest names no scope section; the executable reads the distribution's default (majordomus init --extend adds it)"
+  fi
   [ -f "$MJ_AI_DIR/README.md" ] || { mj_doctrine_fail layout ".ai/README.md" "the protocol entrypoint is absent; the layer is not readable without the tool" "majordomus init --extend"; bad=1; }
   rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"
   if ! mj_git check-ignore -q "$rel/state/current.yaml" 2>/dev/null; then
@@ -663,107 +690,14 @@ mj_validate_dag() {
 # This is the doctrine layer applied to prose: a catalogue entry that names a command
 # nobody wrote is the same defect as a rule nothing invokes, and it fails the same way.
 mj_validate_catalogue() {
-  local root="$MJ_HOME" uc="$MJ_SHARE_DIR/use-cases.yaml" ap="$MJ_SHARE_DIR/applications.yaml"
-  local ucf apf bad=0 i j k id ref n_uc=0 n_ap=0
-  [ -f "$uc" ] && [ -f "$ap" ] || { mj_doctrine_skip catalogue "-" "no catalogue shipped with this installation"; MJ_DOCTRINE_SKIPPED=1; return 0; }
-  ucf="$(mktemp "${TMPDIR:-/tmp}/mj.uc.XXXXXX")"; apf="$(mktemp "${TMPDIR:-/tmp}/mj.ap.XXXXXX")"
-  mj_yaml_flatten "$uc" > "$ucf" 2>/dev/null || { mj_doctrine_fail catalogue "share/use-cases.yaml" "does not parse" "majordomus doctor"; rm -f "$ucf" "$apf"; return 0; }
-  mj_yaml_flatten "$ap" > "$apf" 2>/dev/null || { mj_doctrine_fail catalogue "share/applications.yaml" "does not parse" "majordomus doctor"; rm -f "$ucf" "$apf"; return 0; }
-  # both catalogues loaded into variables once; every field read below is an expansion
-  mj_yload "$ucf" uc; mj_yload "$apf" ap
-  local dispatch_line
-  dispatch_line="$(grep -E '^ *init\|doctor\|' "$MJ_BIN_DIR/majordomus" | head -n1)"
-  dispatch_line="${dispatch_line%%)*}"; dispatch_line="${dispatch_line#"${dispatch_line%%[! ]*}"}"
-
-  # every reference resolves to something that exists
-  i=0
-  while [ -n "$(mj_yv uc "use_cases.$i.id")" ]; do
-    id="$(mj_yv uc "use_cases.$i.id")"; n_uc=$((n_uc+1))
-    # resolved against the dispatch table, which is what actually decides whether a
-    # command exists — CLI.md documents it, bin/majordomus is it
-    for ref in $(mj_yvlist uc "use_cases.$i.commands"); do
-      mj_cat_is_command "$ref" "$dispatch_line" || { mj_doctrine_fail catalogue "$id" "names command '$ref', which bin/majordomus does not dispatch" "majordomus --help"; bad=1; }
-    done
-    # the steps are what a reader actually runs, so they are checked in their own right
-    # rather than trusted to appear in the commands list
-    k=0
-    while [ -n "$(mj_yv uc "use_cases.$i.steps.$k.command")" ]; do
-      ref="$(mj_yv uc "use_cases.$i.steps.$k.command")"
-      mj_cat_is_command "$ref" "$dispatch_line" || { mj_doctrine_fail catalogue "$id" "step $((k+1)) names command '$ref', which bin/majordomus does not dispatch" "majordomus --help"; bad=1; }
-      [ -n "$(mj_yv uc "use_cases.$i.steps.$k.note")" ] || { mj_doctrine_fail catalogue "$id" "step $((k+1)) has no note saying what it does here" "grep -n -A12 'id: $id' share/use-cases.yaml"; bad=1; }
-      k=$((k+1))
-    done
-    [ "$k" -gt 0 ] || { mj_doctrine_fail catalogue "$id" "has no steps; a use case that runs nothing is a description, not a use case" "grep -n -A12 'id: $id' share/use-cases.yaml"; bad=1; }
-    for ref in $(mj_yvlist uc "use_cases.$i.doctrines"); do
-      mj_doc_index "$ref" >/dev/null 2>&1 || { mj_doctrine_fail catalogue "$id" "names doctrine '$ref', which is not in the registry" "majordomus doctrine list"; bad=1; }
-    done
-    for ref in $(mj_yvlist uc "use_cases.$i.claims"); do
-      grep -q "^  - id: $ref$" "$root/docs/CLAIMS.yaml" 2>/dev/null || { mj_doctrine_fail catalogue "$id" "names claim '$ref', which is not in docs/CLAIMS.yaml" "grep -n 'id: $ref' docs/CLAIMS.yaml"; bad=1; }
-    done
-    # the reference to an application must be mutual: a catalogue that disagrees with
-    # itself about what applies to what is worse than one that says less
-    for ref in $(mj_yvlist uc "use_cases.$i.applications"); do
-      if ! mj_cat_has ap applications "$ref"; then
-        mj_doctrine_fail catalogue "$id" "names application '$ref', which does not exist" "grep -n 'id:' share/applications.yaml"; bad=1
-      elif ! mj_cat_back ap applications "$ref" use_cases "$id"; then
-        mj_doctrine_fail catalogue "$id" "names application '$ref', which does not name it back" "grep -n -A20 'id: $ref' share/applications.yaml"; bad=1
-      fi
-    done
-    i=$((i+1))
-  done
-
-  j=0
-  while [ -n "$(mj_yv ap "applications.$j.id")" ]; do
-    id="$(mj_yv ap "applications.$j.id")"; n_ap=$((n_ap+1))
-    # an application that lists only fits is a brochure; both sides are required
-    [ -n "$(mj_yv ap "applications.$j.fits_when.0")" ] || { mj_doctrine_fail catalogue "$id" "declares no fits_when" "grep -n -A8 'id: $id' share/applications.yaml"; bad=1; }
-    [ -n "$(mj_yv ap "applications.$j.does_not_fit_when.0")" ] || { mj_doctrine_fail catalogue "$id" "declares no does_not_fit_when; an application that only lists fits is not a description" "grep -n -A8 'id: $id' share/applications.yaml"; bad=1; }
-    for ref in $(mj_yvlist ap "applications.$j.doctrines"); do
-      mj_doc_index "$ref" >/dev/null 2>&1 || { mj_doctrine_fail catalogue "$id" "names doctrine '$ref', which is not in the registry" "majordomus doctrine list"; bad=1; }
-    done
-    for ref in $(mj_yvlist ap "applications.$j.use_cases"); do
-      if ! mj_cat_has uc use_cases "$ref"; then
-        mj_doctrine_fail catalogue "$id" "names use case '$ref', which does not exist" "grep -n 'id:' share/use-cases.yaml"; bad=1
-      elif ! mj_cat_back uc use_cases "$ref" applications "$id"; then
-        mj_doctrine_fail catalogue "$id" "names use case '$ref', which does not name it back" "grep -n -A20 'id: $ref' share/use-cases.yaml"; bad=1
-      fi
-    done
-    j=$((j+1))
-  done
-
-  [ "$bad" = 0 ] && mj_doctrine_ok catalogue "$n_uc use case(s), $n_ap application(s)" "every command, doctrine, claim and cross-reference resolves, both directions"
-  rm -f "$ucf" "$apf"
+  # the catalogue is the layer's own: use cases and applications under the manifest's
+  # sections, validated by the same function `majordomus usecase validate` runs
+  mj_uc_load
+  if [ -z "$MJ_UC_DIR" ] || [ ! -d "$MJ_UC_DIR" ]; then
+    mj_doctrine_skip catalogue "-" "the manifest names no use-cases section; nothing to resolve"; MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  mj_uc_validate_all
+  [ "$MJ_UC_BAD" = 0 ] && mj_doctrine_ok catalogue "$MJ_UC_N use case(s), $MJ_AP_N application(s)" "every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions"
   return 0
 }
-# does <flat> contain an entry of <kind> with id <id>?
-mj_cat_has() {
-  local p="$1" kind="$2" want="$3" k=0 v
-  while v="$(mj_yv "$p" "$kind.$k.id")"; [ -n "$v" ]; do
-    [ "$v" = "$want" ] && return 0
-    k=$((k+1))
-  done
-  return 1
-}
-mj_cat_back() {
-  local p="$1" kind="$2" want="$3" field="$4" back="$5" k=0 v
-  while v="$(mj_yv "$p" "$kind.$k.id")"; [ -n "$v" ]; do
-    if [ "$v" = "$want" ]; then
-      for v in $(mj_yvlist "$p" "$kind.$k.$field"); do [ "$v" = "$back" ] && return 0; done
-      return 1
-    fi
-    k=$((k+1))
-  done
-  return 1
-}
-# mj_cat_is_command <name> [<dispatch line>]: the dispatch table decides; the caller that
-# checks many names reads the line once and passes it
-mj_cat_is_command() {
-  local line="${2:-}"
-  if [ -z "$line" ]; then
-    line="$(grep -E '^ *init\|doctor\|' "$MJ_BIN_DIR/majordomus" | head -n1)"
-    [ -n "$line" ] || return 1
-    line="${line%%)*}"; line="${line#"${line%%[! ]*}"}"   # drop the trailing ) and the indent
-  fi
-  case "|$line|" in *"|$1|"*) return 0 ;; esac
-  return 1
-}
+

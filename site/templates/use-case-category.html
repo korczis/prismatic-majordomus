@@ -1,0 +1,31 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set cat = load_data(path="data/generated/catalogue.json") -%}
+{%- set c = cat.categories[cat.cat_index[page.extra.category]] -%}
+<div class="max-w-4xl">
+  <p class="text-base leading-relaxed text-body">{{ c.summary }}</p>
+  <dl class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+    <div class="flex gap-1.5"><dt class="text-body-subtle">use cases</dt><dd class="font-mono text-heading">{{ c.count }}</dd></div>
+    {%- for k, v in c.maturity %}<div class="flex gap-1.5"><dt class="text-body-subtle">{{ k }}</dt><dd class="font-mono text-heading">{{ v }}</dd></div>{% endfor -%}
+  </dl>
+  {%- if c.count == 0 %}
+  <p class="mt-6 text-sm text-body">No use case is filed under this category yet. <code class="font-mono text-heading">majordomus usecase scaffold</code> writes a draft for any capability without one.</p>
+  {%- else %}
+  <ul class="mt-6 grid gap-4 md:grid-cols-2" role="list">
+    {%- for uid in c.use_cases -%}{%- set u = cat.use_cases[cat.uc_index[uid]] -%}{%- if u.status != "draft" %}
+    <li><a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span>{{ <maturity status={u.maturity} /> }}</span>{% if u.difficulty %}<span class="font-mono text-xs text-body-subtle">{{ u.difficulty }}</span>{% endif %}</div>
+      <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ u.title }}</h2>
+      <p class="text-sm leading-relaxed text-body">{{ u.summary }}</p>
+      <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">{% for cn in u.commands %}{{ cn }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+    </a></li>
+    {%- endif %}{%- endfor -%}
+  </ul>
+  {%- endif %}
+  {%- if c.applications | length > 0 %}
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Applications these belong to</h2>
+  <ul class="mt-4 flex flex-wrap gap-2">{% for a in c.applications %}{% set aa = cat.applications[cat.ap_index[a]] %}<li><a href="{{ get_url(path='/applications/' ~ a ~ '/', trailing_slash=true) }}" class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm text-heading hover:bg-neutral-secondary-medium">{{ aa.title }}</a></li>{% endfor %}</ul>
+  {%- endif %}
+  <p class="mt-10 text-sm"><a href="{{ get_url(path='/use-cases/', trailing_slash=true) }}" class="text-fg-brand hover:underline">Every category</a> · <a href="{{ get_url(path='/use-cases/coverage/', trailing_slash=true) }}" class="text-fg-brand hover:underline">coverage</a></p>
+</div>
+{% endblock body %}

@@ -19,6 +19,7 @@ use crate::git::GitState;
 use crate::metadata::{frontmatter, yaml, Format, FrontMatterRule, KindSchema, KindSpec};
 use crate::model::{uri_for, Diagnostic, Object, Provenance, Severity};
 use crate::repository::Repository;
+use crate::scope::{Scope, Scoped, Verdict};
 
 /// A file larger than this is refused rather than read.
 pub const MAX_FILE_BYTES: u64 = 4 * 1024 * 1024;
@@ -51,6 +52,11 @@ pub struct RepositoryInfo {
     /// The kinds files the reader was configured from: the distribution's, then the
     /// repository's own when it has one.
     pub kind_sources: Vec<String>,
+    /// Where the scope was read from: `repository` or `distribution`.
+    pub scope_origin: crate::scope::Origin,
+    /// The scope file: repository-relative for the repository's own, the share path for
+    /// the distribution's default.
+    pub scope_path: String,
 }
 
 #[derive(Debug)]
@@ -67,6 +73,8 @@ pub struct Index {
     /// A hash of every object's path and content, in URI order: the repository state this
     /// index is a picture of, stable across processes.
     pub fingerprint: String,
+    /// The scope the index was built under, with every tracked file tallied against it.
+    pub scoped: Scoped,
 }
 
 impl Index {
@@ -78,12 +86,36 @@ impl Index {
         schema: &KindSchema,
         source: &dyn DiscoverySource,
         git: GitState,
+        scope: Scope,
     ) -> Result<Self> {
         let _phase = crate::perf::phase(crate::perf::Phase::IndexBuild);
         crate::perf::Counters::bump(&crate::perf::COUNTERS.index_builds);
         let (files, mut diagnostics) = discovery::discover(repo, sources, source)?;
+        let (tally, mut scope_diagnostics) = scope.tally_repository(repo, source)?;
+        diagnostics.append(&mut scope_diagnostics);
         let mut objects = Vec::with_capacity(files.len());
         for file in &files {
+            // the scope decides before anything is read: a source outside it is not an
+            // object, and the diagnostic names the rule so that the declaration is fixed
+            // at its source (the scope, or the class that claims the file)
+            let judged = scope.classify(repo.root(), &file.rel_path);
+            if judged.verdict == Verdict::Out {
+                diagnostics.push(Diagnostic::warning(
+                    "out_of_scope",
+                    Some(file.rel_path.clone()),
+                    format!(
+                        "discovered by class '{}' but out of the repository scope ({}{}); not read",
+                        file.class,
+                        judged.reason.map(|r| r.as_str()).unwrap_or("out"),
+                        judged
+                            .rule
+                            .as_deref()
+                            .map(|r| format!(": {r}"))
+                            .unwrap_or_default()
+                    ),
+                ));
+                continue;
+            }
             match read_objects(repo, schema, file) {
                 Ok((mut read, mut member_diagnostics)) => {
                     objects.append(&mut read);
@@ -116,6 +148,8 @@ impl Index {
                 .map(|c| (c.id.clone(), c.kind.clone()))
                 .collect(),
             kind_sources: schema.sources().to_vec(),
+            scope_origin: scope.origin(),
+            scope_path: scope.path().to_string(),
         };
         tracing::info!(
             objects = objects.len(),
@@ -140,6 +174,7 @@ impl Index {
             diagnostics,
             state,
             fingerprint,
+            scoped: Scoped { scope, tally },
         })
     }
 

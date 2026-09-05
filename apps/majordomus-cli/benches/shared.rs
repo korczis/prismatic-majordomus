@@ -61,6 +61,7 @@ fn context(root: &Path) -> Arc<Context> {
     )
     .unwrap();
     let schema = KindSchema::load(&share, &repo).unwrap();
+    let scope = majordomus_cli::scope::Scope::load(&share, &repo).unwrap();
     let fs = FileSystem {
         excluded: vec![".git".into(), repo.local_path()],
     };
@@ -72,6 +73,7 @@ fn context(root: &Path) -> Arc<Context> {
         GitState::Unavailable {
             reason: "bench".into(),
         },
+        scope,
     )
     .unwrap();
     let registry = CapabilityRegistry::builder()

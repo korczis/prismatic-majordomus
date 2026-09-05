@@ -290,6 +290,10 @@ fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
         "share/kinds.yaml",
         &std::fs::read_to_string(dist.join("kinds.yaml")).unwrap(),
     );
+    f.write(
+        "share/skeleton/ai/repo/scope.yaml",
+        &std::fs::read_to_string(dist.join("skeleton/ai/repo/scope.yaml")).unwrap(),
+    );
     f.commit("distribution");
     let out = std::process::Command::new(BIN)
         .args(["capabilities", "validate"])

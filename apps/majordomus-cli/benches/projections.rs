@@ -54,6 +54,7 @@ fn build_index(root: &Path) -> Index {
     )
     .unwrap();
     let schema = KindSchema::load(&share, &repo).unwrap();
+    let scope = majordomus_cli::scope::Scope::load(&share, &repo).unwrap();
     let fs = FileSystem {
         excluded: vec![".git".into(), repo.local_path()],
     };
@@ -65,6 +66,7 @@ fn build_index(root: &Path) -> Index {
         GitState::Unavailable {
             reason: "bench".into(),
         },
+        scope,
     )
     .unwrap()
 }

@@ -130,6 +130,21 @@ fixture_repo() {
     mkdir -p "$dst/$(dirname "$p")"
     cp -R "$ROOT/$p" "$dst/$p"
   done
+  # the generator validates and runs the repository's use cases through the tool, which
+  # needs the layer (manifest, policy, rules, sources), the fixtures the scenarios prepare
+  # repositories from, and the executable's registry the MCP tools resolve against
+  if [ ! -f "$dst/.ai/manifest.yaml" ]; then
+    mkdir -p "$dst/.ai/repo"; cp "$ROOT/.ai/README.md" "$ROOT/.ai/manifest.yaml" "$dst/.ai/"
+    for p in README.md policy.yaml scope.yaml knowledge rules profiles prompts workflows use-cases applications adrs; do
+      [ -e "$ROOT/.ai/repo/$p" ] && [ ! -e "$dst/.ai/repo/$p" ] && cp -R "$ROOT/.ai/repo/$p" "$dst/.ai/repo/$p"
+    done
+    for p in "$ROOT"/.ai/repo/use-cases/* "$ROOT"/.ai/repo/applications/*; do
+      [ -e "$dst/.ai/repo/${p#"$ROOT"/.ai/repo/}" ] || cp "$p" "$dst/.ai/repo/${p#"$ROOT"/.ai/repo/}"
+    done
+  fi
+  [ -e "$dst/test/lib.sh" ] || { mkdir -p "$dst/test"; cp "$ROOT/test/lib.sh" "$dst/test/lib.sh"; }
+  [ -e "$dst/test/fixtures" ] || { mkdir -p "$dst/test"; cp -R "$ROOT/test/fixtures" "$dst/test/fixtures"; }
+  [ -e "$dst/docs/generated/registry.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/registry.json" "$dst/docs/generated/"; }
   # every path a claim names must resolve where the generator runs, so the fixture carries
   # them too, read from the matrix rather than listed here: a claim implemented outside the
   # trees copied above (the Rust executable under apps/) is otherwise "missing". After the

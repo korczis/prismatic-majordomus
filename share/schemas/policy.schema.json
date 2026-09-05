@@ -208,6 +208,40 @@
           }
         }
       }
+    },
+    "use_cases": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How use-case coverage is gated: per class of target, whether a gap fails, is reported, or is not looked at.",
+      "properties": {
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "commands": {
+              "enum": [
+                "required",
+                "advisory",
+                "off"
+              ]
+            },
+            "claims": {
+              "enum": [
+                "required",
+                "advisory",
+                "off"
+              ]
+            },
+            "mcp_tools": {
+              "enum": [
+                "required",
+                "advisory",
+                "off"
+              ]
+            }
+          }
+        }
+      }
     }
   }
 }
