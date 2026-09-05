@@ -1,0 +1,257 @@
+#!/usr/bin/env bash
+# pages — the GitHub Pages fast path: the smallest sequence that turns this commit into
+# publishable bytes, and the measurement of it. One command, run the same way by a person and
+# by .github/workflows/pages.yml, so there is no GitHub-only build semantics to drift from.
+#
+#   scripts/pages build [--base-url URL]  the site, without regenerating what is committed
+#   scripts/pages check                   every static check over the output, without a second generation
+#   scripts/pages fingerprint             the canonical input hash of this tree
+#   scripts/pages current                 is site/data/generated current for this tree? (exit 0/10)
+#   scripts/pages paths                   the paths a push must touch for the site to be able to change
+#   scripts/pages budget [--json]         the controlled budgets, from the model
+#   scripts/pages benchmark [-n N]        build and check N times; JSON (milliseconds) on stdout
+#   scripts/pages report --timings FILE   the SLO verdict for a run, as a Markdown fragment
+#   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
+#                                         poll the public site until it serves that commit
+#
+# The model is .ai/repo/ci/pages.yaml. Nothing here carries a path list, a budget or a gate
+# name of its own. Exit 0 ok, 2 usage, 10 a refusal or a budget exceeded, 12 something missing.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+MJ_VERSION="pages"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# shellcheck source=../lib/common.sh
+. "$ROOT/lib/common.sh"
+MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
+command -v jq >/dev/null || { echo "pages: jq is required" >&2; exit 12; }
+
+MODEL="$ROOT/.ai/repo/ci/pages.yaml"
+GATES="$ROOT/.ai/repo/ci/gates.yaml"
+[ -f "$MODEL" ] || { echo "pages: no publication model at ${MODEL#"$ROOT"/}" >&2; exit 12; }
+
+FLAT="$(mktemp "${TMPDIR:-/tmp}/mj-pages.XXXXXX")"
+trap 'rm -f "$FLAT" "${GFLAT:-}"' EXIT
+mj_yaml_flatten "$MODEL" > "$FLAT" || { echo "pages: ${MODEL#"$ROOT"/} does not parse" >&2; exit 10; }
+[ "$(mj_yget "$FLAT" version)" = 1 ] || { echo "pages: ${MODEL#"$ROOT"/}: version must be 1" >&2; exit 10; }
+m() { mj_yget "$FLAT" "$1"; }
+ml() { mj_ylist "$FLAT" "$1"; }
+
+OUTPUT="$(m deploy.output)"
+IDENTITY="$(m deploy.identity)"
+
+# ---------------------------------------------------------------- timing
+# Rows in the shape scripts/ci/summary already renders: "<gate><TAB><step><TAB><seconds>".
+# MJ_PAGES_TIMINGS names the file; without it the rows go nowhere and nothing is measured.
+row() { [ -n "${MJ_PAGES_TIMINGS:-}" ] && printf 'pages\t%s\t%s\n' "$1" "$2" >> "$MJ_PAGES_TIMINGS"; return 0; }
+now() { date +%s; }
+# milliseconds, from the tool's own clock: a phase that takes under a second is still a phase,
+# and a benchmark that can only see whole seconds cannot tell 40 ms from 900
+now_ms() { MJ_TIMING=1 mj_ms; }
+timed() { local step="$1" t0; shift; t0="$(now)"; "$@"; local rc=$?; row "$step" "$(( $(now) - t0 ))"; return "$rc"; }
+
+# ---------------------------------------------------------------- fingerprint
+# The canonical input hash: what generate-site-data writes into source.json as source_hash,
+# computed over the same list in one hashing process. `current` compares it with the committed
+# value, which answers "must this tree be regenerated?" in a fifth of a second rather than in
+# the forty-odd seconds a generation costs. The generator remains the only thing that writes
+# the data; this only decides whether it has to run.
+cmd_fingerprint() { "$ROOT/scripts/generate-site-data" --fingerprint; }
+
+cmd_current() {
+  local want have src="$ROOT/$OUTPUT/../data/generated/source.json"
+  src="$ROOT/site/data/generated/source.json"
+  [ -f "$src" ] || { echo "pages: $src is absent; run scripts/generate-site-data" >&2; return 12; }
+  want="$(cmd_fingerprint)"
+  have="$(jq -r '.source_hash' "$src")"
+  if [ "$want" = "$have" ]; then
+    [ -n "${MJ_PAGES_QUIET:-}" ] || printf 'pages: site/data/generated is current for this tree (input hash %s)\n' "${want:0:12}"
+    return 0
+  fi
+  printf 'pages: site/data/generated is stale — it carries input hash %s, this tree hashes to %s\n' "${have:0:12}" "${want:0:12}" >&2
+  printf '       the committed derived data is a projection of the tree it was generated from; run\n       scripts/generate-site-data and commit the result.\n' >&2
+  return 10
+}
+
+# ---------------------------------------------------------------- build
+# No generation. The committed site/data/generated is the canonical projection — the pre-commit
+# hook and the `site-build` gate of validate.yml both refuse a tree where it is stale — so the
+# fast path establishes that it is current by hash and then renders it. Deleting every cache
+# and regenerating from the canonical sources must produce these same bytes; that is what
+# `scripts/generate-site-data --check` proves in the full gate.
+cmd_build() {
+  local base=""
+  while [ $# -gt 0 ]; do case "$1" in
+    --base-url) base="$2"; shift 2 ;;
+    *) echo "pages build: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  MJ_PAGES_QUIET=1 timed fingerprint cmd_current || return 10
+  if [ -n "$base" ]; then timed build "$ROOT/scripts/site-build" --no-data --base-url "$base"
+  else timed build "$ROOT/scripts/site-build" --no-data; fi
+}
+
+cmd_check() { timed check "$ROOT/scripts/site-check" --no-sync; }
+
+# ---------------------------------------------------------------- the trigger paths
+# Derived, never written twice: the classes of the gate model that name the gate this model
+# names are the classes whose paths can change the site. Their pathspecs, plus the extras this
+# model declares, are exactly the `paths:` of the Pages workflow.
+#
+# A class that escalates the whole plan (`gates: full`) is deliberately not one of them. That
+# escalation is about how much validation a change to the pipeline deserves, not about what the
+# published bytes are derived from: changing scripts/ci-plan or the justfile makes every gate
+# run and cannot move a pixel. Publication follows the inputs, and the inputs are named.
+cmd_paths() {
+  [ -f "$GATES" ] || { echo "pages: no gate model at ${GATES#"$ROOT"/}" >&2; return 12; }
+  GFLAT="$(mktemp "${TMPDIR:-/tmp}/mj-pages-gates.XXXXXX")"
+  mj_yaml_flatten "$GATES" > "$GFLAT" || { echo "pages: ${GATES#"$ROOT"/} does not parse" >&2; return 10; }
+  local gate; gate="$(m trigger.gate)"
+  awk -F= -v gate="$gate" '
+    $1 ~ /^classes\.[0-9]+\.id$/            { split($1, a, "."); id[a[2]] = $2 }
+    $1 ~ /^classes\.[0-9]+\.gates\.[0-9]+$/ { split($1, a, "."); if ($2 == gate) want[a[2]] = 1 }
+    $1 ~ /^classes\.[0-9]+\.paths\.[0-9]+$/ { split($1, a, "."); p[a[2] "." a[4]] = $2; c[a[2]] = 1 }
+    END { for (k in p) { split(k, a, "."); if (a[1] in want) print p[k] } }
+  ' "$GFLAT" > "$GFLAT.paths"
+  ml trigger.extra >> "$GFLAT.paths"
+  sort -u "$GFLAT.paths"
+  rm -f "$GFLAT.paths"
+}
+
+# ---------------------------------------------------------------- budgets
+cmd_budget() {
+  if [ "${1:-}" = --json ]; then
+    jq -n --arg w "$(for k in checkout setup build check publish controlled; do printf '%s=%s\n' "$k" "$(m "budget.warm.$k")"; done)" \
+          --arg c "$(m budget.cold.controlled)" --arg e "$(m budget.end_to_end)" '
+      { schema: 1,
+        warm: ($w | split("\n") | map(select(length > 0)) | map(split("=") | {key: .[0], value: (.[1] | tonumber)}) | from_entries),
+        cold: { controlled: ($c | tonumber) },
+        end_to_end: ($e | tonumber) }'
+  else
+    printf 'warm  %-12s %s s\n' checkout "$(m budget.warm.checkout)" setup "$(m budget.warm.setup)" \
+      build "$(m budget.warm.build)" check "$(m budget.warm.check)" publish "$(m budget.warm.publish)" \
+      controlled "$(m budget.warm.controlled)"
+    printf 'cold  %-12s %s s\n' controlled "$(m budget.cold.controlled)"
+    printf 'slo   %-12s %s s (push to publicly observable; reported, not enforced)\n' end_to_end "$(m budget.end_to_end)"
+  fi
+}
+
+# ---------------------------------------------------------------- benchmark
+# The controlled build path, repeated. Measured values only: nothing here prints a number it
+# did not time, and the JSON is what docs and the site read rather than a figure in prose.
+cmd_benchmark() {
+  local n=3 json=0
+  while [ $# -gt 0 ]; do case "$1" in
+    -n|--iterations) n="$2"; shift 2 ;;
+    --json) json=1; shift ;;
+    *) echo "pages benchmark: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  case "$n" in ''|*[!0-9]*|0) echo "pages benchmark: --iterations must be a positive integer" >&2; exit 2 ;; esac
+  local t tmp i b c f
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj-pages-bench.XXXXXX")"
+  i=1; while [ "$i" -le "$n" ]; do
+    t="$(now_ms)"; MJ_PAGES_QUIET=1 cmd_current >/dev/null 2>&1 || { echo "pages benchmark: the derived data is stale; nothing measured" >&2; rm -f "$tmp"; exit 10; }
+    f=$(( $(now_ms) - t ))
+    t="$(now_ms)"; "$ROOT/scripts/site-build" --no-data >/dev/null 2>&1 || { echo "pages benchmark: the build failed" >&2; rm -f "$tmp"; exit 10; }
+    b=$(( $(now_ms) - t ))
+    t="$(now_ms)"; "$ROOT/scripts/site-check" --no-sync >/dev/null 2>&1 || { echo "pages benchmark: the check failed" >&2; rm -f "$tmp"; exit 10; }
+    c=$(( $(now_ms) - t ))
+    printf '%s\t%s\t%s\n' "$f" "$b" "$c" >> "$tmp"
+    printf 'pages benchmark: sample %s/%s — fingerprint %s ms, build %s ms, check %s ms\n' "$i" "$n" "$f" "$b" "$c" >&2
+    i=$((i+1))
+  done
+  # min, median and p90 of each phase and of their sum, over the samples actually taken
+  jq -Rn --arg samples "$n" --arg routes "$(find "$ROOT/$OUTPUT" -name index.html | wc -l | tr -d ' ')" --rawfile rows "$tmp" '
+    def stats(a): (a | sort) as $s | { min: $s[0], median: $s[(($s | length) / 2 | floor)],
+                                        p90: $s[((($s | length) * 0.9) - 1 | floor | if . < 0 then 0 else . end)],
+                                        max: $s[-1] };
+    ($rows | split("\n") | map(select(length > 0)) | map(split("\t") | map(tonumber))) as $r
+    | { schema: 1, samples: ($samples | tonumber), routes: ($routes | tonumber), unit: "milliseconds",
+        fingerprint: stats([$r[][0]]), build: stats([$r[][1]]), check: stats([$r[][2]]),
+        controlled: stats([$r[] | add]) }'
+  rm -f "$tmp"
+}
+
+# ---------------------------------------------------------------- the run's verdict
+# The timing rows of one deployment against the budgets, as the fragment the workflow appends
+# to its job summary. Controlled latency is what can fail; external latency is reported beside
+# it and never conflated with it.
+cmd_report() {
+  local timings="" ext_queue="" ext_pages="" e2e="" cold=0 out
+  while [ $# -gt 0 ]; do case "$1" in
+    --timings) timings="$2"; shift 2 ;;
+    --queue) ext_queue="$2"; shift 2 ;;
+    --pages-build) ext_pages="$2"; shift 2 ;;
+    --end-to-end) e2e="$2"; shift 2 ;;
+    --cold) cold=1; shift ;;
+    *) echo "pages report: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  [ -n "$timings" ] && [ -s "$timings" ] || { echo "pages report: --timings names no rows" >&2; exit 2; }
+  local controlled budget verdict rc=0
+  controlled="$(awk -F'\t' '{ s += $3 } END { print s + 0 }' "$timings")"
+  if [ "$cold" = 1 ]; then budget="$(m budget.cold.controlled)"; else budget="$(m budget.warm.controlled)"; fi
+  if [ "$controlled" -le "$budget" ]; then verdict="PASS"; else verdict="OVER BUDGET"; rc=10; fi
+  out="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+  {
+    printf '### Pages fast path\n\n'
+    printf '| phase | seconds | budget |\n|---|---:|---:|\n'
+    awk -F'\t' -v mm="$FLAT" '{ print $2 "\t" $3 }' "$timings" | while IFS="$(printf '\t')" read -r step secs; do
+      printf '| %s | %s | %s |\n' "$step" "$secs" "$(m "budget.warm.$step" || true)"
+    done
+    printf '| **controlled** | **%s** | **%s** |\n\n' "$controlled" "$budget"
+    printf '| external (not budgeted) | seconds |\n|---|---:|\n'
+    printf '| Actions queue and runner start | %s |\n' "${ext_queue:-not measured}"
+    printf '| GitHub pages build and deployment | %s |\n\n' "${ext_pages:-not measured}"
+    printf 'Pages SLO: **%s** — controlled path %s s / %s s' "$verdict" "$controlled" "$budget"
+    [ -n "$e2e" ] && printf ', push to public %s s / %s s' "$e2e" "$(m budget.end_to_end)"
+    printf '\n'
+    if [ -n "$e2e" ] && [ "$e2e" -gt "$(m budget.end_to_end)" ] && [ "$rc" = 0 ]; then
+      printf '\nThe end-to-end target was not met while the controlled path was inside its budget: the\nremainder is the Actions queue and GitHub'"'"'s own Pages build, which this repository does not\nspend. That is an external limit, not a regression here.\n'
+    fi
+  } >> "$out"
+  return "$rc"
+}
+
+# ---------------------------------------------------------------- public verification
+# Workflow success is not publication. The site serves its own identity at deploy.identity —
+# the commit it was built from — so the moment that file names this commit is the moment the
+# deployment is publicly observable, measured from outside with the cache defeated.
+cmd_verify() {
+  local url="" commit="" timeout=180 quiet=0 t0 waited served
+  while [ $# -gt 0 ]; do case "$1" in
+    --url) url="$2"; shift 2 ;;
+    --commit) commit="$2"; shift 2 ;;
+    --timeout) timeout="$2"; shift 2 ;;
+    --quiet) quiet=1; shift ;;
+    *) echo "pages verify: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  [ -n "$url" ] || url="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml")"
+  [ -n "$commit" ] || commit="$(git -C "$ROOT" rev-parse HEAD)"
+  command -v curl >/dev/null || { echo "pages verify: curl is required" >&2; return 12; }
+  t0="$(now)"
+  while :; do
+    served="$(curl -fsSL -H 'Cache-Control: no-cache' "${url%/}/$IDENTITY?t=$(now)" 2>/dev/null | jq -r '.commit // empty' 2>/dev/null || true)"
+    if [ "$served" = "$commit" ]; then
+      waited=$(( $(now) - t0 ))
+      [ "$quiet" = 1 ] || printf 'pages verify: %s serves %s after %s s\n' "${url%/}/$IDENTITY" "${commit:0:12}" "$waited"
+      printf '%s\n' "$waited" > "${MJ_PAGES_WAITED:-/dev/null}"
+      return 0
+    fi
+    [ $(( $(now) - t0 )) -lt "$timeout" ] || {
+      printf 'pages verify: after %s s %s still serves %s, not %s\n' "$timeout" "${url%/}/$IDENTITY" "${served:-nothing}" "${commit:0:12}" >&2
+      return 10; }
+    sleep 2
+  done
+}
+
+# ---------------------------------------------------------------- dispatch
+case "${1:-}" in
+  build)       shift; cmd_build "$@" ;;
+  check)       shift; cmd_check "$@" ;;
+  fingerprint) shift; cmd_fingerprint "$@" ;;
+  current)     shift; cmd_current "$@" ;;
+  paths)       shift; cmd_paths "$@" ;;
+  budget)      shift; cmd_budget "$@" ;;
+  benchmark)   shift; cmd_benchmark "$@" ;;
+  report)      shift; cmd_report "$@" ;;
+  verify)      shift; cmd_verify "$@" ;;
+  -h|--help|"") sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) echo "pages: unknown command $1 (scripts/pages --help)" >&2; exit 2 ;;
+esac

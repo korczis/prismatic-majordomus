@@ -1,0 +1,130 @@
+# The Pages fast path: a push to master that can change the site becomes public without
+# waiting for anything that cannot. It is an adapter over `scripts/pages`, which a person runs
+# the same way (docs/GITHUB_PAGES_PERFORMANCE.md); the model it reads is .ai/repo/ci/pages.yaml.
+#
+# What is on this critical path: the committed derived data proved current by its own input
+# hash, the site rendered from it, every static check over the output, and the push to
+# gh-pages. What is not: the behavioural suite, the crate's gates, coverage, the macOS suite,
+# the benchmark check and the browser probe — validate.yml runs all of them on this same
+# commit, in parallel, and they gate merging through the `ci` status. Nothing that can make the
+# published bytes wrong was moved off; only what guards the repository rather than the bytes.
+#
+# The `paths:` below is derived, not written: it is `scripts/pages paths`, which is the union
+# of the gate model's classes that name the site-build gate plus this model's extras.
+# test/cases/97_pages_fast_path.sh fails when the two differ.
+name: pages
+on:
+  push:
+    branches: [master]
+    paths:
+      - .ai/**
+      - .githooks/**
+      - .github/workflows/pages.yml
+      - .nojekyll
+      - AGENTS.md
+      - assets/**
+      - bin/**
+      - CLAUDE.md
+      - CONTRIBUTING.md
+      - docs/**
+      - docs/generated/**
+      - examples/**
+      - lib/**
+      - LICENSE
+      - package-lock.json
+      - package.json
+      - README.md
+      - scripts/generate-site-data
+      - scripts/github-sync
+      - scripts/lib/**
+      - scripts/pages
+      - scripts/rules-package
+      - scripts/site-build
+      - scripts/site-check
+      - scripts/site-deploy
+      - scripts/site-probe
+      - scripts/site-serve
+      - SECURITY.md
+      - share/**
+      - share/allow/**
+      - site/**
+      - site/data/registry/**
+      - test/**
+  workflow_dispatch:
+
+# Only what the deploy needs: the push to gh-pages. GitHub's own "pages build and deployment"
+# serves that branch and needs no permission here.
+permissions:
+  contents: write
+
+# The site is a projection of the newest commit, so an older deployment of an older commit is
+# worth nothing the moment a newer push exists. A superseded run is cancelled rather than
+# finished; the branch push is idempotent and last-writer-wins, so cancelling one loses nothing
+# but the seconds it would have spent.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # when the push was accepted, so that queue and runner allocation are measured as what
+      # they are — GitHub's latency, reported beside this repository's and never mixed into it
+      - id: t
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          created="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at)"
+          echo "created=$(date -u -d "$created" +%s)" >> "$GITHUB_OUTPUT"
+          echo "start=$(date -u +%s)" >> "$GITHUB_OUTPUT"
+
+      # shallow: the fast path reads the tree, never its history. scripts/site-deploy fetches
+      # the one branch it pushes for itself.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - id: setup
+        uses: ./.github/actions/setup-site
+
+      - name: timings
+        run: |
+          echo "MJ_PAGES_TIMINGS=$PWD/pages-timings.tsv" >> "$GITHUB_ENV"
+          printf 'pages\tcheckout+setup\t%s\n' "$(( $(date -u +%s) - ${{ steps.t.outputs.start }} ))" > "$PWD/pages-timings.tsv"
+
+      # the committed derived data proved current by hash, then rendered; no generation
+      - name: build
+        run: scripts/pages build
+
+      # every static check over the output; the browser probe stays in validate.yml
+      - name: check
+        run: scripts/pages check
+
+      # the one deploy path, the same script a person runs
+      - name: publish
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          t0="$(date -u +%s)"
+          scripts/site-deploy --skip-build
+          printf 'pages\tpublish\t%s\n' "$(( $(date -u +%s) - t0 ))" >> "$MJ_PAGES_TIMINGS"
+
+      # publication, not workflow success: the site serves the commit it was built from at
+      # /build.json, so this waits for that file to name this commit and measures the wait
+      - id: public
+        continue-on-error: true
+        run: |
+          t0="$(date -u +%s)"
+          MJ_PAGES_WAITED=/dev/null scripts/pages verify --commit "$GITHUB_SHA" --timeout 240
+          echo "pages_build=$(( $(date -u +%s) - t0 ))" >> "$GITHUB_OUTPUT"
+          echo "end_to_end=$(( $(date -u +%s) - ${{ steps.t.outputs.created }} ))" >> "$GITHUB_OUTPUT"
+
+      - if: always()
+        run: |
+          scripts/pages report --timings "$MJ_PAGES_TIMINGS" \
+            --queue "$(( ${{ steps.t.outputs.start }} - ${{ steps.t.outputs.created }} ))" \
+            --pages-build "${{ steps.public.outputs.pages_build || 'not measured' }}" \
+            ${{ steps.public.outputs.end_to_end && format('--end-to-end {0}', steps.public.outputs.end_to_end) || '' }}
