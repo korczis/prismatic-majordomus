@@ -13,43 +13,47 @@ doctrines: [majordomus.ledger-integrity]
 claims: [ledger-integrity, event-vocabulary, history-ledger-read]
 responsibilities: [state, watch]
 applications: [several-agents-one-repository, long-running-work]
-scenario:
-  setup: installed
-  given:
-    - 'Majordomus installed, no session open'
-  steps:
-    - id: open
-      run: ['session', 'start', '--worker', 'some-provider/some-model']
-      note: 'one execution episode of one worker begins'
-      expect:
-        exit: 0
-        stdout_contains: ['^session s-[0-9]+-[0-9a-f]+ opened at']
-    - id: refuse-a-second
-      run: ['session', 'start']
-      note: 'one session per checkout at a time'
-      expect:
-        exit: 15
-        stdout_contains: ['is open here']
-    - id: close
-      run: ['session', 'close']
-      note: 'the envelope: identity, a temporal boundary, references to what the episode produced'
-      expect:
-        exit: 0
-        stdout_contains: ['^\.ai/local/state/sessions/']
-    - id: ledger
-      run: ['history']
-      note: 'the ledger carries both ends of the episode'
-      expect:
-        exit: 0
-        stdout_contains: ['session.started', 'session.closed']
-  then:
-    - 'a closed session is an envelope, never a transcript'
-    - 'which work happened together, and in what order, is answerable'
 ---
 
 # Situation
 
 A worker touches two tasks in one sitting and makes two decisions an hour apart. Nothing records that one worker made both, so later they look unrelated, and the only witness is a conversation nobody can search.
+
+# Scenario
+
+```yaml
+setup: installed
+given:
+  - 'Majordomus installed, no session open'
+steps:
+  - id: open
+    run: ['session', 'start', '--worker', 'some-provider/some-model']
+    note: 'one execution episode of one worker begins'
+    expect:
+      exit: 0
+      stdout_contains: ['^session s-[0-9]+-[0-9a-f]+ opened at']
+  - id: refuse-a-second
+    run: ['session', 'start']
+    note: 'one session per checkout at a time'
+    expect:
+      exit: 15
+      stdout_contains: ['is open here']
+  - id: close
+    run: ['session', 'close']
+    note: 'the envelope: identity, a temporal boundary, references to what the episode produced'
+    expect:
+      exit: 0
+      stdout_contains: ['^\.ai/local/state/sessions/']
+  - id: ledger
+    run: ['history']
+    note: 'the ledger carries both ends of the episode'
+    expect:
+      exit: 0
+      stdout_contains: ['session.started', 'session.closed']
+then:
+  - 'a closed session is an envelope, never a transcript'
+  - 'which work happened together, and in what order, is answerable'
+```
 
 # Outcome
 

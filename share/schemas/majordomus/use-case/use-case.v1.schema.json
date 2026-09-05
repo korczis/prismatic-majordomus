@@ -4,7 +4,7 @@
   "x-majordomus-schema": "majordomus.use-case/v1",
   "x-majordomus-derived-from": "majordomus/use-case/use-case.v1.proto",
   "x-majordomus-allow": "use-case",
-  "description": "The whole use case: the front matter, the executable scenario inside it, then the narrative.",
+  "description": "The whole use case: the front matter, then the narrative with the executable scenario inside it.",
   "title": "use-case",
   "type": "object",
   "additionalProperties": false,
@@ -138,9 +138,6 @@
         "related": {
           "$ref": "#/$defs/Related"
         },
-        "scenario": {
-          "$ref": "#/$defs/Scenario"
-        },
         "performance": {
           "$ref": "#/$defs/Performance"
         }
@@ -166,7 +163,7 @@
       }
     },
     "Scenario": {
-      "description": "The executable proof: a fresh repository prepared by a setup script, then the steps in order, each a real invocation of the tool with its expected exit code and output.",
+      "description": "The executable proof, written as YAML inside the fenced block of the body's `Scenario` section: a fresh repository prepared by a setup script, then the steps in order, each a real invocation of the tool with its expected exit code and output.  This message is reached from the body rather than from `Header`, so no allow-list row is projected for it; `share/sections/use-case.txt` carries the section and `lib/usecase.sh` parses the block.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -322,7 +319,7 @@
       }
     },
     "Body": {
-      "description": "The body carries the narrative: the situation the reader is in, and what they are left with. The scenario in the front matter proves it; these two sections say why it matters.",
+      "description": "The body carries the narrative and the proof: the situation the reader is in, the scenario that demonstrates it against the real tool, and what they are left with.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -343,6 +340,13 @@
           "level": 1,
           "required": true,
           "non_empty": true
+        },
+        {
+          "heading": "Scenario",
+          "level": 1,
+          "required": true,
+          "non_empty": true,
+          "description": "One fenced ```yaml block, shaped by `Scenario` above. Required, because a use case that cannot be executed is a story about the tool rather than a use of it."
         },
         {
           "heading": "Outcome",

@@ -55,14 +55,41 @@ mj_uc_paths() {
   MJ_UC_EVIDENCE="$MJ_AI_LOCAL_DIR/evidence/use-cases"
 }
 
-# the front matter of a Markdown object, flattened into a temp file; empty on failure
+# The `# Scenario` section's fenced YAML block, verbatim, or nothing.
+#
+# The scenario is the one part of a use case that is executed rather than read, and it
+# used to live in the front matter. It does not any more: front matter is what the object
+# *is* — its identity and its classification — and a twenty-line program is neither. A
+# reader opening the file now sees the narrative and the proof in the order they happen,
+# and the block stays YAML because it is still run.
+mj_uc_scenario_yaml() {
+  awk '
+    /^# Scenario[ \t]*$/ { sec = 1; next }
+    sec && /^```yaml[ \t]*$/ { fence = 1; next }
+    sec && fence && /^```[ \t]*$/ { exit }
+    sec && fence { print; next }
+    sec && /^# / { exit }
+  ' "$1"
+}
+
+# the front matter of a Markdown object, flattened into a temp file, with the scenario
+# section folded in under the `scenario.` prefix so that every reader below sees one flat
+# namespace and neither knows nor cares which half of the file a key came from;
+# empty on failure
 mj_uc_flat() {
-  local f="$1" front tmp
+  local f="$1" front tmp scenario
   front="$(mj_record_front "$f")" || return 1
   [ -n "$front" ] || return 1
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ucf.XXXXXX")"
   printf '%s\n' "$front" > "$tmp.yaml"
   mj_yaml_flatten "$tmp.yaml" > "$tmp" 2>/dev/null || { rm -f "$tmp" "$tmp.yaml"; return 1; }
+  scenario="$(mj_uc_scenario_yaml "$f")"
+  if [ -n "$scenario" ]; then
+    printf '%s\n' "$scenario" > "$tmp.yaml"
+    # a scenario that does not parse leaves the use case scenario-less, which `check`
+    # reports as a use case targeting a guarantee without evidence — never as a silence
+    mj_yaml_flatten "$tmp.yaml" 2>/dev/null | sed 's/^/scenario./' >> "$tmp" || true
+  fi
   rm -f "$tmp.yaml"
   printf '%s' "$tmp"
 }
@@ -249,10 +276,13 @@ mj_uc_validate_all() {
     mj_uc_get "$i" status; st="$MJ_V"
     case "$st" in active|draft|deprecated) ;; *) mj_uc_bad "$id" "status '$st' is not active, draft or deprecated" "" ;; esac
     for k in title summary category; do mj_uc_get "$i" "$k"; [ -n "$MJ_V" ] || mj_uc_bad "$id" "declares no $k" ""; done
-    # keys the schema does not declare: the allow-list is generated from the schema
+    # keys the schema does not declare: the allow-list is generated from the schema, and
+    # covers the front matter only. The scenario the loader folded in under `scenario.`
+    # came from the body, where the section list is what governs it, so it is dropped here
+    # rather than measured against a list that deliberately no longer mentions it.
     flatn="MJ_UC_FLAT_$i"
-    unk="$(mj_yaml_unknown_keys "${!flatn}" "$MJ_ALLOW_DIR/use-case.txt" || true)"
-    [ -z "$unk" ] || mj_uc_bad "$id" "unknown key(s): $(printf '%s' "$unk" | tr '\n' ' ')" "share/schemas/use-case.schema.json"
+    unk="$(grep -v '^scenario\.' "${!flatn}" 2>/dev/null | mj_yaml_unknown_keys /dev/stdin "$MJ_ALLOW_DIR/use-case.txt" || true)"
+    [ -z "$unk" ] || mj_uc_bad "$id" "unknown key(s): $(printf '%s' "$unk" | tr '\n' ' ')" "share/schemas/majordomus/use-case/use-case.v1.proto"
     mj_uc_get "$i" category; case "$cats" in *" $MJ_V "*) ;; *) mj_uc_bad "$id" "category '$MJ_V' is not in taxonomy.yaml" "$(mj_rel "$MJ_UC_DIR")/taxonomy.yaml" ;; esac
     cmd_list="$(mj_uc_list "$i" commands)"
     [ -n "$cmd_list" ] || mj_uc_bad "$id" "names no command; a use case that runs nothing is a description" ""
@@ -269,7 +299,7 @@ mj_uc_validate_all() {
     fi
     # the body carries the sections a reader expects
     body="$(mj_record_body "$f")"
-    for k in "# Situation" "# Outcome"; do case "$body" in *"$k"*) ;; *) mj_uc_bad "$id" "body has no '$k' heading" "" ;; esac; done
+    for k in "# Situation" "# Scenario" "# Outcome"; do case "$body" in *"$k"*) ;; *) mj_uc_bad "$id" "body has no '$k' heading" "" ;; esac; done
     # the scenario: setup exists, stdin bodies exist, every step names a declared command,
     # step ids are unique, every step expects an exit code
     if mj_uc_has_scenario "$i"; then
@@ -684,7 +714,7 @@ mj_uc_cmd_scaffold() {
     {
       printf -- '---\nid: %s-draft\nkind: use-case\ntitle: %s\nsummary: %s\ncategory: %s\nstatus: draft\ntarget: advisory\nweight: 100\nactors: [maintainer]\ndifficulty: basic\ncommands: [%s]\n' \
         "$c" "'TODO: the task \`$c\` answers'" "'TODO: one sentence; scaffolded from the registry, the command fixture and the claims, nothing here is verified'" "$cat" "$c"
-      printf 'doctrines: []\nclaims: [%s]\nresponsibilities: [%s]\napplications: []\nscenario:\n  setup: %s\n  given:\n    - %s\n  steps:\n    - id: first\n      run: [%s]\n      expect:\n        exit: %s\n  then:\n    - %s\n---\n\n# Situation\n\nTODO\n\n# Outcome\n\nTODO\n' \
+      printf 'doctrines: []\nclaims: [%s]\nresponsibilities: [%s]\napplications: []\n---\n\n# Situation\n\nTODO\n\n# Scenario\n\n```yaml\nsetup: %s\ngiven:\n  - %s\nsteps:\n  - id: first\n    run: [%s]\n    expect:\n      exit: %s\nthen:\n  - %s\n```\n\n# Outcome\n\nTODO\n' \
         "$(printf '%s' "$claims_of" | sed 's/ *$//; s/ /, /g')" "$resp_cmd" "$setup" "'TODO: the state the setup script prepares'" "$run0" "$exp" "'TODO: what is true afterwards'"
     } > "$f"
     written=$((written+1)); printf 'wrote: %s (draft; complete the narrative and the assertions, then set status: active)\n' "$(mj_rel "$f")"

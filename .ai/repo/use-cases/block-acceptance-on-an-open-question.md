@@ -14,45 +14,6 @@ doctrines: [majordomus.blocker-resolution, majordomus.questions-store-integrity,
 claims: [open-question-gate, blocker-store, finish-contract, typed-outcome, consistency-check]
 responsibilities: [finish, state]
 applications: [long-running-work, ci-gated-project]
-scenario:
-  setup: finish-blocker-open
-  given:
-    - 'an active task with one unresolved question open against it'
-  steps:
-    - id: see-it
-      run: ['question', 'list']
-      note: 'the open question, numbered, on this branch'
-      expect:
-        exit: 0
-        stdout_contains: ['unresolved', 'tabs']
-    - id: refused
-      run: ['finish', '--outcome', 'completed', '--verify-command', 'true']
-      note: 'completion is refused while the question is open; the refusal names it'
-      expect:
-        exit: 10
-        stdout_contains: ['question']
-    - id: still-flagged
-      run: ['check']
-      note: 'check reports the blocker as a failing line, not a warning'
-      expect:
-        exit: 10
-        stdout_contains: ['FAIL']
-    - id: resolve
-      run: ['question', 'resolve', '1', '--answer', 'tabs are refused; the subset has no tabs']
-      note: 'the one line is rewritten as resolved with its answer'
-      expect:
-        exit: 0
-        stdout_contains: ['resolved']
-    - id: clear
-      run: ['check']
-      note: 'nothing blocks now'
-      expect:
-        exit: 0
-        stdout_contains: ['0 failing']
-  then:
-    - 'finish refused with exit 10 while the question was open'
-    - 'the resolved entry keeps the question and the answer together'
-    - 'check is green once the store holds no unresolved entry'
 ---
 
 # Situation
@@ -65,6 +26,49 @@ Somebody asked a question that decides how the work is done, nobody answered, an
 - `finish --outcome completed`: refused while an entry is unresolved, with the entry named
 - `check`: the same gate as a failing line, so it is visible before anyone tries to finish
 - `question resolve <n> --answer`: rewrites that one line as resolved, with the answer beside the question
+
+# Scenario
+
+```yaml
+setup: finish-blocker-open
+given:
+  - 'an active task with one unresolved question open against it'
+steps:
+  - id: see-it
+    run: ['question', 'list']
+    note: 'the open question, numbered, on this branch'
+    expect:
+      exit: 0
+      stdout_contains: ['unresolved', 'tabs']
+  - id: refused
+    run: ['finish', '--outcome', 'completed', '--verify-command', 'true']
+    note: 'completion is refused while the question is open; the refusal names it'
+    expect:
+      exit: 10
+      stdout_contains: ['question']
+  - id: still-flagged
+    run: ['check']
+    note: 'check reports the blocker as a failing line, not a warning'
+    expect:
+      exit: 10
+      stdout_contains: ['FAIL']
+  - id: resolve
+    run: ['question', 'resolve', '1', '--answer', 'tabs are refused; the subset has no tabs']
+    note: 'the one line is rewritten as resolved with its answer'
+    expect:
+      exit: 0
+      stdout_contains: ['resolved']
+  - id: clear
+    run: ['check']
+    note: 'nothing blocks now'
+    expect:
+      exit: 0
+      stdout_contains: ['0 failing']
+then:
+  - 'finish refused with exit 10 while the question was open'
+  - 'the resolved entry keeps the question and the answer together'
+  - 'check is green once the store holds no unresolved entry'
+```
 
 # Outcome
 

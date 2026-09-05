@@ -2,6 +2,11 @@
 // commands, rules, claims, responsibilities and applications it names, and the scenario
 // that proves it against the real tool.
 //
+// The scenario is a body section, not a header field. Front matter says what an object is
+// — its identity and its classification — and a twenty-line program is neither; a reader
+// opening the file meets the narrative and the proof in the order they happen. `Scenario`
+// below describes the YAML inside that section's fenced block.
+//
 // Canonical. `majordomus generate` projects this file into share/allow/use-case.txt,
 // share/sections/use-case.txt and use-case.v1.schema.json beside it.
 
@@ -15,8 +20,8 @@ option (majordomus.schema_id) = "majordomus.use-case/v1";
 option (majordomus.allow_list) = "use-case";
 option (majordomus.document_format) = "markdown";
 
-// The whole use case: the front matter, the executable scenario inside it, then the
-// narrative.
+// The whole use case: the front matter, then the narrative with the executable scenario
+// inside it.
 message Document {
   Header header = 1 [(majordomus.required) = true];
   Body body = 2 [(majordomus.required) = true];
@@ -65,9 +70,7 @@ message Header {
 
   Related related = 18;
 
-  Scenario scenario = 19;
-
-  Performance performance = 20;
+  Performance performance = 19;
 }
 
 enum Status {
@@ -107,8 +110,13 @@ message Related {
   repeated string suppress = 2;
 }
 
-// The executable proof: a fresh repository prepared by a setup script, then the steps in
-// order, each a real invocation of the tool with its expected exit code and output.
+// The executable proof, written as YAML inside the fenced block of the body's `Scenario`
+// section: a fresh repository prepared by a setup script, then the steps in order, each a
+// real invocation of the tool with its expected exit code and output.
+//
+// This message is reached from the body rather than from `Header`, so no allow-list row is
+// projected for it; `share/sections/use-case.txt` carries the section and `lib/usecase.sh`
+// parses the block.
 message Scenario {
   option (majordomus.closed) = true;
 
@@ -172,8 +180,8 @@ message Performance {
   uint32 budget_ms = 1 [(majordomus.required) = true, (majordomus.minimum) = 1];
 }
 
-// The body carries the narrative: the situation the reader is in, and what they are left
-// with. The scenario in the front matter proves it; these two sections say why it matters.
+// The body carries the narrative and the proof: the situation the reader is in, the
+// scenario that demonstrates it against the real tool, and what they are left with.
 message Body {
   option (majordomus.body) = true;
 
@@ -183,7 +191,15 @@ message Body {
     (majordomus.required) = true,
     (majordomus.non_empty) = true
   ];
-  Section outcome = 2 [
+  // One fenced ```yaml block, shaped by `Scenario` above. Required, because a use case
+  // that cannot be executed is a story about the tool rather than a use of it.
+  Section scenario = 2 [
+    (majordomus.heading) = "Scenario",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  Section outcome = 3 [
     (majordomus.heading) = "Outcome",
     (majordomus.level) = 1,
     (majordomus.required) = true,
