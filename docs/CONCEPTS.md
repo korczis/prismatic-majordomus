@@ -12,7 +12,7 @@ every file it writes, uses these words and no others.
 | **task** | the one active unit of work in a checkout | `.ai/local/state/current.yaml` |
 | **session** | one execution episode of one worker: it opens, it may touch several tasks, and it closes into an immutable record that references what the episode produced and copies none of it | `.ai/local/state/session-current.yaml` while open, `.ai/local/state/sessions/` once closed |
 | **envelope** | what a closed session record is: identity, a temporal boundary, and references — never a copy of the records it names | `.ai/local/state/sessions/<file>.md` |
-| **scope** | the normalised set of repository paths a task may touch, or that a context document applies to | `scope:` in the task record; `scope:` and `paths:` in a context document |
+| **scope** | the normalised set of repository paths a task may touch, or that a context document applies to; and, for the repository as a whole, what a worker reads of it and what it never reads, declared once, out over in, a path matching nothing out | `scope:` in the task record; `scope:` and `paths:` in a context document; `.ai/repo/scope.yaml`, read by `scope` and `majordomus://scope` |
 | **claim** | the same scope, seen from another worktree; overlap is reported, never blocked | reported by `start` and `check --overlap` |
 | **checkpoint** | a compact progress record inside an active task, capped by policy so that it stays quotable rather than becoming a report; also updates `checkpoint_at`, from which staleness is measured | `.ai/local/state/checkpoints/`, `checkpoint`, `check --checkpoint` |
 | **handover** | an append-only continuation record with computed front matter and required sections, written when a worker stops | `.ai/local/state/handovers/` |
