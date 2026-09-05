@@ -142,6 +142,22 @@ pub enum Error {
         id: String,
     },
 
+    /// The policy file does not parse, or does not carry what the projections need.
+    #[error("policy {path} is invalid: {reason}")]
+    InvalidPolicy {
+        /// The policy file.
+        path: PathBuf,
+        /// What is wrong.
+        reason: String,
+    },
+    /// A declared provider projection cannot be produced.
+    #[error("projection {target}: {reason}")]
+    InvalidProjection {
+        /// The declared target.
+        target: String,
+        /// What is wrong.
+        reason: String,
+    },
     /// `generate --check` found committed projections that differ from the registry, or are missing.
     #[error("generated artifact(s) stale: {} (run: majordomus generate)", files.join(", "))]
     Stale {
@@ -164,6 +180,8 @@ impl Error {
             | Error::StrictDiagnostics { .. }
             | Error::KindSchema { .. }
             | Error::Registry { .. }
+            | Error::InvalidPolicy { .. }
+            | Error::InvalidProjection { .. }
             | Error::Stale { .. } => 10,
             Error::CapabilityNotFound { .. } => 12,
             Error::Git { .. }
