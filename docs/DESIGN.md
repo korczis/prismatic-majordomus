@@ -664,7 +664,10 @@ Deferred, with the reason:
 - **Dependency edges between tasks.** No real use case in the evidence justified a
   graph. Deferred until one does.
 - **Multi-repository or organisational policy.** Out of scope for a local-first tool.
-- **Any daemon, scheduler, server, MCP surface, or background monitor.**
+- **Any daemon, scheduler, or background monitor.** An MCP surface was deferred here
+  with them and later added as something else: a read-only stdio process the client
+  spawns and that dies with it, in `apps/majordomus-cli/`, decided in
+  `.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md` and described in `MCP.md`.
 
 ## Commercial Expansion Paths
 

@@ -76,6 +76,9 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [An issue cannot be completed while a required piece of evidence is missing](https://korczis.github.io/prismatic-majordomus/guarantees/evidence-gates-done/) | `docs/PLANNING.md` | `lib/plan.sh` | `test/cases/41_project_status.sh` |
 | [The roadmap is derived from milestone state, and no document may be a second authority for it](https://korczis.github.io/prismatic-majordomus/guarantees/roadmap-derived/) | `docs/ROADMAP.md` | `lib/doctor.sh` | `test/cases/49_roadmap_doctrine.sh` |
 | [GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten](https://korczis.github.io/prismatic-majordomus/guarantees/github-projection/) | `docs/PLANNING.md` | `scripts/github-sync` | `test/cases/45_github_projection.sh` |
+| [The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout](https://korczis.github.io/prismatic-majordomus/guarantees/mcp-stdio-surface/) | `docs/MCP.md` | `apps/majordomus-cli/src/mcp/protocol.rs` | `test/cases/72_rust_mcp.sh` |
+| [What the MCP server serves is decided by the manifest, the declared source classes and each file's front matter, so an object added to the layer is served with no change to the executable](https://korczis.github.io/prismatic-majordomus/guarantees/mcp-data-driven/) | `docs/MCP.md` | `apps/majordomus-cli/src/index.rs` | `test/cases/72_rust_mcp.sh` |
+| [A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller](https://korczis.github.io/prismatic-majordomus/guarantees/mcp-degraded-not-silent/) | `docs/MCP.md` | `apps/majordomus-cli/src/index.rs` | `test/cases/72_rust_mcp.sh` |
 
 ## advisory
 

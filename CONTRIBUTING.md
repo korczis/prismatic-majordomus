@@ -20,7 +20,8 @@ arbitrary. Most of them were paid for.
 ## What is not
 
 - new agents, personas, roles, tiers, or registries
-- a daemon, server, database, queue, MCP surface, or background process
+- a daemon, database, queue, or background process; the stdio MCP server in
+  `apps/majordomus-cli/` is the one server, read-only and gone when the client is
 - a check that reports but is described as enforcing
 - a number written into prose that a command could compute
 - an edit to a generated file instead of to the source it is generated from
@@ -36,7 +37,11 @@ arbitrary. Most of them were paid for.
 3. Add or change the test in `test/cases/` first. Tests run in a disposable temporary
    repository, never against this checkout.
 4. Run `test/run.sh` and `shellcheck` if available. The site cases skip themselves when
-   `zola`, `jq` or `node_modules/` are absent, so a CLI-only change needs none of them.
+   `zola`, `jq` or `node_modules/` are absent, so a CLI-only change needs none of them;
+   `72_rust_mcp.sh` skips itself when `cargo` is absent.
+   For a change under `apps/majordomus-cli/`, also run, from that directory,
+   `cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings` and
+   `cargo test`; CI runs all three.
 5. If you changed a file the website reads — `README.md`, `docs/*.md`,
    `docs/CLAIMS.yaml`, `share/skeleton/**`, `bin/majordomus`, `lib/**` — run
    `scripts/generate-site-data` and commit the regenerated `site/data/generated/` and

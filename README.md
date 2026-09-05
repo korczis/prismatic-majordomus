@@ -311,7 +311,8 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 - not a model, and it never invokes one
 - not an agent framework, orchestrator, or runtime
 - not a prompt library or a memory system
-- not a server, daemon, database, queue, MCP surface, or hosted service
+- not a daemon, database, queue, or hosted service; the one server is `majordomus mcp`, a
+  read-only stdio process a client spawns and that dies with it ([`docs/MCP.md`](docs/MCP.md))
 - not a slice of any other platform; there is no shared code
 
 ## Limitations
@@ -345,6 +346,25 @@ Each step is gated by the previous one being real, and that is an invariant rath
 promise: a milestone whose dependencies are not accepted is blocked, and finishing every
 issue inside it does not release it. [`docs/ROADMAP.md`](docs/ROADMAP.md) explains how the
 ordering, the gate and the claim linkage are derived.
+
+## MCP
+
+The Rust executable under [`apps/majordomus-cli/`](apps/majordomus-cli/) serves the same
+`.ai/` layer to any client that speaks the Model Context Protocol, read-only, over stdio.
+What it serves is decided by the repository's data, not by the code: the manifest names the
+sections, `.ai/repo/knowledge/sources.yaml` says which files carry which kind, and a rule
+or prompt added to the layer is served after a restart with no change to the executable.
+
+```bash
+cargo build --manifest-path apps/majordomus-cli/Cargo.toml
+apps/majordomus-cli/target/debug/majordomus --help
+apps/majordomus-cli/target/debug/majordomus mcp --inspect   # what would be served, and every diagnostic
+apps/majordomus-cli/target/debug/majordomus mcp             # serve on stdio until the client goes
+```
+
+It writes nothing, listens on no port, and refuses to be a daemon. The task lifecycle
+stays in `bin/majordomus`; the executable advertises the one command it implements.
+Surface, failure behaviour and what is deliberately not served: [`docs/MCP.md`](docs/MCP.md).
 
 ## Contributing
 

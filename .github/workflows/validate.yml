@@ -76,6 +76,29 @@ jobs:
       - name: derived site data in sync
         run: scripts/generate-site-data --check
 
+  # The Rust executable: format, lints as errors, and its own suite, which spawns the built
+  # binary and speaks MCP to it over pipes. The behavioural case 72_rust_mcp.sh in the job
+  # above covers the cross-check against the layer the shell tool writes.
+  rust:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: apps/majordomus-cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/majordomus-cli
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+      - run: cargo test --no-fail-fast
+
   site:
     runs-on: ubuntu-latest
     steps:

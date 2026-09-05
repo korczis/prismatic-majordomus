@@ -735,6 +735,47 @@
       "note": "The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit."
     },
     {
+      "id": "claim:mcp-stdio-surface",
+      "kind": "claim",
+      "label": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-stdio-surface/",
+      "external": false,
+      "note": "One process per client, alive as long as its pipe; diagnostics go to stderr; a session leaves the repository byte-identical. The crate's own suite, tests/mcp_stdio.rs, holds the same frames to the same rules."
+    },
+    {
+      "id": "claim:mcp-data-driven",
+      "kind": "claim",
+      "label": "What the MCP server serves is decided by the manifest, the declared source classes and each file's front matter, so an object added to the layer is served with no change to the executable",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-data-driven/",
+      "external": false,
+      "note": "The add, remove and break sequence through the built binary is tests/external_extension.rs in the crate; the shell case proves the layer init writes is served, and that a rule added to it appears."
+    },
+    {
+      "id": "claim:mcp-degraded-not-silent",
+      "kind": "claim",
+      "label": "A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-degraded-not-silent/",
+      "external": false,
+      "note": "Two files of one kind claiming one identity are both excluded and both named. --strict refuses to serve a degraded layer; --inspect exits 10 on one."
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/index.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/index.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mcp/protocol.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mcp/protocol.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:bin/majordomus",
       "kind": "implementation",
       "label": "bin/majordomus",
@@ -963,6 +1004,13 @@
       "kind": "source",
       "label": "docs/DYNAMICITY.md",
       "route": "/docs/dynamicity/",
+      "external": false
+    },
+    {
+      "id": "source:docs/MCP.md",
+      "kind": "source",
+      "label": "docs/MCP.md",
+      "route": "/docs/mcp/",
       "external": false
     },
     {
@@ -1272,6 +1320,13 @@
       "label": "test/cases/70_context_impact.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/70_context_impact.sh"
+    },
+    {
+      "id": "test:test/cases/72_rust_mcp.sh",
+      "kind": "test",
+      "label": "test/cases/72_rust_mcp.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/72_rust_mcp.sh"
     }
   ],
   "edges": [
@@ -1676,6 +1731,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mcp-stdio-surface",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mcp-data-driven",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mcp-degraded-not-silent",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -2036,6 +2106,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mcp-stdio-surface",
+      "target": "impl:apps/majordomus-cli/src/mcp/protocol.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mcp-data-driven",
+      "target": "impl:apps/majordomus-cli/src/index.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mcp-degraded-not-silent",
+      "target": "impl:apps/majordomus-cli/src/index.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "test:test/cases/00_yaml_flatten.sh",
       "kind": "proved_by"
@@ -2393,6 +2478,21 @@
     {
       "source": "claim:github-projection",
       "target": "test:test/cases/45_github_projection.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-stdio-surface",
+      "target": "test:test/cases/72_rust_mcp.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-data-driven",
+      "target": "test:test/cases/72_rust_mcp.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-degraded-not-silent",
+      "target": "test:test/cases/72_rust_mcp.sh",
       "kind": "proved_by"
     }
   ]

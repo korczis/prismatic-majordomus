@@ -133,7 +133,7 @@ Rejected outright, with the failure that justifies rejection:
 | Rename accepted as fix | The migration caught itself mechanically renaming a doctrine and reverted. If a check can be satisfied by search-and-replace it is not a check. |
 | Mythological vocabulary | 2,850 files still carried banned phrasing a year after the removal order. Ordinary engineering language only. |
 | Unbounded session-note directories | 10 GB, 1,496 files, a manual fifteen-to-thirty-minute recovery runbook. |
-| Any daemon, server, database, queue, MCP surface, background monitor, vector store | No evidence any of these solved a problem the file-based mechanisms did not. |
+| Any daemon, server, database, queue, MCP surface, background monitor, vector store | No evidence any of these solved a problem the file-based mechanisms did not. The stdio MCP reader added later in `apps/majordomus-cli/` is none of these: no process outlives its client, no state outlives a process; see `.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md`. |
 
 ## 5. Proposed File Tree
 

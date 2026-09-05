@@ -1046,6 +1046,45 @@
       "source_route": "/docs/planning/",
       "command": null,
       "test_case": "45_github_projection"
+    },
+    {
+      "id": "mcp-stdio-surface",
+      "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+      "source": "docs/MCP.md",
+      "implementation": "apps/majordomus-cli/src/mcp/protocol.rs",
+      "test": "test/cases/72_rust_mcp.sh",
+      "status": "guaranteed",
+      "note": "One process per client, alive as long as its pipe; diagnostics go to stderr; a session leaves the repository byte-identical. The crate's own suite, tests/mcp_stdio.rs, holds the same frames to the same rules.",
+      "responsibility": "none",
+      "source_route": "/docs/mcp/",
+      "command": null,
+      "test_case": "72_rust_mcp"
+    },
+    {
+      "id": "mcp-data-driven",
+      "claim": "What the MCP server serves is decided by the manifest, the declared source classes and each file's front matter, so an object added to the layer is served with no change to the executable",
+      "source": "docs/MCP.md",
+      "implementation": "apps/majordomus-cli/src/index.rs",
+      "test": "test/cases/72_rust_mcp.sh",
+      "status": "guaranteed",
+      "note": "The add, remove and break sequence through the built binary is tests/external_extension.rs in the crate; the shell case proves the layer init writes is served, and that a rule added to it appears.",
+      "responsibility": "none",
+      "source_route": "/docs/mcp/",
+      "command": null,
+      "test_case": "72_rust_mcp"
+    },
+    {
+      "id": "mcp-degraded-not-silent",
+      "claim": "A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller",
+      "source": "docs/MCP.md",
+      "implementation": "apps/majordomus-cli/src/index.rs",
+      "test": "test/cases/72_rust_mcp.sh",
+      "status": "guaranteed",
+      "note": "Two files of one kind claiming one identity are both excluded and both named. --strict refuses to serve a degraded layer; --inspect exits 10 on one.",
+      "responsibility": "none",
+      "source_route": "/docs/mcp/",
+      "command": null,
+      "test_case": "72_rust_mcp"
     }
   ]
 }
