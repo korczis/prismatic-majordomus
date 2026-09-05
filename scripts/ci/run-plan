@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# run-plan — run the gates a plan selects, here, with the commands the model names: what a
+# pull request would run for this working tree (the default), or every gate (--full). The
+# same commands CI runs, in the plan's order, stopping at nothing: every selected gate runs
+# and the summary names each one that failed. The macOS gate is the suite and the crate's
+# suites under macOS; on another platform it is reported as not runnable here, never as a
+# pass.
+#
+#   scripts/ci/run-plan [--full] [ci-plan options...]
+set -u
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT" || exit 2
+plan="$(mktemp "${TMPDIR:-/tmp}/mj-run-plan.XXXXXX")"; trap 'rm -f "$plan"' EXIT
+scripts/ci-plan "$@" > "$plan" || exit $?
+printf 'run-plan: %s — %s\n' "$(jq -r .mode "$plan")" "$(jq -r .reason "$plan")"
+failed=""; ran=0; t_all="$(date +%s)"
+for g in $(jq -r '.selected[]' "$plan"); do
+  cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
+  if [ "$g" = macos ] && [ "$(uname -s)" != Darwin ]; then
+    printf '\n==> %s: not runnable here (macOS only); CI runs it on macos-latest\n' "$g"; continue
+  fi
+  printf '\n==> %s: %s\n' "$g" "$cmd"
+  t0="$(date +%s)"
+  if bash -c "$cmd"; then printf '==> %s: ok (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"
+  else printf '==> %s: FAILED (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; failed="$failed $g"; fi
+  ran=$((ran+1))
+done
+printf '\nrun-plan: %s gate(s) ran in %ss' "$ran" "$(( $(date +%s) - t_all ))"
+[ "$ran" -gt 0 ] || { printf '; nothing ran, which is not a pass\n'; exit 1; }
+if [ -n "$failed" ]; then printf '; failed:%s\n' "$failed"; exit 1; fi
+printf '; every gate passed\n'

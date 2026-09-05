@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+# ci-plan — which gates a change must run, from the CI model in .ai/repo/ci/gates.yaml.
+#
+#   scripts/ci-plan                         the working tree against the default branch:
+#                                           the commits since the merge base plus the
+#                                           uncommitted changes
+#   scripts/ci-plan --base A --head B       the paths that differ between two revisions
+#   scripts/ci-plan --files LIST            the paths listed in LIST (`-` for stdin), one per
+#                                           line; this is how the tests drive it
+#   scripts/ci-plan --full [why]            every gate, with the reason recorded
+#   --format json|text|github               json (default): the plan; text: one line per gate;
+#                                           github: name=value lines for $GITHUB_OUTPUT
+#   --model FILE                            another model (the tests mutate a copy)
+#   --check                                 validate the model and exit: 0 sound, 10 not
+#
+# The plan is deterministic for a given model and path list, and the same command runs
+# here and in the workflow. Exit 0 with a plan, 2 on usage, 10 on a model that does not
+# resolve, 12 when git cannot answer.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+MJ_VERSION="ci-plan"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# shellcheck source=../lib/common.sh
+. "$ROOT/lib/common.sh"
+command -v jq >/dev/null || { echo "ci-plan: jq is required" >&2; exit 12; }
+
+MODEL="$ROOT/.ai/repo/ci/gates.yaml"; BASE=""; HEAD=""; FILES=""; FULL=0; WHY=""; FORMAT=json; CHECK=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --base) BASE="$2"; shift 2 ;;
+    --head) HEAD="$2"; shift 2 ;;
+    --files) FILES="$2"; shift 2 ;;
+    --full) FULL=1; shift; if [ $# -gt 0 ] && [ "${1#--}" = "$1" ]; then WHY="$1"; shift; fi ;;
+    --format) FORMAT="$2"; shift 2 ;;
+    --model) MODEL="$2"; shift 2 ;;
+    --check) CHECK=1; shift ;;
+    *) echo "ci-plan: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+case "$FORMAT" in json|text|github) ;; *) echo "ci-plan: --format is json, text or github" >&2; exit 2 ;; esac
+[ -f "$MODEL" ] || { echo "ci-plan: no CI model at $MODEL" >&2; exit 10; }
+
+# ---------------------------------------------------------------- the model
+FLAT="$(mktemp "${TMPDIR:-/tmp}/mj-ci-plan.XXXXXX")"; trap 'rm -f "$FLAT" "${LIST:-}"' EXIT
+mj_yaml_flatten "$MODEL" > "$FLAT" || { echo "ci-plan: $MODEL does not parse" >&2; exit 10; }
+[ "$(mj_yget "$FLAT" version)" = 1 ] || { echo "ci-plan: $MODEL: version must be 1" >&2; exit 10; }
+gate_ids="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { print $2 }' "$FLAT")"
+[ -n "$gate_ids" ] || { echo "ci-plan: $MODEL declares no gates" >&2; exit 10; }
+bad=0
+for g in $gate_ids; do
+  i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
+  [ -n "$(mj_yget "$FLAT" "gates.$i.job")" ] || { echo "ci-plan: gate $g names no job" >&2; bad=1; }
+  [ -n "$(mj_yget "$FLAT" "gates.$i.runs")" ] || { echo "ci-plan: gate $g names no command (runs)" >&2; bad=1; }
+  for ref in $(mj_ylist "$FLAT" "gates.$i.implies") $(mj_ylist "$FLAT" "gates.$i.requires"); do
+    printf '%s\n' "$gate_ids" | grep -qx "$ref" || { echo "ci-plan: gate $g refers to a gate that does not exist: $ref" >&2; bad=1; }
+  done
+done
+[ "$(printf '%s\n' "$gate_ids" | sort | uniq -d | wc -l | tr -d ' ')" = 0 ] || { echo "ci-plan: a gate id is declared twice" >&2; bad=1; }
+class_ids="$(awk -F= '$1 ~ /^classes\.[0-9]+\.id$/ { print $2 }' "$FLAT")"
+[ -n "$class_ids" ] || { echo "ci-plan: $MODEL declares no classes" >&2; exit 10; }
+n_classes="$(printf '%s\n' "$class_ids" | wc -l | tr -d ' ')"
+i=0; while [ "$i" -lt "$n_classes" ]; do
+  c="$(mj_yget "$FLAT" "classes.$i.id")"
+  [ -n "$(mj_ylist "$FLAT" "classes.$i.paths")" ] || { echo "ci-plan: class $c names no paths" >&2; bad=1; }
+  if [ "$(mj_yget "$FLAT" "classes.$i.gates")" != full ]; then
+    for ref in $(mj_ylist "$FLAT" "classes.$i.gates"); do
+      printf '%s\n' "$gate_ids" | grep -qx "$ref" || { echo "ci-plan: class $c names a gate that does not exist: $ref" >&2; bad=1; }
+    done
+  fi
+  i=$((i+1))
+done
+[ "$bad" = 0 ] || exit 10
+gate_jobs="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.job$/ { split($1, a, "."); job[a[2]] = $2 } END { for (i in id) print id[i] "\t" job[i] }' "$FLAT")"
+gate_runs="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.runs$/ { split($1, a, "."); r[a[2]] = substr($0, length($1) + 2) } END { for (i in id) print id[i] "\t" r[i] }' "$FLAT")"
+[ "$CHECK" = 1 ] && { echo "ci-plan: $MODEL: $(printf '%s\n' "$gate_ids" | wc -l | tr -d ' ') gates, $n_classes classes, every reference resolves"; exit 0; }
+
+# ---------------------------------------------------------------- the change
+LIST="$(mktemp "${TMPDIR:-/tmp}/mj-ci-plan-files.XXXXXX")"
+if [ "$FULL" = 1 ]; then
+  : > "$LIST"; [ -n "$WHY" ] || WHY="full validation requested"
+elif [ -n "$FILES" ]; then
+  if [ "$FILES" = - ]; then cat > "$LIST"; else cat "$FILES" > "$LIST"; fi
+  BASE="(listed)"; HEAD="(listed)"
+else
+  if [ -z "$BASE" ]; then
+    for ref in origin/master master origin/main main; do
+      git -C "$ROOT" rev-parse -q --verify "$ref" >/dev/null 2>&1 && { BASE="$(git -C "$ROOT" merge-base "$ref" "${HEAD:-HEAD}")"; break; }
+    done
+    [ -n "$BASE" ] || { echo "ci-plan: no default branch to compare with; pass --base" >&2; exit 12; }
+  fi
+  if [ -n "$HEAD" ]; then
+    git -C "$ROOT" diff --name-only "$BASE" "$HEAD" > "$LIST" || { echo "ci-plan: git diff $BASE $HEAD failed" >&2; exit 12; }
+  else
+    HEAD="worktree"
+    { git -C "$ROOT" diff --name-only "$BASE" HEAD && git -C "$ROOT" status --porcelain | sed 's/^...//; s/.* -> //'; } | sort -u > "$LIST" \
+      || { echo "ci-plan: git diff $BASE failed" >&2; exit 12; }
+  fi
+fi
+sed -i.bak '/^$/d' "$LIST" 2>/dev/null && rm -f "$LIST.bak"
+
+# ---------------------------------------------------------------- the match
+# One awk pass: every changed path against every class pattern; the union of the classes'
+# gates, `full` when a class says so or a path matches nothing.
+MATCH="$(awk -F= -v files="$LIST" '
+  function pat2re(p,   r, i, c, out) {
+    out = "^"
+    for (i = 1; i <= length(p); i++) {
+      c = substr(p, i, 1)
+      if (c == "*") { if (substr(p, i + 1, 1) == "*") { out = out ".*"; i++ } else { out = out "[^/]*" } }
+      else if (index(".\\+?()[]{}|^$", c)) { out = out "\\" c }
+      else out = out c
+    }
+    return out "$"
+  }
+  $1 ~ /^classes\.[0-9]+\.id$/ { split($1, a, "."); cid[a[2]] = $2; if (a[2] + 0 > nc) nc = a[2] + 0 }
+  $1 ~ /^classes\.[0-9]+\.paths\.[0-9]+$/ { split($1, a, "."); pat[a[2] "." a[4]] = pat2re($2); np[a[2]] = (a[4] + 0 > np[a[2]] ? a[4] + 0 : np[a[2]]) }
+  $1 ~ /^classes\.[0-9]+\.gates$/ { split($1, a, "."); full[a[2]] = ($2 == "full") }
+  $1 ~ /^classes\.[0-9]+\.gates\.[0-9]+$/ { split($1, a, "."); cg[a[2]] = cg[a[2]] " " $2 }
+  END {
+    while ((getline path < files) > 0) {
+      hit = 0
+      for (c = 0; c <= nc; c++) for (i = 0; i <= np[c]; i++) if ((c "." i) in pat && match(path, pat[c "." i])) {
+        hit = 1; print "class\t" cid[c] "\t" path
+        if (full[c]) print "full\t" cid[c] "\t" path
+        n = split(cg[c], gs, " "); for (k = 1; k <= n; k++) if (gs[k] != "") print "gate\t" gs[k] "\t" cid[c]
+        break
+      }
+      if (!hit) print "unclassified\t-\t" path
+    }
+  }' "$FLAT")"
+
+mode=affected; reason="the gates of the classes the changed paths fall in"
+if [ "$FULL" = 1 ]; then mode=full; reason="$WHY"
+elif printf '%s\n' "$MATCH" | grep -q '^full'; then
+  mode=full; reason="a changed path is in a class that escalates: $(printf '%s\n' "$MATCH" | awk -F'\t' '$1=="full"{print $3}' | head -3 | tr '\n' ' ')"
+elif printf '%s\n' "$MATCH" | grep -q '^unclassified'; then
+  mode=full; reason="a changed path is in no class of the model: $(printf '%s\n' "$MATCH" | awk -F'\t' '$1=="unclassified"{print $3}' | head -3 | tr '\n' ' ')"
+elif [ ! -s "$LIST" ]; then
+  reason="no changed path; only the gates that always run"
+fi
+
+# ---------------------------------------------------------------- the selection
+selected=""; why_of=""
+add() { case " $selected " in *" $1 "*) ;; *) selected="$selected $1" ;; esac; why_of="$why_of
+$1	$2"; }
+for g in $gate_ids; do
+  i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
+  if [ "$mode" = full ]; then add "$g" "full"
+  elif [ "$(mj_yget "$FLAT" "gates.$i.always")" = true ]; then add "$g" "always"
+  else
+    by="$(printf '%s\n' "$MATCH" | awk -F'\t' -v g="$g" '$1=="gate" && $2==g {print $3}' | sort -u | tr '\n' ' ')"
+    [ -n "$by" ] && add "$g" "class ${by% }"
+  fi
+done
+# a selected gate brings what it implies and what it requires
+changed=1; while [ "$changed" = 1 ]; do
+  changed=0
+  for g in $selected; do
+    i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
+    for ref in $(mj_ylist "$FLAT" "gates.$i.implies"); do case " $selected " in *" $ref "*) ;; *) add "$ref" "implied by $g"; changed=1 ;; esac; done
+    for ref in $(mj_ylist "$FLAT" "gates.$i.requires"); do case " $selected " in *" $ref "*) ;; *) add "$ref" "required by $g"; changed=1 ;; esac; done
+  done
+done
+selected="${selected# }"
+
+# ---------------------------------------------------------------- the output
+case "$FORMAT" in
+  text)
+    printf 'mode: %s (%s)\nbase: %s\nhead: %s\nchanged: %s path(s)\n' "$mode" "$reason" "$BASE" "$HEAD" "$(wc -l < "$LIST" | tr -d ' ')"
+    for g in $gate_ids; do
+      w="$(printf '%s\n' "$why_of" | awk -F'\t' -v g="$g" '$1==g {print $2; exit}')"
+      if [ -n "$w" ]; then printf '  run   %-17s %s\n' "$g" "$w"; else printf '  skip  %-17s no changed path in a class that needs it\n' "$g"; fi
+    done ;;
+  github)
+    printf 'mode=%s\n' "$mode"
+    printf 'selected=%s\n' "$selected"
+    for g in $gate_ids; do
+      case " $selected " in *" $g "*) v=true ;; *) v=false ;; esac
+      printf '%s=%s\n' "$(printf '%s' "$g" | tr '-' '_')" "$v"
+    done ;;
+  json)
+    {
+      printf '%s\n' "$MATCH" | awk -F'\t' '$1=="class" {print $2 "\t" $3}' | sort -u
+    } > "$FLAT.classes"
+    jq -n --arg mode "$mode" --arg reason "$reason" --arg base "$BASE" --arg head "$HEAD" --arg model "${MODEL#"$ROOT"/}" \
+      --rawfile changed "$LIST" --rawfile classes "$FLAT.classes" \
+      --arg selected "$selected" --arg gates "$gate_ids" --arg why "$why_of" --arg jobs "$gate_jobs" --arg runs "$gate_runs" \
+      --arg unclassified "$(printf '%s\n' "$MATCH" | awk -F'\t' '$1=="unclassified"{print $3}')" '
+      def lines: split("\n") | map(select(length > 0));
+      ($why | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $w
+      | ($jobs | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $jobs
+      | ($runs | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $runs
+      | ($selected | split(" ") | map(select(length > 0))) as $sel
+      | { schema: 1, model: $model, mode: $mode, reason: $reason, base: $base, head: $head,
+          changed: ($changed | lines),
+          classes: ($classes | lines | map(split("\t")) | group_by(.[0]) | map({id: .[0][0], paths: map(.[1])})),
+          unclassified: ($unclassified | lines),
+          gates: ($gates | lines | map({id: ., job: ($jobs[.] // ""), runs: ($runs[.] // ""), selected: (. as $g | $sel | index($g) != null), reason: ($w[.] // "no changed path in a class that needs it")})),
+          selected: $sel }'
+    rm -f "$FLAT.classes" ;;
+esac

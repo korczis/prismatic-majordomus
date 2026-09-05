@@ -1,0 +1,2833 @@
+{
+  "schema": 1,
+  "repository": "korczis/prismatic-majordomus",
+  "recorded_at": "2026-09-05T06:36:40Z",
+  "note": "before the overhaul: validate.yml with two OS matrices and pages.yml repeating the suite and the probe over the same commit",
+  "runs": [
+    {
+      "workflow": "validate",
+      "id": 33948414217,
+      "event": "push",
+      "branch": "feature/scope-policy",
+      "head_sha": "8ec5922a9b546ac4f3e828fed27a8bc022e76dd4",
+      "conclusion": "failure",
+      "created_at": "2026-09-05T05:54:37Z",
+      "run_started_at": "2026-09-05T05:54:37Z",
+      "updated_at": "2026-09-05T06:26:59Z",
+      "wall_seconds": 1942,
+      "jobs": [
+        {
+          "name": "rust (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 1672,
+          "seconds": 269,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 9
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 10
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 26
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 67
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 15
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 80
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 18
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "failure",
+              "seconds": 34
+            }
+          ]
+        },
+        {
+          "name": "site",
+          "runner": "ubuntu-latest",
+          "conclusion": "failure",
+          "queue_seconds": 506,
+          "seconds": 27,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run taiki-e/install-action@v2",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "failure",
+              "seconds": 14
+            }
+          ]
+        },
+        {
+          "name": "coverage",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 59,
+          "seconds": 60,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 11
+            },
+            {
+              "name": "Run taiki-e/install-action@cargo-llvm-cov",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo llvm-cov --all-targets --summary-only --fail-under-lines \"$(cat ../../scripts/rust-coverage-threshold)\"",
+              "conclusion": "success",
+              "seconds": 37
+            }
+          ]
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "failure",
+          "queue_seconds": 792,
+          "seconds": 1077,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "shellcheck",
+              "conclusion": "success",
+              "seconds": 27
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "failure",
+              "seconds": 1038
+            }
+          ]
+        },
+        {
+          "name": "test (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "cancelled",
+          "queue_seconds": 0,
+          "seconds": 1869,
+          "steps": []
+        },
+        {
+          "name": "rust (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 81,
+          "seconds": 121,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 9
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 33
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 26
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "success",
+              "seconds": 21
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "validate",
+      "id": 33948375648,
+      "event": "pull_request",
+      "branch": "feature/openapi-reference",
+      "head_sha": "8de168618ba8c497f28bfefbb635a8836337daba",
+      "conclusion": "failure",
+      "created_at": "2026-09-05T05:53:36Z",
+      "run_started_at": "2026-09-05T05:53:36Z",
+      "updated_at": "2026-09-05T06:23:52Z",
+      "wall_seconds": 1816,
+      "jobs": [
+        {
+          "name": "coverage",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 959,
+          "seconds": 57,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 12
+            },
+            {
+              "name": "Run taiki-e/install-action@cargo-llvm-cov",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo llvm-cov --all-targets --summary-only --fail-under-lines \"$(cat ../../scripts/rust-coverage-threshold)\"",
+              "conclusion": "success",
+              "seconds": 31
+            }
+          ]
+        },
+        {
+          "name": "test (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "cancelled",
+          "queue_seconds": 646,
+          "seconds": 899,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "cancelled",
+              "seconds": 887
+            }
+          ]
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "failure",
+          "queue_seconds": 185,
+          "seconds": 1344,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "shellcheck",
+              "conclusion": "success",
+              "seconds": 31
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "failure",
+              "seconds": 1301
+            }
+          ]
+        },
+        {
+          "name": "site",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 5,
+          "seconds": 1100,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run taiki-e/install-action@v2",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 11
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 13
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 20
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "success",
+              "seconds": 1042
+            },
+            {
+              "name": "manifest",
+              "conclusion": "success",
+              "seconds": 0
+            }
+          ]
+        },
+        {
+          "name": "rust (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 496,
+          "seconds": 126,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 9
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 33
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 25
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "success",
+              "seconds": 25
+            }
+          ]
+        },
+        {
+          "name": "rust (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 1554,
+          "seconds": 261,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 10
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 11
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 17
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 62
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 9
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 78
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 24
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "failure",
+              "seconds": 37
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "pages",
+      "id": 33947666831,
+      "event": "push",
+      "branch": "master",
+      "head_sha": "b9f10914717916c3d5036b071cd707094d96f42f",
+      "conclusion": "failure",
+      "created_at": "2026-09-05T05:36:52Z",
+      "run_started_at": "2026-09-05T05:36:52Z",
+      "updated_at": "2026-09-05T06:22:15Z",
+      "wall_seconds": 2723,
+      "jobs": [
+        {
+          "name": "build",
+          "runner": "ubuntu-latest",
+          "conclusion": "failure",
+          "queue_seconds": 4,
+          "seconds": 2716,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 6
+            },
+            {
+              "name": "install pinned Zola",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "install site build dependencies",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 1533
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "derived data is in sync with canonical sources",
+              "conclusion": "success",
+              "seconds": 15
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 17
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 31
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "failure",
+              "seconds": 1100
+            }
+          ]
+        },
+        {
+          "name": "deploy",
+          "runner": "ubuntu-latest",
+          "conclusion": "skipped",
+          "queue_seconds": 0,
+          "seconds": 0,
+          "steps": []
+        }
+      ]
+    },
+    {
+      "workflow": "validate",
+      "id": 33947666746,
+      "event": "push",
+      "branch": "master",
+      "head_sha": "b9f10914717916c3d5036b071cd707094d96f42f",
+      "conclusion": "failure",
+      "created_at": "2026-09-05T05:36:52Z",
+      "run_started_at": "2026-09-05T05:36:52Z",
+      "updated_at": "2026-09-05T06:19:38Z",
+      "wall_seconds": 2566,
+      "jobs": [
+        {
+          "name": "coverage",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 51,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 12
+            },
+            {
+              "name": "Run taiki-e/install-action@cargo-llvm-cov",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run cargo llvm-cov --all-targets --summary-only --fail-under-lines \"$(cat ../../scripts/rust-coverage-threshold)\"",
+              "conclusion": "success",
+              "seconds": 28
+            }
+          ]
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 1495,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "shellcheck",
+              "conclusion": "success",
+              "seconds": 29
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 1365
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 8
+            },
+            {
+              "name": "context documents in sync",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "continuity subsystem is reachable",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "the project model validates",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "the GitHub projection is producible offline",
+              "conclusion": "success",
+              "seconds": 63
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 15
+            }
+          ]
+        },
+        {
+          "name": "site",
+          "runner": "ubuntu-latest",
+          "conclusion": "failure",
+          "queue_seconds": 3,
+          "seconds": 1014,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run taiki-e/install-action@v2",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 10
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 11
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 19
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "failure",
+              "seconds": 962
+            }
+          ]
+        },
+        {
+          "name": "rust (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 2353,
+          "seconds": 211,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 11
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 9
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 15
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 55
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 61
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 15
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "failure",
+              "seconds": 26
+            }
+          ]
+        },
+        {
+          "name": "test (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 164,
+          "seconds": 2389,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "failure",
+              "seconds": 2375
+            }
+          ]
+        },
+        {
+          "name": "rust (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 105,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 8
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 6
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 30
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 19
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "success",
+              "seconds": 21
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "validate",
+      "id": 33946775658,
+      "event": "pull_request",
+      "branch": "fix/claim-test-file-name",
+      "head_sha": "99f2137ee19d9e0358a69cd28da94f02bf88eec3",
+      "conclusion": "failure",
+      "created_at": "2026-09-05T05:16:32Z",
+      "run_started_at": "2026-09-05T05:16:32Z",
+      "updated_at": "2026-09-05T06:04:18Z",
+      "wall_seconds": 2866,
+      "jobs": [
+        {
+          "name": "rust (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 119,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 9
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 33
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 24
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "success",
+              "seconds": 27
+            }
+          ]
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 1249,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "shellcheck",
+              "conclusion": "success",
+              "seconds": 24
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 1144
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 6
+            },
+            {
+              "name": "context documents in sync",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "continuity subsystem is reachable",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "the project model validates",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "the GitHub projection is producible offline",
+              "conclusion": "success",
+              "seconds": 50
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 11
+            }
+          ]
+        },
+        {
+          "name": "test (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 979,
+          "seconds": 1886,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "failure",
+              "seconds": 1871
+            }
+          ]
+        },
+        {
+          "name": "site",
+          "runner": "ubuntu-latest",
+          "conclusion": "failure",
+          "queue_seconds": 56,
+          "seconds": 893,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run taiki-e/install-action@v2",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 9
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 11
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 18
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "failure",
+              "seconds": 844
+            }
+          ]
+        },
+        {
+          "name": "rust (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 1126,
+          "seconds": 252,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 8
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 11
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 17
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 62
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 12
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 78
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 21
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "failure",
+              "seconds": 33
+            }
+          ]
+        },
+        {
+          "name": "coverage",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 125,
+          "seconds": 53,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 11
+            },
+            {
+              "name": "Run taiki-e/install-action@cargo-llvm-cov",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo llvm-cov --all-targets --summary-only --fail-under-lines \"$(cat ../../scripts/rust-coverage-threshold)\"",
+              "conclusion": "success",
+              "seconds": 29
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "validate",
+      "id": 33946468813,
+      "event": "pull_request",
+      "branch": "feature/registry-projections",
+      "head_sha": "614b7b13a5d85026d0f80889b768cf17e697ce22",
+      "conclusion": "failure",
+      "created_at": "2026-09-05T05:09:44Z",
+      "run_started_at": "2026-09-05T05:09:44Z",
+      "updated_at": "2026-09-05T06:22:18Z",
+      "wall_seconds": 4354,
+      "jobs": [
+        {
+          "name": "rust (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 117,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 8
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 33
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 25
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "success",
+              "seconds": 25
+            }
+          ]
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 4,
+          "seconds": 1386,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "shellcheck",
+              "conclusion": "success",
+              "seconds": 28
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 1267
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 6
+            },
+            {
+              "name": "context documents in sync",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "continuity subsystem is reachable",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "the project model validates",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "the GitHub projection is producible offline",
+              "conclusion": "success",
+              "seconds": 55
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 13
+            }
+          ]
+        },
+        {
+          "name": "coverage",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 4,
+          "seconds": 55,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 12
+            },
+            {
+              "name": "Run taiki-e/install-action@cargo-llvm-cov",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo llvm-cov --all-targets --summary-only --fail-under-lines \"$(cat ../../scripts/rust-coverage-threshold)\"",
+              "conclusion": "success",
+              "seconds": 31
+            }
+          ]
+        },
+        {
+          "name": "site",
+          "runner": "ubuntu-latest",
+          "conclusion": "failure",
+          "queue_seconds": 4,
+          "seconds": 1064,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run taiki-e/install-action@v2",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 13
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 14
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 27
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "failure",
+              "seconds": 999
+            }
+          ]
+        },
+        {
+          "name": "test (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 1985,
+          "seconds": 2160,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "failure",
+              "seconds": 2143
+            }
+          ]
+        },
+        {
+          "name": "rust (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 4196,
+          "seconds": 157,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 8
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 16
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 39
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 6
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 47
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 10
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "failure",
+              "seconds": 19
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "validate",
+      "id": 33946467253,
+      "event": "push",
+      "branch": "feature/registry-projections",
+      "head_sha": "614b7b13a5d85026d0f80889b768cf17e697ce22",
+      "conclusion": "failure",
+      "created_at": "2026-09-05T05:09:41Z",
+      "run_started_at": "2026-09-05T05:09:41Z",
+      "updated_at": "2026-09-05T06:15:56Z",
+      "wall_seconds": 3975,
+      "jobs": [
+        {
+          "name": "site",
+          "runner": "ubuntu-latest",
+          "conclusion": "failure",
+          "queue_seconds": 3,
+          "seconds": 1204,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run taiki-e/install-action@v2",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 14
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 15
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 29
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "failure",
+              "seconds": 1135
+            }
+          ]
+        },
+        {
+          "name": "rust (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 2903,
+          "seconds": 184,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 12
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 43
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 6
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 61
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 15
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "failure",
+              "seconds": 26
+            }
+          ]
+        },
+        {
+          "name": "test (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 2017,
+          "seconds": 1956,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "failure",
+              "seconds": 1945
+            }
+          ]
+        },
+        {
+          "name": "coverage",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 52,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 11
+            },
+            {
+              "name": "Run taiki-e/install-action@cargo-llvm-cov",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run cargo llvm-cov --all-targets --summary-only --fail-under-lines \"$(cat ../../scripts/rust-coverage-threshold)\"",
+              "conclusion": "success",
+              "seconds": 32
+            }
+          ]
+        },
+        {
+          "name": "rust (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 121,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 9
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 33
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 25
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 6
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "success",
+              "seconds": 25
+            }
+          ]
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 1273,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "shellcheck",
+              "conclusion": "success",
+              "seconds": 25
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 1169
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 6
+            },
+            {
+              "name": "context documents in sync",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "continuity subsystem is reachable",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "the project model validates",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "the GitHub projection is producible offline",
+              "conclusion": "success",
+              "seconds": 44
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 12
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "validate",
+      "id": 33946336869,
+      "event": "push",
+      "branch": "feature/registry-projections",
+      "head_sha": "ff054abdb6a150bb27139bccb785fd3448e07a9b",
+      "conclusion": "failure",
+      "created_at": "2026-09-05T05:06:38Z",
+      "run_started_at": "2026-09-05T05:06:38Z",
+      "updated_at": "2026-09-05T05:42:41Z",
+      "wall_seconds": 2163,
+      "jobs": [
+        {
+          "name": "site",
+          "runner": "ubuntu-latest",
+          "conclusion": "failure",
+          "queue_seconds": 10,
+          "seconds": 1091,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run taiki-e/install-action@v2",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 13
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 14
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 27
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "failure",
+              "seconds": 1020
+            }
+          ]
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 1378,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "shellcheck",
+              "conclusion": "success",
+              "seconds": 31
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 1257
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 6
+            },
+            {
+              "name": "context documents in sync",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "continuity subsystem is reachable",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "the project model validates",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "the GitHub projection is producible offline",
+              "conclusion": "success",
+              "seconds": 55
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 12
+            }
+          ]
+        },
+        {
+          "name": "rust (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 121,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 9
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 6
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 34
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 25
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "success",
+              "seconds": 28
+            }
+          ]
+        },
+        {
+          "name": "coverage",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 4,
+          "seconds": 59,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 11
+            },
+            {
+              "name": "Run taiki-e/install-action@cargo-llvm-cov",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo llvm-cov --all-targets --summary-only --fail-under-lines \"$(cat ../../scripts/rust-coverage-threshold)\"",
+              "conclusion": "success",
+              "seconds": 35
+            }
+          ]
+        },
+        {
+          "name": "test (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 141,
+          "seconds": 2020,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "failure",
+              "seconds": 2006
+            }
+          ]
+        },
+        {
+          "name": "rust (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 1476,
+          "seconds": 92,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 13
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "failure",
+              "seconds": 59
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "pages",
+      "id": 33946172145,
+      "event": "push",
+      "branch": "master",
+      "head_sha": "cb9dc62b13f21e3f66e6de46315f3028292b31a2",
+      "conclusion": "cancelled",
+      "created_at": "2026-09-05T05:03:01Z",
+      "run_started_at": "2026-09-05T05:03:01Z",
+      "updated_at": "2026-09-05T05:31:58Z",
+      "wall_seconds": 1737,
+      "jobs": [
+        {
+          "name": "build",
+          "runner": "ubuntu-latest",
+          "conclusion": "cancelled",
+          "queue_seconds": 3,
+          "seconds": 1483,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "install pinned Zola",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "install site build dependencies",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 1201
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "derived data is in sync with canonical sources",
+              "conclusion": "success",
+              "seconds": 12
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 13
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 23
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "cancelled",
+              "seconds": 211
+            }
+          ]
+        },
+        {
+          "name": "deploy",
+          "runner": "ubuntu-latest",
+          "conclusion": "cancelled",
+          "queue_seconds": 0,
+          "seconds": 0,
+          "steps": []
+        }
+      ]
+    },
+    {
+      "workflow": "validate",
+      "id": 33946172136,
+      "event": "push",
+      "branch": "master",
+      "head_sha": "cb9dc62b13f21e3f66e6de46315f3028292b31a2",
+      "conclusion": "failure",
+      "created_at": "2026-09-05T05:03:01Z",
+      "run_started_at": "2026-09-05T05:03:01Z",
+      "updated_at": "2026-09-05T05:35:12Z",
+      "wall_seconds": 1931,
+      "jobs": [
+        {
+          "name": "coverage",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 4,
+          "seconds": 71,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 15
+            },
+            {
+              "name": "Run taiki-e/install-action@cargo-llvm-cov",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run cargo llvm-cov --all-targets --summary-only --fail-under-lines \"$(cat ../../scripts/rust-coverage-threshold)\"",
+              "conclusion": "success",
+              "seconds": 40
+            }
+          ]
+        },
+        {
+          "name": "site",
+          "runner": "ubuntu-latest",
+          "conclusion": "failure",
+          "queue_seconds": 4,
+          "seconds": 1077,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "Run taiki-e/install-action@v2",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 13
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 14
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 27
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "failure",
+              "seconds": 1009
+            }
+          ]
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 5,
+          "seconds": 1427,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "shellcheck",
+              "conclusion": "success",
+              "seconds": 30
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 1305
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "context documents in sync",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "continuity subsystem is reachable",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "the project model validates",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "the GitHub projection is producible offline",
+              "conclusion": "success",
+              "seconds": 55
+            },
+            {
+              "name": "derived site data in sync",
+              "conclusion": "success",
+              "seconds": 13
+            }
+          ]
+        },
+        {
+          "name": "rust (ubuntu-latest)",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 141,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 8
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 8
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 37
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 5
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 37
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 9
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "success",
+              "seconds": 21
+            }
+          ]
+        },
+        {
+          "name": "rust (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 128,
+          "seconds": 223,
+          "steps": [
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "conclusion": "success",
+              "seconds": 7
+            },
+            {
+              "name": "Run cargo fmt --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo clippy --all-targets --all-features -- -D warnings",
+              "conclusion": "success",
+              "seconds": 12
+            },
+            {
+              "name": "Run cargo test --no-fail-fast",
+              "conclusion": "success",
+              "seconds": 49
+            },
+            {
+              "name": "Run cargo doc --no-deps",
+              "conclusion": "success",
+              "seconds": 12
+            },
+            {
+              "name": "Run cargo bench --no-run",
+              "conclusion": "success",
+              "seconds": 79
+            },
+            {
+              "name": "Run cargo run --quiet -- capabilities validate",
+              "conclusion": "success",
+              "seconds": 18
+            },
+            {
+              "name": "Run cargo run --quiet -- generate --check",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run cargo run --quiet -- bench coverage --check",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run cargo run --quiet -- bench --profile ci --check --no-write",
+              "conclusion": "failure",
+              "seconds": 29
+            }
+          ]
+        },
+        {
+          "name": "test (macos-latest)",
+          "runner": "macos-latest",
+          "conclusion": "failure",
+          "queue_seconds": 123,
+          "seconds": 1807,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "Run npm ci --no-audit --no-fund",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "shell syntax",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "failure",
+              "seconds": 1796
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "pages",
+      "id": 33945926778,
+      "event": "push",
+      "branch": "master",
+      "head_sha": "c7b937cf6964cb6a5c08351af4aa23cd7ff9c014",
+      "conclusion": "cancelled",
+      "created_at": "2026-09-05T04:57:24Z",
+      "run_started_at": "2026-09-05T04:57:24Z",
+      "updated_at": "2026-09-05T05:03:02Z",
+      "wall_seconds": 338,
+      "jobs": []
+    },
+    {
+      "workflow": "pages",
+      "id": 33945368668,
+      "event": "push",
+      "branch": "master",
+      "head_sha": "b806960a28eef71e89654142cb771ada51840699",
+      "conclusion": "cancelled",
+      "created_at": "2026-09-05T04:44:24Z",
+      "run_started_at": "2026-09-05T04:44:24Z",
+      "updated_at": "2026-09-05T04:57:25Z",
+      "wall_seconds": 781,
+      "jobs": []
+    },
+    {
+      "workflow": "pages",
+      "id": 33945263086,
+      "event": "push",
+      "branch": "master",
+      "head_sha": "b864d40bf67238c7f5e016b3bb1691f7c6e6e721",
+      "conclusion": "cancelled",
+      "created_at": "2026-09-05T04:41:59Z",
+      "run_started_at": "2026-09-05T04:41:59Z",
+      "updated_at": "2026-09-05T04:44:25Z",
+      "wall_seconds": 146,
+      "jobs": []
+    },
+    {
+      "workflow": "pages",
+      "id": 33944358613,
+      "event": "push",
+      "branch": "master",
+      "head_sha": "eb49390fe2e6adee2f516d0a539abc36fc563f5f",
+      "conclusion": "success",
+      "created_at": "2026-09-05T04:22:07Z",
+      "run_started_at": "2026-09-05T04:22:07Z",
+      "updated_at": "2026-09-05T05:07:11Z",
+      "wall_seconds": 2704,
+      "jobs": [
+        {
+          "name": "build",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 2687,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 2
+            },
+            {
+              "name": "install pinned Zola",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "install site build dependencies",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 1860
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 10
+            },
+            {
+              "name": "derived data is in sync with canonical sources",
+              "conclusion": "success",
+              "seconds": 24
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 23
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 32
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "success",
+              "seconds": 722
+            },
+            {
+              "name": "manifest",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run actions/configure-pages@v5",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "Run actions/upload-pages-artifact@v3",
+              "conclusion": "success",
+              "seconds": 2
+            }
+          ]
+        },
+        {
+          "name": "deploy",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 4,
+          "seconds": 8,
+          "steps": [
+            {
+              "name": "Run actions/deploy-pages@v4",
+              "conclusion": "success",
+              "seconds": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "pages",
+      "id": 33940657866,
+      "event": "push",
+      "branch": "master",
+      "head_sha": "b50e87ff91cd6c579c5b64ff8acedf8710b03f91",
+      "conclusion": "success",
+      "created_at": "2026-09-05T03:00:39Z",
+      "run_started_at": "2026-09-05T03:00:39Z",
+      "updated_at": "2026-09-05T03:49:59Z",
+      "wall_seconds": 2960,
+      "jobs": [
+        {
+          "name": "build",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 4,
+          "seconds": 2941,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "install pinned Zola",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "install site build dependencies",
+              "conclusion": "success",
+              "seconds": 3
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 1968
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 10
+            },
+            {
+              "name": "derived data is in sync with canonical sources",
+              "conclusion": "success",
+              "seconds": 26
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 27
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 35
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "success",
+              "seconds": 861
+            },
+            {
+              "name": "manifest",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run actions/configure-pages@v5",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run actions/upload-pages-artifact@v3",
+              "conclusion": "success",
+              "seconds": 2
+            }
+          ]
+        },
+        {
+          "name": "deploy",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 4,
+          "seconds": 8,
+          "steps": [
+            {
+              "name": "Run actions/deploy-pages@v4",
+              "conclusion": "success",
+              "seconds": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "pages",
+      "id": 33935793033,
+      "event": "push",
+      "branch": "master",
+      "head_sha": "c800d44380d11501328b8243818f95d0e85960bf",
+      "conclusion": "success",
+      "created_at": "2026-09-05T01:19:08Z",
+      "run_started_at": "2026-09-05T01:19:08Z",
+      "updated_at": "2026-09-05T02:20:57Z",
+      "wall_seconds": 3709,
+      "jobs": [
+        {
+          "name": "build",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 3,
+          "seconds": 3689,
+          "steps": [
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "install pinned Zola",
+              "conclusion": "success",
+              "seconds": 1
+            },
+            {
+              "name": "install site build dependencies",
+              "conclusion": "success",
+              "seconds": 4
+            },
+            {
+              "name": "behavioural tests",
+              "conclusion": "success",
+              "seconds": 2670
+            },
+            {
+              "name": "self-supervision",
+              "conclusion": "success",
+              "seconds": 14
+            },
+            {
+              "name": "derived data is in sync with canonical sources",
+              "conclusion": "success",
+              "seconds": 32
+            },
+            {
+              "name": "build the site",
+              "conclusion": "success",
+              "seconds": 32
+            },
+            {
+              "name": "check the site",
+              "conclusion": "success",
+              "seconds": 45
+            },
+            {
+              "name": "probe the site in a browser",
+              "conclusion": "success",
+              "seconds": 878
+            },
+            {
+              "name": "manifest",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run actions/configure-pages@v5",
+              "conclusion": "success",
+              "seconds": 0
+            },
+            {
+              "name": "Run actions/upload-pages-artifact@v3",
+              "conclusion": "success",
+              "seconds": 2
+            }
+          ]
+        },
+        {
+          "name": "deploy",
+          "runner": "ubuntu-latest",
+          "conclusion": "success",
+          "queue_seconds": 4,
+          "seconds": 11,
+          "steps": [
+            {
+              "name": "Run actions/deploy-pages@v4",
+              "conclusion": "success",
+              "seconds": 6
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

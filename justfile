@@ -151,10 +151,10 @@ update *args:
 [group('test')]
 test: test-shell rust-check site-data-check
 
-# The behavioural suite of the shell tool and the cross-checks of the Rust executable (test/cases/*.sh). `just test-shell 72_rust_mcp` runs one.
+# The behavioural suite of the shell tool and the cross-checks of the Rust executable (test/cases/*.sh), MJ_TEST_JOBS cases at a time (default 4 here; `MJ_TEST_JOBS=1 just test-shell` streams serially). `just test-shell 72_rust_mcp` runs one.
 [group('test')]
 test-shell *only:
-    bash test/run.sh {{only}}
+    MJ_TEST_JOBS="${MJ_TEST_JOBS:-4}" bash test/run.sh {{only}}
 
 # The Rust crate's own suites: unit, integration, doctests.
 [group('test')]
@@ -176,11 +176,38 @@ coverage:
 bench *name:
     RUSTFLAGS='' cargo bench --manifest-path "{{manifest}}" {{ if name == "" { "" } else { "--bench " + name } }}
 
-# shellcheck over the shell tool, the scripts and every case.
+# bash -n and shellcheck over the shell tool, the scripts and every case (scripts/ci/shell-lint, the same gate CI runs).
 [group('test')]
 lint-shell:
-    shellcheck -x -s bash -S warning bin/majordomus bin/majordomus-mcp lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/github-sync scripts/site-build scripts/site-check scripts/site-serve scripts/rules-package scripts/rust-check
-    shellcheck -x -s bash -S warning test/cases/*.sh
+    scripts/ci/shell-lint
+
+# ---------------------------------------------------------------- ci (docs/CI.md)
+
+# What CI would run for this working tree against master, from .ai/repo/ci/gates.yaml; extra arguments pass to scripts/ci-plan (--full, --base, --head, --files).
+[group('ci')]
+ci-plan *args:
+    scripts/ci-plan --format text {{args}}
+
+# The gates every plan runs: shell syntax and shellcheck, then doctor, watch, the context documents, the continuity commands, plan validate, the offline GitHub projection and the derived site data.
+[group('ci')]
+ci-structure:
+    scripts/ci/shell-lint
+    scripts/ci/core-check
+
+# The gates the plan selects for this working tree, with the commands CI runs, in the plan's order.
+[group('ci')]
+ci-fast *args:
+    scripts/ci/run-plan {{args}}
+
+# Every gate, as a push to master runs them (the macOS gate only on macOS).
+[group('ci')]
+ci-full:
+    scripts/ci/run-plan --full "just ci-full"
+
+# What GitHub observed of recent runs, recorded into .ai/repo/ci/baseline.json (needs gh); `just ci-baseline --table` renders it.
+[group('ci')]
+ci-baseline *args:
+    scripts/ci-baseline {{args}}
 
 # ---------------------------------------------------------------- site and derived files
 
@@ -198,6 +225,16 @@ site-data-check:
 [group('site')]
 site-build:
     scripts/site-build
+
+# The static checks over the built site (scripts/site-check).
+[group('site')]
+site-check:
+    scripts/site-check
+
+# Every route at three widths in a real browser, SITE_PROBE_JOBS routes at a time (default 4 here); `just site-probe --quick` samples one route per template.
+[group('site')]
+site-probe *args:
+    SITE_PROBE_JOBS="${SITE_PROBE_JOBS:-4}" scripts/site-probe {{args}}
 
 # Serve the website locally in watch mode.
 [group('site')]

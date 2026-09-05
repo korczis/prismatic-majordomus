@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# shell-lint — the syntax and shellcheck gate, the same command here and in CI: bash -n over
+# the tool, the library, the harness and every case; shellcheck -x -s bash -S warning over
+# the tool, the scripts and every case. Exit 0 clean, non-zero on the first finding, 12
+# when shellcheck is not installed (the gate needs it; a missing linter is not a pass).
+set -eu
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT"
+scripts="bin/majordomus bin/majordomus-mcp lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/github-sync scripts/site-build scripts/site-check scripts/site-probe scripts/site-serve scripts/rules-package scripts/rust-check scripts/ci-plan scripts/ci-baseline scripts/ci/*"
+echo "==> bash -n"
+# shellcheck disable=SC2086
+for f in $scripts test/cases/*.sh; do bash -n "$f" || { echo "shell-lint: syntax: $f"; exit 1; }; done
+command -v shellcheck >/dev/null || { echo "shell-lint: shellcheck is required (brew install shellcheck / apt-get install shellcheck)" >&2; exit 12; }
+echo "==> shellcheck"
+# shellcheck disable=SC2086
+shellcheck -x -s bash -S warning $scripts
+shellcheck -x -s bash -S warning test/cases/*.sh
+echo "shell-lint: ok"

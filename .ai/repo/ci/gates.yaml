@@ -1,0 +1,131 @@
+# The CI model of this repository: which validation gates exist, which job runs each, and
+# which classes of changed paths can affect which gates. scripts/ci-plan reads this file and
+# nothing else to decide what a change must run; .github/workflows/validate.yml is a thin
+# adapter over that plan and carries no path list of its own. A path class that is wrong
+# here is wrong once, in the one place the tests read (test/cases/94_ci_plan.sh).
+#
+# Rules the planner applies:
+#   - a gate with `always: true` runs in every plan;
+#   - a changed path selects the gates of every class whose pattern matches it (the union,
+#     never the first match), so an overlap can only widen a plan;
+#   - a class whose gates are the word `full` escalates the whole plan;
+#   - a changed path that no class matches escalates the whole plan, and the plan names it;
+#   - `implies` adds a gate whenever its parent is selected (a full Rust gate includes the
+#     registry checks); `requires` names the gate a gate cannot run without (the probe needs
+#     the built site), which the planner adds;
+#   - the full plan (a master push, the schedule, a dispatch, a pull request labelled ci:full, or the
+#     escalations above) selects every gate.
+#
+# Patterns: `**` crosses directories, `*` does not, a pattern without a wildcard names one
+# path. Paths are repository-relative, as `git diff --name-only` prints them.
+version: 1
+
+gates:
+  - id: shell-lint
+    job: structure
+    always: true
+    runs: scripts/ci/shell-lint
+    summary: bash -n over every script, shellcheck over the tool, the scripts and the cases
+
+  - id: core-check
+    job: structure
+    always: true
+    runs: scripts/ci/core-check
+    summary: doctor, watch, the context documents, the continuity commands, plan validate, the offline GitHub projection, the derived site data
+
+  - id: shell-suite
+    job: suite
+    runs: MJ_TEST_JOBS=4 bash test/run.sh
+    summary: every behavioural case, in a disposable repository each, four at a time
+
+  - id: rust-integration
+    job: rust
+    runs: scripts/rust-check --integration
+    summary: the executable built, the registry validated, every committed projection current, the benchmark coverage complete
+
+  - id: rust-check
+    job: rust
+    implies: [rust-integration]
+    runs: scripts/rust-check --ci
+    summary: fmt, clippy with warnings denied, the suites and doc examples, rustdoc, the benchmarks building, the registry checks, the benchmark runner through every transport
+
+  - id: rust-coverage
+    job: coverage
+    runs: just coverage
+    summary: line coverage of the crate against scripts/rust-coverage-threshold
+
+  - id: rust-bench
+    job: bench
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench --profile ci --check --no-write
+    summary: the benchmark check against the committed baseline of its platform (macOS, the one platform with a baseline under .ai/repo/benchmarks/rust/)
+
+  - id: site-build
+    job: site
+    runs: scripts/site-build && scripts/site-check
+    summary: the derived data current, the site built once, every static check over the output
+
+  - id: site-probe
+    job: site
+    requires: [site-build]
+    runs: SITE_PROBE_JOBS=4 scripts/site-probe
+    summary: every route at three widths in a real browser, the menu, the dropdown, the theme toggle, the diagrams
+
+  - id: macos
+    job: macos
+    runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
+    summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
+
+classes:
+  # the pipeline itself: a change here can only be validated by running everything
+  - id: ci
+    paths: [.github/workflows/**, .github/actions/**, scripts/ci/**, scripts/ci-plan, scripts/ci-baseline, .ai/repo/ci/**, test/run.sh, test/lib.sh, justfile]
+    gates: full
+
+  # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
+  - id: rust
+    paths: [apps/majordomus-cli/**, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-coverage, rust-bench, shell-suite, macos]
+
+  # projections of the registry and the policy: generate --check decides whether they are
+  # current, and their content is read by the site and by the suite
+  - id: rust-generated
+    paths: [docs/generated/**, site/data/registry/**, share/allow/**, AGENTS.md, CLAUDE.md]
+    gates: [rust-integration, shell-suite, site-build, site-probe]
+
+  # the distribution: the skeleton, the schemas, the kinds, the command and event registries;
+  # read by both implementations at run time, embedded in the crate at build, and inputs of
+  # the site generator
+  - id: share
+    paths: [share/**]
+    gates: [rust-check, rust-coverage, rust-bench, shell-suite, site-build, site-probe, macos]
+
+  # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
+  - id: shell
+    paths: [bin/**, lib/**, test/**, .githooks/**, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
+    gates: [shell-suite, rust-integration, site-build, site-probe, macos]
+
+  # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
+  # ADRs; objects of the index the registry dataset is derived from, inputs of the site
+  - id: layer
+    paths: [.ai/**]
+    gates: [shell-suite, rust-integration, site-build, site-probe]
+
+  # documents and the files the site generator reads at the root; documents are index objects
+  - id: docs
+    paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**]
+    gates: [shell-suite, rust-integration, site-build, site-probe]
+
+  # the site: templates, assets, styles, scripts, its build dependencies and its scripts
+  - id: site
+    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-probe, scripts/site-serve]
+    gates: [shell-suite, site-build, site-probe]
+
+  # the MCP client configurations and the launcher they name; case 90 reads them
+  - id: clients
+    paths: [.mcp.json, .codex/**, .gemini/**]
+    gates: [shell-suite]
+
+  # nothing a gate reads
+  - id: inert
+    paths: [.gitignore, .editorconfig, .github/ISSUE_TEMPLATE/**, .github/pull_request_template.md]
+    gates: []

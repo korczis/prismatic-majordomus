@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# summary — the performance telemetry of one job as a Markdown fragment: the plan's
+# selection for this job, the gate and step durations recorded through MJ_CI_TIMINGS, the
+# slowest cases of the suite from MJ_TEST_REPORT, and the cache facts the job passed in.
+# Written to $GITHUB_STEP_SUMMARY when set, else stdout; small on purpose. The same rows
+# are what scripts/ci-baseline reads back from a run, so the question "why did CI get slow"
+# has a table to start from rather than a scroll through the logs.
+#
+#   scripts/ci/summary --job NAME [--timings FILE] [--report FILE] [--fact "key=value"]...
+set -eu
+JOB=""; TIMINGS=""; REPORT=""; FACTS=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --job) JOB="$2"; shift 2 ;;
+    --timings) TIMINGS="$2"; shift 2 ;;
+    --report) REPORT="$2"; shift 2 ;;
+    --fact) FACTS="$FACTS
+$2"; shift 2 ;;
+    *) echo "summary: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+[ -n "$JOB" ] || { echo "summary: --job is required" >&2; exit 2; }
+out="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+{
+  printf '### %s\n\n' "$JOB"
+  if [ -n "$FACTS" ]; then
+    printf '| fact | value |\n|---|---|\n'
+    printf '%s\n' "$FACTS" | sed '/^$/d' | awk -F= '{ printf "| %s | %s |\n", $1, substr($0, length($1) + 2) }'
+    printf '\n'
+  fi
+  if [ -n "$TIMINGS" ] && [ -s "$TIMINGS" ]; then
+    printf '| gate | step | seconds |\n|---|---|---|\n'
+    awk -F'\t' '{ printf "| %s | %s | %s |\n", $1, $2, $3; t[$1] += $3 } END { for (g in t) printf "| **%s** | total | **%s** |\n", g, t[g] }' "$TIMINGS"
+    printf '\n'
+  fi
+  if [ -n "$REPORT" ] && [ -s "$REPORT" ]; then
+    printf 'Suite: %s cases, %s failed, %s case-seconds; the slowest:\n\n' \
+      "$(wc -l < "$REPORT" | tr -d ' ')" "$(awk -F'\t' '$2 != "ok"' "$REPORT" | wc -l | tr -d ' ')" "$(awk -F'\t' '{ s += $3 } END { print s + 0 }' "$REPORT")"
+    printf '| case | result | seconds | phase |\n|---|---|---|---|\n'
+    sort -t "$(printf '\t')" -k3,3nr "$REPORT" | head -8 | awk -F'\t' '{ printf "| %s | %s | %s | %s |\n", $1, $2, $3, $4 }'
+    printf '\n'
+  fi
+} >> "$out"

@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# verdict — the one required status of the workflow, decided from the plan and from what
+# the jobs reported. It is green only when planning succeeded, every gate the plan selected
+# ran in a job that succeeded, and no job that ran failed or was cancelled. A gate the plan
+# left out may be skipped, and its job says why. An empty selection is a failure: a plan
+# that selects nothing is a broken plan, never a pass.
+#
+#   scripts/ci/verdict --plan plan.json --needs needs.json [--summary FILE]
+#
+# needs.json is the workflow's `needs` context (toJSON(needs)): a job name to {result: ...}.
+# The table it writes (to --summary, or $GITHUB_STEP_SUMMARY, or stdout) says for every
+# gate whether it was planned, which job carried it, and what that job reported.
+# Exit 0 green, 1 red, 2 usage.
+set -eu
+PLAN=""; NEEDS=""; SUMMARY="${GITHUB_STEP_SUMMARY:-}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --plan) PLAN="$2"; shift 2 ;;
+    --needs) NEEDS="$2"; shift 2 ;;
+    --summary) SUMMARY="$2"; shift 2 ;;
+    *) echo "verdict: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+[ -n "$PLAN" ] && [ -n "$NEEDS" ] || { echo "verdict: --plan and --needs are required" >&2; exit 2; }
+command -v jq >/dev/null || { echo "verdict: jq is required" >&2; exit 2; }
+jq -e '.schema == 1 and (.gates | type == "array")' "$PLAN" >/dev/null 2>&1 || { echo "verdict: $PLAN is not a plan" >&2; exit 1; }
+jq -e 'type == "object"' "$NEEDS" >/dev/null 2>&1 || { echo "verdict: $NEEDS is not the needs context" >&2; exit 1; }
+
+red=0; rows=""
+say() { rows="$rows
+| $1 | $2 | $3 | $4 | $5 |"; }
+plan_result="$(jq -r '.plan.result // "absent"' "$NEEDS")"
+[ "$plan_result" = success ] || { echo "verdict: planning did not succeed ($plan_result)"; red=1; }
+n_selected="$(jq -r '[.gates[] | select(.selected)] | length' "$PLAN")"
+[ "$n_selected" -gt 0 ] || { echo "verdict: the plan selected no gate; that is a broken plan, not a pass"; red=1; }
+for g in $(jq -r '.gates[].id' "$PLAN"); do
+  job="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .job' "$PLAN")"
+  selected="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .selected' "$PLAN")"
+  reason="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .reason' "$PLAN")"
+  result="$(jq -r --arg j "$job" '.[$j].result // "absent"' "$NEEDS")"
+  if [ "$selected" = true ]; then
+    case "$result" in
+      success) say "$g" "$job" "run ($reason)" "success" "" ;;
+      *) say "$g" "$job" "run ($reason)" "**$result**" "a selected gate did not succeed"; echo "verdict: gate $g was selected and its job $job reported $result"; red=1 ;;
+    esac
+  else
+    case "$result" in
+      skipped) say "$g" "$job" "skipped ($reason)" "skipped" "" ;;
+      success) say "$g" "$job" "not planned ($reason)" "success" "its job ran for another gate" ;;
+      *) say "$g" "$job" "not planned ($reason)" "**$result**" "a job that ran did not succeed"; echo "verdict: gate $g was not planned, yet its job $job reported $result"; red=1 ;;
+    esac
+  fi
+done
+mode="$(jq -r '.mode' "$PLAN")"; why="$(jq -r '.reason' "$PLAN")"
+{
+  if [ "$red" = 0 ]; then printf '## ci: green\n\n'; else printf '## ci: red\n\n'; fi
+  printf 'Plan: **%s** — %s. Selected %s of %s gates.\n\n' "$mode" "$why" "$n_selected" "$(jq -r '.gates | length' "$PLAN")"
+  printf '| gate | job | planned | job result | note |\n|---|---|---|---|---|%s\n' "$rows"
+} > "${SUMMARY:-/dev/stdout}"
+[ -n "$SUMMARY" ] && { if [ "$red" = 0 ]; then echo "verdict: green ($n_selected gates ran and succeeded)"; else echo "verdict: red"; fi; }
+exit "$red"

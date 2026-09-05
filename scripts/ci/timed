@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# timed — run one command and append its wall time as a row a summary can read:
+#   scripts/ci/timed <gate> <step> <rows-file> <command> [args...]
+# The row is "<gate><TAB><step><TAB><seconds>"; the command's exit code is this script's.
+set -u
+[ $# -ge 4 ] || { echo "timed: usage: timed <gate> <step> <rows-file> <command> [args...]" >&2; exit 2; }
+gate="$1"; step="$2"; rows="$3"; shift 3
+t0="$(date +%s)"
+"$@"; rc=$?
+printf '%s\t%s\t%s\n' "$gate" "$step" "$(( $(date +%s) - t0 ))" >> "$rows"
+exit "$rc"

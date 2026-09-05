@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# ci-baseline — what GitHub observed of recent workflow runs, recorded as data: per run the
+# commit, the event, the branch, the conclusion and the wall time; per job the runner, the
+# queue time and the duration; per step the seconds. Written to .ai/repo/ci/baseline.json
+# (or --out), the file a later measurement is compared with when the question is "why did
+# CI become slow". Nothing here is typed by hand: rerun it and commit the diff.
+#
+#   scripts/ci-baseline [--runs N] [--workflow NAME]... [--out FILE] [--note TEXT]
+#   scripts/ci-baseline --table [FILE]        render a recorded baseline as a table
+#
+# Needs the GitHub CLI, authenticated. Exit 0, 2 on usage, 12 when gh cannot answer.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+OUT="$ROOT/.ai/repo/ci/baseline.json"; RUNS=8; WORKFLOWS=""; NOTE=""; TABLE=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --runs) RUNS="$2"; shift 2 ;;
+    --workflow) WORKFLOWS="$WORKFLOWS $2"; shift 2 ;;
+    --out) OUT="$2"; shift 2 ;;
+    --note) NOTE="$2"; shift 2 ;;
+    --table) TABLE=1; shift; if [ $# -gt 0 ]; then OUT="$1"; shift; fi ;;
+    *) echo "ci-baseline: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+command -v jq >/dev/null || { echo "ci-baseline: jq is required" >&2; exit 12; }
+if [ "$TABLE" = 1 ]; then
+  [ -f "$OUT" ] || { echo "ci-baseline: no baseline at $OUT" >&2; exit 2; }
+  jq -r '"recorded \(.recorded_at) from \(.repository)\(if .note != "" then " — " + .note else "" end)",
+    (.runs[] | "\n\(.workflow) #\(.id) \(.event) \(.branch) \(.head_sha[0:7]) \(.conclusion) wall=\(.wall_seconds)s created=\(.created_at)",
+      (.jobs[] | "  \(.name) [\(.runner)] \(.conclusion) queue=\(.queue_seconds)s run=\(.seconds)s",
+        (.steps[] | "      \(.seconds)s  \(.name)")))' "$OUT"
+  exit 0
+fi
+command -v gh >/dev/null || { echo "ci-baseline: the GitHub CLI (gh) is required" >&2; exit 12; }
+[ -n "$WORKFLOWS" ] || WORKFLOWS="validate pages"
+repo="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)" || { echo "ci-baseline: gh cannot see the repository (gh auth login)" >&2; exit 12; }
+tmp="$(mktemp "${TMPDIR:-/tmp}/mj-ci-baseline.XXXXXX")"; trap 'rm -f "$tmp"' EXIT
+: > "$tmp"
+for wf in $WORKFLOWS; do
+  # completed runs only: a run in flight has no duration yet
+  ids="$(gh run list --workflow "$wf" --status completed --limit "$RUNS" --json databaseId -q '.[].databaseId' 2>/dev/null || true)"
+  for id in $ids; do
+    gh api "repos/$repo/actions/runs/$id" > "$tmp.run" || { echo "ci-baseline: run $id is not readable" >&2; exit 12; }
+    gh api --paginate "repos/$repo/actions/runs/$id/jobs?per_page=100" > "$tmp.jobs" || { echo "ci-baseline: the jobs of run $id are not readable" >&2; exit 12; }
+    jq -n --slurpfile run "$tmp.run" --slurpfile jobs "$tmp.jobs" --arg wf "$wf" '
+      def secs(a; b): if a == null or b == null then null else ((b | fromdateiso8601) - (a | fromdateiso8601)) end;
+      ($run[0]) as $r | ([$jobs[] | .jobs[]] ) as $js
+      | { workflow: $wf, id: $r.id, event: $r.event, branch: $r.head_branch, head_sha: $r.head_sha,
+          conclusion: $r.conclusion, created_at: $r.created_at, run_started_at: $r.run_started_at, updated_at: $r.updated_at,
+          wall_seconds: secs($r.created_at; $r.updated_at),
+          jobs: [ $js[] | { name: .name, runner: (.labels | join(",")), conclusion: .conclusion,
+                            queue_seconds: secs(.created_at; .started_at), seconds: secs(.started_at; .completed_at),
+                            steps: [ .steps[] | select(.conclusion != "skipped") | select(.name | test("^(Set up job|Complete job|Post Run|Run actions/checkout)") | not)
+                                     | { name: .name, conclusion: .conclusion, seconds: secs(.started_at; .completed_at) } ] } ] }' >> "$tmp"
+  done
+done
+rm -f "$tmp.run" "$tmp.jobs"
+[ -s "$tmp" ] || { echo "ci-baseline: no completed run found for:$WORKFLOWS" >&2; exit 12; }
+mkdir -p "$(dirname "$OUT")"
+jq -s --arg repo "$repo" --arg note "$NOTE" --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  '{ schema: 1, repository: $repo, recorded_at: $at, note: $note, runs: (sort_by(.created_at) | reverse) }' "$tmp" > "$OUT"
+printf 'ci-baseline: %s run(s) of%s recorded in %s\n' "$(jq '.runs | length' "$OUT")" "$WORKFLOWS" "${OUT#"$ROOT"/}"

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# metrics — the timing rows of every job of one run in one table, job first:
+#   scripts/ci/metrics <dir>    every <dir>/ci-metrics-<job>/*.tsv, as "<job><TAB>..." rows
+# The rows come from MJ_CI_TIMINGS (gate, step, seconds) and MJ_TEST_REPORT (case, result,
+# seconds, phase); the job name is the artifact's suffix. Nothing here is required to
+# exist: a run whose jobs were skipped has fewer rows, not an error.
+set -eu
+dir="${1:-}"; [ -n "$dir" ] || { echo "metrics: usage: metrics <dir>" >&2; exit 2; }
+[ -d "$dir" ] || exit 0
+for d in "$dir"/ci-metrics-*; do
+  [ -d "$d" ] || continue
+  job="${d##*/ci-metrics-}"
+  for f in "$d"/*.tsv; do
+    [ -f "$f" ] || continue
+    awk -v j="$job" -F'\t' '{ print j "\t" $0 }' "$f"
+  done
+done
