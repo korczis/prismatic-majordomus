@@ -12,7 +12,7 @@ fits_when:
 does_not_fit_when:
   - 'No AI client ever opens the repository; the shell tool alone supervises the work'
   - 'You want the server to route work or refuse writes outside an announced scope; announcements are informational and the task record is the enforced form'
-use_cases: [serve-the-layer-to-ai-clients, extend-what-the-executable-serves]
+use_cases: [serve-the-layer-to-ai-clients, extend-what-the-executable-serves, classify-what-belongs-in-the-context, find-an-object-without-reading-everything, keep-the-bootstrap-thin-and-within-budget, read-only-the-context-that-fits, trace-a-change-to-the-context-it-affects]
 doctrines: [majordomus.ai-layout-integrity, majordomus.projection-integrity]
 responsibilities: [layer, projection]
 ---
