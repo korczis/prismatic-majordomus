@@ -46,6 +46,18 @@ sources:
     pathspec: ':(glob).ai/repo/prompts/*.md'
     required: false
 
+  - id: skill
+    kind: skill
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/skills/*/SKILL.md'
+    required: false
+
+  - id: skill_example
+    kind: document
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/skills/*/examples/*.md'
+    required: false
+
   - id: workflow
     kind: document
     discovery: vcs

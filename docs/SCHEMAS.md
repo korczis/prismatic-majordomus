@@ -857,6 +857,57 @@ itself, which the budget then pays for twice.
 
 ---
 
+## `.ai/repo/skills/<id>/SKILL.md`
+
+A skill: a provider-neutral procedure for one bounded kind of work. Front matter is
+authored, validated against `share/schemas/skill.schema.json` (the allow-list
+`share/allow/skill.txt` is generated from it); the body is the procedure. The skill's
+identity is the `id`, which must equal the directory name, and its MCP URI is
+`majordomus://skill/<id>`. Discovery is the source class `skill` in
+`.ai/repo/knowledge/sources.yaml`; nothing else registers a skill.
+
+```markdown
+---
+schema: skill/v1
+id: repo-review
+version: 1
+title: Repository review
+description: An evidence-driven review of the actual state of the repository before work is recommended or done.
+status: active
+tags: [review, evidence]
+related: []
+inputs:
+  - a checkout of the repository with git history available
+outputs:
+  - findings, each with severity, evidence, location and the smallest correct fix
+---
+# Purpose
+...
+# Procedure
+...
+# Output
+...
+```
+
+| Key | Required | Meaning |
+|---|---|---|
+| `schema` | yes | `skill/v1` |
+| `id` | yes | `^[a-z][a-z0-9-]*$`; must equal the directory name |
+| `version` | yes | an integer of at least 1 |
+| `title` | yes | non-empty |
+| `description` | yes | one sentence; shown by every listing |
+| `status` | yes | `draft`, `active` or `deprecated` |
+| `tags` | no | ids, same pattern as `id` |
+| `related` | no | ids of other skills; every one must exist |
+| `inputs`, `outputs` | no | one string per item; what the worker needs and what the procedure leaves |
+
+Unknown keys are errors. The body carries non-empty level-one sections `# Purpose`,
+`# Procedure` and `# Output`; `majordomus skills check` refuses a skill without them.
+`examples/*.md` beside the file are optional documents, each opening with a level-one
+heading. See [`CLI.md`](CLI.md) for `majordomus skills`.
+
+---
+
 ## `.ai/repo/knowledge/sources.yaml`
 
 The repository's declared knowledge sources: which tracked files are knowledge, in which

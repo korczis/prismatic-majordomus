@@ -55,7 +55,8 @@ manifest names the tree; the contract identifies a document:
 2. read `manifest.yaml`,
 3. load the registered sections under `repo/` that the task needs,
 4. load the mandatory rules and resolve their dependencies (below),
-5. load only the skills and knowledge the task is about,
+5. load only the skills and knowledge the task is about (a skill is `repo/skills/<id>/SKILL.md`,
+   discovered by the source class `skill`, listed by `majordomus skills list`; see `repo/skills/README.md`),
 6. never load `local/`.
 
 A file under `repo/` that no manifest section covers is not context and carries no
