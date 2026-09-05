@@ -75,7 +75,10 @@ fn document(fingerprint: &str) -> ResultDocument {
 fn baselines_are_written_and_read_per_platform_and_results_are_written_under_the_local_half() {
     let f = Fixture::new();
     let repo = Repository::discover(&f.root()).unwrap();
-    assert!(!Provenance::of(&repo, "fp").dirty, "a committed fixture is clean");
+    assert!(
+        !Provenance::of(&repo, "fp").dirty,
+        "a committed fixture is clean"
+    );
     assert!(baseline::load_baseline(&repo, "testos-testarch-debug")
         .unwrap()
         .is_none());
@@ -134,7 +137,10 @@ fn baselines_are_written_and_read_per_platform_and_results_are_written_under_the
             "release"
         }
     );
-    assert!(real.dirty, "the baseline and the local run are untracked files: the tree is dirty now");
+    assert!(
+        real.dirty,
+        "the baseline and the local run are untracked files: the tree is dirty now"
+    );
     assert!(real.commit.is_some());
     assert_eq!(
         real.platform(),

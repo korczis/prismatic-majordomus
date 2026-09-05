@@ -15,9 +15,11 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         GenerateTarget::All => Target::ALL,
         GenerateTarget::Openapi => &[Target::OpenApi],
         GenerateTarget::Docs => &[Target::Docs],
+        GenerateTarget::Benchmarks => &[Target::Benchmarks],
+        GenerateTarget::Registry => &[Target::Registry],
         GenerateTarget::Allow => &[Target::Allow],
     };
-    let mut artifacts = generate::artifacts(app.registry(), crate::VERSION, targets)?;
+    let mut artifacts = generate::context_artifacts(&app.context, crate::VERSION, targets)?;
     if targets.contains(&Target::Allow) {
         artifacts.extend(generate::allow_artifacts(
             &app.schema,

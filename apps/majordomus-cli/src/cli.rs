@@ -319,8 +319,12 @@ pub enum GenerateTarget {
     All,
     /// `docs/generated/openapi.json`.
     Openapi,
-    /// `docs/generated/capabilities.md`.
+    /// `docs/generated/capabilities.md` and `docs/generated/modules/<id>.md`.
     Docs,
+    /// `docs/generated/benchmarks.md`: every benchmark target and the coverage
+    Benchmarks,
+    /// `docs/generated/registry.json`: the builtin registry as data
+    Registry,
     /// The shell tool's allow-lists under share/allow, derived from the schemas
     Allow,
 }
