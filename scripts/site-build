@@ -26,6 +26,21 @@ fi
 # the OpenAPI document the executable generated, served raw at /openapi.json: byte for byte the
 # committed file, so what the site offers is what `majordomus generate --check` verified
 cp "$ROOT/docs/generated/openapi.json" "$SITE/static/openapi.json"
+# the build's provenance, a fact of this build and of no committed file: the commit and its
+# cleanliness, the site's input hash, the registry and index fingerprints the executable
+# stamped into its dataset, and the generators. Read by the templates (data/build.json) and
+# served at /build.json (static/build.json) so that a deployment can be verified from outside
+# against the commit that was meant to deploy. Both files are ignored, never committed.
+commit="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
+dirty=false; [ -z "$(git -C "$ROOT" status --porcelain --untracked-files=no 2>/dev/null)" ] || dirty=true
+jq -n --arg commit "$commit" --argjson dirty "$dirty" \
+  --slurpfile src "$SITE/data/generated/source.json" --slurpfile reg "$SITE/data/registry/registry.json" \
+  '{schema: 1, commit: $commit, dirty: $dirty,
+    source_version: $src[0].source_version, source_hash: $src[0].source_hash, site_generator_version: $src[0].generator_version,
+    registry_fingerprint: $reg[0].registry.fingerprint, index_fingerprint: $reg[0].index.fingerprint,
+    registry_generator: ($reg[0].generator.id + " " + $reg[0].generator.version), registry_dataset: $reg[0].schema}' \
+  > "$SITE/data/build.json"
+cp "$SITE/data/build.json" "$SITE/static/build.json"
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"
 cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
 cp "$SITE/graph.js" "$SITE/static/js/graph.js"

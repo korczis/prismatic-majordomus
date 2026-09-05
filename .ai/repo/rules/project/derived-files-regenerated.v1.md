@@ -21,8 +21,8 @@ A generated file is changed by changing its canonical source and rerunning the g
 
 # Failure behaviour
 
-No command decides this rule; a reviewer does, and a change that violates it is not merged. Where a behavioural case covers part of it, that case is named below.
+No command decides this rule; a reviewer does, and a change that violates it is not merged. The machine-checkable part is `scripts/derive-check`, which CI and the Pages workflow run and which names every stale artifact of either generator; a validator of the wiring itself would have to live in `lib/`, where every installation's `doctor` would carry it without a rule that declares it there, so the wiring is held by the cases named below instead.
 
 # Verification
 
-Review. scripts/generate-site-data --check runs in CI; test/cases/51_derived_artifacts_committed.sh proves the committed derived files match their sources; the majordomus.projection-integrity rule covers the generated instruction files.
+Review. `scripts/derive-check` — `majordomus generate --check` and `scripts/generate-site-data --check` together — runs in CI and in front of every Pages deploy, and `scripts/derive` regenerates every derived file in dependency order; test/cases/51_derived_artifacts_committed.sh proves the committed derived files match their sources and that none embeds the commit it lands in; test/cases/95_executable_reference.sh proves a capability that joins or leaves the registry manifest gains or loses its site route from the generator alone; the majordomus.projection-integrity rule covers the generated instruction files.

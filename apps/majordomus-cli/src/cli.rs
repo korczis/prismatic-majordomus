@@ -373,3 +373,139 @@ pub struct GenerateArgs {
     #[arg(long, value_name = "DIR")]
     pub out: Option<PathBuf>,
 }
+
+// ------------------------------------------------------------------ the command line as data
+//
+// clap is the one declaration of the command line: every command, argument, default and
+// value set above. The reference of the native CLI (`docs/generated/cli.md`, the site's
+// page for it) is rendered from this walk of the built `Command`, never from `--help`
+// prose and never from a list kept beside the declaration.
+
+/// One command of the executable's command line, as clap declares it, with the commands
+/// under it. The root is `majordomus`.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct CommandDoc {
+    /// The full path, `["majordomus", "bench", "coverage"]`.
+    pub path: Vec<String>,
+    /// The one-line description.
+    pub about: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The long description, when the command has one.
+    pub long_about: Option<String>,
+    /// The arguments in declaration order: positionals and options, `--help` and
+    /// `--version` excluded.
+    pub args: Vec<ArgDoc>,
+    /// The subcommands in declaration order.
+    pub subcommands: Vec<CommandDoc>,
+}
+
+/// One argument of a command.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct ArgDoc {
+    /// The argument's id, `transport`.
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// `--transport`, without the dashes.
+    pub long: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// `-t`, without the dash.
+    pub short: Option<char>,
+    /// Given by position rather than by flag.
+    pub positional: bool,
+    /// The help text.
+    pub help: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The placeholder for the value, `PATH`.
+    pub value_name: Option<String>,
+    /// Whether the argument takes a value at all (a flag does not).
+    pub takes_value: bool,
+    /// Must be given.
+    pub required: bool,
+    /// Accepted by every command under the one that declares it.
+    pub global: bool,
+    /// The values a value-enum argument accepts, with the help of each; empty for any
+    /// other argument. Always present, so a template can ask for its length.
+    pub possible_values: Vec<PossibleValueDoc>,
+    /// The default value(s), as clap renders them; empty when there is none.
+    pub defaults: Vec<String>,
+}
+
+/// One value of a value-enum argument.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct PossibleValueDoc {
+    /// The value as typed.
+    pub name: String,
+    /// Its help, when it has one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub help: Option<String>,
+}
+
+/// The whole command line, from the built clap declaration. Deterministic: clap keeps
+/// declaration order, and nothing here depends on the environment.
+pub fn tree() -> CommandDoc {
+    use clap::CommandFactory;
+    let mut root = Cli::command();
+    root.build();
+    walk(&root, Vec::new())
+}
+
+fn walk(cmd: &clap::Command, mut path: Vec<String>) -> CommandDoc {
+    path.push(cmd.get_name().to_string());
+    let args = cmd
+        .get_arguments()
+        .filter(|a| !matches!(a.get_id().as_str(), "help" | "version"))
+        .map(|a| ArgDoc {
+            name: a.get_id().to_string(),
+            long: a.get_long().map(str::to_string),
+            short: a.get_short(),
+            positional: a.is_positional(),
+            help: a.get_help().map(|h| h.to_string()).unwrap_or_default(),
+            value_name: a
+                .get_value_names()
+                .and_then(|names| names.first())
+                .map(|n| n.to_string()),
+            takes_value: a.get_action().takes_values(),
+            required: a.is_required_set(),
+            global: a.is_global_set(),
+            possible_values: a
+                .get_possible_values()
+                .into_iter()
+                .filter(|v| !v.is_hide_set())
+                .map(|v| PossibleValueDoc {
+                    name: v.get_name().to_string(),
+                    help: v.get_help().map(|h| h.to_string()),
+                })
+                .collect(),
+            defaults: a
+                .get_default_values()
+                .iter()
+                .map(|v| v.to_string_lossy().into_owned())
+                .collect(),
+        })
+        .collect();
+    // clap adds a `help` subcommand to every command that has subcommands; it documents
+    // nothing of its own and is left out, as `--help` is among the arguments
+    let subcommands = cmd
+        .get_subcommands()
+        .filter(|s| !s.is_hide_set() && s.get_name() != "help")
+        .map(|s| walk(s, path.clone()))
+        .collect();
+    CommandDoc {
+        path,
+        about: cmd.get_about().map(|a| a.to_string()).unwrap_or_default(),
+        long_about: cmd.get_long_about().map(|a| a.to_string()),
+        args,
+        subcommands,
+    }
+}
+
+impl CommandDoc {
+    /// Every command, this one first, then the subcommands depth first.
+    pub fn flatten(&self) -> Vec<&CommandDoc> {
+        let mut out = vec![self];
+        for s in &self.subcommands {
+            out.extend(s.flatten());
+        }
+        out
+    }
+}

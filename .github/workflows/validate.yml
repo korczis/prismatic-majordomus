@@ -119,7 +119,11 @@ jobs:
     if: needs.plan.outputs.shell_suite == 'true'
     runs-on: ubuntu-latest
     steps:
+      # the whole history: a case that clones this checkout into a fixture and pushes
+      # (96_site_deploy does, to a bare repository of its own) cannot push a shallow clone
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: site
         uses: ./.github/actions/setup-site
       - id: rust
@@ -279,6 +283,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: site
         uses: ./.github/actions/setup-site
       - id: rust

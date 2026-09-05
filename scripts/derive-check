@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# derive-check — is every committed derived artifact what its canonical sources produce?
+# Writes nothing. Exit 0 when everything is current, 10 with every stale artifact named.
+# Composes the generators' own checks, in the order scripts/derive runs the generators, and
+# runs both before exiting so that one report names everything that is stale:
+#
+#   majordomus generate --check        every projection of the registry, the schemas, the
+#                                      policy and the index: docs/generated/**, share/allow/**,
+#                                      the provider bootstraps, site/data/registry/registry.json
+#   scripts/generate-site-data --check site/data/generated/**, docs/SITE_CLAIMS.md,
+#                                      docs/PLAN_STATUS.md (by input hash, which covers
+#                                      docs/generated/registry.json and openapi.json)
+#
+# Together they prove the chain: a capability edited in Rust makes registry.json stale (the
+# first check), and a registry.json regenerated without the site makes the site's input hash
+# move (the second). `just derive-check` runs this; so do the Pages workflow and the CI jobs.
+set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CRATE="$ROOT/apps/majordomus-cli"
+PROFILE="${MAJORDOMUS_BUILD_PROFILE:-debug}"
+export MAJORDOMUS_SHARE="${MAJORDOMUS_SHARE:-$ROOT/share}"
+if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
+else
+  release=(); [ "$PROFILE" = release ] && release=(--release)
+  RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}" || exit 13
+  RB="$CRATE/target/$PROFILE/majordomus"
+fi
+rc=0
+printf '==> derive-check: majordomus generate --check\n'
+"$RB" generate --repo "$ROOT" --check || rc=10
+printf '==> derive-check: scripts/generate-site-data --check\n'
+"$ROOT/scripts/generate-site-data" --check || rc=10
+if [ "$rc" = 0 ]; then printf '==> derive-check: every derived artifact is current\n'
+else printf '==> derive-check: stale derived artifact(s); run scripts/derive (just derive) and commit the result\n' >&2; fi
+exit "$rc"

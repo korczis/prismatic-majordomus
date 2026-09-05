@@ -1,0 +1,36 @@
+{% extends "page.html" %}
+{#- Every builtin capability, one card each, grouped by module. Data: data/registry/registry.json
+    and the routes of data/generated/executable.json. -#}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = get_section(path="registry/_index.md") -%}
+{%- set reg = load_data(path="data/registry/registry.json") -%}
+{%- set ex = load_data(path="data/generated/executable.json") -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+{%- set current = "capabilities" -%}{% include "partials/registry-nav.html" %}
+{%- for m in ex.modules -%}
+<h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="{{ get_url(path=m.route, trailing_slash=true) }}" class="font-mono hover:underline">{{ m.id }}</a> <span class="text-base font-normal text-body">{{ m.title }}</span></h2>
+<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+  {%- for link in m.capabilities -%}
+  {%- set c = [x for x in reg.registry.builtin if x.id == link.id][0] -%}
+  <li><a href="{{ get_url(path=link.route, trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">{{ c.id }}</code>
+    <span class="mt-1 text-sm text-body">{{ c.description }}</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">{{ c.kind }}</span>
+      <span class="rounded border border-default px-1 text-body">{{ c.stability }}</span>
+      {% if c.exposure.mcp and c.exposure.mcp.tool %}<span class="rounded border border-default px-1 text-body">mcp</span>{% endif %}
+      {% if c.exposure.http %}<span class="rounded border border-default px-1 text-body">http</span>{% endif %}
+      {% if c.exposure.cli %}<span class="rounded border border-default px-1 text-body">cli</span>{% endif %}
+      {% if c.cache.policy != "disabled" %}<span class="rounded border border-default px-1 text-body">cached</span>{% endif %}
+    </span>
+  </a></li>
+  {%- endfor -%}
+</ul>
+{%- endfor -%}
+</div>
+{% endblock content %}

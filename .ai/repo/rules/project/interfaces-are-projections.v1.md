@@ -17,7 +17,7 @@ The Rust executable exposes the same things through several interfaces. A tool t
 
 # Required behaviour
 
-An executable capability is one typed descriptor with one handler, composed into the registry in `capability/builtin.rs`. A declarative object is a file the layer's `sources.yaml` maps to a kind whose reading `share/kinds.yaml` and `share/schemas/` declare, read at run time; a repository adds kinds and schemas under `.ai/repo/knowledge/` and never edits Rust for another object of a known kind. MCP tools and resources, HTTP routes, the OpenAPI document, the Swagger UI shell, the `capabilities` commands and `docs/generated/` are projections built from the registry when asked; none of them declares a name, a description, a schema or a route of its own. The shell tool's allow-lists under `share/allow/` are generated from the schemas.
+An executable capability is one typed descriptor with one handler, composed into the registry in `capability/builtin.rs`. A declarative object is a file the layer's `sources.yaml` maps to a kind whose reading `share/kinds.yaml` and `share/schemas/` declare, read at run time; a repository adds kinds and schemas under `.ai/repo/knowledge/` and never edits Rust for another object of a known kind. MCP tools and resources, HTTP routes, the OpenAPI document, the Swagger UI shell, the `capabilities` commands, `docs/generated/` and the website's `/registry/` pages are projections built from the registry when asked; none of them declares a name, a description, a schema or a route of its own. The shell tool's allow-lists under `share/allow/` are generated from the schemas.
 
 # Failure behaviour
 
@@ -25,4 +25,4 @@ A reviewer decides this rule for a change that adds a definition to a projection
 
 # Verification
 
-Review, `cargo test --manifest-path apps/majordomus-cli/Cargo.toml`, and `test/cases/76_capabilities_projections.sh`, which builds the executable, changes nothing but data, and reads the same capability back through every interface.
+Review, `cargo test --manifest-path apps/majordomus-cli/Cargo.toml`, and `test/cases/76_capabilities_projections.sh`, which builds the executable, changes nothing but data, and reads the same capability back through every interface. The website is one more interface: its pages about the executable are rendered from the registry dataset and routed from the registry manifest (`test/cases/95_executable_reference.sh`), and `scripts/site-check` refuses a template, generator or navigation file that names a capability by hand.
