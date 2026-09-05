@@ -719,6 +719,52 @@ Task t-20260903193012-a4f1 on branch main at 3f2a9c1e...: fix the OAuth callback
 Scope: lib/auth
 ```
 
+## `majordomus skills`
+
+The repository's skills: provider-neutral procedures for one bounded kind of work each,
+under the layer's skills section. Read-only.
+
+A skill is a directory `.ai/repo/skills/<id>/` holding `SKILL.md` — YAML front matter
+satisfying `share/schemas/skill.schema.json` over a Markdown body that is the procedure —
+and optionally `examples/*.md`. Nothing registers it. The source class `skill` in
+`.ai/repo/knowledge/sources.yaml` discovers it, and that is the same declaration the
+Rust executable indexes, so a skill exists for `skills list`, for `doctor`, for the
+website and for MCP (`majordomus://skill/<id>`), or for none of them. See
+[`SCHEMAS.md`](SCHEMAS.md) for the file contract.
+
+```
+majordomus skills list [--json]        every skill: id, status, version, description
+majordomus skills show <id> [--json]   the repository-relative path, then the file as written
+majordomus skills check [--json]       validate every skill and every reference it makes
+```
+
+- `list` prints one line per discovered skill in discovery order, invalid ones included
+  (a listing that silently shrank would hide the file that needs fixing). `--json` adds
+  the URI, tags, related ids, inputs, outputs, the path, the content hash and the tracked
+  examples.
+- `show` prints the path on the first line and the file below it; `--json` adds the
+  body as a field. An id that is not a skill exits `12` and names `skills list`.
+- `check` validates every skill against the allow-list generated from the schema (no
+  unknown key), `schema: skill/v1`, an integer `version`, a `status` from the closed
+  set, an `id` equal to the directory name, non-empty `# Purpose`, `# Procedure` and
+  `# Output` sections; refuses two skills claiming one id, a `related` id that names no
+  skill, and an example without a level-one heading. Every finding names the file and
+  every reason. It ends with the counts of what it examined — skills, examples,
+  references — and exits `10` on any failure. A repository with no skills is a `WARN`,
+  never a pass over nothing. An absent allow-list (`share/allow/skill.txt`, a distribution
+  that was not generated) is `13`, naming `majordomus generate allow`.
+
+`doctor` and `watch` run the same examination through the doctrine
+`majordomus.skill-integrity`; `scripts/generate-site-data` reads the same catalogue and
+refuses to build the site from a skill that does not validate.
+
+```
+$ majordomus skills check
+OK   skill       1 skill(s) — every one parses, matches its directory and carries its sections
+OK   skill       5 reference(s) — every related id and every example resolves
+skills: 1 discovered, 1 valid; examples: 5; references: 5 checked; failures: 0
+```
+
 ## `majordomus search`
 
 Find durable records without reading all of them. Read-only.

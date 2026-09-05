@@ -23,6 +23,9 @@
 . "$MJ_LIB_DIR/decision.sh"
 # shellcheck source=prompt.sh
 . "$MJ_LIB_DIR/prompt.sh"
+# the skill validator reads the catalogue every skill surface reads
+# shellcheck source=skills.sh
+. "$MJ_LIB_DIR/skills.sh"
 # shellcheck source=context.sh
 . "$MJ_LIB_DIR/context.sh"
 # the project-model validators read the one engine, not a copy of its rules

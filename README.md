@@ -288,6 +288,7 @@ table, rule bullets, a rules or lifecycle or finish-contract heading — and a
 | `update` | regenerate projections from policy | projections | 0 / 10 / 15 |
 | `handover` | write a continuation record; `--resolve` finds one | one new file | 0 / 10 / 12 |
 | `finish` | evaluate the finish contract | task record, ledger | 0 / 10 / 15 |
+| `skills` | the repository's skills: list, show one, check every one against its contract | no | 0 / 10 / 12 / 13 |
 | `bench` | how long does every public command take here, cold and warm, against the baseline? | local evidence under `.ai/local/benchmarks/`; the baseline only with `--write-baseline` | 0 / 10 / 12 / 15 |
 
 Exit codes are a contract: `0` ok, `2` usage, `10` contract unmet, `11` drift found,

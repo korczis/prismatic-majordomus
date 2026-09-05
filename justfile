@@ -145,6 +145,11 @@ check *args:
 update *args:
     "{{shell_bin}}" update {{args}}
 
+# The repository's skills: list, show <id>, or check every one against its contract.
+[group('lifecycle')]
+skills *args:
+    "{{shell_bin}}" skills {{args}}
+
 # ---------------------------------------------------------------- test
 
 # Every gate: the shell suite, the Rust gate, the site data check.
