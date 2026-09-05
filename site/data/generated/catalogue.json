@@ -2353,7 +2353,7 @@
         "checkpoint-long-work",
         "hand-work-between-sessions",
         "trace-a-change-to-the-context-it-affects",
-        "accept-or-refuse-finished-work"
+        "document-every-directory-of-the-layer"
       ]
     },
     {
@@ -4088,6 +4088,205 @@
       ]
     },
     {
+      "id": "document-every-directory-of-the-layer",
+      "kind": "use-case",
+      "title": "Refuse a directory of the layer that documents nothing",
+      "summary": "A directory added under the layer without a context document fails validation by name, and nothing resolves against the tree until it says what it is for.",
+      "category": "knowledge",
+      "status": "active",
+      "target": "guaranteed",
+      "weight": 71,
+      "actors": [
+        "maintainer",
+        "reviewer"
+      ],
+      "difficulty": "intermediate",
+      "commands": [
+        "context",
+        "doctor"
+      ],
+      "doctrines": [
+        "majordomus.context-integrity"
+      ],
+      "claims": [
+        "context-coverage",
+        "context-documents"
+      ],
+      "responsibilities": [
+        "layer"
+      ],
+      "applications": [
+        "repository-with-authored-governance"
+      ],
+      "scenario": {
+        "setup": "undocumented-directory",
+        "given": [
+          "a repository with Majordomus installed, a new section that carries its contract, and one directory below it that carries none"
+        ],
+        "steps": [
+          {
+            "id": "validate",
+            "run": [
+              "context",
+              "validate"
+            ],
+            "note": "the directory with no document is named, and the one that has its contract is not",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "missing-contract",
+                "zones/deep"
+              ],
+              "stdout_not_contains": [
+                "zones — missing-contract"
+              ]
+            }
+          },
+          {
+            "id": "resolve",
+            "run": [
+              "context",
+              "resolve",
+              ".ai/repo/zones"
+            ],
+            "note": "nothing resolves against a tree that does not validate, not even the part that is correct",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "does not validate"
+              ]
+            }
+          },
+          {
+            "id": "doctor",
+            "run": [
+              "doctor"
+            ],
+            "note": "the same finding through the rule majordomus.context-integrity, which the pre-commit hook runs",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "missing-contract"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a directory of the layer with no context document is a named failure, not a silence",
+          "the finding names the directory, so the fix is one file in one place",
+          "the tree refuses to resolve until it is fixed, so nobody reads a half-documented layer"
+        ]
+      },
+      "path": ".ai/repo/use-cases/document-every-directory-of-the-layer.md",
+      "maturity": "guaranteed",
+      "evidence": {
+        "schema": "majordomus/use-case-evidence/v1",
+        "use_case": "document-every-directory-of-the-layer",
+        "setup": "undocumented-directory",
+        "result": "pass",
+        "steps": [
+          {
+            "id": "validate",
+            "command": "majordomus context validate",
+            "argv": [
+              "context",
+              "validate"
+            ],
+            "stdin": null,
+            "exit": 10,
+            "expected_exit": 10,
+            "output": "FAIL context     .ai/repo/zones/deep — missing-contract: carries no context document; a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)  [reproduce: printf '%s\\n' '---' 'schema: context/v1' > .ai/repo/zones/deep/README.md]\ncontext validate: 1 problem(s) in 15 document(s)",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 10,
+                "observed": 10,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "missing-contract",
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "zones/deep",
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_not_contains",
+                "pattern": "zones — missing-contract",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "resolve",
+            "command": "majordomus context resolve .ai/repo/zones",
+            "argv": [
+              "context",
+              "resolve",
+              ".ai/repo/zones"
+            ],
+            "stdin": null,
+            "exit": 10,
+            "expected_exit": 10,
+            "output": "FAIL context     .ai/repo/zones/deep — missing-contract: carries no context document; a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)  [reproduce: printf '%s\\n' '---' 'schema: context/v1' > .ai/repo/zones/deep/README.md]\nmajordomus: context: the tree does not validate (1 problem(s) above); nothing is resolved partially",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 10,
+                "observed": 10,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "does not validate",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "doctor",
+            "command": "majordomus doctor",
+            "argv": [
+              "doctor"
+            ],
+            "stdin": null,
+            "exit": 10,
+            "expected_exit": 10,
+            "output": "OK   layout      .ai/manifest.yaml — schema ai-repository/v1\nOK   layout      .ai/repo/scope.yaml — version 1; 21 in pathspec(s); every key is one the schema declares\nOK   layout      .ai/local/ — ignored, and nothing under it is tracked\nOK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool\nOK   layout      .ai/local/state/handovers — present\nOK   layout      .ai/local/state/checkpoints — present\nOK   layout      .ai/repo/prompts — present\nOK   records     ledger.jsonl — every line is a well-formed event\nOK   policy      19 key(s) — every policy value the code reads is declared, with no reader-side default\nOK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own\nOK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions\nFAIL context     .ai/repo/zones/deep — missing-contract: carries no context document; a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)  [reproduce: printf '%s\\n' '---' 'schema: context/v1' > .ai/repo/zones/deep/README.md]\nOK   policy      .ai/repo/policy.yaml — parsed, version 1\nOK   profiles    4 files — parsed; default 'implementation' exists\nINFO adr         .ai/repo/adrs/ — no decisions; nothing to validate\nOK   records     decisions.md — every entry is attributable\nINFO project     .ai/repo/project — no canonical project model here; nothing to validate\nOK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]\nOK   doctrine    35 doctrines — validator, dispatch, propagation, test and CI resolve for every one\nFAIL wiring      doctor-on-commit — hook .git/hooks/pre-commit does not exist  [reproduce: ls -l .git/hooks/pre-commit]\nFAIL wiring      finish-on-push — hook .git/hooks/pre-push does not exist  [reproduce: ls -l .git/hooks/pre-push]\nOK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]\nOK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]\nINFO project     .ai/repo/project — no canonical project model here; nothing to validate\nOK   projection  AGENTS.md — content matches its stamp\nOK   projection  CLAUDE.md — content matches its stamp\nOK   projection  GEMINI.md — content matches its stamp\nOK   budget      AGENTS.md — 32 lines, budget 150\nOK   links       AGENTS.md — all references resolve\nOK   counts      AGENTS.md — no hardcoded counts\nOK   context     builder — 18 lines, budget 300  [reproduce: majordomus context]\nOK   capture     .ai/local/prompts — ignored and untracked\nOK   capture     .ai/local/prompts — no records yet; the archive is empty\nOK   prompt      4 asset(s) — front matter valid, every token known\nOK   records     open-questions.md — every entry parses\nOK   retention   ledger — 1 lines, cap 5000\nOK   retention   handovers — 0 files, cap 200\nOK   retention   checkpoints — 0 files, cap 500\nINFO project     .ai/repo/project — no canonical project model here; nothing to validate\nOK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))\nOK   rules       45 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override\nINFO skill       .ai/repo/skills/ — no skills; nothing to validate\nINFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nINFO env         - — bash <version>, git <version>, jq <version>, shellcheck present\n·    budget      doctor — <timed against the policy budget>\ndoctor: 3 failure(s)",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 10,
+                "observed": 10,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "missing-contract",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          }
+        ]
+      },
+      "related_ids": [
+        "trace-a-change-to-the-context-it-affects",
+        "read-only-the-context-that-fits",
+        "classify-what-belongs-in-the-context",
+        "add-a-use-case-and-prove-it",
+        "adopt-an-existing-repository"
+      ]
+    },
+    {
       "id": "trace-a-change-to-the-context-it-affects",
       "kind": "use-case",
       "title": "Trace a change to the context documents it affects",
@@ -4347,11 +4546,11 @@
         ]
       },
       "related_ids": [
+        "document-every-directory-of-the-layer",
         "classify-what-belongs-in-the-context",
         "migrate-from-the-old-layout",
         "read-only-the-context-that-fits",
-        "extend-what-the-executable-serves",
-        "serve-the-layer-to-ai-clients"
+        "extend-what-the-executable-serves"
       ]
     },
     {
@@ -8107,6 +8306,7 @@
         "classify-what-belongs-in-the-context",
         "keep-the-bootstrap-thin-and-within-budget",
         "trace-a-change-to-the-context-it-affects",
+        "document-every-directory-of-the-layer",
         "trust-the-policy-before-reading-it",
         "follow-a-skill-the-repository-defines"
       ],
@@ -8414,16 +8614,17 @@
       "title": "Repository knowledge",
       "summary": "What the repository declares about itself: sources, nodes, edges, the plan, and searching them.",
       "order": 70,
-      "count": 5,
+      "count": 6,
       "use_cases": [
         "classify-what-belongs-in-the-context",
+        "document-every-directory-of-the-layer",
         "plan-the-work-as-data",
         "read-back-what-happened",
         "record-a-decision-before-it-is-forgotten",
         "trace-a-change-to-the-context-it-affects"
       ],
       "maturity": {
-        "guaranteed": 5
+        "guaranteed": 6
       },
       "applications": [
         "ci-gated-project",
@@ -8535,9 +8736,9 @@
       {
         "class": "command",
         "id": "doctor",
-        "use_cases": 12,
-        "executable": 9,
-        "evidence": 9,
+        "use_cases": 13,
+        "executable": 10,
+        "evidence": 10,
         "status": "covered",
         "policy": "required"
       },
@@ -8562,9 +8763,9 @@
       {
         "class": "command",
         "id": "context",
-        "use_cases": 6,
-        "executable": 6,
-        "evidence": 6,
+        "use_cases": 7,
+        "executable": 7,
+        "evidence": 7,
         "status": "covered",
         "policy": "required"
       },
@@ -9129,19 +9330,19 @@
       {
         "class": "claim",
         "id": "context-documents",
-        "use_cases": 2,
-        "executable": 2,
-        "evidence": 2,
+        "use_cases": 3,
+        "executable": 3,
+        "evidence": 3,
         "status": "covered",
         "policy": "advisory"
       },
       {
         "class": "claim",
         "id": "context-coverage",
-        "use_cases": 0,
-        "executable": 0,
-        "evidence": 0,
-        "status": "gap",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
         "policy": "advisory"
       },
       {
@@ -9506,17 +9707,17 @@
       }
     ],
     "total": 110,
-    "covered": 104,
+    "covered": 105,
     "partial": 0,
     "gaps_required": 0
   },
   "counts": {
-    "use_cases": 34,
+    "use_cases": 35,
     "drafts": 0,
     "applications": 5,
     "categories": 10,
     "maturity": {
-      "guaranteed": 32,
+      "guaranteed": 33,
       "verified": 2
     }
   },
@@ -9539,22 +9740,23 @@
     "gate-ci-on-the-tool-itself": 15,
     "block-acceptance-on-an-open-question": 16,
     "complete-an-issue-only-with-its-evidence": 17,
-    "trace-a-change-to-the-context-it-affects": 18,
-    "read-back-what-happened": 19,
-    "deliver-issues-in-waves": 20,
-    "classify-what-belongs-in-the-context": 21,
-    "find-an-object-without-reading-everything": 22,
-    "add-a-use-case-and-prove-it": 23,
-    "capture-the-prompts-that-started-the-work": 24,
-    "follow-a-skill-the-repository-defines": 25,
-    "keep-decisions-out-of-the-transcript": 26,
-    "know-which-tool-is-running": 27,
-    "migrate-from-the-old-layout": 28,
-    "open-and-close-a-session": 29,
-    "plan-the-work-as-data": 30,
-    "read-the-rules-the-tool-applies": 31,
-    "record-a-decision-before-it-is-forgotten": 32,
-    "resume-from-a-prompt-asset": 33
+    "document-every-directory-of-the-layer": 18,
+    "trace-a-change-to-the-context-it-affects": 19,
+    "read-back-what-happened": 20,
+    "deliver-issues-in-waves": 21,
+    "classify-what-belongs-in-the-context": 22,
+    "find-an-object-without-reading-everything": 23,
+    "add-a-use-case-and-prove-it": 24,
+    "capture-the-prompts-that-started-the-work": 25,
+    "follow-a-skill-the-repository-defines": 26,
+    "keep-decisions-out-of-the-transcript": 27,
+    "know-which-tool-is-running": 28,
+    "migrate-from-the-old-layout": 29,
+    "open-and-close-a-session": 30,
+    "plan-the-work-as-data": 31,
+    "read-the-rules-the-tool-applies": 32,
+    "record-a-decision-before-it-is-forgotten": 33,
+    "resume-from-a-prompt-asset": 34
   },
   "ap_index": {
     "repository-with-authored-governance": 0,
