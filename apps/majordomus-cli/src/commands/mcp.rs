@@ -278,7 +278,7 @@ impl Session {
         message: Value,
         client: Option<ClientInfo>,
         reason: &str,
-    ) -> Option<Value> {
+    ) -> Option<Reply> {
         match Self::alone(&self.args, client, reason) {
             Ok(backend) => {
                 self.replace(backend);
