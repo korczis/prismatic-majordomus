@@ -1,0 +1,42 @@
+id: I0818
+milestone: M004
+title: The command registry is read in one pass
+slug: registry-batch-reads
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Replace the per-index, per-field awk lookups in mj_cmdreg_public, mj_cmdreg_ids and the event registry with one awk pass each, and read them once per process."
+why: "Command coverage costs three seconds because mj_cmdreg_public runs dozens of awk processes and is called inside a loop over declared commands."
+current_state: "mj_cmdreg is one awk per key; mj_cmdreg_public loops it; mj_validate_command_coverage calls mj_cmdreg_public per declared command."
+desired_state: "Each registry is flattened once and its public ids and dispatch table are derived with one awk; the coverage validator reads every case header with one pass."
+scope:
+  - lib/commands.sh
+  - lib/common.sh
+  - test/cases/30_command_registry.sh
+  - test/cases/31_command_coverage.sh
+non_scope:
+  - A change to share/commands.yaml
+depends_on:
+  - I0817
+acceptance_criteria:
+  - validate:command_coverage and validate:command_surface each under 200 ms on this repository
+  - Cases 30, 31, 35 and 36 pass unchanged
+  - yaml_flatten count for doctor does not grow
+validation:
+  - MJ_TIMING=1 bin/majordomus doctor
+  - bash test/run.sh 31_command_coverage
+evidence_required:
+  - batch_reads
+risk: "A batch read must produce exactly the per-key results; the cases that mutate the registry are the proof."
+started_at: 2026-09-05T01:50:00Z
+verified_at: 2026-09-05T02:05:00Z
+completed_at: 2026-09-05T02:05:00Z
+evidence:
+  - covers: batch_reads
+    type: test
+    command: "MJ_TIMING=1 bin/majordomus doctor"
+    result: "validate:command_coverage went from 3080 ms to 74 ms and validate:command_surface from 352 ms to 141 ms on this repository; mj_cmdreg_public and mj_cmdreg_ids are one awk each, the coverage validator reads every case header in one pass and the public list once, the surface validator reads the dispatch table once, and mj_event_index is one pass; cases 15, 22, 30, 31, 33, 35 and 36 pass unchanged, including the mutations that remove a registry entry and add a dispatcher-only command"
+    commit: c9443ae
+    recorded_at: 2026-09-05T02:05:00Z
+created_at: 2026-09-05
+updated_at: 2026-09-05

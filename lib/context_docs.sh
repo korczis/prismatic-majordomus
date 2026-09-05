@@ -36,8 +36,9 @@ MJ_CTXD_TAB="$(printf '\t')"
 mj_ctxd_tree()      { mj_rel "$MJ_AI_DIR"; }
 mj_ctxd_cleanup()   { rm -f "${MJ_CTXD_FLAT:-}" "${MJ_CTXD_PROBLEMS:-}" 2>/dev/null; }
 mj_ctxd_problem()   { printf '%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "${4:-}" >> "$MJ_CTXD_PROBLEMS"; }
-mj_ctxd()           { mj_yget "$MJ_CTXD_FLAT" "docs.$1.$2"; }
-mj_ctxd_list()      { mj_ylist "$MJ_CTXD_FLAT" "docs.$1.$2"; }
+# the documents are loaded into variables once (mj_yload); a field read is an expansion
+mj_ctxd()           { mj_yv ctxd "docs.$1.$2"; }
+mj_ctxd_list()      { mj_yvlist ctxd "docs.$1.$2"; }
 mj_ctxd_problems()  { [ -s "$MJ_CTXD_PROBLEMS" ]; }
 
 # the file conventions the manifest declares: names that must carry the contract
@@ -173,8 +174,10 @@ mj_ctxd_load() {
   MJ_CTXD_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.ctxd.flat.XXXXXX")"
   MJ_CTXD_PROBLEMS="$(mktemp "${TMPDIR:-/tmp}/mj.ctxd.prob.XXXXXX")"
   MJ_CTXD_COUNT=0; MJ_CTXD_LOADED=1
-  local conv providers f
+  local conv providers f t0
+  t0="$(mj_phase_begin ctxd:conventions)"
   conv="$(mj_ctxd_conventions | tr '\n' ' ')"; providers="$(mj_ctxd_providers)"
+  mj_phase_end ctxd:conventions "$t0"; t0="$(mj_phase_begin ctxd:links)"
   # (7) a symbolic link anywhere under the tree, file or directory, whatever its name: the
   # tree is read literally, and a link would let a document live outside what the manifest
   # names or appear under two paths
@@ -183,11 +186,18 @@ mj_ctxd_load() {
     case "$f" in "$(mj_rel "$MJ_AI_LOCAL_DIR")"/*) continue ;; esac
     mj_ctxd_problem refused-path "$f" "is a symbolic link; the tree is read literally and links are not followed" "ls -l '$f'"
   done < <(cd "$MJ_ROOT" && find "$(mj_ctxd_tree)" -type l -print 2>/dev/null | LC_ALL=C sort)
+  mj_phase_end ctxd:links "$t0"; t0="$(mj_phase_begin ctxd:scan)"
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     if mj_ctxd_scan "$f" "$MJ_CTXD_COUNT" "$conv" "$providers"; then MJ_CTXD_COUNT=$((MJ_CTXD_COUNT + 1)); fi
   done < <(mj_ctxd_files)
+  mj_phase_end ctxd:scan "$t0"; t0="$(mj_phase_begin ctxd:load)"
+  # every field of every document becomes a variable once; the cross checks and every
+  # later reader expand them instead of running one awk per field
+  mj_yload "$MJ_CTXD_FLAT" ctxd
+  mj_phase_end ctxd:load "$t0"; t0="$(mj_phase_begin ctxd:cross_check)"
   mj_ctxd_cross_check
+  mj_phase_end ctxd:cross_check "$t0"
   return 0
 }
 

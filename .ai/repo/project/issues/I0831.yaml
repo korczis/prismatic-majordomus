@@ -1,0 +1,30 @@
+id: I0831
+milestone: M004
+title: Performance claims at their proven status
+slug: performance-claims
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add claims to docs/CLAIMS.yaml for derived benchmark targets, separated cold and warm distributions, flatten-once, cache equivalence and regression refusal, each naming its case, and regenerate the site data."
+why: "The claims matrix is where a guarantee is stated once and the site reads it."
+current_state: "No performance claim exists."
+desired_state: "Guaranteed claims for what cases prove, planned for what is deferred, each with a claim page."
+scope:
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - docs/SITE_CLAIMS.md
+  - site/data/generated
+non_scope: []
+depends_on:
+  - I0822
+  - I0826
+acceptance_criteria:
+  - Every guaranteed claim names an existing case
+  - generate-site-data --check is in sync
+validation:
+  - scripts/generate-site-data --check
+evidence_required:
+  - docs_integrated
+risk: "A claim named guaranteed without a case is refused by the generator."
+created_at: 2026-09-05
+updated_at: 2026-09-05

@@ -1,0 +1,49 @@
+id: I0823
+milestone: M004
+title: majordomus bench: targets derived from the command registry
+slug: bench-command
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add the bench command: every public command in share/commands.yaml is a target, run against a disposable installed repository, with warmup and samples from the policy, reporting min, p50, p90, p95, p99, max, mean and stddev per target and mode."
+why: "A benchmark list kept by hand goes stale the day a command is added; the registry already knows the surface."
+current_state: "There is no benchmark command; ad hoc timing lives in shells."
+desired_state: "bench, bench <command>, --mode cold|warm|both, --samples, --warmup, --format json, --list; the JSON carries schema majordomus/benchmark-result/v1, commit, dirty flag, platform, build of bash and the benchmark profile."
+scope:
+  - lib/bench.sh
+  - bin/majordomus
+  - share/commands.yaml
+  - share/allow/policy.txt
+  - share/skeleton/policy.yaml
+  - .ai/repo/policy.yaml
+  - docs/CLI.md
+  - test/cases/79_bench_command.sh
+  - test/fixtures/commands/bench.json
+non_scope:
+  - Benchmarking the Rust executable
+  - A benchmark of commands that mutate the repository outside a disposable fixture
+depends_on:
+  - I0817
+acceptance_criteria:
+  - bench --list prints exactly the public commands of the registry
+  - A run records both modes separately with the eight statistics
+  - Case 79 proves the target list follows a registry mutation
+  - The command is registered, covered and documented like every other command
+validation:
+  - bash test/run.sh 79_bench_command
+  - bin/majordomus bench --format json
+evidence_required:
+  - bench_targets_derived
+risk: "Commands that read stdin or need an active task need a fixture per target; the fixtures under test/fixtures/commands already describe one scenario per command and are reused."
+started_at: 2026-09-05T03:33:10Z
+verified_at: 2026-09-05T03:33:10Z
+completed_at: 2026-09-05T03:33:10Z
+evidence:
+  - covers: bench_targets_derived
+    type: test
+    command: "bash test/run.sh 79_bench_command"
+    result: "lib/bench.sh derives its targets from mj_cmdreg_public minus itself and its scenario per target from the first scenario of test/fixtures/commands/<command>.json; case 79 asserts --list equals the registry public set, that a public command added to a copy of the registry appears in the copy's --list with no edit to the harness, that a read-only run records one cold and N warm results with count, min, p50, p90, p95, p99, max, mean and stddev ordered, and that a state-mutating target records only a cold distribution over fresh repositories; bench is registered in share/commands.yaml, dispatched by bin/majordomus, demonstrated by test/fixtures/commands/bench.json and documented in docs/CLI.md and docs/SCHEMAS.md; the fixture and coverage cases 30, 31, 34 and 15 pass"
+    commit: next
+    recorded_at: 2026-09-05T03:33:10Z
+created_at: 2026-09-05
+updated_at: 2026-09-05

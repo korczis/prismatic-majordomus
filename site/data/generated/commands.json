@@ -272,7 +272,8 @@
           "18_doctrine_wiring",
           "19_end_to_end",
           "36_command_doctrines",
-          "44_model_doctrine"
+          "44_model_doctrine",
+          "83_doctor_budget"
         ],
         "negative": [
           "02_doctor_basic",
@@ -285,7 +286,8 @@
           "22_history",
           "24_prompt_search",
           "25_continuity_lifecycle",
-          "36_command_doctrines"
+          "36_command_doctrines",
+          "83_doctor_budget"
         ]
       },
       "demo_data": {
@@ -370,14 +372,16 @@
         "behaviour": [
           "07_watch",
           "15_command_surface",
-          "19_end_to_end"
+          "19_end_to_end",
+          "83_doctor_budget"
         ],
         "negative": [
           "07_watch",
           "13_region_projection",
           "21_decision_question",
           "22_history",
-          "24_prompt_search"
+          "24_prompt_search",
+          "83_doctor_budget"
         ]
       },
       "demo_data": {
@@ -2442,6 +2446,133 @@
         ]
       },
       "doc_md": "\nMove a repository's project data from the pre-`.ai` layout under `.majordomus/` into the\nportable AI layer under `.ai/`, once and explicitly. No ordinary command migrates: `check`,\n`doctor`, `start` and the rest refuse (`12`) a legacy layout and name this command.\n\n**Markers:** legacy is `.ai/repo/policy.yaml`; new is `.ai/manifest.yaml`; a\n`.majordomus/bin/majordomus` is a tool installation and never project data.\n\n**Reads:** every file under `.majordomus/`, the skeleton manifest (the destinations come\nfrom it), the tool's templates (to tell an unchanged template from a customised one).\n**Writes:** `.ai/README.md`, `.ai/manifest.yaml`; the canonical files moved into\n`.ai/repo/` (`git mv` where tracked, so history follows); `.ai/local/state/` moved to\n`.ai/local/state/` and taken out of the index; the rest of the layer seeded from the\nskeleton without overwriting anything that moved; one `.ai/local/` line in `.gitignore`;\na byte-for-byte copy of the state under `tmp/majordomus-migrate-backup/<utc>/state/`,\nand of the legacy `providers/` under `.../providers/`, verified and printed, before\neither is touched; a `layout.migrated` ledger line; then `update --force` renders the\nprojections from the tool's thin bootstraps and `doctor` judges the result, each exit\nreported on its own line.\n\n**Behaviour:**\n- `--dry-run` prints the whole plan, one line per file with its action and destination,\n  and writes nothing. The same table drives the real run.\n- `templates/*.md` identical to the tool's own are dropped; a customised one moves to\n  `.ai/repo/templates/`. `generated/` is dropped: every projection now carries its own stamp.\n- `providers/` — the provider body and the monolithic templates that asked for it — is not\n  carried into `.ai/`. The body no longer exists anywhere and `update` renders none, so an\n  old template would leave a literal token in a generated file. The directory is copied\n  to the backup, removed from the index, and reported in one line: the bootstraps are now\n  the tool's thin adapters, a repository override goes under `.ai/repo/providers/<provider>.tmpl`\n  in the new format, and the body's rules belong under `.ai/repo/rules/project/` as rule\n  objects (`DOCTRINE.md` describes the format).\n- A file under `.majordomus/` this version does not know is never deleted. It is reported,\n  and `.majordomus/` is removed only when it is empty.\n- Refuses (`15`) a `.majordomus/` that holds both `policy.yaml` and `bin/majordomus`,\n  and names the safe manual step; refuses (`15`) when a destination under `.ai/` already\n  exists, listing each one. Nothing is written in either case.\n- A legacy policy that does not parse, or is not version 1, is refused (`10`) before\n  anything moves: fix it in place first.\n- Idempotent: on a repository already on the `.ai` layout it says so and exits `0`. With\n  neither layout present it exits `12` and names `init`.\n- The state stops being tracked: its durability is the checkout plus the backup, not the\n  branch. Commit the tracked half after reviewing `git status`.\n\n```\n$ majordomus migrate --dry-run\nmigrate: .majordomus/ (pre-.ai layout) -> .ai/ (ai-repository/v1)\n  move  .ai/repo/policy.yaml -> .ai/repo/policy.yaml\n  move  .ai/repo/profiles/debugging.yaml -> .ai/repo/profiles/debugging.yaml\n  state .ai/local/state/current.yaml -> .ai/local/state/current.yaml\n  drop  .majordomus/templates/handover.md    (identical to the tool's template)\n  ...\ndry run: nothing written\n```"
+    },
+    {
+      "name": "bench",
+      "summary": "Time every public command of the registry, cold and warm, and compare with the baseline.",
+      "category": "system",
+      "stage": "inspect",
+      "class": "generated-output-mutating",
+      "read_only": false,
+      "requires_task": "none",
+      "requires_repository": true,
+      "requires_installed": true,
+      "json_output": true,
+      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
+      "demo": "benchmark-run",
+      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds.",
+      "reads": [
+        "share/commands.yaml",
+        "test/fixtures/commands/",
+        ".ai/repo/policy.yaml",
+        ".ai/repo/benchmarks/baseline.json"
+      ],
+      "writes": [
+        ".ai/local/benchmarks/",
+        ".ai/repo/benchmarks/baseline.json"
+      ],
+      "exit_codes": [
+        0,
+        2,
+        10,
+        12,
+        13,
+        15
+      ],
+      "tests": {
+        "behaviour": [
+          "79_bench_command",
+          "80_bench_persistence",
+          "81_bench_baseline",
+          "82_bench_check"
+        ],
+        "negative": [
+          "79_bench_command",
+          "80_bench_persistence",
+          "81_bench_baseline",
+          "82_bench_check"
+        ]
+      },
+      "demo_data": {
+        "schema": 1,
+        "command": "bench",
+        "title": "Performance as executable evidence",
+        "intro": "bench times every public command of the registry in a disposable repository, cold and warm, and records the distribution rather than an average. The targets are the registry; nothing here keeps a list.",
+        "scenarios": [
+          {
+            "id": "lists",
+            "title": "The targets, derived from the registry",
+            "given": {
+              "installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "bench",
+              "--list"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^doctor +read-only",
+                "^start +state-mutating"
+              ]
+            },
+            "explain": "Every public command is a target with its class and the scenario it will run; the harness itself is the one public command that is not a target.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "times-one",
+            "title": "One target, one cold run",
+            "given": {
+              "installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "bench",
+              "version",
+              "--samples",
+              "1",
+              "--warmup",
+              "0",
+              "--mode",
+              "cold",
+              "--no-save"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^version +cold +ok +1 "
+              ]
+            },
+            "explain": "A read-only command is run once cold in a prepared repository; the row carries the status of the run and the percentiles of its samples, in milliseconds of the child process alone.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "refuses-unknown",
+            "title": "A command that is not in the registry",
+            "given": {
+              "installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "bench",
+              "nosuch"
+            ],
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "not a public command of the registry"
+              ]
+            },
+            "explain": "A target is a public command of share/commands.yaml and nothing else, so a name the registry does not carry is a missing artifact, exit 12, with the command that lists what exists.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          }
+        ]
+      },
+      "doc_md": "\nTime every public command of the registry, cold and warm, and compare with the baseline.\n\nThe targets are the public commands of `share/commands.yaml` and nothing else: a command\nadded to the registry is a target from that moment, and the harness never times itself.\nEach target runs in a disposable repository. When the tool's own suite is present, the\nscenario is the first scenario of the command's fixture under `test/fixtures/commands/`,\nso what is timed is what the site demonstrates and the suite executes; otherwise it is the\nbare command in an installed repository.\n\nA read-only command is run once cold, then `benchmark.warmup` times unsampled, then\n`benchmark.samples` times warm, all in one repository. A command that mutates state gets a\nfresh repository per sample, so every sample of it is cold and it has no warm\ndistribution. A sample is the wall-clock time of the child process alone; setup is never\ninside the clock. Every distribution is recorded with its count, minimum, p50, p90, p95,\np99, maximum, mean and standard deviation; nothing is averaged away.\n\n- `bench` times every target; `bench <command>...` only those.\n- `--list` prints the targets with their class and scenario, `--format json` as data.\n- `--samples <n>`, `--warmup <n>` override the policy for this run only; `--mode cold|warm|both`\n  selects the distributions recorded.\n- `--format json` prints the run as one document with schema `majordomus/benchmark-result/v1`:\n  the run id, the commit and whether the tree was dirty, the platform, the profile and one\n  result per target and mode.\n- Every run is written under `.ai/local/benchmarks/` (`runs/<run-id>.json`, `latest.json`,\n  one line per run in `history.jsonl`) unless `--no-save`. That is local evidence: ignored\n  by git, never a baseline.\n- `--write-baseline` writes the run as `.ai/repo/benchmarks/baseline.json`, schema\n  `majordomus/benchmark-baseline/v1`, and prints the old and new p50/p95/p99 per target. It\n  refuses a dirty tree without `--force`, because a baseline records a commit.\n- `--check` compares the run with the baseline under `benchmark.regression`: for each target\n  and mode, a p50, p95 or p99 more than the threshold fraction over the baseline is a\n  `FAIL` naming the metric, both values and the threshold, and the command exits `10`. No\n  baseline exits `12`; a baseline with another schema is not comparable and exits `15`.\n\n`MJ_TIMING=1` on any command prints the phases and work counters of that run on stderr,\nwhich is how a slow target is taken apart.\n\n```\n$ majordomus bench --list\ncommand      class                      scenario\ninit         generated-output-mutating  fixture fresh\ndoctor       read-only                  fixture not-wired\n...\n\n$ majordomus bench doctor version\ncommand      mode  status       n     p50     p95     p99     max  scenario\ndoctor       cold  ok           1    2711    2711    2711    2711  fixture not-wired\ndoctor       warm  ok          10    2640    2790    2790    2790  fixture not-wired\nversion      cold  ok           1      41      41      41      41  fixture prints\nversion      warm  ok          10      38      45      45      45  fixture prints\n\nslowest by warm p95 (cold where warm does not apply):\n  doctor       p95 2790 ms\n  version      p95 45 ms\n\nrun b-20260905T031200Z-9f1c saved as .ai/local/benchmarks/runs/b-20260905T031200Z-9f1c.json\n```\n\nExit `2` on a usage error, `12` when a named target is not a public command of the\nregistry, `13` when a target did not run cleanly (its row says `setup-failed` or the exit\ncode it produced), `10`, `12` and `15` from `--check` as above."
     }
   ]
 }

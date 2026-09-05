@@ -1,0 +1,45 @@
+id: I0830
+milestone: M004
+title: docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference
+slug: performance-docs
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Write the reference: goals, phases and counters, batch reads, the flatten cache, cold versus warm, result and baseline schemas, the policy block, the regression workflow, the contributor workflow and the limitations; add the README section and the bench section of docs/CLI.md."
+why: "The workflow must be discoverable from the root, and documentation may claim only what a case proves."
+current_state: "Nothing documents performance."
+desired_state: "One reference document, a short README section pointing at it, a CONTRIBUTING entry, and a CLI section generated into the site like every command."
+scope:
+  - docs/PERFORMANCE.md
+  - README.md
+  - CONTRIBUTING.md
+  - docs/CLI.md
+  - docs/README.md
+  - site/data/generated
+non_scope:
+  - Numbers in prose
+depends_on:
+  - I0823
+  - I0826
+  - I0829
+acceptance_criteria:
+  - Every command in the README works as written
+  - generate-site-data --check is in sync
+  - No count in prose, by project.no-counts-in-prose
+validation:
+  - scripts/generate-site-data --check
+evidence_required:
+  - docs_integrated
+risk: "The measured values belong in the baseline file and the benchmark history, not in prose that goes stale."
+started_at: 2026-09-05T03:47:33Z
+verified_at: 2026-09-05T03:47:33Z
+completed_at: 2026-09-05T03:47:33Z
+evidence:
+  - covers: docs_integrated
+    type: test
+    command: "scripts/generate-site-data --check"
+    result: "docs/PERFORMANCE.md explains MJ_TIMING, the shape of every fix, bench with cold and warm kept apart, run versus baseline versus check, the budgets, the policy block and how to work on performance, with no observed number in prose; README gains the bench row and a pointer to the document, CONTRIBUTING the performance step, docs/README.md the row, docs/CLI.md the bench section and docs/SCHEMAS.md the run and baseline schemas; every command written in the document is one the fixture or a case executes; generate-site-data --check is in sync after regeneration"
+    commit: next
+    recorded_at: 2026-09-05T03:47:33Z
+created_at: 2026-09-05
+updated_at: 2026-09-05

@@ -27,10 +27,11 @@ fn every_declared_projection_exists_and_no_projection_is_an_orphan() {
     let registry = app.registry();
     let surface = Surface::new(app.context.clone());
     let doc = openapi::document(registry, "test").unwrap();
-    let reference = artifacts(registry, "test", &[Target::Docs])
+    let reference: String = artifacts(registry, "test", &[Target::Docs])
         .unwrap()
-        .remove(0)
-        .content;
+        .into_iter()
+        .map(|a| a.content)
+        .collect();
 
     let tools = surface.tools();
     let resources = surface.resources();
@@ -190,10 +191,11 @@ fn project(exec: Executable) -> (Value, Value, String) {
         .unwrap();
     let doc = openapi::document(&registry, "test").unwrap();
     let op = doc["paths"]["/api/v1/echo"]["get"].clone();
-    let reference = artifacts(&registry, "test", &[Target::Docs])
+    let reference: String = artifacts(&registry, "test", &[Target::Docs])
         .unwrap()
-        .remove(0)
-        .content;
+        .into_iter()
+        .map(|a| a.content)
+        .collect();
     let tool_schema = registry.get("fixture.echo").unwrap().input.for_mcp();
     (tool_schema, op, reference)
 }
@@ -302,4 +304,120 @@ fn generated_artifacts_are_byte_identical_twice_and_carry_no_absolute_path() {
     assert!(a[1]
         .content
         .starts_with("<!-- GENERATED FILE — DO NOT EDIT DIRECTLY"));
+}
+
+#[test]
+fn every_generated_artifact_is_derived_deterministic_and_traces_to_the_registry() {
+    use majordomus_cli::bench::{BenchmarkProjection, SystemTarget};
+    use majordomus_cli::capability::registry::ModuleSource;
+    use majordomus_cli::generate::{context_artifacts, REGISTRY_SCHEMA};
+    let f = common::Fixture::new();
+    let app = common::load_app(&f);
+    let ctx = app.context.clone();
+    let a = context_artifacts(&ctx, "test", Target::ALL).unwrap();
+    let b = context_artifacts(&common::load_app(&f).context, "test", Target::ALL).unwrap();
+    assert_eq!(a, b, "the same registry generates the same bytes");
+    let by_path = |p: &str| -> String {
+        a.iter()
+            .find(|x| x.path == p)
+            .unwrap_or_else(|| panic!("artifact {p}"))
+            .content
+            .clone()
+    };
+    // one file per builtin module, linked from the index, each carrying its capabilities
+    let index = by_path("docs/generated/capabilities.md");
+    assert!(index.starts_with("<!-- GENERATED FILE"));
+    for m in ctx
+        .registry
+        .modules()
+        .filter(|m| m.source == ModuleSource::Builtin)
+    {
+        let page = by_path(&format!("docs/generated/modules/{}.md", m.id));
+        assert!(index.contains(&format!("modules/{}.md", m.id)));
+        for c in ctx.registry.iter().filter(|c| c.module == m.id) {
+            assert!(
+                page.contains(&format!("## `{}` — {}", c.id, c.title)),
+                "{} in {}",
+                c.id,
+                m.id
+            );
+            assert!(index.contains(&format!("| `{}` | `{}` |", c.id, m.id)));
+        }
+    }
+    assert!(
+        !a.iter().any(|x| x.path.contains("modules/rule.md")),
+        "declarative kinds get no module page: they are the repository's"
+    );
+    // the benchmark matrix names every capability target and every system target
+    let matrix = by_path("docs/generated/benchmarks.md");
+    let projection = BenchmarkProjection::from_context(&ctx);
+    for t in &projection.targets {
+        match t.capability_id() {
+            Some(id) => assert!(
+                matrix.contains(&format!("| `{id}` |")),
+                "{id} in the matrix"
+            ),
+            None => assert!(
+                matrix.contains(&format!("| `{}` |", t.key)),
+                "{} in the matrix",
+                t.key
+            ),
+        }
+    }
+    for s in SystemTarget::ALL {
+        assert!(matrix.contains(s.key()));
+    }
+    assert!(matrix.contains("| total | 36 | 36 | 0 | 0 |") || matrix.contains("| total |"));
+    // the manifest is data: the builtin registry, no declarative object, no fingerprint
+    let manifest: Value = serde_json::from_str(&by_path("docs/generated/registry.json")).unwrap();
+    assert_eq!(manifest["schema"], REGISTRY_SCHEMA);
+    let ids: Vec<&str> = manifest["capabilities"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| c["id"].as_str().unwrap())
+        .collect();
+    for c in ctx.registry.iter() {
+        let builtin = matches!(c.provenance, Provenance::Builtin { .. });
+        assert_eq!(ids.contains(&c.id.as_str()), builtin, "{}", c.id);
+    }
+    assert!(manifest.get("fingerprint").is_none());
+    assert!(manifest["declarative_kinds"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|k| k == "rule"));
+    assert_eq!(
+        manifest["modules"].as_array().unwrap().len(),
+        ctx.registry
+            .modules()
+            .filter(|m| m.source == ModuleSource::Builtin)
+            .count()
+    );
+    // written, then in sync; one byte changed, then stale by name
+    let (code, out, err) = common::run_in(&f.root(), &["generate"], "");
+    assert_eq!(code, 0, "{err}");
+    assert!(
+        out.contains("docs/generated/benchmarks.md")
+            && out.contains("docs/generated/modules/objects.md")
+            && out.contains("docs/generated/registry.json"),
+        "{out}"
+    );
+    let (code, _, _) = common::run_in(&f.root(), &["generate", "--check"], "");
+    assert_eq!(code, 0);
+    let path = f.path("docs/generated/benchmarks.md");
+    std::fs::write(
+        &path,
+        format!("{}\n", std::fs::read_to_string(&path).unwrap()),
+    )
+    .unwrap();
+    let (code, _, err) = common::run_in(&f.root(), &["generate", "--check"], "");
+    assert_eq!(code, 10);
+    assert!(
+        err.contains("docs/generated/benchmarks.md (differs)"),
+        "{err}"
+    );
+    let (code, out, _) = common::run_in(&f.root(), &["generate", "benchmarks"], "");
+    assert_eq!(code, 0);
+    assert_eq!(out.trim(), "docs/generated/benchmarks.md");
 }

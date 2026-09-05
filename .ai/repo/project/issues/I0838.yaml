@@ -1,0 +1,28 @@
+id: I0838
+milestone: M004
+title: bench compare and the top regressions report
+slug: bench-compare
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add bench compare <run-a> <run-b> and make the human report rank the largest regressions, the largest improvements and the slowest targets by p95."
+why: "A wall of numbers hides the one that matters."
+current_state: "Only --check compares, against the baseline."
+desired_state: "Any two persisted runs compare with the same table as --check; the default report ends with the ranked tail."
+scope:
+  - lib/bench.sh
+  - docs/CLI.md
+  - test/cases/85_bench_compare.sh
+non_scope: []
+depends_on:
+  - I0826
+acceptance_criteria:
+  - compare of a run with itself reports zero deltas
+  - Case 85 proves the ranking on two fixture runs
+validation:
+  - bash test/run.sh 85_bench_compare
+evidence_required:
+  - regression_refused
+risk: "Percentile arithmetic is implemented once and unit-tested on small datasets."
+created_at: 2026-09-05
+updated_at: 2026-09-05

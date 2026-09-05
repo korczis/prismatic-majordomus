@@ -220,7 +220,35 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
                 })
                 .unwrap_or(0);
             w(&mut out, format!("OK   openapi     {} operation(s), {} schema component(s) — generated from the registry without conflict", ops, doc["components"]["schemas"].as_object().map(|s| s.len()).unwrap_or(0)))?;
-            w(&mut out, "validate: 0 failure(s)".into())?;
+            let projection = crate::bench::BenchmarkProjection::from_context(ctx);
+            let coverage = crate::bench::Coverage::compute(ctx, &projection);
+            let total = coverage.tallies.get("total").cloned().unwrap_or_default();
+            let mut failures = 0;
+            if coverage.is_complete() {
+                w(&mut out, format!("OK   benchmarks  {} target(s) cover {} requirement(s) — every executable timed directly and on every transport it is exposed on, plus the transports' own operations", projection.targets.len(), total.required))?;
+            } else {
+                failures += 1;
+                w(&mut out, format!("FAIL benchmarks  {} of {} requirement(s) missing, {} waived — a case must exist for every exposed executable  [reproduce: majordomus bench coverage]", total.missing, total.required, total.waived))?;
+                for line in coverage
+                    .lines
+                    .iter()
+                    .filter(|l| l.state != crate::bench::CoverageState::Covered)
+                {
+                    w(
+                        &mut out,
+                        format!(
+                            "     {:?} {} on {}",
+                            line.state,
+                            line.subject,
+                            line.transport.name()
+                        ),
+                    )?;
+                }
+            }
+            w(&mut out, format!("validate: {failures} failure(s)"))?;
+            if failures > 0 {
+                return Ok(10);
+            }
         }
     }
     Ok(0)

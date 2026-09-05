@@ -288,10 +288,15 @@ table, rule bullets, a rules or lifecycle or finish-contract heading — and a
 | `update` | regenerate projections from policy | projections | 0 / 10 / 15 |
 | `handover` | write a continuation record; `--resolve` finds one | one new file | 0 / 10 / 12 |
 | `finish` | evaluate the finish contract | task record, ledger | 0 / 10 / 15 |
+| `bench` | how long does every public command take here, cold and warm, against the baseline? | local evidence under `.ai/local/benchmarks/`; the baseline only with `--write-baseline` | 0 / 10 / 12 / 15 |
 
 Exit codes are a contract: `0` ok, `2` usage, `10` contract unmet, `11` drift found,
 `12` missing artifact, `13` internal error, `15` refused. There is no "warn and
 continue". Details: [`docs/CLI.md`](docs/CLI.md).
+
+Every command reports where its time went with `MJ_TIMING=1`, and `bench` holds the
+accepted state in a tracked baseline; how that works, and the rules behind it, is
+[`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 
 ## Customisation
 

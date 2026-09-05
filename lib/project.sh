@@ -30,7 +30,7 @@ mj_project_present() { [ -f "$MJ_PROJECT_DIR/project.yaml" ]; }
 mj_project_load() {
   [ "$MJ_PJ_LOADED" = 1 ] && return 0
   mj_project_present || return 1
-  local dir raw flat f id rc=0
+  local dir raw flat f id rc=0 msg
   dir="$MJ_PROJECT_DIR"
   MJ_PJ="$(mktemp -d "${TMPDIR:-/tmp}/mj.pj.XXXXXX")"
   mkdir -p "$MJ_PJ/flat"
@@ -40,29 +40,53 @@ mj_project_load() {
   mj_yaml_flatten "$dir/project.yaml" > "$flat" 2>/dev/null || { mj_err "project.yaml does not parse"; return 2; }
   awk -F= '{ k=$1; sub(/^[^=]*=/, "", $0); printf "P\t%s\t%s\n", k, $0 }' "$flat" >> "$raw"
 
+  # Every milestone and issue is flattened by one awk process, and one more awk emits the
+  # model rows for all of them while checking that each record's id field agrees with its
+  # filename. A record that does not parse, or whose id disagrees, is refused by name; two
+  # files cannot claim one id because the flat directory is keyed by the filename.
   MJ_PJ_MILESTONES=""; MJ_PJ_ISSUES=""
-  for f in "$dir"/milestones/*.yaml; do
+  # the records in one collation whatever the shell's locale: a glob sorts by the locale,
+  # and the row order of the model must not depend on who loaded it
+  set -- ; for f in $(cd "$dir/milestones" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
+    case "$f" in *.yaml) [ -f "$dir/milestones/$f" ] && set -- "$@" "$dir/milestones/$f" ;; esac
+  done
+  for f in "$@"; do MJ_PJ_MILESTONES="$MJ_PJ_MILESTONES $(basename "$f" .yaml)"; done
+  for f in $(cd "$dir/issues" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
+    case "$f" in *.yaml) ;; *) continue ;; esac
+    f="$dir/issues/$f"
     [ -f "$f" ] || continue
     id="$(basename "$f" .yaml)"
-    flat="$MJ_PJ/flat/$id"
-    [ -f "$flat" ] && { mj_err "duplicate id $id ($f)"; rc=2; continue; }
-    mj_yaml_flatten "$f" > "$flat" 2>/dev/null || { mj_err "$f does not parse"; rc=2; continue; }
-    [ "$(mj_yget "$flat" id)" = "$id" ] || { mj_err "$f declares id '$(mj_yget "$flat" id)' but its filename says $id"; rc=2; continue; }
-    awk -F= -v i="$id" '{ k=$1; sub(/^[^=]*=/, "", $0); printf "M\t%s\t%s\t%s\n", i, k, $0 }' "$flat" >> "$raw"
-    MJ_PJ_MILESTONES="$MJ_PJ_MILESTONES $id"
+    # one id, one record: the flat directory is keyed by the filename, so a milestone and
+    # an issue with one name would otherwise collapse into one flat file silently
+    case " $MJ_PJ_MILESTONES " in *" $id "*) mj_err "duplicate id $id ($f)"; rc=2; continue ;; esac
+    set -- "$@" "$f"; MJ_PJ_ISSUES="$MJ_PJ_ISSUES $id"
   done
-  for f in "$dir"/issues/*.yaml; do
-    [ -f "$f" ] || continue
-    id="$(basename "$f" .yaml)"
-    flat="$MJ_PJ/flat/$id"
-    [ -f "$flat" ] && { mj_err "duplicate id $id ($f)"; rc=2; continue; }
-    mj_yaml_flatten "$f" > "$flat" 2>/dev/null || { mj_err "$f does not parse"; rc=2; continue; }
-    [ "$(mj_yget "$flat" id)" = "$id" ] || { mj_err "$f declares id '$(mj_yget "$flat" id)' but its filename says $id"; rc=2; continue; }
-    awk -F= -v i="$id" '{ k=$1; sub(/^[^=]*=/, "", $0); printf "I\t%s\t%s\t%s\n", i, k, $0 }' "$flat" >> "$raw"
-    MJ_PJ_ISSUES="$MJ_PJ_ISSUES $id"
-  done
+  [ $# -gt 0 ] && mj_yaml_flatten_many "$MJ_PJ/flat" "$@"
+  if [ -f "$MJ_PJ/flat/.errors" ]; then
+    while IFS="$MJ_TAB" read -r id msg; do mj_err "$dir/$id: does not parse ($msg)"; done < "$MJ_PJ/flat/.errors"
+    rc=2
+  fi
+  set -- ; for id in $MJ_PJ_MILESTONES $MJ_PJ_ISSUES; do set -- "$@" "$MJ_PJ/flat/$id"; done
+  awk -v ms=" $MJ_PJ_MILESTONES " 'FNR == 1 {
+      if (id != "" && seen != id) { printf "%s\t%s\n", id, seen > "/dev/stderr"; bad = 1 }
+      id = FILENAME; sub(/.*\//, "", id); seen = ""; tag = index(ms, " " id " ") ? "M" : "I" }
+    $1 == "id" && seen == "" { v = $0; sub(/^[^=]*=/, "", v); seen = v }
+    { k = $1; sub(/^[^=]*=/, "", $0); printf "%s\t%s\t%s\t%s\n", tag, id, k, $0 }
+    END { if (id != "" && seen != id) { printf "%s\t%s\n", id, seen > "/dev/stderr"; bad = 1 }; exit bad }' \
+    FS='=' "$@" >> "$raw" 2>"$MJ_PJ/id.err" || rc=2
+  if [ -s "$MJ_PJ/id.err" ]; then
+    while IFS="$MJ_TAB" read -r id msg; do
+      f="$dir/milestones/$id.yaml"; [ -f "$f" ] || f="$dir/issues/$id.yaml"
+      mj_err "$f declares id '$msg' but its filename says $id"
+    done < "$MJ_PJ/id.err"
+  fi
   [ "$rc" = 0 ] || return 2
   awk -f "$MJ_LIB_DIR/project.awk" "$raw" > "$MJ_PJ/model.tsv" || return 2
+  # every record's fields and every model row become variables once, so the readers
+  # below expand them instead of running one awk per field or per row
+  mj_yload_dir "$MJ_PJ/flat" pj
+  mj_yassign < <(awk -F'\t' '$1 == "M" || $1 == "I" { id = $2; gsub(/-/, "___", id); gsub(/\./, "__", id)
+      printf "pjrow_%s_%s\t%s\n", $1, id, $0 }' "$MJ_PJ/model.tsv")
   MJ_PJ_LOADED=1
   return 0
 }
@@ -71,8 +95,21 @@ mj_project_unload() { [ -n "$MJ_PJ" ] && rm -rf "$MJ_PJ"; MJ_PJ=""; MJ_PJ_LOADED
 # ---------------------------------------------------------------- model accessors
 # Every one of these reads model.tsv. None recomputes anything.
 mj_pj_rows()   { awk -F'\t' -v t="$1" '$1==t' "$MJ_PJ/model.tsv"; }
-mj_pj_row()    { awk -F'\t' -v t="$1" -v i="$2" '$1==t && $2==i' "$MJ_PJ/model.tsv"; }
-mj_pj_col()    { mj_pj_row "$1" "$2" | cut -f"$3"; }
+# a milestone or issue row is a variable after the load; other row types stay in awk
+mj_pj_row() {
+  case "$1" in
+    M|I) local id="${2//-/___}"; id="${id//./__}"; local n="pjrow_$1_$id"; [ -n "${!n:-}" ] && printf '%s\n' "${!n}" ;;
+    *) awk -F'\t' -v t="$1" -v i="$2" '$1==t && $2==i' "$MJ_PJ/model.tsv" ;;
+  esac
+}
+# one column of a row, split on a byte that is not whitespace so that an empty field
+# between two tabs keeps its place (IFS whitespace would collapse it)
+mj_pj_col() {
+  local row sep n="$3" fields; row="$(mj_pj_row "$1" "$2")"; sep="$(printf '\001')"
+  row="${row//$MJ_TAB/$sep}"
+  IFS="$sep" read -r -a fields <<< "$row"
+  printf '%s' "${fields[$((n - 1))]:-}"
+}
 
 mj_pj_project_name()   { mj_pj_rows P | cut -f2; }
 mj_pj_repository()     { mj_pj_rows P | cut -f3; }
@@ -136,8 +173,8 @@ mj_pj_warn_count()    { mj_pj_rows V | awk -F'\t' '$2=="WARN"' | wc -l | tr -d '
 
 # flattened canonical record of one milestone or issue, for the fields the model does not carry
 mj_pj_flat()  { printf '%s' "$MJ_PJ/flat/$1"; }
-mj_pj_get()   { mj_yget "$MJ_PJ/flat/$1" "$2"; }
-mj_pj_list()  { mj_ylist "$MJ_PJ/flat/$1" "$2"; }
+mj_pj_get()   { local p="${1//-/___}"; mj_yv "pj_${p//./__}" "$2"; }
+mj_pj_list()  { local p="${1//-/___}"; mj_yvlist "pj_${p//./__}" "$2"; }
 
 # the next issue a worker should take: the lowest-wave READY issue of the active milestone,
 # highest priority first, then id. Derived on every call; never stored.
@@ -162,20 +199,22 @@ mj_pj_ready_ranked() {
 # Same contract as the policy and profile files: a key nobody reads is an error, not a
 # comment. The allowlists live beside the ones for policy and profiles.
 mj_project_unknown_keys() {
-  local bad=0 f id allow out
-  for f in "$MJ_PJ/flat"/*; do
-    [ -f "$f" ] || continue
-    id="$(basename "$f")"
-    if [ "$id" = PROJECT ]; then allow="project"
-    elif mj_pj_is_milestone "$id"; then allow="milestone"
-    else allow="issue"; fi
-    out="$(mj_yaml_unknown_keys "$f" "$MJ_ALLOW_DIR/$allow.txt" || true)"
-    if [ -n "$out" ]; then
-      printf '%s %s\n' "$id" "$(printf '%s' "$out" | tr '\n' ' ')"
-      bad=1
-    fi
-  done
-  return $bad
+  # one awk over every flattened record and the three allow-lists: a key is unknown when
+  # no pattern of its record kind matches it. The per-file, per-key shape before this
+  # ran thousands of processes and was most of plan validate.
+  local out
+  out="$(awk -v ms=" $MJ_PJ_MILESTONES " -v allow="$MJ_ALLOW_DIR" '
+    function load(kind,   f, line) { f = allow "/" kind ".txt"; while ((getline line < f) > 0) if (line != "") pat[kind, ++np[kind]] = line; close(f) }
+    BEGIN { load("project"); load("milestone"); load("issue") }
+    FNR == 1 { id = FILENAME; sub(/.*\//, "", id)
+      kind = (id == "PROJECT") ? "project" : (index(ms, " " id " ") ? "milestone" : "issue") }
+    { key = $0; sub(/=.*/, "", key); ok = 0
+      for (i = 1; i <= np[kind]; i++) if (key ~ pat[kind, i]) { ok = 1; break }
+      if (!ok) bad[id] = bad[id] " " key }
+    END { for (id in bad) print id bad[id] }' "$MJ_PJ"/flat/* | LC_ALL=C sort)"
+  [ -n "$out" ] || return 0
+  printf '%s\n' "$out"
+  return 1
 }
 
 # ---------------------------------------------------------------- Mermaid
@@ -209,24 +248,9 @@ mj_project_roadmap_mermaid() {
 }
 
 mj_project_mermaid() {
-  local m="${1:-}" id st cls
-  printf 'flowchart LR\n'
-  mj_pj_issue_ids | while read -r id; do
-    [ -n "$m" ] && [ "$(mj_pj_col I "$id" 3)" != "$m" ] && continue
-    st="$(mj_pj_i_status "$id")"
-    printf '    %s["%s<br/>%s"]:::%s\n' "$id" "$id" "$(mj_pj_i_title "$id" | sed 's/"/\&quot;/g')" "$(printf '%s' "$st" | tr 'A-Z' 'a-z')"
-  done
-  mj_pj_rows G | while IFS="$(printf '\t')" read -r _ from to; do
-    if [ -n "$m" ]; then
-      [ "$(mj_pj_col I "$from" 3)" = "$m" ] || continue
-      [ "$(mj_pj_col I "$to" 3)" = "$m" ] || continue
-    fi
-    printf '    %s --> %s\n' "$from" "$to"
-  done
-  for cls in "done:#16a34a:#052e16" "active:#2563eb:#eff6ff" "verify:#7c3aed:#f5f3ff" \
-             "ready:#0891b2:#ecfeff" "blocked:#b45309:#fffbeb" "cancelled:#6b7280:#f9fafb"; do
-    printf '    classDef %s stroke:%s,fill:%s,stroke-width:2px\n' "${cls%%:*}" "$(printf '%s' "$cls" | cut -d: -f2)" "$(printf '%s' "$cls" | cut -d: -f3)"
-  done
+  # one pass over the model: every issue of the milestone (or the plan) as a node, every
+  # dependency edge between two such issues, then the class definitions
+  awk -F'\t' -v m="${1:-}" -f "$MJ_LIB_DIR/mermaid.awk" "$MJ_PJ/model.tsv"
 }
 
 # ---------------------------------------------------------------- issue mutation

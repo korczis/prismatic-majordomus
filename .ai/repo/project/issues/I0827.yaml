@@ -1,0 +1,40 @@
+id: I0827
+milestone: M004
+title: The benchmark policy block
+slug: benchmark-policy
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Declare benchmark.samples, benchmark.warmup, benchmark.timeout_seconds, benchmark.cache_max_entries, benchmark.regression.p50/p95/p99 and benchmark.budget.doctor_ms in the policy, its allow-list and the skeleton, with no reader-side default."
+why: "Repeated constants in code are the thing majordomus.policy-completeness exists to refuse."
+current_state: "The policy has no benchmark keys."
+desired_state: "One block, documented in docs/SCHEMAS.md, read by bench, the cache and the budget check."
+scope:
+  - share/allow/policy.txt
+  - share/skeleton/policy.yaml
+  - .ai/repo/policy.yaml
+  - docs/SCHEMAS.md
+  - lib/doctor.sh
+non_scope: []
+depends_on:
+  - I0823
+acceptance_criteria:
+  - doctor's policy-completeness check passes with the new keys
+  - An unknown benchmark key is refused
+validation:
+  - bin/majordomus doctor
+evidence_required:
+  - docs_integrated
+risk: "The peer branch generates allow-lists from schemas; the keys are added in the anchored one-per-line form so the fold is mechanical."
+started_at: 2026-09-05T03:33:10Z
+verified_at: 2026-09-05T03:33:10Z
+completed_at: 2026-09-05T03:33:10Z
+evidence:
+  - covers: docs_integrated
+    type: test
+    command: "bin/majordomus doctor"
+    result: "share/schemas/policy.schema.json declares benchmark.samples, benchmark.warmup, benchmark.regression.{p50,p95,p99} and benchmark.budget.{doctor_ms,watch_ms}; share/allow/policy.txt is regenerated from it by the Rust generate command and generate --check reports in sync; share/skeleton/policy.yaml and .ai/repo/policy.yaml carry the block; doctor reports every policy key the code reads as declared, with the key scanner widened to keys carrying digits; docs/SCHEMAS.md documents the keys"
+    commit: next
+    recorded_at: 2026-09-05T03:33:10Z
+created_at: 2026-09-05
+updated_at: 2026-09-05

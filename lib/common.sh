@@ -205,7 +205,7 @@ mj_layout_table() {
   done
 }
 
-mj_git() { git -C "$MJ_ROOT" "$@"; }
+mj_git() { mj_count git; git -C "$MJ_ROOT" "$@"; }
 mj_git_repo_id() { mj_git rev-parse --git-common-dir 2>/dev/null | { read -r d; case "$d" in /*) printf '%s' "$d" ;; *) printf '%s/%s' "$MJ_ROOT" "$d" ;; esac; }; }
 mj_git_branch()  { mj_git symbolic-ref --short HEAD 2>/dev/null || printf 'DETACHED'; }
 # --verify, because plain `rev-parse HEAD` in a repository with no commits prints the
@@ -235,7 +235,57 @@ mj_git_touched() {
 }
 
 # ---------------------------------------------------------------- misc
+# one tab, computed once: a loop that writes IFS="$MJ_TAB" per iteration forks a
+# subshell per line, which is where a listing of a few hundred rows lost a second
+MJ_TAB="$(printf '\t')"
 mj_now()    { date -u +%Y-%m-%dT%H:%M:%SZ; }
+
+# ---------------------------------------------------------------- timing
+# Phase timing and work counters, on only when MJ_TIMING is set: every phase a command
+# declares is written as one line to a file created here, in the shell that reports at
+# exit, never inside a command substitution. The clock is EPOCHREALTIME where bash has
+# it, otherwise perl, otherwise whole seconds, and the report says which. Off, the cost
+# of a phase or a count is one test.
+MJ_TIMING_FILE=""; MJ_TIMING_T0=""
+if [ -n "${EPOCHREALTIME:-}" ]; then MJ_TIMING_CLOCK=epochrealtime
+elif command -v perl >/dev/null 2>&1; then MJ_TIMING_CLOCK=perl
+else MJ_TIMING_CLOCK=seconds; fi
+mj_ms() {
+  case "$MJ_TIMING_CLOCK" in
+    epochrealtime) local t="${EPOCHREALTIME/./}"; printf '%s' "${t%???}" ;;
+    perl) perl -MTime::HiRes=time -e 'printf("%d", time() * 1000)' ;;
+    *) printf '%s000' "$(date +%s)" ;;
+  esac
+}
+mj_timing_on() { [ -n "${MJ_TIMING:-}" ]; }
+if mj_timing_on && [ -z "${MJ_TIMING_FILE:-}" ]; then
+  MJ_TIMING_FILE="$(mktemp "${TMPDIR:-/tmp}/mj.timing.XXXXXX")"; export MJ_TIMING_FILE
+  MJ_TIMING_T0="$(mj_ms)"
+fi
+# t0="$(mj_phase_begin <name>)" ... mj_phase_end <name> "$t0"
+mj_phase_begin() { mj_timing_on || return 0; mj_ms; }
+mj_phase_end() {
+  mj_timing_on || return 0
+  [ -n "${2:-}" ] || return 0
+  printf 'phase\t%s\t%s\n' "$1" "$(( $(mj_ms) - $2 ))" >> "$MJ_TIMING_FILE"
+}
+# mj_count <name>: one unit of a kind of work worth counting (a parse, a git call)
+mj_count() { mj_timing_on || return 0; printf 'count\t%s\t1\n' "$1" >> "$MJ_TIMING_FILE"; }
+# The report: phases ranked by time, counters summed, on stderr so the command's own
+# output is untouched, in the same shape whatever the command was.
+mj_timing_report() {
+  mj_timing_on || return 0
+  [ -n "$MJ_TIMING_FILE" ] && [ -f "$MJ_TIMING_FILE" ] || return 0
+  local tab; tab="$(printf '\t')"
+  {
+    printf 'TIMING clock=%s total=%s ms\n' "$MJ_TIMING_CLOCK" "$(( $(mj_ms) - MJ_TIMING_T0 ))"
+    awk -F'\t' '$1=="phase" { t[$2]+=$3; n[$2]++ } END { for (k in t) printf "phase\t%d\t%d\t%s\n", t[k], n[k], k }' "$MJ_TIMING_FILE" \
+      | sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "phase  %8d ms  %4d x  %s\n", $2, $3, $4 }'
+    awk -F'\t' '$1=="count" { c[$2]+=$3 } END { for (k in c) printf "count\t%d\t%s\n", c[k], k }' "$MJ_TIMING_FILE" \
+      | sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "count  %8d     %s\n", $2, $3 }'
+  } >&2
+  rm -f "$MJ_TIMING_FILE"
+}
 mj_now_compact() { date -u +%Y%m%dT%H%M%SZ; }
 mj_rand16() { od -An -N8 -tx1 /dev/urandom | tr -d ' \n'; }
 mj_sha256() {
@@ -292,35 +342,57 @@ mj_epoch() {
 # Supported: `key: value`, nested maps by 2-space indent, block lists (`- item`),
 # lists of maps (`- key: value` + indented keys), inline lists `[a, b]`, quotes,
 # comments. Tabs, anchors, multi-line scalars and flow maps are rejected.
-mj_yaml_flatten() {
-  awk '
+# mj_yaml_flatten <file>            one file, flat lines on stdout, ERROR on stderr and exit 3
+# mj_yaml_flatten_many <outdir> [--front] <file>...
+#   many files in one awk process: <outdir>/<basename without extension> holds each
+#   file's flat lines; a file that does not parse is named in <outdir>/.errors with its
+#   message and its output is left empty. --front reads only the YAML front matter of
+#   Markdown files. One process for a hundred records is what a loader pays instead of
+#   a hundred, which is the difference between a plan that validates in a second and
+#   one that validates in five.
+MJ_FLATTEN_AWK='
   function trim(s){ sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
   function unq(v){
     if (v ~ /^".*"$/ || v ~ /^\047.*\047$/) return substr(v,2,length(v)-2)
     sub(/[ \t]+#.*$/,"",v); return trim(v)
   }
   function join(a,b){ return (a=="" ? b : a "." b) }
+  function put(l){ if (outdir == "") print l; else print l > out }
+  function fail(m){
+    if (outdir == "") { print "ERROR:" m > "/dev/stderr"; exit 3 }
+    print name "\t" m >> (outdir "/.errors"); failed = 1; skipped[name] = 1
+  }
   function emit_val(p,v,  n,i,parts){
     if (v ~ /^\[.*\]$/) {
       v=substr(v,2,length(v)-2); v=trim(v)
-      if (v=="") { print p "=[]"; return }
+      if (v=="") { put(p "=[]"); return }
       n=split(v,parts,/[ \t]*,[ \t]*/)
-      for(i=1;i<=n;i++) print p "." (i-1) "=" unq(parts[i])
+      for(i=1;i<=n;i++) put(p "." (i-1) "=" unq(parts[i]))
       return
     }
-    print p "=" unq(v)
+    put(p "=" unq(v))
   }
   function clear_from(i,  k){ for(k in ctx) if(k+0>i) delete ctx[k]; for(k in pend) if(k+0>=i) delete pend[k] }
   BEGIN{ ctx[0]="" }
+  outdir != "" && FNR == 1 {
+    if (out != "") close(out)
+    if (numbered) name = ++nfile
+    else { name = FILENAME; sub(/.*\//, "", name); sub(/\.[A-Za-z0-9]+$/, "", name) }
+    out = outdir "/" name; printf "" > out
+    delete ctx; delete pend; delete cnt; ctx[0] = ""; failed = 0; infront = 0; front_done = 0
+    if (front) { if ($0 != "---") { fail("no front matter"); nextfile } infront = 1; next }
+  }
+  outdir != "" && failed { nextfile }
+  outdir != "" && front && infront && FNR > 1 && $0 == "---" { infront = 0; front_done = 1; nextfile }
   {
     line=$0
-    if (line ~ /\t/) { print "ERROR:tab character on line " NR > "/dev/stderr"; exit 3 }
+    if (line ~ /\t/) { fail("tab character on line " FNR); if (outdir != "") nextfile; }
     if (line ~ /^[ \t]*(#|$)/) next
     if (line ~ /^---[ \t]*$/) next
     match(line,/^ */); ind=RLENGTH; s=substr(line,ind+1)
-    if (ind % 2 != 0) { print "ERROR:odd indentation on line " NR > "/dev/stderr"; exit 3 }
+    if (ind % 2 != 0) { fail("odd indentation on line " FNR); if (outdir != "") nextfile; }
     if (s ~ /^- /) {
-      if (!(ind in pend)) { print "ERROR:list item without a parent key on line " NR > "/dev/stderr"; exit 3 }
+      if (!(ind in pend)) { fail("list item without a parent key on line " FNR); if (outdir != "") nextfile; }
       parent=pend[ind]; idx=cnt[parent]+0; cnt[parent]=idx+1
       item=trim(substr(s,3)); ip=parent "." idx
       if (item ~ /^[A-Za-z_][A-Za-z0-9_-]*:([ \t]|$)/) {
@@ -332,29 +404,92 @@ mj_yaml_flatten() {
       } else emit_val(ip,item)
       next
     }
-    if (s !~ /^[A-Za-z_][A-Za-z0-9_-]*:([ \t]|$)/) { print "ERROR:cannot parse line " NR ": " s > "/dev/stderr"; exit 3 }
-    if (!(ind in ctx)) { print "ERROR:unexpected indentation on line " NR > "/dev/stderr"; exit 3 }
+    if (s !~ /^[A-Za-z_][A-Za-z0-9_-]*:([ \t]|$)/) { fail("cannot parse line " FNR ": " s); if (outdir != "") nextfile; }
+    if (!(ind in ctx)) { fail("unexpected indentation on line " FNR); if (outdir != "") nextfile; }
     k=s; sub(/:.*$/,"",k); v=s; sub(/^[^:]*:[ \t]*/,"",v)
     clear_from(ind)
     p=join(ctx[ind],k)
     if (v=="") { pend[ind]=p; pend[ind+2]=p; ctx[ind+2]=p }
     else emit_val(p,v)
-  }' "$1"
+  }'
+mj_yaml_flatten() {
+  mj_count yaml_flatten
+  awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$1"
+}
+# --numbered names the outputs 1, 2, 3 ... in argument order, for callers whose files
+# may share a basename; the caller keeps the number-to-path map.
+mj_yaml_flatten_many() {
+  local outdir="$1" front=0 numbered=0; shift
+  while :; do case "${1:-}" in --front) front=1; shift ;; --numbered) numbered=1; shift ;; *) break ;; esac; done
+  [ $# -gt 0 ] || return 0
+  mj_count yaml_flatten_many
+  rm -f "$outdir/.errors"
+  awk -v outdir="$outdir" -v front="$front" -v numbered="$numbered" "$MJ_FLATTEN_AWK" "$@"
+}
+# mj_sha256_many: NUL-separated paths on stdin, one "hash<TAB>path" line per file, one
+# hashing process for all of them. Hashing one file per process costs more than reading
+# it, and the knowledge compiler hashes every source it discovers.
+mj_sha256_many() {
+  mj_count sha256_many
+  if command -v sha256sum >/dev/null 2>&1; then xargs -0 sha256sum
+  elif command -v shasum >/dev/null 2>&1; then xargs -0 shasum -a 256
+  else mj_die "$MJ_EX_MISSING" "need sha256sum or shasum"; fi | awk '{ h = $1; sub(/^[^ ]+  /, ""); printf "%s\t%s\n", h, $0 }'
 }
 # value of a flattened key (first match); empty if absent
 # One process each. These run thousands of times per command — the rule loader alone asks
 # for well over a thousand keys — and the sed|sed|head form they replaced cost four forks
 # per lookup, which was most of a command's wall time.
+# ---------------------------------------------------------------- flat file -> variables
+# mj_yload <flat> <prefix>: every key=value of a flattened file becomes one shell variable
+# <prefix>__<key>, with each "." of the key written "__" and each "-" written "___", so a
+# reader that needs many keys of one file pays one awk and one loop of builtins instead of
+# one awk per key. Keys outside [A-Za-z0-9_.-] are skipped: they fail every allow-list
+# anyway and could not be variable names. Nothing read from a file is ever evaluated: awk
+# emits name<TAB>value, the name is checked once more here, and printf -v assigns it.
+mj_yassign() { # name<TAB>value lines on stdin -> variables, in this shell
+  local line n
+  while IFS= read -r line; do
+    n="${line%%"$MJ_TAB"*}"
+    case "$n" in ''|*[!A-Za-z0-9_]*) continue ;; esac
+    printf -v "$n" '%s' "${line#*"$MJ_TAB"}"
+  done
+}
+mj_yload() {
+  mj_yassign < <(awk -F= -v p="$2" '{
+      k = $1; if (k !~ /^[A-Za-z0-9_.-]+$/) next
+      gsub(/-/, "___", k); gsub(/\./, "__", k)
+      v = $0; sub(/^[^=]*=/, "", v)
+      printf "%s__%s\t%s\n", p, k, v }' "$1")
+}
+# mj_yload_dir <dir> <prefix>: every file of a flat directory at once, one awk and one
+# loop; the variables are <prefix>_<file name>__<key>, the file name sanitised like a key
+mj_yload_dir() {
+  mj_yassign < <(awk -F= -v p="$2" 'FNR == 1 { pre = FILENAME; sub(/.*\//, "", pre); gsub(/-/, "___", pre); gsub(/\./, "__", pre); pre = p "_" pre }
+      { k = $1; if (k !~ /^[A-Za-z0-9_.-]+$/) next
+        gsub(/-/, "___", k); gsub(/\./, "__", k)
+        v = $0; sub(/^[^=]*=/, "", v)
+        printf "%s__%s\t%s\n", pre, k, v }' "$1"/*)
+}
+# mj_yv <prefix> <key>: the value loaded for a key, empty when absent
+# printed as a line, like the flat file's own line, so a caller that collects several
+# values in a command substitution gets one per line; an absent key prints nothing
+mj_yv() { local k="${2//-/___}" n; k="${k//./__}"; n="$1__$k"; [ -n "${!n:-}" ] && printf '%s\n' "${!n}"; return 0; }
+# mj_yvlist <prefix> <key>: the values under key.0, key.1 ... with no process per item
+mj_yvlist() { local i=0 k n; k="${2//-/___}"; k="${k//./__}"; while n="$1__${k}__$i"; [ -n "${!n:-}" ]; do printf '%s\n' "${!n}"; i=$((i+1)); done; }
+
 mj_yget()  { awk -v k="$2" 'index($0, k "=") == 1 { print substr($0, length(k) + 2); exit }' "$1"; }
 # list values under a key prefix: key.0, key.1 ...
 mj_ylist() { awk -v k="$2" 'index($0, k ".") == 1 { r = substr($0, length(k) + 2); if (r ~ /^[0-9]+=/) { sub(/^[0-9]+=/, "", r); print r } }' "$1"; }
 # keys not matching any regex in an allowlist file -> printed; returns 1 if any
 mj_yaml_unknown_keys() {
-  local flat="$1" allow="$2" bad=0 key
-  while IFS='=' read -r key _; do
-    grep -qE -f "$allow" <<<"$key" || { printf '%s\n' "$key"; bad=1; }
-  done < "$flat"
-  return $bad
+  # one grep per file, not one per key: the keys are cut out in one pass and the ones no
+  # allow-list pattern matches are the unknown ones. On a plan of a hundred records the
+  # per-key shape ran thousands of grep processes and was most of plan validate.
+  local flat="$1" allow="$2" out
+  out="$(cut -d= -f1 "$flat" | grep -vE -f "$allow" || true)"
+  [ -n "$out" ] || return 0
+  printf '%s\n' "$out"
+  return 1
 }
 
 # ---------------------------------------------------------------- regions and stamps
@@ -478,14 +613,10 @@ mj_events_load() {
 # file on every call and leaking a temporary file each time.
 mj_event_ids() { sed -n 's/^events\.[0-9]*\.id=//p' "$MJ_EV_FLAT"; }
 mj_event_known() { mj_event_ids | grep -Fxq "$1"; }
-# the index of one event, so its other fields can be read
+# the index of one event, so its other fields can be read: one pass, not one awk per index
 mj_event_index() {
-  local i=0
-  while [ -n "$(mj_yget "$MJ_EV_FLAT" "events.$i.id")" ]; do
-    [ "$(mj_yget "$MJ_EV_FLAT" "events.$i.id")" = "$1" ] && { printf '%s' "$i"; return 0; }
-    i=$((i+1))
-  done
-  return 1
+  awk -F= -v want="$1" '/^events\.[0-9]+\.id=/ { v = $0; sub(/^[^=]*=/, "", v); if (v == want) { split($1, k, "."); print k[2]; found = 1; exit } }
+    END { exit found ? 0 : 1 }' "$MJ_EV_FLAT"
 }
 mj_event_requires() {
   local i; i="$(mj_event_index "$1")" || return 0
@@ -581,7 +712,7 @@ mj_load_profile() {
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
-mj_cleanup() { rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" 2>/dev/null; }
+mj_cleanup() { mj_timing_report; rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" 2>/dev/null; }
 trap mj_cleanup EXIT
 
 # ---------------------------------------------------------------- records

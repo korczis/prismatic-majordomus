@@ -7,7 +7,7 @@
   },
   "active_milestone": "M003",
   "next_ready": "I0806",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::ready\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::ready\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0817[\"I0817<br/>Phase timing and work counters behind MJ_TIMING\"]:::done\n    I0818[\"I0818<br/>The command registry is read in one pass\"]:::done\n    I0819[\"I0819<br/>The project model is loaded with one flatten per file and no per-file lookups\"]:::done\n    I0820[\"I0820<br/>Catalogue, DAG, context and command-surface validators read their inputs once\"]:::ready\n    I0821[\"I0821<br/>Flattened YAML is cached under .ai/local/cache by content hash\"]:::ready\n    I0822[\"I0822<br/>Every canonical file is flattened at most once per command\"]:::blocked\n    I0823[\"I0823<br/>majordomus bench: targets derived from the command registry\"]:::done\n    I0824[\"I0824<br/>Bench persists local runs and keeps a latest projection\"]:::done\n    I0825[\"I0825<br/>An explicit committed baseline\"]:::done\n    I0826[\"I0826<br/>bench --check refuses a regression by policy\"]:::done\n    I0827[\"I0827<br/>The benchmark policy block\"]:::done\n    I0828[\"I0828<br/>doctor under a declared budget, and the hook inherits it\"]:::blocked\n    I0829[\"I0829<br/>Performance doctrine as project rules\"]:::done\n    I0830[\"I0830<br/>docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference\"]:::done\n    I0831[\"I0831<br/>Performance claims at their proven status\"]:::blocked\n    I0832[\"I0832<br/>generate-site-data instrumented and its hot spots removed\"]:::ready\n    I0833[\"I0833<br/>knowledge nodes and edges read each source once\"]:::done\n    I0834[\"I0834<br/>The test runner reports per-case time and the suite budget\"]:::blocked\n    I0835[\"I0835<br/>CI runs the structural performance checks\"]:::blocked\n    I0836[\"I0836<br/>A synthetic repository generator for scaling cases\"]:::ready\n    I0837[\"I0837<br/>Timing report as JSON\"]:::ready\n    I0838[\"I0838<br/>bench compare and the top regressions report\"]:::ready\n    I0839[\"I0839<br/>watch inherits every doctor fix and its own budget\"]:::blocked\n    I0840[\"I0840<br/>context and its subcommands under a second\"]:::blocked\n    I0841[\"I0841<br/>Cache equivalence proved by property-shaped cases\"]:::blocked\n    I0842[\"I0842<br/>Before and after evidence for every optimisation\"]:::blocked\n    I0843[\"I0843<br/>The performance workflow is discoverable and complete\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    I0817 --> I0818\n    I0817 --> I0819\n    I0817 --> I0821\n    I0817 --> I0823\n    I0817 --> I0832\n    I0817 --> I0833\n    I0817 --> I0837\n    I0818 --> I0820\n    I0818 --> I0822\n    I0818 --> I0828\n    I0818 --> I0842\n    I0819 --> I0820\n    I0819 --> I0822\n    I0819 --> I0828\n    I0819 --> I0832\n    I0819 --> I0836\n    I0819 --> I0842\n    I0820 --> I0822\n    I0820 --> I0828\n    I0820 --> I0840\n    I0820 --> I0842\n    I0821 --> I0840\n    I0821 --> I0841\n    I0822 --> I0831\n    I0822 --> I0835\n    I0823 --> I0824\n    I0823 --> I0827\n    I0823 --> I0830\n    I0824 --> I0825\n    I0825 --> I0826\n    I0826 --> I0830\n    I0826 --> I0831\n    I0826 --> I0835\n    I0826 --> I0838\n    I0827 --> I0828\n    I0828 --> I0834\n    I0828 --> I0839\n    I0829 --> I0830\n    I0830 --> I0843\n    I0831 --> I0843\n    I0832 --> I0842\n    I0833 --> I0842\n    I0835 --> I0843\n    I0841 --> I0843\n    I0842 --> I0843\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "statuses": {
     "issue": [
       "READY",
@@ -432,6 +432,118 @@
           "ACTIVE": 0,
           "VERIFY": 0,
           "DONE": 8,
+          "CANCELLED": 0
+        }
+      }
+    },
+    {
+      "id": "M004",
+      "slug": "performance-truth",
+      "status": "ACTIVE",
+      "order": 4,
+      "priority": "p0",
+      "title": "Performance is executable evidence, and the hot path does no canonical work twice",
+      "problem": "The shell tool is slow enough to be avoided: doctor takes ten seconds and runs on every commit through the pre-commit hook, watch takes the same, knowledge nodes six seconds, plan validate four, the site-data check and a single test case half a minute, and the suite half an hour. Nobody could say which phase paid for it, because nothing measured phases; the two validators that cost two thirds of doctor are loops of one awk process per key over files that were already flattened once. The Rust executable measured at the same time is fast, so the slowness is the shell tool's own.",
+      "outcome": "Every public command can be benchmarked from the command registry with cold and warm distributions, the phases and work counters of any run can be printed, the caches and batch reads that remove repeated work preserve every observable result, an accepted baseline lives in the repository and a check refuses a regression by policy, and the pre-commit hook is fast enough that nobody routes around it.",
+      "current_state": "MJ_TIMING prints per-validator phases and two work counters (feature/performance-truth 77f5d79). No benchmark command, no baseline, no regression check, no parse cache, no performance doctrine; the numbers above are the measured baseline on this repository.",
+      "desired_state": "majordomus bench derives its targets from share/commands.yaml, records p50, p90, p95, p99, min, max, mean and stddev per command and mode, persists local runs under .ai/local/benchmarks/, compares against .ai/repo/benchmarks/baseline.json under the policy's benchmark block, and exits non-zero on a regression. Registry, catalogue, project-model and coverage validators read each flat file once. Flattened YAML is cached under .ai/local/cache/ by content hash. Project rules state the doctrine, docs/PERFORMANCE.md explains it, and CI runs the structural checks.",
+      "scope": [
+        "lib",
+        "bin/majordomus",
+        "share/commands.yaml",
+        "share/allow",
+        "share/standard/majordomus/",
+        "share/skeleton",
+        ".ai/repo/rules/project",
+        ".ai/repo/benchmarks",
+        "docs",
+        "scripts",
+        "test/cases",
+        "test/lib.sh",
+        ".github/workflows/validate.yml"
+      ],
+      "non_scope": [
+        "Any change to apps/majordomus-cli, whose measured latency is not the problem",
+        "A metrics database, a dashboard, a tracing backend or any telemetry service",
+        "Hot reload or filesystem watching",
+        "A persistent capability result cache across processes beyond the flatten cache",
+        "Benchmarking external services"
+      ],
+      "acceptance_criteria": [
+        "Every public command in share/commands.yaml is a benchmark target without a second list anywhere",
+        "Cold and warm distributions are recorded separately with p50, p95 and p99 and never mixed",
+        "A local run is persisted under .ai/local/benchmarks/ and never treated as a baseline",
+        "The committed baseline is updated only by an explicit command on a clean tree",
+        "bench --check exits non-zero on a regression over the policy thresholds and names the command, the metric, both values and the threshold",
+        "Every canonical file is flattened at most once per command, proved by the work counters in a case",
+        "A cache hit and a cache miss produce byte-identical command output for every read-only command, proved by a case",
+        "doctor on this repository runs under the budget the policy declares, and the pre-commit hook inherits it",
+        "The performance rules are project rules under .ai/repo/rules/project, and docs/PERFORMANCE.md is the reference the README points at"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor",
+        "bin/majordomus watch",
+        "bin/majordomus bench --check",
+        "scripts/generate-site-data --check",
+        "shellcheck -x -s bash bin/majordomus lib/*.sh"
+      ],
+      "evidence_required": [
+        "phase_timing",
+        "batch_reads",
+        "flatten_cache",
+        "bench_targets_derived",
+        "bench_persisted",
+        "baseline_explicit",
+        "regression_refused",
+        "doctor_under_budget",
+        "docs_integrated"
+      ],
+      "risks": [
+        "A cache is a second thing that can be believed. The flatten cache is keyed by the content hash of the file it caches, so a stale entry cannot be read for a changed file; it can only cost a miss.",
+        "Wall-clock thresholds are noisy across machines. The regression policy is conservative and relative, the structural counters are exact, and only the counters gate CI strictly.",
+        "Batching reads changes how validators are written. Each rewrite is proved by the case that already exists for the validator, run before and after, plus the counter case."
+      ],
+      "evidence": [],
+      "issues": [
+        "I0817",
+        "I0818",
+        "I0819",
+        "I0820",
+        "I0821",
+        "I0822",
+        "I0823",
+        "I0824",
+        "I0825",
+        "I0826",
+        "I0827",
+        "I0828",
+        "I0829",
+        "I0830",
+        "I0831",
+        "I0832",
+        "I0833",
+        "I0834",
+        "I0835",
+        "I0836",
+        "I0837",
+        "I0838",
+        "I0839",
+        "I0840",
+        "I0841",
+        "I0842",
+        "I0843"
+      ],
+      "mermaid": "flowchart LR\n    I0817[\"I0817<br/>Phase timing and work counters behind MJ_TIMING\"]:::done\n    I0818[\"I0818<br/>The command registry is read in one pass\"]:::done\n    I0819[\"I0819<br/>The project model is loaded with one flatten per file and no per-file lookups\"]:::done\n    I0820[\"I0820<br/>Catalogue, DAG, context and command-surface validators read their inputs once\"]:::ready\n    I0821[\"I0821<br/>Flattened YAML is cached under .ai/local/cache by content hash\"]:::ready\n    I0822[\"I0822<br/>Every canonical file is flattened at most once per command\"]:::blocked\n    I0823[\"I0823<br/>majordomus bench: targets derived from the command registry\"]:::done\n    I0824[\"I0824<br/>Bench persists local runs and keeps a latest projection\"]:::done\n    I0825[\"I0825<br/>An explicit committed baseline\"]:::done\n    I0826[\"I0826<br/>bench --check refuses a regression by policy\"]:::done\n    I0827[\"I0827<br/>The benchmark policy block\"]:::done\n    I0828[\"I0828<br/>doctor under a declared budget, and the hook inherits it\"]:::blocked\n    I0829[\"I0829<br/>Performance doctrine as project rules\"]:::done\n    I0830[\"I0830<br/>docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference\"]:::done\n    I0831[\"I0831<br/>Performance claims at their proven status\"]:::blocked\n    I0832[\"I0832<br/>generate-site-data instrumented and its hot spots removed\"]:::ready\n    I0833[\"I0833<br/>knowledge nodes and edges read each source once\"]:::done\n    I0834[\"I0834<br/>The test runner reports per-case time and the suite budget\"]:::blocked\n    I0835[\"I0835<br/>CI runs the structural performance checks\"]:::blocked\n    I0836[\"I0836<br/>A synthetic repository generator for scaling cases\"]:::ready\n    I0837[\"I0837<br/>Timing report as JSON\"]:::ready\n    I0838[\"I0838<br/>bench compare and the top regressions report\"]:::ready\n    I0839[\"I0839<br/>watch inherits every doctor fix and its own budget\"]:::blocked\n    I0840[\"I0840<br/>context and its subcommands under a second\"]:::blocked\n    I0841[\"I0841<br/>Cache equivalence proved by property-shaped cases\"]:::blocked\n    I0842[\"I0842<br/>Before and after evidence for every optimisation\"]:::blocked\n    I0843[\"I0843<br/>The performance workflow is discoverable and complete\"]:::blocked\n    I0817 --> I0818\n    I0817 --> I0819\n    I0817 --> I0821\n    I0817 --> I0823\n    I0817 --> I0832\n    I0817 --> I0833\n    I0817 --> I0837\n    I0818 --> I0820\n    I0818 --> I0822\n    I0818 --> I0828\n    I0818 --> I0842\n    I0819 --> I0820\n    I0819 --> I0822\n    I0819 --> I0828\n    I0819 --> I0832\n    I0819 --> I0836\n    I0819 --> I0842\n    I0820 --> I0822\n    I0820 --> I0828\n    I0820 --> I0840\n    I0820 --> I0842\n    I0821 --> I0840\n    I0821 --> I0841\n    I0822 --> I0831\n    I0822 --> I0835\n    I0823 --> I0824\n    I0823 --> I0827\n    I0823 --> I0830\n    I0824 --> I0825\n    I0825 --> I0826\n    I0826 --> I0830\n    I0826 --> I0831\n    I0826 --> I0835\n    I0826 --> I0838\n    I0827 --> I0828\n    I0828 --> I0834\n    I0828 --> I0839\n    I0829 --> I0830\n    I0830 --> I0843\n    I0831 --> I0843\n    I0832 --> I0842\n    I0833 --> I0842\n    I0835 --> I0843\n    I0841 --> I0843\n    I0842 --> I0843\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 27,
+        "required": 27,
+        "by_status": {
+          "READY": 6,
+          "BLOCKED": 10,
+          "ACTIVE": 0,
+          "VERIFY": 0,
+          "DONE": 11,
           "CANCELLED": 0
         }
       }
@@ -4233,6 +4345,1432 @@
       "started_at": "",
       "verified_at": "",
       "completed_at": ""
+    },
+    {
+      "id": "I0817",
+      "slug": "phase-timing-and-counters",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 0,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Phase timing and work counters behind MJ_TIMING",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I0818",
+        "I0819",
+        "I0821",
+        "I0823",
+        "I0832",
+        "I0833",
+        "I0837"
+      ],
+      "scope": [
+        "lib/common.sh",
+        "lib/doctrine.sh",
+        "test/cases/08_no_forbidden_constructs.sh"
+      ],
+      "non_scope": [
+        "A tracing backend",
+        "Timing that is on when MJ_TIMING is unset"
+      ],
+      "objective": "Time every validator and count every YAML flatten and git call when MJ_TIMING is set, and report them ranked at exit.",
+      "why": "Nothing else in this milestone can be measured without it; optimisation without a ranking is guessing.",
+      "current_state": "Landed on feature/performance-truth as 77f5d79: the dispatcher declares one phase per validator, mj_git and mj_yaml_flatten count.",
+      "desired_state": "Phases and counters are the vocabulary every later issue reports in.",
+      "acceptance_criteria": [
+        "The report ranks phases by time and sums counters on stderr, with the command output untouched",
+        "Off, a phase or a count costs one test and no subprocess"
+      ],
+      "validation": [
+        "MJ_TIMING=1 bin/majordomus doctor",
+        "bash test/run.sh 08_no_forbidden_constructs"
+      ],
+      "evidence_required": [
+        "phase_timing"
+      ],
+      "evidence": [
+        {
+          "covers": "phase_timing",
+          "type": "test",
+          "command": "MJ_TIMING=1 bin/majordomus doctor",
+          "result": "the report on stderr ranks one phase per validator and sums the yaml_flatten and git counters; on this repository the two largest phases are the project-model and command-coverage validators, together two thirds of doctor's total; case 08 accepts the timing file as a scratch path; cases 02, 14, 17 and 18 pass unchanged",
+          "artifact": "",
+          "commit": "77f5d79",
+          "recorded_at": "2026-09-05T01:44:00Z"
+        }
+      ],
+      "risk": "The clock is EPOCHREALTIME where bash has it and perl otherwise; whole seconds where neither exists, and the report says which.",
+      "completion": "",
+      "started_at": "2026-09-05T01:35:00Z",
+      "verified_at": "2026-09-05T01:44:00Z",
+      "completed_at": "2026-09-05T01:44:00Z"
+    },
+    {
+      "id": "I0818",
+      "slug": "registry-batch-reads",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The command registry is read in one pass",
+      "depends_on": [
+        "I0817"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0820",
+        "I0822",
+        "I0828",
+        "I0842"
+      ],
+      "scope": [
+        "lib/commands.sh",
+        "lib/common.sh",
+        "test/cases/30_command_registry.sh",
+        "test/cases/31_command_coverage.sh"
+      ],
+      "non_scope": [
+        "A change to share/commands.yaml"
+      ],
+      "objective": "Replace the per-index, per-field awk lookups in mj_cmdreg_public, mj_cmdreg_ids and the event registry with one awk pass each, and read them once per process.",
+      "why": "Command coverage costs three seconds because mj_cmdreg_public runs dozens of awk processes and is called inside a loop over declared commands.",
+      "current_state": "mj_cmdreg is one awk per key; mj_cmdreg_public loops it; mj_validate_command_coverage calls mj_cmdreg_public per declared command.",
+      "desired_state": "Each registry is flattened once and its public ids and dispatch table are derived with one awk; the coverage validator reads every case header with one pass.",
+      "acceptance_criteria": [
+        "validate:command_coverage and validate:command_surface each under 200 ms on this repository",
+        "Cases 30, 31, 35 and 36 pass unchanged",
+        "yaml_flatten count for doctor does not grow"
+      ],
+      "validation": [
+        "MJ_TIMING=1 bin/majordomus doctor",
+        "bash test/run.sh 31_command_coverage"
+      ],
+      "evidence_required": [
+        "batch_reads"
+      ],
+      "evidence": [
+        {
+          "covers": "batch_reads",
+          "type": "test",
+          "command": "MJ_TIMING=1 bin/majordomus doctor",
+          "result": "validate:command_coverage went from 3080 ms to 74 ms and validate:command_surface from 352 ms to 141 ms on this repository; mj_cmdreg_public and mj_cmdreg_ids are one awk each, the coverage validator reads every case header in one pass and the public list once, the surface validator reads the dispatch table once, and mj_event_index is one pass; cases 15, 22, 30, 31, 33, 35 and 36 pass unchanged, including the mutations that remove a registry entry and add a dispatcher-only command",
+          "artifact": "",
+          "commit": "c9443ae",
+          "recorded_at": "2026-09-05T02:05:00Z"
+        }
+      ],
+      "risk": "A batch read must produce exactly the per-key results; the cases that mutate the registry are the proof.",
+      "completion": "",
+      "started_at": "2026-09-05T01:50:00Z",
+      "verified_at": "2026-09-05T02:05:00Z",
+      "completed_at": "2026-09-05T02:05:00Z"
+    },
+    {
+      "id": "I0819",
+      "slug": "project-model-batch-load",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The project model is loaded with one flatten per file and no per-file lookups",
+      "depends_on": [
+        "I0817"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0820",
+        "I0822",
+        "I0828",
+        "I0832",
+        "I0836",
+        "I0842"
+      ],
+      "scope": [
+        "lib/project.sh",
+        "lib/doctor.sh",
+        "lib/plan.sh",
+        "test/cases/40_project_model.sh",
+        "test/cases/41_project_status.sh",
+        "test/cases/43_plan_command.sh"
+      ],
+      "non_scope": [
+        "Any change to the model semantics in project.awk"
+      ],
+      "objective": "Make mj_project_load and mj_project_unknown_keys read each milestone and issue once, checking ids and unknown keys inside awk rather than with a subprocess per file and per key.",
+      "why": "The project validator costs 3.5 s of doctor and plan validate costs 4.4 s on 73 records; the count grows with the plan.",
+      "current_state": "Every record is flattened, then read back with mj_yget per check, then re-read to build raw.tsv.",
+      "desired_state": "One flatten and one awk per record, unknown keys computed by one awk over the flat directory against the allow-lists.",
+      "acceptance_criteria": [
+        "validate:project under 400 ms and plan validate under 1 s on this repository",
+        "Cases 40 to 48 pass unchanged"
+      ],
+      "validation": [
+        "MJ_TIMING=1 bin/majordomus plan validate",
+        "bash test/run.sh 40_project_model"
+      ],
+      "evidence_required": [
+        "batch_reads"
+      ],
+      "evidence": [
+        {
+          "covers": "batch_reads",
+          "type": "test",
+          "command": "MJ_TIMING=1 bin/majordomus plan validate",
+          "result": "mj_yaml_unknown_keys is one cut and one grep per file instead of one grep per key, and the record id check rides on the awk pass that emits the model rows; on this repository validate:project went from 3483 ms to 452 ms, doctor from 10.0 s to 3.9 s and plan validate from 4.4 s to 1.1 s with the same findings; an issue whose id disagrees with its filename is still refused by name; cases 02, 16, 24, 40, 41, 43, 44, 45 and 47 pass unchanged",
+          "artifact": "",
+          "commit": "next",
+          "recorded_at": "2026-09-05T02:16:00Z"
+        }
+      ],
+      "risk": "Unknown-key detection moved into awk must keep the same allow-list semantics; case 44 mutates a record and expects the refusal.",
+      "completion": "",
+      "started_at": "2026-09-05T02:06:00Z",
+      "verified_at": "2026-09-05T02:16:00Z",
+      "completed_at": "2026-09-05T02:16:00Z"
+    },
+    {
+      "id": "I0820",
+      "slug": "validators-batch-reads",
+      "milestone": "M004",
+      "status": "READY",
+      "wave": 2,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Catalogue, DAG, context and command-surface validators read their inputs once",
+      "depends_on": [
+        "I0818",
+        "I0819"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0822",
+        "I0828",
+        "I0840",
+        "I0842"
+      ],
+      "scope": [
+        "lib/doctor.sh",
+        "lib/context_docs.sh",
+        "lib/commands.sh",
+        "test/cases/28_catalogue.sh",
+        "test/cases/42_dag_waves.sh",
+        "test/cases/69_context_documents.sh"
+      ],
+      "non_scope": [],
+      "objective": "Rewrite the remaining validators that loop mj_yget or mj_git per item so that each reads its inputs with one pass.",
+      "why": "Together they cost 2.3 s of doctor after the two largest validators are fixed.",
+      "current_state": "validate:catalogue 0.8 s, validate:context 0.6 s, validate:dag 0.5 s, validate:command_surface 0.35 s.",
+      "desired_state": "Each of the four under 150 ms on this repository, with identical findings.",
+      "acceptance_criteria": [
+        "Each validator's phase under 150 ms",
+        "The cases that mutate their inputs still fail on the mutation"
+      ],
+      "validation": [
+        "MJ_TIMING=1 bin/majordomus doctor",
+        "bash test/run.sh 69_context_documents"
+      ],
+      "evidence_required": [
+        "batch_reads"
+      ],
+      "evidence": [],
+      "risk": "The context validator shells out to git per document; batching it must keep the tracked-only rule.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0821",
+      "slug": "flatten-cache",
+      "milestone": "M004",
+      "status": "READY",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Flattened YAML is cached under .ai/local/cache by content hash",
+      "depends_on": [
+        "I0817"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0840",
+        "I0841"
+      ],
+      "scope": [
+        "lib/common.sh",
+        "share/allow/policy.txt",
+        "share/skeleton/policy.yaml",
+        ".ai/repo/policy.yaml",
+        "docs/SCHEMAS.md",
+        "test/cases/77_flatten_cache.sh"
+      ],
+      "non_scope": [
+        "A cross-process cache of command results"
+      ],
+      "objective": "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<sha256>, keyed by the file's content hash and the flattener's own version, so a second command on unchanged files does no parsing.",
+      "why": "doctor flattens 181 files and knowledge nodes 146; across the hook, watch and context the same files are parsed again and again.",
+      "current_state": ".ai/README.md already reserves local/cache/ for rebuildable caches; nothing uses it.",
+      "desired_state": "A miss parses and writes atomically; a hit copies; a changed file cannot hit because its hash changed; the cache is bounded by an entry cap in the policy and trimmed oldest first.",
+      "acceptance_criteria": [
+        "Byte-identical output of every read-only command with a cold and a warm cache, proved by case 77",
+        "A changed file is re-parsed, proved by mutation",
+        "The cache never grows past the cap",
+        "yaml_flatten count is unchanged; a new counter flatten_cache_hit reports hits"
+      ],
+      "validation": [
+        "bash test/run.sh 77_flatten_cache",
+        "MJ_TIMING=1 bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "flatten_cache"
+      ],
+      "evidence": [],
+      "risk": "Hashing a file costs a subprocess too; the cache pays only when a flatten is materially dearer than a hash, which the counters must show before this lands.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0822",
+      "slug": "flatten-once-invariant",
+      "milestone": "M004",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Every canonical file is flattened at most once per command",
+      "depends_on": [
+        "I0818",
+        "I0819",
+        "I0820"
+      ],
+      "blocked_by": [
+        "I0820"
+      ],
+      "dependents": [
+        "I0831",
+        "I0835"
+      ],
+      "scope": [
+        "test/cases/78_flatten_once.sh",
+        "lib/common.sh"
+      ],
+      "non_scope": [],
+      "objective": "Add a case that runs doctor, watch, context and plan validate under MJ_TIMING and asserts the yaml_flatten count never exceeds the number of distinct canonical files a command reads.",
+      "why": "This is the shell tool's form of the no-rebuild-per-request invariant: repeated work is structural, and a counter catches it where a clock cannot.",
+      "current_state": "doctor flattens 181 times for a repository with fewer canonical files than that.",
+      "desired_state": "The counter equals the distinct-file count per command and the case fails when a validator regresses to re-flattening.",
+      "acceptance_criteria": [
+        "Case 78 passes on this repository and fails on a mutation that re-flattens inside a loop"
+      ],
+      "validation": [
+        "bash test/run.sh 78_flatten_once"
+      ],
+      "evidence_required": [
+        "batch_reads"
+      ],
+      "evidence": [],
+      "risk": "Some validators legitimately flatten a file twice in different shapes; the case names the allowed exceptions explicitly rather than tolerating a margin.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0823",
+      "slug": "bench-command",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "majordomus bench: targets derived from the command registry",
+      "depends_on": [
+        "I0817"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0824",
+        "I0827",
+        "I0830"
+      ],
+      "scope": [
+        "lib/bench.sh",
+        "bin/majordomus",
+        "share/commands.yaml",
+        "share/allow/policy.txt",
+        "share/skeleton/policy.yaml",
+        ".ai/repo/policy.yaml",
+        "docs/CLI.md",
+        "test/cases/79_bench_command.sh",
+        "test/fixtures/commands/bench.json"
+      ],
+      "non_scope": [
+        "Benchmarking the Rust executable",
+        "A benchmark of commands that mutate the repository outside a disposable fixture"
+      ],
+      "objective": "Add the bench command: every public command in share/commands.yaml is a target, run against a disposable installed repository, with warmup and samples from the policy, reporting min, p50, p90, p95, p99, max, mean and stddev per target and mode.",
+      "why": "A benchmark list kept by hand goes stale the day a command is added; the registry already knows the surface.",
+      "current_state": "There is no benchmark command; ad hoc timing lives in shells.",
+      "desired_state": "bench, bench <command>, --mode cold|warm|both, --samples, --warmup, --format json, --list; the JSON carries schema majordomus/benchmark-result/v1, commit, dirty flag, platform, build of bash and the benchmark profile.",
+      "acceptance_criteria": [
+        "bench --list prints exactly the public commands of the registry",
+        "A run records both modes separately with the eight statistics",
+        "Case 79 proves the target list follows a registry mutation",
+        "The command is registered, covered and documented like every other command"
+      ],
+      "validation": [
+        "bash test/run.sh 79_bench_command",
+        "bin/majordomus bench --format json"
+      ],
+      "evidence_required": [
+        "bench_targets_derived"
+      ],
+      "evidence": [
+        {
+          "covers": "bench_targets_derived",
+          "type": "test",
+          "command": "bash test/run.sh 79_bench_command",
+          "result": "lib/bench.sh derives its targets from mj_cmdreg_public minus itself and its scenario per target from the first scenario of test/fixtures/commands/<command>.json; case 79 asserts --list equals the registry public set, that a public command added to a copy of the registry appears in the copy's --list with no edit to the harness, that a read-only run records one cold and N warm results with count, min, p50, p90, p95, p99, max, mean and stddev ordered, and that a state-mutating target records only a cold distribution over fresh repositories; bench is registered in share/commands.yaml, dispatched by bin/majordomus, demonstrated by test/fixtures/commands/bench.json and documented in docs/CLI.md and docs/SCHEMAS.md; the fixture and coverage cases 30, 31, 34 and 15 pass",
+          "artifact": "",
+          "commit": "next",
+          "recorded_at": "2026-09-05T03:33:10Z"
+        }
+      ],
+      "risk": "Commands that read stdin or need an active task need a fixture per target; the fixtures under test/fixtures/commands already describe one scenario per command and are reused.",
+      "completion": "",
+      "started_at": "2026-09-05T03:33:10Z",
+      "verified_at": "2026-09-05T03:33:10Z",
+      "completed_at": "2026-09-05T03:33:10Z"
+    },
+    {
+      "id": "I0824",
+      "slug": "bench-persistence",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 2,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Bench persists local runs and keeps a latest projection",
+      "depends_on": [
+        "I0823"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0825"
+      ],
+      "scope": [
+        "lib/bench.sh",
+        "docs/SCHEMAS.md",
+        "test/cases/80_bench_persistence.sh"
+      ],
+      "non_scope": [
+        "Committing local runs"
+      ],
+      "objective": "Write every run to .ai/local/benchmarks/runs/<run-id>.json and .ai/local/benchmarks/latest.json atomically, and append one line per run to history.jsonl.",
+      "why": "Evidence that lives only in a terminal is lost with the terminal.",
+      "current_state": "Nothing is persisted.",
+      "desired_state": "Local evidence under .ai/local/, ignored by git, never a baseline; latest.json is a convenience projection of the newest run.",
+      "acceptance_criteria": [
+        "Interrupting a run leaves no partial latest.json",
+        "Case 80 proves the files and the schema version"
+      ],
+      "validation": [
+        "bash test/run.sh 80_bench_persistence"
+      ],
+      "evidence_required": [
+        "bench_persisted"
+      ],
+      "evidence": [
+        {
+          "covers": "bench_persisted",
+          "type": "test",
+          "command": "bash test/run.sh 80_bench_persistence",
+          "result": "case 80 runs bench twice and asserts one document per run under .ai/local/benchmarks/runs, latest.json byte-identical to the newest run, history.jsonl with one parsable line per run in order, every document carrying schema majordomus/benchmark-result/v1 with commit, dirty flag, environment and profile, no temporary file surviving a save; a run killed mid-way leaves no run document, no latest.json and no history line because the save is one tmp+mv at the end; a run changes nothing tracked and --no-save writes nothing",
+          "artifact": "",
+          "commit": "next",
+          "recorded_at": "2026-09-05T03:47:33Z"
+        }
+      ],
+      "risk": "history.jsonl is append-only; a corrupt line is reported by validation, never silently skipped.",
+      "completion": "",
+      "started_at": "2026-09-05T03:47:33Z",
+      "verified_at": "2026-09-05T03:47:33Z",
+      "completed_at": "2026-09-05T03:47:33Z"
+    },
+    {
+      "id": "I0825",
+      "slug": "bench-baseline",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 3,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "An explicit committed baseline",
+      "depends_on": [
+        "I0824"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0826"
+      ],
+      "scope": [
+        "lib/bench.sh",
+        ".ai/repo/benchmarks/baseline.json",
+        "share/skeleton/ai/repo/benchmarks",
+        "docs/SCHEMAS.md",
+        "test/cases/81_bench_baseline.sh"
+      ],
+      "non_scope": [
+        "Raw samples in the baseline"
+      ],
+      "objective": "Add bench --write-baseline, which refuses a dirty tree unless forced, prints old, new and delta per target, and writes .ai/repo/benchmarks/baseline.json with schema majordomus/benchmark-baseline/v1.",
+      "why": "A baseline that updates itself is not a baseline.",
+      "current_state": "No baseline exists.",
+      "desired_state": "A reviewable file under .ai/repo/, updated only by the command, carrying the commit, the profile and the summary statistics per target and mode.",
+      "acceptance_criteria": [
+        "Writing on a dirty tree is refused without --force",
+        "The written file round-trips through bench --check with zero regressions"
+      ],
+      "validation": [
+        "bash test/run.sh 81_bench_baseline"
+      ],
+      "evidence_required": [
+        "baseline_explicit"
+      ],
+      "evidence": [
+        {
+          "covers": "baseline_explicit",
+          "type": "test",
+          "command": "bash test/run.sh 81_bench_baseline",
+          "result": "case 81 asserts --write-baseline is refused with exit 15 on a dirty tree and writes nothing, that --force writes and records dirty:true, that on a clean tree the baseline carries schema majordomus/benchmark-baseline/v1, dirty:false and the HEAD commit, that it is the one untracked change git status shows, that the written file round-trips through --check with every target within thresholds, and that a second write prints the move per target and mode and leaves a reviewable diff; the tree state is read once at the start of the run so the baseline temporary file cannot make the run look dirty",
+          "artifact": "",
+          "commit": "next",
+          "recorded_at": "2026-09-05T03:47:33Z"
+        }
+      ],
+      "risk": "Two machines give two baselines; the file records the platform and the check reports not comparable across a different profile or schema.",
+      "completion": "",
+      "started_at": "2026-09-05T03:47:33Z",
+      "verified_at": "2026-09-05T03:47:33Z",
+      "completed_at": "2026-09-05T03:47:33Z"
+    },
+    {
+      "id": "I0826",
+      "slug": "bench-check",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 4,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "bench --check refuses a regression by policy",
+      "depends_on": [
+        "I0825"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0830",
+        "I0831",
+        "I0835",
+        "I0838"
+      ],
+      "scope": [
+        "lib/bench.sh",
+        "share/allow/policy.txt",
+        "share/skeleton/policy.yaml",
+        ".ai/repo/policy.yaml",
+        "test/cases/82_bench_check.sh"
+      ],
+      "non_scope": [
+        "Significance testing"
+      ],
+      "objective": "Compare a fresh run against the baseline under the policy's benchmark.regression thresholds (relative p50, p95, p99) and exit non-zero naming the command, the metric, both values and the threshold.",
+      "why": "Without a gate the next slow validator arrives unnoticed, exactly as the current ones did.",
+      "current_state": "No comparison exists.",
+      "desired_state": "Deterministic report: metric, baseline, current, absolute and relative delta, threshold, result; incompatible baselines are reported as not comparable rather than as a number.",
+      "acceptance_criteria": [
+        "A baseline edited to make the current run a regression makes the check exit non-zero with the named metric",
+        "A compatible run within thresholds passes",
+        "A baseline with another schema version is not comparable"
+      ],
+      "validation": [
+        "bash test/run.sh 82_bench_check"
+      ],
+      "evidence_required": [
+        "regression_refused"
+      ],
+      "evidence": [
+        {
+          "covers": "regression_refused",
+          "type": "test",
+          "command": "bash test/run.sh 82_bench_check",
+          "result": "case 82 asserts --check exits 12 without a baseline, 15 for a baseline of another schema, 0 with OK lines when the same command is measured twice on one machine, 10 with FAIL lines naming p50, p95 and p99, both values and the policy threshold when the baseline is edited to claim one millisecond, that raising benchmark.regression.p50 in the policy turns the same edit into a pass, and that a target the baseline does not know is INFO, never compared; baseline rows reach awk through a file because BSD awk refuses a newline in a -v value",
+          "artifact": "",
+          "commit": "next",
+          "recorded_at": "2026-09-05T03:47:33Z"
+        }
+      ],
+      "risk": "Thresholds live in the policy and are read like every other policy key: declared, no reader-side default.",
+      "completion": "",
+      "started_at": "2026-09-05T03:47:33Z",
+      "verified_at": "2026-09-05T03:47:33Z",
+      "completed_at": "2026-09-05T03:47:33Z"
+    },
+    {
+      "id": "I0827",
+      "slug": "benchmark-policy",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 2,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The benchmark policy block",
+      "depends_on": [
+        "I0823"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0828"
+      ],
+      "scope": [
+        "share/allow/policy.txt",
+        "share/skeleton/policy.yaml",
+        ".ai/repo/policy.yaml",
+        "docs/SCHEMAS.md",
+        "lib/doctor.sh"
+      ],
+      "non_scope": [],
+      "objective": "Declare benchmark.samples, benchmark.warmup, benchmark.timeout_seconds, benchmark.cache_max_entries, benchmark.regression.p50/p95/p99 and benchmark.budget.doctor_ms in the policy, its allow-list and the skeleton, with no reader-side default.",
+      "why": "Repeated constants in code are the thing majordomus.policy-completeness exists to refuse.",
+      "current_state": "The policy has no benchmark keys.",
+      "desired_state": "One block, documented in docs/SCHEMAS.md, read by bench, the cache and the budget check.",
+      "acceptance_criteria": [
+        "doctor's policy-completeness check passes with the new keys",
+        "An unknown benchmark key is refused"
+      ],
+      "validation": [
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "docs_integrated"
+      ],
+      "evidence": [
+        {
+          "covers": "docs_integrated",
+          "type": "test",
+          "command": "bin/majordomus doctor",
+          "result": "share/schemas/policy.schema.json declares benchmark.samples, benchmark.warmup, benchmark.regression.{p50,p95,p99} and benchmark.budget.{doctor_ms,watch_ms}; share/allow/policy.txt is regenerated from it by the Rust generate command and generate --check reports in sync; share/skeleton/policy.yaml and .ai/repo/policy.yaml carry the block; doctor reports every policy key the code reads as declared, with the key scanner widened to keys carrying digits; docs/SCHEMAS.md documents the keys",
+          "artifact": "",
+          "commit": "next",
+          "recorded_at": "2026-09-05T03:33:10Z"
+        }
+      ],
+      "risk": "The peer branch generates allow-lists from schemas; the keys are added in the anchored one-per-line form so the fold is mechanical.",
+      "completion": "",
+      "started_at": "2026-09-05T03:33:10Z",
+      "verified_at": "2026-09-05T03:33:10Z",
+      "completed_at": "2026-09-05T03:33:10Z"
+    },
+    {
+      "id": "I0828",
+      "slug": "doctor-budget",
+      "milestone": "M004",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "doctor under a declared budget, and the hook inherits it",
+      "depends_on": [
+        "I0818",
+        "I0819",
+        "I0820",
+        "I0827"
+      ],
+      "blocked_by": [
+        "I0820"
+      ],
+      "dependents": [
+        "I0834",
+        "I0839"
+      ],
+      "scope": [
+        "lib/doctor.sh",
+        "docs/PERFORMANCE.md",
+        ".ai/repo/policy.yaml",
+        "test/cases/83_doctor_budget.sh"
+      ],
+      "non_scope": [
+        "A blocking budget"
+      ],
+      "objective": "Report doctor's own wall time against benchmark.budget.doctor_ms as a finding, advisory, and record the measured value on this repository as the budget's rationale in docs/PERFORMANCE.md.",
+      "why": "The pre-commit hook is the one place a slow doctor is paid on every commit.",
+      "current_state": "10 s on this repository before this milestone.",
+      "desired_state": "Under 1.5 s on this repository, with the budget declared and the hook unchanged.",
+      "acceptance_criteria": [
+        "doctor prints its total and the budget; over budget is WARN, never the exit code",
+        "Case 83 proves the finding appears with a tiny budget"
+      ],
+      "validation": [
+        "MJ_TIMING=1 bin/majordomus doctor",
+        "bash test/run.sh 83_doctor_budget"
+      ],
+      "evidence_required": [
+        "doctor_under_budget"
+      ],
+      "evidence": [],
+      "risk": "WARN never changes the exit code, by doctrine.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0829",
+      "slug": "performance-rules",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 0,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Performance doctrine as project rules",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I0830"
+      ],
+      "scope": [
+        ".ai/repo/rules/project",
+        "docs/DOCTRINE.md"
+      ],
+      "non_scope": [
+        "Provider-specific copies"
+      ],
+      "objective": "Add project rules: derived state is computed once per state version, a command's hot path does not re-parse canonical files, every public command is benchmarkable from the registry, cacheability never changes observable behaviour, and performance claims need benchmark evidence.",
+      "why": "A rule that lives only in a document is not enforced; project rules are loaded by every worker and named by doctor.",
+      "current_state": "No performance rule exists.",
+      "desired_state": "Five rules under .ai/repo/rules/project, advisory where a reviewer decides and enforced by the cases and counters where a case exists, each naming its case.",
+      "acceptance_criteria": [
+        "rules list shows the five rules resolving",
+        "Each rule names the case or the review that proves it"
+      ],
+      "validation": [
+        "bin/majordomus rules list",
+        "bash test/run.sh 67_rule_dag"
+      ],
+      "evidence_required": [
+        "docs_integrated"
+      ],
+      "evidence": [
+        {
+          "covers": "docs_integrated",
+          "type": "test",
+          "command": "bin/majordomus rules list",
+          "result": "five advisory project rules resolve with the vendored baseline: project.derived-once (case 78 when it exists, else review with MJ_TIMING counters), project.hot-path-reads-once (case 78), project.benchmarkable-commands (case 79), project.cache-is-invisible (the equivalence case once a cache exists; none exists), project.performance-evidence (review of the commit message against MJ_TIMING and of the baseline diff against bench --check); their depends_on resolve to project.derived-files-regenerated@1, project.no-claim-without-test@1 and project.no-counts-in-prose@1; doctor reports the rule set resolving in one deterministic order and cases 67 and 68 pass",
+          "artifact": "",
+          "commit": "next",
+          "recorded_at": "2026-09-05T03:47:33Z"
+        }
+      ],
+      "risk": "project.no-new-nouns: the rules use the existing vocabulary (phase, counter, cache, baseline) and add no concept.",
+      "completion": "",
+      "started_at": "2026-09-05T03:47:33Z",
+      "verified_at": "2026-09-05T03:47:33Z",
+      "completed_at": "2026-09-05T03:47:33Z"
+    },
+    {
+      "id": "I0830",
+      "slug": "performance-docs",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 5,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference",
+      "depends_on": [
+        "I0823",
+        "I0826",
+        "I0829"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0843"
+      ],
+      "scope": [
+        "docs/PERFORMANCE.md",
+        "README.md",
+        "CONTRIBUTING.md",
+        "docs/CLI.md",
+        "docs/README.md",
+        "site/data/generated"
+      ],
+      "non_scope": [
+        "Numbers in prose"
+      ],
+      "objective": "Write the reference: goals, phases and counters, batch reads, the flatten cache, cold versus warm, result and baseline schemas, the policy block, the regression workflow, the contributor workflow and the limitations; add the README section and the bench section of docs/CLI.md.",
+      "why": "The workflow must be discoverable from the root, and documentation may claim only what a case proves.",
+      "current_state": "Nothing documents performance.",
+      "desired_state": "One reference document, a short README section pointing at it, a CONTRIBUTING entry, and a CLI section generated into the site like every command.",
+      "acceptance_criteria": [
+        "Every command in the README works as written",
+        "generate-site-data --check is in sync",
+        "No count in prose, by project.no-counts-in-prose"
+      ],
+      "validation": [
+        "scripts/generate-site-data --check"
+      ],
+      "evidence_required": [
+        "docs_integrated"
+      ],
+      "evidence": [
+        {
+          "covers": "docs_integrated",
+          "type": "test",
+          "command": "scripts/generate-site-data --check",
+          "result": "docs/PERFORMANCE.md explains MJ_TIMING, the shape of every fix, bench with cold and warm kept apart, run versus baseline versus check, the budgets, the policy block and how to work on performance, with no observed number in prose; README gains the bench row and a pointer to the document, CONTRIBUTING the performance step, docs/README.md the row, docs/CLI.md the bench section and docs/SCHEMAS.md the run and baseline schemas; every command written in the document is one the fixture or a case executes; generate-site-data --check is in sync after regeneration",
+          "artifact": "",
+          "commit": "next",
+          "recorded_at": "2026-09-05T03:47:33Z"
+        }
+      ],
+      "risk": "The measured values belong in the baseline file and the benchmark history, not in prose that goes stale.",
+      "completion": "",
+      "started_at": "2026-09-05T03:47:33Z",
+      "verified_at": "2026-09-05T03:47:33Z",
+      "completed_at": "2026-09-05T03:47:33Z"
+    },
+    {
+      "id": "I0831",
+      "slug": "performance-claims",
+      "milestone": "M004",
+      "status": "BLOCKED",
+      "wave": 5,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Performance claims at their proven status",
+      "depends_on": [
+        "I0822",
+        "I0826"
+      ],
+      "blocked_by": [
+        "I0822"
+      ],
+      "dependents": [
+        "I0843"
+      ],
+      "scope": [
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        "docs/SITE_CLAIMS.md",
+        "site/data/generated"
+      ],
+      "non_scope": [],
+      "objective": "Add claims to docs/CLAIMS.yaml for derived benchmark targets, separated cold and warm distributions, flatten-once, cache equivalence and regression refusal, each naming its case, and regenerate the site data.",
+      "why": "The claims matrix is where a guarantee is stated once and the site reads it.",
+      "current_state": "No performance claim exists.",
+      "desired_state": "Guaranteed claims for what cases prove, planned for what is deferred, each with a claim page.",
+      "acceptance_criteria": [
+        "Every guaranteed claim names an existing case",
+        "generate-site-data --check is in sync"
+      ],
+      "validation": [
+        "scripts/generate-site-data --check"
+      ],
+      "evidence_required": [
+        "docs_integrated"
+      ],
+      "evidence": [],
+      "risk": "A claim named guaranteed without a case is refused by the generator.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0832",
+      "slug": "generator-hot-spots",
+      "milestone": "M004",
+      "status": "READY",
+      "wave": 2,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "generate-site-data instrumented and its hot spots removed",
+      "depends_on": [
+        "I0817",
+        "I0819"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0842"
+      ],
+      "scope": [
+        "scripts/generate-site-data",
+        "test/cases/10_site_data.sh",
+        "test/cases/51_derived_artifacts_committed.sh"
+      ],
+      "non_scope": [
+        "Changing the generated data"
+      ],
+      "objective": "Declare phases per section of the site generator, rank them, and remove the repeated work in the two most expensive sections.",
+      "why": "The generator's --check runs in CI and in case 51; it costs 27 s on this repository.",
+      "current_state": "No phase inside the generator is timed.",
+      "desired_state": "--check under 8 s on this repository, output byte-identical.",
+      "acceptance_criteria": [
+        "Byte-identical site/data/generated before and after",
+        "The phase ranking is printed under MJ_TIMING"
+      ],
+      "validation": [
+        "MJ_TIMING=1 scripts/generate-site-data --check"
+      ],
+      "evidence_required": [
+        "batch_reads"
+      ],
+      "evidence": [],
+      "risk": "The generator shares lib/common.sh, so the flatten cache and the batch loaders apply to it directly.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0833",
+      "slug": "knowledge-hot-spots",
+      "milestone": "M004",
+      "status": "DONE",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "knowledge nodes and edges read each source once",
+      "depends_on": [
+        "I0817"
+      ],
+      "blocked_by": [],
+      "dependents": [
+        "I0842"
+      ],
+      "scope": [
+        "lib/knowledge.sh",
+        "lib/knowledge.awk",
+        "test/cases/64_knowledge_discovery.sh",
+        "test/cases/73_knowledge_nodes.sh",
+        "test/cases/74_knowledge_edges.sh"
+      ],
+      "non_scope": [
+        "Changing node identities or edge semantics"
+      ],
+      "objective": "Time the knowledge stages, then remove the per-file subprocesses in discovery and extraction so that nodes and edges take one pass per source.",
+      "why": "knowledge nodes costs 5.7 s and flattens 146 files on this repository.",
+      "current_state": "Discovery hashes and flattens per file with a subprocess each.",
+      "desired_state": "nodes and edges under 1 s on this repository with identical output.",
+      "acceptance_criteria": [
+        "Byte-identical nodes and edges output before and after",
+        "Cases 64, 73, 74 and 75 pass unchanged"
+      ],
+      "validation": [
+        "MJ_TIMING=1 bin/majordomus knowledge nodes",
+        "bash test/run.sh 73_knowledge_nodes"
+      ],
+      "evidence_required": [
+        "batch_reads"
+      ],
+      "evidence": [
+        {
+          "covers": "batch_reads",
+          "type": "test",
+          "command": "MJ_TIMING=1 bin/majordomus knowledge nodes",
+          "result": "every discovered file is hashed by one process instead of one shasum per file, the YAML kinds and the front-matter kinds are flattened by one awk each, the documents' headings and links and the line stores are read by one awk each, the source classes are variables, and the row formatters use a substring instead of a cut per row; on this repository knowledge nodes went from 6.3 s to 0.63 s and edges to 0.62 s with nodes, edges and sources byte-identical except for the hashes of the edited library files; cases 64, 73, 74 and 75 pass unchanged. The same commit computes the tab once for every IFS loop in lib and the site generator, which forked a subshell per row; cases 10, 11, 40, 43, 61 and 66 pass unchanged",
+          "artifact": "",
+          "commit": "next",
+          "recorded_at": "2026-09-05T03:05:00Z"
+        }
+      ],
+      "risk": "Identity is a content hash per file; one sha256 subprocess per file remains unless hashing is batched, which shasum -a 256 with many arguments allows.",
+      "completion": "",
+      "started_at": "2026-09-05T02:40:00Z",
+      "verified_at": "2026-09-05T03:05:00Z",
+      "completed_at": "2026-09-05T03:05:00Z"
+    },
+    {
+      "id": "I0834",
+      "slug": "suite-time",
+      "milestone": "M004",
+      "status": "BLOCKED",
+      "wave": 4,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The test runner reports per-case time and the suite budget",
+      "depends_on": [
+        "I0828"
+      ],
+      "blocked_by": [
+        "I0828"
+      ],
+      "dependents": [],
+      "scope": [
+        "test/run.sh",
+        "lib/bench.sh"
+      ],
+      "non_scope": [
+        "Parallel test execution"
+      ],
+      "objective": "Print each case's wall time in test/run.sh, sort the slowest at the end, and record the suite's total in the benchmark history as a system target.",
+      "why": "A single case costs 29 s because it runs doctor several times; the suite's half hour is the same cost multiplied.",
+      "current_state": "run.sh prints ok or FAIL and nothing about time.",
+      "desired_state": "Per-case times printed, the suite under ten minutes on this repository after the doctor fixes, the total recorded.",
+      "acceptance_criteria": [
+        "run.sh prints a time per case and a ranked tail",
+        "The suite total appears in bench --list as a system target"
+      ],
+      "validation": [
+        "bash test/run.sh 01_init"
+      ],
+      "evidence_required": [
+        "doctor_under_budget"
+      ],
+      "evidence": [],
+      "risk": "Times in the runner output must not be asserted by any case.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0835",
+      "slug": "ci-performance",
+      "milestone": "M004",
+      "status": "BLOCKED",
+      "wave": 5,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "CI runs the structural performance checks",
+      "depends_on": [
+        "I0822",
+        "I0826"
+      ],
+      "blocked_by": [
+        "I0822"
+      ],
+      "dependents": [
+        "I0843"
+      ],
+      "scope": [
+        ".github/workflows/validate.yml",
+        "test/cases/26_ci_wiring.sh"
+      ],
+      "non_scope": [
+        "Latency gates at millisecond precision"
+      ],
+      "objective": "Add the flatten-once case, the cache-equivalence case and bench --check with the CI profile to validate.yml, with the wall-clock thresholds conservative and the counters exact.",
+      "why": "A check that nobody runs is documentation.",
+      "current_state": "CI runs the suite, the generator check and shellcheck.",
+      "desired_state": "The counters gate strictly; bench --check gates on gross regressions only; results are uploaded as an artifact.",
+      "acceptance_criteria": [
+        "Case 26 proves the new steps are wired",
+        "A deliberately regressed baseline fails the workflow step locally"
+      ],
+      "validation": [
+        "bash test/run.sh 26_ci_wiring"
+      ],
+      "evidence_required": [
+        "regression_refused"
+      ],
+      "evidence": [],
+      "risk": "GitHub runners are slower and noisier than a laptop; the CI profile has more warmup and wider thresholds, declared in the policy.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0836",
+      "slug": "synthetic-repository",
+      "milestone": "M004",
+      "status": "READY",
+      "wave": 2,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "A synthetic repository generator for scaling cases",
+      "depends_on": [
+        "I0819"
+      ],
+      "blocked_by": [],
+      "dependents": [],
+      "scope": [
+        "test/lib.sh",
+        "test/cases/84_scaling.sh"
+      ],
+      "non_scope": [
+        "Wall-clock assertions in the scaling case"
+      ],
+      "objective": "Add a test helper that builds a repository with N issues, N milestones, N rules and N context documents from the skeleton, and a case that runs doctor and plan validate at three sizes and asserts the yaml_flatten count grows linearly.",
+      "why": "Quadratic behaviour hides in small repositories; the counters expose it before wall clock does.",
+      "current_state": "Fixtures are hand-built per case.",
+      "desired_state": "One generator in test/lib.sh, one scaling case, counters linear in N.",
+      "acceptance_criteria": [
+        "Counters at N, 2N and 4N are within a linear bound",
+        "The generator is reused by at least one other case"
+      ],
+      "validation": [
+        "bash test/run.sh 84_scaling"
+      ],
+      "evidence_required": [
+        "batch_reads"
+      ],
+      "evidence": [],
+      "risk": "The generated records must pass plan validate; the helper builds them from the same templates the skeleton ships.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0837",
+      "slug": "timing-json",
+      "milestone": "M004",
+      "status": "READY",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Timing report as JSON",
+      "depends_on": [
+        "I0817"
+      ],
+      "blocked_by": [],
+      "dependents": [],
+      "scope": [
+        "lib/common.sh",
+        "docs/SCHEMAS.md",
+        "lib/bench.sh"
+      ],
+      "non_scope": [],
+      "objective": "Under --json, print the timing report as one JSON object on stderr with phases and counters, so bench can carry a phase breakdown per sample.",
+      "why": "A breakdown that only humans can read cannot be compared by a check.",
+      "current_state": "The report is text.",
+      "desired_state": "Same data, one line of JSON when --json is set, documented in docs/SCHEMAS.md.",
+      "acceptance_criteria": [
+        "The JSON parses with jq and carries every phase and counter of the text form"
+      ],
+      "validation": [
+        "MJ_TIMING=1 bin/majordomus --json doctor"
+      ],
+      "evidence_required": [
+        "phase_timing"
+      ],
+      "evidence": [],
+      "risk": "stdout stays the command's; the report stays on stderr in both forms.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0838",
+      "slug": "bench-compare",
+      "milestone": "M004",
+      "status": "READY",
+      "wave": 5,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "bench compare and the top regressions report",
+      "depends_on": [
+        "I0826"
+      ],
+      "blocked_by": [],
+      "dependents": [],
+      "scope": [
+        "lib/bench.sh",
+        "docs/CLI.md",
+        "test/cases/85_bench_compare.sh"
+      ],
+      "non_scope": [],
+      "objective": "Add bench compare <run-a> <run-b> and make the human report rank the largest regressions, the largest improvements and the slowest targets by p95.",
+      "why": "A wall of numbers hides the one that matters.",
+      "current_state": "Only --check compares, against the baseline.",
+      "desired_state": "Any two persisted runs compare with the same table as --check; the default report ends with the ranked tail.",
+      "acceptance_criteria": [
+        "compare of a run with itself reports zero deltas",
+        "Case 85 proves the ranking on two fixture runs"
+      ],
+      "validation": [
+        "bash test/run.sh 85_bench_compare"
+      ],
+      "evidence_required": [
+        "regression_refused"
+      ],
+      "evidence": [],
+      "risk": "Percentile arithmetic is implemented once and unit-tested on small datasets.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0839",
+      "slug": "watch-budget",
+      "milestone": "M004",
+      "status": "BLOCKED",
+      "wave": 4,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "watch inherits every doctor fix and its own budget",
+      "depends_on": [
+        "I0828"
+      ],
+      "blocked_by": [
+        "I0828"
+      ],
+      "dependents": [],
+      "scope": [
+        "lib/watch.sh",
+        ".ai/repo/policy.yaml",
+        "share/allow/policy.txt",
+        "share/skeleton/policy.yaml",
+        "test/cases/83_doctor_budget.sh"
+      ],
+      "non_scope": [],
+      "objective": "Confirm watch dispatches the rewritten validators, time it, and declare benchmark.budget.watch_ms next to doctor's.",
+      "why": "watch shares the validators, so it is fixed by the same work, but nothing proves it.",
+      "current_state": "watch takes 9.7 s.",
+      "desired_state": "Under 1.5 s on this repository, reported against its budget like doctor.",
+      "acceptance_criteria": [
+        "watch prints its total and budget",
+        "Case 83 covers watch as well as doctor"
+      ],
+      "validation": [
+        "MJ_TIMING=1 bin/majordomus watch"
+      ],
+      "evidence_required": [
+        "doctor_under_budget"
+      ],
+      "evidence": [],
+      "risk": "watch reports drift, so the budget finding is INFO there, never DRIFT.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0840",
+      "slug": "context-hot-spots",
+      "milestone": "M004",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "context and its subcommands under a second",
+      "depends_on": [
+        "I0820",
+        "I0821"
+      ],
+      "blocked_by": [
+        "I0820",
+        "I0821"
+      ],
+      "dependents": [],
+      "scope": [
+        "lib/context_docs.sh",
+        "lib/context.sh",
+        "test/cases/69_context_documents.sh",
+        "test/cases/70_context_impact.sh",
+        "test/cases/71_context_sync.sh"
+      ],
+      "non_scope": [],
+      "objective": "Time context resolve, validate, affected and check-sync, and remove the per-document git and awk calls so each runs under a second on this repository.",
+      "why": "context is what every session runs first, and resolve is what every worker runs before touching a path.",
+      "current_state": "Each takes about one second, dominated by per-document git ls-files.",
+      "desired_state": "One git ls-files per invocation, one flatten per document, output unchanged.",
+      "acceptance_criteria": [
+        "Cases 23, 69, 70 and 71 pass unchanged",
+        "git count for context validate is at most two"
+      ],
+      "validation": [
+        "MJ_TIMING=1 bin/majordomus context validate"
+      ],
+      "evidence_required": [
+        "batch_reads"
+      ],
+      "evidence": [],
+      "risk": "The tracked-only rule must survive: one ls-files listing is filtered per document instead of asked per document.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0841",
+      "slug": "cache-equivalence",
+      "milestone": "M004",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Cache equivalence proved by property-shaped cases",
+      "depends_on": [
+        "I0821"
+      ],
+      "blocked_by": [
+        "I0821"
+      ],
+      "dependents": [
+        "I0843"
+      ],
+      "scope": [
+        "test/cases/86_cache_equivalence.sh",
+        "share/commands.yaml"
+      ],
+      "non_scope": [],
+      "objective": "For every read-only command in the registry, run it with the cache cold, warm, and disabled, on this repository and on a synthetic one, and assert byte-identical output and exit code; then mutate one file and assert the changed output is served.",
+      "why": "A cache that changes a result is worse than no cache; the proof has to cover every reader, not the one that was tested.",
+      "current_state": "No cache exists yet.",
+      "desired_state": "One case iterating the registry's read-only commands, so a command added later is covered by existing.",
+      "acceptance_criteria": [
+        "The case reads the registry for the command list and fails if it is empty",
+        "Every read-only command is byte-identical across modes",
+        "A mutated file changes the output and the counters show a miss"
+      ],
+      "validation": [
+        "bash test/run.sh 86_cache_equivalence"
+      ],
+      "evidence_required": [
+        "flatten_cache"
+      ],
+      "evidence": [],
+      "risk": "Commands whose output carries a timestamp (context) are compared after the timestamp line is dropped, and the case says which line.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0842",
+      "slug": "before-after-evidence",
+      "milestone": "M004",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Before and after evidence for every optimisation",
+      "depends_on": [
+        "I0818",
+        "I0819",
+        "I0820",
+        "I0832",
+        "I0833"
+      ],
+      "blocked_by": [
+        "I0820",
+        "I0832"
+      ],
+      "dependents": [
+        "I0843"
+      ],
+      "scope": [
+        "docs/PERFORMANCE.md",
+        ".ai/repo/benchmarks/baseline.json"
+      ],
+      "non_scope": [
+        "Numbers in prose outside the baseline and the history"
+      ],
+      "objective": "Record, for each hot spot removed, the phase time before and after and the counter before and after, in the benchmark history and in the commit message, and summarise them in docs/PERFORMANCE.md by pointing at the baseline file.",
+      "why": "A speed-up without numbers is a claim.",
+      "current_state": "77f5d79 records the first ranking in its message.",
+      "desired_state": "Every optimisation commit carries its measured delta; the baseline file carries the accepted state.",
+      "acceptance_criteria": [
+        "Each optimisation commit names its phase and both values",
+        "The baseline reflects the state after the last optimisation"
+      ],
+      "validation": [
+        "git log --grep perf"
+      ],
+      "evidence_required": [
+        "doctor_under_budget"
+      ],
+      "evidence": [],
+      "risk": "project.no-counts-in-prose keeps measured values out of the documents; the baseline file is the one place they live.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I0843",
+      "slug": "performance-workflow-complete",
+      "milestone": "M004",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The performance workflow is discoverable and complete",
+      "depends_on": [
+        "I0830",
+        "I0831",
+        "I0835",
+        "I0841",
+        "I0842"
+      ],
+      "blocked_by": [
+        "I0831",
+        "I0835",
+        "I0841",
+        "I0842"
+      ],
+      "dependents": [],
+      "scope": [
+        "docs/PLAN_STATUS.md",
+        ".ai/repo/project"
+      ],
+      "non_scope": [],
+      "objective": "Close the milestone: every acceptance criterion of M004 has evidence, the README workflow runs as written, the site is regenerated, and the final report is a plan record rather than a conversation.",
+      "why": "A milestone is accepted by its evidence, not by finishing its issues.",
+      "current_state": "Open.",
+      "desired_state": "M004 accepted with evidence on every criterion.",
+      "acceptance_criteria": [
+        "plan validate passes and M004 reports every evidence_required token satisfied"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "bin/majordomus plan status"
+      ],
+      "evidence_required": [
+        "docs_integrated"
+      ],
+      "evidence": [],
+      "risk": "The last issue is the one that checks the others honestly.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
     }
   ],
   "waves": [
@@ -4248,7 +5786,9 @@
         "I0601",
         "I0701",
         "I0801",
-        "I0802"
+        "I0802",
+        "I0817",
+        "I0829"
       ]
     },
     {
@@ -4263,7 +5803,13 @@
         "I0602",
         "I0702",
         "I0803",
-        "I0807"
+        "I0807",
+        "I0818",
+        "I0819",
+        "I0821",
+        "I0823",
+        "I0833",
+        "I0837"
       ]
     },
     {
@@ -4278,7 +5824,13 @@
         "I0603",
         "I0703",
         "I0804",
-        "I0808"
+        "I0808",
+        "I0820",
+        "I0824",
+        "I0827",
+        "I0832",
+        "I0836",
+        "I0841"
       ]
     },
     {
@@ -4293,7 +5845,12 @@
         "I0604",
         "I0704",
         "I0805",
-        "I0809"
+        "I0809",
+        "I0822",
+        "I0825",
+        "I0828",
+        "I0840",
+        "I0842"
       ]
     },
     {
@@ -4306,7 +5863,10 @@
         "I0305",
         "I0605",
         "I0806",
-        "I0810"
+        "I0810",
+        "I0826",
+        "I0834",
+        "I0839"
       ]
     },
     {
@@ -4317,7 +5877,11 @@
         "I0009",
         "I0013",
         "I0206",
-        "I0811"
+        "I0811",
+        "I0830",
+        "I0831",
+        "I0835",
+        "I0838"
       ]
     },
     {
@@ -4326,7 +5890,8 @@
         "I0011",
         "I0014",
         "I0812",
-        "I0814"
+        "I0814",
+        "I0843"
       ]
     },
     {
@@ -4590,7 +6155,194 @@
     {
       "from": "I0815",
       "to": "I0816"
+    },
+    {
+      "from": "I0817",
+      "to": "I0818"
+    },
+    {
+      "from": "I0817",
+      "to": "I0819"
+    },
+    {
+      "from": "I0817",
+      "to": "I0821"
+    },
+    {
+      "from": "I0817",
+      "to": "I0823"
+    },
+    {
+      "from": "I0817",
+      "to": "I0832"
+    },
+    {
+      "from": "I0817",
+      "to": "I0833"
+    },
+    {
+      "from": "I0817",
+      "to": "I0837"
+    },
+    {
+      "from": "I0818",
+      "to": "I0820"
+    },
+    {
+      "from": "I0818",
+      "to": "I0822"
+    },
+    {
+      "from": "I0818",
+      "to": "I0828"
+    },
+    {
+      "from": "I0818",
+      "to": "I0842"
+    },
+    {
+      "from": "I0819",
+      "to": "I0820"
+    },
+    {
+      "from": "I0819",
+      "to": "I0822"
+    },
+    {
+      "from": "I0819",
+      "to": "I0828"
+    },
+    {
+      "from": "I0819",
+      "to": "I0832"
+    },
+    {
+      "from": "I0819",
+      "to": "I0836"
+    },
+    {
+      "from": "I0819",
+      "to": "I0842"
+    },
+    {
+      "from": "I0820",
+      "to": "I0822"
+    },
+    {
+      "from": "I0820",
+      "to": "I0828"
+    },
+    {
+      "from": "I0820",
+      "to": "I0840"
+    },
+    {
+      "from": "I0820",
+      "to": "I0842"
+    },
+    {
+      "from": "I0821",
+      "to": "I0840"
+    },
+    {
+      "from": "I0821",
+      "to": "I0841"
+    },
+    {
+      "from": "I0822",
+      "to": "I0831"
+    },
+    {
+      "from": "I0822",
+      "to": "I0835"
+    },
+    {
+      "from": "I0823",
+      "to": "I0824"
+    },
+    {
+      "from": "I0823",
+      "to": "I0827"
+    },
+    {
+      "from": "I0823",
+      "to": "I0830"
+    },
+    {
+      "from": "I0824",
+      "to": "I0825"
+    },
+    {
+      "from": "I0825",
+      "to": "I0826"
+    },
+    {
+      "from": "I0826",
+      "to": "I0830"
+    },
+    {
+      "from": "I0826",
+      "to": "I0831"
+    },
+    {
+      "from": "I0826",
+      "to": "I0835"
+    },
+    {
+      "from": "I0826",
+      "to": "I0838"
+    },
+    {
+      "from": "I0827",
+      "to": "I0828"
+    },
+    {
+      "from": "I0828",
+      "to": "I0834"
+    },
+    {
+      "from": "I0828",
+      "to": "I0839"
+    },
+    {
+      "from": "I0829",
+      "to": "I0830"
+    },
+    {
+      "from": "I0830",
+      "to": "I0843"
+    },
+    {
+      "from": "I0831",
+      "to": "I0843"
+    },
+    {
+      "from": "I0832",
+      "to": "I0842"
+    },
+    {
+      "from": "I0833",
+      "to": "I0842"
+    },
+    {
+      "from": "I0835",
+      "to": "I0843"
+    },
+    {
+      "from": "I0841",
+      "to": "I0843"
+    },
+    {
+      "from": "I0842",
+      "to": "I0843"
     }
   ],
-  "findings": []
+  "findings": [
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I0821",
+      "message": "shares lib/common.sh with I0837; they may not run concurrently"
+    }
+  ]
 }

@@ -131,7 +131,7 @@ mj_migrate_inventory() {
 mj_migrate_print_plan() {
   local action rel dest
   printf 'migrate: .majordomus/ (pre-.ai layout) -> .ai/ (%s)\n' "$(mj_yget "$MJ_MIG_MANIFEST" schema)"
-  while IFS="$(printf '\t')" read -r action rel dest; do
+  while IFS="$MJ_TAB" read -r action rel dest; do
     [ -n "$action" ] || continue
     case "$action" in
       move|state) printf '  %-5s .majordomus/%s -> %s\n' "$action" "$rel" "$(mj_rel "$dest")" ;;
@@ -176,7 +176,7 @@ mj_migrate_apply() {
   [ "$MJ_LAYOUT" = ai ] || mj_die "$MJ_EX_INTERNAL" "the layout did not resolve as .ai after the manifest was written"
 
   # 3. the canonical files, one by one: git mv keeps history for what is tracked
-  while IFS="$(printf '\t')" read -r action rel dest; do
+  while IFS="$MJ_TAB" read -r action rel dest; do
     [ -n "$action" ] || continue
     src="$MJ_MIG_SRC/$rel"
     case "$action" in

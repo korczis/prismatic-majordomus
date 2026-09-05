@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "command": "bench",
+  "title": "Performance as executable evidence",
+  "intro": "bench times every public command of the registry in a disposable repository, cold and warm, and records the distribution rather than an average. The targets are the registry; nothing here keeps a list.",
+  "scenarios": [
+    {
+      "id": "lists",
+      "title": "The targets, derived from the registry",
+      "given": { "installed": true },
+      "setup": "installed",
+      "run": ["bench", "--list"],
+      "expect": { "exit": 0, "stdout_contains": ["^doctor +read-only", "^start +state-mutating"] },
+      "explain": "Every public command is a target with its class and the scenario it will run; the harness itself is the one public command that is not a target."
+    },
+    {
+      "id": "times-one",
+      "title": "One target, one cold run",
+      "given": { "installed": true },
+      "setup": "installed",
+      "run": ["bench", "version", "--samples", "1", "--warmup", "0", "--mode", "cold", "--no-save"],
+      "expect": { "exit": 0, "stdout_contains": ["^version +cold +ok +1 "] },
+      "explain": "A read-only command is run once cold in a prepared repository; the row carries the status of the run and the percentiles of its samples, in milliseconds of the child process alone."
+    },
+    {
+      "id": "refuses-unknown",
+      "title": "A command that is not in the registry",
+      "given": { "installed": true },
+      "setup": "installed",
+      "run": ["bench", "nosuch"],
+      "expect": { "exit": 12, "stdout_contains": ["not a public command of the registry"] },
+      "explain": "A target is a public command of share/commands.yaml and nothing else, so a name the registry does not carry is a missing artifact, exit 12, with the command that lists what exists."
+    }
+  ]
+}

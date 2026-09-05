@@ -1,0 +1,42 @@
+id: I0826
+milestone: M004
+title: bench --check refuses a regression by policy
+slug: bench-check
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Compare a fresh run against the baseline under the policy's benchmark.regression thresholds (relative p50, p95, p99) and exit non-zero naming the command, the metric, both values and the threshold."
+why: "Without a gate the next slow validator arrives unnoticed, exactly as the current ones did."
+current_state: "No comparison exists."
+desired_state: "Deterministic report: metric, baseline, current, absolute and relative delta, threshold, result; incompatible baselines are reported as not comparable rather than as a number."
+scope:
+  - lib/bench.sh
+  - share/allow/policy.txt
+  - share/skeleton/policy.yaml
+  - .ai/repo/policy.yaml
+  - test/cases/82_bench_check.sh
+non_scope:
+  - Significance testing
+depends_on:
+  - I0825
+acceptance_criteria:
+  - A baseline edited to make the current run a regression makes the check exit non-zero with the named metric
+  - A compatible run within thresholds passes
+  - A baseline with another schema version is not comparable
+validation:
+  - bash test/run.sh 82_bench_check
+evidence_required:
+  - regression_refused
+risk: "Thresholds live in the policy and are read like every other policy key: declared, no reader-side default."
+started_at: 2026-09-05T03:47:33Z
+verified_at: 2026-09-05T03:47:33Z
+completed_at: 2026-09-05T03:47:33Z
+evidence:
+  - covers: regression_refused
+    type: test
+    command: "bash test/run.sh 82_bench_check"
+    result: "case 82 asserts --check exits 12 without a baseline, 15 for a baseline of another schema, 0 with OK lines when the same command is measured twice on one machine, 10 with FAIL lines naming p50, p95 and p99, both values and the policy threshold when the baseline is edited to claim one millisecond, that raising benchmark.regression.p50 in the policy turns the same edit into a pass, and that a target the baseline does not know is INFO, never compared; baseline rows reach awk through a file because BSD awk refuses a newline in a -v value"
+    commit: next
+    recorded_at: 2026-09-05T03:47:33Z
+created_at: 2026-09-05
+updated_at: 2026-09-05

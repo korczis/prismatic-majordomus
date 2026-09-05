@@ -38,6 +38,7 @@ mj_cmd_doctor() {
   esac; done
   mj_require_installed
   MJ_DOCTOR_MISSING=0
+  local t_start; t_start="$(mj_ms)"
 
   # The policy has to parse before anything can be judged against it. This is the one
   # ordering doctor imposes; everything after it is the registry's order.
@@ -48,7 +49,17 @@ mj_cmd_doctor() {
 
   mj_doctrine_dispatch doctor
   mj_report_environment
+  mj_report_budget doctor "$t_start"
   mj_finish_doctor
+}
+
+# The command's own wall time against the policy's budget for it: WARN over budget, INFO
+# under, never the exit code. The budget is measured, not guessed, and changing it is a
+# policy edit with a run behind it (majordomus bench doctor).
+mj_report_budget() { # command, start ms
+  local elapsed budget; elapsed=$(( $(mj_ms) - $2 )); budget="$(mj_pol_req "benchmark.budget.${1}_ms")"
+  if [ "$elapsed" -gt "$budget" ]; then mj_warn budget "$1" "$elapsed ms, over the budget of $budget ms (policy benchmark.budget.${1}_ms)" "MJ_TIMING=1 majordomus $1"
+  else mj_info budget "$1" "$elapsed ms of $budget ms" "MJ_TIMING=1 majordomus $1"; fi
 }
 
 # ---------------------------------------------------------------- validators
@@ -300,8 +311,9 @@ mj_validate_policy_defaults() {
   [ -f "$skel" ] || { mj_doctrine_skip policy "skeleton" "no skeleton policy to compare against"; MJ_DOCTRINE_SKIPPED=1; return 0; }
   flat="$(mktemp "${TMPDIR:-/tmp}/mj.sk.XXXXXX")"
   mj_yaml_flatten "$skel" > "$flat" 2>/dev/null || { rm -f "$flat"; mj_doctrine_fail policy "skeleton" "share/skeleton/policy.yaml does not parse" "majordomus doctor"; return 0; }
-  for k in $(grep -rhE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' "$MJ_LIB_DIR" | grep -v '^[[:space:]]*#' \
-             | grep -oE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
+  # a key is letters, digits and underscores per segment (benchmark.regression.p95 is one)
+  for k in $(grep -rhE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' "$MJ_LIB_DIR" | grep -v '^[[:space:]]*#' \
+             | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
     n=$((n + 1))
     if [ -z "$(mj_yget "$flat" "$k")" ] && ! grep -qE "^${k}\." "$flat"; then
       mj_doctrine_fail policy "$k" "read by lib/ but absent from share/skeleton/policy.yaml" "grep -rn 'mj_pol_req $k' lib/"; bad=1
@@ -629,7 +641,7 @@ mj_validate_roadmap() {
 mj_validate_dag() {
   local lvl subj msg n
   mj_project_doctrine_load || return 0
-  mj_pj_findings | while IFS="$(printf '\t')" read -r _ lvl _ subj msg; do
+  mj_pj_findings | while IFS="$MJ_TAB" read -r _ lvl _ subj msg; do
     case "$lvl" in
       FAIL) mj_doctrine_fail dag "$subj" "$msg" "majordomus plan validate" ;;
       *)    mj_warn dag "$subj" "$msg" "majordomus plan show $subj" ;;
@@ -657,38 +669,43 @@ mj_validate_catalogue() {
   ucf="$(mktemp "${TMPDIR:-/tmp}/mj.uc.XXXXXX")"; apf="$(mktemp "${TMPDIR:-/tmp}/mj.ap.XXXXXX")"
   mj_yaml_flatten "$uc" > "$ucf" 2>/dev/null || { mj_doctrine_fail catalogue "share/use-cases.yaml" "does not parse" "majordomus doctor"; rm -f "$ucf" "$apf"; return 0; }
   mj_yaml_flatten "$ap" > "$apf" 2>/dev/null || { mj_doctrine_fail catalogue "share/applications.yaml" "does not parse" "majordomus doctor"; rm -f "$ucf" "$apf"; return 0; }
+  # both catalogues loaded into variables once; every field read below is an expansion
+  mj_yload "$ucf" uc; mj_yload "$apf" ap
+  local dispatch_line
+  dispatch_line="$(grep -E '^ *init\|doctor\|' "$MJ_BIN_DIR/majordomus" | head -n1)"
+  dispatch_line="${dispatch_line%%)*}"; dispatch_line="${dispatch_line#"${dispatch_line%%[! ]*}"}"
 
   # every reference resolves to something that exists
   i=0
-  while [ -n "$(mj_yget "$ucf" "use_cases.$i.id")" ]; do
-    id="$(mj_yget "$ucf" "use_cases.$i.id")"; n_uc=$((n_uc+1))
+  while [ -n "$(mj_yv uc "use_cases.$i.id")" ]; do
+    id="$(mj_yv uc "use_cases.$i.id")"; n_uc=$((n_uc+1))
     # resolved against the dispatch table, which is what actually decides whether a
     # command exists — CLI.md documents it, bin/majordomus is it
-    for ref in $(mj_ylist "$ucf" "use_cases.$i.commands"); do
-      mj_cat_is_command "$ref" || { mj_doctrine_fail catalogue "$id" "names command '$ref', which bin/majordomus does not dispatch" "majordomus --help"; bad=1; }
+    for ref in $(mj_yvlist uc "use_cases.$i.commands"); do
+      mj_cat_is_command "$ref" "$dispatch_line" || { mj_doctrine_fail catalogue "$id" "names command '$ref', which bin/majordomus does not dispatch" "majordomus --help"; bad=1; }
     done
     # the steps are what a reader actually runs, so they are checked in their own right
     # rather than trusted to appear in the commands list
     k=0
-    while [ -n "$(mj_yget "$ucf" "use_cases.$i.steps.$k.command")" ]; do
-      ref="$(mj_yget "$ucf" "use_cases.$i.steps.$k.command")"
-      mj_cat_is_command "$ref" || { mj_doctrine_fail catalogue "$id" "step $((k+1)) names command '$ref', which bin/majordomus does not dispatch" "majordomus --help"; bad=1; }
-      [ -n "$(mj_yget "$ucf" "use_cases.$i.steps.$k.note")" ] || { mj_doctrine_fail catalogue "$id" "step $((k+1)) has no note saying what it does here" "grep -n -A12 'id: $id' share/use-cases.yaml"; bad=1; }
+    while [ -n "$(mj_yv uc "use_cases.$i.steps.$k.command")" ]; do
+      ref="$(mj_yv uc "use_cases.$i.steps.$k.command")"
+      mj_cat_is_command "$ref" "$dispatch_line" || { mj_doctrine_fail catalogue "$id" "step $((k+1)) names command '$ref', which bin/majordomus does not dispatch" "majordomus --help"; bad=1; }
+      [ -n "$(mj_yv uc "use_cases.$i.steps.$k.note")" ] || { mj_doctrine_fail catalogue "$id" "step $((k+1)) has no note saying what it does here" "grep -n -A12 'id: $id' share/use-cases.yaml"; bad=1; }
       k=$((k+1))
     done
     [ "$k" -gt 0 ] || { mj_doctrine_fail catalogue "$id" "has no steps; a use case that runs nothing is a description, not a use case" "grep -n -A12 'id: $id' share/use-cases.yaml"; bad=1; }
-    for ref in $(mj_ylist "$ucf" "use_cases.$i.doctrines"); do
+    for ref in $(mj_yvlist uc "use_cases.$i.doctrines"); do
       mj_doc_index "$ref" >/dev/null 2>&1 || { mj_doctrine_fail catalogue "$id" "names doctrine '$ref', which is not in the registry" "majordomus doctrine list"; bad=1; }
     done
-    for ref in $(mj_ylist "$ucf" "use_cases.$i.claims"); do
+    for ref in $(mj_yvlist uc "use_cases.$i.claims"); do
       grep -q "^  - id: $ref$" "$root/docs/CLAIMS.yaml" 2>/dev/null || { mj_doctrine_fail catalogue "$id" "names claim '$ref', which is not in docs/CLAIMS.yaml" "grep -n 'id: $ref' docs/CLAIMS.yaml"; bad=1; }
     done
     # the reference to an application must be mutual: a catalogue that disagrees with
     # itself about what applies to what is worse than one that says less
-    for ref in $(mj_ylist "$ucf" "use_cases.$i.applications"); do
-      if ! mj_cat_has "$apf" applications "$ref"; then
+    for ref in $(mj_yvlist uc "use_cases.$i.applications"); do
+      if ! mj_cat_has ap applications "$ref"; then
         mj_doctrine_fail catalogue "$id" "names application '$ref', which does not exist" "grep -n 'id:' share/applications.yaml"; bad=1
-      elif ! mj_cat_back "$apf" applications "$ref" use_cases "$id"; then
+      elif ! mj_cat_back ap applications "$ref" use_cases "$id"; then
         mj_doctrine_fail catalogue "$id" "names application '$ref', which does not name it back" "grep -n -A20 'id: $ref' share/applications.yaml"; bad=1
       fi
     done
@@ -696,18 +713,18 @@ mj_validate_catalogue() {
   done
 
   j=0
-  while [ -n "$(mj_yget "$apf" "applications.$j.id")" ]; do
-    id="$(mj_yget "$apf" "applications.$j.id")"; n_ap=$((n_ap+1))
+  while [ -n "$(mj_yv ap "applications.$j.id")" ]; do
+    id="$(mj_yv ap "applications.$j.id")"; n_ap=$((n_ap+1))
     # an application that lists only fits is a brochure; both sides are required
-    [ -n "$(mj_yget "$apf" "applications.$j.fits_when.0")" ] || { mj_doctrine_fail catalogue "$id" "declares no fits_when" "grep -n -A8 'id: $id' share/applications.yaml"; bad=1; }
-    [ -n "$(mj_yget "$apf" "applications.$j.does_not_fit_when.0")" ] || { mj_doctrine_fail catalogue "$id" "declares no does_not_fit_when; an application that only lists fits is not a description" "grep -n -A8 'id: $id' share/applications.yaml"; bad=1; }
-    for ref in $(mj_ylist "$apf" "applications.$j.doctrines"); do
+    [ -n "$(mj_yv ap "applications.$j.fits_when.0")" ] || { mj_doctrine_fail catalogue "$id" "declares no fits_when" "grep -n -A8 'id: $id' share/applications.yaml"; bad=1; }
+    [ -n "$(mj_yv ap "applications.$j.does_not_fit_when.0")" ] || { mj_doctrine_fail catalogue "$id" "declares no does_not_fit_when; an application that only lists fits is not a description" "grep -n -A8 'id: $id' share/applications.yaml"; bad=1; }
+    for ref in $(mj_yvlist ap "applications.$j.doctrines"); do
       mj_doc_index "$ref" >/dev/null 2>&1 || { mj_doctrine_fail catalogue "$id" "names doctrine '$ref', which is not in the registry" "majordomus doctrine list"; bad=1; }
     done
-    for ref in $(mj_ylist "$apf" "applications.$j.use_cases"); do
-      if ! mj_cat_has "$ucf" use_cases "$ref"; then
+    for ref in $(mj_yvlist ap "applications.$j.use_cases"); do
+      if ! mj_cat_has uc use_cases "$ref"; then
         mj_doctrine_fail catalogue "$id" "names use case '$ref', which does not exist" "grep -n 'id:' share/use-cases.yaml"; bad=1
-      elif ! mj_cat_back "$ucf" use_cases "$ref" applications "$id"; then
+      elif ! mj_cat_back uc use_cases "$ref" applications "$id"; then
         mj_doctrine_fail catalogue "$id" "names use case '$ref', which does not name it back" "grep -n -A20 'id: $ref' share/use-cases.yaml"; bad=1
       fi
     done
@@ -720,33 +737,33 @@ mj_validate_catalogue() {
 }
 # does <flat> contain an entry of <kind> with id <id>?
 mj_cat_has() {
-  local f="$1" kind="$2" want="$3" k=0
-  while [ -n "$(mj_yget "$f" "$kind.$k.id")" ]; do
-    [ "$(mj_yget "$f" "$kind.$k.id")" = "$want" ] && return 0
+  local p="$1" kind="$2" want="$3" k=0 v
+  while v="$(mj_yv "$p" "$kind.$k.id")"; [ -n "$v" ]; do
+    [ "$v" = "$want" ] && return 0
     k=$((k+1))
   done
   return 1
 }
-# does entry <id> of <kind> in <flat> list <back> in its <field> list?
 mj_cat_back() {
-  local f="$1" kind="$2" want="$3" field="$4" back="$5" k=0 v
-  while [ -n "$(mj_yget "$f" "$kind.$k.id")" ]; do
-    if [ "$(mj_yget "$f" "$kind.$k.id")" = "$want" ]; then
-      for v in $(mj_ylist "$f" "$kind.$k.$field"); do [ "$v" = "$back" ] && return 0; done
+  local p="$1" kind="$2" want="$3" field="$4" back="$5" k=0 v
+  while v="$(mj_yv "$p" "$kind.$k.id")"; [ -n "$v" ]; do
+    if [ "$v" = "$want" ]; then
+      for v in $(mj_yvlist "$p" "$kind.$k.$field"); do [ "$v" = "$back" ] && return 0; done
       return 1
     fi
     k=$((k+1))
   done
   return 1
 }
-
-# is <name> a command the binary dispatches? The dispatch table is one case arm, so the
-# question is whether the name appears between its pipes.
+# mj_cat_is_command <name> [<dispatch line>]: the dispatch table decides; the caller that
+# checks many names reads the line once and passes it
 mj_cat_is_command() {
-  local line
-  line="$(grep -E '^ *init\|doctor\|' "$MJ_BIN_DIR/majordomus" | head -n1)"
-  [ -n "$line" ] || return 1
-  line="${line%%)*}"; line="${line#"${line%%[! ]*}"}"   # drop the trailing ) and the indent
+  local line="${2:-}"
+  if [ -z "$line" ]; then
+    line="$(grep -E '^ *init\|doctor\|' "$MJ_BIN_DIR/majordomus" | head -n1)"
+    [ -n "$line" ] || return 1
+    line="${line%%)*}"; line="${line#"${line%%[! ]*}"}"   # drop the trailing ) and the indent
+  fi
   case "|$line|" in *"|$1|"*) return 0 ;; esac
   return 1
 }

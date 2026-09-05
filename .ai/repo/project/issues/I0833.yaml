@@ -1,0 +1,42 @@
+id: I0833
+milestone: M004
+title: knowledge nodes and edges read each source once
+slug: knowledge-hot-spots
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Time the knowledge stages, then remove the per-file subprocesses in discovery and extraction so that nodes and edges take one pass per source."
+why: "knowledge nodes costs 5.7 s and flattens 146 files on this repository."
+current_state: "Discovery hashes and flattens per file with a subprocess each."
+desired_state: "nodes and edges under 1 s on this repository with identical output."
+scope:
+  - lib/knowledge.sh
+  - lib/knowledge.awk
+  - test/cases/64_knowledge_discovery.sh
+  - test/cases/73_knowledge_nodes.sh
+  - test/cases/74_knowledge_edges.sh
+non_scope:
+  - Changing node identities or edge semantics
+depends_on:
+  - I0817
+acceptance_criteria:
+  - Byte-identical nodes and edges output before and after
+  - Cases 64, 73, 74 and 75 pass unchanged
+validation:
+  - MJ_TIMING=1 bin/majordomus knowledge nodes
+  - bash test/run.sh 73_knowledge_nodes
+evidence_required:
+  - batch_reads
+risk: "Identity is a content hash per file; one sha256 subprocess per file remains unless hashing is batched, which shasum -a 256 with many arguments allows."
+started_at: 2026-09-05T02:40:00Z
+verified_at: 2026-09-05T03:05:00Z
+completed_at: 2026-09-05T03:05:00Z
+evidence:
+  - covers: batch_reads
+    type: test
+    command: "MJ_TIMING=1 bin/majordomus knowledge nodes"
+    result: "every discovered file is hashed by one process instead of one shasum per file, the YAML kinds and the front-matter kinds are flattened by one awk each, the documents' headings and links and the line stores are read by one awk each, the source classes are variables, and the row formatters use a substring instead of a cut per row; on this repository knowledge nodes went from 6.3 s to 0.63 s and edges to 0.62 s with nodes, edges and sources byte-identical except for the hashes of the edited library files; cases 64, 73, 74 and 75 pass unchanged. The same commit computes the tab once for every IFS loop in lib and the site generator, which forked a subshell per row; cases 10, 11, 40, 43, 61 and 66 pass unchanged"
+    commit: next
+    recorded_at: 2026-09-05T03:05:00Z
+created_at: 2026-09-05
+updated_at: 2026-09-05

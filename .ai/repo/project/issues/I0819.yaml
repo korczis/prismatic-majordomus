@@ -1,0 +1,43 @@
+id: I0819
+milestone: M004
+title: The project model is loaded with one flatten per file and no per-file lookups
+slug: project-model-batch-load
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make mj_project_load and mj_project_unknown_keys read each milestone and issue once, checking ids and unknown keys inside awk rather than with a subprocess per file and per key."
+why: "The project validator costs 3.5 s of doctor and plan validate costs 4.4 s on 73 records; the count grows with the plan."
+current_state: "Every record is flattened, then read back with mj_yget per check, then re-read to build raw.tsv."
+desired_state: "One flatten and one awk per record, unknown keys computed by one awk over the flat directory against the allow-lists."
+scope:
+  - lib/project.sh
+  - lib/doctor.sh
+  - lib/plan.sh
+  - test/cases/40_project_model.sh
+  - test/cases/41_project_status.sh
+  - test/cases/43_plan_command.sh
+non_scope:
+  - Any change to the model semantics in project.awk
+depends_on:
+  - I0817
+acceptance_criteria:
+  - validate:project under 400 ms and plan validate under 1 s on this repository
+  - Cases 40 to 48 pass unchanged
+validation:
+  - MJ_TIMING=1 bin/majordomus plan validate
+  - bash test/run.sh 40_project_model
+evidence_required:
+  - batch_reads
+risk: "Unknown-key detection moved into awk must keep the same allow-list semantics; case 44 mutates a record and expects the refusal."
+started_at: 2026-09-05T02:06:00Z
+verified_at: 2026-09-05T02:16:00Z
+completed_at: 2026-09-05T02:16:00Z
+evidence:
+  - covers: batch_reads
+    type: test
+    command: "MJ_TIMING=1 bin/majordomus plan validate"
+    result: "mj_yaml_unknown_keys is one cut and one grep per file instead of one grep per key, and the record id check rides on the awk pass that emits the model rows; on this repository validate:project went from 3483 ms to 452 ms, doctor from 10.0 s to 3.9 s and plan validate from 4.4 s to 1.1 s with the same findings; an issue whose id disagrees with its filename is still refused by name; cases 02, 16, 24, 40, 41, 43, 44, 45 and 47 pass unchanged"
+    commit: next
+    recorded_at: 2026-09-05T02:16:00Z
+created_at: 2026-09-05
+updated_at: 2026-09-05

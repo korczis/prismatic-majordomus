@@ -173,7 +173,7 @@ mj_plan_validate() {
     done
     fails=1
   fi
-  mj_pj_findings | while IFS="$(printf '\t')" read -r _ lvl code subj msg; do
+  mj_pj_findings | while IFS="$MJ_TAB" read -r _ lvl code subj msg; do
     case "$lvl" in
       FAIL) mj_fail "$code" "$subj" "$msg" "majordomus plan show $subj" ;;
       *)    mj_warn "$code" "$subj" "$msg" "majordomus plan show $subj" ;;
@@ -279,7 +279,7 @@ mj_plan_state_list() {
 # overlap is reported here rather than left for two workers to discover in a conflict.
 mj_plan_waves() {
   local only="${1:-}" w line id st keep
-  mj_pj_rows W | while IFS="$(printf '\t')" read -r _ w line; do
+  mj_pj_rows W | while IFS="$MJ_TAB" read -r _ w line; do
     keep=""
     for id in $line; do
       [ -n "$only" ] && [ "$(mj_pj_col I "$id" 3)" != "$only" ] && continue
@@ -296,7 +296,7 @@ mj_plan_waves() {
   conflicts="$(mj_pj_findings | awk -F'\t' '$3=="scope_conflict"')"
   if [ -n "$conflicts" ]; then
     printf '\nserialised by scope overlap:\n'
-    printf '%s\n' "$conflicts" | while IFS="$(printf '\t')" read -r _ _ _ subj msg; do
+    printf '%s\n' "$conflicts" | while IFS="$MJ_TAB" read -r _ _ _ subj msg; do
       printf '  %s %s\n' "$subj" "$msg"
     done
   fi

@@ -1,0 +1,30 @@
+id: I0832
+milestone: M004
+title: generate-site-data instrumented and its hot spots removed
+slug: generator-hot-spots
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Declare phases per section of the site generator, rank them, and remove the repeated work in the two most expensive sections."
+why: "The generator's --check runs in CI and in case 51; it costs 27 s on this repository."
+current_state: "No phase inside the generator is timed."
+desired_state: "--check under 8 s on this repository, output byte-identical."
+scope:
+  - scripts/generate-site-data
+  - test/cases/10_site_data.sh
+  - test/cases/51_derived_artifacts_committed.sh
+non_scope:
+  - Changing the generated data
+depends_on:
+  - I0817
+  - I0819
+acceptance_criteria:
+  - Byte-identical site/data/generated before and after
+  - The phase ranking is printed under MJ_TIMING
+validation:
+  - MJ_TIMING=1 scripts/generate-site-data --check
+evidence_required:
+  - batch_reads
+risk: "The generator shares lib/common.sh, so the flatten cache and the batch loaders apply to it directly."
+created_at: 2026-09-05
+updated_at: 2026-09-05

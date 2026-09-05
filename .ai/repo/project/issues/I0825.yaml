@@ -1,0 +1,41 @@
+id: I0825
+milestone: M004
+title: An explicit committed baseline
+slug: bench-baseline
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add bench --write-baseline, which refuses a dirty tree unless forced, prints old, new and delta per target, and writes .ai/repo/benchmarks/baseline.json with schema majordomus/benchmark-baseline/v1."
+why: "A baseline that updates itself is not a baseline."
+current_state: "No baseline exists."
+desired_state: "A reviewable file under .ai/repo/, updated only by the command, carrying the commit, the profile and the summary statistics per target and mode."
+scope:
+  - lib/bench.sh
+  - .ai/repo/benchmarks/baseline.json
+  - share/skeleton/ai/repo/benchmarks
+  - docs/SCHEMAS.md
+  - test/cases/81_bench_baseline.sh
+non_scope:
+  - Raw samples in the baseline
+depends_on:
+  - I0824
+acceptance_criteria:
+  - Writing on a dirty tree is refused without --force
+  - The written file round-trips through bench --check with zero regressions
+validation:
+  - bash test/run.sh 81_bench_baseline
+evidence_required:
+  - baseline_explicit
+risk: "Two machines give two baselines; the file records the platform and the check reports not comparable across a different profile or schema."
+started_at: 2026-09-05T03:47:33Z
+verified_at: 2026-09-05T03:47:33Z
+completed_at: 2026-09-05T03:47:33Z
+evidence:
+  - covers: baseline_explicit
+    type: test
+    command: "bash test/run.sh 81_bench_baseline"
+    result: "case 81 asserts --write-baseline is refused with exit 15 on a dirty tree and writes nothing, that --force writes and records dirty:true, that on a clean tree the baseline carries schema majordomus/benchmark-baseline/v1, dirty:false and the HEAD commit, that it is the one untracked change git status shows, that the written file round-trips through --check with every target within thresholds, and that a second write prints the move per target and mode and leaves a reviewable diff; the tree state is read once at the start of the run so the baseline temporary file cannot make the run look dirty"
+    commit: next
+    recorded_at: 2026-09-05T03:47:33Z
+created_at: 2026-09-05
+updated_at: 2026-09-05

@@ -1,0 +1,40 @@
+id: I0817
+milestone: M004
+title: Phase timing and work counters behind MJ_TIMING
+slug: phase-timing-and-counters
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Time every validator and count every YAML flatten and git call when MJ_TIMING is set, and report them ranked at exit."
+why: "Nothing else in this milestone can be measured without it; optimisation without a ranking is guessing."
+current_state: "Landed on feature/performance-truth as 77f5d79: the dispatcher declares one phase per validator, mj_git and mj_yaml_flatten count."
+desired_state: "Phases and counters are the vocabulary every later issue reports in."
+scope:
+  - lib/common.sh
+  - lib/doctrine.sh
+  - test/cases/08_no_forbidden_constructs.sh
+non_scope:
+  - A tracing backend
+  - Timing that is on when MJ_TIMING is unset
+depends_on: []
+acceptance_criteria:
+  - The report ranks phases by time and sums counters on stderr, with the command output untouched
+  - Off, a phase or a count costs one test and no subprocess
+validation:
+  - MJ_TIMING=1 bin/majordomus doctor
+  - bash test/run.sh 08_no_forbidden_constructs
+evidence_required:
+  - phase_timing
+risk: "The clock is EPOCHREALTIME where bash has it and perl otherwise; whole seconds where neither exists, and the report says which."
+started_at: 2026-09-05T01:35:00Z
+verified_at: 2026-09-05T01:44:00Z
+completed_at: 2026-09-05T01:44:00Z
+evidence:
+  - covers: phase_timing
+    type: test
+    command: "MJ_TIMING=1 bin/majordomus doctor"
+    result: "the report on stderr ranks one phase per validator and sums the yaml_flatten and git counters; on this repository the two largest phases are the project-model and command-coverage validators, together two thirds of doctor's total; case 08 accepts the timing file as a scratch path; cases 02, 14, 17 and 18 pass unchanged"
+    commit: 77f5d79
+    recorded_at: 2026-09-05T01:44:00Z
+created_at: 2026-09-05
+updated_at: 2026-09-05

@@ -177,6 +177,11 @@ impl Repository {
         format!(".ai/{}", self.manifest.local.path)
     }
 
+    /// The repository-relative path of the tracked half.
+    pub fn repo_path(&self) -> String {
+        format!(".ai/{}", self.manifest.repo.path)
+    }
+
     /// The manifest section a repository-relative path falls under, by longest prefix.
     pub fn section_of(&self, rel_path: &str) -> Option<&str> {
         let mut best: Option<(&str, usize)> = None;

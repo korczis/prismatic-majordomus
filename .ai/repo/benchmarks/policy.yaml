@@ -1,0 +1,15 @@
+# The regression policy `majordomus bench --check` applies when it compares a run with
+# this platform's accepted baseline (baseline.<os>-<arch>-<build>.json beside this file).
+# Thresholds are relative increases of a metric; an increase under minimum_absolute_us is
+# noise whatever the ratio. Data, read at run time; there is no threshold in the code.
+version: 1
+
+regression:
+  p50:
+    relative: 0.25
+  p95:
+    relative: 0.30
+  p99:
+    relative: 0.50
+
+minimum_absolute_us: 200

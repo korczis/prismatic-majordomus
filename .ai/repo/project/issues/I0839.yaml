@@ -1,0 +1,30 @@
+id: I0839
+milestone: M004
+title: watch inherits every doctor fix and its own budget
+slug: watch-budget
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Confirm watch dispatches the rewritten validators, time it, and declare benchmark.budget.watch_ms next to doctor's."
+why: "watch shares the validators, so it is fixed by the same work, but nothing proves it."
+current_state: "watch takes 9.7 s."
+desired_state: "Under 1.5 s on this repository, reported against its budget like doctor."
+scope:
+  - lib/watch.sh
+  - .ai/repo/policy.yaml
+  - share/allow/policy.txt
+  - share/skeleton/policy.yaml
+  - test/cases/83_doctor_budget.sh
+non_scope: []
+depends_on:
+  - I0828
+acceptance_criteria:
+  - watch prints its total and budget
+  - Case 83 covers watch as well as doctor
+validation:
+  - MJ_TIMING=1 bin/majordomus watch
+evidence_required:
+  - doctor_under_budget
+risk: "watch reports drift, so the budget finding is INFO there, never DRIFT."
+created_at: 2026-09-05
+updated_at: 2026-09-05

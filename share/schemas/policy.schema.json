@@ -6,69 +6,134 @@
   "x-majordomus-allow": "policy",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version"],
+  "required": [
+    "version"
+  ],
   "properties": {
-    "version": { "const": 1 },
+    "version": {
+      "const": 1
+    },
     "context": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "always_loaded_budget_lines": { "type": "integer", "minimum": 1 },
-        "builder_budget_lines": { "type": "integer", "minimum": 1 },
-        "recent_decisions": { "type": "integer", "minimum": 0 },
-        "max_list_items": { "type": "integer", "minimum": 1 },
-        "strategy": { "type": "string" },
-        "transcript_is_state": { "type": "boolean" }
+        "always_loaded_budget_lines": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "builder_budget_lines": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "recent_decisions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_list_items": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "strategy": {
+          "type": "string"
+        },
+        "transcript_is_state": {
+          "type": "boolean"
+        }
       }
     },
     "profiles": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "default": { "type": "string" },
-        "checkpoint_interval_default": { "type": "string" }
+        "default": {
+          "type": "string"
+        },
+        "checkpoint_interval_default": {
+          "type": "string"
+        }
       }
     },
     "verification": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "required_for_changes": { "type": "boolean" },
-        "finish_requires": { "type": "array", "items": { "type": "string" } }
+        "required_for_changes": {
+          "type": "boolean"
+        },
+        "finish_requires": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "checkpoint": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "max_body_lines": { "type": "integer", "minimum": 1 },
-        "retention_max_files": { "type": "integer", "minimum": 1 }
+        "max_body_lines": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "retention_max_files": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "handover": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "required_sections": { "type": "array", "items": { "type": "string" } },
-        "retention_max_files": { "type": "integer", "minimum": 1 }
+        "required_sections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "retention_max_files": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "ledger": {
       "type": "object",
       "additionalProperties": false,
-      "properties": { "retention_max_lines": { "type": "integer", "minimum": 1 } }
+      "properties": {
+        "retention_max_lines": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
     },
     "enforcement": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "path", "wired_by"],
+        "required": [
+          "name",
+          "path",
+          "wired_by"
+        ],
         "properties": {
-          "name": { "type": "string" },
-          "path": { "type": "string" },
-          "wired_by": { "type": "string" },
-          "args": { "type": "array", "items": { "type": "string" } }
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "wired_by": {
+            "type": "string"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     },
@@ -77,12 +142,70 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["provider", "target"],
+        "required": [
+          "provider",
+          "target"
+        ],
         "properties": {
-          "provider": { "type": "string" },
-          "target": { "type": "string" },
-          "always_loaded": { "type": "boolean" },
-          "mode": { "type": "string" }
+          "provider": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "always_loaded": {
+            "type": "boolean"
+          },
+          "mode": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How majordomus bench samples, and the thresholds bench --check and the command budgets apply.",
+      "properties": {
+        "samples": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "warmup": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "regression": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "p50": {
+              "type": "number",
+              "minimum": 0
+            },
+            "p95": {
+              "type": "number",
+              "minimum": 0
+            },
+            "p99": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "budget": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "doctor_ms": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "watch_ms": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
         }
       }
     }

@@ -90,6 +90,12 @@ arbitrary. Most of them were paid for.
    in `README.md` or `docs/` against the tests. Wording that outruns the tests is
    downgraded or removed in the same pull request. A new capability sentence also needs
    a row in `docs/CLAIMS.yaml` with its status, implementation and test.
+9. A change made for speed carries its measurement: `MJ_TIMING=1 bin/majordomus <command>`
+   before and after, both numbers in the commit message, and `majordomus bench <command>`
+   when the change is accepted. The baseline under `.ai/repo/benchmarks/` changes only
+   through `majordomus bench --write-baseline`, in its own commit; `majordomus bench --check`
+   is the regression gate. The mechanism and the rules are in
+   [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 
 ## Language
 

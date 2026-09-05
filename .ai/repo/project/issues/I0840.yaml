@@ -1,0 +1,31 @@
+id: I0840
+milestone: M004
+title: context and its subcommands under a second
+slug: context-hot-spots
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Time context resolve, validate, affected and check-sync, and remove the per-document git and awk calls so each runs under a second on this repository."
+why: "context is what every session runs first, and resolve is what every worker runs before touching a path."
+current_state: "Each takes about one second, dominated by per-document git ls-files."
+desired_state: "One git ls-files per invocation, one flatten per document, output unchanged."
+scope:
+  - lib/context_docs.sh
+  - lib/context.sh
+  - test/cases/69_context_documents.sh
+  - test/cases/70_context_impact.sh
+  - test/cases/71_context_sync.sh
+non_scope: []
+depends_on:
+  - I0820
+  - I0821
+acceptance_criteria:
+  - Cases 23, 69, 70 and 71 pass unchanged
+  - git count for context validate is at most two
+validation:
+  - MJ_TIMING=1 bin/majordomus context validate
+evidence_required:
+  - batch_reads
+risk: "The tracked-only rule must survive: one ls-files listing is filtered per document instead of asked per document."
+created_at: 2026-09-05
+updated_at: 2026-09-05

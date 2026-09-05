@@ -88,6 +88,17 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+benchmark:
+  samples: 10            # warm samples per target in `majordomus bench`
+  warmup: 2              # unsampled runs before them
+  regression:            # fractions over the baseline that `bench --check` refuses
+    p50: 0.5
+    p95: 0.5
+    p99: 0.6
+  budget:                # doctor and watch report their own wall time against these (WARN, never the exit code)
+    doctor_ms: 3000
+    watch_ms: 3000
+
 enforcement:                             # what doctor reconciles; each must be wired
   - name: doctor-on-commit
     path: majordomus                       # on PATH, repo-relative, absolute, or named in the hook line
@@ -908,6 +919,35 @@ the one portable monotonic ordering available without sub-second timestamps.
 deletes and refuses to overwrite an existing archive.
 
 ---
+
+## `.ai/local/benchmarks/runs/<run-id>.json` — a benchmark run
+
+Written by `majordomus bench`, one file per run, plus `latest.json` (the newest run) and
+`history.jsonl` (one compact line per run). Local evidence under the ignored half of the
+layer; never a baseline.
+
+```json
+{"schema":"majordomus/benchmark-result/v1",
+ "run_id":"b-20260905T031200Z-9f1c","recorded_at":"2026-09-05T03:12:00Z",
+ "repository":{"commit":"<40 hex>","branch":"main","dirty":false},
+ "environment":{"os":"Darwin","arch":"arm64","bash":"5.3.15","clock":"epochrealtime"},
+ "profile":{"samples":10,"warmup":2,"mode":"both"},
+ "results":[{"command":"doctor","mode":"warm","class":"read-only","scenario":"fixture not-wired",
+             "status":"ok","samples":10,"min_ms":2601,"p50_ms":2640,"p90_ms":2760,"p95_ms":2790,
+             "p99_ms":2790,"max_ms":2790,"mean_ms":2655.2,"stddev_ms":58.1}]}
+```
+
+`status` is `ok`, `setup-failed`, or `exit-<code>` when the command exited with a code its
+scenario does not accept. Percentiles are nearest-rank over the sorted samples. `clock`
+names the source of the milliseconds (`epochrealtime`, `perl` or `seconds`).
+
+## `.ai/repo/benchmarks/baseline.json` — the accepted baseline
+
+The same document with schema `majordomus/benchmark-baseline/v1`, written only by
+`majordomus bench --write-baseline` on a clean tree (or with `--force`), tracked and
+reviewed like any other change. `bench --check` compares a fresh run's p50, p95 and p99 per
+target and mode against it under the policy's `benchmark.regression` fractions; a baseline
+with another schema is reported as not comparable, never as a number.
 
 ## Projection stamp
 
