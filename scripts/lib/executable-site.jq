@@ -18,7 +18,12 @@
 # to that surface; any other claim implemented in the crate belongs to the executable as a
 # whole. The prefixes are the crate's directories, listed once below.
 
-def slug: gsub("\\."; "-");
+# Two spellings of an id. `anchor` is the HTML id on /docs/api/ (`#op-<id with . as ->`), which
+# api.html forms the same way and Zola never touches. `slug` is the route segment: Zola
+# slugifies paths, so an underscore in an id becomes a dash there, and the dataset says the
+# route Zola will actually serve.
+def anchor: gsub("\\."; "-");
+def slug: gsub("[._]"; "-");
 def crate: "apps/majordomus-cli/";
 def blob($p): $repo_url + "/blob/" + $branch + "/" + $p;
 
@@ -81,7 +86,7 @@ def claim_ref: { id: .id, status: .status, route: ("/guarantees/" + .id + "/"), 
           kind: .kind,
           source_path: .source_path,
           source_url: blob(.source_path),
-          api_anchor: (if .exposure.http then ("/docs/api/#op-" + (.id | slug)) else null end),
+          api_anchor: (if .exposure.http then ("/docs/api/#op-" + (.id | anchor)) else null end),
           tool: (.exposure.mcp.tool // null),
           resource: (.exposure.mcp.resource.uri // null),
           cli: (if .exposure.cli then ("majordomus " + (.exposure.cli.path | join(" "))) else null end),

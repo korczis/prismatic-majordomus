@@ -285,9 +285,13 @@ and Open Graph metadata. The route classes and their sources:
 | `/build.json` | `scripts/site-build` | — (served raw) |
 | `/render-test/` | `site/content-src/render-test.md`, `noindex` | `docs-page.html` |
 
-A capability's slug is its id with `.` replaced by `-` (`objects.search` →
-`/registry/capabilities/objects-search/`), the same rule the API reference uses for its
-operation anchors (`#op-objects-search`), so the two link each other without a table.
+A capability's route slug is its id with `.` and `_` replaced by `-` (`objects.search` →
+`/registry/capabilities/objects-search/`, `repository.scope_classify` →
+`/registry/capabilities/repository-scope-classify/`): Zola slugifies every path that way,
+so the dataset names the route Zola actually serves. The API reference's operation anchors
+are HTML ids Zola never touches, so they replace only the `.` (`#op-objects-search`,
+`#op-repository-scope_classify`); `executable.json` carries both spellings (`slug`,
+`api_anchor`), so the two link each other without a table.
 
 Navigation is `site/data/nav.toml`: a handful of intents (Why, Get started, Concepts, Plan,
 Trust, Executable, Reference), rendered as Flowbite dropdowns on desktop and as labelled flat

@@ -21,7 +21,7 @@ n="$(jq '.capabilities | length' "$REG")"
 [ "$(jq '.counts.capabilities' "$G/executable.json")" = "$n" ] || { echo "    executable.json counts $(jq '.counts.capabilities' "$G/executable.json") capabilities, the manifest $n"; exit 1; }
 # every capability of the manifest is a route with its stub, and links its module
 for id in $(jq -r '.capabilities[].id' "$REG"); do
-  slug="$(printf '%s' "$id" | tr '.' '-')"
+  slug="$(printf '%s' "$id" | tr '._' '--')"   # the route Zola serves: it slugifies `_` to `-` as well
   [ -f "$C/capabilities/$slug.md" ] || { echo "    no stub for $id"; exit 1; }
   grep -q "^id = \"$id\"" "$C/capabilities/$slug.md" || { echo "    stub of $id does not carry its id"; exit 1; }
   m="$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .module' "$REG")"
