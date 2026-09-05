@@ -4,9 +4,15 @@
 . "$ROOT/test/lib.sh"
 # Every surface has to read the same fixture, and the site generator reads the repository it
 # lives in, so the case runs against its own copy of the tool rather than against this one.
+# The tool's own trees, then every canonical input the generator names that is not under
+# .ai/ (this case writes its own layer with init, and a copied manifest would block it),
+# read from --inputs so that a new input reaches this copy without this line changing.
 mkdir -p "$T/tool"
 cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/docs" "$ROOT/scripts" "$ROOT/site" "$T/tool/"
-cp "$ROOT/README.md" "$ROOT/LICENSE" "$T/tool/"
+for p in $("$ROOT/scripts/generate-site-data" --inputs | grep -v '^\.ai/'); do
+  [ -e "$T/tool/$p" ] && continue
+  mkdir -p "$T/tool/$(dirname "$p")"; cp "$ROOT/$p" "$T/tool/$p"
+done
 rm -rf "$T/tool/site/public"
 cd "$T/tool" || exit 1
 git init -q .; git config user.email t@example.com; git config user.name t; git commit -q --allow-empty -m init

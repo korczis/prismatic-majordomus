@@ -200,8 +200,10 @@ for f in "$ROOT"/test/cases/*.sh; do
     # a copy, not any mention: every case sources "$ROOT/test/lib.sh", and sourcing a file
     # is not copying a tree. Matching a bare reference made the rule fire on all of them the
     # moment test/ became a canonical input.
-    if grep -qE "cp[^|]*\\\$ROOT/$p\\b" "$f" && ! grep -q 'fixture_repo' "$f"; then
-      echo "    $(basename "$f") copies canonical input tree $p by hand; use fixture_repo"; exit 1
+    # a case that copies a tree whole for its templates but takes the list of inputs from
+    # --inputs holds no list of its own either
+    if grep -qE "cp[^|]*\\\$ROOT/$p\\b" "$f" && ! grep -qE 'fixture_repo|generate-site-data" --inputs' "$f"; then
+      echo "    $(basename "$f") copies canonical input tree $p by hand; use fixture_repo or --inputs"; exit 1
     fi
   done
 done
