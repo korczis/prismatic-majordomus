@@ -60,6 +60,8 @@ share/standard/majordomus/manifest.yaml
 docs/CLAIMS.yaml
 docs/RESPONSIBILITIES.yaml
 docs/generated/openapi.json
+docs/generated/registry.json
+apps/majordomus-cli/README.md
 site/config.toml
 README.md
 LICENSE"
@@ -1189,6 +1191,58 @@ i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jline)" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
 
 mj_phase_end "gen:derived_section_pages_every" "$GEN_T0"
+# ---------------------------------------------------------------- executable.json and /registry/ (the Rust executable, as routes)
+GEN_T0="$(mj_phase_begin "gen:executable_routes")"
+# The Rust executable documents itself: `majordomus generate` writes docs/generated/registry.json
+# (every builtin descriptor, its module and the file it was composed in) from the one capability
+# registry, and site/data/registry/registry.json (the same plus the command line, the MCP and
+# HTTP surfaces, the benchmark system and the index) for the templates to read. This generator
+# does not restate any of it. It reads the manifest — a code-only projection, so no cycle runs
+# through the index — for the ids, and adds the site's own layer: one route per module and per
+# capability, the pages for the command line, MCP, the benchmarks and the executable's own
+# narrative (the crate's README), the anchor of an operation on the API reference, the link to
+# the source on GitHub, and the claims that speak about each surface, attached by the path of
+# their implementation (scripts/lib/executable-site.jq). A capability added to the registry gets
+# its page, its index entries and its links from this pass alone; nothing here names one.
+REG="$ROOT/docs/generated/registry.json"
+[ "$(jq -r '.schema' "$REG")" = "majordomus/capability-registry/v1" ] || { echo "generate-site-data: docs/generated/registry.json is not a majordomus/capability-registry/v1 manifest (regenerate: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
+[ "$(jq '.capabilities | length' "$REG")" -gt 0 ] || { echo "generate-site-data: docs/generated/registry.json lists no capability" >&2; exit 10; }
+# every source path the manifest names is a file of this tree; the rule that turns a Rust
+# module path into a file lives in the executable, and this is where it is held to the tree
+jq -r '[.capabilities[].source_path] | unique[]' "$REG" | while read -r sp; do
+  [ -f "$ROOT/$sp" ] || { echo "generate-site-data: docs/generated/registry.json names $sp as a capability's source and no such file exists (Provenance::source_path and the crate's layout disagree)" >&2; exit 10; }
+done
+jq -r '.capabilities[].module' "$REG" | sort -u | while read -r m; do
+  jq -e --arg m "$m" '.modules[] | select(.id == $m and .source == "builtin")' "$REG" >/dev/null || { echo "generate-site-data: docs/generated/registry.json: capability module $m is not a builtin module of the manifest" >&2; exit 10; }
+done
+jq -S --arg repo_url "$(jq -r '.repository_url' "$OUT/project.json")" --arg branch master \
+   --argjson claims "$(jq -c '.claims' "$OUT/capabilities.json")" -f "$ROOT/scripts/lib/executable-site.jq" "$REG" > "$OUT/executable.json" \
+  || { echo "generate-site-data: projecting docs/generated/registry.json failed" >&2; exit 13; }
+# the routes: one section with the executable's pages, one subsection per entity class
+rm -rf "$CONTENT_ROOT/registry"
+mk_section registry "Registry" "What the Rust executable compiled the repository into: every capability, every object of the layer, the kinds it reads, and the fingerprint that names this exact state." registry.html page.html 26
+mk_section registry/modules "Modules" "The builtin modules of the executable: what each composes, where it stands, and where its source is." registry-modules.html registry-module.html 2
+mk_section registry/capabilities "Capabilities" "Every executable capability: its schemas, exposures, policies, provenance, and the claims and tests that speak about it." registry-capabilities.html registry-capability.html 3
+printf -- '+++\ntitle = "Command line"\ndescription = "The native command line of the Rust executable, every command and argument, as clap declares it."\nweight = 4\ntemplate = "registry-cli.html"\n[extra]\nsource = "apps/majordomus-cli/src/cli.rs"\n+++\n' > "$CONTENT_ROOT/registry/cli.md"
+printf -- '+++\ntitle = "MCP surface"\ndescription = "The tools and resources the executable serves to an MCP client, the transports, the shared server, and what decides all of it."\nweight = 5\ntemplate = "registry-mcp.html"\n[extra]\nsource = "docs/MCP.md"\n+++\n' > "$CONTENT_ROOT/registry/mcp.md"
+printf -- '+++\ntitle = "Benchmarks"\ndescription = "Every benchmark target derived from the registry, the coverage, the regression policy, and the accepted baselines with their provenance."\nweight = 6\ntemplate = "registry-benchmarks.html"\n[extra]\nsource = ".ai/repo/benchmarks/rust/"\n+++\n' > "$CONTENT_ROOT/registry/benchmarks.md"
+i=0; jq -r '.modules[] | [.id, .slug, .title] | @tsv' "$OUT/executable.json" | while IFS="$MJ_TAB" read -r id slug title; do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\nslug = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$title")" "$(jq -r --arg id "$id" '.modules[] | select(.id==$id) | .description' "$REG" | jline)" "$i" "$(jstr "$slug")" "$(jstr "$id")" "$(jq -r --arg id "$id" '.modules[] | select(.id==$id) | .source_path' "$OUT/executable.json" | jline)" > "$CONTENT_ROOT/registry/modules/$slug.md"; done
+i=0; jq -r '.capabilities[] | [.id, .slug, .source_path] | @tsv' "$OUT/executable.json" | while IFS="$MJ_TAB" read -r id slug sp; do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\nslug = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$id")" "$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .description' "$REG" | jline)" "$i" "$(jstr "$slug")" "$(jstr "$id")" "$(jstr "$sp")" > "$CONTENT_ROOT/registry/capabilities/$slug.md"; done
+# the executable's own narrative: the crate's README, projected as the documents are, with
+# its relative links rewritten to site routes or to the repository
+# the description is the README's first sentence; the links: ../../docs/X.md to the document's
+# route (the awk lowers the name, as the docs projection does), any other ../../ path to the
+# file on GitHub
+{ printf -- '+++\ntitle = "The Rust executable"\ndescription = %s\nweight = 1\ntemplate = "registry-executable.html"\n[extra]\nsource = "apps/majordomus-cli/README.md"\n+++\n\n' "$(awk 'NR>2 && NF { printf "%s ", $0 } NR>2 && !NF { exit }' "$ROOT/apps/majordomus-cli/README.md" | sed -E 's/`//g; s/^([^.]*\.)[^.]*.*$/\1/; s/ +$//' | jline)"
+  printf '{%% raw %%}\n'
+  sed '1{/^# /d;}' "$ROOT/apps/majordomus-cli/README.md" \
+    | awk '{ while (match($0, /\]\(\.\.\/\.\.\/docs\/[A-Z_]+\.md\)/)) { t=substr($0,RSTART+13,RLENGTH-14); gsub(/_/,"-",t); $0=substr($0,1,RSTART-1) "](@/docs/" tolower(t) ")" substr($0,RSTART+RLENGTH) } print }' \
+    | sed -E "s#\]\(\.\./\.\./([^)]+)\)#]($(jq -r '.repository_url' "$OUT/project.json")/blob/master/\1)#g" \
+    | awk -f "$ROOT/scripts/lib/project-markdown.awk"
+  printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/registry/executable.md"
+mj_phase_end "gen:executable_routes" "$GEN_T0"
 # ---------------------------------------------------------------- docs/SITE_CLAIMS.md (derived release artifact)
 GEN_T0="$(mj_phase_begin "gen:docs_SITE_CLAIMS.md_derived")"
 SC="$STAGE/SITE_CLAIMS.md"

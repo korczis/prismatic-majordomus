@@ -1,0 +1,28 @@
+{% extends "page.html" %}
+{#- The executable's own narrative: apps/majordomus-cli/README.md, projected as the documents
+    are, with the claims implemented in the crate that no other page of this section claims. -#}
+{% block body %}
+{%- set ex = load_data(path="data/generated/executable.json") -%}
+{%- set reg = load_data(path="data/registry/registry.json") -%}
+{%- set current = "executable" -%}{% include "partials/registry-nav.html" %}
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono hover:underline">{{ page.extra.source }}</a> — the same Markdown GitHub shows. The command line, the capabilities, the MCP and HTTP surfaces and the benchmarks are not written there: they are generated from the registry, and their pages are the row of links above.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
+    {%- set claims = ex.claims.executable -%}{%- set heading = "Claims implemented in the executable" -%}{% include "partials/registry-claims.html" %}
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">at a glance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">version</dt><dd class="font-mono text-heading">{{ reg.generator.id }} {{ reg.generator.version }}</dd></div>
+        <div><dt class="text-body-subtle">capabilities</dt><dd class="text-heading">{{ reg.registry.summary.builtin }} builtin in {{ ex.counts.modules }} modules, {{ reg.registry.summary.declarative }} declarative</dd></div>
+        <div><dt class="text-body-subtle">surfaces</dt><dd class="text-heading">{{ reg.mcp.tools | length }} MCP tools · {{ reg.http.routes | length }} HTTP routes · {{ reg.cli.subcommands | length }} commands</dd></div>
+        <div><dt class="text-body-subtle">crate</dt><dd class="min-w-0 break-all"><a href="{{ project.repository_url }}/tree/master/apps/majordomus-cli" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli</a></dd></div>
+        <div><dt class="text-body-subtle">generated reference</dt><dd class="min-w-0 break-all"><a href="{{ project.repository_url }}/tree/master/docs/generated" class="font-mono text-fg-brand hover:underline">docs/generated/</a></dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+{% endblock body %}
+{% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}

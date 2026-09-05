@@ -1,0 +1,40 @@
+{% extends "page.html" %}
+{#- The native command line, rendered from data/registry/registry.json .cli, which the
+    executable derives from its clap declaration. Every command, argument, default and value
+    set is that declaration's; docs/generated/cli.md is the same tree as Markdown. The tree
+    is walked three levels deep, which is one more than it has; a deeper one is a template
+    change, and the site check refuses a command the page does not render. -#}
+{% block body %}
+{%- set reg = load_data(path="data/registry/registry.json") -%}
+{%- set ex = load_data(path="data/generated/executable.json") -%}
+{%- set root = reg.cli -%}
+{%- set current = "cli" -%}{% include "partials/registry-nav.html" %}
+<div class="mt-6 grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Commands">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1">
+      {%- for c in root.subcommands -%}
+      <li><a href="#cmd-{{ c.path | join(sep="-") }}" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">{{ c.path | last }}</a>
+        {%- if c.subcommands | length > 0 -%}<ul class="ml-3 hidden lg:block">{% for s in c.subcommands %}<li><a href="#cmd-{{ s.path | join(sep="-") }}" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">{{ c.path | last }} {{ s.path | last }}</a>{% if s.subcommands | length > 0 %}<ul class="ml-3">{% for u in s.subcommands %}<li><a href="#cmd-{{ u.path | join(sep="-") }}" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">{{ s.path | last }} {{ u.path | last }}</a></li>{% endfor %}</ul>{% endif %}</li>{% endfor %}</ul>{%- endif -%}
+      </li>
+      {%- endfor -%}
+    </ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="text-lg text-body">{{ root.about }}</p>
+    {%- if root.long_about %}<p class="mt-3 whitespace-pre-line text-sm text-body">{{ root.long_about }}</p>{% endif -%}
+    <p class="mt-4 text-sm text-body-subtle">Declared once in <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono text-fg-brand hover:underline">{{ page.extra.source }}</a>; this page, <code class="font-mono">--help</code> and <a href="{{ project.repository_url }}/blob/master/docs/generated/cli.md" class="font-mono text-fg-brand hover:underline">docs/generated/cli.md</a> are projections of it. The task lifecycle (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) is the shell tool, documented under <a href="{{ get_url(path="/commands/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Commands</a>.</p>
+    {%- set n = root -%}{% include "partials/cli-command.html" %}
+    {%- for c in root.subcommands -%}
+      {%- set n = c -%}{% include "partials/cli-command.html" %}
+      {%- for s in c.subcommands -%}
+        {%- set n = s -%}{% include "partials/cli-command.html" %}
+        {%- for u in s.subcommands -%}
+          {%- set n = u -%}{% include "partials/cli-command.html" %}
+        {%- endfor -%}
+      {%- endfor -%}
+    {%- endfor -%}
+    {%- set claims = ex.claims.cli -%}{%- set heading = "Claims about the command line" -%}{% include "partials/registry-claims.html" %}
+  </div>
+</div>
+{% endblock body %}

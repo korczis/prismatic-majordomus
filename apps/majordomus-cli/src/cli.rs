@@ -402,11 +402,10 @@ pub struct ArgDoc {
     pub required: bool,
     /// Accepted by every command under the one that declares it.
     pub global: bool,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    /// The values a value-enum argument accepts, with the help of each.
+    /// The values a value-enum argument accepts, with the help of each; empty for any
+    /// other argument. Always present, so a template can ask for its length.
     pub possible_values: Vec<PossibleValueDoc>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    /// The default value(s), as clap renders them.
+    /// The default value(s), as clap renders them; empty when there is none.
     pub defaults: Vec<String>,
 }
 

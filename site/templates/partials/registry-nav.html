@@ -1,0 +1,16 @@
+{#- The executable's pages, as one row of links. The routes are data/generated/executable.json,
+    which scripts/generate-site-data derives from the registry manifest; `current` is the
+    key of the page rendering this partial. The labels are the site's; the routes are not. -#}
+{%- set ex = load_data(path="data/generated/executable.json") -%}
+{%- set on = "rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" -%}
+{%- set off = "rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading" -%}
+<nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="{{ get_url(path=ex.routes.overview, trailing_slash=true) }}" class="{% if current == 'overview' %}{{ on }}{% else %}{{ off }}{% endif %}"{% if current == 'overview' %} aria-current="page"{% endif %}>Registry</a>
+  <a href="{{ get_url(path=ex.routes.executable, trailing_slash=true) }}" class="{% if current == 'executable' %}{{ on }}{% else %}{{ off }}{% endif %}"{% if current == 'executable' %} aria-current="page"{% endif %}>The executable</a>
+  <a href="{{ get_url(path=ex.routes.modules, trailing_slash=true) }}" class="{% if current == 'modules' %}{{ on }}{% else %}{{ off }}{% endif %}"{% if current == 'modules' %} aria-current="page"{% endif %}>Modules</a>
+  <a href="{{ get_url(path=ex.routes.capabilities, trailing_slash=true) }}" class="{% if current == 'capabilities' %}{{ on }}{% else %}{{ off }}{% endif %}"{% if current == 'capabilities' %} aria-current="page"{% endif %}>Capabilities</a>
+  <a href="{{ get_url(path=ex.routes.cli, trailing_slash=true) }}" class="{% if current == 'cli' %}{{ on }}{% else %}{{ off }}{% endif %}"{% if current == 'cli' %} aria-current="page"{% endif %}>Command line</a>
+  <a href="{{ get_url(path=ex.routes.mcp, trailing_slash=true) }}" class="{% if current == 'mcp' %}{{ on }}{% else %}{{ off }}{% endif %}"{% if current == 'mcp' %} aria-current="page"{% endif %}>MCP</a>
+  <a href="{{ get_url(path=ex.routes.http, trailing_slash=true) }}" class="{{ off }}">HTTP API</a>
+  <a href="{{ get_url(path=ex.routes.benchmarks, trailing_slash=true) }}" class="{% if current == 'benchmarks' %}{{ on }}{% else %}{{ off }}{% endif %}"{% if current == 'benchmarks' %} aria-current="page"{% endif %}>Benchmarks</a>
+</nav>

@@ -1,4 +1,4 @@
-# Site navigation: five intents, small on purpose. Rendered by templates/partials/navbar.html
+# Site navigation: a handful of intents, small on purpose. Rendered by templates/partials/navbar.html
 # as Flowbite dropdowns on desktop and as labelled flat lists inside the collapsed mobile menu.
 # A group with no items is a plain link. Every href must resolve; scripts/site-check verifies it.
 
@@ -51,14 +51,25 @@ items = [
 ]
 
 [[groups]]
+label = "Executable"
+href = "/registry/"
+items = [
+  { label = "The Rust executable", href = "/registry/executable/" },
+  { label = "Registry", href = "/registry/" },
+  { label = "Capabilities", href = "/registry/capabilities/" },
+  { label = "Command line", href = "/registry/cli/" },
+  { label = "MCP surface", href = "/registry/mcp/" },
+  { label = "HTTP API", href = "/docs/api/" },
+  { label = "Benchmarks", href = "/registry/benchmarks/" },
+]
+
+[[groups]]
 label = "Reference"
 href = "/docs/"
 items = [
   { label = "All documents", href = "/docs/" },
   { label = "CLI reference", href = "/docs/cli/" },
-  { label = "HTTP API", href = "/docs/api/" },
   { label = "File schemas", href = "/docs/schemas/" },
-  { label = "Registry", href = "/registry/" },
   { label = "Program map", href = "/map/" },
   { label = "How this site is built", href = "/architecture/" },
 ]

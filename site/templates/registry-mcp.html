@@ -1,0 +1,67 @@
+{% extends "page.html" %}
+{#- The MCP surface: the tools and the resources the registry projects, from
+    data/registry/registry.json .mcp; the narrative of the transports, the shared server
+    and the lease is docs/MCP.md, rendered at /docs/mcp/ and linked, not restated. -#}
+{% block body %}
+{%- set reg = load_data(path="data/registry/registry.json") -%}
+{%- set ex = load_data(path="data/generated/executable.json") -%}
+{%- set mcp = reg.mcp -%}
+{%- set current = "mcp" -%}{% include "partials/registry-nav.html" %}
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="text-lg text-body">An MCP client sees the registry as tools and resources. Every tool is a capability with an <code class="font-mono">mcp.tool</code> exposure; every builtin capability with a resource exposure answers its URI; every object of the layer is one more resource. Nothing is listed here that the registry does not hold.</p>
+    <p class="mt-3 text-sm text-body-subtle">How a client reaches the server — <code class="font-mono">majordomus mcp</code> over stdio, the one shared server per repository with MCP over HTTP, the lease, the peers, what the server refuses — is <a href="{{ get_url(path="/docs/mcp/", trailing_slash=true) }}" class="text-fg-brand hover:underline">the MCP document</a>; the shared server's resilience is <a href="{{ get_url(path="/doctrines/", trailing_slash=true) }}" class="text-fg-brand hover:underline">doctrine</a>.</p>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Tools</h2>
+    <p class="mt-2 text-sm text-body">{{ mcp.tools | length }} tools, as <code class="font-mono">tools/list</code> answers. The input schema of each is the capability's canonical input; the page of the capability shows it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default">
+      <table class="w-full min-w-[36rem] text-left text-sm">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">tool</th><th class="px-3 py-2">capability</th><th class="px-3 py-2">kind</th><th class="px-3 py-2">input → output</th><th class="px-3 py-2">read-only</th></tr></thead>
+        <tbody>
+        {%- for t in mcp.tools -%}
+        {%- set link = [x for x in ex.capabilities if x.id == t.id][0] -%}
+        <tr class="border-t border-default align-top">
+          <td class="px-3 py-2"><code class="break-all font-mono font-semibold text-heading">{{ t.name }}</code><p class="mt-1 max-w-md text-xs text-body">{{ t.description }}</p></td>
+          <td class="px-3 py-2"><a href="{{ get_url(path=link.route, trailing_slash=true) }}" class="break-all font-mono text-fg-brand hover:underline">{{ t.id }}</a></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">{{ t.kind }}</td>
+          <td class="px-3 py-2 font-mono text-xs text-body">{{ t.input }} → {{ t.output }}</td>
+          <td class="px-3 py-2 font-mono text-xs text-body">{% if t.read_only %}yes{% else %}no — changes this process's memory{% endif %}</td>
+        </tr>
+        {%- endfor -%}
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Resources</h2>
+    <p class="mt-2 text-sm text-body">The builtin capabilities that answer a URI, and the shape of every declarative object's URI. <code class="font-mono">resources/list</code> returns these first, then one entry per object of the layer ({{ reg.index.objects | length }} in this repository, listed on the <a href="{{ get_url(path=ex.routes.overview, trailing_slash=true) }}" class="text-fg-brand hover:underline">registry page</a>).</p>
+    <ul class="mt-3 space-y-2">
+      {%- for r in mcp.resources -%}
+      {%- set link = [x for x in ex.capabilities if x.id == r.id][0] -%}
+      <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><code class="break-all font-mono font-semibold text-heading">{{ r.uri }}</code><span class="text-body">{{ r.title }}</span><a href="{{ get_url(path=link.route, trailing_slash=true) }}" class="ms-auto break-all font-mono text-xs text-fg-brand hover:underline">{{ r.id }}</a></li>
+      {%- endfor -%}
+      <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><code class="break-all font-mono font-semibold text-heading">{{ mcp.resource_template }}</code><span class="text-body">one per object of the layer; a read resolves the URI exactly as the object tool and the HTTP route do</span></li>
+    </ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Protocol</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">server name</dt><dd class="mt-1 font-mono text-heading">{{ mcp.server_name }} {{ reg.generator.version }}</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">protocol versions</dt><dd class="mt-1 font-mono text-heading">{{ mcp.protocol_versions | join(sep=", ") }}</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">transports</dt><dd class="mt-1 text-body">stdio (<code class="font-mono">majordomus mcp</code>), and MCP over HTTP at <code class="font-mono">/mcp</code> on the shared server</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">side effects</dt><dd class="mt-1 text-body">none on the repository; the lease under the local state directory while a server runs</dd></div>
+    </dl>
+
+    {%- set claims = ex.claims.mcp -%}{%- set heading = "Claims about the MCP surface and the shared server" -%}{% include "partials/registry-claims.html" %}
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">tools and resources from</dt><dd class="font-mono text-heading">the capability registry (<code>exposure.mcp</code>)</dd></div>
+        <div><dt class="text-body-subtle">narrative</dt><dd><a href="{{ get_url(path="/docs/mcp/", trailing_slash=true) }}" class="font-mono text-fg-brand hover:underline">{{ page.extra.source }}</a></dd></div>
+        <div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">{{ reg.registry.fingerprint }}</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">{{ reg.generator.id }} {{ reg.generator.version }}</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+{% endblock body %}

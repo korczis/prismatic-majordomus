@@ -1,0 +1,108 @@
+{% extends "page.html" %}
+{#- The benchmark system, from data/registry/registry.json .benchmarks: the targets the
+    registry derives, the coverage, the regression policy as data, and the accepted
+    baselines as committed, each labelled with what measured it. No number here is typed;
+    a measurement is evidence of one host and one build, and is presented as that. -#}
+{% block body %}
+{%- set reg = load_data(path="data/registry/registry.json") -%}
+{%- set ex = load_data(path="data/generated/executable.json") -%}
+{%- set b = reg.benchmarks -%}
+{%- set current = "benchmarks" -%}{% include "partials/registry-nav.html" %}
+<div class="mt-6 min-w-0">
+  <p class="text-lg text-body">Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. <code class="font-mono">majordomus bench coverage</code> computes the same table live, <code class="font-mono">majordomus bench</code> times it, and <code class="font-mono">bench --check</code> compares a run with the accepted baseline of its platform under the policy below.</p>
+  <p class="mt-3 text-sm text-body-subtle">The same matrix as Markdown is <a href="{{ project.repository_url }}/blob/master/docs/generated/benchmarks.md" class="font-mono text-fg-brand hover:underline">docs/generated/benchmarks.md</a>; how to read a measurement is <a href="{{ get_url(path="/docs/performance/", trailing_slash=true) }}" class="text-fg-brand hover:underline">the performance document</a>.</p>
+
+  <h2 id="coverage" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Coverage</h2>
+  <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    {%- for name, t in b.coverage.tallies -%}
+    <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ name }}</span><p class="mt-1 text-2xl font-semibold text-heading">{{ t.covered }}<span class="text-base font-normal text-body-subtle"> / {{ t.required }}</span></p><p class="mt-1 font-mono text-xs {% if t.missing > 0 %}text-fg-danger-strong{% else %}text-body-subtle{% endif %}">{{ t.missing }} missing · {{ t.waived }} waived</p></div>
+    {%- endfor -%}
+  </div>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[32rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">subject</th><th class="px-3 py-2">module</th><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th></tr></thead>
+      <tbody>
+      {%- for l in b.coverage.lines -%}
+      {%- set links = [x for x in ex.capabilities if x.id == l.subject] -%}
+      <tr class="border-t border-default align-top"><td class="px-3 py-2">{% if links | length > 0 %}<a href="{{ get_url(path=links[0].route, trailing_slash=true) }}" class="break-all font-mono text-fg-brand hover:underline">{{ l.subject }}</a>{% else %}<code class="break-all font-mono text-heading">{{ l.subject }}</code>{% endif %}</td><td class="px-3 py-2 font-mono text-xs text-body">{{ l.module }}</td><td class="px-3 py-2 font-mono text-xs text-body">{{ l.transport }}</td><td class="px-3 py-2 font-mono text-xs {% if l.state == 'missing' %}text-fg-danger-strong{% else %}text-body{% endif %}">{{ l.state }}{% if l.reason %} ({{ l.reason }}){% endif %}</td><td class="px-3 py-2 font-mono text-xs text-body">{{ l.cases }}</td></tr>
+      {%- endfor -%}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="targets" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Targets</h2>
+  <p class="mt-2 text-sm text-body">{{ b.targets | length }} targets for this repository. The key is stable across runs; a cached capability is measured cold and warm as well as uncached.</p>
+  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">key</th><th class="px-3 py-2">transport</th><th class="px-3 py-2">capability</th><th class="px-3 py-2">case</th><th class="px-3 py-2">reached as</th><th class="px-3 py-2">cache</th></tr></thead>
+      <tbody>
+      {%- for t in b.targets -%}
+      <tr id="target-{{ t.key | slugify }}" class="scroll-mt-24 border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-xs text-heading">{{ t.key }}</code></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">{{ t.transport }}</td>
+        <td class="px-3 py-2">{% if t.id %}{% set links = [x for x in ex.capabilities if x.id == t.id] %}<a href="{{ get_url(path=links[0].route, trailing_slash=true) }}" class="break-all font-mono text-xs text-fg-brand hover:underline">{{ t.id }}</a>{% else %}<span class="font-mono text-xs text-body-subtle">system</span>{% endif %}</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">{% if t.case %}{{ t.case }}{% else %}—{% endif %}</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">{% if t.tool %}{{ t.tool }}{% elif t.route %}{{ t.route }}{% elif t.kind == "capability" %}executor{% else %}—{% endif %}</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">{% if t.cached %}cold + warm{% else %}uncached{% endif %}</td>
+      </tr>
+      {%- endfor -%}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="system" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">System targets</h2>
+  <p class="mt-2 text-sm text-body">The transports' own operations, not capabilities.</p>
+  <ul class="mt-3 space-y-2">
+    {%- for s in b.system_targets -%}
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><code class="break-all font-mono font-semibold text-heading">{{ s.key }}</code><span class="font-mono text-xs text-body-subtle">{{ s.transport }}</span><span class="min-w-0 basis-full text-body">{{ s.description }}</span></li>
+    {%- endfor -%}
+  </ul>
+
+  <h2 id="policy" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Regression policy</h2>
+  <p class="mt-2 text-sm text-body">What <code class="font-mono">bench --check</code> applies, read from <a href="{{ project.repository_url }}/blob/master/{{ b.policy_path }}" class="font-mono text-fg-brand hover:underline">{{ b.policy_path }}</a>: a metric fails when it grows by more than its relative threshold and by at least the absolute floor, and gates only once the run took its minimum samples.</p>
+  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[24rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">metric</th><th class="px-3 py-2">allowed increase</th><th class="px-3 py-2">gates from</th></tr></thead>
+      <tbody>
+      {%- for metric, t in b.policy.regression -%}
+      <tr class="border-t border-default"><td class="px-3 py-2 font-mono text-heading">{{ metric }}</td><td class="px-3 py-2 font-mono text-xs text-body">{{ t.relative * 100 }}%</td><td class="px-3 py-2 font-mono text-xs text-body">{{ t.minimum_samples }} samples</td></tr>
+      {%- endfor -%}
+      <tr class="border-t border-default"><td class="px-3 py-2 font-mono text-heading">absolute floor</td><td class="px-3 py-2 font-mono text-xs text-body" colspan="2">{{ b.policy.minimum_absolute_us }} µs — an increase under it is noise, whatever the ratio</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="baselines" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Accepted baselines</h2>
+  {%- if b.baselines | length > 0 -%}
+  <p class="mt-2 text-sm text-body">One per platform, committed and reviewed. A measurement is evidence of the host, build and commit named with it and of nothing else: a debug build on one laptop says nothing about a release build elsewhere, and <code class="font-mono">bench --check</code> fails a run only against a baseline recorded on the same host.</p>
+  {%- for bl in b.baselines -%}
+  <details class="mt-4 rounded-base border border-default bg-neutral-primary-soft" {% if loop.first %}open{% endif %}>
+    <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-heading"><code class="font-mono">{{ bl.platform }}</code> <span class="ms-2 font-mono text-xs font-normal text-body-subtle">{{ bl.profile }} profile · {{ bl.results | length }} measurements · {{ bl.finished_at }}</span></summary>
+    <div class="border-t border-default px-4 py-3">
+      <dl class="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
+        <dt class="text-body-subtle">file</dt><dd class="min-w-0 break-all"><a href="{{ project.repository_url }}/blob/master/{{ bl.path }}" class="font-mono text-fg-brand hover:underline">{{ bl.path }}</a></dd>
+        <dt class="text-body-subtle">host</dt><dd class="font-mono text-heading">{{ bl.provenance.host | default(value="not recorded") }}</dd>
+        <dt class="text-body-subtle">build</dt><dd class="font-mono text-heading">{{ bl.provenance.build_profile }} · {{ bl.provenance.os }} {{ bl.provenance.arch }} · majordomus-cli {{ bl.provenance.version }}</dd>
+        <dt class="text-body-subtle">commit</dt><dd class="min-w-0 break-all font-mono text-heading">{% if bl.provenance.commit %}<a href="{{ project.repository_url }}/commit/{{ bl.provenance.commit }}" class="text-fg-brand hover:underline">{{ bl.provenance.commit }}</a>{% else %}unknown{% endif %}{% if bl.provenance.dirty %} (dirty tree){% endif %}</dd>
+        <dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">{{ bl.provenance.registry_fingerprint }}{% if bl.provenance.registry_fingerprint != reg.registry.fingerprint %} <span class="text-body-subtle">(the registry has moved since; the baseline predates it)</span>{% endif %}</dd>
+      </dl>
+      <div class="mt-3 overflow-x-auto rounded-base border border-default">
+        <table class="w-full min-w-[36rem] text-left text-sm">
+          <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">target</th><th class="px-3 py-2">cache</th><th class="px-3 py-2 text-right">samples</th><th class="px-3 py-2 text-right">p50 µs</th><th class="px-3 py-2 text-right">p95 µs</th><th class="px-3 py-2 text-right">p99 µs</th><th class="px-3 py-2 text-right">handler runs</th></tr></thead>
+          <tbody>
+          {%- for r in bl.results -%}
+          <tr class="border-t border-default"><td class="px-3 py-2"><code class="break-all font-mono text-xs text-heading">{{ r.key }}</code></td><td class="px-3 py-2 font-mono text-xs text-body">{{ r.cache_mode }}</td><td class="px-3 py-2 text-right font-mono text-xs text-body">{{ r.samples }}</td><td class="px-3 py-2 text-right font-mono text-xs text-body">{{ r.p50_us | round(precision=1) }}</td><td class="px-3 py-2 text-right font-mono text-xs text-body">{{ r.p95_us | round(precision=1) }}</td><td class="px-3 py-2 text-right font-mono text-xs text-body">{{ r.p99_us | round(precision=1) }}</td><td class="px-3 py-2 text-right font-mono text-xs text-body">{% if r.handler_invocations is defined %}{{ r.handler_invocations }}{% else %}—{% endif %}</td></tr>
+          {%- endfor -%}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+  {%- endfor -%}
+  {%- else -%}
+  <p class="mt-2 text-sm text-body-subtle">No baseline is committed. <code class="font-mono">majordomus bench baseline update</code> records one for the platform it runs on.</p>
+  {%- endif -%}
+
+  {%- set claims = ex.claims.benchmarks -%}{%- set heading = "Claims about the benchmark system" -%}{% include "partials/registry-claims.html" %}
+</div>
+{% endblock body %}

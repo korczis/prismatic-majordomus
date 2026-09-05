@@ -108,80 +108,13 @@ distribution already declares is an error naming both files.
 
 ## Command reference
 
-Every command starts from the same options:
-
-| option | effect |
-|---|---|
-| `--repo <PATH>` | start the root search at `PATH` instead of the working directory; an invalid path is an error, never a fallback |
-| `--discovery vcs\|filesystem` | `vcs` (default) enumerates tracked files through `git ls-files`, the layer's contract; `filesystem` walks the work tree with the same glob semantics and sees untracked files too |
-| `--strict` | exit 10 instead of proceeding when any file of the layer carries an error diagnostic |
-| `--share <DIR>` | the share directory, see above |
-
-### `majordomus mcp`
-
-| | |
-|---|---|
-| stdout | protocol frames only, one JSON-RPC message per line; nothing else, ever |
-| stderr | structured diagnostics through `tracing`, filtered by `MAJORDOMUS_LOG` (default `info`); the shared server's URL, Swagger UI and `/mcp` are logged the moment it is bound |
-| stdin | protocol frames, one per line; EOF ends the session |
-| shared server | the first `mcp` in a repository creates the lease `.ai/local/state/mcp/server.json`, binds `--http-host`:`--http-port` (default `127.0.0.1:8741`; a taken port is replaced by a free one and both are logged), publishes the URL in the lease, and serves HTTP beside its stdio; every later `mcp` in the same repository finds the lease, checks that the server answers for this root, and bridges its stdio to `/mcp` (no index, no registry, no port of its own); a lease whose server does not answer is taken over |
-| lifetime | the server serves until its own client is gone and the last attached peer has left; then it closes the port and removes the lease. A bridge whose server dies takes over on its next message (its client's `initialize` is carried across) or attaches to whichever process won; when it can do neither the client gets a JSON-RPC error naming why |
-| peers | every session is a peer named by its `initialize` `clientInfo`; `majordomus_peers` lists them, `majordomus_announce` records what the caller is working on; the `initialize` instructions name the URL, the caller's peer id and every other peer |
-| side effects | the lease file under `.ai/local/state/mcp/` (the checkout-local half, never tracked), removed on exit; a loopback socket; nothing under the tracked tree, ever |
-| exit | `0` at EOF or when the client closes its read end (after the last peer has left, for the server); `13` when the lease cannot be created or joined |
-| `--standalone` | this client alone: no shared server, no HTTP, no lease, no peers, nothing written anywhere |
-| `--http-host <HOST>`, `--http-port <PORT>` | where the shared server binds when this process starts it |
-| `--inspect [--format text\|json]` | print the repository, resources, tools and every diagnostic, then exit; 10 when there is an error diagnostic; touches no port and no lease |
-| `--transport stdio` | the transport of this process's own client; the option exists so that a second one is an addition |
-
-### `majordomus serve`
-
-| | |
-|---|---|
-| bind | `--host` (default `127.0.0.1`) and `--port` (default `8741`; `0` picks a free port and the address is logged on stderr) |
-| shared server | the same server `mcp` starts, without a stdio session: it takes the lease, and when another process already holds it, logs that server's URL and exits 0 rather than starting a second one |
-| routes | `/` (an index, with the root it serves), `/openapi.json`, `/docs`, `/mcp` (MCP over HTTP: `POST` a JSON-RPC message, `Mcp-Session-Id` from `initialize` on every later request, `DELETE` to end the session, `GET` is 405), and one route per capability with an HTTP exposure under `/api/v1/`; `HEAD` answers like `GET` without a body |
-| binding | `GET` binds every top-level input property as a query parameter coerced by its schema type; `POST` binds the JSON body (a command's binding: `peers.announce`) |
-| errors | JSON `{ "error": { "code", "message" } }`: 400 `invalid_input`, `invalid_json`, `session_required`; 404 `not_found`, `session_not_found`; 405 `method_not_allowed`; 413 `too_large`; 422 `refused`; 500 `internal` |
-| lifecycle | when stdin is a pipe or a socket the server starts stopping at its end of file and waits for attached peers to leave; otherwise (a terminal, `/dev/null`, a file) it runs until the process is stopped |
-| side effects | the lease under `.ai/local/state/mcp/`, removed on exit; nothing else is written, no state is kept between requests beyond the peer board and the open sessions |
-| exit | `0` when stopped through stdin, or when another process already serves; `13` when the port cannot be bound |
-
-Swagger UI's own assets are loaded by the browser from the pinned `swagger-ui-dist` on
-unpkg; the document it renders is local. That is the one part of the HTTP projection that
-needs the network.
-
-### `majordomus bench [id] [--transport …] [--profile …] [--format …] [--check] [--no-write]`
-
-| | |
-|---|---|
-| targets | derived from the registry: every required executable directly and on every transport its exposure declares, once per case of its input type; plus the system targets (MCP process-cold, `initialize`, `ping`, `tools/list`, `resources/list`, `resources/read`; `GET /`, `/openapi.json`, `/docs`) |
-| `id` | only that capability (or keys starting with the text) |
-| `--transport direct\|mcp\|http\|system\|all` | direct runs the executor in process (cold and warm for a cached capability, handler invocations counted); `mcp` spawns `majordomus mcp --standalone` and speaks real frames; `http` binds a loopback socket in this process and sends real requests |
-| `--profile quick\|full\|ci` | warmup and samples per target, and processes spawned for the cold target |
-| output | slowest p95 first; `--format json` is the result document (`majordomus/benchmark-result/v1`: commit, dirty state, build profile, platform, registry fingerprint, per target and cache mode the statistics) |
-| written | `.ai/local/benchmarks/<utc>-<profile>.json`, unless `--no-write` |
-| `--check` | compares with `.ai/repo/benchmarks/rust/baseline.<os>-<arch>-<build>.json` under `.ai/repo/benchmarks/rust/policy.yaml`; every line printed; exit 10 on a regression; a baseline recorded on another host (the document carries CPU brand and core count) is reported against only, exit 0; no baseline for the platform compares nothing and says so |
-| `bench coverage [--format json] [--check]` | covered / required per transport and in total; `--check` exits 10 when anything is missing or waived |
-| `bench baseline update [--profile full] [--allow-dirty]` | runs and records the baseline; a dirty tree is refused without the flag |
-| exit | `0`; `10` on a regression or incomplete coverage under `--check`; `12` when the filter matches nothing; `2` for a bad flag |
-
-### `majordomus capabilities list|describe|schema|validate`
-
-`list [--kind query|command|resource] [--exposure mcp|http|cli] [--format text|json]` and
-`describe <id> [--format …]` dispatch through the registry's own introspection
-capabilities, bound by their CLI exposure; `schema <id> [--side input|output]` prints a
-canonical schema; `validate` builds the registry and every projection and prints one `OK`
-line per check, or exits 10 with every violation named. An unknown id exits 12.
-
-### `majordomus generate [all|openapi|docs|benchmarks|registry|allow] [--check] [--out <DIR>]`
-
-Writes `docs/generated/openapi.json`, `docs/generated/capabilities.md` with one
-`docs/generated/modules/<id>.md` per executable module, `docs/generated/benchmarks.md`
-(every target and the coverage), `docs/generated/registry.json` (the builtin registry as
-data) and, from the schemas, `share/allow/*.txt`; `--check` compares without writing and
-exits 10 naming every stale file; `--out` redirects the repository-relative artifacts
-under another root.
+The command line is declared once, in `src/cli.rs` (clap). Its reference is generated from
+that declaration and never written by hand: [`docs/generated/cli.md`](../../docs/generated/cli.md)
+for a reader on GitHub, the website's [command line page](https://korczis.github.io/prismatic-majordomus/registry/cli/)
+for everyone else, and `majordomus --help` at a terminal. `majordomus generate` writes the
+file and `majordomus generate --check` refuses a stale one in CI. Every command starts from
+the same options (`--repo`, `--discovery`, `--strict`, `--share`); the reference lists them
+on each command that accepts them.
 
 ### Exit codes
 

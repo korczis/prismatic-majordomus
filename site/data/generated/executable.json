@@ -1,0 +1,453 @@
+{
+  "capabilities": [
+    {
+      "api_anchor": "/docs/api/#op-capabilities-describe",
+      "claims": [],
+      "cli": "majordomus capabilities describe",
+      "id": "capabilities.describe",
+      "kind": "query",
+      "module": "capabilities",
+      "module_route": "/registry/modules/capabilities/",
+      "resource": null,
+      "route": "/registry/capabilities/capabilities-describe/",
+      "slug": "capabilities-describe",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
+      "tests": [],
+      "title": "Describe one capability",
+      "tool": "majordomus_capability"
+    },
+    {
+      "api_anchor": "/docs/api/#op-capabilities-list",
+      "claims": [],
+      "cli": "majordomus capabilities list",
+      "id": "capabilities.list",
+      "kind": "query",
+      "module": "capabilities",
+      "module_route": "/registry/modules/capabilities/",
+      "resource": null,
+      "route": "/registry/capabilities/capabilities-list/",
+      "slug": "capabilities-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
+      "tests": [],
+      "title": "List capabilities",
+      "tool": "majordomus_capabilities"
+    },
+    {
+      "api_anchor": "/docs/api/#op-objects-get",
+      "claims": [
+        {
+          "id": "mcp-uri-resolution",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+          "route": "/guarantees/mcp-uri-resolution/",
+          "status": "guaranteed",
+          "test": "test/cases/72_rust_mcp.sh"
+        }
+      ],
+      "cli": null,
+      "id": "objects.get",
+      "kind": "query",
+      "module": "objects",
+      "module_route": "/registry/modules/objects/",
+      "resource": null,
+      "route": "/registry/capabilities/objects-get/",
+      "slug": "objects-get",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "tests": [
+        "test/cases/72_rust_mcp.sh"
+      ],
+      "title": "Get one object",
+      "tool": "majordomus_get"
+    },
+    {
+      "api_anchor": "/docs/api/#op-objects-list",
+      "claims": [
+        {
+          "id": "mcp-uri-resolution",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+          "route": "/guarantees/mcp-uri-resolution/",
+          "status": "guaranteed",
+          "test": "test/cases/72_rust_mcp.sh"
+        }
+      ],
+      "cli": null,
+      "id": "objects.list",
+      "kind": "query",
+      "module": "objects",
+      "module_route": "/registry/modules/objects/",
+      "resource": null,
+      "route": "/registry/capabilities/objects-list/",
+      "slug": "objects-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "tests": [
+        "test/cases/72_rust_mcp.sh"
+      ],
+      "title": "List objects",
+      "tool": "majordomus_list"
+    },
+    {
+      "api_anchor": "/docs/api/#op-objects-search",
+      "claims": [
+        {
+          "id": "mcp-uri-resolution",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+          "route": "/guarantees/mcp-uri-resolution/",
+          "status": "guaranteed",
+          "test": "test/cases/72_rust_mcp.sh"
+        }
+      ],
+      "cli": null,
+      "id": "objects.search",
+      "kind": "query",
+      "module": "objects",
+      "module_route": "/registry/modules/objects/",
+      "resource": null,
+      "route": "/registry/capabilities/objects-search/",
+      "slug": "objects-search",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "tests": [
+        "test/cases/72_rust_mcp.sh"
+      ],
+      "title": "Search objects",
+      "tool": "majordomus_search"
+    },
+    {
+      "api_anchor": "/docs/api/#op-peers-announce",
+      "claims": [],
+      "cli": null,
+      "id": "peers.announce",
+      "kind": "command",
+      "module": "peers",
+      "module_route": "/registry/modules/peers/",
+      "resource": null,
+      "route": "/registry/capabilities/peers-announce/",
+      "slug": "peers-announce",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/peers.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/peers.rs",
+      "tests": [],
+      "title": "Announce what this peer is working on",
+      "tool": "majordomus_announce"
+    },
+    {
+      "api_anchor": "/docs/api/#op-peers-list",
+      "claims": [],
+      "cli": null,
+      "id": "peers.list",
+      "kind": "query",
+      "module": "peers",
+      "module_route": "/registry/modules/peers/",
+      "resource": null,
+      "route": "/registry/capabilities/peers-list/",
+      "slug": "peers-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/peers.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/peers.rs",
+      "tests": [],
+      "title": "List peers",
+      "tool": "majordomus_peers"
+    },
+    {
+      "api_anchor": "/docs/api/#op-perf-counters",
+      "claims": [],
+      "cli": null,
+      "id": "perf.counters",
+      "kind": "query",
+      "module": "perf",
+      "module_route": "/registry/modules/perf/",
+      "resource": null,
+      "route": "/registry/capabilities/perf-counters/",
+      "slug": "perf-counters",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/perf.rs",
+      "tests": [],
+      "title": "Performance counters",
+      "tool": "majordomus_perf"
+    },
+    {
+      "api_anchor": "/docs/api/#op-repository-info",
+      "claims": [],
+      "cli": null,
+      "id": "repository.info",
+      "kind": "query",
+      "module": "repository",
+      "module_route": "/registry/modules/repository/",
+      "resource": "majordomus://repository",
+      "route": "/registry/capabilities/repository-info/",
+      "slug": "repository-info",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
+      "tests": [],
+      "title": "Repository and index state",
+      "tool": "majordomus_repository"
+    }
+  ],
+  "claims": {
+    "benchmarks": [
+      {
+        "id": "rust-hot-path-benchmarks",
+        "implementation": "apps/majordomus-cli/benches/projections.rs",
+        "route": "/guarantees/rust-hot-path-benchmarks/",
+        "status": "guaranteed",
+        "test": "test/cases/77_rust_evidence.sh"
+      },
+      {
+        "id": "benchmark-coverage-derived",
+        "implementation": "apps/majordomus-cli/src/bench/coverage.rs",
+        "route": "/guarantees/benchmark-coverage-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/91_canonical_architecture.sh"
+      }
+    ],
+    "cli": [],
+    "executable": [
+      {
+        "id": "mcp-data-driven",
+        "implementation": "apps/majordomus-cli/src/index.rs",
+        "route": "/guarantees/mcp-data-driven/",
+        "status": "guaranteed",
+        "test": "test/cases/72_rust_mcp.sh"
+      },
+      {
+        "id": "mcp-degraded-not-silent",
+        "implementation": "apps/majordomus-cli/src/index.rs",
+        "route": "/guarantees/mcp-degraded-not-silent/",
+        "status": "guaranteed",
+        "test": "test/cases/72_rust_mcp.sh"
+      },
+      {
+        "id": "capability-registry",
+        "implementation": "apps/majordomus-cli/src/capability/registry.rs",
+        "route": "/guarantees/capability-registry/",
+        "status": "guaranteed",
+        "test": "test/cases/76_capabilities_projections.sh"
+      },
+      {
+        "id": "schema-driven-kinds",
+        "implementation": "apps/majordomus-cli/src/metadata/mod.rs",
+        "route": "/guarantees/schema-driven-kinds/",
+        "status": "guaranteed",
+        "test": "test/cases/76_capabilities_projections.sh"
+      },
+      {
+        "id": "generated-projections-checked",
+        "implementation": "apps/majordomus-cli/src/generate.rs",
+        "route": "/guarantees/generated-projections-checked/",
+        "status": "guaranteed",
+        "test": "test/cases/76_capabilities_projections.sh"
+      },
+      {
+        "id": "capability-modules",
+        "implementation": "apps/majordomus-cli/src/capability/module.rs",
+        "route": "/guarantees/capability-modules/",
+        "status": "guaranteed",
+        "test": "test/cases/91_canonical_architecture.sh"
+      },
+      {
+        "id": "hot-path-no-rebuild",
+        "implementation": "apps/majordomus-cli/src/perf.rs",
+        "route": "/guarantees/hot-path-no-rebuild/",
+        "status": "guaranteed",
+        "test": "test/cases/91_canonical_architecture.sh"
+      },
+      {
+        "id": "execution-cache-equivalence",
+        "implementation": "apps/majordomus-cli/src/capability/executor.rs",
+        "route": "/guarantees/execution-cache-equivalence/",
+        "status": "guaranteed",
+        "test": "test/cases/91_canonical_architecture.sh"
+      },
+      {
+        "id": "provider-projections-one-renderer",
+        "implementation": "apps/majordomus-cli/src/providers.rs",
+        "route": "/guarantees/provider-projections-one-renderer/",
+        "status": "guaranteed",
+        "test": "test/cases/93_rust_provider_projections.sh"
+      },
+      {
+        "id": "site-registry-dataset",
+        "implementation": "apps/majordomus-cli/src/site.rs",
+        "route": "/guarantees/site-registry-dataset/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/projections.rs"
+      }
+    ],
+    "http": [
+      {
+        "id": "interfaces-are-projections",
+        "implementation": "apps/majordomus-cli/src/http/openapi.rs",
+        "route": "/guarantees/interfaces-are-projections/",
+        "status": "guaranteed",
+        "test": "test/cases/76_capabilities_projections.sh"
+      },
+      {
+        "id": "openapi-inferred",
+        "implementation": "apps/majordomus-cli/src/http/openapi.rs",
+        "route": "/guarantees/openapi-inferred/",
+        "status": "guaranteed",
+        "test": "test/cases/92_openapi_reference.sh"
+      }
+    ],
+    "mcp": [
+      {
+        "id": "mcp-stdio-surface",
+        "implementation": "apps/majordomus-cli/src/mcp/protocol.rs",
+        "route": "/guarantees/mcp-stdio-surface/",
+        "status": "guaranteed",
+        "test": "test/cases/72_rust_mcp.sh"
+      },
+      {
+        "id": "mcp-shared-server",
+        "implementation": "apps/majordomus-cli/src/lease.rs",
+        "route": "/guarantees/mcp-shared-server/",
+        "status": "guaranteed",
+        "test": "test/cases/90_mcp_shared_server.sh"
+      },
+      {
+        "id": "mcp-lease-resilience",
+        "implementation": "apps/majordomus-cli/src/lease.rs",
+        "route": "/guarantees/mcp-lease-resilience/",
+        "status": "guaranteed",
+        "test": "test/cases/90_mcp_shared_server.sh"
+      },
+      {
+        "id": "mcp-peers",
+        "implementation": "apps/majordomus-cli/src/peers.rs",
+        "route": "/guarantees/mcp-peers/",
+        "status": "guaranteed",
+        "test": "test/cases/90_mcp_shared_server.sh"
+      }
+    ]
+  },
+  "counts": {
+    "capabilities": 9,
+    "claims": 19,
+    "modules": 5
+  },
+  "generator": "majordomus-cli 0.1.0",
+  "modules": [
+    {
+      "capabilities": [
+        {
+          "id": "capabilities.describe",
+          "route": "/registry/capabilities/capabilities-describe/",
+          "slug": "capabilities-describe"
+        },
+        {
+          "id": "capabilities.list",
+          "route": "/registry/capabilities/capabilities-list/",
+          "slug": "capabilities-list"
+        }
+      ],
+      "claims": [],
+      "id": "capabilities",
+      "route": "/registry/modules/capabilities/",
+      "slug": "capabilities",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
+      "title": "Capabilities"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "objects.get",
+          "route": "/registry/capabilities/objects-get/",
+          "slug": "objects-get"
+        },
+        {
+          "id": "objects.list",
+          "route": "/registry/capabilities/objects-list/",
+          "slug": "objects-list"
+        },
+        {
+          "id": "objects.search",
+          "route": "/registry/capabilities/objects-search/",
+          "slug": "objects-search"
+        }
+      ],
+      "claims": [
+        {
+          "id": "mcp-uri-resolution",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+          "route": "/guarantees/mcp-uri-resolution/",
+          "status": "guaranteed",
+          "test": "test/cases/72_rust_mcp.sh"
+        }
+      ],
+      "id": "objects",
+      "route": "/registry/modules/objects/",
+      "slug": "objects",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "title": "Objects"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "peers.announce",
+          "route": "/registry/capabilities/peers-announce/",
+          "slug": "peers-announce"
+        },
+        {
+          "id": "peers.list",
+          "route": "/registry/capabilities/peers-list/",
+          "slug": "peers-list"
+        }
+      ],
+      "claims": [],
+      "id": "peers",
+      "route": "/registry/modules/peers/",
+      "slug": "peers",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/peers.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/peers.rs",
+      "title": "Peers"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "perf.counters",
+          "route": "/registry/capabilities/perf-counters/",
+          "slug": "perf-counters"
+        }
+      ],
+      "claims": [],
+      "id": "perf",
+      "route": "/registry/modules/perf/",
+      "slug": "perf",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/perf.rs",
+      "title": "Performance"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "repository.info",
+          "route": "/registry/capabilities/repository-info/",
+          "slug": "repository-info"
+        }
+      ],
+      "claims": [],
+      "id": "repository",
+      "route": "/registry/modules/repository/",
+      "slug": "repository",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
+      "title": "Repository"
+    }
+  ],
+  "registry_schema": "majordomus/capability-registry/v1",
+  "routes": {
+    "benchmarks": "/registry/benchmarks/",
+    "capabilities": "/registry/capabilities/",
+    "cli": "/registry/cli/",
+    "executable": "/registry/executable/",
+    "http": "/docs/api/",
+    "mcp": "/registry/mcp/",
+    "modules": "/registry/modules/",
+    "overview": "/registry/"
+  },
+  "schema": 1,
+  "source": "docs/generated/registry.json"
+}
