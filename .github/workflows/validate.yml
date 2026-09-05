@@ -23,7 +23,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y shellcheck >/dev/null
-          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/github-sync scripts/site-build scripts/site-check scripts/site-serve scripts/rules-package
+          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/github-sync scripts/site-build scripts/site-check scripts/site-serve scripts/rules-package scripts/rust-check
           shellcheck -x -s bash -S warning test/cases/*.sh
       # The one canonical validation surface. Every behavioural, negative and integration
       # case runs here; nothing is skipped, and no failure is swallowed. test/run.sh exits
@@ -96,8 +96,34 @@ jobs:
         with:
           workspaces: apps/majordomus-cli
       - run: cargo fmt --check
+      # missing documentation on a public item is a warning, and warnings are errors here
       - run: cargo clippy --all-targets --all-features -- -D warnings
       - run: cargo test --no-fail-fast
+      - run: cargo doc --no-deps
+        env:
+          RUSTDOCFLAGS: -D warnings
+      - run: cargo bench --no-run
+      # the registry builds and every projection with it; the committed projections
+      # (docs/generated, share/allow) match the registry and the schemas
+      - run: cargo run --quiet -- capabilities validate
+      - run: cargo run --quiet -- generate --check
+
+  # Line coverage of the crate, with the threshold scripts/rust-check enforces locally.
+  coverage:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/majordomus-cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/majordomus-cli
+      - run: cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat ../../scripts/rust-coverage-threshold)"
 
   site:
     runs-on: ubuntu-latest

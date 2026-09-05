@@ -757,3 +757,39 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: Two files of one kind claiming one identity are both excluded and both named. --strict refuses to serve a degraded layer; --inspect exits 10 on one.
+
+  - id: capability-registry
+    claim: Every capability of the Rust executable is defined once, and the registry refuses a duplicate id or a colliding projection name, naming both parties
+    source: docs/CAPABILITIES.md
+    implementation: apps/majordomus-cli/src/capability/registry.rs
+    test: test/cases/76_capabilities_projections.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: Two sources, builtin executables and the layer's objects, meet in one registry built at one place; ids, MCP names and URIs, HTTP routes and CLI paths are each unique or the registry does not build. The crate's tests/registry.rs covers every collision.
+
+  - id: interfaces-are-projections
+    claim: MCP, HTTP, OpenAPI, Swagger UI, the capabilities commands and the generated reference are derived from the registry, and a change to one definition reaches every one of them
+    source: docs/CAPABILITIES.md
+    implementation: apps/majordomus-cli/src/http/openapi.rs
+    test: test/cases/76_capabilities_projections.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: No projection declares a name, a description, a schema or a route of its own; tests/projections.rs proves every declared projection present and none orphan, and that a changed input type and description reach the MCP schema, the OpenAPI operation and the reference. MCP and HTTP answer the same handler identically.
+
+  - id: schema-driven-kinds
+    claim: How each declarative kind is read and which keys it may carry is data read at run time, and a repository adds a kind with its JSON Schema without a code change
+    source: docs/CAPABILITIES.md
+    implementation: apps/majordomus-cli/src/metadata/mod.rs
+    test: test/cases/76_capabilities_projections.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: share/kinds.yaml and share/schemas/*.schema.json are the distribution's; .ai/repo/knowledge/kinds.yaml and schemas/ are the repository's; a name declared by both is an error naming both files. The shell tool's allow-lists are generated from the same schemas.
+
+  - id: generated-projections-checked
+    claim: The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one
+    source: docs/CAPABILITIES.md
+    implementation: apps/majordomus-cli/src/generate.rs
+    test: test/cases/76_capabilities_projections.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: Byte-identical on regeneration, no timestamps, no absolute paths; --check writes nothing and exits 10 naming every file that differs or is missing. CI runs it.
