@@ -333,30 +333,35 @@ for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do
   claim="$(jq -r --arg i "$id" '.claims[] | select(.id==$i) | .claim' "$SITE/data/generated/capabilities.json")"
   if grep -qF "$claim" "$PUB/index.html" && ! grep -F "$claim" "$PUB/index.html" | grep -qF "guarantees/$id/"; then bad claims "homepage mentions claim $id without linking its page"; fi
 done
-# 13e. every directory the generator writes under site/content/ must be ignored. The fact
-# lives in generate-site-data, which writes each section fresh and deletes it first, so a new
-# section nobody added to .gitignore shows up as untracked files that the next `git add -A`
-# commits and the following generate deletes again. Derived by scanning for $CONTENT_ROOT
-# uses rather than by listing the sections, so the next one is covered the day it is written.
+# 13e. every directory the generator writes under site/content/ must be committed, and no
+# .gitignore rule may hide it. The publication path renders what is committed instead of
+# regenerating it — that is the whole of why it fits its build budget — so a generated section
+# that is absent from a fresh clone is a section the public site cannot have, and Zola fails on
+# the first link into it. What keeps a committed projection from rotting is not ignoring it but
+# `scripts/generate-site-data --check`, which diffs every derived page and names every orphan,
+# exactly as it does for site/data/generated. Derived by scanning for $CONTENT_ROOT uses rather
+# than by listing the sections, so the next one is covered the day it is written.
 for d in $(grep -oE '\$CONTENT_ROOT/[a-z-]+' "$ROOT/scripts/generate-site-data" | sed 's#.*/##' | sort -u); do
-  # a tracked file is never "ignored", so check both: a generated section that is committed
-  # is a different fault from one .gitignore forgot, and saying which saves the reader a
-  # detour through `git check-ignore` on a path that is in .gitignore already
-  if [ -n "$(git -C "$ROOT" ls-files "site/content/$d" 2>/dev/null)" ]; then
-    bad ignored "generate-site-data writes site/content/$d/ but $(git -C "$ROOT" ls-files "site/content/$d" | wc -l | tr -d ' ') file(s) there are committed"
-  elif ! git -C "$ROOT" check-ignore -q "site/content/$d/" 2>/dev/null; then
-    bad ignored "generate-site-data writes site/content/$d/ but .gitignore does not cover it"
+  # an ignored section and an empty one are different faults: the first is a .gitignore rule
+  # that has to go, the second is a generation nobody committed, and saying which saves the
+  # reader a detour through `git check-ignore` on a path no rule mentions
+  if git -C "$ROOT" check-ignore -q "site/content/$d/" 2>/dev/null; then
+    bad ignored "generate-site-data writes site/content/$d/ but .gitignore hides it from a clone"
+  elif [ -z "$(git -C "$ROOT" ls-files "site/content/$d" 2>/dev/null)" ]; then
+    bad ignored "generate-site-data writes site/content/$d/ but no file there is committed"
   fi
 done
 
-# 13a. derived content is ignored: site/content-src/*.md is projected into site/content/, and
-# .gitignore names those projections one by one. A new page whose projection is not ignored
-# would be committed as if someone had written it by hand, and would then rot.
+# 13a. the projections of site/content-src/*.md into site/content/ are committed like every
+# other derived page, for the same reason: a fresh clone renders them. They are still nobody's
+# to edit — the file under content-src is the original, and --check restores that fact the
+# moment the projection is touched.
 for f in "$SITE"/content-src/*.md; do
   [ -e "$f" ] || continue
   rel="site/content/$(basename "$f")"
-  git -C "$ROOT" check-ignore -q "$rel" 2>/dev/null || bad ignored "$rel is projected from content-src but not in .gitignore"
-done; ok ignored "every projection of site/content-src/ is ignored, not committed"
+  if git -C "$ROOT" check-ignore -q "$rel" 2>/dev/null; then bad ignored "$rel is projected from content-src but .gitignore hides it from a clone"
+  elif [ -z "$(git -C "$ROOT" ls-files "$rel" 2>/dev/null)" ]; then bad ignored "$rel is projected from content-src but is not committed"; fi
+done; ok ignored "every projection of site/content-src/ is committed, and held current by --check"
 
 # 13g. every claim a milestone names carries the link back. The edge is declared once, in
 # milestone.claims, and the claim page derives the reverse — so this asserts the direction

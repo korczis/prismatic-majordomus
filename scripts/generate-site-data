@@ -1618,6 +1618,32 @@ if [ "$CHECK" = 1 ]; then
   for n in SITE_CLAIMS PLAN_STATUS PAGES_STATUS; do
     diff -q "$STAGE/$n.md" "$ROOT/docs/$n.md" >/dev/null 2>&1 || { stale_diff "$STAGE/$n.md" "$ROOT/docs/$n.md" "docs/$n.md"; rc=10; }
   done
+  # The derived content, held to the same contract as the derived data: it is committed, so the
+  # publication path can render it without regenerating it, and this is what refuses a stale
+  # page. The set of generated paths is what this run staged — never a list written here, which
+  # would be a second declaration of what the generator produces and would go stale silently.
+  ( cd "$STAGE/content" && find . -type f ) | sed 's#^\./##' | LC_ALL=C sort > "$STAGE/content.generated"
+  while IFS= read -r rel; do
+    [ -n "$rel" ] || continue
+    diff -q "$STAGE/content/$rel" "$ROOT/site/content/$rel" >/dev/null 2>&1 \
+      || { stale_diff "$STAGE/content/$rel" "$ROOT/site/content/$rel" "site/content/$rel"; rc=10; }
+  done < "$STAGE/content.generated"
+  # An orphan is a page the generator no longer produces, and only a directory this run staged
+  # can hold one: everything else under site/content/ is hand-written.
+  : > "$STAGE/content.orphans"
+  for d in "$STAGE"/content/*/; do
+    [ -d "$d" ] || continue
+    n="$(basename "${d%/}")"
+    [ -d "$ROOT/site/content/$n" ] || continue
+    ( cd "$ROOT/site/content" && find "$n" -type f ) | sed 's#^\./##' | LC_ALL=C sort \
+      | while IFS= read -r rel; do
+          [ -f "$STAGE/content/$rel" ] || printf '%s\n' "$rel" >> "$STAGE/content.orphans"
+        done
+  done
+  while IFS= read -r rel; do
+    [ -n "$rel" ] || continue
+    echo "ORPHAN site/content/$rel is no longer generated (run: scripts/generate-site-data)"; rc=10
+  done < "$STAGE/content.orphans"
   # source.json carries the commit, which moves every commit; compare the input hash only
   a="$(jq -r .source_hash "$OUT/source.json")"; b="$(jq -r .source_hash "$DEST_DATA/source.json" 2>/dev/null || true)"
   [ "$a" = "$b" ] || { echo "STALE site/data/generated/source.json: input hash ${b:0:12} != ${a:0:12}"; rc=10; }

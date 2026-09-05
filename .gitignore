@@ -16,24 +16,13 @@ node_modules
 
 # derived site, rebuilt by scripts/generate-site-data and scripts/site-build
 # (site/static/images/ is copied from assets/ at build but committed, so it stays tracked)
-site/content/docs/
-site/content/render-test.md
-site/content/architecture.md
-site/content/map.md
-site/content/evidence.md
-site/content/contract.md
-site/content/profiles/
-site/content/guarantees/
-site/content/supervises/
-site/content/commands/
-site/content/skills/
-site/content/doctrines/
-site/content/why/
-site/content/outcomes/
-site/content/use-cases/
-site/content/applications/
-site/content/plan/
-site/content/registry/
+#
+# site/content/ is NOT here. The derived content is a projection of the same canonical inputs
+# as site/data/generated, produced by the same generator in the same run, and it is committed
+# for the same reason: the publication path renders what is committed rather than regenerating
+# it (docs/GITHUB_PAGES_PERFORMANCE.md — the fast path's build budget is 20 s and a generation
+# costs twice that). `scripts/generate-site-data --check` diffs it exactly as it diffs the data,
+# so a stale page is refused by the same gate that refuses stale data.
 site/public/
 site/static/app.css
 site/static/openapi.json
