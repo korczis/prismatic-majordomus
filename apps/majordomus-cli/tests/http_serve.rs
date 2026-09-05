@@ -354,3 +354,194 @@ fn with_stdin_at_dev_null_the_server_keeps_running() {
     child.kill().unwrap();
     let _ = child.wait();
 }
+
+/// Every route the registry puts on the wire, replayed over a real socket with the
+/// capability's own benchmark cases, bound the way a client would send them; and the
+/// document's examples are exactly those cases. Driven by the registry: a route added
+/// tomorrow is replayed tomorrow, and a case the document does not show is a failure here.
+#[test]
+fn every_route_answers_its_benchmark_cases_and_the_document_shows_them() {
+    use majordomus_cli::capability::{CapabilityKind, CaseContext, HttpMethod};
+    use majordomus_cli::http::Request;
+
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let ctx = app.context.clone();
+    let s = Served::start(&f.root(), &[]);
+    let (_, doc) = s.get("/openapi.json");
+
+    let cases = CaseContext { index: &ctx.index };
+    let mut replayed = 0;
+    for c in ctx.registry.iter() {
+        let Some(http) = &c.exposure.http else {
+            continue;
+        };
+        let op = &doc["paths"][&http.path][http.method.as_str().to_lowercase()];
+        assert!(
+            op.is_object(),
+            "{}: {} {} is in the document",
+            c.id,
+            http.method.as_str(),
+            http.path
+        );
+        let provider = ctx
+            .registry
+            .cases(c.id.as_str())
+            .unwrap_or_else(|| panic!("{}: an executable on the wire has a case provider", c.id));
+        let inputs = provider(&cases);
+        assert!(
+            !inputs.is_empty(),
+            "{}: at least one case in this repository",
+            c.id
+        );
+        for case in &inputs {
+            let request = Request::bind(http.method, &http.path, &case.input);
+            let body = (http.method == HttpMethod::Post)
+                .then(|| String::from_utf8(request.body.clone()).unwrap());
+            let (status, _, text) = s.request(&request.method, &request.target(), body.as_deref());
+            let answer: Value = serde_json::from_str(&text)
+                .unwrap_or_else(|e| panic!("{}/{}: not JSON ({e}): {text}", c.id, case.name));
+            match status {
+                200 => assert!(answer.is_object(), "{}/{}: {answer}", c.id, case.name),
+                // a command may turn a caller down for a reason that is not the input: over
+                // plain HTTP there is no MCP session to announce for
+                422 if c.kind == CapabilityKind::Command => assert_eq!(
+                    answer["error"]["code"], "refused",
+                    "{}/{}: {answer}",
+                    c.id, case.name
+                ),
+                other => panic!("{}/{} answered {other}: {answer}", c.id, case.name),
+            }
+            replayed += 1;
+
+            // the document shows this case, under its name, where the binding puts it
+            match http.method {
+                HttpMethod::Get => {
+                    for (name, value) in case.input.as_object().unwrap() {
+                        if value.is_null() {
+                            continue;
+                        }
+                        let param = op["parameters"]
+                            .as_array()
+                            .unwrap()
+                            .iter()
+                            .find(|p| p["name"] == *name)
+                            .unwrap_or_else(|| {
+                                panic!("{}: parameter {name} is in the document", c.id)
+                            });
+                        assert_eq!(
+                            param["examples"][case.name]["value"], *value,
+                            "{}/{}: the example of {name}",
+                            c.id, case.name
+                        );
+                        assert!(
+                            param["schema"]["type"] != json!(["string", "null"])
+                                && param["schema"].get("default") != Some(&Value::Null),
+                            "{}: a query parameter is never null: {}",
+                            c.id,
+                            param["schema"]
+                        );
+                    }
+                }
+                HttpMethod::Post => {
+                    assert_eq!(
+                        op["requestBody"]["content"]["application/json"]["examples"][case.name]
+                            ["value"],
+                        case.input,
+                        "{}/{}: the request body example",
+                        c.id,
+                        case.name
+                    );
+                }
+            }
+        }
+        // the responses are the statuses the router maps this kind's errors to
+        let responses = op["responses"].as_object().unwrap();
+        for status in ["200", "400", "404", "500", "default"] {
+            assert!(
+                responses.contains_key(status),
+                "{}: response {status}",
+                c.id
+            );
+        }
+        assert_eq!(
+            responses.contains_key("422"),
+            c.kind == CapabilityKind::Command,
+            "{}: 422 is a command's alone",
+            c.id
+        );
+        for (status, r) in responses {
+            assert!(
+                r["description"].as_str().is_some_and(|d| !d.is_empty()),
+                "{}: {status} is described",
+                c.id
+            );
+            assert!(
+                r["content"]["application/json"]["schema"].is_object(),
+                "{}: {status} has a schema",
+                c.id
+            );
+        }
+        assert_eq!(op["x-majordomus-benchmark"], json!(c.benchmark), "{}", c.id);
+        assert_eq!(op["x-majordomus-cache"], json!(c.cache), "{}", c.id);
+    }
+    assert!(
+        replayed >= 9,
+        "the builtin routes were replayed: {replayed}"
+    );
+
+    // the document's prose is the one source: tags are the modules, info is about.rs
+    let tags: BTreeSet<&str> = doc["tags"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|t| t["name"].as_str().unwrap())
+        .collect();
+    let used: BTreeSet<&str> = doc["paths"]
+        .as_object()
+        .unwrap()
+        .values()
+        .flat_map(|m| m.as_object().unwrap().values())
+        .flat_map(|o| {
+            o["tags"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|t| t.as_str().unwrap())
+        })
+        .collect();
+    assert_eq!(
+        tags, used,
+        "every tag an operation uses is declared with a description, and no other"
+    );
+    for t in doc["tags"].as_array().unwrap() {
+        let module = ctx
+            .registry
+            .modules()
+            .find(|m| m.id.as_str() == t["name"].as_str().unwrap())
+            .expect("a tag is a module");
+        assert_eq!(t["description"], json!(module.description));
+    }
+    assert_eq!(
+        doc["info"]["description"],
+        json!(majordomus_cli::about::description())
+    );
+    assert_eq!(
+        doc["info"]["summary"],
+        json!(majordomus_cli::about::SUMMARY)
+    );
+    assert_eq!(
+        doc["externalDocs"]["url"],
+        json!(majordomus_cli::about::REFERENCE_URL)
+    );
+    assert_eq!(
+        doc["info"]["license"]["identifier"],
+        json!(majordomus_cli::about::LICENSE)
+    );
+    let (_, index) = s.get("/");
+    assert_eq!(index["description"], json!(majordomus_cli::about::SUMMARY));
+    assert_eq!(
+        index["reference"],
+        json!(majordomus_cli::about::REFERENCE_URL)
+    );
+}
