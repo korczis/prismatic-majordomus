@@ -19,8 +19,6 @@ RB="$ROOT/apps/majordomus-cli/target/debug/majordomus"
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 # the executable reads kinds.yaml and the schemas from the tool distribution at run time
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
-# without a distribution nothing starts, and the search is named
-( unset MAJORDOMUS_SHARE; expect_exit 12 "$RB" mcp --inspect; expect_grep 'no share directory holds kinds.yaml' ) || exit 1
 
 # --- the executable's public surface, black-box
 expect_exit 0 "$RB" --help
@@ -33,6 +31,8 @@ expect_grep "unrecognized subcommand 'nonsense'"
 # --- the layer init writes is served, complete and with state ok
 "$MJ" init >/dev/null
 git add -A >/dev/null && git commit -qm install
+# without a distribution nothing starts, and the search is named
+( unset MAJORDOMUS_SHARE; expect_exit 12 "$RB" mcp --inspect; expect_grep 'no share directory holds kinds.yaml' ) || exit 1
 before="$(git status --porcelain; git ls-files -s | shasum -a 256)"
 expect_exit 0 "$RB" mcp --inspect
 expect_grep '^state       ok$'
