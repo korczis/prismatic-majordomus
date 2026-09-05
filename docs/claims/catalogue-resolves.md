@@ -2,7 +2,7 @@
 
 ## What it means
 
-`share/use-cases.yaml` and `share/applications.yaml` describe what Majordomus is for. Every command a use case walks through, every rule it relies on, and every promise it makes is a reference to something else in the repository — and every one of those references is checked. So is the relationship between the two files: a use case naming an application that does not name it back is a failure, not an asymmetry somebody will notice later.
+The use cases under `.ai/repo/use-cases/` and the applications under `.ai/repo/applications/` describe what Majordomus is for. Every command a use case walks through, every rule it relies on, and every promise it makes is a reference to something else in the repository — and every one of those references is checked. So is the relationship between the two files: a use case naming an application that does not name it back is a failure, not an asymmetry somebody will notice later.
 
 ## How it works
 
@@ -17,7 +17,7 @@ majordomus doctor
 # OK catalogue  6 use case(s), 4 application(s) — every command, doctrine, claim and cross-reference resolves, both directions
 ```
 
-Change a doctrine id in `share/use-cases.yaml` to one that does not exist and `doctor` names the use case, the missing id, and the command that lists the real ones.
+Change a doctrine id in a use case under `.ai/repo/use-cases/` to one that does not exist and `doctor` names the use case, the missing id, and the command that lists the real ones; `majordomus usecase validate` prints the same lines.
 
 ## What it does not cover
 
