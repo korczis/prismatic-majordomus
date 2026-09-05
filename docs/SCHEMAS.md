@@ -148,6 +148,38 @@ The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
 
 ---
 
+## `.ai/repo/scope.yaml`
+
+The repository scope: what a worker reads and what it never reads. Named by the
+manifest's `scope` section; a manifest naming none means the distribution's default
+applies (`share/skeleton/ai/repo/scope.yaml`). The schema is
+`share/schemas/scope.schema.json`; the shell tool's allow-list is generated from it.
+[`SCOPE.md`](SCOPE.md) explains the judgement.
+
+```yaml
+version: 1
+in:                                   # pathspecs anchored at the root; a trailing / is the directory and everything beneath
+  - .ai/repo/**
+  - src/**
+out:                                  # wins over in; every key optional
+  paths: ['.git/', '.ai/local/', '**/target/']
+  binary: true                        # a NUL byte in the first 8 KiB
+  max_bytes: 1048576
+  archive: { names: [...] }           # written as a block mapping; the subset has no flow maps
+  image: { names: [...] }
+  video: { names: [...] }
+  pdf: { names: [...] }
+  database_dump: { names: [...] }
+  generated: { paths: [...], names: [...] }
+  secret: { paths: [...], names: [...] }
+  fixtures: { paths: [...], names: [...], max_bytes: 65536 }
+```
+
+`names` are matched against the file name alone and may not carry a slash; a pattern
+with a leading slash, a `:(` prefix or a `..` segment is refused with the key named.
+
+---
+
 ## `.ai/repo/profiles/<name>.yaml`
 
 Five independent axes. Nothing here names a vendor model.

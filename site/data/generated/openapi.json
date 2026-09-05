@@ -1,8 +1,8 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 9,
-    "schemas": 45,
+    "operations": 11,
+    "schemas": 56,
     "tags": 5
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -753,6 +753,101 @@
       "variants": []
     },
     {
+      "description": "One category of `out`: pathspecs and file-name patterns.",
+      "is_enum": false,
+      "name": "Category",
+      "properties": [
+        {
+          "description": "Pathspecs anchored at the repository root.",
+          "name": "paths",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Patterns matched against the file name alone.",
+          "name": "names",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Out"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One path, judged.",
+      "is_enum": false,
+      "name": "Classification",
+      "properties": [
+        {
+          "description": "The path, repository-relative, as judged.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "In or out.",
+          "name": "verdict",
+          "refs": [
+            "Verdict"
+          ],
+          "required": true,
+          "type": "Verdict"
+        },
+        {
+          "description": "Why it is out; absent when it is in.",
+          "name": "reason",
+          "refs": [
+            "Reason"
+          ],
+          "required": false,
+          "type": "Reason | null"
+        },
+        {
+          "description": "The pattern or limit that decided: the `in` pathspec, the `out` pattern, `binary`,\n`max_bytes` or `fixtures.max_bytes`; absent for `undeclared`.",
+          "name": "rule",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the path exists in the work tree; a path that does not is judged by name.",
+          "name": "exists",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the path is a directory; a directory is in when something beneath it can be.",
+          "name": "directory",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The size, when the path is an existing file.",
+          "name": "bytes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "repository.scope_classify"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How a capability appears on the command line: the words after `majordomus`.",
       "is_enum": false,
       "name": "CliExposure",
@@ -916,6 +1011,43 @@
       "variants": []
     },
     {
+      "description": "`scope.yaml`, typed. Unknown keys are refused by the type and by the `scope` schema.",
+      "is_enum": false,
+      "name": "Declaration",
+      "properties": [
+        {
+          "description": "The format version; only [`SCOPE_VERSION`] is read.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The allow-list: pathspecs anchored at the repository root.",
+          "name": "in",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What is never read; wins over `in`.",
+          "name": "out",
+          "refs": [
+            "Out"
+          ],
+          "required": true,
+          "type": "Out"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ScopeReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.",
       "is_enum": false,
       "name": "Diagnostic",
@@ -984,6 +1116,8 @@
         "peers.announce",
         "perf.counters",
         "repository.info",
+        "repository.scope",
+        "repository.scope_classify",
         "objects.search"
       ],
       "used_by_schemas": [],
@@ -1056,6 +1190,41 @@
       "used_by_schemas": [
         "Capability",
         "CapabilitySummary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The `fixtures` category: where fixtures live and how large one may be.",
+      "is_enum": false,
+      "name": "Fixtures",
+      "properties": [
+        {
+          "description": "Pathspecs anchored at the repository root.",
+          "name": "paths",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Patterns matched against the file name alone.",
+          "name": "names",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "A fixture over this many bytes is out.",
+          "name": "max_bytes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Out"
       ],
       "values": [],
       "variants": []
@@ -1509,6 +1678,173 @@
       "variants": []
     },
     {
+      "description": "Where the declaration was read from.",
+      "is_enum": true,
+      "name": "Origin",
+      "properties": [],
+      "type": "\"repository\" | \"distribution\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryInfo",
+        "ScopeReport"
+      ],
+      "values": [
+        {
+          "description": "The repository's own, named by the manifest's `scope` section.",
+          "value": "repository"
+        },
+        {
+          "description": "The distribution's default, because the repository declares none.",
+          "value": "distribution"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The `out:` mapping: every category optional, each the reason a path is out.",
+      "is_enum": false,
+      "name": "Out",
+      "properties": [
+        {
+          "description": "Never read, by path: version control, the local half, dependencies, build outputs.",
+          "name": "paths",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Content that is not text (a NUL byte in the first window) is out, whatever the name says.",
+          "name": "binary",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "A file over this many bytes is out, whatever it is.",
+          "name": "max_bytes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Archives.",
+          "name": "archive",
+          "refs": [
+            "Category"
+          ],
+          "required": false,
+          "type": "Category | null"
+        },
+        {
+          "description": "Images.",
+          "name": "image",
+          "refs": [
+            "Category"
+          ],
+          "required": false,
+          "type": "Category | null"
+        },
+        {
+          "description": "Video.",
+          "name": "video",
+          "refs": [
+            "Category"
+          ],
+          "required": false,
+          "type": "Category | null"
+        },
+        {
+          "description": "PDF documents.",
+          "name": "pdf",
+          "refs": [
+            "Category"
+          ],
+          "required": false,
+          "type": "Category | null"
+        },
+        {
+          "description": "Database dumps.",
+          "name": "database_dump",
+          "refs": [
+            "Category"
+          ],
+          "required": false,
+          "type": "Category | null"
+        },
+        {
+          "description": "Generated assets: changed by changing the source and regenerating.",
+          "name": "generated",
+          "refs": [
+            "Category"
+          ],
+          "required": false,
+          "type": "Category | null"
+        },
+        {
+          "description": "Secrets: never read, never served, never quoted; a tracked one is reported.",
+          "name": "secret",
+          "refs": [
+            "Category"
+          ],
+          "required": false,
+          "type": "Category | null"
+        },
+        {
+          "description": "Fixtures are read up to a size; over it they are data, not context.",
+          "name": "fixtures",
+          "refs": [
+            "Fixtures"
+          ],
+          "required": false,
+          "type": "Fixtures | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Declaration"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One tracked file that is out.",
+      "is_enum": false,
+      "name": "OutFile",
+      "properties": [
+        {
+          "description": "Repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why.",
+          "name": "reason",
+          "refs": [
+            "Reason"
+          ],
+          "required": true,
+          "type": "Reason"
+        },
+        {
+          "description": "The rule that decided; absent for `undeclared`.",
+          "name": "rule",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Tally"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One peer as the board lists it.",
       "is_enum": false,
       "name": "Peer",
@@ -1656,6 +1992,69 @@
       "variants": []
     },
     {
+      "description": "Why a path is out. The order is the order the rules decide in.",
+      "is_enum": true,
+      "name": "Reason",
+      "properties": [],
+      "type": "\"path\" | \"secret\" | \"generated\" | \"archive\" | \"image\" | \"video\" | \"pdf\" | \"database_dump\" | \"undeclared\" | \"fixture_over_limit\" | \"over_limit\" | \"binary\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Classification",
+        "OutFile"
+      ],
+      "values": [
+        {
+          "description": "Named under `out.paths`.",
+          "value": "path"
+        },
+        {
+          "description": "A secret.",
+          "value": "secret"
+        },
+        {
+          "description": "A generated asset.",
+          "value": "generated"
+        },
+        {
+          "description": "An archive.",
+          "value": "archive"
+        },
+        {
+          "description": "An image.",
+          "value": "image"
+        },
+        {
+          "description": "Video.",
+          "value": "video"
+        },
+        {
+          "description": "A PDF document.",
+          "value": "pdf"
+        },
+        {
+          "description": "A database dump.",
+          "value": "database_dump"
+        },
+        {
+          "description": "Matches no `in` pathspec.",
+          "value": "undeclared"
+        },
+        {
+          "description": "A fixture over `out.fixtures.max_bytes`.",
+          "value": "fixture_over_limit"
+        },
+        {
+          "description": "Over `out.max_bytes`.",
+          "value": "over_limit"
+        },
+        {
+          "description": "Content with a NUL byte in its first [`SNIFF_BYTES`]: not text.",
+          "value": "binary"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "What the index knows about the repository it was built from.",
       "is_enum": false,
       "name": "RepositoryInfo",
@@ -1710,6 +2109,22 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "Where the scope was read from: `repository` or `distribution`.",
+          "name": "scope_origin",
+          "refs": [
+            "Origin"
+          ],
+          "required": true,
+          "type": "Origin"
+        },
+        {
+          "description": "The scope file: repository-relative for the repository's own, the share path for\nthe distribution's default.",
+          "name": "scope_path",
+          "refs": [],
+          "required": true,
+          "type": "string"
         }
       ],
       "type": "object",
@@ -1823,6 +2238,54 @@
           "type": "AnswerView"
         }
       ]
+    },
+    {
+      "description": "The scope: the declaration as read, its origin, and every tracked file against it.",
+      "is_enum": false,
+      "name": "ScopeReport",
+      "properties": [
+        {
+          "description": "`repository` when the manifest names a scope section, `distribution` for the default.",
+          "name": "origin",
+          "refs": [
+            "Origin"
+          ],
+          "required": true,
+          "type": "Origin"
+        },
+        {
+          "description": "The file the declaration was read from.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The declaration as read.",
+          "name": "declaration",
+          "refs": [
+            "Declaration"
+          ],
+          "required": true,
+          "type": "Declaration"
+        },
+        {
+          "description": "Every tracked file judged by name and size, counted; the out ones listed.",
+          "name": "tracked",
+          "refs": [
+            "Tally"
+          ],
+          "required": true,
+          "type": "Tally"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "repository.scope"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
     },
     {
       "description": "One search hit: the object, summarised, and the first matching line of its content.",
@@ -2128,6 +2591,57 @@
       "variants": []
     },
     {
+      "description": "Every tracked file against the scope, counted.",
+      "is_enum": false,
+      "name": "Tally",
+      "properties": [
+        {
+          "description": "How many tracked files were judged.",
+          "name": "files",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many are in.",
+          "name": "in",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many are out.",
+          "name": "out",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many are out for each reason present.",
+          "name": "by_reason",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Every tracked file that is out, with its reason and the rule that decided.",
+          "name": "out_files",
+          "refs": [
+            "OutFile"
+          ],
+          "required": true,
+          "type": "array of OutFile"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ScopeReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How a peer reached the server.",
       "is_enum": true,
       "name": "Transport",
@@ -2145,6 +2659,28 @@
         {
           "description": "MCP over HTTP at `/mcp`: a `majordomus mcp` bridge, or a client speaking it directly.",
           "value": "http"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "In or out.",
+      "is_enum": true,
+      "name": "Verdict",
+      "properties": [],
+      "type": "\"in\" | \"out\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Classification"
+      ],
+      "values": [
+        {
+          "description": "Read.",
+          "value": "in"
+        },
+        {
+          "description": "Never read; the reason says why.",
+          "value": "out"
         }
       ],
       "variants": []
@@ -2741,7 +3277,7 @@
       ]
     },
     {
-      "description": "The repository this process serves: its layer, its git state, and the state of the index built from it.",
+      "description": "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads.",
       "name": "repository",
       "operations": [
         {
@@ -2798,6 +3334,142 @@
           "result_schema": "RepositoryReport",
           "stability": "behaviorally_verified",
           "summary": "Repository and index state"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "scope",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/scope\"",
+          "description": "The scope declaration as read, where it came from (the repository's own or the distribution's default), and every tracked file tallied against it: how many are in, how many are out for each reason, and which.",
+          "id": "repository.scope",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "scope",
+            "uri": "majordomus://scope"
+          },
+          "mcp_tool": "majordomus_scope",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/scope",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::repository",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The repository scope: the result.",
+              "schema": "ScopeReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ScopeReport",
+          "stability": "behaviorally_verified",
+          "summary": "The repository scope"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "scope classify",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/scope/classify?path=docs%2FCLAIMS.yaml\"",
+          "description": "Whether a repository-relative path is in or out of the scope, the reason when it is out, and the pattern or limit that decided; an existing file is judged by name, then size, then content.",
+          "id": "repository.scope_classify",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_scope_classify",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Repository-relative, forward slashes; `./` is stripped. An absolute path or a\n`..` segment is an invalid input.",
+              "examples": [
+                {
+                  "case": "first-object",
+                  "value": "\"docs/CLAIMS.yaml\""
+                },
+                {
+                  "case": "layer-file",
+                  "value": "\".ai/manifest.yaml\""
+                },
+                {
+                  "case": "local-half",
+                  "value": "\".ai/local/state/current.yaml\""
+                },
+                {
+                  "case": "secret",
+                  "value": "\"config/.env\""
+                },
+                {
+                  "case": "undeclared",
+                  "value": "\"node_modules/left-pad/index.js\""
+                }
+              ],
+              "name": "path",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/scope/classify",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::repository",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Judge a path against the scope: the result.",
+              "schema": "Classification",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Classification",
+          "stability": "behaviorally_verified",
+          "summary": "Judge a path against the scope"
         }
       ]
     }
