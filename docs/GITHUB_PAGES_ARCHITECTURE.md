@@ -356,7 +356,7 @@ it downloads the `site/public` the `site` job built, checked and probed in the s
 runs `scripts/site-deploy --skip-build`, once `structure`, `suite`, `rust` and `site` are
 green. A person runs `scripts/site-deploy` (or `just site-deploy`) when the operator wants
 the site live without waiting for the Actions queue; the procedure is
-`.ai/repo/skills/deploy-site.md`. Pointing Pages at the branch is a one-time
+`.ai/repo/skills/deploy-site/SKILL.md`. Pointing Pages at the branch is a one-time
 `scripts/site-deploy --configure-pages`.
 
 ## Sync guarantee

@@ -2,7 +2,7 @@
 
 ## What it means
 
-`scripts/site-deploy` is the only way the site reaches GitHub Pages. The Pages workflow runs it after its gate; a person runs it when the operator wants the site live without waiting for the Actions queue (`.ai/repo/skills/deploy-site.md`, `just site-deploy`). Either way the same checks run and the same branch is pushed: `gh-pages`, which GitHub Pages serves.
+`scripts/site-deploy` is the only way the site reaches GitHub Pages. The Pages workflow runs it after its gate; a person runs it when the operator wants the site live without waiting for the Actions queue (`.ai/repo/skills/deploy-site/SKILL.md`, `just site-deploy`). Either way the same checks run and the same branch is pushed: `gh-pages`, which GitHub Pages serves.
 
 ## How it works
 

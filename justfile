@@ -226,7 +226,7 @@ site-data:
 site-data-check:
     scripts/generate-site-data --check
 
-# Deploy the site by hand: gate, build, check, push gh-pages (see .ai/repo/skills/deploy-site.md). `just site-deploy --dry-run` shows what it would push.
+# Deploy the site by hand: gate, build, check, push gh-pages (see .ai/repo/skills/deploy-site/SKILL.md). `just site-deploy --dry-run` shows what it would push.
 [group('site')]
 site-deploy *args:
     scripts/site-deploy {{args}}
