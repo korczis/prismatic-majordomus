@@ -6,12 +6,20 @@
 {% block content %}
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
 {%- set cat = load_data(path="data/generated/catalogue.json") -%}
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p>
+  <dl class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+    <div class="flex gap-1.5"><dt class="text-body-subtle">use cases</dt><dd class="font-mono text-heading">{{ cat.counts.use_cases }}</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">categories</dt><dd class="font-mono text-heading">{{ cat.counts.categories }}</dd></div>
+    {%- for k, v in cat.counts.maturity %}<div class="flex gap-1.5"><dt class="text-body-subtle">{{ k }}</dt><dd class="font-mono text-heading">{{ v }}</dd></div>{% endfor -%}
+    <div class="flex gap-1.5"><dt class="text-body-subtle">coverage</dt><dd class="font-mono text-heading"><a href="{{ get_url(path='/use-cases/coverage/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ cat.coverage.covered }} of {{ cat.coverage.total }} targets</a></dd></div>
+  </dl>
+</div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
-  {#- Filter by the command a use case actually runs, and by the context it applies to.
-      Both option lists come from the data, so a new use case adds its own filters. -#}
-  <div x-data="{ q: '', app: 'all' }">
+  {#- Facets come from the data: applications, actors, difficulty and maturity are read off the
+      use cases, so a new use case adds its own filters. Without JavaScript every use case is
+      listed, by category, in the taxonomy's order. -#}
+  <div x-data="{ q: '', app: 'all', actor: 'all', m: 'all' }">
     <div class="flex flex-wrap items-center gap-3">
       <label class="sr-only" for="uc-filter">Filter use cases</label>
       <input id="uc-filter" type="search" x-model="q" placeholder="Filter by task, command or rule" class="w-full max-w-sm rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm text-heading placeholder:text-body-subtle focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
@@ -22,25 +30,48 @@
         {%- endfor -%}
       </div>
     </div>
-    <p class="mt-2 text-xs text-body-subtle">Filtering runs in the browser. Without JavaScript every use case below is still listed.</p>
+    <div class="mt-3 flex flex-wrap items-center gap-3 text-sm">
+      <div class="flex flex-wrap gap-1" role="group" aria-label="Filter by actor">
+        <button type="button" x-on:click="actor = 'all'" :class="actor === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">any actor</button>
+        {%- for a in cat.facets.actors %}<button type="button" x-on:click="actor = '{{ a }}'" :class="actor === '{{ a }}' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">{{ a }}</button>{% endfor -%}
+      </div>
+      <div class="flex flex-wrap gap-1" role="group" aria-label="Filter by maturity">
+        <button type="button" x-on:click="m = 'all'" :class="m === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">any maturity</button>
+        {%- for k in cat.facets.maturities %}<button type="button" x-on:click="m = '{{ k }}'" :class="m === '{{ k }}' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">{{ k }}</button>{% endfor -%}
+      </div>
+    </div>
+    <p class="mt-2 text-xs text-body-subtle">Filtering runs in the browser. Without JavaScript every use case below is still listed, by category.</p>
 
-    <ul class="mt-6 grid gap-4 md:grid-cols-2" role="list" aria-live="polite">
-      {%- for u in cat.use_cases -%}
-      <li x-show="(app === 'all' || '{{ u.applications | join(sep=" ") }}'.includes(app)) && ('{{ u.id }} {{ u.title | lower }} {{ u.commands | join(sep=" ") }} {{ u.doctrines | join(sep=" ") }}'.includes(q.toLowerCase()))">
-        <a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-          <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ u.title }}</h2>
-          <p class="text-sm leading-relaxed text-body">{{ u.summary }}</p>
-          <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">{% for s in u.steps %}{{ s.command }}{% if not loop.last %} → {% endif %}{% endfor %}</span>
-        </a>
-      </li>
-      {%- endfor -%}
-    </ul>
+    {%- for c in cat.categories -%}
+    {%- if c.count > 0 %}
+    <section class="mt-10" aria-labelledby="cat-{{ c.id }}">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-{{ c.id }}" class="text-xl font-semibold tracking-tight text-heading"><a href="{{ get_url(path='/use-cases/' ~ c.id ~ '/', trailing_slash=true) }}" class="hover:underline">{{ c.title }}</a> <span class="font-mono text-sm text-body-subtle">{{ c.count }}</span></h2>
+        <p class="text-sm text-body">{{ c.summary }}</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list">
+        {%- for uid in c.use_cases -%}{%- set u = cat.use_cases[cat.uc_index[uid]] -%}
+        {%- if u.status != "draft" %}
+        <li x-show="(app === 'all' || '{{ u.applications | join(sep=" ") }}'.includes(app)) && (actor === 'all' || '{{ u.actors | default(value=[]) | join(sep=" ") }}'.includes(actor)) && (m === 'all' || m === '{{ u.maturity }}') && ('{{ u.id }} {{ u.title | lower }} {{ u.commands | join(sep=" ") }} {{ u.doctrines | join(sep=" ") }}'.includes(q.toLowerCase()))">
+          <a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span>{{ <maturity status={u.maturity} /> }}</span>{% if u.difficulty %}<span class="font-mono text-xs text-body-subtle">{{ u.difficulty }}</span>{% endif %}</div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ u.title }}</h3>
+            <p class="text-sm leading-relaxed text-body">{{ u.summary }}</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">{% for cn in u.commands %}{{ cn }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+          </a>
+        </li>
+        {%- endif %}
+        {%- endfor -%}
+      </ul>
+    </section>
+    {%- endif %}
+    {%- endfor -%}
   </div>
 
   <div class="mt-12 max-w-3xl">
-    <h2 class="text-xl font-semibold tracking-tight text-heading">How this differs from the other lists</h2>
+    <h2 class="text-xl font-semibold tracking-tight text-heading">What a use case is here</h2>
+    <p class="mt-3 text-body">One file under <code class="font-mono text-heading">.ai/repo/use-cases/</code>: the commands, rules and promises it names, and a scenario the tool executes against itself. The maturity shown on each card is observed, not written: a use case is <em>guaranteed</em> only when its scenario passed and every claim it names is guaranteed. The <a href="{{ get_url(path='/use-cases/coverage/', trailing_slash=true) }}" class="text-fg-brand hover:underline">coverage page</a> says which capabilities still have no use case.</p>
     <p class="mt-3 text-body">A <a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="text-fg-brand hover:underline">why page</a> is a moment you recognise. A use case is a task you perform. An <a href="{{ get_url(path='/applications/', trailing_slash=true) }}" class="text-fg-brand hover:underline">application</a> is a context it suits. A <a href="{{ get_url(path='/commands/', trailing_slash=true) }}" class="text-fg-brand hover:underline">command page</a> is one command's surface.</p>
-    <p class="mt-3 text-body">All four are generated from data, and every reference between them is checked: a use case naming a command, rule or promise that does not exist refuses the build and fails <code class="font-mono text-heading">majordomus doctor</code>.</p>
   </div>
 </div>
 {% endblock content %}

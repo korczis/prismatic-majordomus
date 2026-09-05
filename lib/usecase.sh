@@ -329,23 +329,35 @@ mj_uc_cmd_validate() {
 # wherever the behaviour is: the scenario repository's path, the tool's own path, the
 # home directory, timestamps, task and session ids, record hashes, durations.
 mj_uc_normalise() { # repo-path
+  local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
+    -e "s#$real#<repo>#g" \
     -e "s#$1#<repo>#g" \
     -e "s#$MJ_BIN_DIR/majordomus#majordomus#g" \
     -e "s#${HOME}#<home>#g" \
     -e 's/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z/<time>/g' \
     -e 's/[0-9]{8}T[0-9]{6}Z/<time>/g' \
     -e 's/[0-9]{4}-[0-9]{2}-[0-9]{2}/<date>/g' \
-    -e 's/\bt-[0-9]{14}-[0-9a-f]{4}\b/t-<id>/g' \
-    -e 's/\bs-[0-9]+-[0-9a-f]+\b/s-<id>/g' \
+    -e 's/t-[0-9]{14}-[0-9a-f]{4}/t-<id>/g' \
+    -e 's/s-[0-9]+-[0-9a-f]+/s-<id>/g' \
     -e 's/--[0-9a-f]{7}--[0-9a-f]{16}\.md/--<head>--<hash>.md/g' \
-    -e 's/\b[0-9a-f]{40}\b/<sha>/g' \
-    -e 's/\b[0-9a-f]{16}\b/<hash16>/g' \
-    -e 's/\b[0-9a-f]{12}\b/<hash12>/g' \
-    -e 's/\b[0-9]+ ms\b/<n> ms/g' \
+    -e 's/[0-9a-f]{40}/<sha>/g' \
+    -e 's/[0-9a-f]{16}/<hash16>/g' \
+    -e 's/(policy|match the last update \(|inputs )[0-9a-f]{12}/\1<hash12>/g' \
+    -e 's/(head +)[0-9a-f]{7}/\1<head>/g' \
+    -e 's/\(head [0-9a-f]{7}\)/(head <head>)/g' \
+    -e 's/(  +)[0-9a-f]{7}(  |$)/\1<head>\2/g' \
+    -e 's/^([a-z_-]+ +(cold|warm) +[a-z]+ +[0-9]+) +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+/\1  <ms>  <ms>  <ms>  <ms>/' \
+    -e 's/^(INFO|WARN) +budget +([a-z]+) — .*$/·    budget      \2 — <timed against the policy budget>/' \
+    -e 's/[0-9]+ ms/<n> ms/g' \
+    -e 's/[0-9]+ ms of/<n> ms of/g' \
     -e 's/\([0-9]+m ago/(<n>m ago/g' \
-    -e 's/\b(bash|git|jq|shellcheck) [0-9][0-9.]*/\1 <version>/g'
+    -e 's/ [0-9]+m ago/ <n>m ago/g' \
+    -e 's/(bash|git|jq|shellcheck) [0-9][0-9.]*/\1 <version>/g'
 }
+# a JSON string body: backslash and quote escaped, newlines and tabs as escapes, every
+# other control byte dropped; the newlines of a command's output are its structure
+mj_uc_jesc() { printf '%s' "$1" | awk 'BEGIN{ORS=""} { gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); gsub(/\t/, "\\t"); gsub(/[\001-\010\013-\037]/, ""); if (NR > 1) printf "\\n"; printf "%s", $0 }'; }
 
 # run one use case's scenario; prints the evidence JSON to the file named; returns 0 on
 # pass, 1 on a failed step, 2 when the use case has no scenario
@@ -367,7 +379,7 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
       && if [ -f "$helpers" ]; then . "$helpers"; fi \
       && . "$fix/setup/$setup.sh" ) > "$setup_out" 2>&1 || {
     printf '{"schema":"majordomus/use-case-evidence/v1","use_case":"%s","setup":"%s","result":"fail","reason":"setup failed","setup_output":"%s","steps":[]}\n' \
-      "$id" "$setup" "$(mj_json_esc "$(mj_uc_normalise "$W" < "$setup_out" | head -c 4000)")" > "$out"
+      "$id" "$setup" "$(mj_uc_jesc "$(mj_uc_normalise "$W" < "$setup_out" | head -c 4000)")" > "$out"
     [ "$keep" = 1 ] || rm -rf "$base"; return 1; }
   k=0
   while sid="$(mj_uc_v "$i" "scenario.steps.$k.id")"; [ -n "$sid" ]; do
@@ -409,7 +421,7 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
       n=$((n+1))
     done
     [ "$first" = 1 ] || steps_json="$steps_json,"; first=0
-    steps_json="$steps_json{\"id\":\"$(mj_json_esc "$sid")\",\"command\":\"$(mj_json_esc "majordomus $*")\",\"argv\":$(printf '%s\n' "$@" | mj_uc_jarr),\"stdin\":$( [ -n "$stdin_f" ] && printf '"%s"' "$(mj_json_esc "$stdin_f")" || printf null ),\"exit\":$rc,\"expected_exit\":$want,\"output\":\"$(mj_json_esc "$(printf '%s' "$norm" | head -c 12000)")\",\"assertions\":[${asserts%,}],\"result\":\"$([ "$ok" = 1 ] && printf pass || printf fail)\",\"reason\":$( [ -n "$fail_reason" ] && printf '"%s"' "$(mj_json_esc "$fail_reason")" || printf null ),\"timing\":{\"duration_ms\":$dur}}"
+    steps_json="$steps_json{\"id\":\"$(mj_json_esc "$sid")\",\"command\":\"$(mj_json_esc "majordomus $*")\",\"argv\":$(printf '%s\n' "$@" | mj_uc_jarr),\"stdin\":$( [ -n "$stdin_f" ] && printf '"%s"' "$(mj_json_esc "$stdin_f")" || printf null ),\"exit\":$rc,\"expected_exit\":$want,\"output\":\"$(mj_uc_jesc "$(printf '%s' "$norm" | head -c 12000)")\",\"assertions\":[${asserts%,}],\"result\":\"$([ "$ok" = 1 ] && printf pass || printf fail)\",\"reason\":$( [ -n "$fail_reason" ] && printf '"%s"' "$(mj_json_esc "$fail_reason")" || printf null ),\"timing\":{\"duration_ms\":$dur}}"
     [ "$ok" = 1 ] || { all_ok=0; break; }
     k=$((k+1))
   done
@@ -420,34 +432,46 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
 }
 
 mj_uc_cmd_run() {
-  local json="${MJ_JSON:-0}" outdir="" keep=0 ids="" i id ev rc fails=0 ran=0 skipped=0 first=1
+  local json="${MJ_JSON:-0}" outdir="" keep=0 ids="" i id ev rc fails=0 ran=0 skipped=0 first=1 jobs=0 maxjobs="${MJ_UC_JOBS:-8}"
   while [ $# -gt 0 ]; do case "$1" in
-    --json) json=1; shift ;; --out) outdir="$2"; shift 2 ;; --keep) keep=1; shift ;;
+    --json) json=1; shift ;; --out) outdir="$2"; shift 2 ;; --keep) keep=1; shift ;; --jobs) maxjobs="$2"; shift 2 ;;
     --help|-h) mj_uc_usage; return 0 ;; -*) mj_die "$MJ_EX_USAGE" "usecase run: unknown option $1" ;;
     *) ids="$ids $1"; shift ;; esac; done
   mj_uc_require
   mkdir -p "$MJ_UC_EVIDENCE"
   [ -z "$outdir" ] || mkdir -p "$outdir"
   [ -n "$ids" ] || ids="$MJ_UC_IDS"
+  for id in $ids; do mj_uc_index "$id" >/dev/null || mj_die "$MJ_EX_MISSING" "no use case '$id' (majordomus usecase list)"; done
+  # the scenarios are independent (a repository each), so they run a few at a time; the
+  # report is printed in list order once every one has finished, so the output is stable
+  local rcdir; rcdir="$(mktemp -d "${TMPDIR:-/tmp}/mj-ucrc.XXXXXX")"
+  for id in $ids; do
+    i="$(mj_uc_index "$id")"
+    mj_uc_has_scenario "$i" || continue
+    ( mj_uc_run_one "$i" "$MJ_UC_EVIDENCE/$id.json" "$keep"; echo $? > "$rcdir/$id" ) &
+    jobs=$((jobs+1))
+    if [ "$jobs" -ge "$maxjobs" ]; then wait -n 2>/dev/null || wait; jobs=$((jobs-1)); fi
+  done
+  wait
   [ "$json" = 1 ] && printf '{"schema":"majordomus/use-case-run/v1","results":['
   for id in $ids; do
-    i="$(mj_uc_index "$id")" || mj_die "$MJ_EX_MISSING" "no use case '$id' (majordomus usecase list)"
+    i="$(mj_uc_index "$id")"
     if ! mj_uc_has_scenario "$i"; then
       skipped=$((skipped+1))
       [ "$json" = 1 ] || printf '%-38s described (no scenario)\n' "$id"
       continue
     fi
-    ev="$MJ_UC_EVIDENCE/$id.json"; rc=0
-    mj_uc_run_one "$i" "$ev" "$keep" || rc=$?
+    ev="$MJ_UC_EVIDENCE/$id.json"; rc="$(cat "$rcdir/$id" 2>/dev/null || echo 13)"
     ran=$((ran+1))
     [ -z "$outdir" ] || cp "$ev" "$outdir/$id.json"
-    if [ "$json" = 1 ]; then [ "$first" = 1 ] || printf ','; first=0; cat "$ev" | tr -d '\n'
+    if [ "$json" = 1 ]; then [ "$first" = 1 ] || printf ','; first=0; tr -d '\n' < "$ev"
     else
       if [ "$rc" = 0 ]; then printf '%-38s pass  %s step(s)\n' "$id" "$(grep -o '"id":"' "$ev" | wc -l | tr -d ' ')"
       else fails=$((fails+1)); printf '%-38s FAIL  %s\n' "$id" "$(grep -o '"reason":"[^"]*"' "$ev" | grep -v 'null' | head -1 | cut -d'"' -f4)"
         grep -o '"output":"[^"]*"' "$ev" | tail -1 | cut -d'"' -f4 | sed 's/\\n/\n/g' | sed 's/^/      | /' | head -20; fi
     fi
   done
+  rm -rf "$rcdir"
   if [ "$json" = 1 ]; then printf '],"ran":%s,"failed":%s,"skipped":%s}\n' "$ran" "$fails" "$skipped"
   else printf 'usecase run: %s scenario(s), %s failed, %s described only; evidence under %s/\n' "$ran" "$fails" "$skipped" "$(mj_rel "$MJ_UC_EVIDENCE")"; fi
   mj_ledger_append use_cases.ran "\"ran\":$ran,\"failed\":$fails" 2>/dev/null || true

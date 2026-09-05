@@ -1306,6 +1306,45 @@
       "source_route": "/docs/scope/",
       "command": null,
       "test_case": "93_scope_policy"
+    },
+    {
+      "id": "use-case-coverage",
+      "claim": "Every public command is named and run by an active use case, a guaranteed claim or an MCP tool without one is a named gap, and the policy says which gaps fail doctor, check and finish",
+      "source": "docs/USE_CASES.md",
+      "implementation": "lib/usecase.sh",
+      "test": "test/cases/94_use_cases.sh",
+      "status": "guaranteed",
+      "note": "The tally is computed from the command registry, docs/CLAIMS.yaml, the executable's registry and the use cases under .ai/repo/use-cases/; a draft never counts. The doctrine is majordomus.use-case-coverage, gated by policy use_cases.coverage and the finish key use_cases_covered.",
+      "responsibility": "doctor",
+      "source_route": "/docs/use-cases/",
+      "command": "usecase",
+      "test_case": "94_use_cases"
+    },
+    {
+      "id": "use-case-evidence",
+      "claim": "A use case's scenario executes against the real tool in a disposable repository, every step's exit code and output are asserted, and the normalised evidence is what the site shows",
+      "source": "docs/USE_CASES.md",
+      "implementation": "lib/usecase.sh",
+      "test": "test/cases/94_use_cases.sh",
+      "status": "guaranteed",
+      "note": "majordomus usecase run writes .ai/local/evidence/use-cases/<id>.json; scripts/generate-site-data runs the same scenarios and embeds the evidence into site/data/generated/catalogue.json, so --check proves the pages show what the tool did. Paths, timestamps, ids, hashes and durations are normalised; nothing behavioural is.",
+      "responsibility": "doctor",
+      "source_route": "/docs/use-cases/",
+      "command": "usecase",
+      "test_case": "94_use_cases"
+    },
+    {
+      "id": "use-case-impact",
+      "claim": "From the files a change touched, the tool names the commands, rules, use cases, scenarios and behavioural cases affected, and scaffolds a draft for a capability no use case covers",
+      "source": "docs/USE_CASES.md",
+      "implementation": "lib/usecase.sh",
+      "test": "test/cases/94_use_cases.sh",
+      "status": "guaranteed",
+      "note": "usecase impact maps paths through docs/RESPONSIBILITIES.yaml, the dispatch table, the rules' identities and the scenarios' fixtures; usecase scaffold writes drafts from the registry, the command fixture and the claims, and never a guarantee.",
+      "responsibility": "doctor",
+      "source_route": "/docs/use-cases/",
+      "command": "usecase",
+      "test_case": "94_use_cases"
     }
   ]
 }

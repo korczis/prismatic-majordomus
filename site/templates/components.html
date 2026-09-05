@@ -61,6 +61,18 @@
 {% endcomponent linkcard %}
 
 {#- A doctrine's class. blocking stops the command; advisory reports and lets it pass. -#}
+{#- the observed maturity of a use case: computed by the generator from evidence and from the
+    objects the use case names, never written into the file -#}
+{% component maturity(status) %}
+{%- if status == "guaranteed" -%}<span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
+{%- elif status == "verified" -%}<span class="bg-brand-softer text-fg-brand-strong border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">verified</span>
+{%- elif status == "executable" -%}<span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">executable</span>
+{%- elif status == "described" -%}<span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">described</span>
+{%- elif status == "draft" -%}<span class="bg-neutral-primary-soft text-body-subtle border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">draft</span>
+{%- else -%}<span class="bg-neutral-primary-soft text-body-subtle border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">{{ status }}</span>
+{%- endif -%}
+{% endcomponent maturity %}
+
 {% component doctrine_class(class) %}
 {%- if class == "blocking" -%}<span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">blocking</span>
 {%- else -%}<span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span>
