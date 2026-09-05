@@ -212,7 +212,7 @@ fn capabilities_text_output_names_projections_and_provenance() {
         "http         GET /api/v1/object",
         "cli          none",
         "input        GetInput",
-        "output       ObjectView",
+        "output       ResourceView",
         "provenance   builtin ",
     ] {
         assert!(out.contains(needle), "missing {needle:?} in:\n{out}");
@@ -249,7 +249,14 @@ fn capabilities_text_output_names_projections_and_provenance() {
     );
     assert_eq!(code, 0);
     let v: serde_json::Value = serde_json::from_str(&out).unwrap();
-    assert_eq!(v["title"], "ObjectView");
+    assert_eq!(v["title"], "ResourceView");
+    // the two shapes objects.get answers, tagged by `source`
+    let variants = v["oneOf"].as_array().expect("a tagged union");
+    assert_eq!(variants.len(), 2, "{v}");
+    assert!(
+        v.to_string().contains("\"ObjectView\"") && v.to_string().contains("\"AnswerView\""),
+        "{v}"
+    );
     let (code, out, _) = run_in(
         &f.root(),
         &[

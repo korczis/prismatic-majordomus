@@ -825,6 +825,22 @@
       "note": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build."
     },
     {
+      "id": "claim:mcp-uri-resolution",
+      "kind": "claim",
+      "label": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-uri-resolution/",
+      "external": false,
+      "note": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects_get.rs covers every branch at the library level."
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/capability/registry.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/capability/registry.rs",
@@ -1914,6 +1930,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mcp-uri-resolution",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -2324,6 +2345,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mcp-uri-resolution",
+      "target": "impl:apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "test:test/cases/00_yaml_flatten.sh",
       "kind": "proved_by"
@@ -2731,6 +2757,11 @@
     {
       "source": "claim:mcp-client-autostart",
       "target": "test:test/cases/90_mcp_shared_server.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-uri-resolution",
+      "target": "test:test/cases/72_rust_mcp.sh",
       "kind": "proved_by"
     }
   ]

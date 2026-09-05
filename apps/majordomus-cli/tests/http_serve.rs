@@ -94,6 +94,21 @@ fn openapi_docs_and_one_operation_over_a_real_socket() {
     assert_eq!(status, 200);
     assert_eq!(repo["state"], "ok");
     assert_eq!(repo["capabilities"]["http_routes"], 9);
+
+    // the object route resolves the repository URI to repository.info, as MCP does
+    let (status, doc) = s.get("/api/v1/object?uri=majordomus://repository");
+    assert_eq!(status, 200, "{doc}");
+    assert_eq!(doc["source"], "builtin");
+    assert_eq!(doc["id"], "repository.info");
+    assert_eq!(doc["identity"], "repository");
+    assert_eq!(doc["media_type"], "application/json");
+    assert_eq!(
+        doc["answer"], repo,
+        "the same report the repository route answers"
+    );
+    let parsed: Value = serde_json::from_str(doc["content"].as_str().unwrap()).unwrap();
+    assert_eq!(parsed, repo, "and its text parses back to it");
+    assert_eq!(got["source"], "declarative");
 }
 
 #[test]
@@ -173,6 +188,16 @@ fn mcp_and_http_answer_the_same_capability_with_the_same_result() {
         json!({ "uri": "majordomus://prompt/continue" }),
     );
     assert_eq!(via_http, via_mcp);
+    let via_http = s.get("/api/v1/object?uri=majordomus://repository").1;
+    let via_mcp = mcp_call(
+        &f.root(),
+        "majordomus_get",
+        json!({ "uri": "majordomus://repository" }),
+    );
+    assert_eq!(
+        via_http, via_mcp,
+        "the repository URI resolves alike on both"
+    );
     let via_http = s.get("/api/v1/search?query=resume&limit=5").1;
     let via_mcp = mcp_call(
         &f.root(),

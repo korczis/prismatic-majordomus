@@ -8,7 +8,7 @@ use std::sync::Arc;
 use serde::Serialize;
 use serde_json::{json, Value};
 
-use crate::capability::{CapabilityError, CapabilityKind, CapabilityRegistry, Context};
+use crate::capability::{builtin, CapabilityError, CapabilityKind, CapabilityRegistry, Context};
 use crate::index::Index;
 
 use super::protocol::{resource_json, tool_json};
@@ -226,38 +226,19 @@ impl Surface {
         out.into_iter().map(|(_, r)| r).collect()
     }
 
-    /// Read one resource: an object's content, or a query with a resource exposure answered as JSON.
+    /// Read one resource: an object's content, or a query with a resource exposure answered
+    /// as JSON. The resolution is `objects.get`'s ([`builtin::resolve`]), so the tool, the
+    /// HTTP route and this read answer one URI alike.
     pub fn read(&self, uri: &str) -> Result<ResourceContent, SurfaceError> {
-        let c = self
-            .ctx
-            .registry
-            .by_mcp_uri(uri)
-            .ok_or_else(|| SurfaceError::UnknownResource(uri.to_string()))?;
-        match c.kind {
-            CapabilityKind::Resource => {
-                let object = self
-                    .ctx
-                    .index
-                    .get(uri)
-                    .ok_or_else(|| SurfaceError::UnknownResource(uri.to_string()))?;
-                Ok(ResourceContent {
-                    uri: uri.to_string(),
-                    media_type: object.media_type.to_string(),
-                    text: object.content.clone(),
-                })
-            }
-            CapabilityKind::Query | CapabilityKind::Command => {
-                let value = self
-                    .ctx
-                    .execute(c.id.as_str(), json!({}))
-                    .map_err(|e| SurfaceError::Internal(e.to_string()))?;
-                Ok(ResourceContent {
-                    uri: uri.to_string(),
-                    media_type: "application/json".into(),
-                    text: pretty(&value),
-                })
-            }
-        }
+        let resolved = builtin::resolve(&self.ctx, uri).map_err(|e| match e {
+            CapabilityError::NotFound(_) => SurfaceError::UnknownResource(uri.to_string()),
+            other => SurfaceError::Internal(other.to_string()),
+        })?;
+        Ok(ResourceContent {
+            uri: uri.to_string(),
+            media_type: resolved.media_type(),
+            text: resolved.text(),
+        })
     }
 
     /// Every tool, by canonical id. Computed once and shared.
@@ -310,8 +291,4 @@ impl Surface {
             .execute("repository.info", json!({}))
             .map_err(|e| SurfaceError::Internal(e.to_string()))
     }
-}
-
-fn pretty(v: &Value) -> String {
-    serde_json::to_string_pretty(v).unwrap_or_else(|_| v.to_string())
 }
