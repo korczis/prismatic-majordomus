@@ -984,6 +984,33 @@
       "status": "guaranteed",
       "route": "/guarantees/scope-declared/",
       "external": false,
+      "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns."
+    },
+    {
+      "id": "claim:use-case-coverage",
+      "kind": "claim",
+      "label": "Every public command is named and run by an active use case, a guaranteed claim or an MCP tool without one is a named gap, and the policy says which gaps fail doctor, check and finish",
+      "status": "guaranteed",
+      "route": "/guarantees/use-case-coverage/",
+      "external": false,
+      "note": "The tally is computed from the command registry, docs/CLAIMS.yaml, the executable's registry and the use cases under .ai/repo/use-cases/; a draft never counts. The doctrine is majordomus.use-case-coverage, gated by policy use_cases.coverage and the finish key use_cases_covered."
+    },
+    {
+      "id": "claim:use-case-evidence",
+      "kind": "claim",
+      "label": "A use case's scenario executes against the real tool in a disposable repository, every step's exit code and output are asserted, and the normalised evidence is what the site shows",
+      "status": "guaranteed",
+      "route": "/guarantees/use-case-evidence/",
+      "external": false,
+      "note": "majordomus usecase run writes .ai/local/evidence/use-cases/<id>.json; scripts/generate-site-data runs the same scenarios and embeds the evidence into site/data/generated/catalogue.json, so --check proves the pages show what the tool did. Paths, timestamps, ids, hashes and durations are normalised; nothing behavioural is."
+    },
+    {
+      "id": "claim:use-case-impact",
+      "kind": "claim",
+      "label": "From the files a change touched, the tool names the commands, rules, use cases, scenarios and behavioural cases affected, and scaffolds a draft for a capability no use case covers",
+      "status": "guaranteed",
+      "route": "/guarantees/use-case-impact/",
+      "external": false,
       "note": "The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared."
     },
     {
@@ -1290,6 +1317,13 @@
       "external": false
     },
     {
+      "id": "impl:lib/usecase.sh",
+      "kind": "implementation",
+      "label": "lib/usecase.sh",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:lib/watch.sh",
       "kind": "implementation",
       "label": "lib/watch.sh",
@@ -1462,6 +1496,13 @@
       "kind": "source",
       "label": "docs/SCOPE.md",
       "route": "/docs/scope/",
+      "external": false
+    },
+    {
+      "id": "source:docs/USE_CASES.md",
+      "kind": "source",
+      "label": "docs/USE_CASES.md",
+      "route": "/docs/use-cases/",
       "external": false
     },
     {
@@ -1827,6 +1868,13 @@
       "label": "test/cases/94_ci_plan.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/94_ci_plan.sh"
+    },
+    {
+      "id": "test:test/cases/94_use_cases.sh",
+      "kind": "test",
+      "label": "test/cases/94_use_cases.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/94_use_cases.sh"
     },
     {
       "id": "test:test/cases/96_site_deploy.sh",
@@ -2378,6 +2426,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:use-case-coverage",
+      "target": "source:docs/USE_CASES.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:use-case-evidence",
+      "target": "source:docs/USE_CASES.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:use-case-impact",
+      "target": "source:docs/USE_CASES.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:site-deploy-one-path",
       "target": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
       "kind": "specified_by"
@@ -2883,6 +2946,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:use-case-coverage",
+      "target": "impl:lib/usecase.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:use-case-evidence",
+      "target": "impl:lib/usecase.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:use-case-impact",
+      "target": "impl:lib/usecase.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:site-deploy-one-path",
       "target": "impl:scripts/site-deploy",
       "kind": "implemented_by"
@@ -3385,6 +3463,21 @@
     {
       "source": "claim:scope-declared",
       "target": "test:test/cases/93_scope_policy.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:use-case-coverage",
+      "target": "test:test/cases/94_use_cases.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:use-case-evidence",
+      "target": "test:test/cases/94_use_cases.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:use-case-impact",
+      "target": "test:test/cases/94_use_cases.sh",
       "kind": "proved_by"
     },
     {
