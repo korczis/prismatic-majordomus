@@ -177,6 +177,19 @@
       "test_case": "21_decision_question"
     },
     {
+      "id": "prompt-capture",
+      "claim": "A declared provider hook captures the person's raw prompts below the model, and doctor proves it by running it",
+      "source": "docs/DOCTRINE.md",
+      "implementation": "lib/capture.sh",
+      "test": "test/cases/29_prompt_capture.sh",
+      "status": "guaranteed",
+      "note": "Covers the four states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, and a record set that cannot carry model output.",
+      "responsibility": "policy",
+      "source_route": "/docs/doctrine/",
+      "command": "capture",
+      "test_case": "29_prompt_capture"
+    },
+    {
       "id": "prompt-assets",
       "claim": "Every repository-local prompt asset renders, and an unknown token is a failure",
       "source": "docs/DOCTRINE.md",

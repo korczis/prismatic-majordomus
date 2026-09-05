@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "command": "capture",
+  "title": "Raw prompt history, captured below the model",
+  "intro": "A worker cannot record its own prompts: it never sees what the person typed, and a record that depends on a model choosing to write it is missing exactly the prompts that mattered. Capture runs in the provider's hook instead, and the state a provider is in is decided by running that hook, not by finding a file.",
+  "scenarios": [
+    {
+      "id": "unconfigured",
+      "title": "Before anything is wired",
+      "given": {
+        "hook installed": false
+      },
+      "setup": "installed",
+      "run": [
+        "capture",
+        "status"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "claude-code",
+          "unconfigured"
+        ]
+      },
+      "explain": "An adapter exists for Claude Code, but this repository does not wire it, and the command says so rather than reporting an empty archive as success."
+    },
+    {
+      "id": "verified",
+      "title": "After the hook is installed",
+      "given": {
+        "hook installed": true
+      },
+      "setup": "capture-installed",
+      "run": [
+        "capture",
+        "status"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "verified",
+          "synthetic payload"
+        ]
+      },
+      "explain": "verified is not the presence of a file. The command drove a payload through the shim the provider would run, into an archive of its own, and read the record back."
+    },
+    {
+      "id": "no-adapter",
+      "title": "A provider whose prompts cannot be observed",
+      "given": {
+        "adapter exists": false
+      },
+      "setup": "installed",
+      "run": [
+        "capture",
+        "prompt",
+        "--provider",
+        "codex"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no adapter",
+          "claude-code"
+        ]
+      },
+      "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the providers that do have one. Note what it is not: capture prompt runs inside a provider hook, where exit 2 rejects the person's prompt, so it never returns that code whatever is wrong."
+    }
+  ]
+}

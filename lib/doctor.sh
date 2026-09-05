@@ -26,6 +26,9 @@
 # the skill validator reads the catalogue every skill surface reads
 # shellcheck source=skills.sh
 . "$MJ_LIB_DIR/skills.sh"
+# the capture doctrine and the provider states the wiring verifier reports
+# shellcheck source=capture.sh
+. "$MJ_LIB_DIR/capture.sh"
 # shellcheck source=context.sh
 . "$MJ_LIB_DIR/context.sh"
 # the project-model validators read the one engine, not a copy of its rules
@@ -138,8 +141,16 @@ mj_validate_wiring() {
           if [ ! -f "$MJ_ROOT/$target" ]; then mj_doctrine_fail wiring "$name" "ci file $target does not exist"
           elif ! grep -qE "majordomus[[:space:]]+$arg0" "$MJ_ROOT/$target"; then mj_doctrine_fail wiring "$name" "$target does not invoke majordomus $arg0" "grep -n majordomus $target"
           else mj_doctrine_ok wiring "$name" "invoked from $target"; fi ;;
+        provider-hook)
+          # A hook that exists is not a hook that captures. The state comes from driving a
+          # synthetic payload through the shim the provider would run, so "wired" and
+          # "verified" stay different words with different evidence behind them.
+          local cst creason
+          cst="$(mj_capture_state "$target")"; creason="${cst#*"$MJ_TAB"}"; cst="${cst%%"$MJ_TAB"*}"
+          if [ "$cst" = verified ]; then mj_doctrine_ok wiring "$name" "$creason"
+          else mj_doctrine_fail wiring "$name" "$cst — $creason" "majordomus capture status"; fi ;;
         manual) mj_doctrine_skip wiring "$name" "wired_by: manual — documented, not verified" ;;
-        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | ci:<path> | manual)" ;;
+        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | ci:<path> | provider-hook:<provider> | manual)" ;;
       esac
     fi
     i=$((i+1))

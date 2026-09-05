@@ -69,6 +69,10 @@ enforcement:
     path: bin/majordomus
     args: [finish, --check]
     wired_by: git-hook:pre-push
+  - name: prompt-capture
+    path: bin/majordomus
+    args: [capture, prompt]
+    wired_by: provider-hook:claude-code
 
 projections:
   - provider: agents

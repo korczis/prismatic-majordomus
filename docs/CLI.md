@@ -765,6 +765,107 @@ OK   skill       5 reference(s) — every related id and every example resolves
 skills: 1 discovered, 1 valid; examples: 5; references: 5 checked; failures: 0
 ```
 
+## `majordomus capture`
+
+Record the person's raw prompts from a provider hook, install that hook, and report what
+each provider actually does in this repository.
+
+**Why a hook and not an instruction.** A worker cannot be asked to record its own prompts.
+It never sees the bytes the person typed, only what the provider assembled from them, and a
+record written by a model is missing exactly the prompts that mattered: the first one of a
+session, which arrives before any instruction has been read, and every one where the model
+was busy doing what it was asked. A line in `AGENTS.md` is a request, not a mechanism, and
+no behavioural test can prove a request was honoured. So capture happens below the model,
+in the provider's own hook, where running it is the proof that it works.
+
+`capture install` writes two things and refuses to overwrite either: a shim at
+`.claude/hooks/majordomus-capture`, and the hook entry in `.claude/settings.json`. When the
+configuration exists and names something else, the command prints the entry to add and
+exits 15 rather than rewriting a file it did not write. The shim finds the repository from
+its own location: the provider substitutes its project directory into the command string
+textually, so nothing in the environment names the repository, and the working directory a
+hook runs in is not contracted.
+
+`capture prompt` reads one JSON payload on stdin and writes one record. **It never exits
+2**, because in `UserPromptSubmit` that exit code rejects the person's prompt, and a broken
+archive must never cost someone their input; a payload it cannot read is written to the
+archive's own log instead — and **`doctor` fails while that log is non-empty**, because a
+capture that failed means prompts were lost. That log is the only thing that can catch the
+failure that matters: if the provider renames the field the prompt arrives in, the hook
+still runs and the self test still passes, since it sends a payload of the tool's own
+making. Read the log and delete it; it is a diagnostic, and unlike a record, nothing is lost
+by removing it. The prompt text itself is the raw span from the payload, copied through
+still escaped, so no decode and re-encode step can lose a character.
+
+**One prompt is one file**, `.ai/local/prompts/YYYYMMDDHHMMSS-<slug>.json`, where the slug
+is the opening of the prompt itself:
+
+```
+.ai/local/prompts/
+  20260905113342-why-arent-prompts-saved-automatically.json
+  20260905114501-make-it-a-file-per-prompt.json
+```
+
+A record is immutable once written, two hooks cannot interleave inside one file, the name
+sorts chronologically, and the directory listing is already a readable history. The slug is
+a hint and never a faithful rendering — escapes and non-ASCII collapse into hyphens, and
+the prompt itself is inside the file with nothing done to it. Records stay idempotent on
+the provider's prompt identity, which is a field and not the name: a hook delivered twice
+within the day writes once.
+
+**Not every payload is a prompt, and the field it arrives in is not fixed.** The event is
+not what its name suggests: Claude Code also fires `UserPromptSubmit` for messages it
+injects into the turn — a completed background task, a system reminder — and those are not
+the person's prompts. A payload whose declared origin is not a person, or whose text opens
+with a marker the provider injects, is skipped: no record, and no log line, because a skip
+is normal operation rather than a failure. A payload that says nothing about its origin is
+captured, since losing a real prompt is the worse of the two mistakes.
+
+The payload keys are candidates rather than one assumed name — the prompt is read from
+`prompt`, then `prompt_text`, then `text`. A payload field is the provider's private shape:
+it is versioned on their schedule, renaming one is not a breaking change to them, and a
+capture built on a single assumed name loses every prompt the day it moves. When none of
+the candidates is present, nothing is written and the log names the keys that *were* there,
+so the next name is read off a real payload instead of guessed.
+
+**The archive is evidence, not knowledge.** It lives under the ignored half of the layer,
+nothing loads it into a context, no command retrieves from it, and `doctor` fails if
+anything under it is tracked by Git. The writer emits a closed set of fields, so the
+model's half of the exchange cannot arrive through it.
+
+**Nothing deletes a record.** The ledger, the checkpoints and the handovers rotate under a
+policy cap because each restates state that is still available elsewhere; a prompt is not —
+it existed once, was derived from nothing, and no other file can reconstruct it. So there is
+no cap to configure, the archive grows, `doctor` reports how many records and how many
+kibibytes it holds, and a person who wants it smaller deletes files themselves rather than
+discovering that the hook meant to keep their prompts had been discarding them.
+
+**`capture status` reports five distinct states, and never a generic pass:**
+
+| state | what is true |
+|---|---|
+| `unsupported` | the provider has no documented event that hands a command the prompt before the model runs |
+| `unconfigured` | an adapter exists, but this repository does not wire it |
+| `named` | the configuration declares the hook, but not the shim this tool wrote |
+| `wired` | the shim is in place and executable, but a payload through it produced no record |
+| `verified` | a synthetic payload driven through the shim produced a record |
+
+A repository holds itself to this by declaring an `enforcement` entry with
+`wired_by: provider-hook:<provider>`; `doctor` then fails unless the state is `verified`,
+and because `doctor` runs on `pre-commit`, a hook that stops capturing stops the commit.
+Only Claude Code has an adapter today. Codex and Gemini are reported `unsupported` rather
+than assumed, and no other surface — the web, the desktop app, another machine — is
+observable from here at all.
+
+```
+$ majordomus capture install
+INFO  capture  .claude/hooks/majordomus-capture  written and made executable
+INFO  capture  .claude/settings.json  written with the UserPromptSubmit hook
+$ majordomus capture status
+claude-code    verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record
+```
+
+
 ## `majordomus search`
 
 Find durable records without reading all of them. Read-only.
