@@ -169,7 +169,9 @@
 
     function focus(node) {
       var keep = node.closedNeighborhood();
-      cy.elements().data('dimmed', true);
+      // the previous selection's edges must lose their focus first: edge[?focus] outranks
+      // edge[?dimmed] in the stylesheet, so an edge that kept both stayed lit under the new one
+      cy.elements().removeData('focus').data('dimmed', true);
       keep.removeData('dimmed');
       keep.edges().data('focus', true);
       describe(node);
