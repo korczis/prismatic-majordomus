@@ -154,7 +154,7 @@ impl Surface {
                 },
             ));
         }
-        out.sort_by(|a, b| a.0.cmp(&b.0));
+        out.sort_by_key(|(rank, _)| *rank);
         out.into_iter().map(|(_, r)| r).collect()
     }
 
