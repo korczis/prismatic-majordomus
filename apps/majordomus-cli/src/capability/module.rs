@@ -1,6 +1,6 @@
 //! Modules compose capabilities; the application composes modules. A module is one Rust
-//! module with a `module()` function built by [`module!`], owning its id, its metadata
-//! and the executables it ships; [`compose_modules!`] names the modules the application
+//! module with a `module()` function built by [`crate::module!`], owning its id, its metadata
+//! and the executables it ships; [`crate::compose_modules!`] names the modules the application
 //! is made of, and that list of modules is the only composition a person writes at the
 //! root. Adding a capability to an existing module touches that module alone.
 //!

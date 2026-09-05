@@ -12,6 +12,7 @@
 #![warn(missing_docs)]
 
 pub mod app;
+pub mod bench;
 pub mod capability;
 pub mod cli;
 pub mod commands;
