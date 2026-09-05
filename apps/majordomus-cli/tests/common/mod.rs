@@ -304,3 +304,148 @@ pub fn diagnostics(inspect: &Value) -> Vec<Value> {
         .unwrap()
         .clone()
 }
+
+// ---------------------------------------------------------------- HTTP helpers
+
+use std::io::{BufRead, BufReader, Read};
+use std::net::TcpStream;
+use std::process::Child;
+
+/// A running `majordomus serve --port 0` with the address it reported. Dropping it closes
+/// the child's stdin, which is how the server is told to stop, and asserts a clean exit.
+pub struct Served {
+    pub child: Child,
+    pub address: String,
+}
+
+impl Served {
+    /// Spawn the server in `cwd` and wait for the "listening on" line on stderr.
+    pub fn start(cwd: &Path, extra: &[&str]) -> Self {
+        use std::process::Stdio;
+        let mut args = vec!["serve", "--port", "0"];
+        args.extend_from_slice(extra);
+        let mut child = Command::new(BIN)
+            .args(&args)
+            .current_dir(cwd)
+            .env("MAJORDOMUS_LOG", "info")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("spawn majordomus serve");
+        let stderr = child.stderr.take().unwrap();
+        let mut lines = BufReader::new(stderr).lines();
+        let mut address = None;
+        for line in lines.by_ref() {
+            let line = line.unwrap();
+            if let Some(rest) = line.split("listening on http://").nth(1) {
+                address = Some(rest.split_whitespace().next().unwrap().to_string());
+                break;
+            }
+            if line.contains("majordomus:") {
+                panic!("serve failed: {line}");
+            }
+        }
+        // keep draining stderr so the child never blocks on a full pipe
+        std::thread::spawn(move || for _ in lines {});
+        Served {
+            child,
+            address: address.expect("serve reported its address"),
+        }
+    }
+
+    /// One HTTP/1.1 request; returns (status, headers, body).
+    pub fn request(
+        &self,
+        method: &str,
+        target: &str,
+        body: Option<&str>,
+    ) -> (u16, Vec<(String, String)>, String) {
+        let mut stream = TcpStream::connect(&self.address).expect("connect");
+        let body = body.unwrap_or("");
+        let req = format!(
+            "{method} {target} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
+            self.address,
+            body.len()
+        );
+        use std::io::Write;
+        stream.write_all(req.as_bytes()).unwrap();
+        let mut raw = Vec::new();
+        stream.read_to_end(&mut raw).unwrap();
+        let text = String::from_utf8(raw).expect("response is UTF-8");
+        let (head, body) = text.split_once("\r\n\r\n").expect("a header/body split");
+        let mut lines = head.lines();
+        let status: u16 = lines
+            .next()
+            .unwrap()
+            .split_whitespace()
+            .nth(1)
+            .unwrap()
+            .parse()
+            .unwrap();
+        let headers = lines
+            .filter_map(|l| {
+                l.split_once(": ")
+                    .map(|(k, v)| (k.to_lowercase(), v.to_string()))
+            })
+            .collect();
+        (status, headers, body.to_string())
+    }
+
+    pub fn get(&self, target: &str) -> (u16, Value) {
+        let (status, _, body) = self.request("GET", target, None);
+        let v = serde_json::from_str(&body)
+            .unwrap_or_else(|e| panic!("GET {target}: body is not JSON ({e}): {body}"));
+        (status, v)
+    }
+}
+
+impl Served {
+    /// Close stdin and wait: the documented way to stop the server.
+    pub fn stop(&mut self) -> i32 {
+        drop(self.child.stdin.take());
+        let status = self.child.wait().expect("wait for serve");
+        status.code().unwrap_or(-1)
+    }
+}
+
+impl Drop for Served {
+    fn drop(&mut self) {
+        if self.child.stdin.is_some() {
+            let code = self.stop();
+            assert_eq!(code, 0, "serve did not end cleanly when stdin closed");
+        }
+    }
+}
+
+/// Everything a `$ref` in an OpenAPI document points at must exist under components.
+pub fn openapi_refs_resolve(doc: &Value) -> Vec<String> {
+    let mut missing = Vec::new();
+    fn walk(v: &Value, doc: &Value, missing: &mut Vec<String>) {
+        match v {
+            Value::Object(m) => {
+                if let Some(Value::String(r)) = m.get("$ref") {
+                    let name = r.strip_prefix("#/components/schemas/").unwrap_or("");
+                    if name.is_empty() || doc["components"]["schemas"].get(name).is_none() {
+                        missing.push(r.clone());
+                    }
+                }
+                m.values().for_each(|c| walk(c, doc, missing));
+            }
+            Value::Array(a) => a.iter().for_each(|c| walk(c, doc, missing)),
+            _ => {}
+        }
+    }
+    walk(doc, doc, &mut missing);
+    missing
+}
+
+/// A fixture as a library-level index and registry, for tests of the projections that
+/// need no process boundary.
+pub fn load_app(f: &Fixture) -> majordomus_cli::app::App {
+    let args = majordomus_cli::cli::RepoArgs {
+        repo: Some(f.root()),
+        ..Default::default()
+    };
+    majordomus_cli::app::App::load(&args).expect("app loads")
+}

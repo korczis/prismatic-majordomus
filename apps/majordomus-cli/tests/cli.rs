@@ -119,3 +119,71 @@ fn explicit_repo_overrides_the_working_directory() {
         "{out}"
     );
 }
+
+#[test]
+fn new_commands_have_help_and_honest_exit_codes() {
+    for args in [
+        &["serve", "--help"][..],
+        &["capabilities", "--help"],
+        &["capabilities", "list", "--help"],
+        &["generate", "--help"],
+    ] {
+        let (code, out, err) = run(args);
+        assert_eq!(code, 0, "{args:?}: {err}");
+        assert!(out.contains("Usage: majordomus"), "{out}");
+    }
+    let (_, out, _) = run(&["--help"]);
+    for c in ["mcp", "serve", "capabilities", "generate"] {
+        assert!(
+            out.contains(&format!("\n  {c} ")),
+            "top-level help lacks {c}:\n{out}"
+        );
+    }
+    let f = Fixture::new();
+    let (code, _, err) = run_in(&f.root(), &["capabilities", "describe", "nope.x"], "");
+    assert_eq!(code, 12, "{err}");
+    assert!(err.contains("unknown capability: nope.x"), "{err}");
+    let (code, out, _) = run_in(
+        &f.root(),
+        &[
+            "capabilities",
+            "describe",
+            "objects.get",
+            "--format",
+            "json",
+        ],
+        "",
+    );
+    assert_eq!(code, 0);
+    let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(v["exposure"]["http"]["path"], "/api/v1/object");
+    let (code, out, _) = run_in(&f.root(), &["capabilities", "schema", "objects.get"], "");
+    assert_eq!(code, 0);
+    let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert!(v["properties"]["uri"].is_object());
+    let (code, out, _) = run_in(&f.root(), &["capabilities", "validate"], "");
+    assert_eq!(code, 0);
+    assert!(
+        out.contains("validate: 0 failure(s)") && out.contains("OK   openapi"),
+        "{out}"
+    );
+    let (code, out, _) = run_in(
+        &f.root(),
+        &["capabilities", "list", "--exposure", "cli"],
+        "",
+    );
+    assert_eq!(code, 0);
+    assert!(
+        out.contains("capabilities.list")
+            && out.contains("capabilities.describe")
+            && !out.contains("objects.get"),
+        "{out}"
+    );
+    let (code, _, err) = run_in(
+        &f.root(),
+        &["capabilities", "list", "--kind", "nonsense"],
+        "",
+    );
+    assert_ne!(code, 0);
+    assert!(err.contains("not query or resource"), "{err}");
+}
