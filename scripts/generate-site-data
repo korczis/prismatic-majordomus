@@ -98,10 +98,36 @@ flat() { local t; t="$(mktemp "${TMPDIR:-/tmp}/mj.f.XXXXXX")"; mj_yaml_flatten "
 yload() { mj_yload "$1" "Y_${1//[!A-Za-z0-9]/_}"; eval "Y_${1//[!A-Za-z0-9]/_}__LOADED=1"; }
 yv() { local p="Y_${1//[!A-Za-z0-9]/_}" l; eval "l=\"\${${p}__LOADED:-}\""; if [ -n "$l" ]; then mj_yv "$p" "$2"; else mj_yget "$1" "$2"; fi; }
 ylist() { local p="Y_${1//[!A-Za-z0-9]/_}" l; eval "l=\"\${${p}__LOADED:-}\""; if [ -n "$l" ]; then mj_yvlist "$p" "$2"; else mj_ylist "$1" "$2"; fi; }
-jstr() { jq -Rn --arg v "$1" '$v'; }           # JSON string
+# jstr <string>: the string as a JSON string literal, without a process. What jq -Rn --arg
+# prints: backslash and quote escaped, the named control characters as \n \r \t \b \f,
+# every other control byte as \u00XX; anything else, UTF-8 included, verbatim.
+jstr() {
+  local s="$1" out="" c i n
+  case "$s" in *[\\\"$'\x01'-$'\x1f']*) ;; *) printf '"%s"' "$s"; return 0 ;; esac
+  n=${#s}
+  for ((i = 0; i < n; i++)); do
+    c="${s:i:1}"
+    case "$c" in
+      \\) out="$out\\\\" ;;
+      \") out="$out\\\"" ;;
+      $'\n') out="$out\\n" ;;
+      $'\r') out="$out\\r" ;;
+      $'\t') out="$out\\t" ;;
+      $'\b') out="$out\\b" ;;
+      $'\f') out="$out\\f" ;;
+      [$'\x01'-$'\x1f']) out="$out$(printf '\\u%04x' "'$c")" ;;
+      *) out="$out$c" ;;
+    esac
+  done
+  printf '"%s"' "$out"
+}
+# jarr: the lines on stdin as a JSON array of strings; jline: the first line as a JSON
+# string. What `jq -R . | jq -sc .` and `jq -Rn input` printed, without a process each.
+jarr() { local l out="" first=1; while IFS= read -r l; do out="$out$([ "$first" = 1 ] || printf ',')$(jstr "$l")"; first=0; done; printf '[%s]' "$out"; }
+jline() { local l=""; IFS= read -r l || true; jstr "$l"; }
 jbool() { case "$1" in true) echo true ;; false) echo false ;; *) jstr "$1" ;; esac; }
 jnum_or_str() { case "$1" in ''|*[!0-9]*) jstr "$1" ;; *) printf '%s' "$1" ;; esac; }
-ylist_json() { mj_ylist "$1" "$2" | jq -R . | jq -sc .; }
+ylist_json() { mj_ylist "$1" "$2" | jarr; }
 # Rewrite a generated file in place. The scratch file lives outside the staging directory,
 # which is published wholesale, and a failure aborts rather than publishing a half-written
 # artifact: `jq ... > "$OUT/x.tmp" && mv` leaks the temp into the site and, because `&&`
@@ -230,13 +256,13 @@ done
 mj_phase_end "gen:capabilities.json_from_docs" "$GEN_T0"
 # ---------------------------------------------------------------- lifecycle.json
 GEN_T0="$(mj_phase_begin "gen:lifecycle.json")"
-OUTCOMES="$(grep -oE 'completed\|partial\|blocked\|no_match\|failed' "$ROOT/lib/finish.sh" | head -1 | tr '|' '\n' | jq -R . | jq -sc .)"
+OUTCOMES="$(grep -oE 'completed\|partial\|blocked\|no_match\|failed' "$ROOT/lib/finish.sh" | head -1 | tr '|' '\n' | jarr)"
 # The labels are the ones mj_git_label can actually print, read out of the function that
 # prints them. A label listed here that the function cannot produce would be a vocabulary
 # the site teaches and the tool never uses.
 LABELS="$(awk '/^mj_git_label\(\)/ { f = 1 } f && /printf/ { if (match($0, /printf '"'"'[a-z_]+'"'"'/)) {
              lbl = substr($0, RSTART + 8, RLENGTH - 9); if (!(lbl in seen)) { seen[lbl] = 1; print lbl } } }
-           f && /^}/ { exit }' "$ROOT/lib/common.sh" | jq -R . | jq -sc .)"
+           f && /^}/ { exit }' "$ROOT/lib/common.sh" | jarr)"
 [ "$(printf '%s' "$LABELS" | jq length)" -ge 2 ] \
   || { echo "generate-site-data: no divergence labels in lib/common.sh mj_git_label" >&2; exit 10; }
 # The lifecycle is the block the seeded task-lifecycle workflow carries, in the order it
@@ -260,7 +286,7 @@ PRINCIPLES="$(
     rm -f "$fm" "$Ff"; k=$((k+1))
   done; rm -f "$Mf"
 )"
-PRINCIPLES="$(printf '%s\n' "$PRINCIPLES" | jq -R . | jq -sc .)"
+PRINCIPLES="$(printf '%s\n' "$PRINCIPLES" | jarr)"
 [ "$(printf '%s' "$PRINCIPLES" | jq length)" -ge 8 ] || { echo "generate-site-data: expected the principle rules in share/standard/majordomus" >&2; exit 10; }
 jq -n --argjson outcomes "$OUTCOMES" --argjson labels "$LABELS" --argjson steps "$STEPS" --argjson principles "$PRINCIPLES" \
   '{schema:1, outcomes:$outcomes, divergence_labels:$labels, steps:$steps, principles:$principles}' > "$OUT/lifecycle.json"
@@ -286,7 +312,7 @@ FINISH_BLOCK="$(awk '/^```/{c++; if(c==1){f=1;next} if(c==2){exit}} f' "$ROOT/RE
 [ -n "$FINISH_BLOCK" ] || { echo "generate-site-data: README.md has no first fenced block (the hero renders it)" >&2; exit 10; }
 # the five lines of the finish contract, read out of the transcript itself rather than listed
 # again here: the hero animation and the transcript below it are then the same five checks
-FINISH_CHECKS="$(printf '%s\n' "$FINISH_BLOCK" | awk '/^(OK|FAIL)[[:space:]]/{print $2}' | awk '!seen[$0]++' | jq -R . | jq -sc .)"
+FINISH_CHECKS="$(printf '%s\n' "$FINISH_BLOCK" | awk '/^(OK|FAIL)[[:space:]]/{print $2}' | awk '!seen[$0]++' | jarr)"
 [ "$(printf '%s' "$FINISH_CHECKS" | jq length)" -ge 4 ] || { echo "generate-site-data: the README finish transcript no longer lists its checks" >&2; exit 10; }
 DOES_ROWS="$(section_of "$ROOT/README.md" "What it does" "Quick start" | grep -E '^\| \*\*' | sed -E 's/^\| \*\*([^*]+)\*\* \| (.*) \|$/\1|\2/' | jq -Rn '[inputs | split("|") | {title: .[0], text: .[1]}]')"
 PROBLEM_MD="$(section_of "$ROOT/README.md" "The problem" "What it does")"
@@ -314,7 +340,7 @@ for f in "$ROOT"/test/cases/*.sh; do
     printf '%s\tnegative\t%s\n' "$c" "$n" >> "$COVER"
   done
 done
-cover_json() { awk -F'\t' -v c="$1" -v l="$2" '$1==c && $2==l {print $3}' "$COVER" | sort -u | jq -R . | jq -sc .; }
+cover_json() { awk -F'\t' -v c="$1" -v l="$2" '$1==c && $2==l {print $3}' "$COVER" | sort -u | jarr; }
 # The demonstration is the fixture test/cases/34_command_fixtures.sh executes, with each
 # scenario's setup script inlined so the page can show the preparation it ran against. A
 # page that rendered a different scenario from the one the tests run would be a second
@@ -638,7 +664,7 @@ WHY_JSON="$(
     tget() { printf '%s' "$fm" | sed -n "s/^$1 = \"\(.*\)\"$/\1/p" | head -1; }
     tnum() { printf '%s' "$fm" | sed -n "s/^$1 = \([0-9]*\)$/\1/p" | head -1; }
     tarr() { printf '%s' "$fm" | sed -n "s/^$1 = \[\(.*\)\]$/\1/p" | head -1 \
-             | tr ',' '\n' | sed 's/^ *"//; s/" *$//; s/^ *//; s/ *$//' | grep -v '^$' | jq -R . | jq -sc .; }
+             | tr ',' '\n' | sed 's/^ *"//; s/" *$//; s/^ *//; s/ *$//' | grep -v '^$' | jarr; }
     jq -cn --arg slug "$slug" --arg title "$(tget title | sed 's/\\"/"/g')" \
       --arg desc "$(tget description | sed 's/\\"/"/g')" --arg hook "$(tget hook | sed 's/\\"/"/g')" \
       --argjson weight "$(tnum weight)" --argjson cmds "$(tarr commands)" \
@@ -835,7 +861,7 @@ printf '%s\n' "$ARCH_TSV" | jq -Rn --arg ai "$AI/" --slurpfile proj "$OUT/projec
 [ "$(jq '.nodes | length' "$OUT/architecture.json")" -ge 20 ] || { echo "generate-site-data: architecture scan found almost nothing; the scanner or the sources moved" >&2; exit 10; }
 # every command that has a module on disk must appear as one in the scan; a command the
 # dispatcher answers itself (version) has no module and is not expected to have a node
-MODULE_CMDS="$(for f in "$ROOT"/lib/*.sh; do b="$(basename "$f" .sh)"; [ "$b" = common ] || printf '%s\n' "$b"; done | jq -R . | jq -sc .)"
+MODULE_CMDS="$(for f in "$ROOT"/lib/*.sh; do b="$(basename "$f" .sh)"; [ "$b" = common ] || printf '%s\n' "$b"; done | jarr)"
 jq -e --argjson mods "$MODULE_CMDS" --slurpfile proj "$OUT/project.json" '
   (($proj[0].commands | map(.name)) - ($proj[0].commands | map(.name) - $mods))
   - ([.nodes[] | select(.kind=="module") | .command] | map(select(. != null))) | length == 0' \
@@ -985,8 +1011,8 @@ if mj_project_load; then
   # The status vocabulary travels with the data. Every page that shows a status or a count
   # loops over this rather than naming done, ready, active, verify and blocked itself, so
   # the engine adding a status changes the pages and the documentation without an edit.
-  ST="$(jq -n --argjson i "$(mj_pj_statuses issue | tr ' ' '\n' | jq -R . | jq -sc .)" \
-             --argjson m "$(mj_pj_statuses milestone | tr ' ' '\n' | jq -R . | jq -sc .)" \
+  ST="$(jq -n --argjson i "$(mj_pj_statuses issue | tr ' ' '\n' | jarr)" \
+             --argjson m "$(mj_pj_statuses milestone | tr ' ' '\n' | jarr)" \
              '{issue:$i, milestone:$m}')"
   # The model's collections reach jq through files, never through argv. Linux caps a SINGLE
   # argv entry at MAX_ARG_STRLEN (131072 bytes) regardless of the much larger total ARG_MAX;
@@ -1077,10 +1103,10 @@ CONTENT_ROOT="$STAGE/content"
 rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/use-cases" "$CONTENT_ROOT/applications" "$CONTENT_ROOT/plan"
 mk_section profiles "Execution profiles" "Capability class, reasoning effort, output verbosity, presentation, context toggles and verification are independent fields. Rendered from the profile files a fresh install writes." profiles.html profile.html 30
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jq -Rn 'input')" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jline)" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
 mk_section guarantees "Guaranteed, advisory, planned" "What Majordomus actually does today, row by row, with the file that implements it and the test that proves it." guarantees.html claim.html 40
 i=0; for st in $(jq -r '.statuses | keys_unsorted[]' "$OUT/capabilities.json"); do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "status.html"\n[extra]\nstatus = %s\n+++\n' "$(jstr "$(printf '%s' "$st" | awk '{print toupper(substr($0,1,1)) substr($0,2)}') capabilities")" "$(jq -r --arg s "$st" '.statuses[$s]' "$OUT/capabilities.json" | jq -Rn 'input')" "$i" "$(jstr "$st")" > "$CONTENT_ROOT/guarantees/$st.md"; done
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "status.html"\n[extra]\nstatus = %s\n+++\n' "$(jstr "$(printf '%s' "$st" | awk '{print toupper(substr($0,1,1)) substr($0,2)}') capabilities")" "$(jq -r --arg s "$st" '.statuses[$s]' "$OUT/capabilities.json" | jline)" "$i" "$(jstr "$st")" > "$CONTENT_ROOT/guarantees/$st.md"; done
 jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | while IFS="$MJ_TAB" read -r id claim st; do i=$((i+1))
   detail="$ROOT/docs/claims/$id.md"
   [ -f "$detail" ] || { echo "generate-site-data: claim $id has no docs/claims/$id.md (every claim needs its detail page)" >&2; exit 10; }
@@ -1092,31 +1118,31 @@ jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | whi
 # the command that produces a number rather than the number.
 mk_section supervises "What Majordomus supervises" "$(jq -r '.does | length' "$OUT/readme.json") responsibilities, one layer. Each is a file under .ai/ and a subcommand that reads it." supervises-section.html responsibility.html 20
 i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while IFS="$MJ_TAB" read -r slug title text; do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$text" | sed -E 's/`([^`]*)`/\1/g' | jq -Rn 'input')" "$i" "$(jstr "$slug")" > "$CONTENT_ROOT/supervises/$slug.md"; done
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$text" | sed -E 's/`([^`]*)`/\1/g' | jline)" "$i" "$(jstr "$slug")" > "$CONTENT_ROOT/supervises/$slug.md"; done
 mk_section doctrines "Doctrine" "A rule is enforced when it is declared, implemented, wired, executed, failure-propagating, tested and CI-blocking. Each one below shows its whole chain." doctrines-section.html doctrine.html 22
 i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrines.json" | while IFS="$MJ_TAB" read -r id slug title summary; do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" "$(jq -r --arg id "$id" '.doctrines[] | select(.id==$id) | .source' "$OUT/doctrines.json" | jq -Rn 'input')" > "$CONTENT_ROOT/doctrines/$slug.md"; done
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$i" "$(jstr "$id")" "$(jq -r --arg id "$id" '.doctrines[] | select(.id==$id) | .source' "$OUT/doctrines.json" | jline)" > "$CONTENT_ROOT/doctrines/$slug.md"; done
 mk_section plan "The plan" "Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .ai/repo/project." plan-section.html issue.html 21
 printf -- '+++\ntitle = "Dependency graph"\ndescription = "Every issue, every dependency, and the execution waves the graph implies — drawn from the canonical edges, never by hand."\nweight = 1\ntemplate = "dag.html"\n+++\n' > "$CONTENT_ROOT/plan/dag.md"
 i=1; for mid in $(jq -r '.milestones | sort_by(.order) | .[].id' "$OUT/plan.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "milestone.html"\n[extra]\nplan_id = %s\nsource = ".ai/repo/project/milestones/%s.yaml"\n+++\n' \
     "$(jstr "$mid — $(jq -r --arg m "$mid" '.milestones[] | select(.id==$m) | .title' "$OUT/plan.json")")" \
-    "$(jq -r --arg m "$mid" '.milestones[] | select(.id==$m) | .outcome' "$OUT/plan.json" | jq -Rn 'input')" \
+    "$(jq -r --arg m "$mid" '.milestones[] | select(.id==$m) | .outcome' "$OUT/plan.json" | jline)" \
     "$i" "$(jstr "$mid")" "$mid" > "$CONTENT_ROOT/plan/$mid.md"; done
 for iid in $(jq -r '.issues[].id' "$OUT/plan.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nplan_id = %s\nsource = ".ai/repo/project/issues/%s.yaml"\n+++\n' \
     "$(jstr "$iid — $(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .title' "$OUT/plan.json")")" \
-    "$(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .objective' "$OUT/plan.json" | jq -Rn 'input')" \
+    "$(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .objective' "$OUT/plan.json" | jline)" \
     "$i" "$(jstr "$iid")" "$iid" > "$CONTENT_ROOT/plan/$iid.md"; done
 mk_section use-cases "Use cases" "What people do with it: a situation, the commands that answer it, and what you are left holding. Every step names a real command and every promise a real claim." use-cases-section.html use-case.html 12
 i=0; jq -r '.use_cases[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$MJ_TAB" read -r id title summary; do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/use-cases.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/use-cases/$id.md"; done
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/use-cases.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/use-cases/$id.md"; done
 mk_section applications "Applications" "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description." applications-section.html application.html 14
 i=0; jq -r '.applications[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$MJ_TAB" read -r id title summary; do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/applications.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/applications/$id.md"; done
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/applications.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/applications/$id.md"; done
 mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
-  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jq -Rn 'input')" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jline)" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
 
 mj_phase_end "gen:derived_section_pages_every" "$GEN_T0"
 # ---------------------------------------------------------------- docs/SITE_CLAIMS.md (derived release artifact)
