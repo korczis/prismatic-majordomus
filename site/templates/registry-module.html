@@ -10,7 +10,7 @@
 {%- set current = "modules" -%}{% include "partials/registry-nav.html" %}
 <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="text-lg text-body">{{ m.description }}</p>
+    <p class="break-words text-lg text-body">{{ m.description }}</p>
     <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
       <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">module {{ m.id }}</span></li>
       <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">{{ m.source }}</span></li>
