@@ -9,8 +9,10 @@ that are derived from the registry and define nothing of their own. Behaviour as
 implemented and tested; where this document and the executable disagree, the document is
 wrong and changes in the same commit. The decisions are
 [ADR 2](../.ai/repo/adrs/0002-canonical-capability-registry.md) (the registry and the
-projections) and [ADR 4](../.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md)
-(modules, the executor, benchmarks as evidence); the rules are
+projections), [ADR 4](../.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md)
+(modules, the executor, benchmarks as evidence) and
+[ADR 5](../.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md)
+(one projection plan, named owners, the site as a view of the registry); the rules are
 `project.interfaces-are-projections`, `project.rust-canonical-declaration`,
 `project.rust-benchmark-coverage` and `project.rust-hot-path`.
 
