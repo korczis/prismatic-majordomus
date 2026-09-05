@@ -45,9 +45,15 @@ mj_project_load() {
   # filename. A record that does not parse, or whose id disagrees, is refused by name; two
   # files cannot claim one id because the flat directory is keyed by the filename.
   MJ_PJ_MILESTONES=""; MJ_PJ_ISSUES=""
-  set -- ; for f in "$dir"/milestones/*.yaml; do [ -f "$f" ] && set -- "$@" "$f"; done
+  # the records in one collation whatever the shell's locale: a glob sorts by the locale,
+  # and the row order of the model must not depend on who loaded it
+  set -- ; for f in $(cd "$dir/milestones" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
+    case "$f" in *.yaml) [ -f "$dir/milestones/$f" ] && set -- "$@" "$dir/milestones/$f" ;; esac
+  done
   for f in "$@"; do MJ_PJ_MILESTONES="$MJ_PJ_MILESTONES $(basename "$f" .yaml)"; done
-  for f in "$dir"/issues/*.yaml; do
+  for f in $(cd "$dir/issues" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
+    case "$f" in *.yaml) ;; *) continue ;; esac
+    f="$dir/issues/$f"
     [ -f "$f" ] || continue
     id="$(basename "$f" .yaml)"
     # one id, one record: the flat directory is keyed by the filename, so a milestone and
@@ -242,24 +248,9 @@ mj_project_roadmap_mermaid() {
 }
 
 mj_project_mermaid() {
-  local m="${1:-}" id st cls
-  printf 'flowchart LR\n'
-  mj_pj_issue_ids | while read -r id; do
-    [ -n "$m" ] && [ "$(mj_pj_col I "$id" 3)" != "$m" ] && continue
-    st="$(mj_pj_i_status "$id")"
-    printf '    %s["%s<br/>%s"]:::%s\n' "$id" "$id" "$(mj_pj_i_title "$id" | sed 's/"/\&quot;/g')" "$(printf '%s' "$st" | tr 'A-Z' 'a-z')"
-  done
-  mj_pj_rows G | while IFS="$MJ_TAB" read -r _ from to; do
-    if [ -n "$m" ]; then
-      [ "$(mj_pj_col I "$from" 3)" = "$m" ] || continue
-      [ "$(mj_pj_col I "$to" 3)" = "$m" ] || continue
-    fi
-    printf '    %s --> %s\n' "$from" "$to"
-  done
-  for cls in "done:#16a34a:#052e16" "active:#2563eb:#eff6ff" "verify:#7c3aed:#f5f3ff" \
-             "ready:#0891b2:#ecfeff" "blocked:#b45309:#fffbeb" "cancelled:#6b7280:#f9fafb"; do
-    printf '    classDef %s stroke:%s,fill:%s,stroke-width:2px\n' "${cls%%:*}" "$(printf '%s' "$cls" | cut -d: -f2)" "$(printf '%s' "$cls" | cut -d: -f3)"
-  done
+  # one pass over the model: every issue of the milestone (or the plan) as a node, every
+  # dependency edge between two such issues, then the class definitions
+  awk -F'\t' -v m="${1:-}" -f "$MJ_LIB_DIR/mermaid.awk" "$MJ_PJ/model.tsv"
 }
 
 # ---------------------------------------------------------------- issue mutation

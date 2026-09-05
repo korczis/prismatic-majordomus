@@ -949,71 +949,15 @@ GEN_T0="$(mj_phase_begin "gen:plan.json_the_execution_mode")"
 . "$ROOT/lib/project.sh"
 # shellcheck source=../lib/plan.sh
 . "$ROOT/lib/plan.sh"
-pj_list()  { mj_ylist "$MJ_PJ/flat/$1" "$2" | jq -R . | jq -sc .; }
-pj_ev()    { # evidence entries of one record as a JSON array
-  local id="$1" i=0
-  printf '['
-  while [ -n "$(mj_pj_get "$id" "evidence.$i.covers")" ]; do
-    [ "$i" = 0 ] || printf ','
-    jq -cn --arg c "$(mj_pj_get "$id" "evidence.$i.covers")" --arg t "$(mj_pj_get "$id" "evidence.$i.type")" \
-      --arg cmd "$(mj_pj_get "$id" "evidence.$i.command")" --arg r "$(mj_pj_get "$id" "evidence.$i.result")" \
-      --arg a "$(mj_pj_get "$id" "evidence.$i.artifact")" --arg co "$(mj_pj_get "$id" "evidence.$i.commit")" \
-      --arg at "$(mj_pj_get "$id" "evidence.$i.recorded_at")" \
-      '{covers:$c,type:$t,command:$cmd,result:$r,artifact:$a,commit:$co,recorded_at:$at}'
-    i=$((i+1))
-  done
-  printf ']'
-}
-csv_json() { printf '%s' "$1" | tr ',' '\n' | sed '/^$/d' | jq -R . | jq -sc .; }
 
 if mj_project_load; then
-  MS="$(first=1; printf '['; for id in $(mj_pj_milestone_ids); do
-    [ "$first" = 1 ] || printf ','; first=0
-    row="$(mj_pj_row M "$id")"
-    jq -cn --arg id "$id" --arg slug "$(printf '%s' "$row" | cut -f7)" --arg status "$(printf '%s' "$row" | cut -f3)" \
-      --argjson order "$(printf '%s' "$row" | cut -f4)" --arg priority "$(printf '%s' "$row" | cut -f5)" \
-      --arg title "$(printf '%s' "$row" | cut -f6)" \
-      --arg problem "$(mj_pj_get "$id" problem)" --arg outcome "$(mj_pj_get "$id" outcome)" \
-      --arg current "$(mj_pj_get "$id" current_state)" --arg desired "$(mj_pj_get "$id" desired_state)" \
-      --argjson scope "$(pj_list "$id" scope)" --argjson non_scope "$(pj_list "$id" non_scope)" \
-      --argjson acceptance "$(pj_list "$id" acceptance_criteria)" --argjson validation "$(pj_list "$id" validation)" \
-      --argjson need "$(pj_list "$id" evidence_required)" --argjson risks "$(pj_list "$id" risks)" \
-      --argjson evidence "$(pj_ev "$id")" \
-      --argjson counts "$(printf '%s' "$row" | cut -f8 | tr ',' '\n' \
-        | jq -Rn '[inputs | split("=") | {key: .[0], value: (.[1] | tonumber)}] | from_entries
-                  | {total, required, by_status: (del(.total, .required))}')" \
-      --argjson issues "$(mj_pj_of_milestone "$id" | jq -R . | jq -sc .)" \
-      --arg mermaid "$(mj_project_mermaid "$id")" \
-      '{id:$id,slug:$slug,status:$status,order:$order,priority:$priority,title:$title,
-        problem:$problem,outcome:$outcome,current_state:$current,desired_state:$desired,
-        scope:$scope,non_scope:$non_scope,acceptance_criteria:$acceptance,validation:$validation,
-        evidence_required:$need,risks:$risks,evidence:$evidence,issues:$issues,mermaid:$mermaid,
-        counts:$counts}'
-  done; printf ']')"
-  IS="$(first=1; printf '['; for id in $(mj_pj_issue_ids); do
-    [ "$first" = 1 ] || printf ','; first=0
-    row="$(mj_pj_row I "$id")"
-    jq -cn --arg id "$id" --arg slug "$(printf '%s' "$row" | cut -f10)" --arg milestone "$(printf '%s' "$row" | cut -f3)" \
-      --arg status "$(printf '%s' "$row" | cut -f4)" --argjson wave "$(printf '%s' "$row" | cut -f5)" \
-      --arg priority "$(printf '%s' "$row" | cut -f6)" --arg profile "$(printf '%s' "$row" | cut -f7)" \
-      --argjson parallel "$(printf '%s' "$row" | cut -f8)" --arg title "$(printf '%s' "$row" | cut -f9)" \
-      --argjson deps "$(csv_json "$(printf '%s' "$row" | cut -f11)")" \
-      --argjson blocked_by "$(csv_json "$(printf '%s' "$row" | cut -f12)")" \
-      --argjson dependents "$(csv_json "$(printf '%s' "$row" | cut -f13)")" \
-      --argjson scope "$(pj_list "$id" scope)" --argjson non_scope "$(pj_list "$id" non_scope)" \
-      --arg objective "$(mj_pj_get "$id" objective)" --arg why "$(mj_pj_get "$id" why)" \
-      --arg current "$(mj_pj_get "$id" current_state)" --arg desired "$(mj_pj_get "$id" desired_state)" \
-      --argjson acceptance "$(pj_list "$id" acceptance_criteria)" --argjson validation "$(pj_list "$id" validation)" \
-      --argjson need "$(pj_list "$id" evidence_required)" --argjson evidence "$(pj_ev "$id")" \
-      --arg risk "$(mj_pj_get "$id" risk)" --arg completion "$(mj_pj_get "$id" completion)" \
-      --arg started "$(mj_pj_get "$id" started_at)" --arg verified "$(mj_pj_get "$id" verified_at)" \
-      --arg completed "$(mj_pj_get "$id" completed_at)" \
-      '{id:$id,slug:$slug,milestone:$milestone,status:$status,wave:$wave,priority:$priority,profile:$profile,
-        parallel_safe:$parallel,title:$title,depends_on:$deps,blocked_by:$blocked_by,dependents:$dependents,
-        scope:$scope,non_scope:$non_scope,objective:$objective,why:$why,current_state:$current,desired_state:$desired,
-        acceptance_criteria:$acceptance,validation:$validation,evidence_required:$need,evidence:$evidence,
-        risk:$risk,completion:$completion,started_at:$started,verified_at:$verified,completed_at:$completed}'
-  done; printf ']')"
+  # every milestone and every issue as JSON by one awk each, the milestone graphs by one
+  # awk each into a directory the milestone pass reads; jq only assembles and pretty-prints
+  MMD="$(mktemp -d "${TMPDIR:-/tmp}/mj.mmd.XXXXXX")"
+  for id in $(mj_pj_milestone_ids); do mj_project_mermaid "$id" > "$MMD/$id"; done
+  MS="$(awk -F'\t' -v kind=M -v flat="$MJ_PJ/flat" -v mermaid="$MMD" -f "$ROOT/lib/plan_json.awk" "$MJ_PJ/model.tsv")"
+  IS="$(awk -F'\t' -v kind=I -v flat="$MJ_PJ/flat" -f "$ROOT/lib/plan_json.awk" "$MJ_PJ/model.tsv")"
+  rm -rf "$MMD"
   WV="$(mj_pj_rows W | jq -Rn '[inputs | split("\t") | {wave: (.[1]|tonumber), issues: (.[2]|split(" "))}]')"
   EG="$(mj_pj_rows G | jq -Rn '[inputs | split("\t") | {from: .[1], to: .[2]}]')"
   FD="$(mj_pj_findings | jq -Rn '[inputs | split("\t") | {level: .[1], code: .[2], subject: .[3], message: .[4]}]')"
