@@ -1,0 +1,48 @@
+{% extends "page.html" %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+{%- set sk = load_data(path="data/generated/skills.json") -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  {#- Every card below is one file under the skills section, read through the same catalogue
+      the command, doctor and MCP read. The tag filters come from the data, so a new skill
+      brings its own. Filtering is a progressive enhancement; without Alpine every skill is listed. -#}
+  <div x-data="{ q: '', tag: 'all' }">
+    <div class="flex flex-wrap items-center gap-3">
+      <label class="sr-only" for="sk-filter">Filter skills</label>
+      <input id="sk-filter" type="search" x-model="q" placeholder="Filter by id, title or tag" class="w-full max-w-sm rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm text-heading placeholder:text-body-subtle focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+      <div class="flex flex-wrap gap-1" role="group" aria-label="Filter by tag">
+        <button type="button" x-on:click="tag = 'all'" :aria-pressed="tag === 'all' ? 'true' : 'false'" aria-pressed="true" :class="tag === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">All tags</button>
+        {%- for t, ids in sk.by_tag -%}
+        <button type="button" x-on:click="tag = '{{ t }}'" :aria-pressed="tag === '{{ t }}' ? 'true' : 'false'" aria-pressed="false" :class="tag === '{{ t }}' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">{{ t }} <span class="text-body-subtle">{{ ids | length }}</span></button>
+        {%- endfor -%}
+      </div>
+    </div>
+    <p class="mt-2 text-xs text-body-subtle">Filtering runs in the browser. Without JavaScript every skill below is still listed.</p>
+
+    <ul class="mt-6 grid gap-4 md:grid-cols-2" role="list" aria-live="polite">
+      {%- for s in sk.skills -%}
+      <li x-show="(tag === 'all' || '{{ s.tags | join(sep=" ") }}'.split(' ').includes(tag)) && ('{{ s.id }} {{ s.title | lower }} {{ s.tags | join(sep=" ") }}'.includes(q.toLowerCase()))">
+        <a href="{{ get_url(path='/skills/' ~ s.id ~ '/', trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex flex-wrap items-center gap-2"><code class="font-mono text-sm font-medium text-fg-brand">{{ s.id }}</code>{{ <badge status={s.status} /> }}<span class="font-mono text-xs text-body-subtle">v{{ s.version }}</span></span>
+          <h2 class="text-lg font-semibold tracking-tight text-heading">{{ s.title }}</h2>
+          <p class="mt-1 text-sm leading-relaxed text-body">{{ s.description }}</p>
+          <span class="mt-auto flex flex-wrap gap-1 pt-3">{% for t in s.tags %}<span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ t }}</span>{% endfor %}</span>
+        </a>
+      </li>
+      {%- endfor -%}
+    </ul>
+  </div>
+
+  <div class="mt-12 max-w-3xl">
+    <h2 class="text-xl font-semibold tracking-tight text-heading">What a skill is, and where these come from</h2>
+    <p class="mt-3 text-body">A skill is a provider-neutral procedure for one bounded kind of work: a directory under the repository's skills section holding <code class="font-mono text-heading">SKILL.md</code>, front matter over a body with a purpose, a procedure and an output contract. A worker loads one when the task is about what it covers, never by default.</p>
+    <p class="mt-3 text-body">Nothing on this page is typed into the site. The source class <code class="font-mono text-heading">skill</code> in the repository's knowledge sources discovers the files; <code class="font-mono text-heading">majordomus skills list</code>, <code class="font-mono text-heading">doctor</code>, the MCP resources <code class="font-mono text-heading">majordomus://skill/&lt;id&gt;</code> and this page all read that one catalogue, and <code class="font-mono text-heading">majordomus skills check</code> refuses a skill whose front matter, directory, sections or references are wrong. Adding a skill is adding its directory; every surface follows.</p>
+  </div>
+</div>
+{% endblock content %}

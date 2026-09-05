@@ -1,0 +1,69 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set sk = load_data(path="data/generated/skills.json") -%}
+{%- set s = [x for x in sk.skills if x.id == page.extra.id][0] -%}
+{%- set sec = get_section(path="skills/_index.md") -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <div class="mb-6 flex flex-wrap items-center gap-2 text-sm">
+      <code class="font-mono text-heading">{{ s.uri }}</code>
+      {{ <badge status={s.status} /> }}
+      <span class="font-mono text-xs text-body-subtle">version {{ s.version }}</span>
+      {%- for t in s.tags %}<span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ t }}</span>{% endfor %}
+    </div>
+
+    {%- if s.inputs | length > 0 or s.outputs | length > 0 %}
+    <div class="mb-8 grid gap-4 sm:grid-cols-2">
+      {%- if s.inputs | length > 0 %}
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">the worker needs</h2>
+        <ul class="list-disc space-y-1 pl-5 text-sm text-body">{% for i in s.inputs %}<li>{{ i }}</li>{% endfor %}</ul>
+      </div>
+      {%- endif %}
+      {%- if s.outputs | length > 0 %}
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">the procedure leaves</h2>
+        <ul class="list-disc space-y-1 pl-5 text-sm text-body">{% for o in s.outputs %}<li>{{ o }}</li>{% endfor %}</ul>
+      </div>
+      {%- endif %}
+    </div>
+    {%- endif %}
+
+    {#- the body is the skill's own file, copied by the generator; nothing here rewrites it -#}
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+
+    {%- if s.examples | length > 0 %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Examples</h2>
+    <p class="mt-2 text-sm text-body">Read from <code class="font-mono text-heading">examples/</code> beside the skill; the title is each file's first heading.</p>
+    <div class="mt-4 space-y-4">
+      {%- for e in s.examples %}
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="text-base font-semibold text-heading">{{ e.title }}</h3>
+        <p class="mt-1 font-mono text-xs text-body-subtle">{{ e.path }}</p>
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full">{{ e.body | markdown | safe }}</div>
+      </section>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+
+    {%- if s.related | length > 0 %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related skills</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+      {%- for r in s.related %}{% set rr = [x for x in sk.skills if x.id == r][0] %}
+      <li><a href="{{ get_url(path='/skills/' ~ r ~ '/', trailing_slash=true) }}" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><code class="font-mono text-sm font-medium text-fg-brand">{{ r }}</code><span class="text-sm text-heading">{{ rr.title }}</span><span class="text-sm text-body">{{ rr.description }}</span></a></li>
+      {%- endfor %}
+    </ul>
+    {%- endif %}
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
+    <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ s.path }}">{{ s.path }}</a></dd>
+      <dt class="text-body-subtle">content hash</dt><dd class="min-w-0 break-all font-mono text-heading">{{ s.sha256 }}</dd>
+      <dt class="text-body-subtle">contract</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ sk.contract }}">{{ sk.contract }}</a></dd>
+      <dt class="text-body-subtle">also served as</dt><dd class="min-w-0 font-mono text-heading">MCP resource <code>{{ s.uri }}</code> · <code>majordomus skills show {{ s.id }}</code></dd>
+    </dl>
+    <p class="mt-3 text-sm text-body">This page is generated from the file above by <code class="font-mono text-heading">scripts/generate-site-data</code>; editing the page changes nothing, editing the file changes every surface.</p>
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the {{ sec.pages | length }} skills</h2><ol class="space-y-2 text-sm">{% for p in sec.pages %}<li><a href="{{ p.permalink }}" class="block rounded px-2 py-1 {% if p.permalink == page.permalink %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if p.permalink == page.permalink %} aria-current="page"{% endif %}><code class="font-mono text-xs">{{ p.extra.id }}</code><span class="block text-xs text-body-subtle">{{ p.title }}</span></a></li>{% endfor %}</ol></div></aside>
+</div>
+{% endblock body %}

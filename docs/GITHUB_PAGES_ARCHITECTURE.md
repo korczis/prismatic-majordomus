@@ -21,10 +21,11 @@ being maintained separately from the repository that backs it.
 | navigation | five intents, their dropdown items and hrefs | `site/data/nav.toml` | yes |
 | claim detail | what each claim means, how it works, how to see it, what it does not cover, why it exists | `docs/claims/<id>.md` | yes |
 | case studies | the recognition moments, each with its homepage hook in front matter | `site/content-src/why/*.md` | yes |
+| skills | the repository's skills, one directory each; the site reads the catalogue `lib/skills.sh` derives from the source class `skill` | `.ai/repo/skills/<id>/SKILL.md` | yes |
 | rendering reference | representative Markdown for visual validation | `site/content-src/render-test.md` | yes |
 | derived data | stable JSON the templates read | `site/data/generated/*.json` | never |
 | derived release artifact | the claims matrix as Markdown | `docs/SITE_CLAIMS.md` | never |
-| derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command and case study | `site/content/{docs,profiles,guarantees,supervises,commands,why}/`, `render-test.md`, `architecture.md` | never |
+| derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command, case study and skill | `site/content/{docs,profiles,guarantees,supervises,commands,why,skills}/`, `render-test.md`, `architecture.md` | never |
 | presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
 | styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
 | behaviour | theme toggle, Mermaid init | `site/theme.js`, `site/diagrams.js` | yes |

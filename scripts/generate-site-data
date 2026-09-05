@@ -76,6 +76,7 @@ LC_ALL=C; export LC_ALL
 # test cases are inputs because each one declares which commands it covers, and that
 # metadata is the evidence the command pages render
 for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/share/standard/majordomus/rules/*.md "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
+         "$ROOT/$AI"/repo/skills/*/SKILL.md "$ROOT/$AI"/repo/skills/*/examples/*.md "$ROOT/$AI"/repo/knowledge/sources.yaml "$ROOT"/share/allow/skill.txt \
          "$ROOT"/test/cases/*.sh \
          "$ROOT"/test/fixtures/commands/*.json "$ROOT"/test/fixtures/commands/setup/*.sh \
          "$ROOT"/test/fixtures/commands/stdin/* \
@@ -722,6 +723,38 @@ jq '{schema: 1,
 
 
 mj_phase_end "gen:why.json_the_moments_as" "$GEN_T0"
+# ---------------------------------------------------------------- skills.json (the skills, as the one catalogue)
+GEN_T0="$(mj_phase_begin "gen:skills.json")"
+# The skills are canonical Markdown under the layer's skills section. They are not read here
+# by a scanner of their own: lib/skills.sh derives the catalogue from the source class the
+# Rust executable indexes too, validates every skill against the allow-list generated from
+# the schema, and this script projects that catalogue. A skill that does not validate fails
+# the build, as a claim naming a missing test does, because a page that rendered a broken
+# skill would be the one place it looked fine.
+# shellcheck source=../lib/skills.sh
+. "$ROOT/lib/skills.sh"
+MJ_FAILS=0; MJ_JSON=0
+mj_skills_examine mj_skills_report_fail > "$STAGE/skills.findings" || true
+if [ "$MJ_FAILS" != 0 ]; then cat "$STAGE/skills.findings" >&2; echo "generate-site-data: $MJ_FAILS skill finding(s); run: majordomus skills check" >&2; exit 10; fi
+MJ_JSON=1 mj_skills_render_list > "$STAGE/skills.base.json"; MJ_JSON=0
+# every example becomes {path, title, body}: the title is its first heading, the body the rest
+EX_JSON="$(jq -r '.skills[].examples[]' "$STAGE/skills.base.json" | while IFS= read -r ex; do
+  [ -n "$ex" ] || continue
+  jq -n --arg p "$ex" --arg t "$(grep -m1 -E '^# ' "$ROOT/$ex" | sed 's/^# //')" \
+    --rawfile b <(awk 'done { print; next } /^# / { done = 1; next } { print }' "$ROOT/$ex") '{path: $p, title: $t, body: $b}'
+done | jq -s '.')"
+jq --argjson ex "${EX_JSON:-[]}" --arg src "$AI/repo/skills/" '
+  {schema: 1, source: $src, contract: "share/schemas/skill.schema.json",
+   skills: [ .skills[] | . + {route: ("/skills/" + .id + "/"),
+                              examples: [ .examples[] as $p | $ex[] | select(.path == $p) ]} ],
+   count: .count,
+   by_tag: (reduce (.skills[] | . as $s | $s.tags[] | {k: ., v: $s.id}) as $e ({}; .[$e.k] += [$e.v]))}' \
+  "$STAGE/skills.base.json" > "$OUT/skills.json"
+# a related id names a skill in this catalogue or the build fails — the same check the
+# command makes, repeated at the last writer so that a page never links to a 404
+for bad in $(jq -r '[.skills[].id] as $ids | .skills[] | .related[] | select(IN($ids[]) | not)' "$OUT/skills.json"); do
+  echo "generate-site-data: a skill names related skill '$bad', which does not exist" >&2; exit 10; done
+mj_phase_end "gen:skills.json" "$GEN_T0"
 # ---------------------------------------------------------------- catalogue.json
 GEN_T0="$(mj_phase_begin "gen:catalogue.json")"
 # Use cases and applications, with every reference resolved here rather than in a
@@ -1144,7 +1177,7 @@ mk_section() { # dir, title, description, section template, page template, weigh
   printf -- '+++\ntitle = %s\ndescription = %s\nsort_by = "weight"\ntemplate = "%s"\npage_template = "%s"\nweight = %s\n+++\n' "$(jstr "$2")" "$(jstr "$3")" "$4" "$5" "$6" > "$d/_index.md"
 }
 CONTENT_ROOT="$STAGE/content"
-rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/use-cases" "$CONTENT_ROOT/applications" "$CONTENT_ROOT/plan"
+rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/use-cases" "$CONTENT_ROOT/applications" "$CONTENT_ROOT/plan" "$CONTENT_ROOT/skills"
 mk_section profiles "Execution profiles" "Capability class, reasoning effort, output verbosity, presentation, context toggles and verification are independent fields. Rendered from the profile files a fresh install writes." profiles.html profile.html 30
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jline)" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
@@ -1184,6 +1217,17 @@ i=0; jq -r '.use_cases[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json"
 mk_section applications "Applications" "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description." applications-section.html application.html 14
 i=0; jq -r '.applications[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$MJ_TAB" read -r id title summary; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/applications.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/applications/$id.md"; done
+# one page per skill: the generated front matter carries what the listing needs, the body is
+# the skill's own Markdown, and the directory is replaced whole so a removed or renamed skill
+# leaves no page behind
+mk_section skills "Skills" "Provider-neutral procedures for one bounded kind of work each, read from the repository's skills section. Every page is the skill's own file; every listing is derived from it." skills-section.html skill.html 13
+i=0; jq -r '.skills[] | [.id, .title, .description, .status, .version, .path] | @tsv' "$OUT/skills.json" | while IFS="$MJ_TAB" read -r id title desc st ver path; do i=$((i+1))
+  { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nstatus = %s\nversion = %s\nsource = %s\n+++\n{%% raw %%}\n' "$(jstr "$title")" "$(printf '%s' "$desc" | jline)" "$i" "$(jstr "$id")" "$(jstr "$st")" "$ver" "$(jstr "$path")"
+    # the page template renders the title as the one h1, so the skill's own level-one
+    # sections step down one level; fenced code is left alone
+    mj_record_body "$ROOT/$path" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
+      | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
+    printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/skills/$id.md"; done
 mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jline)" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
