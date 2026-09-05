@@ -20,11 +20,12 @@ on:
 permissions:
   contents: read
 
-# A newer commit of the same pull request supersedes the runs of the older ones. master,
-# the schedule and a dispatch never cancel: every commit of master gets its evidence and
-# its deployment, in order.
+# A newer commit of the same pull request supersedes the runs of the older ones. Every
+# other run (master, the schedule, a dispatch) is its own group: it neither waits for nor
+# cancels another, so a master run held up by a scarce runner does not hold up the next
+# commit's evidence; only deployments queue, in the pages job's own group.
 concurrency:
-  group: validate-${{ github.event.pull_request.number || github.ref }}
+  group: validate-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:

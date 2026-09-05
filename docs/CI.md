@@ -161,8 +161,9 @@ probed, as the artifact `site-public`, and the `pages` job publishes it with
 projections current, the site checked and probed. That is what the old `pages.yml`
 required, obtained from one run instead of a second one. Coverage, macOS and the benchmark
 check gate merging (they are in `ci`), not publishing, exactly as before. Deployments queue
-in order and never cancel one another; pull-request runs are superseded by the next commit
-of the same pull request, master runs never are.
+in the `pages` job's own group; pull-request runs are superseded by the next commit of the
+same pull request; every other run is its own group and neither waits for nor cancels
+another, so a run held up by a scarce runner does not hold up the next commit's evidence.
 
 ## Platforms
 

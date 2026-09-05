@@ -47,8 +47,8 @@ nothing was pending, and nothing was protecting master either.
   for the Rust job, because the wait was measured to cost more than the build.
 - **Triggers and concurrency.** Pull requests, pushes to master, a weekly schedule and a
   manual dispatch; no push trigger on other branches, since the same commit is validated as
-  its pull request. A pull request's runs are superseded by its next commit; master runs
-  never cancel, and deployments queue in order.
+  its pull request. A pull request's runs are superseded by its next commit; every other run is its own
+  group, waiting for and cancelling nothing, and deployments queue in the pages job's group.
 - **Platforms.** Linux is the blocking path for what is platform-independent. macOS runs
   the behavioural suite under the stock shell and the crate's suites, when a change can
   reach them and in every full plan, and the benchmark check where the committed baseline
