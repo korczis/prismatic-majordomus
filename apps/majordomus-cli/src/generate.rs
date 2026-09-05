@@ -661,7 +661,7 @@ pub fn cli_reference(tree: &crate::cli::CommandDoc, version: &str) -> String {
             );
             s.push_str(".\n\n");
         }
-        s.push_str(&format!("```text\n{}\n```\n\n", c.usage()));
+        s.push_str(&format!("```text\n{}\n```\n\n", c.usage));
         if c.args.is_empty() {
             s.push_str("Arguments: none.\n\n");
         } else {

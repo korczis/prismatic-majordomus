@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "be5b5ef644e39f0aa30599210ba76fca529e2e352b4d0aff19a0f530bf0bbea9",
+    "fingerprint": "1a4a024bfb404abbc88da1e6b8a5db69d26eaf82f1f6312eca121116d3907571",
     "summary": {
       "total": 511,
       "builtin": 11,
@@ -3604,7 +3604,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2be8bde45ef68108601ec2ffd1c9749c8cc511dfa286f2cb051903f31cdb5279",
+    "fingerprint": "d838363f4e7019cf29407f5bd5075bdb2673723292dfa2b4d554e9a181f3435a",
     "state": "degraded",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -8920,6 +8920,7 @@
     ],
     "route": "/docs/cli/",
     "executable": false,
+    "usage": "majordomus <COMMAND>",
     "about": "Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer",
     "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\nThe task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.",
     "args": [],
@@ -8932,6 +8933,7 @@
         ],
         "route": "/docs/cli/mcp/",
         "executable": true,
+        "usage": "majordomus mcp [OPTIONS]",
         "about": "Serve the repository's AI layer to an MCP client over stdio (read-only)",
         "args": [
           {
@@ -9143,6 +9145,7 @@
         ],
         "route": "/docs/cli/serve/",
         "executable": true,
+        "usage": "majordomus serve [OPTIONS]",
         "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
         "args": [
           {
@@ -9259,6 +9262,7 @@
         ],
         "route": "/docs/cli/capabilities/",
         "executable": false,
+        "usage": "majordomus capabilities [OPTIONS] <COMMAND>",
         "about": "Introspect the capability registry: what exists, where it came from, how it is exposed",
         "args": [
           {
@@ -9333,6 +9337,7 @@
             ],
             "route": "/docs/cli/capabilities/list/",
             "executable": true,
+            "usage": "majordomus capabilities list [OPTIONS]",
             "about": "Every capability, one line each, with its projections",
             "args": [
               {
@@ -9484,6 +9489,7 @@
             ],
             "route": "/docs/cli/capabilities/describe/",
             "executable": true,
+            "usage": "majordomus capabilities describe [OPTIONS] <ID>",
             "about": "One capability by canonical id: schemas, provenance, every projection",
             "args": [
               {
@@ -9607,6 +9613,7 @@
             ],
             "route": "/docs/cli/capabilities/schema/",
             "executable": true,
+            "usage": "majordomus capabilities schema [OPTIONS] <ID>",
             "about": "The canonical input or output JSON Schema of one capability",
             "args": [
               {
@@ -9732,6 +9739,7 @@
             ],
             "route": "/docs/cli/capabilities/validate/",
             "executable": true,
+            "usage": "majordomus capabilities validate [OPTIONS]",
             "about": "Build the registry and every projection; exit 10 with every violation named",
             "args": [
               {
@@ -9821,6 +9829,7 @@
         ],
         "route": "/docs/cli/generate/",
         "executable": true,
+        "usage": "majordomus generate [OPTIONS] [TARGET]",
         "about": "Write the committed projections of the registry (docs/generated), or check that they are current",
         "args": [
           {
@@ -10010,6 +10019,7 @@
         ],
         "route": "/docs/cli/bench/",
         "executable": true,
+        "usage": "majordomus bench [OPTIONS] [COMMAND] [ID]",
         "about": "Time every externally callable operation (each capability directly, over MCP and over HTTP, and the transports' own operations), report coverage, compare with the accepted baseline",
         "args": [
           {
@@ -10227,6 +10237,7 @@
             ],
             "route": "/docs/cli/bench/coverage/",
             "executable": true,
+            "usage": "majordomus bench coverage [OPTIONS]",
             "about": "Every required target and whether it is covered; the denominator is generated from the registry",
             "args": [
               {
@@ -10367,6 +10378,7 @@
             ],
             "route": "/docs/cli/bench/baseline/",
             "executable": false,
+            "usage": "majordomus bench baseline [OPTIONS] <COMMAND>",
             "about": "The accepted baseline of this platform under .ai/repo/benchmarks/rust/",
             "args": [
               {
@@ -10442,6 +10454,7 @@
                 ],
                 "route": "/docs/cli/bench/baseline/update/",
                 "executable": true,
+                "usage": "majordomus bench baseline update [OPTIONS]",
                 "about": "Run the benchmarks and record them as this platform's baseline (a reviewable, tracked file)",
                 "args": [
                   {
@@ -10578,6 +10591,7 @@
         ],
         "route": "/docs/cli/scope/",
         "executable": true,
+        "usage": "majordomus scope [OPTIONS] [PATHS]",
         "about": "The repository scope: what a worker reads and what it never reads; with paths, whether each is in or out and why",
         "args": [
           {

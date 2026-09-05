@@ -10,7 +10,7 @@ This page exists to validate rendering. It is the one Markdown file under `site/
 
 ## Second level heading
 
-Paragraph with **strong**, *emphasis*, `inline code`, a [link to the CLI reference](@/docs/cli.md), and a very long unbroken token: `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`.
+Paragraph with **strong**, *emphasis*, `inline code`, a [link to the CLI reference](@/docs/cli-specification.md), and a very long unbroken token: `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`.
 
 ### Third level
 

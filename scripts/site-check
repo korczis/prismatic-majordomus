@@ -83,7 +83,10 @@ done; ok mobile "no unwrapped <pre>, no unprefixed grid-cols-3+, no fixed width 
 grep -rhoaE '/Users/[a-z]+/|/home/[a-z]+/dev/|\.internal\b|\.corp\b' "$PUB" | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
 grep -rhoaE '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}' "$PUB" | grep -viE 'id-token|GITHUB_TOKEN' | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
 # 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
-for d in $(jq -r '.docs[].path' "$SITE/data/generated/docs.json" | sed 's/\.md$//' | tr 'A-Z_' 'a-z-' | grep -v '^agents$'); do [ -f "$PUB/docs/$d/index.html" ] || bad docs "docs.json lists $d but no route was generated"; done; ok docs "every document in docs.json has a route"
+for d in $(jq -r '.docs[] | select(.route) | .path' "$SITE/data/generated/docs.json"); do
+  r="$(jq -r --arg p "$d" '.docs[] | select(.path==$p) | .route' "$SITE/data/generated/docs.json")"
+  [ -f "$PUB${r}index.html" ] || bad docs "docs.json lists $d at $r and no route was generated"
+done; ok docs "every document in docs.json has the route it records"
 # 13h. the HTTP API reference: the page renders every operation, tag and schema the data holds,
 # the raw document is served byte for byte as the committed one, and the URL the executable
 # prints as externalDocs lands on the page that was built
@@ -154,6 +157,78 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
   grep -qE '/registry/(modules|capabilities)/[a-z]' "$SITE/data/nav.toml" && { bad registry "nav.toml enumerates a module or capability route by hand"; regbad=1; }
   [ "$regbad" = 0 ] && ok registry "$(jq '.counts.modules' "$EXJ") modules and $(jq '.counts.capabilities' "$EXJ") capabilities: every one has its page and no page is an orphan; the CLI, MCP and benchmark pages render the dataset; nothing names a capability by hand"
 else bad registry "site/data/registry/registry.json or site/data/generated/executable.json missing"; fi
+# 13k. the native command line's reference under /docs/cli/**: the routes are exactly the
+# commands the Rust executable declares — no command without a page, no page without a
+# command — and each page renders that command's usage, its arguments and the examples the
+# crate's tests execute. The expectation is the executable's own document
+# (site/data/generated/cli.json, projected from docs/generated/cli.json), never a list kept
+# here: a command added to the executable is checked the day it appears, and a command
+# removed makes its leftover page a failure.
+CLIJ="$SITE/data/generated/cli.json"; clibad=0
+if [ -f "$CLIJ" ]; then
+  [ "$(jq -r '.source' "$CLIJ")" = "docs/generated/cli.json" ] || { bad cli "cli.json does not name docs/generated/cli.json as its source"; clibad=1; }
+  [ -f "$ROOT/$(jq -r '.declaration' "$CLIJ")" ] || { bad cli "the declaration $(jq -r '.declaration' "$CLIJ") does not exist"; clibad=1; }
+  # the two sets, compared as sets and both ways round
+  cli_expected="$(jq -r '.commands[].route' "$CLIJ" | sort)"
+  cli_built="$(find "$PUB/docs/cli" -name index.html 2>/dev/null | sed "s#^$PUB##; s#index\.html\$##" | sort)"
+  for r in $cli_expected; do
+    printf '%s\n' "$cli_built" | grep -qxF "$r" || { bad cli "the executable declares a command at $r and no page was generated"; clibad=1; }
+  done
+  for r in $cli_built; do
+    printf '%s\n' "$cli_expected" | grep -qxF "$r" || { bad cli "orphan route $r names no command of the executable"; clibad=1; }
+  done
+  # the index renders the whole tree: every command's path and every command's route
+  idx="$PUB/docs/cli/index.html"
+  if [ -f "$idx" ]; then
+    jq -r '.commands[] | select(.depth > 0) | [.command, .route] | @tsv' "$CLIJ" | while IFS="$MJ_TAB" read -r command route; do
+      grep -qF ">$command<" "$idx" || echo "the index does not name $command"
+      grep -qF "$PREFIX$route\"" "$idx" || echo "the index does not link $route"
+    done | while read -r l; do bad cli "$l"; done
+  else bad cli "no page at /docs/cli/"; clibad=1; fi
+  # each command's page: its own path, its usage, every argument it documents, every example
+  # it shows (by the anchor the data gives it and by the command line the tests ran), the
+  # link up to its parent and the links down to its children
+  # a tab is whitespace, so an empty field would vanish from `read`; every list is emitted
+  # with "-" for "none" and read back that way
+  jq -r '.commands[] | [.route, .command, (.parent_route // "-"),
+                        ((.args | map(if .positional then (.value_name // (.name | ascii_upcase)) else "--" + .long end) | join(" ")) | if . == "" then "-" else . end),
+                        (([.examples[].id] | join(" ")) | if . == "" then "-" else . end),
+                        (([.children[].route] | join(" ")) | if . == "" then "-" else . end)] | @tsv' "$CLIJ" \
+    | while IFS="$MJ_TAB" read -r route command parent args example_ids children; do
+    pg="$PUB${route}index.html"
+    [ -f "$pg" ] || continue
+    grep -qF "$command" "$pg" || echo "the page at $route does not name $command"
+    [ "$args" = - ] || for a in $args; do grep -qF -- "$a" "$pg" || echo "$command does not document its argument $a on $route"; done
+    [ "$example_ids" = - ] || for id in $example_ids; do grep -qF "id=\"example-$id\"" "$pg" || echo "example $id of $command is not on $route"; done
+    [ "$parent" = - ] || grep -qF "$PREFIX$parent\"" "$pg" || echo "$command does not link up to $parent"
+    [ "$children" = - ] || for ch in $children; do grep -qF "$PREFIX$ch\"" "$pg" || echo "$command does not link down to $ch"; done
+    grep -qF "$(jq -r '.declaration' "$CLIJ")" "$pg" || echo "$command does not name the file it is declared in"
+  done | while read -r l; do bad cli "$l"; done
+  # every example command line a page shows is one the crate's tests execute: the argument
+  # vectors are the same document, so a page cannot show a session nobody ran
+  jq -r '.commands[].examples[].command' "$CLIJ" | while read -r c; do
+    grep -rqF "$c" "$PUB"/docs/cli/ || echo "the example \`$c\` is in the data and on no page"
+  done | while read -r l; do bad cli "$l"; done
+  # nothing enumerates the command line by hand: a command's route typed into a template,
+  # the site generator, its jq programs or the navigation would be a second list. The index
+  # route itself is a section that things legitimately link to; the commands under it are not.
+  for route in $(jq -r '.commands[] | select(.depth > 0) | .route' "$CLIJ"); do
+    hit="$(grep -l -F -- "$route" "$SITE"/templates/*.html "$SITE"/templates/partials/*.html "$ROOT"/scripts/generate-site-data "$ROOT"/scripts/lib/*.jq "$SITE"/data/nav.toml 2>/dev/null || true)"
+    [ -z "$hit" ] || { bad cli "the route $route is named by hand in: $(printf '%s' "$hit" | tr '\n' ' ')"; clibad=1; }
+  done
+  # the reference is reachable: the navigation names it, and the documents index lists it
+  grep -qF '"/docs/cli/"' "$SITE/data/nav.toml" || { bad cli "the navigation does not link /docs/cli/"; clibad=1; }
+  grep -qF "$PREFIX/docs/cli/\"" "$PUB/docs/index.html" || { bad cli "/docs/ does not link the command line reference"; clibad=1; }
+  [ "$clibad" = 0 ] && ok cli "$(jq '.counts.commands' "$CLIJ") command(s) of the Rust executable: every one has its route under /docs/cli/, no route is an orphan, and every page renders its usage, its arguments and the $(jq '.counts.examples' "$CLIJ") example(s) the crate's tests execute"
+else bad cli "site/data/generated/cli.json missing (scripts/generate-site-data projects it from docs/generated/cli.json)"; fi
+# 13l. every document that becomes a page is at the route the generator recorded for it, and
+# the reservation of /docs/cli/ for the native command line holds: docs/CLI.md, the *shell*
+# tool's specification, is a different program and renders under its own name.
+for r in $(jq -r '.docs[] | select(.route) | .route' "$SITE/data/generated/docs.json"); do
+  [ -f "$PUB${r}index.html" ] || bad docs "docs.json records the route $r and no page was generated"
+done
+[ "$(jq -r '.docs[] | select(.path == "CLI.md") | .route' "$SITE/data/generated/docs.json")" = "/docs/cli-specification/" ] \
+  || bad docs "docs/CLI.md is the shell tool's specification; /docs/cli/ belongs to the native command line's reference"
 # 13j. the build's provenance is served at /build.json and is this build's: the commit is
 # HEAD, the input hash is the one the data carries, the fingerprints are the dataset's. A page
 # that names another commit than the one deployed is how a stale deploy hides.

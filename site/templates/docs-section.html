@@ -11,6 +11,17 @@
   <p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p>
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  {%- if section.subsections | length > 0 -%}
+  <ul class="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {%- for path in section.subsections -%}
+    {%- set sub = get_section(path=path) -%}
+    <li><a href="{{ sub.permalink }}" class="block h-full rounded-base border border-brand-soft bg-brand-softer p-5 hover:bg-neutral-secondary-medium">
+      <span class="font-mono text-xs text-body-subtle">{{ sub.extra.source | default(value="") }}</span>
+      <h2 class="mt-1 text-lg font-semibold tracking-tight text-heading">{{ sub.title }}</h2>
+      <p class="mt-2 text-sm text-body">{{ sub.description }}</p></a></li>
+    {%- endfor -%}
+  </ul>
+  {%- endif -%}
   <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     {%- for p in section.pages -%}
     <li><a href="{{ p.permalink }}" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">

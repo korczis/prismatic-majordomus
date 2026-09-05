@@ -59,6 +59,7 @@ docs/CLAIMS.yaml
 docs/RESPONSIBILITIES.yaml
 docs/generated/openapi.json
 docs/generated/registry.json
+docs/generated/cli.json
 apps/majordomus-cli/README.md
 site/config.toml
 README.md
@@ -91,6 +92,20 @@ ${f#"$ROOT"/}"; done
 # stale the moment a new canonical input is added — which is how it went stale before.
 if [ "${1:-}" = --inputs ]; then printf '%s\n' $INPUTS | sed '/^$/d'; exit 0; fi
 for f in $INPUTS; do [ -f "$ROOT/$f" ] || { echo "generate-site-data: canonical input missing: $f" >&2; exit 12; }; done
+
+# The route of a document page, and the one reservation in it. /docs/cli/ is the *native*
+# command line's reference: a generated section with one route per command of the Rust
+# executable, derived from its clap declaration (docs/generated/cli.json). docs/CLI.md
+# specifies the shell tool — a different program, whose structured reference is /commands/ —
+# so its page renders under its full name rather than taking that route. The rule lives here
+# alone: docs.json carries the route each document got, and every consumer (the link
+# rewriting below, the pages, scripts/site-check) reads that field instead of deriving one.
+CLI_SPEC_SLUG="cli-specification"
+doc_slug() { case "$1" in CLI) printf '%s' "$CLI_SPEC_SLUG" ;; *) printf '%s' "$1" | tr 'A-Z_' 'a-z-' ;; esac; }
+# `](NAME.md)` in a document's own Markdown becomes the route of that document. One program,
+# used wherever a canonical document is projected, so the reservation cannot hold in one
+# place and not the other.
+DOCLINK='{ while (match($0, /\]\([A-Z_]+\.md\)/)) { t=substr($0,RSTART+2,RLENGTH-3); gsub(/_/,"-",t); t=tolower(t); if (t == "cli.md") t = spec ".md"; $0=substr($0,1,RSTART-1) "](@/docs/" t ")" substr($0,RSTART+RLENGTH) } print }'
 
 # link rewriting for derived Markdown (repository paths -> site routes)
 LINKSED='s#\](\.\./AGENTS\.md)#](@/docs/contract.md)#g; s#\](AGENTS\.md)#](@/docs/contract.md)#g; s#\](\.\./CONTRIBUTING\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md)#g; s#\](\.\./SECURITY\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md)#g; s#\](CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](docs/CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](README\.md)#](@/docs/_index.md)#g; s#\]((\.\./)?test/cases/)#](https://github.com/korczis/prismatic-majordomus/tree/master/test/cases/)#g'
@@ -507,7 +522,7 @@ RESP_JSON="$(
     rsch="$(yv "$Rf" "responsibilities.$i.schema_anchor")"
     jq -cn --arg id "$rid" --arg title "$(yv "$Rf" "responsibilities.$i.title")" --arg key "$(yv "$Rf" "responsibilities.$i.readme_key")" \
       --arg command "$(yv "$Rf" "responsibilities.$i.command")" --arg impl "$(yv "$Rf" "responsibilities.$i.implementation")" \
-      --arg cli "$rcli" --arg cli_route "/docs/cli/#$(anchor_slug "$rcli")" \
+      --arg cli "$rcli" --arg cli_route "/docs/$(doc_slug CLI)/#$(anchor_slug "$rcli")" \
       --arg schema "$rsch" --arg schema_route "/docs/schemas/#$(anchor_slug "$rsch")" \
       --argjson order "$(jnum_or_str "$(yv "$Rf" "responsibilities.$i.order")")" \
       --argjson files "$(ylist_json "$Rf" "responsibilities.$i.files")" \
@@ -954,7 +969,12 @@ GEN_T0="$(mj_phase_begin "gen:docs_index_from_docs_README.")"
 # here; site-check requires a route for every entry in docs.json.
 DOCS="$(awk '/^## Reference files/{exit} /^\| \[`/{print}' "$ROOT/docs/README.md" | sed -E 's/^\| \[`([^`]+)`\]\(([^)]+)\) \| ([^|]+) \| ([^|]+) \|$/\2|\3|\4/' | grep -vE '^\|' \
   | jq -Rn '[inputs | split("|") | {path: (.[0] | ltrimstr("../")), audience: (.[1]|gsub("^ +| +$";"")), summary: (.[2]|gsub("^ +| +$";""))}]')"
-printf '%s' "$DOCS" | jq '{schema:1, docs:.}' > "$OUT/docs.json"
+# the route each document gets, computed once, here, by the rule above
+DOC_ROUTES="$(printf '%s' "$DOCS" | jq -r '.[].path' | grep -E '^[A-Z_]+\.md$' | while read -r p; do
+  n="${p%.md}"; [ -f "$ROOT/docs/$n.md" ] || continue
+  printf '%s\t/docs/%s/\n' "$p" "$(doc_slug "$n")"
+done | jq -Rn '[inputs | split("\t") | {key: .[0], value: .[1]}] | from_entries')"
+printf '%s' "$DOCS" | jq --argjson routes "$DOC_ROUTES" '{schema:1, docs: [.[] | . + {route: ($routes[.path] // null)}]}' > "$OUT/docs.json"
 # Every file in docs/ is indexed in one of the two tables. An unindexed document is how the
 # index silently went stale before, so it is an error rather than a warning.
 BQ='`'
@@ -977,7 +997,7 @@ rm -rf "$CONTENT"; mkdir -p "$CONTENT"
 # every document listed in the docs/README.md index becomes a page; adding a row is the only step
 # (AGENTS.md is listed in the index but lives at the repository root; it is rendered as "contract" below)
 for d in $(jq -r '.docs[].path' "$OUT/docs.json" | grep -E '^[A-Z_]+\.md$' | sed 's/\.md$//' | while read -r n; do [ -f "$ROOT/docs/$n.md" ] && printf '%s\n' "$n"; done); do
-  src="$ROOT/docs/$d.md"; slug="$(printf '%s' "$d" | tr 'A-Z_' 'a-z-')"
+  src="$ROOT/docs/$d.md"; slug="$(doc_slug "$d")"
   title="$(grep -m1 '^# ' "$src" | sed 's/^# //; s/ — .*//')"
   summary="$(jq -r --arg p "$d.md" '.docs[] | select(.path==$p) | .summary' "$OUT/docs.json")"
   { printf -- '+++
@@ -990,7 +1010,7 @@ source = "docs/%s.md"
 
 ' "$(jstr "$title")" "$(jstr "$summary")" "$(grep -n "^| \[\`$d.md\`" "$ROOT/docs/README.md" | cut -d: -f1 | head -1)" "$d"
     printf '{%% raw %%}\n'
-    sed '1{/^# /d;}' "$src" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" | awk '{ while (match($0, /\]\([A-Z_]+\.md\)/)) { t=substr($0,RSTART+2,RLENGTH-3); gsub(/_/,"-",t); $0=substr($0,1,RSTART-1) "](@/docs/" tolower(t) ")" substr($0,RSTART+RLENGTH) } print }'
+    sed '1{/^# /d;}' "$src" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" | awk -v spec="$CLI_SPEC_SLUG" "$DOCLINK"
     printf '{%% endraw %%}\n'
   } > "$CONTENT/$slug.md"
 done
@@ -1207,7 +1227,7 @@ jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | whi
   [ -f "$detail" ] || { echo "generate-site-data: claim $id has no docs/claims/$id.md (every claim needs its detail page)" >&2; exit 10; }
   summary="$(awk '/^## What it means/{f=1;next} f&&/^## /{exit} f&&NF{print; exit}' "$detail" | sed -E 's/`//g; s/\[([^]]+)\]\([^)]+\)/\1/g')"
   { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nclaim_id = %s\nstatus = %s\nsource = "docs/claims/%s.md"\n+++\n{%% raw %%}\n' "$(jstr "$claim")" "$(jstr "${summary:-Status: $st. Source, implementation and test for this claim.}")" "$((i+10))" "$(jstr "$id")" "$(jstr "$st")" "$id"
-    sed '1{/^# /d;}' "$detail" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" | awk '{ while (match($0, /\]\([A-Z_]+\.md\)/)) { t=substr($0,RSTART+2,RLENGTH-3); gsub(/_/,"-",t); $0=substr($0,1,RSTART-1) "](@/docs/" tolower(t) ")" substr($0,RSTART+RLENGTH) } print }'
+    sed '1{/^# /d;}' "$detail" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" | awk -v spec="$CLI_SPEC_SLUG" "$DOCLINK"
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/guarantees/$id.md"; done
 # The count is computed, never written: the repository's own rule is that prose states
 # the command that produces a number rather than the number.
@@ -1299,6 +1319,62 @@ i=0; jq -r '.capabilities[] | [.id, .slug, .source_path] | @tsv' "$OUT/executabl
     | awk -f "$ROOT/scripts/lib/project-markdown.awk"
   printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/registry/executable.md"
 mj_phase_end "gen:executable_routes" "$GEN_T0"
+# ---------------------------------------------------------------- /docs/cli/** (the native command line, as routes)
+GEN_T0="$(mj_phase_begin "gen:cli_routes")"
+# The Rust executable documents its own command line: `majordomus generate` writes
+# docs/generated/cli.json from the clap declaration and the examples declared beside it —
+# every command, its arguments, their defaults and value sets, the examples the crate's
+# tests execute, and the route each command's page has. This generator reads that document,
+# projects it into the shape the templates render (scripts/lib/cli-site.jq flattens the tree,
+# because Tera has no recursion) and writes one route per command. Nothing here names a
+# command, an option or an example: a command added to the executable gets its page, its
+# place in the tree and its examples from this pass alone, and scripts/site-check refuses a
+# route the declaration does not have and a command that has no route.
+CLIJ="$ROOT/docs/generated/cli.json"
+[ -f "$CLIJ" ] || { echo "generate-site-data: docs/generated/cli.json is missing (run: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
+[ "$(jq -r '.schema' "$CLIJ")" = "majordomus/cli/v1" ] || { echo "generate-site-data: docs/generated/cli.json is not a majordomus/cli/v1 document (regenerate: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
+jq -S -f "$ROOT/scripts/lib/cli-site.jq" "$CLIJ" > "$OUT/cli.json" \
+  || { echo "generate-site-data: projecting docs/generated/cli.json failed" >&2; exit 13; }
+[ "$(jq '.counts.commands' "$OUT/cli.json")" -gt 0 ] || { echo "generate-site-data: docs/generated/cli.json declares no command" >&2; exit 10; }
+# the declaration the pages link to as the source is a file of this tree
+CLI_DECL="$(jq -r '.declaration' "$OUT/cli.json")"
+[ -f "$ROOT/$CLI_DECL" ] || { echo "generate-site-data: docs/generated/cli.json names $CLI_DECL as the declaration and no such file exists" >&2; exit 10; }
+# every command a person can run carries an example; the executable refuses to generate a
+# document that breaks this, and the site refuses to render one that did
+missing_ex="$(jq -r '[.commands[] | select(.executable) | select((.examples | length) == 0) | .command] | join(", ")' "$OUT/cli.json")"
+[ -z "$missing_ex" ] || { echo "generate-site-data: docs/generated/cli.json has runnable command(s) without an example: $missing_ex (see majordomus capabilities validate)" >&2; exit 10; }
+# the routes must be under the prefix the document declares, or the section below would
+# write outside its own tree
+CLI_PREFIX="$(jq -r '.route_prefix' "$OUT/cli.json")"
+jq -e --arg p "$CLI_PREFIX" 'all(.commands[].route; . == ($p + "/") or startswith($p + "/"))' "$OUT/cli.json" >/dev/null \
+  || { echo "generate-site-data: a command route is not under $CLI_PREFIX: $(jq -r --arg p "$CLI_PREFIX" '[.commands[].route | select((. == ($p + "/") or startswith($p + "/")) | not)] | join(", ")' "$OUT/cli.json")" >&2; exit 10; }
+CLI_DIR="$CONTENT_ROOT${CLI_PREFIX}"
+rm -rf "$CLI_DIR"; mkdir -p "$CLI_DIR"
+# One page per command, at the route the executable derived. A command with commands under
+# it is a Zola section (it has pages beneath it); a command with none is a page. Which it is
+# comes from the data, so a command that grows a subcommand changes shape by itself.
+i=0
+jq -r '.commands[] | [.route, .command, .about, (.children | length), .depth] | @tsv' "$OUT/cli.json" \
+  | while IFS="$MJ_TAB" read -r route command about children depth; do
+  i=$((i+1))
+  rel="${route#/}"; rel="${rel%/}"                       # docs/cli/bench/coverage
+  if [ "$depth" = 0 ]; then
+    # the index of the reference: the whole tree, and what makes it true
+    printf -- '+++\ntitle = "Command line reference"\ndescription = %s\nsort_by = "weight"\ntemplate = "docs-cli.html"\npage_template = "docs-cli-command.html"\nweight = %s\n[extra]\nroute = %s\ncommand = %s\nsource = %s\n+++\n' \
+      "$(jstr "Every command of the Rust executable, generated from its clap declaration: arguments, defaults, accepted values, and examples that the crate's tests execute.")" \
+      "$(grep -n '^| \[`CLI.md`' "$ROOT/docs/README.md" | cut -d: -f1 | head -1)" \
+      "$(jstr "$route")" "$(jstr "$command")" "$(jstr "$CLI_DECL")" > "$CLI_DIR/_index.md"
+  elif [ "$children" -gt 0 ]; then
+    mkdir -p "$CONTENT_ROOT/$rel"
+    printf -- '+++\ntitle = %s\ndescription = %s\nsort_by = "weight"\ntemplate = "docs-cli-group.html"\npage_template = "docs-cli-command.html"\nweight = %s\n[extra]\nroute = %s\ncommand = %s\nsource = %s\n+++\n' \
+      "$(jstr "$command")" "$(printf '%s' "$about" | jline)" "$i" "$(jstr "$route")" "$(jstr "$command")" "$(jstr "$CLI_DECL")" > "$CONTENT_ROOT/$rel/_index.md"
+  else
+    mkdir -p "$(dirname "$CONTENT_ROOT/$rel")"
+    printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nroute = %s\ncommand = %s\nsource = %s\n+++\n' \
+      "$(jstr "$command")" "$(printf '%s' "$about" | jline)" "$i" "$(jstr "$route")" "$(jstr "$command")" "$(jstr "$CLI_DECL")" > "$CONTENT_ROOT/$rel.md"
+  fi
+done
+mj_phase_end "gen:cli_routes" "$GEN_T0"
 # ---------------------------------------------------------------- docs/SITE_CLAIMS.md (derived release artifact)
 GEN_T0="$(mj_phase_begin "gen:docs_SITE_CLAIMS.md_derived")"
 SC="$STAGE/SITE_CLAIMS.md"

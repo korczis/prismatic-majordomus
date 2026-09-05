@@ -5,27 +5,11 @@
   <h2 class="break-words font-mono text-xl font-semibold tracking-tight text-heading"><a href="#{{ anchor }}" class="hover:underline">{{ n.path | join(sep=" ") }}</a></h2>
   <p class="mt-2 text-sm text-body">{{ n.about }}</p>
   {%- if n.long_about %}<p class="mt-2 whitespace-pre-line text-sm text-body">{{ n.long_about }}</p>{% endif -%}
+  <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="px-3 py-2 text-xs text-body"><code>{{ n.usage }}</code></pre></div>
+  <p class="mt-2 text-sm"><a href="{{ get_url(path=n.route, trailing_slash=true) }}" class="font-mono text-fg-brand hover:underline">{{ n.route }}</a> <span class="text-body-subtle">— this command on its own page</span></p>
   {%- if n.subcommands | length > 0 -%}
   <p class="mt-2 text-sm text-body-subtle">Subcommands: {% for s in n.subcommands %}<a href="#cmd-{{ s.path | join(sep="-") }}" class="font-mono text-fg-brand hover:underline">{{ s.path | last }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.</p>
   {%- endif -%}
-  {%- if n.args | length > 0 -%}
-  <div class="mt-3 overflow-x-auto rounded-base border border-default">
-    <table class="w-full min-w-[36rem] text-left text-sm">
-      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">argument</th><th class="px-3 py-2">value</th><th class="px-3 py-2">default</th><th class="px-3 py-2">description</th></tr></thead>
-      <tbody>
-      {%- for a in n.args -%}
-      {%- set placeholder = a.value_name | default(value=a.name | upper) -%}
-      <tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">{% if a.positional %}&lt;{{ placeholder }}&gt;{% else %}{% if a.short %}-{{ a.short }}, {% endif %}{% if a.long %}--{{ a.long }}{% endif %}{% endif %}</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">{% if not a.takes_value %}flag{% elif a.possible_values | length > 0 %}{% for v in a.possible_values %}{{ v.name }}{% if not loop.last %} | {% endif %}{% endfor %}{% else %}&lt;{{ placeholder }}&gt;{% endif %}</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">{% if a.takes_value and a.defaults | length > 0 %}{{ a.defaults | join(sep=", ") }}{% elif a.required %}required{% else %}—{% endif %}</td>
-        <td class="px-3 py-2 text-body">{{ a.help }}{% if a.global %} <span class="text-xs text-body-subtle">(accepted by every subcommand)</span>{% endif %}{% if a.possible_values | length > 0 %}<ul class="mt-1 space-y-0.5 text-xs text-body-subtle">{% for v in a.possible_values %}{% if v.help %}<li><code class="font-mono">{{ v.name }}</code> — {{ v.help }}</li>{% endif %}{% endfor %}</ul>{% endif %}</td>
-      </tr>
-      {%- endfor -%}
-      </tbody>
-    </table>
-  </div>
-  {%- else -%}
-  <p class="mt-2 text-sm text-body-subtle">Arguments: none.</p>
-  {%- endif -%}
+  {% include "partials/cli-args.html" %}
+  {% include "partials/cli-examples.html" %}
 </section>

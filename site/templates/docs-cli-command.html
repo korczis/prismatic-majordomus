@@ -1,0 +1,7 @@
+{#- A command with nothing under it: a Zola page, at the route the executable derived. -#}
+{% extends "page.html" %}
+{% block body %}
+{%- set cli = load_data(path="data/generated/cli.json") -%}
+{%- set cmd = [c for c in cli.commands if c.route == page.extra.route] | first -%}
+{% include "partials/cli-page.html" %}
+{% endblock body %}

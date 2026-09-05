@@ -162,7 +162,7 @@
         <ul class="space-y-1 text-sm">{% for q in group %}<li><a href="{{ get_url(path="/commands/" ~ q.name ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 font-mono {% if q.name == c.name %}bg-brand-softer text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.name == c.name %} aria-current="page"{% endif %}>{{ q.name }}</a></li>{% endfor %}</ul>
         {%- endif -%}
       {%- endfor -%}
-      <p class="mt-4 text-xs text-body-subtle"><a href="{{ get_url(path="/docs/cli/", trailing_slash=true) }}" class="hover:underline">Full CLI reference →</a></p>
+      <p class="mt-4 text-xs text-body-subtle"><a href="{{ get_url(path="/docs/cli-specification/", trailing_slash=true) }}" class="hover:underline">Full shell CLI specification →</a></p>
     </div>
   </aside>
 </div>

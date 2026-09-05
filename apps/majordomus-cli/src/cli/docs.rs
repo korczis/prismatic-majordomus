@@ -36,6 +36,9 @@ pub struct CommandDoc {
     /// when no subcommand follows it. A command that only groups others cannot be run and
     /// carries no example.
     pub executable: bool,
+    /// The usage line, `majordomus bench coverage [OPTIONS]`, derived here so that no
+    /// projection assembles one of its own.
+    pub usage: String,
     /// The one-line description.
     pub about: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -188,7 +191,7 @@ pub fn tree() -> CommandDoc {
 
 fn walk(cmd: &clap::Command, mut path: Vec<String>) -> CommandDoc {
     path.push(cmd.get_name().to_string());
-    let args = cmd
+    let args: Vec<ArgDoc> = cmd
         .get_arguments()
         .filter(|a| !matches!(a.get_id().as_str(), "help" | "version"))
         .map(|a| ArgDoc {
@@ -240,6 +243,7 @@ fn walk(cmd: &clap::Command, mut path: Vec<String>) -> CommandDoc {
         .collect();
     CommandDoc {
         route: route(&path),
+        usage: usage(&path, &args, &subcommands, executable),
         path,
         executable,
         about: cmd.get_about().map(|a| a.to_string()).unwrap_or_default(),
@@ -269,34 +273,34 @@ impl CommandDoc {
     pub fn parent_route(&self) -> Option<String> {
         (self.path.len() > 1).then(|| route(&self.path[..self.path.len() - 1]))
     }
+}
 
-    /// The usage line: the command, its options placeholder and its positionals, as the
-    /// reference prints it above the argument table.
-    pub fn usage(&self) -> String {
-        let mut s = self.command();
-        if self.args.iter().any(|a| !a.positional) {
-            s.push_str(" [OPTIONS]");
-        }
-        if !self.subcommands.is_empty() {
-            s.push_str(if self.executable {
-                " [COMMAND]"
-            } else {
-                " <COMMAND>"
-            });
-        }
-        for a in self.args.iter().filter(|a| a.positional) {
-            let name = a
-                .value_name
-                .clone()
-                .unwrap_or_else(|| a.name.to_uppercase());
-            s.push_str(&if a.required {
-                format!(" <{name}>")
-            } else {
-                format!(" [{name}]")
-            });
-        }
-        s
+/// The usage line of a command: what it is called, that it takes options, whether a
+/// subcommand follows it and whether one must, and its positionals in order.
+fn usage(path: &[String], args: &[ArgDoc], subcommands: &[CommandDoc], executable: bool) -> String {
+    let mut s = path.join(" ");
+    if args.iter().any(|a| !a.positional) {
+        s.push_str(" [OPTIONS]");
     }
+    if !subcommands.is_empty() {
+        s.push_str(if executable {
+            " [COMMAND]"
+        } else {
+            " <COMMAND>"
+        });
+    }
+    for a in args.iter().filter(|a| a.positional) {
+        let name = a
+            .value_name
+            .clone()
+            .unwrap_or_else(|| a.name.to_uppercase());
+        s.push_str(&if a.required {
+            format!(" <{name}>")
+        } else {
+            format!(" [{name}]")
+        });
+    }
+    s
 }
 
 /// The machine-readable projection of the whole tree: `docs/generated/cli.json`, the file

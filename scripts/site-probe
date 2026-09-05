@@ -100,6 +100,30 @@ if [ -n "${SITE_PROBE_ONLY:-}" ]; then
   routes="$(for r in $routes; do for o in $SITE_PROBE_ONLY; do [ "$r" = "$o" ] && printf '%s\n' "$r"; done; done; true)"
   [ -n "$routes" ] || { echo "site-probe: SITE_PROBE_ONLY names no built route" >&2; exit 12; }
 fi
+# The native command line's reference, fetched from the running server: every route the
+# executable declares answers 200, and the deepest command page carries what it promises —
+# its own path, an argument, and the session an example test executed. The route list is
+# site/data/generated/cli.json, which the executable derived from its clap declaration, so a
+# command added to it is fetched the day it appears and nothing here names one. This runs
+# whether or not the sweep below is narrowed to a sample.
+CLIJ="$SITE/data/generated/cli.json"
+if [ -f "$CLIJ" ]; then
+  clibad=0; cli_n=0
+  for r in $(jq -r '.commands[].route' "$CLIJ"); do
+    cli_n=$((cli_n + 1))
+    code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT$PREFIX$r")"
+    [ "$code" = 200 ] || { bad cli "$r answered $code"; clibad=1; }
+  done
+  deep="$(jq -r '[.commands[] | select((.examples | length) > 0)] | sort_by(-.depth) | first | .route' "$CLIJ")"
+  body="$(curl -s "http://127.0.0.1:$PORT$PREFIX$deep")"
+  for needle in \
+    "$(jq -r --arg r "$deep" '.commands[] | select(.route == $r) | .command' "$CLIJ")" \
+    "$(jq -r --arg r "$deep" '.commands[] | select(.route == $r) | .args[0] | if .positional then (.value_name // (.name | ascii_upcase)) else "--" + .long end' "$CLIJ")" \
+    "$(jq -r --arg r "$deep" '.commands[] | select(.route == $r) | .examples[0].command' "$CLIJ")"; do
+    printf '%s' "$body" | grep -qF -- "$needle" || { bad cli "$deep does not show $needle"; clibad=1; }
+  done
+  [ "$clibad" = 0 ] && ok cli "$cli_n command route(s) answered 200; $deep shows its path, its arguments and the example its test runs"
+else bad cli "site/data/generated/cli.json missing; the command routes cannot be derived"; fi
 if [ "$QUICK" = 1 ]; then
   # Sample one route per template, not one per section. Pages that share a template share
   # their layout, which is what makes a sample sound; section names are a proxy that stops
