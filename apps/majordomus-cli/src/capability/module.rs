@@ -1,8 +1,9 @@
 //! Modules compose capabilities; the application composes modules. A module is one Rust
-//! module with a `module()` function built by [`module!`], owning its id, its metadata
-//! and the executables it ships; [`compose_modules!`] names the modules the application
-//! is made of, and that list of modules is the only composition a person writes at the
-//! root. Adding a capability to an existing module touches that module alone.
+//! module with a `module()` function built by [`module!`](crate::module), owning its id,
+//! its metadata and the executables it ships; [`compose_modules!`](crate::compose_modules)
+//! names the modules the application is made of, and that list of modules is the only
+//! composition a person writes at the root. Adding a capability to an existing module
+//! touches that module alone.
 //!
 //! The macros build plain values. Nothing is registered behind the caller's back: the
 //! result is handed to the registry builder explicitly in `app.rs`.
