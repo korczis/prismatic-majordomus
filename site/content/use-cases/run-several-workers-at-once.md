@@ -6,7 +6,7 @@ weight = 4
 id = "run-several-workers-at-once"
 source = ".ai/repo/use-cases/run-several-workers-at-once.md"
 category = "workers"
-maturity = "guaranteed"
+maturity = "executable"
 +++
 
 ## Situation

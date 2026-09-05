@@ -92,7 +92,12 @@ mj_require_installed() {
 # command, a hook) must read its own distribution, not the one that started it.
 if [ -n "${MJ_BIN_DIR:-}" ]; then MJ_HOME="$(cd "$MJ_BIN_DIR/.." && pwd)"
 else MJ_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; fi
-MJ_SHARE_DIR="$MJ_HOME/share"
+# The distribution's data: kinds, schemas, allow-lists, the skeleton, the standard rule
+# package. MAJORDOMUS_SHARE names it, the same variable the Rust executable reads, so one
+# distribution serves both halves of the tool and a test can point them at a fixture
+# together. Unset, it is the share directory beside this executable, which is what an
+# ordinary run wants and what makes the tool work from any checkout.
+MJ_SHARE_DIR="${MAJORDOMUS_SHARE:-$MJ_HOME/share}"
 MJ_SKELETON_DIR="$MJ_SHARE_DIR/skeleton"
 MJ_ALLOW_DIR="$MJ_SHARE_DIR/allow"
 MJ_STD_RULES_DIR="$MJ_SHARE_DIR/standard/majordomus"
@@ -677,6 +682,21 @@ mj_load_current() {
   [ -f "$MJ_CUR" ] || return 1
   MJ_CUR_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.cur.XXXXXX")"
   mj_yaml_flatten "$MJ_CUR" > "$MJ_CUR_FLAT" || return 2
+  mj_allow_warn current "$MJ_CUR_FLAT" "$MJ_ALLOW_DIR/current.txt" "$(mj_rel "$MJ_CUR")"
+  return 0
+}
+
+# Hold a flattened local-state file to its schema, by way of the allow-list `generate allow`
+# derives from it. The local half of the layer is not indexed, so no kind applies a schema
+# there; this is where those schemas are applied instead, and it is what keeps a schema from
+# being a file that describes nothing. A warning rather than a failure, deliberately: these
+# records are this checkout's own, an unknown key means the record is stale or foreign, and
+# neither is a reason to refuse the command a person is running.
+mj_allow_warn() {
+  local kind="$1" flat="$2" allow="$3" rel="$4" k
+  [ -f "$allow" ] || return 0
+  k="$(mj_yaml_unknown_keys "$flat" "$allow" || true)"
+  [ -z "$k" ] || mj_warn "$kind" "$rel" "unknown key(s) the $kind schema does not declare: $(printf '%s' "$k" | tr '\n' ' ')" "majordomus doctor"
   return 0
 }
 mj_cur() { [ -n "${MJ_CUR_FLAT:-}" ] || return 0; mj_yget "$MJ_CUR_FLAT" "$1"; }

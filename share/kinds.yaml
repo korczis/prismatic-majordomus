@@ -110,8 +110,22 @@ kinds:
   document:
     format: markdown
     front_matter: optional
+    schema: document
     identity: []
     title: '@heading'
+    description: description
+
+  # The plan's header — what this repository is, not what is planned in it. The milestones
+  # and issues beside it are their own kinds.
+  project:
+    format: yaml
+    schema: project
+    identity: []
+    title: name
+    description: repository
+    schema_version:
+      field: schema_version
+      supported: [1]
 
   context:
     format: markdown

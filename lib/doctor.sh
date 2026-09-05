@@ -718,3 +718,108 @@ mj_validate_catalogue() {
   return 0
 }
 
+
+# ---------------------------------------------------------------- schema integrity
+# Two things this repository relied on were true only because the code happened to do them.
+#
+# The order the rules apply in was in lib/rules.sh and nowhere a person could read, so which
+# of two rules wins was answerable only by running it. The rule states it; this reports it,
+# so that the statement and the behaviour are checked against each other rather than merely
+# both existing.
+#
+# And a schema was optional. A kind declared without one carries its metadata through
+# unvalidated, silently, looking exactly like a kind that validates — every one of those is a
+# place where a typo in front matter becomes data. The same hole runs the other way: a schema
+# file no kind names describes nothing, is applied to nothing, and drifts away from the shape
+# it was written for with nothing to notice. Both directions are checked here because only
+# the pair means "everything the tool reads has a contract".
+#
+# The exemption is the format's and not the author's: a kind whose files are plain text has
+# no metadata to validate, and says so by declaring no schema. A kind of any other format
+# without one is a gap.
+#
+# A schema has two ways to be applied, because the layer has two halves. The tracked half is
+# indexed, so a kind names the schema and the index enforces it. The local half is not
+# indexed at all, so no kind can name one; there the schema is applied through the allow-list
+# `generate allow` derives from it, read by the command that loads the file. Either counts.
+# Neither, and the file describes nothing.
+mj_validate_schema_integrity() {
+  local kinds="$MJ_SHARE_DIR/kinds.yaml" sdir="$MJ_SHARE_DIR/schemas" flat
+  [ -f "$kinds" ] || { mj_doctrine_fail schema "share/kinds.yaml" "absent; nothing declares what the tool reads" "ls $MJ_SHARE_DIR"; return 0; }
+
+  # The order, reported from the resolver rather than restated: a second implementation of
+  # the ordering here would be the thing most likely to disagree with it.
+  #
+  # There is no failing branch. A set that does not resolve has no order, so no doctrine can
+  # be dispatched at all — the loader in lib/doctrine.sh refuses before any validator runs,
+  # naming the dependency that is missing. Repeating that check here would be a second answer
+  # to a question already answered, in a function that could not have been reached to ask it.
+  mj_doctrine_ok schema "rules" "$(mj_rule_count) rule(s) resolve in one order: the vendored baseline in manifest order, then the project's, as a dependency graph"
+
+  # every kind that carries metadata declares a schema, and every schema is named by a kind
+  flat="$(mktemp "${TMPDIR:-/tmp}/mj.kinds.XXXXXX")"
+  if ! mj_yaml_flatten "$kinds" > "$flat" 2>/dev/null; then
+    mj_doctrine_fail schema "share/kinds.yaml" "does not parse" "majordomus doctor"; rm -f "$flat"; return 0
+  fi
+
+  local k fmt sch unschemad="" named=" " n=0
+  for k in $(sed -n 's/^kinds\.\([a-z0-9_-]*\)\.format=.*/\1/p' "$flat" | sort -u); do
+    n=$((n + 1))
+    fmt="$(mj_yget "$flat" "kinds.$k.format")"
+    sch="$(mj_yget "$flat" "kinds.$k.schema")"
+    if [ -n "$sch" ]; then named="$named$sch "
+    elif [ "$fmt" != text ]; then unschemad="$unschemad $k"
+    fi
+  done
+  rm -f "$flat"
+
+  if [ -n "$unschemad" ]; then
+    mj_doctrine_fail schema "share/kinds.yaml" \
+      "$(printf '%s' "$unschemad" | wc -w | tr -d ' ') kind(s) carry metadata and declare no schema, so their front matter is never validated:$unschemad" \
+      "grep -n -A4 '^  ${unschemad# }:' share/kinds.yaml"
+  else
+    mj_doctrine_ok schema "share/kinds.yaml" "$n kind(s); every one that carries metadata declares a schema"
+  fi
+
+  local f base orphan="" bad="" m=0
+  for f in "$sdir"/*.schema.json; do
+    [ -e "$f" ] || break
+    base="$(basename "$f" .schema.json)"; m=$((m + 1))
+    mj_json_ok "$f" || bad="$bad $base"
+    case "$named" in
+      *" $base "*) ;;
+      *) mj_allow_applied "$base" || orphan="$orphan $base" ;;
+    esac
+  done
+
+  if [ -n "$bad" ]; then
+    mj_doctrine_fail schema "share/schemas" "$(printf '%s' "$bad" | wc -w | tr -d ' ') schema(s) do not parse as JSON:$bad" "python3 -m json.tool share/schemas/${bad# }.schema.json"
+  elif [ -n "$orphan" ]; then
+    mj_doctrine_fail schema "share/schemas" \
+      "$(printf '%s' "$orphan" | wc -w | tr -d ' ') schema(s) are named by no kind, so nothing applies them:$orphan" \
+      "grep -n 'schema:' share/kinds.yaml   # wire it to a kind, or delete the file"
+  else
+    mj_doctrine_ok schema "share/schemas" "$m schema(s), each valid JSON and each applied — by a kind, or through its allow-list where the layer is not indexed"
+  fi
+  return 0
+}
+
+# Is this schema applied through its generated allow-list? True when something in the tool
+# reads share/allow/<name>.txt, which is the only way a schema reaches the local half of the
+# layer. Matched against the source rather than a list kept here, so wiring one up is the
+# thing that makes it count.
+mj_allow_applied() {
+  [ -f "$MJ_ALLOW_DIR/$1.txt" ] || return 1
+  # lib/ and the crate's sources only: a recursive walk from the repository root would
+  # descend into the Rust build directory, which is large, changes constantly, and cannot
+  # tell anyone anything about what the tool reads
+  grep -rqE "(ALLOW_DIR|share/allow)/$1\.txt" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" 2>/dev/null
+}
+
+# Does this file parse as JSON? The schemas are the tool's own data, so a parser being
+# absent is not a reason to pass them.
+mj_json_ok() {
+  if command -v python3 >/dev/null 2>&1; then python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$1" >/dev/null 2>&1
+  elif command -v jq >/dev/null 2>&1; then jq -e . "$1" >/dev/null 2>&1
+  else return 0; fi
+}
