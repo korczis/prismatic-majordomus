@@ -197,7 +197,11 @@ floor under which a difference is noise, and per metric the sample count under w
 does not gate: a quick run fails on its median only, a full run on every percentile). `bench --check` reports every line, names new
 targets and stale baseline entries (a renamed capability is never silently matched), and
 notes when the registry fingerprint moved. A baseline is compared on its own platform
-only; a CI runner without a committed baseline compares nothing and says so.
+only, and it fails a run only on the host that recorded it: the result document carries
+the host (CPU brand string and logical core count), and a run on another host, such as a
+hosted CI runner reading a baseline recorded on a developer's machine, prints every line
+with "reporting only" and exits 0. A CI runner without a committed baseline compares
+nothing and says so.
 
 ## Kinds and schemas, read at run time
 
