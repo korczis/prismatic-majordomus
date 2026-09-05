@@ -124,7 +124,11 @@ impl McpEndpoint {
         let response = lock(&session.server).handle(message);
         let mut out = match response {
             None => Response::new(202, "application/json", String::new()),
-            Some(v) => Response::new(200, "application/json", v.to_string()),
+            Some(reply) => Response::new(
+                200,
+                "application/json",
+                serde_json::to_string(&reply).unwrap_or_default(),
+            ),
         };
         out.headers.push((SESSION_HEADER.to_string(), id));
         out

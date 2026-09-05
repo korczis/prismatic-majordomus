@@ -29,11 +29,12 @@ use super::protocol::Server;
 /// assert!(lines[0].contains("\"result\""));
 /// assert!(lines[1].contains("-32700"));
 /// ```
-pub fn serve<R, W, H>(input: R, mut output: W, mut handle: H) -> Result<usize>
+pub fn serve<R, W, H, M>(input: R, mut output: W, mut handle: H) -> Result<usize>
 where
     R: BufRead,
     W: Write,
-    H: FnMut(Value) -> Option<Value>,
+    H: FnMut(Value) -> Option<M>,
+    M: serde::Serialize,
 {
     let mut answered = 0;
     for line in input.lines() {
@@ -48,26 +49,27 @@ where
         if line.trim().is_empty() {
             continue;
         }
-        let response = match serde_json::from_str::<Value>(&line) {
-            Ok(message) => handle(message),
-            Err(e) => Some(Server::parse_error(&e.to_string())),
+        let written = match serde_json::from_str::<Value>(&line) {
+            Ok(message) => match handle(message) {
+                Some(response) => write_line(&mut output, &response),
+                None => continue,
+            },
+            Err(e) => write_line(&mut output, &Server::parse_error(&e.to_string())),
         };
-        if let Some(response) = response {
-            match write_line(&mut output, &response) {
-                Ok(()) => answered += 1,
-                Err(Error::Transport(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => {
-                    tracing::info!("client closed the output; stopping");
-                    return Ok(answered);
-                }
-                Err(e) => return Err(e),
+        match written {
+            Ok(()) => answered += 1,
+            Err(Error::Transport(e)) if e.kind() == std::io::ErrorKind::BrokenPipe => {
+                tracing::info!("client closed the output; stopping");
+                return Ok(answered);
             }
+            Err(e) => return Err(e),
         }
     }
     tracing::info!(answered, "input ended; stopping");
     Ok(answered)
 }
 
-fn write_line<W: Write>(output: &mut W, message: &Value) -> Result<()> {
+fn write_line<W: Write, M: serde::Serialize>(output: &mut W, message: &M) -> Result<()> {
     let mut text = serde_json::to_string(message).map_err(|e| Error::Protocol {
         reason: e.to_string(),
     })?;

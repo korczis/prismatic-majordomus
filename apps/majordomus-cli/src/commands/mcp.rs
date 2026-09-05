@@ -17,6 +17,7 @@ use crate::cli::{McpArgs, OutputFormat, RepoArgs, Transport};
 use crate::error::{Error, Result};
 use crate::lease::{self, Lease, Role};
 use crate::mcp::bridge::{Bridge, BridgeError, HEARTBEAT};
+use crate::mcp::protocol::Reply;
 use crate::mcp::{stdio, Server, Surface};
 use crate::model::Severity;
 use crate::peers::{ClientInfo, PeerId, Transport as PeerTransport};
@@ -199,14 +200,14 @@ impl Session {
         Backend::Remote { bridge, heartbeat }
     }
 
-    fn handle(&mut self, message: Value) -> Option<Value> {
+    fn handle(&mut self, message: Value) -> Option<Reply> {
         match &mut self.backend {
             Backend::Local(local) => local.server.handle(message),
             Backend::Alone(server) => server.handle(message),
             Backend::Remote { bridge, .. } => {
                 let answer = lock(bridge).handle(&message);
                 match answer {
-                    Ok(v) => v,
+                    Ok(v) => v.map(Reply::Value),
                     Err(e) => self.failover(message, e),
                 }
             }
@@ -215,7 +216,7 @@ impl Session {
 
     /// The server this session was bridged to is gone: elect again, and either become
     /// the server (carrying the client's session over) or attach to whoever did.
-    fn failover(&mut self, message: Value, cause: BridgeError) -> Option<Value> {
+    fn failover(&mut self, message: Value, cause: BridgeError) -> Option<Reply> {
         tracing::warn!("{cause}; electing again");
         let client = match &self.backend {
             Backend::Remote { bridge, .. } => lock(bridge).client().cloned(),
@@ -249,7 +250,7 @@ impl Session {
                 match retry {
                     Ok(v) => {
                         tracing::info!(url = %url, "re-attached to the shared server");
-                        v
+                        v.map(Reply::Value)
                     }
                     Err(e) => unavailable(&message, &e.to_string()),
                 }
@@ -316,13 +317,13 @@ impl Session {
 }
 
 /// The JSON-RPC answer for a request that no server could take; nothing for a notification.
-fn unavailable(message: &Value, reason: &str) -> Option<Value> {
+fn unavailable(message: &Value, reason: &str) -> Option<Reply> {
     let id = message.get("id").cloned().filter(|i| !i.is_null())?;
-    Some(json!({
+    Some(Reply::Value(json!({
         "jsonrpc": "2.0",
         "id": id,
         "error": { "code": -32603, "message": format!("shared server unavailable: {reason}") }
-    }))
+    })))
 }
 
 fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {

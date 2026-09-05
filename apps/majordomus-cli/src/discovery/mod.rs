@@ -138,15 +138,37 @@ pub trait DiscoverySource {
     fn enumerate(&self, root: &Path, pathspec: &str) -> Result<Vec<String>>;
 }
 
-/// The version-control index: tracked files only, as the contract prescribes.
-pub struct VcsIndex;
+/// The version-control index: tracked files only, as the contract prescribes. The index
+/// is read from git once per build (`git ls-files`, every tracked path) and each class's
+/// `:(glob)` pathspec is matched in process with the same matcher the filesystem walk
+/// uses; one subprocess per repository instead of one per class.
+#[derive(Default)]
+pub struct VcsIndex {
+    tracked: std::cell::OnceCell<Vec<String>>,
+}
 
 impl DiscoverySource for VcsIndex {
     fn name(&self) -> &'static str {
         "vcs"
     }
     fn enumerate(&self, root: &Path, pathspec: &str) -> Result<Vec<String>> {
-        git::ls_files(root, pathspec)
+        let tracked = match self.tracked.get() {
+            Some(t) => t,
+            None => {
+                let all = git::ls_files_all(root)?;
+                let _ = self.tracked.set(all);
+                self.tracked.get().expect("just set")
+            }
+        };
+        let pattern = pathspec.strip_prefix(GLOB_PREFIX).unwrap_or(pathspec);
+        let matcher = glob::Glob::new(pattern);
+        let mut out: Vec<String> = tracked
+            .iter()
+            .filter(|p| matcher.matches(p))
+            .cloned()
+            .collect();
+        out.sort();
+        Ok(out)
     }
 }
 

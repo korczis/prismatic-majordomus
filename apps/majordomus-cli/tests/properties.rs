@@ -272,7 +272,11 @@ fn direct_http_and_mcp_answer_the_same_data_or_fail_the_same_way() {
                 let direct = direct_ctx.execute(&id, input.clone());
                 if let Some(tool) = &tool {
                     let frame = json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": tool, "arguments": input } });
-                    let answer = mcp.borrow_mut().handle(frame).expect("a response");
+                    let answer = mcp
+                        .borrow_mut()
+                        .handle(frame)
+                        .expect("a response")
+                        .into_value();
                     match &direct {
                         Ok(v) => {
                             prop_assert!(answer["result"]["isError"] == false, "{}: {}", id, answer);

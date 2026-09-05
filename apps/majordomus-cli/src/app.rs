@@ -77,7 +77,7 @@ impl App {
                         reason: format!("{reason}; discovery through the version-control index needs git (or pass --discovery filesystem)"),
                     });
                 }
-                Box::new(VcsIndex)
+                Box::new(VcsIndex::default())
             }
             DiscoveryMode::Filesystem => Box::new(FileSystem {
                 excluded: vec![".git".into(), repository.local_path()],
