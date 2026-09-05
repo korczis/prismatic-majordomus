@@ -286,6 +286,7 @@
           "22_history",
           "24_prompt_search",
           "25_continuity_lifecycle",
+          "29_prompt_capture",
           "36_command_doctrines",
           "83_doctor_budget"
         ]
@@ -1527,6 +1528,122 @@
         ]
       },
       "doc_md": "\nList, show and render repository-local prompt assets. Read-only.\n\nAn asset is `.ai/repo/prompts/<name>.md`: YAML front matter with `name` (matching the\nfilename) and a non-empty `description`, then a body. They are small, versioned with the\nrepository, and provider-neutral — a prompt library is not the goal, and nothing here\ninvokes a model.\n\n**Rendering substitutes a closed set of tokens and no others.** Inline: `{{TASK}}`,\n`{{TASK_ID}}`, `{{PROFILE}}`, `{{SCOPE}}`, `{{OWNER}}`, `{{BRANCH}}`, `{{HEAD}}`,\n`{{WORKING_TREE}}`, `{{REPOSITORY}}`, `{{NOW}}`. Alone on a line: `{{OPEN_QUESTIONS}}`,\n`{{DECISIONS}}`, `{{CHECKPOINT}}`, `{{HANDOVER}}`, `{{CONTEXT}}`.\n\nThere is no templating language: no conditionals, no loops, no includes, no shell. An\nunknown token is an error, exactly as an unknown configuration key is, because a prompt\nthat silently renders `{{TSAK}}` as literal text is worse than one that refuses. `doctor`\nand `watch` validate every asset for the same reason.\n\n```\n$ majordomus prompt list\ncontinue               resume a task from durable state instead of from someone's memory\ndebug                  frame a defect so that the fix is proven, not asserted\nhandover               produce a continuation record body for the current task\nreview                 review the working diff against the claimed scope and the finish contract\n$ majordomus prompt render debug | head -3\nTask t-20260903193012-a4f1 on branch main at 3f2a9c1e...: fix the OAuth callback\n\nScope: lib/auth\n```"
+    },
+    {
+      "name": "capture",
+      "summary": "Record the person's raw prompts from a provider hook, install that hook, and report what each provider actually does here.",
+      "category": "memory",
+      "stage": "work",
+      "class": "generated-output-mutating",
+      "read_only": false,
+      "requires_task": "none",
+      "requires_repository": true,
+      "requires_installed": true,
+      "json_output": true,
+      "syntax": "majordomus capture status [--json]",
+      "demo": "capture-status",
+      "note": "'capture prompt' never exits 2: it runs inside a provider hook, where that exit code can reject the person's prompt. install refuses to rewrite a configuration it did not write, and prints the entry to add.",
+      "reads": [
+        ".claude/settings.json",
+        ".ai/repo/policy.yaml"
+      ],
+      "writes": [
+        ".ai/local/prompts/",
+        ".claude/hooks/majordomus-capture",
+        ".claude/settings.json"
+      ],
+      "exit_codes": [
+        0,
+        2,
+        12,
+        13,
+        15
+      ],
+      "tests": {
+        "behaviour": [
+          "29_prompt_capture"
+        ],
+        "negative": [
+          "29_prompt_capture"
+        ]
+      },
+      "demo_data": {
+        "schema": 1,
+        "command": "capture",
+        "title": "Raw prompt history, captured below the model",
+        "intro": "A worker cannot record its own prompts: it never sees what the person typed, and a record that depends on a model choosing to write it is missing exactly the prompts that mattered. Capture runs in the provider's hook instead, and the state a provider is in is decided by running that hook, not by finding a file.",
+        "scenarios": [
+          {
+            "id": "unconfigured",
+            "title": "Before anything is wired",
+            "given": {
+              "hook installed": false
+            },
+            "setup": "installed",
+            "run": [
+              "capture",
+              "status"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "claude-code",
+                "unconfigured"
+              ]
+            },
+            "explain": "An adapter exists for Claude Code, but this repository does not wire it, and the command says so rather than reporting an empty archive as success.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "verified",
+            "title": "After the hook is installed",
+            "given": {
+              "hook installed": true
+            },
+            "setup": "capture-installed",
+            "run": [
+              "capture",
+              "status"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "verified",
+                "synthetic payload"
+              ]
+            },
+            "explain": "verified is not the presence of a file. The command drove a payload through the shim the provider would run, into an archive of its own, and read the record back.",
+            "setup_sh": "# Installed, with the prompt-capture hook in place and majordomus on PATH, which is how a\n# repository that is not the tool's own checkout reaches it.\n. \"$FIXTURE_SETUP/installed.sh\"\nPATH=\"$(dirname \"$MJ\"):$PATH\"; export PATH\n\"$MJ\" capture install >/dev/null",
+            "stdin_body": null
+          },
+          {
+            "id": "no-adapter",
+            "title": "A provider whose prompts cannot be observed",
+            "given": {
+              "adapter exists": false
+            },
+            "setup": "installed",
+            "run": [
+              "capture",
+              "prompt",
+              "--provider",
+              "codex"
+            ],
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no adapter",
+                "claude-code"
+              ]
+            },
+            "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the providers that do have one. Note what it is not: capture prompt runs inside a provider hook, where exit 2 rejects the person's prompt, so it never returns that code whatever is wrong.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          }
+        ]
+      },
+      "doc_md": "\nRecord the person's raw prompts from a provider hook, install that hook, and report what\neach provider actually does in this repository.\n\n**Why a hook and not an instruction.** A worker cannot be asked to record its own prompts.\nIt never sees the bytes the person typed, only what the provider assembled from them, and a\nrecord written by a model is missing exactly the prompts that mattered: the first one of a\nsession, which arrives before any instruction has been read, and every one where the model\nwas busy doing what it was asked. A line in `AGENTS.md` is a request, not a mechanism, and\nno behavioural test can prove a request was honoured. So capture happens below the model,\nin the provider's own hook, where running it is the proof that it works.\n\n`capture install` writes two things and refuses to overwrite either: a shim at\n`.claude/hooks/majordomus-capture`, and the hook entry in `.claude/settings.json`. When the\nconfiguration exists and names something else, the command prints the entry to add and\nexits 15 rather than rewriting a file it did not write. The shim finds the repository from\nits own location: the provider substitutes its project directory into the command string\ntextually, so nothing in the environment names the repository, and the working directory a\nhook runs in is not contracted.\n\n`capture prompt` reads one JSON payload on stdin and writes one record. **It never exits\n2**, because in `UserPromptSubmit` that exit code rejects the person's prompt, and a broken\narchive must never cost someone their input; a payload it cannot read is written to the\narchive's own log instead — and **`doctor` fails while that log is non-empty**, because a\ncapture that failed means prompts were lost. That log is the only thing that can catch the\nfailure that matters: if the provider renames the field the prompt arrives in, the hook\nstill runs and the self test still passes, since it sends a payload of the tool's own\nmaking. Read the log and delete it; it is a diagnostic, and unlike a record, nothing is lost\nby removing it. The prompt text itself is the raw span from the payload, copied through\nstill escaped, so no decode and re-encode step can lose a character.\n\n**One prompt is one file**, `.ai/local/prompts/YYYYMMDDHHMMSS-<slug>.json`, where the slug\nis the opening of the prompt itself:\n\n```\n.ai/local/prompts/\n  20260905113342-why-arent-prompts-saved-automatically.json\n  20260905114501-make-it-a-file-per-prompt.json\n```\n\nA record is immutable once written, two hooks cannot interleave inside one file, the name\nsorts chronologically, and the directory listing is already a readable history. The slug is\na hint and never a faithful rendering — escapes and non-ASCII collapse into hyphens, and\nthe prompt itself is inside the file with nothing done to it. Records stay idempotent on\nthe provider's prompt identity, which is a field and not the name: a hook delivered twice\nwithin the day writes once.\n\n**Not every payload is a prompt, and the field it arrives in is not fixed.** The event is\nnot what its name suggests: Claude Code also fires `UserPromptSubmit` for messages it\ninjects into the turn — a completed background task, a system reminder — and those are not\nthe person's prompts. A payload whose declared origin is not a person, or whose text opens\nwith a marker the provider injects, is skipped: no record, and no log line, because a skip\nis normal operation rather than a failure. A payload that says nothing about its origin is\ncaptured, since losing a real prompt is the worse of the two mistakes.\n\nThe payload keys are candidates rather than one assumed name — the prompt is read from\n`prompt`, then `prompt_text`, then `text`. A payload field is the provider's private shape:\nit is versioned on their schedule, renaming one is not a breaking change to them, and a\ncapture built on a single assumed name loses every prompt the day it moves. When none of\nthe candidates is present, nothing is written and the log names the keys that *were* there,\nso the next name is read off a real payload instead of guessed.\n\n**The archive is evidence, not knowledge.** It lives under the ignored half of the layer,\nnothing loads it into a context, no command retrieves from it, and `doctor` fails if\nanything under it is tracked by Git. The writer emits a closed set of fields, so the\nmodel's half of the exchange cannot arrive through it.\n\n**Nothing deletes a record.** The ledger, the checkpoints and the handovers rotate under a\npolicy cap because each restates state that is still available elsewhere; a prompt is not —\nit existed once, was derived from nothing, and no other file can reconstruct it. So there is\nno cap to configure, the archive grows, `doctor` reports how many records and how many\nkibibytes it holds, and a person who wants it smaller deletes files themselves rather than\ndiscovering that the hook meant to keep their prompts had been discarding them.\n\n**`capture status` reports five distinct states, and never a generic pass:**\n\n| state | what is true |\n|---|---|\n| `unsupported` | the provider has no documented event that hands a command the prompt before the model runs |\n| `unconfigured` | an adapter exists, but this repository does not wire it |\n| `named` | the configuration declares the hook, but not the shim this tool wrote |\n| `wired` | the shim is in place and executable, but a payload through it produced no record |\n| `verified` | a synthetic payload driven through the shim produced a record |\n\nA repository holds itself to this by declaring an `enforcement` entry with\n`wired_by: provider-hook:<provider>`; `doctor` then fails unless the state is `verified`,\nand because `doctor` runs on `pre-commit`, a hook that stops capturing stops the commit.\nOnly Claude Code has an adapter today. Codex and Gemini are reported `unsupported` rather\nthan assumed, and no other surface — the web, the desktop app, another machine — is\nobservable from here at all.\n\n```\n$ majordomus capture install\nINFO  capture  .claude/hooks/majordomus-capture  written and made executable\nINFO  capture  .claude/settings.json  written with the UserPromptSubmit hook\n$ majordomus capture status\nclaude-code    verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record\n```"
     },
     {
       "name": "search",

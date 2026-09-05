@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "c9ab64ff9fe430b8597d4b70bf60a355193e2354981a6fc7400b6bd2a4c107b7",
+    "fingerprint": "f3c740b182c8f4cfa684c3703e22908d9439a5471c671fb20661b5b9e0285dbe",
     "summary": {
       "total": 567,
       "builtin": 11,
@@ -3588,7 +3588,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3a88c9ad43f8192dd3045313952461fd422664357ada751b3d68c17d76023dec",
+    "fingerprint": "2aaf051c35a41417baabe47cc355dcc90f923d8c6b1cc4d96cadfca1c43931f9",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -4962,7 +4962,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 33002
+        "bytes": 32996
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -9087,7 +9087,7 @@
         "identity": "test/cases/72_rust_mcp.sh",
         "path": "test/cases/72_rust_mcp.sh",
         "source_class": "case",
-        "bytes": 10131
+        "bytes": 10157
       },
       {
         "uri": "majordomus://test/test/cases/73_knowledge_nodes.sh",
@@ -9364,7 +9364,7 @@
       "majordomus"
     ],
     "about": "Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer",
-    "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\nThe task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.",
+    "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\nBuilt-in commands below are the native Rust CLI surface and are projected to generated reference documentation from the Clap declaration. Capabilities exposed by those commands still come from the canonical capability registry, which projects to MCP, HTTP, OpenAPI and Swagger UI. An unknown top-level command is treated as CLI porcelain: `majordomus init` executes `majordomus-init` from PATH with the remaining arguments. Porcelain commands are external wrappers; a new public Majordomus capability still belongs in the canonical capability registry.",
     "args": [],
     "subcommands": [
       {

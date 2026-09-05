@@ -142,6 +142,15 @@ claims:
     responsibility: scope
     note: A gate that cannot read an entry can be bypassed by mistyping one, so an unreadable question is not a lesser problem than an open one.
 
+  - id: prompt-capture
+    claim: A declared provider hook captures the person's raw prompts below the model, and doctor proves it by running it
+    source: docs/DOCTRINE.md
+    implementation: lib/capture.sh
+    test: test/cases/29_prompt_capture.sh
+    status: guaranteed
+    responsibility: policy
+    note: Covers the four states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, and a record set that cannot carry model output.
+
   - id: prompt-assets
     claim: Every repository-local prompt asset renders, and an unknown token is a failure
     source: docs/DOCTRINE.md

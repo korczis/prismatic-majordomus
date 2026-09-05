@@ -132,6 +132,15 @@
       "note": "A gate that cannot read an entry can be bypassed by mistyping one, so an unreadable question is not a lesser problem than an open one."
     },
     {
+      "id": "claim:prompt-capture",
+      "kind": "claim",
+      "label": "A declared provider hook captures the person's raw prompts below the model, and doctor proves it by running it",
+      "status": "guaranteed",
+      "route": "/guarantees/prompt-capture/",
+      "external": false,
+      "note": "Covers the four states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, and a record set that cannot carry model output."
+    },
+    {
       "id": "claim:prompt-assets",
       "kind": "claim",
       "label": "Every repository-local prompt asset renders, and an unknown token is a failure",
@@ -1154,6 +1163,13 @@
       "external": false
     },
     {
+      "id": "impl:lib/capture.sh",
+      "kind": "implementation",
+      "label": "lib/capture.sh",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:lib/check.sh",
       "kind": "implementation",
       "label": "lib/check.sh",
@@ -1700,6 +1716,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_no_hardcoded_values.sh"
     },
     {
+      "id": "test:test/cases/29_prompt_capture.sh",
+      "kind": "test",
+      "label": "test/cases/29_prompt_capture.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/29_prompt_capture.sh"
+    },
+    {
       "id": "test:test/cases/30_command_registry.sh",
       "kind": "test",
       "label": "test/cases/30_command_registry.sh",
@@ -1945,6 +1968,11 @@
     },
     {
       "source": "claim:blocker-store",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:prompt-capture",
       "target": "source:docs/DOCTRINE.md",
       "kind": "specified_by"
     },
@@ -2504,6 +2532,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:prompt-capture",
+      "target": "impl:lib/capture.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:prompt-assets",
       "target": "impl:lib/prompt.sh",
       "kind": "implemented_by"
@@ -3016,6 +3049,11 @@
     {
       "source": "claim:blocker-store",
       "target": "test:test/cases/21_decision_question.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:prompt-capture",
+      "target": "test:test/cases/29_prompt_capture.sh",
       "kind": "proved_by"
     },
     {

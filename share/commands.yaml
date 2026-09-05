@@ -299,6 +299,24 @@ commands:
     demo: prompt-render
     note: An unknown token, or a block token used inline, is an error rather than a literal left in the output.
 
+  - id: capture
+    title: capture
+    summary: Record the person's raw prompts from a provider hook, install that hook, and report what each provider actually does here.
+    category: memory
+    stage: work
+    visibility: public
+    class: generated-output-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: true
+    syntax: majordomus capture status [--json]
+    reads: [.claude/settings.json, .ai/repo/policy.yaml]
+    writes: [.ai/local/prompts/, .claude/hooks/majordomus-capture, .claude/settings.json]
+    exit_codes: [0, 2, 12, 13, 15]
+    demo: capture-status
+    note: "'capture prompt' never exits 2: it runs inside a provider hook, where that exit code can reject the person's prompt. install refuses to rewrite a configuration it did not write, and prints the entry to add."
+
   - id: search
     title: search
     summary: Find a durable record without reading all of them, in authority order.

@@ -50,6 +50,16 @@
       "external": false
     },
     {
+      "id": "lib/capture.sh",
+      "kind": "module",
+      "label": "capture",
+      "command": "capture",
+      "summary": "record the person's raw prompts from a provider hook, and prove it",
+      "read_only": null,
+      "route": "/commands/capture/",
+      "external": false
+    },
+    {
       "id": "lib/check.sh",
       "kind": "module",
       "label": "check",
@@ -753,6 +763,11 @@
     },
     {
       "source": "bin/majordomus",
+      "target": "lib/capture.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
       "target": "lib/check.sh",
       "kind": "sources"
     },
@@ -914,6 +929,11 @@
     {
       "source": "lib/context.sh",
       "target": "lib/prompt.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/capture.sh",
       "kind": "sources"
     },
     {

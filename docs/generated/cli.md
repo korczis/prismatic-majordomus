@@ -1,5 +1,5 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the clap declaration of the command line (src/cli.rs); regenerate with `majordomus generate`
+     Source: the clap declaration of the command line (src/cli/); regenerate with `majordomus generate`
      Generator: majordomus-cli 0.1.0 -->
 # Command line of the Rust executable
 
@@ -7,9 +7,9 @@ Majordomus control plane: a data-driven MCP server over the repository's .ai/ la
 
 The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.
 
-The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.
+Built-in commands below are the native Rust CLI surface and are projected to generated reference documentation from the Clap declaration. Capabilities exposed by those commands still come from the canonical capability registry, which projects to MCP, HTTP, OpenAPI and Swagger UI. An unknown top-level command is treated as CLI porcelain: `majordomus init` executes `majordomus-init` from PATH with the remaining arguments. Porcelain commands are external wrappers; a new public Majordomus capability still belongs in the canonical capability registry.
 
-Every command below is declared once, in `src/cli.rs`; this file is a projection of that declaration, as `--help` is. The task lifecycle (`init`, `start`, `check`, `finish`, `doctor`, ...) is the shell tool `bin/majordomus`, documented in `docs/CLI.md`.
+Every built-in command below is declared once, under `src/cli/`; this file is a projection of that declaration, as `--help` is. Unknown top-level commands are CLI porcelain: `majordomus init` executes `majordomus-init` from `PATH` with the remaining arguments. Porcelain commands are wrappers; a new public capability still belongs in the canonical capability registry so MCP, HTTP, OpenAPI, Swagger UI and the site stay generated from one model.
 
 ## Commands
 
