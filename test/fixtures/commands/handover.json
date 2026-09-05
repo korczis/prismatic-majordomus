@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "command": "handover",
+  "title": "The record that survives the session",
+  "intro": "A handover is the one artifact designed to be read by someone who was not there. It carries the sections the policy requires and no transcript.",
+  "scenarios": [
+    {
+      "id": "writes",
+      "title": "A body with every required section",
+      "given": {
+        "all required sections present": true
+      },
+      "setup": "active-task",
+      "stdin": "handover-body.md",
+      "run": [
+        "handover"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          ".ai/local/state/handovers/"
+        ]
+      },
+      "explain": "Objective, Current State and Next Action. The front matter \u2014 task, branch, head, worktree \u2014 is computed, so the body cannot disagree with git about where it was written."
+    },
+    {
+      "id": "incomplete",
+      "title": "A body missing a required section",
+      "given": {
+        "all required sections present": false
+      },
+      "setup": "active-task",
+      "stdin": "handover-incomplete.md",
+      "run": [
+        "handover"
+      ],
+      "expect": {
+        "exit": 10,
+        "stdout_contains": [
+          "missing or empty section"
+        ]
+      },
+      "explain": "The sections are named in the refusal. A handover without a Next Action is the failure mode this record exists to prevent, so it is not accepted and quietly filed."
+    }
+  ]
+}

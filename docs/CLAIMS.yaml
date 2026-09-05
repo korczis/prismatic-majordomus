@@ -60,6 +60,7 @@ claims:
     implementation: lib/common.sh
     test: test/cases/03_update.sh
     status: guaranteed
+    responsibility: none      # a property of every command, not of one responsibility
 
   - id: projection-generation
     claim: Provider instruction files are generated from the one policy, deterministically
@@ -207,6 +208,7 @@ claims:
     implementation: lib/init.sh
     test: test/cases/01_init.sh
     status: guaranteed
+    responsibility: none      # installation, which precedes every responsibility
 
   - id: reproduce-command
     claim: Every finding carries the command that reproduces it
@@ -214,6 +216,7 @@ claims:
     implementation: lib/common.sh
     test: test/cases/02_doctor_basic.sh
     status: guaranteed
+    responsibility: none      # a property of every finding, not of one responsibility
 
   - id: no-network
     claim: Nothing performs a network call, evaluates generated text, or deletes recursively
@@ -221,6 +224,7 @@ claims:
     implementation: bin/majordomus
     test: test/cases/08_no_forbidden_constructs.sh
     status: guaranteed
+    responsibility: none      # a boundary of the whole tool
 
   - id: scoped-task
     claim: A task is started with a declared file scope and a profile, and only one task is active per checkout
@@ -557,6 +561,33 @@ claims:
     responsibility: policy
     note: Policy values have no reader-side defaults, claim statuses are declared in the matrix, the site fixtures derive their inputs from the generator, and every command, doctrine and claim is checked against a list read from the dispatch table or the registry rather than written into the test.
 
+  - id: command-surface
+    claim: The public command surface is declared, and reconciled against the dispatcher
+    source: docs/DYNAMICITY.md
+    implementation: share/commands.yaml
+    test: test/cases/30_command_registry.sh
+    status: guaranteed
+    responsibility: doctor
+    note: The registry is authority for what a command means; bin/majordomus stays authority for what runs. A command dispatched with no entry, and an entry nothing dispatches, both fail. A command is public exactly when the usage text lists it, checked in both directions.
+
+  - id: command-coverage
+    claim: Every public command has a behavioural test and a negative test, computed rather than remembered
+    source: docs/DYNAMICITY.md
+    implementation: test/cases/31_command_coverage.sh
+    test: test/cases/31_command_coverage.sh
+    status: guaranteed
+    responsibility: doctor
+    note: The requirement is derived from the registry, so a command added tomorrow is owed coverage from that moment. Coverage is declared in per-case headers rather than inferred, because the negative assertions that use stdin and the surface case's loop are invisible to any scan.
+
+  - id: event-vocabulary
+    claim: The ledger's event vocabulary is closed, on the way in and on the way out
+    source: docs/SCHEMAS.md
+    implementation: lib/common.sh
+    test: test/cases/33_event_registry.sh
+    status: guaranteed
+    responsibility: state
+    note: share/events.yaml declares every name, its emitting command and its required payload keys. An unregistered name is refused on write, refused as a history filter, and reported by history --validate when already stored.
+
   - id: semantic-retrieval
     claim: Ranked or semantic retrieval over durable records is deliberately not implemented
     source: docs/CONTINUITY.md
@@ -590,6 +621,7 @@ claims:
     implementation: '-'
     test: '-'
     status: planned
+    responsibility: none      # planned; no responsibility implements it yet
     note: The one implementation studied was rolled back within days because its limits were global constants rather than task-derived.
 
   - id: telemetry
@@ -598,6 +630,7 @@ claims:
     implementation: '-'
     test: '-'
     status: planned
+    responsibility: none      # planned; no responsibility implements it yet
     note: Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement.
 
   - id: cost-per-outcome
@@ -606,6 +639,7 @@ claims:
     implementation: '-'
     test: '-'
     status: planned
+    responsibility: none      # planned; no responsibility implements it yet
 
   - id: routing
     claim: Routing recommendations will be derived from measured cost and outcome data
@@ -613,6 +647,7 @@ claims:
     implementation: '-'
     test: '-'
     status: planned
+    responsibility: none      # planned; no responsibility implements it yet
     note: Recommendations only. Majordomus does not invoke a model.
 
   - id: shared-policy
@@ -621,6 +656,7 @@ claims:
     implementation: '-'
     test: '-'
     status: planned
+    responsibility: none      # planned; no responsibility implements it yet
 
   - id: task-dependencies
     claim: A task record has no dependencies; sequencing between sessions is not represented

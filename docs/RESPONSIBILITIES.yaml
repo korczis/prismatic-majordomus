@@ -1,15 +1,19 @@
 # The responsibilities — canonical index.
 #
-# The README's "What it does" table is the prose. This file is the machine-readable
-# side of the same fact: for each responsibility, which subcommand acts on it, which
-# files hold it, and where it is specified. The site projects one page per entry from
-# this file joined with docs/CLAIMS.yaml (by `responsibility`), and nothing on those
-# pages is written twice.
+# The README's "What it does" table is the prose. This file is the machine-readable side of
+# the same fact: for each responsibility, which subcommand acts on it, which files hold it,
+# and where it is specified. The site builds one page per entry from this file joined with
+# docs/CLAIMS.yaml by each claim's `responsibility` field, and nothing on those pages is
+# written twice.
 #
-# `scripts/generate-site-data --check` proves, for every entry: the key matches a row
-# of the README table exactly, every path exists, and every anchor is a real heading in
-# the document it names. A responsibility here with no README row, or a README row with
-# no entry here, is an error rather than a page that quietly goes stale.
+# `scripts/generate-site-data` refuses to build unless, for every entry: readme_key matches
+# a row of the README table exactly and every row has an entry, in both directions; every
+# path outside .ai/local/ exists; and cli_anchor and schema_anchor are real headings in
+# the documents they name. Paths under .ai/local/ are described rather than required —
+# `init` creates them, and this repository has them only because it supervises itself.
+#
+# The count above is deliberately absent. It was "nine" over ten entries for as long as
+# nothing read this file, which is the failure the rest of this comment now prevents.
 version: 1
 
 responsibilities:

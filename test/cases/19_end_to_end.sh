@@ -1,3 +1,6 @@
+# majordomus-covers: start check finish handover question doctor watch doctrine update
+# majordomus-negative: check finish doctor
+# majordomus-lifecycle: accepted
 # One complete workflow, start to finish, through the real commands only — the shape a
 # repository actually adopts. Every refusal below is a doctrine refusing, and the reason
 # is asserted by name rather than by exit code alone.

@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "command": "context",
+  "title": "What the next worker needs to know now",
+  "intro": "context assembles durable state in authority order and within a line budget, and names everything it excluded. It writes nothing, records nothing, and calls no model.",
+  "scenarios": [
+    {
+      "id": "with-task",
+      "title": "With an active task and records behind it",
+      "given": {
+        "active task": true
+      },
+      "setup": "active-task-records",
+      "run": [
+        "context"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "## GIT",
+          "## TASK",
+          "narrow the parser"
+        ]
+      },
+      "explain": "Git identity comes first because it is the only section that is not a projection. Everything below it is evidence, and the header says so in as many words."
+    },
+    {
+      "id": "no-task",
+      "title": "With no active task",
+      "given": {
+        "active task": false
+      },
+      "setup": "installed",
+      "run": [
+        "context"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "## GIT"
+        ]
+      },
+      "explain": "Absence is reported rather than guessed at. A worker who is told there is no active task knows to start one; a worker handed a stale record does not."
+    }
+  ]
+}

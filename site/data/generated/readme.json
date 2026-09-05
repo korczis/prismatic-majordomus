@@ -14,35 +14,52 @@
   "limitations_md": "\n- Majordomus is invoked by a person, a git hook, or a worker following its\n  instructions. It does not hook the worker's runtime.\n- It measures no tokens and no cost. [`docs/ECONOMICS.md`](docs/ECONOMICS.md) says what\n  it would take.\n- Scope overlap is reported, never blocked, and only across worktrees of one repository\n  on one machine.\n- The regression-test check in `finish` is a path heuristic (`test/`, `spec/`, `_test.`)\n  and says so in its message.\n- The YAML subset is deliberately small: maps, lists, lists of maps, inline lists,\n  quotes, comments. Anchors, multi-line scalars, and flow maps are rejected.",
   "does": [
     {
-      "title": "Layer",
-      "text": "one portable `.ai/` directory, readable without the tool: `.ai/repo/` is tracked and canonical, `.ai/local/` is this checkout's own and ignored; `doctor` proves the manifest resolves, every section it names exists, and nothing under `local/` is tracked",
-      "slug": "layer",
-      "command": "init",
-      "claim_ids": [
-        "context-documents",
-        "context-impact",
-        "ai-layer-manifest",
-        "legacy-migration"
-      ]
-    },
-    {
       "title": "Policy",
       "text": "one provider-neutral `policy.yaml`; unknown keys are errors",
-      "slug": "policy",
+      "id": "policy",
+      "readme_key": "Policy",
       "command": "update",
+      "implementation": "lib/common.sh",
+      "files": [
+        ".ai/repo/policy.yaml"
+      ],
+      "order": 1,
+      "cli_anchor": "majordomus update",
+      "cli_route": "/docs/cli/#majordomus-update",
+      "schema_anchor": ".ai/repo/policy.yaml",
+      "schema_route": "/docs/schemas/#ai-repo-policy-yaml",
+      "slug": "policy",
       "claim_ids": [
         "policy-parse",
         "doctrine-class-decides",
         "prompt-assets",
         "prompt-asset",
         "derived-not-declared"
+      ],
+      "doctrine_ids": [
+        "majordomus.policy-completeness",
+        "majordomus.policy-integrity",
+        "majordomus.doctrine-wiring-integrity",
+        "majordomus.prompt-integrity"
       ]
     },
     {
       "title": "Projection",
       "text": "`update` generates `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or any target you name, deterministically, and stamps each with the policy hash and the hash of its own content; a hand edit is detected and never silently overwritten",
-      "slug": "projection",
+      "id": "projection",
+      "readme_key": "Projection",
       "command": "update",
+      "implementation": "lib/update.sh",
+      "files": [
+        ".ai/repo/policy.yaml",
+        "share/providers"
+      ],
+      "order": 2,
+      "cli_anchor": "majordomus update",
+      "cli_route": "/docs/cli/#majordomus-update",
+      "schema_anchor": "Projection stamp",
+      "schema_route": "/docs/schemas/#projection-stamp",
+      "slug": "projection",
       "claim_ids": [
         "projection-generation",
         "projection-fingerprint",
@@ -50,13 +67,30 @@
         "no-silent-overwrite",
         "context-budget",
         "bootstrap-chain"
+      ],
+      "doctrine_ids": [
+        "majordomus.bootstrap-integrity",
+        "majordomus.projection-integrity",
+        "majordomus.context-budget"
       ]
     },
     {
       "title": "State",
       "text": "one active task per checkout in `current.yaml`, with `branch`, `head`, and `working_tree` computed from git, never authored",
-      "slug": "state",
+      "id": "state",
+      "readme_key": "State",
       "command": "start",
+      "implementation": "lib/start.sh",
+      "files": [
+        ".ai/local/state/current.yaml",
+        ".ai/local/state/ledger.jsonl"
+      ],
+      "order": 3,
+      "cli_anchor": "majordomus start <task>",
+      "cli_route": "/docs/cli/#majordomus-start-task",
+      "schema_anchor": ".ai/local/state/current.yaml",
+      "schema_route": "/docs/schemas/#ai-local-state-current-yaml",
+      "slug": "state",
       "claim_ids": [
         "ledger-integrity",
         "decision-attribution",
@@ -65,14 +99,33 @@
         "checkpoint-record",
         "decision-record",
         "local-state-ignored",
+        "event-vocabulary",
         "task-dependencies"
+      ],
+      "doctrine_ids": [
+        "majordomus.ai-layout-integrity",
+        "majordomus.ledger-integrity",
+        "majordomus.decision-records",
+        "majordomus.handover-integrity",
+        "majordomus.state-consistency"
       ]
     },
     {
       "title": "Scope",
       "text": "`start` takes the paths a task may touch; `check` and `finish` fail on files outside them; other worktrees' overlapping claims are reported",
-      "slug": "scope",
+      "id": "scope",
+      "readme_key": "Scope",
       "command": "check",
+      "implementation": "lib/check.sh",
+      "files": [
+        ".ai/local/state/current.yaml"
+      ],
+      "order": 4,
+      "cli_anchor": "majordomus check",
+      "cli_route": "/docs/cli/#majordomus-check",
+      "schema_anchor": "Worktree coordination",
+      "schema_route": "/docs/schemas/#worktree-coordination",
+      "slug": "scope",
       "claim_ids": [
         "blocker-store",
         "scoped-task",
@@ -81,13 +134,29 @@
         "overlap-report",
         "task-commit-attribution",
         "worktree-ownership"
+      ],
+      "doctrine_ids": [
+        "majordomus.questions-store-integrity",
+        "majordomus.scope-integrity",
+        "majordomus.state-consistency"
       ]
     },
     {
       "title": "Profiles",
       "text": "one bundle per task class, each setting capability class, reasoning effort, verbosity, presentation, context toggles, verification, and checkpoint interval independently",
-      "slug": "profiles",
+      "id": "profiles",
+      "readme_key": "Profiles",
       "command": "check",
+      "implementation": "lib/update.sh",
+      "files": [
+        ".ai/repo/profiles"
+      ],
+      "order": 5,
+      "cli_anchor": "majordomus check",
+      "cli_route": "/docs/cli/#majordomus-check",
+      "schema_anchor": ".ai/repo/profiles/<name>.yaml",
+      "schema_route": "/docs/schemas/#ai-repo-profiles-name-yaml",
+      "slug": "profiles",
       "claim_ids": [
         "profile-validate",
         "profile-axes",
@@ -97,36 +166,83 @@
         "checkpoint-interval",
         "context-assembly",
         "context-selection-budget"
+      ],
+      "doctrine_ids": [
+        "majordomus.checkpoint-freshness",
+        "majordomus.policy-integrity",
+        "majordomus.profile-requirements"
       ]
     },
     {
       "title": "Handover",
       "text": "append-only records with computed front matter and required sections, created atomically, never staged; `--resolve` finds the right one for this worktree and branch and labels how far git has moved since",
-      "slug": "handover",
+      "id": "handover",
+      "readme_key": "Handover",
       "command": "handover",
+      "implementation": "lib/handover.sh",
+      "files": [
+        ".ai/local/state/handovers"
+      ],
+      "order": 6,
+      "cli_anchor": "majordomus handover",
+      "cli_route": "/docs/cli/#majordomus-handover",
+      "schema_anchor": ".ai/local/state/handovers/<file>.md",
+      "schema_route": "/docs/schemas/#ai-local-state-handovers-file-md",
+      "slug": "handover",
       "claim_ids": [
         "handover-record",
         "no-transcripts",
         "record-resolution"
+      ],
+      "doctrine_ids": [
+        "majordomus.handover-integrity",
+        "majordomus.note-integrity",
+        "majordomus.task-continuity"
       ]
     },
     {
       "title": "Finish",
       "text": "a typed outcome and a contract evaluated line by line; nothing written when any line fails",
-      "slug": "finish",
+      "id": "finish",
+      "readme_key": "Finish",
       "command": "finish",
+      "implementation": "lib/finish.sh",
+      "files": [
+        ".ai/local/state/ledger.jsonl"
+      ],
+      "order": 7,
+      "cli_anchor": "majordomus finish",
+      "cli_route": "/docs/cli/#majordomus-finish",
+      "schema_anchor": "Completion note (when no handover is written)",
+      "schema_route": "/docs/schemas/#completion-note-when-no-handover-is-written",
+      "slug": "finish",
       "claim_ids": [
         "finish-contract",
         "typed-outcome",
         "open-question-gate",
         "blocker-survives-handover"
+      ],
+      "doctrine_ids": [
+        "majordomus.blocker-resolution",
+        "majordomus.verification-integrity"
       ]
     },
     {
       "title": "Doctor",
       "text": "proves the installation is real: policy parses, every declared enforcement is actually invoked by the hook it names without a swallowed exit code, every projection matches its own stamp, the always-loaded file is under budget",
-      "slug": "doctor",
+      "id": "doctor",
+      "readme_key": "Doctor",
       "command": "doctor",
+      "implementation": "lib/doctor.sh",
+      "files": [
+        ".ai/repo/policy.yaml"
+      ],
+      "order": 8,
+      "cli_anchor": "majordomus doctor",
+      "cli_route": "/docs/cli/#majordomus-doctor",
+      "schema_anchor": "Projection stamp",
+      "schema_route": "/docs/schemas/#projection-stamp",
+      "slug": "doctor",
       "claim_ids": [
         "wiring-reconciliation",
         "dispatcher-wiring",
@@ -138,27 +254,65 @@
         "continuity-reachable",
         "vendored-rule-package",
         "rule-resolution",
-        "tool-location-independent"
+        "tool-location-independent",
+        "command-surface",
+        "command-coverage"
+      ],
+      "doctrine_ids": [
+        "majordomus.ai-layout-integrity",
+        "majordomus.layout-integrity",
+        "majordomus.catalogue-integrity",
+        "majordomus.command-surface",
+        "majordomus.doctrine-wiring-integrity",
+        "majordomus.enforcement-wiring",
+        "majordomus.command-coverage",
+        "majordomus.context-budget",
+        "majordomus.retention-caps",
+        "majordomus.rule-package-integrity"
       ]
     },
     {
       "title": "Watch",
       "text": "reports drift between policy, projections, state, scope, and git, each finding with the command that reproduces it",
-      "slug": "watch",
+      "id": "watch",
+      "readme_key": "Watch",
       "command": "watch",
+      "implementation": "lib/watch.sh",
+      "files": [
+        ".ai/local/state/ledger.jsonl"
+      ],
+      "order": 9,
+      "cli_anchor": "majordomus watch",
+      "cli_route": "/docs/cli/#majordomus-watch",
+      "schema_anchor": ".ai/local/state/ledger.jsonl",
+      "schema_route": "/docs/schemas/#ai-local-state-ledger-jsonl",
+      "slug": "watch",
       "claim_ids": [
         "drift-watch",
         "history-ledger-read",
         "record-retention",
         "record-search",
         "semantic-retrieval"
-      ]
+      ],
+      "doctrine_ids": []
     },
     {
       "title": "Plan",
       "text": "milestones are outcome specifications and issues are execution contracts; status, execution waves and the next ready issue are derived from the dependency graph, never stored",
-      "slug": "plan",
+      "id": "plan",
+      "readme_key": "Plan",
       "command": "plan",
+      "implementation": "lib/project.awk",
+      "files": [
+        ".ai/repo/project/milestones",
+        ".ai/repo/project/issues"
+      ],
+      "order": 10,
+      "cli_anchor": "majordomus plan",
+      "cli_route": "/docs/cli/#majordomus-plan",
+      "schema_anchor": ".ai/repo/project/issues/<ID>.yaml",
+      "schema_route": "/docs/schemas/#ai-repo-project-issues-id-yaml",
+      "slug": "plan",
       "claim_ids": [
         "project-schema",
         "project-status-derived",
@@ -167,6 +321,39 @@
         "evidence-gates-done",
         "roadmap-derived",
         "github-projection"
+      ],
+      "doctrine_ids": [
+        "majordomus.dag-integrity",
+        "majordomus.project-integrity",
+        "majordomus.roadmap-integrity"
+      ]
+    },
+    {
+      "title": "Layer",
+      "text": "one portable `.ai/` directory, readable without the tool: `.ai/repo/` is tracked and canonical, `.ai/local/` is this checkout's own and ignored; `doctor` proves the manifest resolves, every section it names exists, and nothing under `local/` is tracked",
+      "id": "layer",
+      "readme_key": "Layer",
+      "command": "init",
+      "implementation": "lib/init.sh",
+      "files": [
+        ".ai/README.md",
+        ".ai/manifest.yaml"
+      ],
+      "order": 11,
+      "cli_anchor": "majordomus init",
+      "cli_route": "/docs/cli/#majordomus-init",
+      "schema_anchor": ".ai/manifest.yaml",
+      "schema_route": "/docs/schemas/#ai-manifest-yaml",
+      "slug": "layer",
+      "claim_ids": [
+        "context-documents",
+        "context-impact",
+        "ai-layer-manifest",
+        "legacy-migration"
+      ],
+      "doctrine_ids": [
+        "majordomus.ai-layout-integrity",
+        "majordomus.context-integrity"
       ]
     }
   ]

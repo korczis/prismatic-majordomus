@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "command": "plan",
+  "title": "The model, validated and read",
+  "intro": "plan reads a canonical project model and moves one issue through it. Status is never stored — it is derived from what was recorded about an issue and from the state of its dependencies. Every scenario here is executed against the real binary by test/cases/34_command_fixtures.sh.",
+  "scenarios": [
+    {
+      "id": "validate",
+      "title": "A model that parses and hangs together",
+      "given": { "model present": true, "dependency satisfied": false },
+      "setup": "plan-model",
+      "run": ["plan", "validate"],
+      "expect": { "exit": 0, "stdout_contains": ["milestone", "issue", "0 failure"] },
+      "explain": "Schemas, references, the dependency graph and status consistency, in one pass. A key nobody reads is an error here for the same reason it is an error in the policy: an unread field is a belief nothing checks."
+    },
+    {
+      "id": "no-model",
+      "title": "A repository with no project model",
+      "given": { "model present": false, "dependency satisfied": false },
+      "setup": "installed",
+      "run": ["plan", "validate"],
+      "expect": { "exit": 12, "stdout_contains": ["no canonical project model"] },
+      "explain": "Exit 12 is MISSING_ARTIFACT: the repository is not set up for a project model, which is a different fact from a model that fails to parse."
+    },
+    {
+      "id": "ready",
+      "title": "What can be started now",
+      "given": { "model present": true, "dependency satisfied": false },
+      "setup": "plan-model",
+      "run": ["plan", "ready"],
+      "expect": { "exit": 0, "stdout_contains": ["I0001"] },
+      "explain": "I0002 depends on I0001, so only I0001 is ready. Readiness is derived from the graph rather than labelled on the issue, so it cannot disagree with the dependencies."
+    },
+    {
+      "id": "blocked",
+      "title": "What is waiting, and on what",
+      "given": { "model present": true, "dependency satisfied": false },
+      "setup": "plan-model",
+      "run": ["plan", "blocked"],
+      "expect": { "exit": 0, "stdout_contains": ["I0002"] },
+      "explain": "The complement of ready, and it names the dependency rather than only the fact of being blocked — the useful question is what to finish first."
+    },
+    {
+      "id": "unknown-subcommand",
+      "title": "A subcommand it does not have",
+      "given": { "model present": true, "dependency satisfied": false },
+      "setup": "plan-model",
+      "run": ["plan", "explain"],
+      "expect": { "exit": 2, "stdout_contains": ["plan"] },
+      "explain": "Exit 2 is USAGE. A mistyped subcommand is refused rather than treated as a default, so a script cannot silently ask a different question from the one it meant."
+    }
+  ]
+}

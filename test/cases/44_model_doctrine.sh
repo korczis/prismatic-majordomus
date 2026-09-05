@@ -1,3 +1,4 @@
+# majordomus-covers: plan doctor
 # The project model as doctrine: declared in the registry, dispatched by doctor and watch,
 # failing the command it runs in, and skipping cleanly where no model exists.
 . "$ROOT/test/lib.sh"

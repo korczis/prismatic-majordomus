@@ -54,7 +54,7 @@
       "test": "test/cases/03_update.sh",
       "status": "guaranteed",
       "note": null,
-      "responsibility": null,
+      "responsibility": "none",
       "source_route": "/docs/cli/",
       "command": null,
       "test_case": "03_update"
@@ -121,7 +121,7 @@
       "note": "A doctrine whose validator does not exist, a validator no doctrine declares, a command that never dispatches, a blocking rule whose command cannot exit non-zero, a missing test, and CI that swallows the suite are six separate failures with six separate messages. Each is mutation-tested.",
       "responsibility": "doctor",
       "source_route": "/docs/doctrine/",
-      "command": null,
+      "command": "doctrine",
       "test_case": "18_doctrine_wiring"
     },
     {
@@ -134,7 +134,7 @@
       "note": "The test changes checkpoint freshness from advisory to blocking in a copy of the vendored rule file and asserts that check's exit code moves from 0 to 10. There are two classes and no override.",
       "responsibility": "policy",
       "source_route": "/docs/doctrine/",
-      "command": null,
+      "command": "doctrine",
       "test_case": "17_doctrine_enforcement"
     },
     {
@@ -186,7 +186,7 @@
       "note": "Covers name and filename mismatch, an empty description, an unknown front-matter key, missing front matter, and a block token used inline.",
       "responsibility": "policy",
       "source_route": "/docs/doctrine/",
-      "command": null,
+      "command": "prompt",
       "test_case": "24_prompt_search"
     },
     {
@@ -275,7 +275,7 @@
       "test": "test/cases/01_init.sh",
       "status": "guaranteed",
       "note": null,
-      "responsibility": null,
+      "responsibility": "none",
       "source_route": "/docs/cli/",
       "command": "init",
       "test_case": "01_init"
@@ -288,7 +288,7 @@
       "test": "test/cases/02_doctor_basic.sh",
       "status": "guaranteed",
       "note": null,
-      "responsibility": null,
+      "responsibility": "none",
       "source_route": "/docs/design/",
       "command": null,
       "test_case": "02_doctor_basic"
@@ -301,7 +301,7 @@
       "test": "test/cases/08_no_forbidden_constructs.sh",
       "status": "guaranteed",
       "note": null,
-      "responsibility": null,
+      "responsibility": "none",
       "source_route": "/docs/design/",
       "command": null,
       "test_case": "08_no_forbidden_constructs"
@@ -524,7 +524,7 @@
       "note": "Git first, then task and profile, then blockers, then authored records, then history. The profile's context block decides what is offered; it is the only code that reads those fields.",
       "responsibility": "profiles",
       "source_route": "/docs/continuity/",
-      "command": null,
+      "command": "context",
       "test_case": "23_context"
     },
     {
@@ -537,7 +537,7 @@
       "note": "The count is of the printed document, not of its sections. Git, task, profile and open blockers are never dropped; record bodies degrade to a pointer before they disappear.",
       "responsibility": "profiles",
       "source_route": "/policy/",
-      "command": null,
+      "command": "context",
       "test_case": "23_context"
     },
     {
@@ -550,7 +550,7 @@
       "note": "The cap is what keeps a checkpoint distinct from a handover. Mode 0600, created atomically, never staged.",
       "responsibility": "state",
       "source_route": "/docs/schemas/",
-      "command": null,
+      "command": "checkpoint",
       "test_case": "20_checkpoint"
     },
     {
@@ -576,7 +576,7 @@
       "note": "What happened, when, for which task, at which head, and what outcome was accepted. Never what anyone said.",
       "responsibility": "watch",
       "source_route": "/docs/cli/",
-      "command": null,
+      "command": "history",
       "test_case": "22_history"
     },
     {
@@ -589,7 +589,7 @@
       "note": "Refuses to overwrite an existing archive, and does nothing when the ledger is under its cap.",
       "responsibility": "watch",
       "source_route": "/docs/schemas/",
-      "command": null,
+      "command": "history",
       "test_case": "22_history"
     },
     {
@@ -602,7 +602,7 @@
       "note": "--why is required. --supersedes refuses text matching no recorded decision. Task and head are computed.",
       "responsibility": "state",
       "source_route": "/docs/schemas/",
-      "command": null,
+      "command": "decision",
       "test_case": "21_decision_question"
     },
     {
@@ -615,7 +615,7 @@
       "note": "A gate that cannot read an entry can be bypassed by mistyping one, so check, doctor and watch all fail on a malformed entry.",
       "responsibility": "finish",
       "source_route": "/docs/schemas/",
-      "command": null,
+      "command": "question",
       "test_case": "21_decision_question"
     },
     {
@@ -628,7 +628,7 @@
       "note": "No conditionals, loops, includes or shell. A prompt that silently renders a misspelled token as literal text is worse than one that refuses.",
       "responsibility": "policy",
       "source_route": "/docs/schemas/",
-      "command": null,
+      "command": "prompt",
       "test_case": "24_prompt_search"
     },
     {
@@ -641,7 +641,7 @@
       "note": "A fixed-string grep in authority order. No ranking, no embedding, no index that could fall out of step with the records it describes.",
       "responsibility": "watch",
       "source_route": "/docs/cli/",
-      "command": null,
+      "command": "search",
       "test_case": "24_prompt_search"
     },
     {
@@ -719,7 +719,7 @@
       "note": "rules vendor status reports an edited, missing or stray file; rules vendor update refuses over it until --force, and never touches rules/project/. A newer executable reports a newer package and does not apply it.",
       "responsibility": "doctor",
       "source_route": "/docs/doctrine/",
-      "command": null,
+      "command": "rules",
       "test_case": "67_rule_dag"
     },
     {
@@ -732,7 +732,7 @@
       "note": "A missing or deprecated dependency, a cycle, one identity claimed twice, a project rule in the vendor namespace, malformed front matter, an unknown key and an x-majordomus block missing its binding are each refused by name. Every dependency is listed before the rule that depends on it, and two runs agree.",
       "responsibility": "doctor",
       "source_route": "/docs/doctrine/",
-      "command": null,
+      "command": "rules",
       "test_case": "67_rule_dag"
     },
     {
@@ -758,7 +758,7 @@
       "note": "Every other command refuses the legacy layout and names migrate. --dry-run prints the plan and writes nothing. A file the version does not know is reported, never deleted; a destination that already exists refuses the whole run.",
       "responsibility": "layer",
       "source_route": "/docs/cli/",
-      "command": null,
+      "command": "migrate",
       "test_case": "66_migrate_legacy"
     },
     {
@@ -799,6 +799,45 @@
       "source_route": "/docs/concepts/",
       "command": "doctor",
       "test_case": "28_no_hardcoded_values"
+    },
+    {
+      "id": "command-surface",
+      "claim": "The public command surface is declared, and reconciled against the dispatcher",
+      "source": "docs/DYNAMICITY.md",
+      "implementation": "share/commands.yaml",
+      "test": "test/cases/30_command_registry.sh",
+      "status": "guaranteed",
+      "note": "The registry is authority for what a command means; bin/majordomus stays authority for what runs. A command dispatched with no entry, and an entry nothing dispatches, both fail. A command is public exactly when the usage text lists it, checked in both directions.",
+      "responsibility": "doctor",
+      "source_route": "/docs/dynamicity/",
+      "command": null,
+      "test_case": "30_command_registry"
+    },
+    {
+      "id": "command-coverage",
+      "claim": "Every public command has a behavioural test and a negative test, computed rather than remembered",
+      "source": "docs/DYNAMICITY.md",
+      "implementation": "test/cases/31_command_coverage.sh",
+      "test": "test/cases/31_command_coverage.sh",
+      "status": "guaranteed",
+      "note": "The requirement is derived from the registry, so a command added tomorrow is owed coverage from that moment. Coverage is declared in per-case headers rather than inferred, because the negative assertions that use stdin and the surface case's loop are invisible to any scan.",
+      "responsibility": "doctor",
+      "source_route": "/docs/dynamicity/",
+      "command": null,
+      "test_case": "31_command_coverage"
+    },
+    {
+      "id": "event-vocabulary",
+      "claim": "The ledger's event vocabulary is closed, on the way in and on the way out",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/common.sh",
+      "test": "test/cases/33_event_registry.sh",
+      "status": "guaranteed",
+      "note": "share/events.yaml declares every name, its emitting command and its required payload keys. An unregistered name is refused on write, refused as a history filter, and reported by history --validate when already stored.",
+      "responsibility": "state",
+      "source_route": "/docs/schemas/",
+      "command": null,
+      "test_case": "33_event_registry"
     },
     {
       "id": "semantic-retrieval",
@@ -847,7 +886,7 @@
       "test": null,
       "status": "planned",
       "note": "The one implementation studied was rolled back within days because its limits were global constants rather than task-derived.",
-      "responsibility": null,
+      "responsibility": "none",
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -860,7 +899,7 @@
       "test": null,
       "status": "planned",
       "note": "Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement.",
-      "responsibility": null,
+      "responsibility": "none",
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -873,7 +912,7 @@
       "test": null,
       "status": "planned",
       "note": null,
-      "responsibility": null,
+      "responsibility": "none",
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -886,7 +925,7 @@
       "test": null,
       "status": "planned",
       "note": "Recommendations only. Majordomus does not invoke a model.",
-      "responsibility": null,
+      "responsibility": "none",
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -899,7 +938,7 @@
       "test": null,
       "status": "planned",
       "note": null,
-      "responsibility": null,
+      "responsibility": "none",
       "source_route": "/docs/design/",
       "command": null,
       "test_case": null
@@ -979,7 +1018,7 @@
       "note": "Evidence is a command and its result, or an artifact. Narrative is refused. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE.",
       "responsibility": "plan",
       "source_route": "/docs/planning/",
-      "command": null,
+      "command": "plan",
       "test_case": "41_project_status"
     },
     {

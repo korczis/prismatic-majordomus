@@ -1,3 +1,5 @@
+# majordomus-covers: update
+# majordomus-negative: update doctor
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 expect_exit 0 "$MJ" update

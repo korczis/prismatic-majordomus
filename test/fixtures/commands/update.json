@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "command": "update",
+  "title": "Regenerating the provider instructions",
+  "intro": "One policy, several provider instruction files, generated deterministically. Running it twice leaves byte-identical files, which is what makes a stamp able to detect a hand edit.",
+  "scenarios": [
+    {
+      "id": "first-run",
+      "title": "The projections have never been generated",
+      "given": {
+        "already generated": false
+      },
+      "setup": "init-only",
+      "run": [
+        "update"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "create CLAUDE.md",
+          "carries its own stamp"
+        ]
+      },
+      "explain": "Each target named in the policy's projections is written, and a stamp of each is recorded together with the hash of the policy that produced it."
+    },
+    {
+      "id": "idempotent",
+      "title": "Running it again with nothing changed",
+      "given": {
+        "already generated": true
+      },
+      "setup": "installed",
+      "run": [
+        "update"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "unchanged CLAUDE.md"
+        ]
+      },
+      "explain": "Deterministic output is not a nicety here. If regeneration produced a different file each time, a stamp could never distinguish a hand edit from the generator's own noise."
+    }
+  ]
+}

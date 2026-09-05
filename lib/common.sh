@@ -208,7 +208,10 @@ mj_layout_table() {
 mj_git() { git -C "$MJ_ROOT" "$@"; }
 mj_git_repo_id() { mj_git rev-parse --git-common-dir 2>/dev/null | { read -r d; case "$d" in /*) printf '%s' "$d" ;; *) printf '%s/%s' "$MJ_ROOT" "$d" ;; esac; }; }
 mj_git_branch()  { mj_git symbolic-ref --short HEAD 2>/dev/null || printf 'DETACHED'; }
-mj_git_head()    { mj_git rev-parse HEAD 2>/dev/null || printf 'NONE'; }
+# --verify, because plain `rev-parse HEAD` in a repository with no commits prints the
+# literal string "HEAD" on stdout and *then* fails. The fallback would append to that,
+# producing an identity field with an embedded newline and a permanently corrupt ledger line.
+mj_git_head()    { local h; h="$(mj_git rev-parse --verify HEAD 2>/dev/null)" || h=""; [ -n "$h" ] || h=NONE; printf '%s' "$h"; }
 mj_git_dirty()   { [ -z "$(mj_git status --porcelain=v1 2>/dev/null)" ] && printf 'clean' || printf 'dirty'; }
 mj_branch_key()  { mj_git_branch | sed 's/[^A-Za-z0-9._-]/-/g'; }
 
@@ -455,10 +458,56 @@ mj_projection_mode() {
   case "$m" in ""|file) printf 'file' ;; region) printf 'region' ;; *) printf '%s' "$m" ;; esac
 }
 
+# ---------------------------------------------------------------- event vocabulary
+# The ledger is append-only and canonical, so a line written into it is permanent. An event
+# name that no reader recognises is therefore a durable record that is silently ignored,
+# which is indistinguishable from the event never having happened. The vocabulary is closed
+# for the same reason an unknown policy key is an error.
+MJ_EV_FLAT=""
+mj_events_load() {
+  [ -n "$MJ_EV_FLAT" ] && [ -f "$MJ_EV_FLAT" ] && return 0
+  local reg="$MJ_BIN_DIR/../share/events.yaml"
+  [ -f "$reg" ] || mj_die "$MJ_EX_INTERNAL" "event registry missing: $reg"
+  MJ_EV_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.ev.XXXXXX")"
+  mj_yaml_flatten "$reg" > "$MJ_EV_FLAT" 2>/dev/null \
+    || mj_die "$MJ_EX_INTERNAL" "event registry does not parse: $reg"
+  [ "$(mj_yget "$MJ_EV_FLAT" version)" = 1 ] || mj_die "$MJ_EX_INTERNAL" "event registry version must be 1"
+}
+# These read the loaded registry. mj_events_load must run in the calling shell first: a load
+# inside a command substitution would set MJ_EV_FLAT in the subshell only, re-flattening the
+# file on every call and leaking a temporary file each time.
+mj_event_ids() { sed -n 's/^events\.[0-9]*\.id=//p' "$MJ_EV_FLAT"; }
+mj_event_known() { mj_event_ids | grep -Fxq "$1"; }
+# the index of one event, so its other fields can be read
+mj_event_index() {
+  local i=0
+  while [ -n "$(mj_yget "$MJ_EV_FLAT" "events.$i.id")" ]; do
+    [ "$(mj_yget "$MJ_EV_FLAT" "events.$i.id")" = "$1" ] && { printf '%s' "$i"; return 0; }
+    i=$((i+1))
+  done
+  return 1
+}
+mj_event_requires() {
+  local i; i="$(mj_event_index "$1")" || return 0
+  mj_ylist "$MJ_EV_FLAT" "events.$i.requires"
+}
+
 # ---------------------------------------------------------------- ledger
 # mj_ledger_append event 'extra json fields without braces'
+# The event must be one share/events.yaml declares, and must carry the payload keys that
+# entry requires. Both are internal errors rather than findings: a command that writes an
+# event the vocabulary does not define is a bug in Majordomus, not a fact about the
+# repository being supervised.
 mj_ledger_append() {
-  local ev="$1" extra="${2:-}" line sid
+  local ev="$1" extra="${2:-}" line sid k
+  mj_events_load
+  mj_event_known "$ev" || mj_die "$MJ_EX_INTERNAL" \
+    "unregistered event '$ev'; declare it in share/events.yaml or use one of: $(mj_event_ids | tr '\n' ' ')"
+  for k in $(mj_event_requires "$ev"); do
+    case "$extra" in *"\"$k\":"*) ;;
+      *) mj_die "$MJ_EX_INTERNAL" "event '$ev' is missing the required field '$k'" ;;
+    esac
+  done
   line="{\"ts\":\"$(mj_now)\",\"event\":\"$ev\",\"head\":\"$(mj_git_head)\",\"branch\":\"$(mj_json_esc "$(mj_git_branch)")\",\"by\":\"majordomus/$MJ_VERSION\""
   sid="$(mj_open_session_id)"
   [ -n "$sid" ] && line="$line,\"session\":\"$sid\""

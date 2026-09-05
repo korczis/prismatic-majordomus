@@ -1,3 +1,5 @@
+# majordomus-covers: knowledge
+# majordomus-negative: knowledge
 # Knowledge discovery is driven by the repository index, not by a filesystem walk.
 #
 # A walk returns build output, vendored trees and editor droppings, returns them in an

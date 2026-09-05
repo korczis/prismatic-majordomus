@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "command": "init",
+  "title": "Setting up, and refusing to overwrite",
+  "intro": "init is the only command that runs before the .ai/ layer exists. It seeds the manifest, the policy, the profiles, the vendored rule baseline and the empty sections from the skeleton, and it never touches .ai/local/.",
+  "scenarios": [
+    {
+      "id": "fresh",
+      "title": "A repository with no AI layer",
+      "given": {
+        "already installed": false,
+        "--extend": false
+      },
+      "setup": "bare",
+      "run": [
+        "init"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^created$",
+          ".ai/repo/policy.yaml",
+          "next: majordomus update"
+        ]
+      },
+      "explain": "The skeleton is copied in, the ignore line for .ai/local/ is added, and the two hook lines the policy needs are printed together with the command that will verify they were added. init does not install hooks itself."
+    },
+    {
+      "id": "refuses",
+      "title": "A repository that already has one",
+      "given": {
+        "already installed": true,
+        "--extend": false
+      },
+      "setup": "installed",
+      "run": [
+        "init"
+      ],
+      "expect": {
+        "exit": 15,
+        "stdout_contains": [
+          "already exists"
+        ]
+      },
+      "explain": "Exit 15 is REFUSED, not an error. Overwriting a policy someone has edited is the kind of silent loss this tool exists to prevent, so it stops and names the flag that adds without overwriting."
+    },
+    {
+      "id": "extends",
+      "title": "Adding what is missing with --extend",
+      "given": {
+        "already installed": true,
+        "--extend": true
+      },
+      "setup": "installed",
+      "run": [
+        "init",
+        "--extend"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "nothing to add"
+        ]
+      },
+      "explain": "--extend seeds only the files the layer lacks and rewrites nothing. On a complete layer it says so; the files under .ai/repo/ belong to the repository from the moment they were created."
+    }
+  ]
+}

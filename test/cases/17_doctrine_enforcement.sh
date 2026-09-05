@@ -1,3 +1,5 @@
+# majordomus-covers: check finish
+# majordomus-negative: check finish
 # A doctrine's class is not a label: it decides whether the command stops. Blocking
 # doctrines refuse; the one advisory doctrine reports and lets the command pass. A
 # blocker refuses completion and permits `blocked`.

@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "command": "history",
+  "title": "Reading the ledger back",
+  "intro": "The ledger is append-only and is the canonical record of what happened. The event vocabulary is closed, so a filter can tell an unknown name from one that has not occurred.",
+  "scenarios": [
+    {
+      "id": "reads",
+      "title": "What this task has done so far",
+      "given": {
+        "event name is registered": true
+      },
+      "setup": "active-task-records",
+      "run": [
+        "history"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "task.started",
+          "decision.recorded",
+          "question.opened"
+        ]
+      },
+      "explain": "Oldest first, each line carrying the timestamp, the event, the task and the git head it happened at."
+    },
+    {
+      "id": "unknown-event",
+      "title": "Filtering on a name that is not registered",
+      "given": {
+        "event name is registered": false
+      },
+      "setup": "active-task-records",
+      "run": [
+        "history",
+        "--event",
+        "task.startd"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout_contains": [
+          "unknown event",
+          "one of:"
+        ]
+      },
+      "explain": "Answering \"no matching events\" would be the same answer a registered name that has not occurred gives. A filter that cannot distinguish those two is not a filter, so this is refused and the vocabulary is printed."
+    }
+  ]
+}

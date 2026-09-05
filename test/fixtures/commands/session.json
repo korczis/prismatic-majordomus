@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "command": "session",
+  "title": "One worker's sitting, as a durable envelope",
+  "intro": "A session is one execution episode in one worktree. It claims no paths and gates nothing; it exists so that the records an episode wrote can be read back together, selected by the session stamp each ledger line carries.",
+  "scenarios": [
+    {
+      "id": "opens",
+      "title": "Opening an episode",
+      "given": {
+        "session open": false
+      },
+      "setup": "installed",
+      "run": [
+        "session",
+        "start",
+        "--worker",
+        "some-provider/some-model"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^session s-[0-9]+-[0-9a-f]+ opened at"
+        ]
+      },
+      "explain": "The identity fields are computed from git. The worker is recorded only because it was supplied; an unrecorded worker stays unrecorded rather than guessed."
+    },
+    {
+      "id": "refuses-second",
+      "title": "Opening a second one here",
+      "given": {
+        "session open": true
+      },
+      "setup": "session-open",
+      "run": [
+        "session",
+        "start"
+      ],
+      "expect": {
+        "exit": 15,
+        "stdout_contains": [
+          "is open here"
+        ]
+      },
+      "explain": "One open session per worktree. Replacing the first would orphan every record it stamped, so the second is refused and told what to do first."
+    },
+    {
+      "id": "closes",
+      "title": "Closing into an envelope",
+      "given": {
+        "session open": true
+      },
+      "setup": "session-open",
+      "run": [
+        "session",
+        "close"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^.ai/local/state/sessions/"
+        ]
+      },
+      "explain": "The closed record names the tasks, checkpoints, handovers, decisions and questions of the episode and copies none of them. The path printed is the record."
+    },
+    {
+      "id": "close-none",
+      "title": "Closing when nothing is open",
+      "given": {
+        "session open": false
+      },
+      "setup": "installed",
+      "run": [
+        "session",
+        "close"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no open session"
+        ]
+      },
+      "explain": "Absence is reported as a missing artifact, exit 12, and never as a silent success."
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+# majordomus-covers: init doctor start check watch update handover finish context checkpoint history decision question prompt search version
+# majordomus-negative: version
 . "$ROOT/test/lib.sh"
 # Every subcommand the binary dispatches is reachable, self-documenting, and exercised
 # here — so "tested in CI" is true of each one individually, not only of the suite.
@@ -33,6 +35,10 @@ expect_exit 0 "$MJ" --version
 expect_grep '^majordomus [0-9]+\.[0-9]+\.[0-9]+$'
 ver="$(sed -n 's/^MJ_VERSION="\([^"]*\)"$/\1/p' "$ROOT/bin/majordomus")"
 expect_grep "^majordomus $ver$"
+# version is dispatched ahead of the option parser, which is exactly how a command comes to
+# ignore arguments the rest of the surface refuses. It has to refuse them for itself.
+expect_exit 2 "$MJ" version --no-such-option
+expect_grep 'version: unknown option --no-such-option'
 
 # an unknown command is a usage error, not a silent no-op
 expect_exit 2 "$MJ" nonsense

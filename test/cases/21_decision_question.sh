@@ -1,3 +1,5 @@
+# majordomus-covers: decision question
+# majordomus-negative: decision question check finish watch doctor
 # Decisions and open questions: the two stores the finish contract reads. Both must be
 # written by a command, validated by the gates, and impossible to corrupt silently.
 . "$ROOT/test/lib.sh"

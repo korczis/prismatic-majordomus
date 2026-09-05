@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "command": "search",
+  "title": "Finding a record without reading all of them",
+  "intro": "A literal search across every durable store, in authority order. It exists so that a worker can find what was already decided instead of deciding it again.",
+  "scenarios": [
+    {
+      "id": "matches",
+      "title": "A term that appears in the records",
+      "given": {
+        "term appears": true
+      },
+      "setup": "active-task-records",
+      "run": [
+        "search",
+        "tabs"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "decision",
+          "match\\(es\\)"
+        ]
+      },
+      "explain": "Each hit names the kind of record, the file and the line, so the result can be opened rather than merely counted."
+    },
+    {
+      "id": "no-match",
+      "title": "A term that appears nowhere",
+      "given": {
+        "term appears": false
+      },
+      "setup": "active-task-records",
+      "run": [
+        "search",
+        "zzzznotfound"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no match"
+        ]
+      },
+      "explain": "Exit 12 rather than 0, so a script can tell absence from failure without parsing the output."
+    }
+  ]
+}

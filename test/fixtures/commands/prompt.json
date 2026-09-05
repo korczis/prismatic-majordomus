@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "command": "prompt",
+  "title": "Repository-local prompt assets",
+  "intro": "Small reusable prompts that live in the repository rather than in someone's history. render substitutes a fixed set of tokens and no others; an unknown token is an error rather than a literal left in the output.",
+  "scenarios": [
+    {
+      "id": "lists",
+      "title": "What is available",
+      "given": {
+        "asset exists": true
+      },
+      "setup": "installed",
+      "run": [
+        "prompt",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "continue",
+          "handover",
+          "review"
+        ]
+      },
+      "explain": "Each asset carries a name matching its filename and a one-line description, both validated by doctor."
+    },
+    {
+      "id": "missing",
+      "title": "Asking for one that does not exist",
+      "given": {
+        "asset exists": false
+      },
+      "setup": "installed",
+      "run": [
+        "prompt",
+        "show",
+        "nosuch"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no prompt asset",
+          "prompt list"
+        ]
+      },
+      "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the command that lists what does exist."
+    }
+  ]
+}

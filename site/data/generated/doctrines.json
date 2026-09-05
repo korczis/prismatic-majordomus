@@ -337,6 +337,33 @@
       "source": "share/standard/majordomus/rules/dag-integrity.v1.md"
     },
     {
+      "id": "majordomus.command-surface",
+      "slug": "command-surface",
+      "title": "The command surface is declared and reconciled",
+      "class": "blocking",
+      "principle": "Define done before executing",
+      "statement": "The command registry is authority for what a command means and the dispatcher for what runs; neither derives from the other, and doctor refuses a command present in one and absent from the other, in either direction.",
+      "summary": "Every command the binary dispatches is described by the shipped registry, every command the registry declares public is dispatched, and a command is public exactly when the usage text lists it.",
+      "validator": "command_surface",
+      "validator_function": "mj_validate_command_surface",
+      "defined_in": "lib/commands.sh",
+      "category": "command",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "command-surface"
+      ],
+      "test": "test/cases/30_command_registry.sh",
+      "depends_on": [
+        "majordomus.define-done-first@1"
+      ],
+      "source": "share/standard/majordomus/rules/command-surface.v1.md"
+    },
+    {
       "id": "majordomus.doctrine-wiring-integrity",
       "slug": "doctrine-wiring-integrity",
       "title": "Doctrine wiring integrity",
@@ -390,6 +417,33 @@
         "majordomus.define-done-first@1"
       ],
       "source": "share/standard/majordomus/rules/enforcement-wiring.v1.md"
+    },
+    {
+      "id": "majordomus.command-coverage",
+      "slug": "command-coverage",
+      "title": "Every public command is exercised and refuted",
+      "class": "blocking",
+      "principle": "Verify outcomes, not activity",
+      "statement": "Coverage is owed to every public command from the moment it is registered; a case declares which commands it exercises and which failure modes it asserts, and a public command that no case declares in both layers is a failure.",
+      "summary": "Every public command has a behavioural test and a negative test, computed from the registry and the coverage each case declares about itself rather than from a list someone maintains.",
+      "validator": "command_coverage",
+      "validator_function": "mj_validate_command_coverage",
+      "defined_in": "lib/commands.sh",
+      "category": "command",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "command-coverage"
+      ],
+      "test": "test/cases/31_command_coverage.sh",
+      "depends_on": [
+        "majordomus.verify-outcomes@1"
+      ],
+      "source": "share/standard/majordomus/rules/command-coverage.v1.md"
     },
     {
       "id": "majordomus.handover-integrity",
@@ -812,8 +866,8 @@
     }
   ],
   "counts": {
-    "declared": 29,
-    "blocking": 25,
+    "declared": 31,
+    "blocking": 27,
     "advisory": 4
   },
   "index": {
@@ -829,22 +883,24 @@
     "majordomus.blocker-resolution": 9,
     "majordomus.decision-records": 10,
     "majordomus.dag-integrity": 11,
-    "majordomus.doctrine-wiring-integrity": 12,
-    "majordomus.enforcement-wiring": 13,
-    "majordomus.handover-integrity": 14,
-    "majordomus.note-integrity": 15,
-    "majordomus.profile-requirements": 16,
-    "majordomus.project-integrity": 17,
-    "majordomus.projection-integrity": 18,
-    "majordomus.context-budget": 19,
-    "majordomus.prompt-integrity": 20,
-    "majordomus.questions-store-integrity": 21,
-    "majordomus.retention-caps": 22,
-    "majordomus.roadmap-integrity": 23,
-    "majordomus.rule-package-integrity": 24,
-    "majordomus.scope-integrity": 25,
-    "majordomus.state-consistency": 26,
-    "majordomus.task-continuity": 27,
-    "majordomus.verification-integrity": 28
+    "majordomus.command-surface": 12,
+    "majordomus.doctrine-wiring-integrity": 13,
+    "majordomus.enforcement-wiring": 14,
+    "majordomus.command-coverage": 15,
+    "majordomus.handover-integrity": 16,
+    "majordomus.note-integrity": 17,
+    "majordomus.profile-requirements": 18,
+    "majordomus.project-integrity": 19,
+    "majordomus.projection-integrity": 20,
+    "majordomus.context-budget": 21,
+    "majordomus.prompt-integrity": 22,
+    "majordomus.questions-store-integrity": 23,
+    "majordomus.retention-caps": 24,
+    "majordomus.roadmap-integrity": 25,
+    "majordomus.rule-package-integrity": 26,
+    "majordomus.scope-integrity": 27,
+    "majordomus.state-consistency": 28,
+    "majordomus.task-continuity": 29,
+    "majordomus.verification-integrity": 30
   }
 }

@@ -60,7 +60,18 @@ arbitrary. Most of them were paid for.
    with `mj_doctrine_fail`, never `mj_fail`: the doctrine's class decides the level, and
    your validator must always `return 0`, because a non-zero return means the validator
    itself broke. [`docs/DOCTRINE.md`](docs/DOCTRINE.md) is the full contract.
-7. Commit in conventional format, `type(scope): description`, small commits that each
+7. **A public command is a declared surface, not a shell function.**
+   [`share/commands.yaml`](share/commands.yaml) says what each command means;
+   `bin/majordomus` decides what runs; neither derives from the other and `doctor`
+   reconciles them. Adding one means, in any order: the dispatch arm and the usage line in
+   `bin/majordomus` with `lib/<name>.sh`; the registry entry and a `` ## `majordomus <name>` ``
+   section in [`docs/CLI.md`](docs/CLI.md); a case that declares
+   `# majordomus-covers: <name>` and one that declares `# majordomus-negative: <name>`; and
+   `test/fixtures/commands/<name>.json`, whose scenarios `test/cases/34_command_fixtures.sh`
+   executes against the real binary and the site renders as that command's demonstration.
+   Miss any of them and you are told which: the registry reconciliation, the coverage
+   doctrine and the site generator each refuse separately and name what is absent.
+8. Commit in conventional format, `type(scope): description`, small commits that each
    leave the tree consistent.
 8. Before marking the pull request ready, compare every capability sentence you touched
    in `README.md` or `docs/` against the tests. Wording that outruns the tests is

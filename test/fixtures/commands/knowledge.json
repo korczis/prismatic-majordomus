@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "command": "knowledge",
+  "title": "What the repository states, compiled",
+  "intro": "knowledge discovers the declared source classes through the version-control index, derives one node per object it finds and one edge per relationship a file states, and reads no prose.",
+  "scenarios": [
+    {
+      "id": "sources",
+      "title": "The declared sources, discovered",
+      "given": {
+        "installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "knowledge",
+        "sources"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^policy +shared +policy +[0-9a-f]{12} +.ai/repo/policy.yaml",
+          "^knowledge sources: [0-9]+ file"
+        ]
+      },
+      "explain": "Every row is a tracked file matched by a declared pathspec; nothing on the filesystem is looked at unless a class names it."
+    },
+    {
+      "id": "nodes",
+      "title": "Nodes of one kind",
+      "given": {
+        "installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "knowledge",
+        "nodes",
+        "--kind",
+        "rule"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^rule +shared +[0-9a-f]{12} +rule:majordomus.scope-integrity"
+        ]
+      },
+      "explain": "A rule's identity is the id in its front matter, so a rebuild after an edit keeps the node and every reference to it."
+    },
+    {
+      "id": "refuses-unknown",
+      "title": "A subcommand that does not exist",
+      "given": {
+        "installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "knowledge",
+        "bogus"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout_contains": [
+          "unknown subcommand"
+        ]
+      },
+      "explain": "Usage errors exit 2 and name the help text; nothing is guessed from a near miss."
+    }
+  ]
+}

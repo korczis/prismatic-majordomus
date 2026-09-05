@@ -1,3 +1,5 @@
+# majordomus-covers: doctor
+# majordomus-negative: doctor
 . "$ROOT/test/lib.sh"
 # not installed
 expect_exit 12 "$MJ" doctor

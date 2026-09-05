@@ -1,3 +1,5 @@
+# majordomus-covers: session
+# majordomus-negative: session
 # A session opens once per worktree, reports itself, and refuses to be opened twice.
 #
 # The session is the seventh durable record and the only one that is not task-shaped. This

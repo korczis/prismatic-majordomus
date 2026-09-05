@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "command": "rules",
+  "title": "The effective rule set, resolved",
+  "intro": "rules reads the vendored baseline and the project rules as one additive set, resolves their dependencies in a deterministic order, and shows any one of them whole.",
+  "scenarios": [
+    {
+      "id": "lists",
+      "title": "The resolved order",
+      "given": {
+        "installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "rules",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^majordomus.scope-integrity +v1 +blocking +vendor:majordomus"
+        ]
+      },
+      "explain": "Every active rule, its version, its class and where it came from. A missing dependency or a cycle would refuse the whole set rather than apply part of it."
+    },
+    {
+      "id": "shows-one",
+      "title": "One rule, whole",
+      "given": {
+        "installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "rules",
+        "show",
+        "majordomus.scope-integrity"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^id: majordomus.scope-integrity$",
+          "^class: blocking$"
+        ]
+      },
+      "explain": "Front matter and body, from the file the repository carries. The rule is the document; the tool only finds it."
+    },
+    {
+      "id": "refuses-unknown",
+      "title": "A rule that is not in the set",
+      "given": {
+        "installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "rules",
+        "show",
+        "nosuch.rule"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no rule 'nosuch.rule'"
+        ]
+      },
+      "explain": "Exit 12, a missing artifact, with the command that lists what exists."
+    }
+  ]
+}

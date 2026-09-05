@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "command": "start",
+  "title": "One scoped task at a time",
+  "intro": "start records what you are about to do and which paths it may touch. The scope is a claim you will be held to by check and by finish.",
+  "scenarios": [
+    {
+      "id": "begins",
+      "title": "Beginning a task",
+      "given": {
+        "task already active": false
+      },
+      "setup": "installed",
+      "run": [
+        "start",
+        "narrow the parser",
+        "--scope",
+        "lib"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^started t-",
+          "profile=implementation",
+          "scope=lib"
+        ]
+      },
+      "explain": "The identity fields \u2014 repository, branch, head, worktree \u2014 are computed from git and never authored. What you supply is the description, the scope and the profile."
+    },
+    {
+      "id": "refuses-second",
+      "title": "Starting a second task while one is active",
+      "given": {
+        "task already active": true
+      },
+      "setup": "active-task",
+      "run": [
+        "start",
+        "something else",
+        "--scope",
+        "lib"
+      ],
+      "expect": {
+        "exit": 15,
+        "stdout_contains": [
+          "is active"
+        ]
+      },
+      "explain": "One active task per checkout. Two open claims on the same working copy cannot both be enforced, so the second is refused and told what to do first."
+    }
+  ]
+}

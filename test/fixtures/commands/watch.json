@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "command": "watch",
+  "title": "What has moved since the last update",
+  "intro": "watch answers a different question from doctor: not what is wrong, but what has changed. It exits 11 for drift and never 10, so no hook blocks on it.",
+  "scenarios": [
+    {
+      "id": "clean",
+      "title": "Nothing has drifted",
+      "given": {
+        "policy edited since update": false
+      },
+      "setup": "installed",
+      "run": [
+        "watch"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "watch: 0 drift"
+        ]
+      },
+      "explain": "Exit 0. The policy hash matches the one recorded at the last update and every projection matches its fingerprint."
+    },
+    {
+      "id": "policy-edited",
+      "title": "The policy was edited and not regenerated",
+      "given": {
+        "policy edited since update": true
+      },
+      "setup": "policy-drifted",
+      "run": [
+        "watch"
+      ],
+      "expect": {
+        "exit": 11,
+        "stdout_contains": [
+          "DRIFT"
+        ]
+      },
+      "explain": "Exit 11 is DRIFT, which is information rather than a verdict. The generated instruction files no longer follow from the policy they were generated from, and `majordomus update` is the fix."
+    }
+  ]
+}

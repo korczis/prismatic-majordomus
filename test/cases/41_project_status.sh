@@ -1,3 +1,5 @@
+# majordomus-covers: plan
+# majordomus-negative: plan
 # Status derivation. No issue file carries a status; every state below is computed from
 # what was recorded about the issue and from the state of its dependencies.
 . "$ROOT/test/lib.sh"

@@ -45,6 +45,15 @@ H
     mj_history_rotate "$led"; return
   fi
 
+  # An unregistered name is refused rather than answered with "no matching events", which
+  # would be the same answer a registered name that has not occurred yet produces. A filter
+  # that cannot say which of those two it means is not a filter.
+  if [ -n "$want_event" ]; then
+    mj_events_load
+    mj_event_known "$want_event" || mj_die "$MJ_EX_USAGE" \
+      "history: unknown event '$want_event' (one of: $(mj_event_ids | tr '\n' ' '))"
+  fi
+
   local cutoff=""
   if [ -n "$since" ]; then
     case "$since" in
@@ -78,7 +87,23 @@ mj_history_validate() {
     [ "$MJ_JSON" = 1 ] || printf 'history --validate: %s malformed line(s)\n' "$(printf '%s\n' "$bad" | wc -w | tr -d ' ')"
     exit "$MJ_EX_CONTRACT"
   fi
-  mj_ok ledger "$(mj_lines "$led") lines" "every line carries ts and event"
+  # A well-formed line can still carry a name no reader knows. That line is durable and
+  # will be silently skipped by every filter, so it is a failure rather than a curiosity.
+  mj_events_load
+  local unknown="" e n=0
+  while IFS= read -r e; do
+    n=$((n+1))
+    [ -n "$e" ] || continue
+    mj_event_known "$e" || case " $unknown " in *" $e "*) ;; *) unknown="$unknown $e" ;; esac
+  done < <(sed -n 's/.*"event":"\([^"]*\)".*/\1/p' "$led")
+  if [ -n "$unknown" ]; then
+    for e in $unknown; do
+      mj_fail ledger "$e" "not a registered event; no reader recognises it" "grep -n '\"event\":\"$e\"' .ai/local/state/ledger.jsonl"
+    done
+    [ "$MJ_JSON" = 1 ] || printf 'history --validate: %s unregistered event name(s)\n' "$(printf '%s\n' $unknown | wc -w | tr -d ' ')"
+    exit "$MJ_EX_CONTRACT"
+  fi
+  mj_ok ledger "$(mj_lines "$led") lines" "every line carries ts and event, and every event is registered"
   [ "$MJ_JSON" = 1 ] || printf 'history --validate: ok\n'
 }
 

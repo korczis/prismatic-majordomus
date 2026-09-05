@@ -71,10 +71,16 @@ while [ $# -gt 0 ]; do
 done
 [ $# -ge 1 ] || { usage; exit "$MJ_EX_USAGE"; }
 cmd="$1"; shift
+# arguments that followed the command, before the global options are merged back in
+nargs=$#
 set -- "${pre[@]+"${pre[@]}"}" "$@"
 case "$cmd" in
   -h|--help|help) usage; exit 0 ;;
-  version|--version) echo "majordomus $MJ_VERSION"; exit 0 ;;
+  version|--version)
+    # every other command refuses an argument it does not know rather than ignoring it;
+    # version is dispatched before the option parser and has to say so for itself
+    [ "$nargs" -eq 0 ] || { mj_err "version: unknown option $1"; exit "$MJ_EX_USAGE"; }
+    echo "majordomus $MJ_VERSION"; exit 0 ;;
   init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session|knowledge|migrate|rules)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090

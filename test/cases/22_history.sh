@@ -1,6 +1,25 @@
+# majordomus-covers: history
+# majordomus-negative: history doctor watch
 # History: the ledger read back. Ordering, filters, the JSON form, validation of malformed
 # lines, and rotation that archives without deleting.
 . "$ROOT/test/lib.sh"
+
+# An event written before the repository has any commit must still be a well-formed line.
+# `git rev-parse HEAD` in a repository with no commits prints the literal string "HEAD" on
+# stdout and then fails, so a fallback that appends produces an identity field with an
+# embedded newline — and one corrupt line in an append-only file is corrupt for good.
+P="$T/before-first-commit"
+mkdir -p "$P" && ( cd "$P" && git init -q . && git config user.email t@example.com && git config user.name t )
+expect_exit 0 "$MJ" --repo "$P" init
+expect_exit 0 "$MJ" --repo "$P" update
+expect_exit 0 "$MJ" --repo "$P" history --validate
+expect_grep 'history --validate: ok'
+[ "$(grep -c '^{' "$P/.ai/local/state/ledger.jsonl")" = "$(wc -l < "$P/.ai/local/state/ledger.jsonl" | tr -d ' ')" ] \
+  || { echo "    a ledger line does not begin with { — an identity field carried a newline"; exit 1; }
+grep -q '"head":"NONE"' "$P/.ai/local/state/ledger.jsonl" \
+  || { echo "    head was not recorded as NONE in a repository with no commits"; exit 1; }
+rm -rf "$P"
+
 "$MJ" init >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base
 

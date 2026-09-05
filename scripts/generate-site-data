@@ -49,6 +49,7 @@ GEN_VERSION=1
 
 # ---------------------------------------------------------------- inputs
 INPUTS="bin/majordomus
+share/commands.yaml
 share/use-cases.yaml
 share/applications.yaml
 share/skeleton/policy.yaml
@@ -68,7 +69,13 @@ LICENSE"
 # uppercase and lowercase names has the same effect; this one merely reached that state
 # first.
 LC_ALL=C; export LC_ALL
+
+# test cases are inputs because each one declares which commands it covers, and that
+# metadata is the evidence the command pages render
 for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/share/standard/majordomus/rules/*.md "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
+         "$ROOT"/test/cases/*.sh \
+         "$ROOT"/test/fixtures/commands/*.json "$ROOT"/test/fixtures/commands/setup/*.sh \
+         "$ROOT"/test/fixtures/commands/stdin/* \
          "$ROOT/$PJ"/project.yaml "$ROOT/$PJ"/milestones/*.yaml \
          "$ROOT/$PJ"/issues/*.yaml; do
   case "$f" in */docs/SITE_CLAIMS.md|*/docs/PLAN_STATUS.md) continue ;; esac   # written by this script; never its own input
@@ -89,6 +96,16 @@ jstr() { jq -Rn --arg v "$1" '$v'; }           # JSON string
 jbool() { case "$1" in true) echo true ;; false) echo false ;; *) jstr "$1" ;; esac; }
 jnum_or_str() { case "$1" in ''|*[!0-9]*) jstr "$1" ;; *) printf '%s' "$1" ;; esac; }
 ylist_json() { mj_ylist "$1" "$2" | jq -R . | jq -sc .; }
+# Rewrite a generated file in place. The scratch file lives outside the staging directory,
+# which is published wholesale, and a failure aborts rather than publishing a half-written
+# artifact: `jq ... > "$OUT/x.tmp" && mv` leaks the temp into the site and, because `&&`
+# suppresses errexit, does it silently.
+jq_inplace() {
+  local target="$1"; shift
+  local t; t="$(mktemp "${TMPDIR:-/tmp}/mj.jqi.XXXXXX")"
+  jq "$@" "$target" > "$t" || { rm -f "$t"; echo "generate-site-data: rewriting ${target##*/} failed" >&2; exit 13; }
+  mv "$t" "$target"
+}
 
 # ---------------------------------------------------------------- project.json
 VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus" | head -1)"
@@ -152,6 +169,14 @@ rm -f "$P"
 
 # ---------------------------------------------------------------- capabilities.json (from docs/CLAIMS.yaml)
 Cf="$(flat "$ROOT/docs/CLAIMS.yaml")"
+# A claim's owning command is its implementation file, matched against the commands the
+# binary actually dispatches. The literal list this replaced predated every continuity
+# command, so their claims published with nothing to link to. An empty join would silently
+# produce `^lib/()\.sh$`, which matches nothing and would set every command to null, so the
+# emptiness is a refusal rather than a quiet no-op.
+COMMAND_NAMES="$(printf '%s' "$COMMANDS" | jq -r '[.[].name] | join("|")')"
+[ -n "$COMMAND_NAMES" ] || { echo "generate-site-data: the dispatch table in bin/majordomus yielded no commands" >&2; exit 10; }
+COMMAND_RE="^lib/($COMMAND_NAMES)\\.sh$"
 {
   i=0; first=1; printf '{"schema":1,"statuses":{'; k=0; sfirst=1
   while [ -n "$(yv "$Cf" "statuses.$k.id")" ]; do
@@ -167,13 +192,14 @@ Cf="$(flat "$ROOT/docs/CLAIMS.yaml")"
       --arg impl "$(yv "$Cf" "claims.$i.implementation")" --arg test "$(yv "$Cf" "claims.$i.test")" --arg status "$(yv "$Cf" "claims.$i.status")" \
       --arg note "$(yv "$Cf" "claims.$i.note")" \
       --arg resp "$(yv "$Cf" "claims.$i.responsibility")" \
+      --arg cmdre "$COMMAND_RE" \
       '{id:$id, claim:$claim, source:$source, implementation:(if $impl=="-" then null else $impl end), test:(if $test=="-" then null else $test end), status:$status, note:(if $note=="" then null else $note end),
         responsibility:(if $resp=="" then null else $resp end),
         source_route: ($source | if test("^docs/[A-Z_]+\\.md$") then "/docs/" + (ltrimstr("docs/") | rtrimstr(".md") | ascii_downcase | gsub("_";"-")) + "/"
                                 elif . == "AGENTS.md" then "/docs/contract/"
                                 elif startswith("share/skeleton/profiles/") then "/profiles/" + (ltrimstr("share/skeleton/profiles/") | rtrimstr(".yaml")) + "/"
                                 elif startswith("share/skeleton/policy") then "/policy/" else null end),
-        command: (if $impl | test("^lib/(init|doctor|start|check|watch|update|handover|finish)\\.sh$") then ($impl | ltrimstr("lib/") | rtrimstr(".sh")) else null end),
+        command: (if $impl | test($cmdre) then ($impl | ltrimstr("lib/") | rtrimstr(".sh")) else null end),
         test_case: (if $test == "-" then null else ($test | ltrimstr("test/cases/") | rtrimstr(".sh")) end)}'
     i=$((i+1))
   done; printf ']}'
@@ -252,22 +278,110 @@ jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" --argjson checks 
   --arg limits "$(section_of "$ROOT/README.md" "Limitations" "Roadmap")" \
   '{schema:1, finish_transcript:$finish, finish_checks:$checks, problem_md:$problem, problem_bullets_md:$problem_bullets, not_md:$notwhat, limitations_md:$limits, does:$does}' > "$OUT/readme.json"
 
-# ---------------------------------------------------------------- commands.json (CLI reference sections per command)
-# docs/CLI.md has one `## `majordomus <name>`` section per command; each becomes a page.
+# ---------------------------------------------------------------- commands.json (from share/commands.yaml)
+# The registry owns what a command is; docs/CLI.md supplies the narrative; the coverage
+# metadata each test case declares about itself supplies the evidence. Nothing here restates
+# a fact that one of those three already holds.
+Kf="$(flat "$ROOT/share/commands.yaml")"
+COVER="$(mktemp "${TMPDIR:-/tmp}/mj.cov.XXXXXX")"
+for f in "$ROOT"/test/cases/*.sh; do
+  n="$(basename "$f" .sh)"
+  for c in $(sed -n 's/^# majordomus-covers: *//p' "$f" | head -1); do
+    [ "$c" = none ] && continue
+    printf '%s\tbehaviour\t%s\n' "$c" "$n" >> "$COVER"
+  done
+  for c in $(sed -n 's/^# majordomus-negative: *//p' "$f" | head -1); do
+    printf '%s\tnegative\t%s\n' "$c" "$n" >> "$COVER"
+  done
+done
+cover_json() { awk -F'\t' -v c="$1" -v l="$2" '$1==c && $2==l {print $3}' "$COVER" | sort -u | jq -R . | jq -sc .; }
+# The demonstration is the fixture test/cases/34_command_fixtures.sh executes, with each
+# scenario's setup script inlined so the page can show the preparation it ran against. A
+# page that rendered a different scenario from the one the tests run would be a second
+# implementation, which is the thing this whole arrangement exists to prevent.
+FIXDIR="$ROOT/test/fixtures/commands"
+demo_json() {
+  local fx="$FIXDIR/$1.json"
+  [ -f "$fx" ] || { echo "generate-site-data: command $1 has no fixture at test/fixtures/commands/$1.json" >&2; exit 10; }
+  local tmp; tmp="$(mktemp "${TMPDIR:-/tmp}/mj.demo.XXXXXX")"
+  cp "$fx" "$tmp"
+  local sid setup body stdin
+  for sid in $(jq -r '.scenarios[].id' "$fx"); do
+    setup="$(jq -r --arg s "$sid" '.scenarios[] | select(.id==$s) | .setup' "$fx")"
+    body="$(cat "$FIXDIR/setup/$setup.sh")"
+    stdin="$(jq -r --arg s "$sid" '.scenarios[] | select(.id==$s) | .stdin // ""' "$fx")"
+    if [ -n "$stdin" ]; then stdin="$(cat "$FIXDIR/stdin/$stdin")"; fi
+    jq --arg s "$sid" --arg b "$body" --arg i "$stdin" \
+      '.scenarios |= map(if .id == $s then . + {setup_sh: $b, stdin_body: (if $i == "" then null else $i end)} else . end)' \
+      "$tmp" > "$tmp.n" && mv "$tmp.n" "$tmp"
+  done
+  jq -c . "$tmp"; rm -f "$tmp" "$tmp.n"
+}
+# Everything that can refuse runs before a byte is written. An `exit` inside a
+# `{ ... } | jq . > file` group kills the group while the redirect has already truncated the
+# target, so the refusal would be reported as jq's parse error and leave a ruined file.
+i=0
+while [ -n "$(yv "$Kf" "commands.$i.id")" ]; do
+  cid="$(yv "$Kf" "commands.$i.id")"
+  if [ "$(yv "$Kf" "commands.$i.visibility")" = public ]; then
+    awk -v h="## \`majordomus $cid" 'index($0,h)==1{f=1;found=1;next} f&&/^## /{exit} f' "$ROOT/docs/CLI.md" | grep -q . \
+      || { echo "generate-site-data: docs/CLI.md has no section for command '$cid'" >&2; exit 10; }
+    [ -f "$FIXDIR/$cid.json" ] \
+      || { echo "generate-site-data: command $cid has no fixture at test/fixtures/commands/$cid.json" >&2; exit 10; }
+    d="$(yv "$Kf" "commands.$i.demo")"
+    [ -n "$d" ] && [ "$d" != none ] \
+      || { echo "generate-site-data: command $cid declares no demo" >&2; exit 10; }
+    [ -n "$(cover_json "$cid" behaviour | jq -r '.[0] // empty')" ] \
+      || { echo "generate-site-data: command $cid has no behavioural test; add one and declare it in that case's header" >&2; exit 10; }
+    [ -n "$(cover_json "$cid" negative | jq -r '.[0] // empty')" ] \
+      || { echo "generate-site-data: command $cid has no negative test; add one and declare it in that case's header" >&2; exit 10; }
+  fi
+  i=$((i+1))
+done
+
 {
-  printf '{"schema":1,"commands":['
-  first=1
-  for name in $(jq -r '.commands[].name' "$OUT/project.json"); do
-    [ "$name" = version ] && continue
-    body="$(awk -v h="## \`majordomus $name" 'index($0,h)==1{f=1;next} f&&/^## /{exit} f' "$ROOT/docs/CLI.md" | sed -E "$LINKSED")"
-    [ -n "$body" ] || { echo "generate-site-data: docs/CLI.md has no section for command '$name'" >&2; exit 10; }
+  printf '{"schema":1,"stages":['
+  i=0; first=1
+  while [ -n "$(yv "$Kf" "stages.$i.id")" ]; do
     [ "$first" = 1 ] || printf ','; first=0
-    jq -cn --arg n "$name" --arg s "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/project.json")" \
-      --argjson ro "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .read_only' "$OUT/project.json")" --arg body "$body" \
-      '{name:$n, summary:$s, read_only:$ro, doc_md:$body}'
+    jq -cn --arg id "$(yv "$Kf" "stages.$i.id")" --arg title "$(yv "$Kf" "stages.$i.title")" '{id:$id, title:$title}'
+    i=$((i+1))
+  done
+  printf '],"commands":['
+  i=0; first=1
+  while [ -n "$(yv "$Kf" "commands.$i.id")" ]; do
+    cid="$(yv "$Kf" "commands.$i.id")"
+    if [ "$(yv "$Kf" "commands.$i.visibility")" != public ]; then i=$((i+1)); continue; fi
+    body="$(awk -v h="## \`majordomus $cid" 'index($0,h)==1{f=1;next} f&&/^## /{exit} f' "$ROOT/docs/CLI.md" | sed -E "$LINKSED")"
+
+    cls="$(yv "$Kf" "commands.$i.class")"
+    if [ "$cls" = read-only ]; then ro=true; else ro=false; fi
+    [ "$first" = 1 ] || printf ','; first=0
+    jq -cn --arg n "$cid" --arg summary "$(yv "$Kf" "commands.$i.summary")" \
+      --arg category "$(yv "$Kf" "commands.$i.category")" --arg stage "$(yv "$Kf" "commands.$i.stage")" \
+      --arg class "$cls" --argjson read_only "$ro" \
+      --arg requires_task "$(yv "$Kf" "commands.$i.requires_task")" \
+      --argjson requires_repository "$(jbool "$(yv "$Kf" "commands.$i.requires_repository")")" \
+      --argjson requires_installed "$(jbool "$(yv "$Kf" "commands.$i.requires_installed")")" \
+      --argjson json_output "$(jbool "$(yv "$Kf" "commands.$i.json")")" \
+      --arg syntax "$(yv "$Kf" "commands.$i.syntax")" --arg demo "$(yv "$Kf" "commands.$i.demo")" \
+      --arg note "$(yv "$Kf" "commands.$i.note")" --arg body "$body" \
+      --argjson reads "$(ylist_json "$Kf" "commands.$i.reads")" \
+      --argjson writes "$(ylist_json "$Kf" "commands.$i.writes")" \
+      --argjson exit_codes "$(mj_ylist "$Kf" "commands.$i.exit_codes" | jq -sc 'map(tonumber)')" \
+      --argjson behaviour "$(cover_json "$cid" behaviour)" \
+      --argjson negative "$(cover_json "$cid" negative)" \
+      --argjson demo_data "$(demo_json "$cid")" \
+      '{name:$n, summary:$summary, category:$category, stage:$stage, class:$class, read_only:$read_only,
+        requires_task:$requires_task, requires_repository:$requires_repository, requires_installed:$requires_installed,
+        json_output:$json_output, syntax:$syntax, demo:$demo, note:(if $note=="" then null else $note end),
+        reads:$reads, writes:$writes, exit_codes:$exit_codes,
+        tests:{behaviour:$behaviour, negative:$negative}, demo_data:$demo_data, doc_md:$body}'
+    i=$((i+1))
   done
   printf ']}'
 } | jq . > "$OUT/commands.json"
+rm -f "$Kf" "$COVER"
 
 # ---------------------------------------------------------------- responsibilities (README "What it does" rows, cross-linked)
 # The cross-links are data: which command owns a responsibility and which claims mention it,
@@ -284,6 +398,8 @@ README_TITLES="$(jq -r '.does[].title' "$OUT/readme.json")"
 heading_in() { # anchor, file -> the anchor is a level-two heading, bare or backticked
   grep -qxF "## $1" "$2" || grep -qxF "## \`$1\`" "$2"
 }
+# Zola's heading anchors: lowercase, every run of non-alphanumerics becomes one dash.
+anchor_slug() { printf '%s' "$1" | tr 'A-Z' 'a-z' | sed -e 's/[^a-z0-9][^a-z0-9]*/-/g' -e 's/^-//' -e 's/-$//'; }
 RESP_KEYS=""
 i=0
 while [ -n "$(yv "$Rf" "responsibilities.$i.id")" ]; do
@@ -326,31 +442,54 @@ while IFS= read -r t; do
 done <<EOF
 $README_TITLES
 EOF
-RESPONSIBILITIES_JSON="$(
+# Every fact a responsibility page shows comes from the canonical index or the README row,
+# joined here so that the templates only render: the owning command, the files that hold
+# the state, the implementation, and the two deep links into the specification.
+RESP_JSON="$(
   i=0; printf '['
   first=1
   while [ -n "$(yv "$Rf" "responsibilities.$i.id")" ]; do
     [ "$first" = 1 ] || printf ','; first=0
-    id="$(yv "$Rf" "responsibilities.$i.id")"
-    title="$(yv "$Rf" "responsibilities.$i.title")"
-    rk="$(yv "$Rf" "responsibilities.$i.readme_key")"
-    cmd="$(yv "$Rf" "responsibilities.$i.command")"
-    jq -cn --arg id "$id" --arg title "$title" --arg rk "$rk" --arg cmd "$cmd" \
-      '{id:$id, title:$title, readme_key:$rk, command:$cmd}'
+    rid="$(yv "$Rf" "responsibilities.$i.id")"
+    rcli="$(yv "$Rf" "responsibilities.$i.cli_anchor")"
+    rsch="$(yv "$Rf" "responsibilities.$i.schema_anchor")"
+    jq -cn --arg id "$rid" --arg title "$(yv "$Rf" "responsibilities.$i.title")" --arg key "$(yv "$Rf" "responsibilities.$i.readme_key")" \
+      --arg command "$(yv "$Rf" "responsibilities.$i.command")" --arg impl "$(yv "$Rf" "responsibilities.$i.implementation")" \
+      --arg cli "$rcli" --arg cli_route "/docs/cli/#$(anchor_slug "$rcli")" \
+      --arg schema "$rsch" --arg schema_route "/docs/schemas/#$(anchor_slug "$rsch")" \
+      --argjson order "$(jnum_or_str "$(yv "$Rf" "responsibilities.$i.order")")" \
+      --argjson files "$(ylist_json "$Rf" "responsibilities.$i.files")" \
+      '{id:$id, title:$title, readme_key:$key, command:(if $command=="" then null else $command end),
+        implementation:$impl, files:$files, order:$order,
+        cli_anchor:$cli, cli_route:$cli_route, schema_anchor:$schema, schema_route:$schema_route}'
     i=$((i+1))
   done
   printf ']'
 )"
 rm -f "$Rf"
+# Every claim declares which responsibility it belongs to, or declares `none` and says why.
+# An absent field would put the claim on no page and report nothing — the same silence the
+# keyword matching this join replaced, one level down.
+claim_resp_bad="$(jq -r --argjson r "$RESP_JSON" '
+  ([$r[].id] + ["none"]) as $known
+  | [ .claims[] | select(.responsibility == null) | .id ] as $absent
+  | [ .claims[] | select(.responsibility != null and ((.responsibility | IN($known[])) | not)) | .id ] as $unknown
+  | (if ($absent | length) > 0 then
+       "claims with no responsibility field: " + ($absent | join(", ")) + " — declare one, or `responsibility: none` with the reason"
+     else "" end)
+  + (if ($unknown | length) > 0 then
+       (if ($absent | length) > 0 then "; " else "" end)
+       + "claims naming a responsibility that does not exist: " + ($unknown | join(", "))
+     else "" end)' "$OUT/capabilities.json")"
+[ -z "$claim_resp_bad" ] || { echo "generate-site-data: $claim_resp_bad" >&2; exit 10; }
 # No fallback for a missing row: the loop above has already refused that case, and a default
 # here would quietly restore the silence it exists to remove.
-jq --argjson resps "$RESPONSIBILITIES_JSON" --slurpfile caps "$OUT/capabilities.json" '
-  ($resps | INDEX(.readme_key)) as $r_by_key
-  | .does |= map(. as $row
-      | ($r_by_key[$row.title] | if . == null then error("no responsibility for README row \($row.title)") else . end) as $r
-      | . + {slug: $r.id,
-             command: (if $r.command == "" then null else $r.command end),
-             claim_ids: [ $caps[0].claims[] | select(.responsibility == $r.id) | .id ]})' "$OUT/readme.json" > "$OUT/readme.json.tmp" && mv "$OUT/readme.json.tmp" "$OUT/readme.json"
+jq_inplace "$OUT/readme.json" --argjson r "$RESP_JSON" --slurpfile caps "$OUT/capabilities.json" '
+  .does |= ([ .[] as $row
+    | ($r[] | select(.readme_key == $row.title)) as $e
+    | [ $caps[0].claims[] | select(.responsibility == $e.id) | .id ] as $cids
+    | $row + $e + {slug: $e.id, claim_ids: $cids} ]
+    | sort_by(.order))'
 
 # ---------------------------------------------------------------- doctrines.json
 # Every field the site shows about a doctrine is either in the rule object or resolved from
@@ -443,11 +582,18 @@ done
   printf ']}'
 } | jq . > "$OUT/doctrines.json"
 # The counts the site prints come from the data, so a doctrine cannot be added without them moving.
-jq '. + {counts: {declared: (.doctrines|length),
+jq_inplace "$OUT/doctrines.json" '. + {counts: {declared: (.doctrines|length),
                   blocking: ([.doctrines[]|select(.class=="blocking")]|length),
                   advisory: ([.doctrines[]|select(.class=="advisory")]|length)},
-         index: (reduce (.doctrines|to_entries[]) as $e ({}; . + {($e.value.id): $e.key}))}' \
-  "$OUT/doctrines.json" > "$OUT/doctrines.json.tmp" && mv "$OUT/doctrines.json.tmp" "$OUT/doctrines.json"
+         index: (reduce (.doctrines|to_entries[]) as $e ({}; . + {($e.value.id): $e.key}))}'
+
+# Which doctrines enforce a responsibility is a join, not an opinion: a doctrine enforces a
+# responsibility when it backs one of that responsibility's claims. Computed here so the
+# template only renders, and so a doctrine added tomorrow appears on the page it belongs to.
+jq_inplace "$OUT/readme.json" --slurpfile docs "$OUT/doctrines.json" '
+  .does |= map(. as $row
+    | . + {doctrine_ids: [ $docs[0].doctrines[]
+        | select((.claims // []) | any(IN($row.claim_ids[]))) | .id ]})'
 
 # ---------------------------------------------------------------- why.json (the five moments, as data)
 # The moments are hand-written prose in site/content-src/why/, but the links out of them are

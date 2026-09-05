@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "command": "migrate",
+  "title": "Leaving the legacy layout, on purpose",
+  "intro": "migrate moves project data from the pre-.ai layout under .majordomus/ into the portable AI layer. It is explicit, it prints its plan, it copies the local state aside first, and it never deletes a file it does not know.",
+  "scenarios": [
+    {
+      "id": "plans",
+      "title": "The plan, and nothing written",
+      "given": {
+        "legacy layout": true,
+        "--dry-run": true
+      },
+      "setup": "legacy-layout",
+      "run": [
+        "migrate",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^migrate: .majordomus/ \\(pre-.ai layout\\) -> .ai/",
+          "move  .majordomus/policy.yaml -> .ai/repo/policy.yaml"
+        ]
+      },
+      "explain": "Every file and where it goes, before anything moves. A plan that surprises is a plan to read again, not to run."
+    },
+    {
+      "id": "migrates",
+      "title": "The move itself",
+      "given": {
+        "legacy layout": true,
+        "--dry-run": false
+      },
+      "setup": "legacy-layout",
+      "run": [
+        "migrate"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^migrated: .ai/ is the layout"
+        ]
+      },
+      "explain": "The tracked half lands under .ai/repo/ and the local half under .ai/local/, which is ignored from then on. doctor runs at the end so the first thing seen on the new layout is its real state."
+    },
+    {
+      "id": "refuses-nothing",
+      "title": "Nothing to migrate and no layer",
+      "given": {
+        "legacy layout": false,
+        "--dry-run": false
+      },
+      "setup": "bare",
+      "run": [
+        "migrate"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "nothing to migrate"
+        ]
+      },
+      "explain": "A repository with neither layout is not migrated into existence; it is told to run init."
+    }
+  ]
+}

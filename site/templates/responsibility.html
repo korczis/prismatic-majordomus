@@ -3,27 +3,131 @@
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set cmds = load_data(path="data/generated/commands.json") -%}
+{%- set docs = load_data(path="data/generated/doctrines.json") -%}
 {%- set r = [x for x in readme.does if x.slug == page.extra.slug][0] -%}
-{%- set why = load_data(path="data/generated/why.json") -%}
+{%- set repo = project.repository_url -%}
+{%- set matching = [x for x in cmds.commands if x.name == (r.command or "")] -%}
+{%- set related = [c for c in caps.claims if c.id in r.claim_ids] -%}
+{%- set enforcing = [d for d in docs.doctrines if d.id in r.doctrine_ids] -%}
+{#- A responsibility's command may also be a dispatcher of doctrines rather than a subject
+    of them — watch enforces rules about other things and is backed by none itself. That is
+    a different relation and is shown as one, not folded into the first. -#}
+{%- set dispatches = [d for d in docs.doctrines if (r.command or "-") in d.enforced_by] -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
+
+    {#- What it is -#}
     <div class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ r.text | markdown | safe }}</div>
-    {%- set matching = [x for x in cmds.commands if x.name == (r.command or "")] -%}
+
+    {#- Where it lives. The paths come from docs/RESPONSIBILITIES.yaml and every one is
+        proved to exist at generation time, so these links cannot rot silently. -#}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where it lives</h2>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">State it owns</h3>
+        <ul class="mt-2 space-y-1 text-sm">{% for f in r.files %}<li><a href="{{ repo }}/blob/master/{{ f }}" class="break-all font-mono text-fg-brand hover:underline">{{ f }}</a></li>{% endfor %}</ul>
+      </div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">What implements it</h3>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="{{ repo }}/blob/master/{{ r.implementation }}" class="break-all font-mono text-fg-brand hover:underline">{{ r.implementation }}</a></li>
+        </ul>
+        <h3 class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Specified in</h3>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="{{ get_url(path=r.cli_route) }}" class="break-all font-mono text-fg-brand hover:underline">CLI · {{ r.cli_anchor }}</a></li>
+          <li><a href="{{ get_url(path=r.schema_route) }}" class="break-all font-mono text-fg-brand hover:underline">Schema · {{ r.schema_anchor }}</a></li>
+        </ul>
+      </div>
+    </div>
+
+    {#- The command that acts on it, with the whole contract rather than a name -#}
     {%- if matching | length > 0 -%}
     {%- set cmd = matching[0] -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The command: <a href="{{ get_url(path="/commands/" ~ cmd.name ~ "/", trailing_slash=true) }}" class="font-mono text-fg-brand hover:underline">majordomus {{ cmd.name }}</a></h2>
-    <p class="mt-2 text-body">{{ cmd.summary }}{% if cmd.read_only %} <span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span>{% endif %}</p>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The command that acts on it</h2>
+    <a href="{{ get_url(path="/commands/" ~ cmd.name ~ "/", trailing_slash=true) }}" class="mt-4 block rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium">
+      <code class="font-mono text-lg font-semibold text-heading">majordomus {{ cmd.name }}</code>
+      <p class="mt-2 text-sm text-body">{{ cmd.summary }}</p>
+      <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+        <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">{{ cmd.class }}</span></li>
+        {%- if cmd.requires_task != "none" %}<li><span class="rounded border border-default px-1.5 py-0.5 font-mono text-body">active task {{ cmd.requires_task }}</span></li>{% endif -%}
+        {%- if cmd.json_output %}<li><span class="rounded border border-default px-1.5 py-0.5 font-mono text-body">--json</span></li>{% endif -%}
+      </ul>
+    </a>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading">{{ cmd.syntax }}</pre></div>
+
+    {#- L. The same fixture that test/cases/34_command_fixtures.sh executes against the real
+        binary, shown here for the command that owns this responsibility. Without JavaScript
+        every scenario is listed in order. -#}
+    {%- set d = cmd.demo_data -%}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">See it refuse, and accept</h2>
+    <p class="mt-2 text-sm text-body">{{ d.intro }}</p>
+    <div class="mt-4" x-data="{ s: '{{ d.scenarios[0].id }}' }">
+      <div role="tablist" aria-label="Scenarios" class="flex flex-wrap gap-2">
+        {%- for sc in d.scenarios -%}
+        <button type="button" role="tab" x-on:click="s = '{{ sc.id }}'" :aria-selected="s === '{{ sc.id }}' ? 'true' : 'false'"
+          class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+          :class="s === '{{ sc.id }}' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">{{ sc.title }}</button>
+        {%- endfor -%}
+      </div>
+      {%- for sc in d.scenarios -%}
+      <div x-show="s === '{{ sc.id }}'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ sc.setup_sh }}</pre></div>
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus{% for a in sc.run %} {{ a }}{% endfor %}{% if sc.stdin_body %} &lt; body.md{% endif %}</pre></div>
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
+        <ul class="mt-2 space-y-1">{% for line in sc.expect.stdout_contains %}<li class="break-all font-mono text-sm text-body">{{ line }}</li>{% endfor %}</ul>
+        <p class="mt-3 text-sm"><span class="text-body-subtle">exit</span>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold {% if sc.expect.exit == 0 %}bg-success-soft text-fg-success-strong{% else %}bg-danger-soft text-fg-danger-strong{% endif %}">{{ sc.expect.exit }}</code></p>
+        <p class="mt-4 text-sm text-body">{{ sc.explain }}</p>
+      </div>
+      {%- endfor -%}
+    </div>
     {%- endif -%}
-    {%- set related = [c for c in caps.claims if c.id in r.claim_ids] -%}
-    {%- if related | length > 0 -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Claims that cover it</h2>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
-      {%- for c in related -%}<li><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={c.status} /> }}</span><span class="text-sm text-heading">{{ c.claim }}</span></a></li>{%- endfor -%}
+
+    {#- What enforces it: the doctrines that back this responsibility's guarantees -#}
+    {%- if enforcing | length > 0 -%}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What enforces it</h2>
+    <ul class="mt-4 space-y-3">
+      {%- for x in enforcing -%}
+      <li><a href="{{ get_url(path="/doctrines/" ~ x.slug ~ "/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="flex flex-wrap items-center gap-2"><span class="font-mono text-sm font-semibold text-heading">{{ x.id }}</span>
+        <span class="rounded border border-default px-1.5 py-0.5 font-mono text-xs {% if x.class == "blocking" %}bg-danger-soft text-fg-danger-strong{% else %}bg-warning-soft text-fg-warning{% endif %}">{{ x.class }}</span>
+        <span class="font-mono text-xs text-body-subtle">enforced by {% for c in x.enforced_by %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}</span></span>
+        <span class="mt-2 block text-sm text-body">{{ x.summary }}</span>
+      </a></li>
+      {%- endfor -%}
     </ul>
     {%- endif -%}
+
+    {#- The guarantees, each with the test that proves it -#}
+    {%- if related | length > 0 -%}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What is guaranteed</h2>
+    <ul class="mt-4 space-y-3">
+      {%- for c in related -%}
+      <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <span class="flex flex-wrap items-center gap-2">{{ <badge status={c.status} /> }}
+          <a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="text-sm text-heading hover:underline">{{ c.claim }}</a></span>
+        {%- if c.test %}<span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="{{ repo }}/blob/master/{{ c.test }}" class="break-all font-mono text-fg-brand hover:underline">{{ c.test }}</a></span>{% endif -%}
+      </li>
+      {%- endfor -%}
+    </ul>
+    {%- endif -%}
+
+    {%- if dispatches | length > 0 -%}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Rules this command runs</h2>
+    <p class="mt-2 text-sm text-body-subtle">Doctrines whose <code class="font-mono">enforced_by</code> names <code class="font-mono">{{ r.command }}</code>. Enforcing a rule and being governed by one are different relations, so they are listed separately.</p>
+    <ul class="mt-4 flex flex-wrap gap-2">
+      {%- for x in dispatches -%}
+      <li><a href="{{ get_url(path="/doctrines/" ~ x.slug ~ "/", trailing_slash=true) }}" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-2.5 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">{{ x.id }}</a></li>
+      {%- endfor -%}
+    </ul>
+    {%- endif -%}
+
     {%- set why_key = page.extra.slug -%}{%- set why_field = "responsibilities" -%}
     {% include "partials/why-backlinks.html" %}
   </div>
+
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">responsibilities</h2><ul class="space-y-1 text-sm">{% for q in readme.does %}<li><a href="{{ get_url(path="/supervises/" ~ q.slug ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 {% if q.slug == r.slug %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.slug == r.slug %} aria-current="page"{% endif %}>{{ q.title }}</a></li>{% endfor %}</ul></div></aside>
 </div>
 {% endblock body %}

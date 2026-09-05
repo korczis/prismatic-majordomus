@@ -861,11 +861,17 @@ ledger is one file per repository, so a selection by time range cannot tell two 
 workers apart, and the first real run of one claimed another worker's records. A line with
 no `session` belongs to no episode, which is the honest answer for work done outside one.
 
+The event vocabulary is closed. `share/events.yaml` declares every name the ledger
+accepts, what writes it, and the payload keys it must carry; `mj_ledger_append` refuses
+an unregistered name, `history --event` refuses to filter on one, and
+`history --validate` reports a stored line whose name no reader recognises. Adding an
+event means adding an entry there — the same rule that makes an unknown policy key an
+error.
+
 Events and their extra fields:
 
 | event | extra fields |
 |---|---|
-| `bootstrap` | `reason` |
 | `task.started` | `profile`, `scope[]`, `owner` |
 | `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved |
 | `task.finished` | `outcome`, `contract` (object of doctrine id → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null, `checkpoints` (count) |
@@ -877,6 +883,12 @@ Events and their extra fields:
 | `session.closed` | `outcome`, `session_path` |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
+| `plan_start` | `issue` |
+| `plan_verify` | `issue` |
+| `plan_evidence` | `issue`, `covers` (the requirement it satisfies), `type` |
+| `plan_done` | `issue` |
+| `layout.migrated` | `from`, `to`, `backup` (the copy of local state made before it moved, or empty) |
+| `rules.vendored` | `package` (the revision of the package now vendored) |
 
 `doctor`, `check` (without `--checkpoint`), `watch`, `context`, `history`, `search`, and
 `prompt` write nothing, the ledger included.

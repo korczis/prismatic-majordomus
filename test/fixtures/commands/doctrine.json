@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "command": "doctrine",
+  "title": "What is enforced, and whether it is wired",
+  "intro": "The registry ships with the tool rather than with a repository: a doctrine is a statement about how Majordomus behaves, and a repository configures the tool without redefining it. Every count this command prints is derived from the registry and the source, never written down.",
+  "scenarios": [
+    {
+      "id": "status",
+      "title": "The summary",
+      "given": {
+        "registry present": true
+      },
+      "setup": "installed",
+      "run": [
+        "doctrine",
+        "status"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "doctrine"
+        ]
+      },
+      "explain": "Declared, blocking, advisory, unwired and uncovered, each computed at the moment you ask. A number written into a document goes stale; a number derived from the registry cannot."
+    },
+    {
+      "id": "list",
+      "title": "One line per rule",
+      "given": {
+        "registry present": true
+      },
+      "setup": "installed",
+      "run": [
+        "doctrine",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "majordomus.scope-integrity",
+          "blocking"
+        ]
+      },
+      "explain": "Each doctrine with its class, the validator that decides it, and the commands that enforce it. A rule with no validator, or a validator no command reaches, is what `doctor` refuses."
+    },
+    {
+      "id": "unknown-subcommand",
+      "title": "A subcommand it does not have",
+      "given": {
+        "registry present": true
+      },
+      "setup": "installed",
+      "run": [
+        "doctrine",
+        "explain"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout_contains": [
+          "unknown subcommand"
+        ]
+      },
+      "explain": "Exit 2 is USAGE. A mistyped subcommand is refused rather than treated as the default, so a script cannot silently ask a different question from the one it meant."
+    }
+  ]
+}

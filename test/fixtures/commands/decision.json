@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "command": "decision",
+  "title": "Why it was done this way",
+  "intro": "A decision records a choice between real alternatives together with its reason. An entry is never edited or deleted; a later decision supersedes an earlier one and both stay readable.",
+  "scenarios": [
+    {
+      "id": "records",
+      "title": "Recording a decision with its reason",
+      "given": {
+        "reason given": true
+      },
+      "setup": "active-task",
+      "run": [
+        "decision",
+        "add",
+        "refuse tabs in the parser",
+        "--why",
+        "two encodings for one token"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "recorded: refuse tabs in the parser"
+        ]
+      },
+      "explain": "The task id and the git head are computed and attached, so a decision can always be placed against the state of the repository when it was taken."
+    },
+    {
+      "id": "reads-back",
+      "title": "Reading them back",
+      "given": {
+        "reason given": true
+      },
+      "setup": "active-task-records",
+      "run": [
+        "decision",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "refuse tabs in the parser",
+          "Why: two encodings"
+        ]
+      },
+      "explain": "The reason is part of the record, not a commit message someone may or may not have written. A decision without one is the thing a later worker cannot safely revisit."
+    }
+  ]
+}

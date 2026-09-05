@@ -1,0 +1,149 @@
+# The event vocabulary: every event name the ledger accepts, what writes it, and what each
+# one must carry. Shipped with the tool, beside share/commands.yaml and share/doctrines.yaml.
+#
+# The ledger is append-only and is the canonical record of what happened. Before this file
+# existed, mj_ledger_append took any string, so a mistyped name produced a durable line that
+# every reader silently ignored, and `history --event <name>` could not tell an unregistered
+# name from a registered one that had not occurred. This repository's own rule is that an
+# unknown configuration key is an error; an unknown event name is now one too.
+#
+# The names here are the names already written. They are registered as they are rather than
+# tidied, because renaming would break every ledger that exists — including this
+# repository's own — and a reader that silently omits everything before a rename is worse
+# than an inconsistent name.
+#
+# fields:
+#   emitted_by   the command whose module writes it; reconciled against lib/<name>.sh
+#   requires     payload keys every line of this type must carry, beyond the envelope
+#   public       true when the event is part of the documented record a user reads back
+#
+# Every line also carries the envelope, which is computed and never authored:
+# ts, event, head, branch, by.
+version: 1
+
+events:
+  - id: task.started
+    title: Task started
+    summary: A scoped task began under a profile.
+    emitted_by: start
+    requires: [task_id, profile, owner, scope]
+    public: true
+
+  - id: task.checkpoint
+    title: Checkpoint recorded
+    summary: Progress was recorded inside the active task.
+    emitted_by: checkpoint
+    requires: [task_id]
+    public: true
+    note: Written by checkpoint, and by check --checkpoint, which records one after its checks run. The checkpoint_path key is absent when the body was empty.
+
+  - id: task.handed_over
+    title: Handover written
+    summary: A continuation record was written for an active task.
+    emitted_by: handover
+    requires: [task_id, handover_path, closed]
+    public: true
+    note: Only for a handover written against an active task. handover --no-task writes a record and emits nothing, because there is no task for the event to belong to.
+
+  - id: task.finished
+    title: Task finished
+    summary: A task reached a typed outcome and its contract was recorded with it.
+    emitted_by: finish
+    requires: [task_id, outcome, contract]
+    public: true
+    note: Written when finish accepts. A refusal is not recorded, which is why an accepted task and one refused four times before passing look the same in the ledger. See the finish-refusal-leaves-no-trace row in docs/HARDCODING_LEDGER.yaml.
+
+  - id: decision.recorded
+    title: Decision recorded
+    summary: A choice between real alternatives was recorded with its reason.
+    emitted_by: decision
+    requires: [task_id, decision]
+    public: true
+
+  - id: question.opened
+    title: Question opened
+    summary: A question that blocks acceptance was opened against a task.
+    emitted_by: question
+    requires: [task_id, question]
+    public: true
+
+  - id: question.resolved
+    title: Question resolved
+    summary: An open question was answered and no longer blocks acceptance.
+    emitted_by: question
+    requires: [task_id, question, answer]
+    public: true
+
+  - id: projections.updated
+    title: Projections updated
+    summary: The provider instruction files were regenerated from the policy.
+    emitted_by: update
+    requires: [policy_sha256, targets]
+    public: true
+
+  - id: ledger.rotated
+    title: Ledger rotated
+    summary: Lines beyond the retention cap were moved into a dated archive.
+    emitted_by: history
+    requires: [archived, kept, archive]
+    public: true
+    note: The ledger's own maintenance, recorded in the ledger. Nothing is deleted; the archive path is part of the record so the rotation can be followed.
+
+  - id: plan_start
+    title: Issue started
+    summary: Execution of one issue in the project model began.
+    emitted_by: plan
+    requires: [issue]
+    public: true
+    note: The four plan events are named with an underscore rather than the dot the rest of the vocabulary uses. They are registered as written, because thirty-five of them are already in this repository's ledger; the inconsistency is recorded in docs/HARDCODING_LEDGER.yaml rather than fixed by a rename that would orphan them.
+
+  - id: plan_verify
+    title: Issue implementation complete
+    summary: An issue was recorded as implemented, with its evidence still outstanding.
+    emitted_by: plan
+    requires: [issue]
+    public: true
+
+  - id: plan_evidence
+    title: Evidence attached
+    summary: One piece of evidence was attached to an issue, against the requirement it satisfies.
+    emitted_by: plan
+    requires: [issue, covers, type]
+    public: true
+
+  - id: plan_done
+    title: Issue done
+    summary: An issue was recorded as complete, its required evidence present.
+    emitted_by: plan
+    requires: [issue]
+    public: true
+
+  - id: session.started
+    title: Session opened
+    summary: One worker's execution episode opened in this worktree.
+    emitted_by: session
+    requires: [owner]
+    public: true
+    note: The worker key is present only when one was supplied; an unrecorded worker stays unrecorded.
+
+  - id: session.closed
+    title: Session closed
+    summary: The open episode was closed into an immutable envelope of references.
+    emitted_by: session
+    requires: [outcome, session_path]
+    public: true
+
+  - id: layout.migrated
+    title: Layout migrated
+    summary: Project data moved from the pre-.ai layout into the portable AI layer.
+    emitted_by: migrate
+    requires: [from, to]
+    public: true
+    note: Carries the backup path when local state was copied aside before it moved.
+
+  - id: rules.vendored
+    title: Rules vendored
+    summary: The vendored rule baseline was replaced with the tool's shipped package.
+    emitted_by: rules
+    requires: [package]
+    public: true

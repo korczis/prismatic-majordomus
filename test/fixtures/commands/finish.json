@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "command": "finish",
+  "title": "The finish contract",
+  "intro": "Choose a situation and see whether the outcome is accepted or refused, and for which reasons. Every scenario here is executed against the real binary by test/cases/34_command_fixtures.sh, so this page cannot claim behaviour the tool does not have.",
+  "scenarios": [
+    {
+      "id": "all-unmet",
+      "title": "Nothing in place yet",
+      "given": { "scope respected": true, "no open blocker": true, "verification given": false, "note present": false },
+      "setup": "active-task",
+      "run": ["finish", "--outcome", "completed"],
+      "expect": { "exit": 10, "stdout_contains": ["FAIL verification", "FAIL note", "refused"] },
+      "explain": "Two contract lines are unmet and both are named at once. A worker who fixes one and is refused again for the next learns the contract one round trip at a time, so every cause is reported together."
+    },
+    {
+      "id": "scope-violation",
+      "title": "Work outside the claimed scope",
+      "given": { "scope respected": false, "no open blocker": true, "verification given": true, "note present": true },
+      "setup": "finish-scope-violation",
+      "run": ["finish", "--outcome", "completed", "--verify-command", "true"],
+      "expect": { "exit": 10, "stdout_contains": ["FAIL scope", "outside claimed scope"] },
+      "explain": "The task claimed lib. A change under docs is work the task did not claim, and it is refused whatever else is in place."
+    },
+    {
+      "id": "blocker-open",
+      "title": "An unresolved question is open",
+      "given": { "scope respected": true, "no open blocker": false, "verification given": true, "note present": true },
+      "setup": "finish-blocker-open",
+      "run": ["finish", "--outcome", "completed", "--verify-command", "true"],
+      "expect": { "exit": 10, "stdout_contains": ["FAIL blockers"] },
+      "explain": "An open question refuses completed, and only completed. The same task can be finished as blocked, which is the honest outcome when the answer is not yours to give."
+    },
+    {
+      "id": "verification-failed",
+      "title": "The verification command runs and fails",
+      "given": { "scope respected": true, "no open blocker": true, "verification given": false, "note present": true },
+      "setup": "finish-ready",
+      "run": ["finish", "--outcome", "completed", "--verify-command", "false"],
+      "expect": { "exit": 10, "stdout_contains": ["FAIL verification", "exit 1"] },
+      "explain": "The command is run, not asserted. Its exit code and duration are recorded whatever it returns, so \"verification ran\" cannot be claimed without something having actually run."
+    },
+    {
+      "id": "check-no-task",
+      "title": "finish --check with no active task",
+      "given": { "scope respected": true, "no open blocker": true, "verification given": true, "note present": true },
+      "setup": "installed",
+      "run": ["finish", "--check"],
+      "expect": { "exit": 0, "stdout_contains": ["nothing to enforce"] },
+      "explain": "This is why a pre-push hook can run finish --check unconditionally: a repository with no active task is not a failing repository."
+    },
+    {
+      "id": "accepted",
+      "title": "Everything in place",
+      "given": { "scope respected": true, "no open blocker": true, "verification given": true, "note present": true },
+      "setup": "finish-ready",
+      "run": ["finish", "--outcome", "completed", "--verify-command", "true"],
+      "expect": { "exit": 0, "stdout_contains": ["completed"] },
+      "explain": "Accepted, and the ledger records the outcome together with the verification that earned it."
+    }
+  ]
+}

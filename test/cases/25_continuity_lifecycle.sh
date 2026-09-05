@@ -1,3 +1,6 @@
+# majordomus-covers: start context checkpoint decision question handover history search check finish
+# majordomus-negative: check finish doctor
+# majordomus-lifecycle: accepted
 # Integration: whole lifecycles through the real CLI, not modules in isolation.
 #
 # The point of the subsystem is that a worker who has lost its conversation can resume from
