@@ -1197,7 +1197,7 @@
       "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
       "test": "test/cases/72_rust_mcp.sh",
       "status": "guaranteed",
-      "note": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects_get.rs covers every branch at the library level.",
+      "note": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects.rs covers every branch at the library level.",
       "responsibility": "none",
       "source_route": "/docs/mcp/",
       "command": null,
@@ -1293,6 +1293,32 @@
       "source_route": "/docs/capabilities/",
       "command": null,
       "test_case": "91_canonical_architecture"
+    },
+    {
+      "id": "provider-projections-one-renderer",
+      "claim": "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, GEMINI.md, ...) are a target of majordomus generate, rendered from the policy and the provider templates byte for byte as the shell tool renders them, and generate --check refuses a hand-edited or stale one in CI",
+      "source": "docs/CAPABILITIES.md",
+      "implementation": "apps/majordomus-cli/src/providers.rs",
+      "test": "test/cases/93_rust_provider_projections.sh",
+      "status": "guaranteed",
+      "note": "One renderer, two entry points that agree on every stamp; the policy is the only input (its hash and the profiles' is the stamp's first hash). A target outside the repository, a provider without a template, a token the policy cannot fill, and an always_loaded target over the budget are refused with the reason, and nothing is written. Region mode keeps the host document outside the markers. apps/majordomus-cli/tests/providers_projection.rs covers the fixture side; CI runs generate --check on every push.",
+      "responsibility": "projection",
+      "source_route": "/docs/capabilities/",
+      "command": null,
+      "test_case": "93_rust_provider_projections"
+    },
+    {
+      "id": "site-registry-dataset",
+      "claim": "The site's Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI",
+      "source": "docs/CAPABILITIES.md",
+      "implementation": "apps/majordomus-cli/src/site.rs",
+      "test": "apps/majordomus-cli/tests/projections.rs",
+      "status": "guaranteed",
+      "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns.",
+      "responsibility": "none",
+      "source_route": "/docs/capabilities/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/projections.rs"
     },
     {
       "id": "openapi-inferred",
