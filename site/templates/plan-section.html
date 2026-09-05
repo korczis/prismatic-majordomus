@@ -59,7 +59,7 @@
       <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave {{ w.wave }}</p>
       <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {%- for id in w.issues %}{%- set it = [i for i in issues if i.id == id] -%}
-        <li><a href="{{ get_url(path="/plan/" ~ (id | lower) ~ "/", trailing_slash=true) }}" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">{{ id }}</span>{{ <plan_status status={it[0].status} /> }}<span class="min-w-0 break-words text-sm text-heading">{{ it[0].title }}</span></a></li>
+        <li class="min-w-0"><a href="{{ get_url(path="/plan/" ~ (id | lower) ~ "/", trailing_slash=true) }}" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">{{ id }}</span>{{ <plan_status status={it[0].status} /> }}<span class="min-w-0 break-words text-sm text-heading">{{ it[0].title }}</span></a></li>
         {%- endfor %}
       </ul>
     </div>
