@@ -948,6 +948,15 @@
       "external": false
     },
     {
+      "id": "claim:site-registry-dataset",
+      "kind": "claim",
+      "label": "The site's Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI",
+      "status": "guaranteed",
+      "route": "/guarantees/site-registry-dataset/",
+      "external": false,
+      "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns."
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/capability/registry.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/capability/registry.rs",
@@ -1007,6 +1016,13 @@
       "id": "impl:apps/majordomus-cli/src/perf.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/perf.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/site.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/site.rs",
       "route": null,
       "external": false
     },
@@ -1331,6 +1347,13 @@
       "label": "share/skeleton/profiles/routine.yaml",
       "route": "/profiles/routine/",
       "external": false
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/projections.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/projections.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/projections.rs"
     },
     {
       "id": "test:test/cases/00_yaml_flatten.sh",
@@ -2117,6 +2140,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:site-registry-dataset",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -2572,6 +2600,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:site-registry-dataset",
+      "target": "impl:apps/majordomus-cli/src/site.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "test:test/cases/00_yaml_flatten.sh",
       "kind": "proved_by"
@@ -3024,6 +3057,11 @@
     {
       "source": "claim:execution-cache-equivalence",
       "target": "test:test/cases/91_canonical_architecture.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:site-registry-dataset",
+      "target": "test:apps/majordomus-cli/tests/projections.rs",
       "kind": "proved_by"
     }
   ]

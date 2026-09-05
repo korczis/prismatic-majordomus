@@ -7,16 +7,22 @@ use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
+use crate::app::App;
 use crate::bench::{BenchmarkProjection, Coverage, CoverageState, SystemTarget, Transport};
 use crate::capability::registry::ModuleSource;
 use crate::capability::{CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::error::{Error, Result};
 use crate::http::openapi;
 use crate::metadata::KindSchema;
+use crate::policy::LoadedPolicy;
 use crate::share::Share;
 
 /// Where generated artifacts live, relative to the repository root.
 pub const OUT_DIR: &str = "docs/generated";
+/// Where the registry dataset the site renders lives, relative to the repository root. The
+/// shell site generator owns `site/data/generated/` wholesale; this directory is the Rust
+/// executable's, so that no directory has two writers.
+pub const SITE_DATA_DIR: &str = "site/data/registry";
 
 /// The first line of every generated Markdown artifact.
 pub const HEADER: &str = "GENERATED FILE — DO NOT EDIT DIRECTLY";
@@ -37,6 +43,9 @@ pub enum Target {
     /// The provider bootstraps the policy's `projections[]` declare, rendered from the
     /// provider templates: `AGENTS.md`, `CLAUDE.md`, ... (see [`crate::providers`]).
     Providers,
+    /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
+    /// (see [`crate::site`]).
+    Site,
 }
 
 impl Target {
@@ -48,6 +57,7 @@ impl Target {
         Target::Registry,
         Target::Allow,
         Target::Providers,
+        Target::Site,
     ];
 }
 
@@ -104,7 +114,42 @@ pub fn artifacts(
                 path: format!("{OUT_DIR}/registry.json"),
                 content: registry_manifest(registry, version),
             }),
-            Target::Benchmarks | Target::Allow | Target::Providers => {}
+            Target::Benchmarks | Target::Allow | Target::Providers | Target::Site => {}
+        }
+    }
+    Ok(out)
+}
+
+/// Every artifact of the selected targets, from every source: the registry (OpenAPI, the
+/// reference, the registry manifest, the benchmark matrix), the schemas (allow-lists), the
+/// policy and the templates (provider bootstraps), and the registry with the index (the
+/// site dataset). This is the one plan `generate` writes and `generate --check` compares;
+/// nothing else assembles artifacts.
+pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
+    let mut out = context_artifacts(&app.context, crate::VERSION, targets)?;
+    if targets.contains(&Target::Allow) {
+        out.extend(allow_artifacts(
+            &app.schema,
+            &app.share,
+            app.repository.root(),
+        ));
+    }
+    let needs_policy = targets.contains(&Target::Providers) || targets.contains(&Target::Site);
+    if needs_policy {
+        let policy = LoadedPolicy::load(&app.repository)?;
+        if targets.contains(&Target::Providers) {
+            out.extend(crate::providers::artifacts(
+                &app.repository,
+                &app.share,
+                &policy,
+            )?);
+        }
+        if targets.contains(&Target::Site) {
+            let dataset = crate::site::dataset(app.registry(), app.index(), &app.schema, &policy);
+            out.push(Artifact {
+                path: format!("{SITE_DATA_DIR}/registry.json"),
+                content: crate::site::render(&dataset),
+            });
         }
     }
     Ok(out)

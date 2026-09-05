@@ -238,6 +238,7 @@ written by hand.
 | registry manifest | the builtin registry as data: modules, descriptors with schemas, declarative kinds, system targets | `docs/generated/registry.json` (`majordomus/capability-registry/v1`) |
 | perf counters | the executor's and the startup phases' counters | `perf.counters`: `majordomus_perf`, `GET /api/v1/perf` |
 | allow-lists | the schemas | `share/allow/*.txt` |
+| site dataset | the registry (fingerprint, counts, builtin capabilities, modules), the index (fingerprint, every object without its content), the kinds and the declared provider projections; no timestamps, no absolute paths, no git state | `site/data/registry/registry.json` — `majordomus generate site`; rendered at `/registry/` |
 | provider bootstraps | the policy's `projections[]`, the profiles and the provider templates (`.ai/repo/providers/`, else `share/providers/`); the stamp carries the policy hash and the content hash; byte-identical to the shell tool's `update` | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, … — `majordomus generate providers` |
 
 The infrastructure routes `/`, `/openapi.json`, `/docs` and `/mcp` are the HTTP
