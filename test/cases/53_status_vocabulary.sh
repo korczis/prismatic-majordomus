@@ -64,9 +64,15 @@ expect_exit 0 "$MJ" plan validate
 # --- a status added to the engine reaches every surface without any of them being edited.
 # The tool is copied so the mutation cannot escape this case; the site generator is included
 # because it is the surface most likely to hold a list of its own.
+# The tool's own trees, then every canonical input the generator names that is not under
+# .ai/ (this case writes its own layer with init, and a copied manifest would block it),
+# read from --inputs so that a new input reaches this copy without this line changing.
 mkdir -p "$T/tool"
 cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/docs" "$ROOT/scripts" "$ROOT/site" "$T/tool/"
-cp "$ROOT/README.md" "$ROOT/LICENSE" "$T/tool/"
+for p in $("$ROOT/scripts/generate-site-data" --inputs | grep -v '^\.ai/'); do
+  [ -e "$T/tool/$p" ] && continue
+  mkdir -p "$T/tool/$(dirname "$p")"; cp "$ROOT/$p" "$T/tool/$p"
+done
 rm -rf "$T/tool/site/public"
 cd "$T/tool" || exit 1
 git init -q .; git config user.email t@example.com; git config user.name t; git commit -q --allow-empty -m init
