@@ -22,7 +22,7 @@ being maintained separately from the repository that backs it.
 | registry dataset | everything the site renders about the executable: descriptors, modules, command line, MCP and HTTP surfaces, benchmarks, the index | `site/data/registry/registry.json` | never — `majordomus generate site` |
 | public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
 | claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
-| marketing copy | headline, section leads, button labels; no claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
+| marketing copy | the hero's three propositions, section leads, button labels; no claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
 | navigation | five intents, their dropdown items and hrefs | `site/data/nav.toml` | yes |
 | claim detail | what each claim means, how it works, how to see it, what it does not cover, why it exists | `docs/claims/<id>.md` | yes |
 | case studies | the recognition moments, each with its homepage hook in front matter | `site/content-src/why/*.md` | yes |
@@ -202,7 +202,7 @@ site/
   templates/
     base.html          head, theme-before-paint, navbar, footer, Flowbite init, Alpine
     components.html    Tera 2 components: badge, code, card, section_head, diagram
-    index.html         homepage, twelve sections, all from generated data
+    index.html         homepage: the business hero, then the sections, all from generated data
     page.html          standalone page with breadcrumb and Typography body
     docs-section.html  /docs/ index from the section's pages
     docs-page.html     document with sidebar navigation
@@ -234,6 +234,20 @@ Flowbite JS is vendored from the pinned package. Its bundle exposes `window.init
 does not call it (verified in `node_modules/flowbite/dist/flowbite.js`), so `base.html` calls
 it once on `DOMContentLoaded`. The navbar uses `data-collapse-toggle`; nothing else needs
 Flowbite JS yet.
+
+The homepage hero holds three business propositions (`[hero].propositions` in
+`marketing.toml`): one complete message per outcome, the first being the page's `h1` and the
+default. The selector is a radio group rather than Flowbite's tabs or carousel, because both of
+those hide the other panels with a class until JavaScript runs: arrow keys move between the
+outcomes natively, every message is in the HTML, and the checked input drives the visible
+message through Tailwind's `peer-checked` (the labels) and `group-has-[#id:checked]` (the
+messages) variants. The three messages share one grid cell and the inactive ones are
+`invisible`, not removed, so the block keeps the height of the longest message and choosing
+another never moves the buttons below it. The first message is visible unless another input
+is checked, so a browser without `:has()` still shows the `h1`. The ids are positional
+(`hero-p-1..3`) because Tailwind compiles only class names it can read in the template.
+`scripts/site-check` proves every proposition is on the page, the first is the `h1` and the
+checked default, and the hero's in-page link lands on a section.
 
 Alpine.js is vendored and used for two things: the copy button on code snippets (`x-data`,
 `x-on:click`, `x-text`) and the raw-policy disclosure on `/policy/`. Both degrade: the code

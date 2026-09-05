@@ -8,10 +8,12 @@
    proposition is the page's h1 and the checked default. The selector is a radio group, so it
    needs no runtime: arrow keys move between the outcomes, every message is in the HTML, and
    the checked input drives the visible message through Tailwind's peer and group-has variants.
-   The first message is shown unless another input is checked, so a browser without :has()
-   still shows the h1. The positional ids (hero-p-1..3) are what the literal class names below
-   refer to: Tailwind compiles only classes it can read in this file. #}
-{%- set hero_show = ["group-has-[#hero-p-2:checked]/hero:hidden group-has-[#hero-p-3:checked]/hero:hidden", "hidden group-has-[#hero-p-2:checked]/hero:block", "hidden group-has-[#hero-p-3:checked]/hero:block"] -%}
+   The three messages share one grid cell and the inactive ones are invisible, not removed, so
+   the block keeps the height of the longest message and choosing another never moves the
+   buttons below. The first message is shown unless another input is checked, so a browser
+   without :has() still shows the h1. The positional ids (hero-p-1..3) are what the literal
+   class names below refer to: Tailwind compiles only classes it can read in this file. #}
+{%- set hero_show = ["group-has-[#hero-p-2:checked]/hero:invisible group-has-[#hero-p-3:checked]/hero:invisible", "invisible group-has-[#hero-p-2:checked]/hero:visible", "invisible group-has-[#hero-p-3:checked]/hero:visible"] -%}
 <section class="border-b border-default bg-neutral-primary">
   <div class="group/hero mx-auto grid max-w-screen-xl gap-6 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-8 lg:py-24">
     <fieldset class="flex flex-wrap gap-2 lg:order-2 lg:flex-col lg:gap-3">
@@ -19,18 +21,18 @@
       {%- for p in m.hero.propositions %}
       <div class="contents">
         <input type="radio" id="hero-p-{{ loop.index }}" name="hero-proposition" class="peer sr-only"{% if loop.first %} checked{% endif %}>
-        <label for="hero-p-{{ loop.index }}" class="block cursor-pointer rounded-base border border-default bg-neutral-primary-soft px-3.5 py-2 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading peer-checked:border-brand-subtle peer-checked:bg-brand-softer peer-checked:text-fg-brand-strong peer-focus-visible:ring-4 peer-focus-visible:ring-brand-medium lg:px-5 lg:py-4">
+        <label for="hero-p-{{ loop.index }}" class="block cursor-pointer rounded-base border border-default bg-neutral-primary-soft px-3.5 py-2 text-sm font-semibold text-body hover:bg-neutral-secondary-medium hover:text-heading peer-checked:border-brand-subtle peer-checked:bg-brand-softer peer-checked:text-fg-brand-strong peer-focus-visible:ring-4 peer-focus-visible:ring-brand-medium lg:px-6 lg:py-5 lg:text-2xl lg:font-extrabold lg:tracking-tight">
           <span class="block">{{ p.label }}</span>
-          <span class="mt-1 hidden text-base font-normal leading-snug text-heading lg:block">{{ p.headline }}</span>
+          <span class="mt-1.5 hidden text-base font-normal leading-snug tracking-normal text-body lg:block">{{ p.headline }}</span>
         </label>
       </div>
       {%- endfor %}
     </fieldset>
     <div class="min-w-0 lg:order-1">
-      <p class="text-base font-medium text-fg-brand">{{ m.hero.eyebrow }}</p>
-      <div class="mt-4" aria-live="polite">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-fg-brand">{{ m.hero.eyebrow }}</p>
+      <div class="mt-4 grid" aria-live="polite">
         {%- for p in m.hero.propositions %}
-        <div class="min-w-0 {{ hero_show[loop.index0] }}">
+        <div class="col-start-1 row-start-1 min-w-0 {{ hero_show[loop.index0] }}">
           {%- if loop.first %}
           <h1 class="text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ p.headline }}</h1>
           {%- else %}
