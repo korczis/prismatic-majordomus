@@ -84,6 +84,24 @@ grep -rhoaE '/Users/[a-z]+/|/home/[a-z]+/dev/|\.internal\b|\.corp\b' "$PUB" | he
 grep -rhoaE '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}' "$PUB" | grep -viE 'id-token|GITHUB_TOKEN' | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
 # 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
 for d in $(jq -r '.docs[].path' "$SITE/data/generated/docs.json" | sed 's/\.md$//' | tr 'A-Z_' 'a-z-' | grep -v '^agents$'); do [ -f "$PUB/docs/$d/index.html" ] || bad docs "docs.json lists $d but no route was generated"; done; ok docs "every document in docs.json has a route"
+# 13h. the HTTP API reference: the page renders every operation, tag and schema the data holds,
+# the raw document is served byte for byte as the committed one, and the URL the executable
+# prints as externalDocs lands on the page that was built
+OAD="$SITE/data/generated/openapi.json"; OAP="$PUB/docs/api/index.html"; apibad=0
+if [ -f "$OAP" ]; then
+  for id in $(jq -r '.tags[].operations[].id' "$OAD"); do grep -qF "id=\"op-$(printf '%s' "$id" | tr '.' '-')\"" "$OAP" || { bad api "operation $id is not on /docs/api/"; apibad=1; }; done
+  for t in $(jq -r '.tags[].name' "$OAD"); do grep -qF "id=\"tag-$t\"" "$OAP" || { bad api "tag $t is not on /docs/api/"; apibad=1; }; done
+  for n in $(jq -r '.schemas[].name' "$OAD"); do grep -qF "id=\"schema-$n\"" "$OAP" || { bad api "schema $n is not on /docs/api/"; apibad=1; }; done
+  grep -qF '/openapi.json' "$OAP" || { bad api "/docs/api/ does not link the raw document"; apibad=1; }
+  jq -r '.tags[].operations[].curl' "$OAD" | while read -r c; do grep -qF "$(printf '%s' "$c" | sed 's/&/\&amp;/g; s/"/\&quot;/g' | cut -c1-40)" "$OAP" || echo "$c"; done | head -1 | grep -q . && { bad api "an operation's curl example is not on /docs/api/"; apibad=1; }
+else bad api "no page at /docs/api/"; apibad=1; fi
+if [ -f "$PUB/openapi.json" ]; then
+  cmp -s "$PUB/openapi.json" "$ROOT/docs/generated/openapi.json" || { bad api "site/public/openapi.json differs from docs/generated/openapi.json"; apibad=1; }
+  [ "$(jq -S '.paths | keys' "$PUB/openapi.json")" = "$(jq -S '[.tags[].operations[].path] | unique' "$OAD")" ] || { bad api "the operations on /docs/api/ are not the paths in /openapi.json"; apibad=1; }
+  ext="$(jq -r '.externalDocs.url // ""' "$PUB/openapi.json")"; extrel="${ext#"$BASE_URL"}"
+  [ -n "$ext" ] && [ "$extrel" != "$ext" ] && [ -f "$PUB${extrel%/}/index.html" ] || { bad api "externalDocs.url '$ext' does not land on a built route"; apibad=1; }
+else bad api "site/public/openapi.json missing"; apibad=1; fi
+[ "$apibad" = 0 ] && ok api "/docs/api/ renders every operation, tag and schema; /openapi.json is the committed document; externalDocs lands on the page"
 # 13b. every tile has a page: profiles, claims, statuses, responsibilities, commands
 for slug in $(jq -r '.profiles[].slug' "$SITE/data/generated/profiles.json"); do [ -f "$PUB/profiles/$slug/index.html" ] || bad tiles "no page for profile $slug"; done
 for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do [ -f "$PUB/guarantees/$id/index.html" ] || bad tiles "no page for claim $id"; done

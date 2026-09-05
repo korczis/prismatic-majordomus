@@ -236,7 +236,7 @@ written by hand.
 | MCP tools | capabilities with an `mcp.tool` exposure; `inputSchema` and `outputSchema` are the canonical schemas; `_meta.majordomus.id` carries the id; `readOnlyHint` follows the kind | `majordomus mcp` on stdio, and `/mcp` on the shared server |
 | MCP resources | capabilities with an `mcp.resource` exposure; a query with one is read as JSON | `majordomus mcp` on stdio, and `/mcp` on the shared server |
 | HTTP routes | capabilities with an `http` exposure; `GET` binds every top-level input property as a query parameter coerced by its schema type, `POST` binds the JSON body (a command's binding); errors map to 400 `invalid_input`, 404 `not_found`, 422 `refused`, 500 `internal`, 405 for another method on a known path | the shared server `majordomus mcp` starts, and `majordomus serve` |
-| OpenAPI 3.1 | the same routes; `operationId` is the id; `x-majordomus-id`, `-kind`, `-stability`, `-provenance`, `-mcp`, `-cli` carry the rest; schemas hoisted into sorted components; the OAS 3.1 base dialect | `GET /openapi.json`, `docs/generated/openapi.json` |
+| OpenAPI 3.1 | the same routes; `operationId` is the id; the tags are the modules with their descriptions; every example is one of the capability's benchmark cases, by name, evaluated against the repository's index; the responses are the statuses the router answers for the kind (422 for a command only) and `default` for what the transport adds; a query parameter is never nullable; `x-majordomus-id`, `-kind`, `-stability`, `-provenance`, `-benchmark`, `-cache`, `-mcp`, `-cli` carry the rest; `info`, licence, contact and `externalDocs` from `about.rs` and the crate manifest; schemas hoisted into sorted components; the OAS 3.1 base dialect | `GET /openapi.json`, `docs/generated/openapi.json`, and the site's `/docs/api/` and `/openapi.json` |
 | Swagger UI | a shell page that loads `/openapi.json`; it embeds no specification; its assets come from the pinned `swagger-ui-dist` on unpkg, the one part that is not offline | `GET /docs` |
 | command line | `capabilities list` and `describe` dispatch through the registry's `cli` exposure; `schema` and `validate` are views of the registry, not capabilities | `majordomus capabilities …` |
 | reference | the index of modules and builtin capabilities, one page per executable module with every capability in full; declarative resources described by rule, listed live | `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` |
@@ -247,7 +247,10 @@ written by hand.
 | site dataset | the registry (fingerprint, counts, builtin capabilities, modules), the index (fingerprint, every object without its content), the kinds and the declared provider projections; no timestamps, no absolute paths, no git state | `site/data/registry/registry.json` — `majordomus generate site`; rendered at `/registry/` |
 | provider bootstraps | the policy's `projections[]`, the profiles and the provider templates (`.ai/repo/providers/`, else `share/providers/`); the stamp carries the policy hash and the content hash; byte-identical to the shell tool's `update` | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, … — `majordomus generate providers` |
 
-The infrastructure routes `/`, `/openapi.json`, `/docs` and `/mcp` are the HTTP
+What every projection says about itself comes from `about.rs`: the OpenAPI `info`,
+the MCP `initialize` instructions and the HTTP index (`GET /`) open with the same
+summary and carry the same paragraphs, so no interface describes the surface in words
+of its own. The infrastructure routes `/`, `/openapi.json`, `/docs` and `/mcp` are the HTTP
 projection's own and are not capabilities; `/mcp` is MCP over HTTP (the Streamable HTTP
 transport's request half, with `Mcp-Session-Id` sessions) and exists on the shared server
 only. One shared server serves a repository: the first `majordomus mcp` or `serve` binds
@@ -366,6 +369,8 @@ with a document edit. The committed files are caches: reviewable, never edited.
 | the registry's invariants, both sources, deterministic build | behaviourally verified (`tests/registry.rs`) |
 | every declared projection present, no orphan, one id everywhere; a change to one descriptor reaches MCP, OpenAPI and the reference | behaviourally verified (`tests/projections.rs`) |
 | HTTP over a real socket, OpenAPI, Swagger shell, typed errors, MCP and HTTP answering the same handler identically, a declarative object reaching HTTP and introspection untouched | behaviourally verified (`tests/http_serve.rs`) |
+| every route replayed over a socket with the capability's own benchmark cases, and the document showing those cases as examples, the modules as tags, the statuses of the kind as responses, the policies as extensions, one prose with MCP and the index | behaviourally verified (`tests/http_serve.rs`, `test/cases/92_openapi_reference.sh`); timed by `benches/routes.rs` |
+| the site's API reference rendered from the committed document, the raw document served at `/openapi.json`, `externalDocs` pointing at the page | checked by `scripts/generate-site-data --check` and `scripts/site-check` (`test/cases/92_openapi_reference.sh`) |
 | one shared server per repository: the lease, the bridge, `/mcp` sessions, the peers and their announcements, the fallback port, `serve` deferring, `--standalone`, the takeover after a kill, the re-attachment, the refusal when the taker cannot serve | behaviourally verified (`tests/mcp_shared.rs`, `tests/shared_units.rs`, `test/cases/90_mcp_shared_server.sh`) |
 | repository-defined kind and schema served without a code change; add, remove, break | behaviourally verified (`tests/external_extension.rs`) |
 | generate, byte-identical regeneration, `--check` on missing and tampered files | behaviourally verified (`tests/generate_check.rs`) |
@@ -376,4 +381,4 @@ with a document edit. The committed files are caches: reviewable, never edited.
 | generated reference per module, benchmark matrix, registry manifest, deterministic and reconciled | behaviourally verified (`tests/projections.rs`) |
 | the whole path through the shell tool's own `init` | behaviourally verified (`test/cases/76_capabilities_projections.sh`) |
 | the id grammar, URIs, tool names, route paths, diagnostic codes, `kinds.yaml`, the schema files | implemented; pre-1.0 compatibility surfaces, changes documented, never silent |
-| Swagger UI assets offline, `/openapi.yaml`, path parameters, hot reload, mutation of the repository over any interface, a server-initiated stream on `/mcp` | not implemented; restart-based rediscovery is the contract, and a shared server keeps the index it built at start until its last client leaves |
+| Swagger UI assets offline or on the site, response examples, `/openapi.yaml`, path parameters, hot reload, mutation of the repository over any interface, a server-initiated stream on `/mcp` | not implemented; restart-based rediscovery is the contract, and a shared server keeps the index it built at start until its last client leaves |

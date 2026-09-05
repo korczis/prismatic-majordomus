@@ -1,0 +1,2805 @@
+{
+  "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
+  "counts": {
+    "operations": 9,
+    "schemas": 45,
+    "tags": 5
+  },
+  "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
+  "errors": [
+    {
+      "code": "invalid_input",
+      "reason": "The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+      "status": "400"
+    },
+    {
+      "code": "not_found",
+      "reason": "The input names something the repository does not hold.",
+      "status": "404"
+    },
+    {
+      "code": "refused",
+      "reason": "The command was understood and turned down for the reason the message gives.",
+      "status": "422"
+    },
+    {
+      "code": "internal",
+      "reason": "The capability failed for a reason of its own; the message names it.",
+      "status": "500"
+    }
+  ],
+  "external_docs": {
+    "description": "The API reference, rendered from this document.",
+    "url": "https://korczis.github.io/prismatic-majordomus/docs/api/"
+  },
+  "generated_by": "majordomus-cli 0.1.0",
+  "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
+  "info": {
+    "contact_name": "Majordomus",
+    "contact_url": "https://github.com/korczis/prismatic-majordomus",
+    "description_md": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` lists the routes; `/docs` is Swagger UI over this document; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
+    "license": "MIT",
+    "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
+    "title": "Majordomus",
+    "version": "0.1.0"
+  },
+  "infrastructure": [
+    {
+      "path": "/",
+      "what": "The index: name, version, repository root, and where the document, the reference, the capabilities, the peers and MCP are."
+    },
+    {
+      "path": "/openapi.json",
+      "what": "This document, rendered from the registry at every request; what Swagger UI loads."
+    },
+    {
+      "path": "/docs",
+      "what": "Swagger UI over /openapi.json, served by the running server; the page embeds no specification of its own."
+    },
+    {
+      "path": "/mcp",
+      "what": "MCP over HTTP (Streamable HTTP) for a second client; the shared server only."
+    }
+  ],
+  "openapi": "3.1.0",
+  "schema": 1,
+  "schemas": [
+    {
+      "description": "The input of `peers.announce`: what the calling peer is working on.",
+      "is_enum": false,
+      "name": "AnnounceInput",
+      "properties": [
+        {
+          "description": "One line, in the peer's words: the task, the question, the intent.",
+          "name": "intent",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it.",
+          "name": "scope",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "peers.announce"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a peer said it is working on.",
+      "is_enum": false,
+      "name": "Announcement",
+      "properties": [
+        {
+          "description": "One line: the task or intent, in the peer's words.",
+          "name": "intent",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Repository-relative paths the peer expects to touch; informational, never enforced here.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "When it was announced, RFC 3339, UTC.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Peer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an [`ObjectView`] where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI.",
+      "is_enum": false,
+      "name": "AnswerView",
+      "properties": [
+        {
+          "description": "The URI as given.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability that answered (`repository.info`).",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its kind: `query`.",
+          "name": "kind",
+          "refs": [
+            "CapabilityKind"
+          ],
+          "required": true,
+          "type": "CapabilityKind"
+        },
+        {
+          "description": "The resource name a client lists (`repository`).",
+          "name": "identity",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability's title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability's description, when it has one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The answer, as the capability's output schema describes it (`capabilities.describe`\ncarries that schema).",
+          "name": "answer",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "Where the capability comes from: the Rust module it is composed in.",
+          "name": "provenance",
+          "refs": [
+            "CapabilityProvenance"
+          ],
+          "required": true,
+          "type": "CapabilityProvenance"
+        },
+        {
+          "description": "`application/json`.",
+          "name": "media_type",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The answer as text: byte for byte what `resources/read` returns for the URI.",
+          "name": "content",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResourceView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides.",
+      "is_enum": false,
+      "name": "BenchmarkPolicy",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability",
+        "CapabilitySummary"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "Timed directly and through every exposure; coverage fails without a case.",
+          "properties": [
+            {
+              "description": "",
+              "name": "policy",
+              "refs": [],
+              "required": true,
+              "type": "\"required\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Not timed, for the typed reason; coverage reports it as waived, never as covered.",
+          "properties": [
+            {
+              "description": "Why.",
+              "name": "reason",
+              "refs": [
+                "WaiverReason"
+              ],
+              "required": true,
+              "type": "WaiverReason"
+            },
+            {
+              "description": "",
+              "name": "policy",
+              "refs": [],
+              "required": true,
+              "type": "\"waived\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry.",
+      "is_enum": false,
+      "name": "CachePolicy",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability",
+        "CapabilitySummary"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "Every call runs the handler.",
+          "properties": [
+            {
+              "description": "",
+              "name": "policy",
+              "refs": [],
+              "required": true,
+              "type": "\"disabled\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Results are kept in this process's memory, bounded, for equal inputs.",
+          "properties": [
+            {
+              "description": "The most entries kept for this capability; the oldest is evicted first.",
+              "name": "max_entries",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "Seconds an entry stays valid; `None` for the life of the process.",
+              "name": "ttl_seconds",
+              "refs": [],
+              "required": false,
+              "type": "integer | null"
+            },
+            {
+              "description": "",
+              "name": "policy",
+              "refs": [],
+              "required": true,
+              "type": "\"process\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "A JSON Schema with, when the type has one, a stable component name (the type's title).",
+      "is_enum": false,
+      "name": "CanonicalSchema",
+      "properties": [
+        {
+          "description": "The component name projections use (`RepositoryInfo`); `None` for an anonymous\nschema such as the empty input.",
+          "name": "name",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The schema itself, without `$schema`; nested types live under `$defs`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The canonical descriptor. Everything a projection may say about a capability is here.",
+      "is_enum": false,
+      "name": "Capability",
+      "properties": [
+        {
+          "description": "The canonical identity.",
+          "name": "id",
+          "refs": [
+            "CapabilityId"
+          ],
+          "required": true,
+          "type": "CapabilityId"
+        },
+        {
+          "description": "The module that composes it: the id's namespace for a builtin, the kind for a\ndeclarative object.",
+          "name": "module",
+          "refs": [
+            "ModuleId"
+          ],
+          "required": true,
+          "type": "ModuleId"
+        },
+        {
+          "description": "Query, command or resource.",
+          "name": "kind",
+          "refs": [
+            "CapabilityKind"
+          ],
+          "required": true,
+          "type": "CapabilityKind"
+        },
+        {
+          "description": "The short name every projection shows.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The one-paragraph description every projection shows.",
+          "name": "description",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The canonical schema of the input; an empty object for a resource.",
+          "name": "input",
+          "refs": [
+            "CanonicalSchema"
+          ],
+          "required": true,
+          "type": "CanonicalSchema"
+        },
+        {
+          "description": "The canonical schema of the output; the object view for a resource.",
+          "name": "output",
+          "refs": [
+            "CanonicalSchema"
+          ],
+          "required": true,
+          "type": "CanonicalSchema"
+        },
+        {
+          "description": "Where it came from.",
+          "name": "provenance",
+          "refs": [
+            "CapabilityProvenance"
+          ],
+          "required": true,
+          "type": "CapabilityProvenance"
+        },
+        {
+          "description": "Where it is projected; absence is explicit.",
+          "name": "exposure",
+          "refs": [
+            "Exposure"
+          ],
+          "required": true,
+          "type": "Exposure"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "stability",
+          "refs": [
+            "Stability"
+          ],
+          "required": true,
+          "type": "Stability"
+        },
+        {
+          "description": "Free tags, from the declarative object's `tags` or the descriptor.",
+          "name": "tags",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether it is a benchmark target; the cases come from the input type.",
+          "name": "benchmark",
+          "refs": [
+            "BenchmarkPolicy"
+          ],
+          "required": true,
+          "type": "BenchmarkPolicy"
+        },
+        {
+          "description": "Whether the executor keeps its results.",
+          "name": "cache",
+          "refs": [
+            "CachePolicy"
+          ],
+          "required": true,
+          "type": "CachePolicy"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "capabilities.describe"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `<kind>.<identity>` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind's identity rule produced it.",
+      "is_enum": false,
+      "name": "CapabilityId",
+      "properties": [],
+      "type": "string",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability",
+        "CapabilitySummary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.",
+      "is_enum": true,
+      "name": "CapabilityKind",
+      "properties": [],
+      "type": "\"query\" | \"command\" | \"resource\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "AnswerView",
+        "Capability",
+        "CapabilitySummary"
+      ],
+      "values": [
+        {
+          "description": "Executable and read-only: a typed handler, an input schema, an output schema.",
+          "value": "query"
+        },
+        {
+          "description": "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only.",
+          "value": "command"
+        },
+        {
+          "description": "Declarative content the repository holds: read as it is, never executed.",
+          "value": "resource"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `capabilities.list`: the matching capabilities, summarised, and the\nregistry counted.",
+      "is_enum": false,
+      "name": "CapabilityList",
+      "properties": [
+        {
+          "description": "How many capabilities matched the filters.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The whole registry, counted by kind, stability and projection.",
+          "name": "summary",
+          "refs": [
+            "Summary"
+          ],
+          "required": true,
+          "type": "Summary"
+        },
+        {
+          "description": "The matching capabilities, by id, without their schemas.",
+          "name": "capabilities",
+          "refs": [
+            "CapabilitySummary"
+          ],
+          "required": true,
+          "type": "array of CapabilitySummary"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "capabilities.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a capability came from. Never an absolute path.",
+      "is_enum": false,
+      "name": "CapabilityProvenance",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "AnswerView",
+        "Capability",
+        "CapabilitySummary"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "Written in Rust, in the named module of this executable.\nWritten in Rust, composed in `builtin.rs`.",
+          "properties": [
+            {
+              "description": "The Rust module the descriptor was composed in.",
+              "name": "module",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "source",
+              "refs": [],
+              "required": true,
+              "type": "\"builtin\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Read from the repository's layer.",
+          "properties": [
+            {
+              "description": "Repository-relative path.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The directory the path sits in, repository-relative; `.` for the root.",
+              "name": "directory",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The `sources.yaml` class that discovered the file.",
+              "name": "source_class",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The manifest section the path falls under, when it falls under one.",
+              "name": "section",
+              "refs": [],
+              "required": false,
+              "type": "string | null"
+            },
+            {
+              "description": "IANA media type of the object's content.",
+              "name": "media_type",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "For one member of a collection file, its key path in the file (`claims.3`).",
+              "name": "member",
+              "refs": [],
+              "required": false,
+              "type": "string | null"
+            },
+            {
+              "description": "",
+              "name": "source",
+              "refs": [],
+              "required": true,
+              "type": "\"declarative\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "One capability as a listing shows it: everything the descriptor says except its two\nschemas, which `capabilities.describe` answers for one capability. A listing of a\nrepository's registry runs to hundreds of entries; their schemas would be megabytes\nof the same object view repeated.",
+      "is_enum": false,
+      "name": "CapabilitySummary",
+      "properties": [
+        {
+          "description": "The canonical identity.",
+          "name": "id",
+          "refs": [
+            "CapabilityId"
+          ],
+          "required": true,
+          "type": "CapabilityId"
+        },
+        {
+          "description": "The module that composes it.",
+          "name": "module",
+          "refs": [
+            "ModuleId"
+          ],
+          "required": true,
+          "type": "ModuleId"
+        },
+        {
+          "description": "Query, command or resource.",
+          "name": "kind",
+          "refs": [
+            "CapabilityKind"
+          ],
+          "required": true,
+          "type": "CapabilityKind"
+        },
+        {
+          "description": "The short name.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The one-paragraph description.",
+          "name": "description",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it came from.",
+          "name": "provenance",
+          "refs": [
+            "CapabilityProvenance"
+          ],
+          "required": true,
+          "type": "CapabilityProvenance"
+        },
+        {
+          "description": "Where it is projected.",
+          "name": "exposure",
+          "refs": [
+            "Exposure"
+          ],
+          "required": true,
+          "type": "Exposure"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "stability",
+          "refs": [
+            "Stability"
+          ],
+          "required": true,
+          "type": "Stability"
+        },
+        {
+          "description": "Free tags.",
+          "name": "tags",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether it is a benchmark target.",
+          "name": "benchmark",
+          "refs": [
+            "BenchmarkPolicy"
+          ],
+          "required": true,
+          "type": "BenchmarkPolicy"
+        },
+        {
+          "description": "Whether the executor keeps its results.",
+          "name": "cache",
+          "refs": [
+            "CachePolicy"
+          ],
+          "required": true,
+          "type": "CachePolicy"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CapabilityList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How a capability appears on the command line: the words after `majordomus`.",
+      "is_enum": false,
+      "name": "CliExposure",
+      "properties": [
+        {
+          "description": "The words after `majordomus`, e.g. `[\"capabilities\", \"list\"]`.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Exposure"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a client said about itself in `initialize`.",
+      "is_enum": false,
+      "name": "ClientInfo",
+      "properties": [
+        {
+          "description": "`clientInfo.name`: `claude-code`, `codex`, `gemini-cli`, whatever the client sends.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`clientInfo.version`.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`clientInfo.title`, when the client sends one.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Peer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The counters and phase totals of this process at one moment. Every value is a count\nor a duration this process measured; none is written anywhere by hand.",
+      "is_enum": false,
+      "name": "CounterSnapshot",
+      "properties": [
+        {
+          "description": "Enumerations of the repository's declared sources.",
+          "name": "repository_scans",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Index builds.",
+          "name": "index_builds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Registry builds.",
+          "name": "registry_builds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "JSON Schemas derived from Rust types.",
+          "name": "schema_generations",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "MCP tool and resource listings computed.",
+          "name": "mcp_projection_builds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "OpenAPI documents built.",
+          "name": "openapi_builds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "HTTP routers built.",
+          "name": "http_projection_builds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Calls through the executor, every transport.",
+          "name": "executions",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Handlers actually run.",
+          "name": "handler_invocations",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Executions answered from the cache.",
+          "name": "cache_hits",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Executions of a cached capability that ran the handler.",
+          "name": "cache_misses",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Cache entries dropped.",
+          "name": "cache_evictions",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Phase totals by phase name.",
+          "name": "phases",
+          "refs": [
+            "PhaseTotals"
+          ],
+          "required": true,
+          "type": "map of PhaseTotals"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "perf.counters"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.",
+      "is_enum": false,
+      "name": "Diagnostic",
+      "properties": [
+        {
+          "description": "How bad.",
+          "name": "severity",
+          "refs": [
+            "Severity"
+          ],
+          "required": true,
+          "type": "Severity"
+        },
+        {
+          "description": "A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Repository-relative path of the file concerned, when there is one.",
+          "name": "path",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What is wrong, for a person; the code is for a program.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The body of every error response.",
+      "is_enum": false,
+      "name": "ErrorBody",
+      "properties": [
+        {
+          "description": "The one error.",
+          "name": "error",
+          "refs": [
+            "ErrorDetail"
+          ],
+          "required": true,
+          "type": "ErrorDetail"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "capabilities.list",
+        "capabilities.describe",
+        "objects.get",
+        "objects.list",
+        "peers.list",
+        "peers.announce",
+        "perf.counters",
+        "repository.info",
+        "objects.search"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What went wrong, as the HTTP projection names it.",
+      "is_enum": false,
+      "name": "ErrorDetail",
+      "properties": [
+        {
+          "description": "`invalid_input`, `not_found`, `refused`, `internal`, `method_not_allowed`.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The reason, for a person.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ErrorBody"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The projections a capability declares. Absence is explicit: `None` means not exposed\nthere, and nothing infers an exposure a descriptor did not declare.",
+      "is_enum": false,
+      "name": "Exposure",
+      "properties": [
+        {
+          "description": "The MCP projection, when declared.",
+          "name": "mcp",
+          "refs": [
+            "McpExposure"
+          ],
+          "required": false,
+          "type": "McpExposure | null"
+        },
+        {
+          "description": "The HTTP projection, when declared.",
+          "name": "http",
+          "refs": [
+            "HttpExposure"
+          ],
+          "required": false,
+          "type": "HttpExposure | null"
+        },
+        {
+          "description": "The command-line projection, when declared.",
+          "name": "cli",
+          "refs": [
+            "CliExposure"
+          ],
+          "required": false,
+          "type": "CliExposure | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability",
+        "CapabilitySummary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What `git` said about the repository.",
+      "is_enum": false,
+      "name": "GitInfo",
+      "properties": [
+        {
+          "description": "Absolute path of the work tree top level.",
+          "name": "toplevel",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Full commit id of HEAD, or `None` in an unborn repository.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Branch name, or `None` when detached or unborn.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`clean` or `dirty`, from `git status --porcelain`.",
+          "name": "working_tree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "GitState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What git says about the repository, or why it could not be asked.",
+      "is_enum": false,
+      "name": "GitState",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryInfo"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "`git` answered; the facts follow.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"available\""
+            }
+          ],
+          "type": "GitInfo"
+        },
+        {
+          "description": "`git` could not be asked, or the root is not a work tree; the reason says which.",
+          "properties": [
+            {
+              "description": "What `git` said, or why it could not be run.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"unavailable\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under [`HttpExposure::PREFIX`].",
+      "is_enum": false,
+      "name": "HttpExposure",
+      "properties": [
+        {
+          "description": "The method.",
+          "name": "method",
+          "refs": [
+            "HttpMethod"
+          ],
+          "required": true,
+          "type": "HttpMethod"
+        },
+        {
+          "description": "The absolute path, under [`HttpExposure::PREFIX`].",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Exposure"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The HTTP methods a capability may be bound to.",
+      "is_enum": true,
+      "name": "HttpMethod",
+      "properties": [],
+      "type": "\"GET\" | \"POST\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "HttpExposure"
+      ],
+      "values": [
+        {
+          "description": "Read-only; the input is bound from the query string.",
+          "value": "GET"
+        },
+        {
+          "description": "The input is bound from the JSON body. No builtin uses it yet.",
+          "value": "POST"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How, if at all, a capability appears to an MCP client.",
+      "is_enum": false,
+      "name": "McpExposure",
+      "properties": [
+        {
+          "description": "As a tool with this name (`[a-z0-9_]+`).",
+          "name": "tool",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "As a readable resource.",
+          "name": "resource",
+          "refs": [
+            "McpResource"
+          ],
+          "required": false,
+          "type": "McpResource | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Exposure"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "An MCP resource: its URI and the short name a client lists.",
+      "is_enum": false,
+      "name": "McpResource",
+      "properties": [
+        {
+          "description": "`majordomus://<kind>/<identity>`, or `majordomus://repository`.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short name a client lists; the identity for a declarative object.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpExposure"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A module identity: the namespace of every capability the module composes, matching\n`[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative\nobject's module is its kind.",
+      "is_enum": false,
+      "name": "ModuleId",
+      "properties": [],
+      "type": "string",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability",
+        "CapabilitySummary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `objects.list`: the matching objects, summarised, in URI order.",
+      "is_enum": false,
+      "name": "ObjectList",
+      "properties": [
+        {
+          "description": "How many objects matched.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The objects, one summary each.",
+          "name": "objects",
+          "refs": [
+            "ObjectSummary"
+          ],
+          "required": true,
+          "type": "array of ObjectSummary"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "objects.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where an object came from. Every field is computed from the repository, never authored.",
+      "is_enum": false,
+      "name": "ObjectProvenance",
+      "properties": [
+        {
+          "description": "Repository-relative path, forward slashes, as the version-control index names it.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The directory the path sits in, repository-relative; `.` for the root. This is the\nhierarchy position a client orders by; no merge semantics are implied.",
+          "name": "directory",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The `sources.yaml` class that discovered the file (`rule`, `readme`, ...).",
+          "name": "source_class",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The manifest section the path falls under (`rules`, `prompts`, ...), when it falls\nunder one; a root `README.md` falls under none.",
+          "name": "section",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Size of the file in bytes.",
+          "name": "bytes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "For an object that is one member of a collection file: the member's key path in\nthe file (`claims.3`).",
+          "name": "member",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObjectView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One object, summarised for a listing.",
+      "is_enum": false,
+      "name": "ObjectSummary",
+      "properties": [
+        {
+          "description": "`majordomus://<kind>/<identity>`.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability id, `<kind>.<identity>`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The kind the object was read as.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The identity within the kind.",
+          "name": "identity",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title, when the kind's title rule found one.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The one-line description, when the kind holds one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Repository-relative source path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObjectList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One declarative object of the repository's layer, as a client reads it.",
+      "is_enum": false,
+      "name": "ObjectView",
+      "properties": [
+        {
+          "description": "`majordomus://<kind>/<identity>`.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability id, `<kind>.<identity>`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The kind the object was read as (`rule`, `prompt`, `document`, ...).",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The identity within the kind (`majordomus.scope-integrity@1`, `continue`, a path).",
+          "name": "identity",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title the kind's title rule found, when it found one.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The one-line description the kind's description field held, when it held one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The parsed front matter or YAML, keys in the file's order.",
+          "name": "metadata",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "Where the object came from: path, directory, source class, section, size, member.",
+          "name": "provenance",
+          "refs": [
+            "ObjectProvenance"
+          ],
+          "required": true,
+          "type": "ObjectProvenance"
+        },
+        {
+          "description": "IANA media type of `content` (`text/markdown`, `application/yaml`, `application/json`, `text/plain`).",
+          "name": "media_type",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The file as read.",
+          "name": "content",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResourceView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One peer as the board lists it.",
+      "is_enum": false,
+      "name": "Peer",
+      "properties": [
+        {
+          "description": "`p1`, `p2`, ...",
+          "name": "id",
+          "refs": [
+            "PeerId"
+          ],
+          "required": true,
+          "type": "PeerId"
+        },
+        {
+          "description": "The client behind it.",
+          "name": "client",
+          "refs": [
+            "ClientInfo"
+          ],
+          "required": true,
+          "type": "ClientInfo"
+        },
+        {
+          "description": "How it is attached.",
+          "name": "transport",
+          "refs": [
+            "Transport"
+          ],
+          "required": true,
+          "type": "Transport"
+        },
+        {
+          "description": "When it attached, RFC 3339, UTC.",
+          "name": "connected_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Seconds since its last message.",
+          "name": "last_seen_seconds_ago",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Its announcement, when it made one.",
+          "name": "announcement",
+          "refs": [
+            "Announcement"
+          ],
+          "required": false,
+          "type": "Announcement | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "peers.announce"
+      ],
+      "used_by_schemas": [
+        "PeerList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server.",
+      "is_enum": false,
+      "name": "PeerId",
+      "properties": [],
+      "type": "string",
+      "used_by": [],
+      "used_by_schemas": [
+        "Peer",
+        "PeerList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `peers.list`: every client attached to this shared server.",
+      "is_enum": false,
+      "name": "PeerList",
+      "properties": [
+        {
+          "description": "How many peers are attached, the caller included.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The caller's own peer id, when the call came through an MCP session.",
+          "name": "caller",
+          "refs": [
+            "PeerId"
+          ],
+          "required": false,
+          "type": "PeerId | null"
+        },
+        {
+          "description": "The peers, in attachment order; `p1` started the server.",
+          "name": "peers",
+          "refs": [
+            "Peer"
+          ],
+          "required": true,
+          "type": "array of Peer"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "peers.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A phase's totals.",
+      "is_enum": false,
+      "name": "PhaseTotals",
+      "properties": [
+        {
+          "description": "How many times the phase ran.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Nanoseconds spent in it, summed.",
+          "name": "total_nanos",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CounterSnapshot"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the index knows about the repository it was built from.",
+      "is_enum": false,
+      "name": "RepositoryInfo",
+      "properties": [
+        {
+          "description": "The repository root, absolute.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The manifest's `schema`, `ai-repository/v1`.",
+          "name": "layer_schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Manifest section name to repository-relative path.",
+          "name": "sections",
+          "refs": [],
+          "required": true,
+          "type": "map of string"
+        },
+        {
+          "description": "What `git` said, or why it could not be asked.",
+          "name": "git",
+          "refs": [
+            "GitState"
+          ],
+          "required": true,
+          "type": "GitState"
+        },
+        {
+          "description": "`vcs` or `filesystem`.",
+          "name": "discovery",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Source class id to kind, in declared order.",
+          "name": "source_classes",
+          "refs": [],
+          "required": true,
+          "type": "array of array of any"
+        },
+        {
+          "description": "The kinds files the reader was configured from: the distribution's, then the\nrepository's own when it has one.",
+          "name": "kind_sources",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The repository, its layer, its git state, and the state of this process's index.",
+      "is_enum": false,
+      "name": "RepositoryReport",
+      "properties": [
+        {
+          "description": "The repository: root, layer schema, sections, git state, discovery mode, source classes, kind sources.",
+          "name": "repository",
+          "refs": [
+            "RepositoryInfo"
+          ],
+          "required": true,
+          "type": "RepositoryInfo"
+        },
+        {
+          "description": "`ok` when every discovered file became an object, `degraded` otherwise.",
+          "name": "state",
+          "refs": [
+            "State"
+          ],
+          "required": true,
+          "type": "State"
+        },
+        {
+          "description": "How many objects the index holds.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Objects per kind.",
+          "name": "kinds",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Every diagnostic the index produced.",
+          "name": "diagnostics",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": true,
+          "type": "array of Diagnostic"
+        },
+        {
+          "description": "The capability registry, counted.",
+          "name": "capabilities",
+          "refs": [
+            "Summary"
+          ],
+          "required": true,
+          "type": "Summary"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "repository.info"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a\ncapability's provenance is.",
+      "is_enum": false,
+      "name": "ResourceView",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [
+        "objects.get"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": [
+        {
+          "description": "A file of the layer, read as it is.",
+          "properties": [
+            {
+              "description": "",
+              "name": "source",
+              "refs": [],
+              "required": true,
+              "type": "\"declarative\""
+            }
+          ],
+          "type": "ObjectView"
+        },
+        {
+          "description": "A query with a resource exposure, executed and rendered as a JSON document.",
+          "properties": [
+            {
+              "description": "",
+              "name": "source",
+              "refs": [],
+              "required": true,
+              "type": "\"builtin\""
+            }
+          ],
+          "type": "AnswerView"
+        }
+      ]
+    },
+    {
+      "description": "One search hit: the object, summarised, and the first matching line of its content.",
+      "is_enum": false,
+      "name": "SearchHit",
+      "properties": [
+        {
+          "description": "`majordomus://<kind>/<identity>`.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability id, `<kind>.<identity>`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The kind the object was read as.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The identity within the kind.",
+          "name": "identity",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title, when the kind's title rule found one.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The one-line description, when the kind holds one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Repository-relative source path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The first line of content that matched, when one did.",
+          "name": "snippet",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SearchResult"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `objects.search`.",
+      "is_enum": false,
+      "name": "SearchResult",
+      "properties": [
+        {
+          "description": "The query as given.",
+          "name": "query",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many hits were returned.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The limit that applied.",
+          "name": "limit",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The hits, in URI order, at most `limit` of them.",
+          "name": "hits",
+          "refs": [
+            "SearchHit"
+          ],
+          "required": true,
+          "type": "array of SearchHit"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "objects.search"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.",
+      "is_enum": true,
+      "name": "Severity",
+      "properties": [],
+      "type": "\"info\" | \"warning\" | \"error\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Diagnostic"
+      ],
+      "values": [
+        {
+          "description": "Worth knowing; changes nothing.",
+          "value": "info"
+        },
+        {
+          "description": "Something to look at; the object is still served.",
+          "value": "warning"
+        },
+        {
+          "description": "The file is excluded and the index is degraded.",
+          "value": "error"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Where a capability stands, in the repository's own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise.",
+      "is_enum": true,
+      "name": "Stability",
+      "properties": [],
+      "type": "\"implemented\" | \"behaviorally_verified\" | \"experimental\" | \"planned\" | \"unsupported\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability",
+        "CapabilitySummary"
+      ],
+      "values": [
+        {
+          "description": "Implemented, and no behavioural test names it yet.",
+          "value": "implemented"
+        },
+        {
+          "description": "Implemented and proved by a behavioural test.",
+          "value": "behaviorally_verified"
+        },
+        {
+          "description": "Implemented, executable, and expected to change.",
+          "value": "experimental"
+        },
+        {
+          "description": "Specified and not implemented: listed, never executable.",
+          "value": "planned"
+        },
+        {
+          "description": "Considered and refused: listed with the reason, never executable.",
+          "value": "unsupported"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Whether every discovered file became an object.",
+      "is_enum": true,
+      "name": "State",
+      "properties": [],
+      "type": "\"ok\" | \"degraded\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryReport"
+      ],
+      "values": [
+        {
+          "description": "Every discovered file became an object.",
+          "value": "ok"
+        },
+        {
+          "description": "At least one file could not be read; the diagnostics say which.",
+          "value": "degraded"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The registry counted: by source, kind, stability and projection.",
+      "is_enum": false,
+      "name": "Summary",
+      "properties": [
+        {
+          "description": "Every capability.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Composed in Rust.",
+          "name": "builtin",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Read from the layer.",
+          "name": "declarative",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "By kind (`query`, `resource`).",
+          "name": "by_kind",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "By stability.",
+          "name": "by_stability",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "With an MCP tool exposure.",
+          "name": "mcp_tools",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "With an MCP resource exposure.",
+          "name": "mcp_resources",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "With an HTTP exposure.",
+          "name": "http_routes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "With a CLI exposure.",
+          "name": "cli_commands",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Modules: composed, derived, and one per declarative kind.",
+          "name": "modules",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Executables whose benchmark policy is required.",
+          "name": "benchmark_required",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Executables waived from benchmarking for a typed reason.",
+          "name": "benchmark_waived",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Executables the executor caches.",
+          "name": "cached",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CapabilityList",
+        "RepositoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How a peer reached the server.",
+      "is_enum": true,
+      "name": "Transport",
+      "properties": [],
+      "type": "\"stdio\" | \"http\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Peer"
+      ],
+      "values": [
+        {
+          "description": "The owner's own client, on the process's stdin and stdout.",
+          "value": "stdio"
+        },
+        {
+          "description": "MCP over HTTP at `/mcp`: a `majordomus mcp` bridge, or a client speaking it directly.",
+          "value": "http"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand.",
+      "is_enum": true,
+      "name": "WaiverReason",
+      "properties": [],
+      "type": "\"not_executable\" | \"destructive\" | \"external_dependency\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BenchmarkPolicy"
+      ],
+      "values": [
+        {
+          "description": "A resource: read, never executed; nothing to time but `objects.get`, which is.",
+          "value": "not_executable"
+        },
+        {
+          "description": "The capability changes something outside this process and cannot be run in a loop.",
+          "value": "destructive"
+        },
+        {
+          "description": "The capability talks to something the benchmark host cannot provide.",
+          "value": "external_dependency"
+        }
+      ],
+      "variants": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "The shared server `majordomus mcp` binds, or `majordomus serve`; loopback, the port in its log.",
+      "url": "/"
+    }
+  ],
+  "source": "docs/generated/openapi.json",
+  "tags": [
+    {
+      "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.",
+      "name": "capabilities",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=16",
+          "cli": "capabilities list",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/capabilities?kind=query\"",
+          "description": "Every capability of this executable and this repository, summarised: kind, module, stability, provenance, the projections it declares, its benchmark and cache policy; the schemas are answered by capabilities.describe.",
+          "id": "capabilities.list",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_capabilities",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only capabilities of this kind: `query`, `command` or `resource`.",
+              "examples": [
+                {
+                  "case": "queries",
+                  "value": "\"query\""
+                }
+              ],
+              "name": "kind",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only capabilities exposed through this projection: `mcp`, `http` or `cli`.",
+              "examples": [],
+              "name": "exposure",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/capabilities",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::capabilities",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "List capabilities: the result.",
+              "schema": "CapabilityList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CapabilityList",
+          "stability": "behaviorally_verified",
+          "summary": "List capabilities"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "capabilities describe",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/capability?id=repository.info\"",
+          "description": "One capability by canonical id: its kind, schemas, provenance, stability, exposures, benchmark and cache policy.",
+          "id": "capabilities.describe",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_capability",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The canonical id, e.g. `repository.info` or `rule.majordomus.scope-integrity@1`.",
+              "examples": [
+                {
+                  "case": "repository-info",
+                  "value": "\"repository.info\""
+                }
+              ],
+              "name": "id",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/capability",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::capabilities",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Describe one capability: the result.",
+              "schema": "Capability",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Capability",
+          "stability": "behaviorally_verified",
+          "summary": "Describe one capability"
+        }
+      ]
+    },
+    {
+      "description": "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched.",
+      "name": "objects",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/object?uri=majordomus%3A%2F%2Fclaim%2Fai-layer-manifest\"",
+          "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content; a URI a query projects (majordomus://repository) answers that query as a JSON document. The same resolution serves the MCP resource read.",
+          "id": "objects.get",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_get",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`).",
+              "examples": [
+                {
+                  "case": "first-object",
+                  "value": "\"majordomus://claim/ai-layer-manifest\""
+                },
+                {
+                  "case": "repository",
+                  "value": "\"majordomus://repository\""
+                }
+              ],
+              "name": "uri",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/object",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::objects",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Get one object: the result.",
+              "schema": "ResourceView",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ResourceView",
+          "stability": "behaviorally_verified",
+          "summary": "Get one object"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/objects?kind=claim\"",
+          "description": "List the declarative objects of the repository's AI layer, optionally by kind or tag.",
+          "id": "objects.list",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_list",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only objects of this kind; the kinds present are listed by `repository.info`. A kind\nthe repository does not have is an invalid input, not an empty answer.",
+              "examples": [
+                {
+                  "case": "first-kind",
+                  "value": "\"claim\""
+                }
+              ],
+              "name": "kind",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only objects whose metadata tags include this tag.",
+              "examples": [],
+              "name": "tag",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/objects",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::objects",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "List objects: the result.",
+              "schema": "ObjectList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ObjectList",
+          "stability": "behaviorally_verified",
+          "summary": "List objects"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=64",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/search?query=the&limit=5\"",
+          "description": "Case-insensitive substring search over identities, titles, descriptions and content.",
+          "id": "objects.search",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_search",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Case-insensitive substring, matched against identity, title, description and content.",
+              "examples": [
+                {
+                  "case": "common-word",
+                  "value": "\"the\""
+                },
+                {
+                  "case": "no-hit",
+                  "value": "\"zqx-nothing-carries-this\""
+                }
+              ],
+              "name": "query",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "Only objects of this kind; a kind the repository does not have is an invalid input.",
+              "examples": [],
+              "name": "kind",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "At most this many hits (default 20, at most 200).",
+              "examples": [
+                {
+                  "case": "no-hit",
+                  "value": "5"
+                }
+              ],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint64)"
+            }
+          ],
+          "path": "/api/v1/search",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::objects",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Search objects: the result.",
+              "schema": "SearchResult",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SearchResult",
+          "stability": "behaviorally_verified",
+          "summary": "Search objects"
+        }
+      ]
+    },
+    {
+      "description": "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.",
+      "name": "peers",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/peers\"",
+          "description": "Every client attached to this shared server: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, and what it announced. In-memory, gone with the process.",
+          "id": "peers.list",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_peers",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/peers",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::peers",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "List peers: the result.",
+              "schema": "PeerList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PeerList",
+          "stability": "behaviorally_verified",
+          "summary": "List peers"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "default",
+              "json": "{\"intent\":\"benchmark: announcing\",\"scope\":[\"apps/majordomus-cli\"]}"
+            }
+          ],
+          "body_schema": "AnnounceInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/peers/announce\" -H \"content-type: application/json\" -d '{\"intent\":\"benchmark: announcing\",\"scope\":[\"apps/majordomus-cli\"]}'",
+          "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+          "id": "peers.announce",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_announce",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/peers/announce",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::peers",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Announce what this peer is working on: the result.",
+              "schema": "Peer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Peer",
+          "stability": "behaviorally_verified",
+          "summary": "Announce what this peer is working on"
+        }
+      ]
+    },
+    {
+      "description": "This process's work counters and phase timings: what happened once at startup and what happens per call, for the structural tests and the benchmark evidence.",
+      "name": "perf",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/perf\"",
+          "description": "The counters of this process: repository scans, index and registry builds, schema generations, projection builds, executions, handler invocations, cache hits, misses and evictions, and the phase timings, as they stand now.",
+          "id": "perf.counters",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_perf",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/perf",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::perf",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Performance counters: the result.",
+              "schema": "CounterSnapshot",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CounterSnapshot",
+          "stability": "behaviorally_verified",
+          "summary": "Performance counters"
+        }
+      ]
+    },
+    {
+      "description": "The repository this process serves: its layer, its git state, and the state of the index built from it.",
+      "name": "repository",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/repository\"",
+          "description": "The repository root, layer sections, git state, discovery mode, kinds present, every diagnostic, and the capability registry counted.",
+          "id": "repository.info",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "repository",
+            "uri": "majordomus://repository"
+          },
+          "mcp_tool": "majordomus_repository",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/repository",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::repository",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Repository and index state: the result.",
+              "schema": "RepositoryReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "RepositoryReport",
+          "stability": "behaviorally_verified",
+          "summary": "Repository and index state"
+        }
+      ]
+    }
+  ]
+}

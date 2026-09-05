@@ -209,7 +209,8 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
                     crate::capability::HttpExposure::PREFIX
                 ),
             )?;
-            let doc = crate::http::openapi::document(&ctx.registry, crate::VERSION)
+            let cases = crate::capability::CaseContext { index: &ctx.index };
+            let doc = crate::http::openapi::document(&ctx.registry, crate::VERSION, Some(&cases))
                 .map_err(|reason| Error::Http { reason })?;
             let ops = doc["paths"]
                 .as_object()

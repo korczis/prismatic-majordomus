@@ -840,7 +840,7 @@
       "status": "guaranteed",
       "route": "/guarantees/mcp-uri-resolution/",
       "external": false,
-      "note": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects.rs covers every branch at the library level."
+      "note": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects_get.rs covers every branch at the library level."
     },
     {
       "id": "claim:rust-evidence-gates",
@@ -906,22 +906,13 @@
       "note": "One executor for every transport; CachePolicy on the descriptor; bounded per capability; the key is the canonical id, the input in canonical form and a sha-256 fingerprint of the repository content and the descriptors. tests/executor.rs and the proptest harness in tests/properties.rs iterate every cached capability with every case and generated inputs."
     },
     {
-      "id": "claim:provider-projections-one-renderer",
+      "id": "claim:openapi-inferred",
       "kind": "claim",
-      "label": "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, GEMINI.md, ...) are a target of majordomus generate, rendered from the policy and the provider templates byte for byte as the shell tool renders them, and generate --check refuses a hand-edited or stale one in CI",
+      "label": "The OpenAPI document is inferred, the tags are the modules, the examples are the benchmark cases, the responses are the router's statuses by kind, the prose is the one text every projection shares, and the site's API reference is rendered from the committed document",
       "status": "guaranteed",
-      "route": "/guarantees/provider-projections-one-renderer/",
+      "route": "/guarantees/openapi-inferred/",
       "external": false,
-      "note": "One renderer, two entry points that agree on every stamp; the policy is the only input (its hash and the profiles' is the stamp's first hash). A target outside the repository, a provider without a template, a token the policy cannot fill, and an always_loaded target over the budget are refused with the reason, and nothing is written. Region mode keeps the host document outside the markers. apps/majordomus-cli/tests/providers_projection.rs covers the fixture side; CI runs generate --check on every push."
-    },
-    {
-      "id": "claim:site-registry-dataset",
-      "kind": "claim",
-      "label": "The site's Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI",
-      "status": "guaranteed",
-      "route": "/guarantees/site-registry-dataset/",
-      "external": false,
-      "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns."
+      "note": "Tags from registry.modules(), examples from the capabilities' BenchmarkCases against the repository's index, responses from one status table keyed by kind, info from about.rs and the crate manifest; benches/routes.rs times every route with the same cases; the site projects the committed document, renders /docs/api/ and serves /openapi.json raw, and site-check refuses a build without them."
     },
     {
       "id": "impl:.github/workflows/validate.yml",
@@ -1025,20 +1016,6 @@
       "id": "impl:apps/majordomus-cli/src/perf.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/perf.rs",
-      "route": null,
-      "external": false
-    },
-    {
-      "id": "impl:apps/majordomus-cli/src/providers.rs",
-      "kind": "implementation",
-      "label": "apps/majordomus-cli/src/providers.rs",
-      "route": null,
-      "external": false
-    },
-    {
-      "id": "impl:apps/majordomus-cli/src/site.rs",
-      "kind": "implementation",
-      "label": "apps/majordomus-cli/src/site.rs",
       "route": null,
       "external": false
     },
@@ -1365,13 +1342,6 @@
       "external": false
     },
     {
-      "id": "test:apps/majordomus-cli/tests/projections.rs",
-      "kind": "test",
-      "label": "apps/majordomus-cli/tests/projections.rs",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/projections.rs"
-    },
-    {
       "id": "test:test/cases/00_yaml_flatten.sh",
       "kind": "test",
       "label": "test/cases/00_yaml_flatten.sh",
@@ -1659,11 +1629,11 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/91_canonical_architecture.sh"
     },
     {
-      "id": "test:test/cases/93_rust_provider_projections.sh",
+      "id": "test:test/cases/92_openapi_reference.sh",
       "kind": "test",
-      "label": "test/cases/93_rust_provider_projections.sh",
+      "label": "test/cases/92_openapi_reference.sh",
       "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/93_rust_provider_projections.sh"
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/92_openapi_reference.sh"
     }
   ],
   "edges": [
@@ -2163,12 +2133,7 @@
       "kind": "specified_by"
     },
     {
-      "source": "claim:provider-projections-one-renderer",
-      "target": "source:docs/CAPABILITIES.md",
-      "kind": "specified_by"
-    },
-    {
-      "source": "claim:site-registry-dataset",
+      "source": "claim:openapi-inferred",
       "target": "source:docs/CAPABILITIES.md",
       "kind": "specified_by"
     },
@@ -2628,13 +2593,8 @@
       "kind": "implemented_by"
     },
     {
-      "source": "claim:provider-projections-one-renderer",
-      "target": "impl:apps/majordomus-cli/src/providers.rs",
-      "kind": "implemented_by"
-    },
-    {
-      "source": "claim:site-registry-dataset",
-      "target": "impl:apps/majordomus-cli/src/site.rs",
+      "source": "claim:openapi-inferred",
+      "target": "impl:apps/majordomus-cli/src/http/openapi.rs",
       "kind": "implemented_by"
     },
     {
@@ -3093,13 +3053,8 @@
       "kind": "proved_by"
     },
     {
-      "source": "claim:provider-projections-one-renderer",
-      "target": "test:test/cases/93_rust_provider_projections.sh",
-      "kind": "proved_by"
-    },
-    {
-      "source": "claim:site-registry-dataset",
-      "target": "test:apps/majordomus-cli/tests/projections.rs",
+      "source": "claim:openapi-inferred",
+      "target": "test:test/cases/92_openapi_reference.sh",
       "kind": "proved_by"
     }
   ]
