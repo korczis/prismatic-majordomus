@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "b477064b839d67dc919c74290d0043e3cc9378ee464fb82c80e892ffa35229d1",
+    "fingerprint": "50276aac8a33fb0c18150161b8f323ef4215199351d6de3e2a5ecb47d6ab76b4",
     "summary": {
       "total": 670,
       "builtin": 11,
@@ -23,7 +23,7 @@
       "mcp_resources": 661,
       "http_routes": 11,
       "cli_commands": 4,
-      "modules": 21,
+      "modules": 22,
       "benchmark_required": 11,
       "benchmark_waived": 0,
       "cached": 2
@@ -3465,7 +3465,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 168,
+        "capabilities": 167,
         "capability_ids": []
       },
       {
@@ -3482,6 +3482,14 @@
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
         "capabilities": 90,
+        "capability_ids": []
+      },
+      {
+        "id": "knowledge",
+        "title": "knowledge",
+        "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
         "capability_ids": []
       },
       {
@@ -3620,7 +3628,7 @@
     ]
   },
   "index": {
-    "fingerprint": "80fb79b62146727fe398bd1c8fa2067f4c065aa91a1c7bf165a87f1bcc92f10c",
+    "fingerprint": "f6afe6df9881f5452b8088634ec50ed4aa3a5fc74ff8dbe209a01599a5a75936",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -3641,9 +3649,10 @@
       "application": 5,
       "claim": 120,
       "context": 5,
-      "document": 168,
+      "document": 167,
       "implementation": 37,
       "issue": 90,
+      "knowledge": 1,
       "milestone": 11,
       "policy": 1,
       "profile": 4,
@@ -4948,16 +4957,6 @@
         "section": "workflows",
         "source_class": "workflow",
         "bytes": 943
-      },
-      {
-        "uri": "majordomus://document/.ai/repo/knowledge/curated/start-here.md",
-        "kind": "document",
-        "identity": ".ai/repo/knowledge/curated/start-here.md",
-        "title": "Start here",
-        "path": ".ai/repo/knowledge/curated/start-here.md",
-        "section": "knowledge",
-        "source_class": "curated",
-        "bytes": 786
       },
       {
         "uri": "majordomus://document/.ai/repo/skills/implement/examples/add-a-catalogue-item.md",
@@ -7763,6 +7762,21 @@
         "bytes": 1016
       },
       {
+        "uri": "majordomus://knowledge/start-here",
+        "kind": "knowledge",
+        "identity": "start-here",
+        "title": "The documents that explain this repository are read in a fixed order",
+        "description": "What to read before changing this repository, and which document answers which question.",
+        "path": ".ai/repo/knowledge/curated/start-here.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1389,
+        "tags": [
+          "onboarding",
+          "documentation"
+        ]
+      },
+      {
         "uri": "majordomus://milestone/M000",
         "kind": "milestone",
         "identity": "M000",
@@ -10419,7 +10433,7 @@
       "format": "markdown",
       "front_matter": "optional",
       "identity": [],
-      "objects": 168
+      "objects": 167
     },
     {
       "name": "implementation",
@@ -10446,7 +10460,7 @@
       "identity": [
         "id"
       ],
-      "objects": 0
+      "objects": 1
     },
     {
       "name": "milestone",
