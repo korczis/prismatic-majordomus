@@ -6,10 +6,22 @@
 #
 #   scripts/site-probe            probe every route at 320, 390 and 1280 px
 #   scripts/site-probe --quick    homepage and one page per section only
-#   SITE_PROBE_ONLY='/plan/ /registry/' scripts/site-probe   only the named routes (local iteration)
+#   SITE_PROBE_JOBS=N             N routes measured at a time, each in its own browser process
+#                                 (default 1); the findings are rendered in route order whatever
+#                                 the order they came in
+#   SITE_PROBE_PORT=N             the local server's port (default: the first free one of 8791-8796)
+#   SITE_PROBE_TIMEOUT=N          seconds a browser process may take for one route before it is
+#                                 killed and the route reported as unanswered (default 90)
+#
+# One browser process measures one route: the three widths are three iframes of that route side
+# by side in one page, each measured by the same script (viewport against scroll width, the
+# elements and text runs past the right edge, the diagrams rendered against the diagrams
+# declared). A finding names the route, the width, the assertion and what was measured.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"; QUICK=0
 [ "${1:-}" = --quick ] && QUICK=1
+JOBS="${SITE_PROBE_JOBS:-1}"
+case "$JOBS" in ''|*[!0-9]*|0) echo "site-probe: SITE_PROBE_JOBS must be a positive integer, got '$JOBS'" >&2; exit 2 ;; esac
 [ -d "$PUB" ] || { echo "site-probe: site/public missing; run scripts/site-build" >&2; exit 12; }
 CHROME=""
 for c in "${CHROME_BIN:-}" google-chrome google-chrome-stable chromium chromium-browser "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; do
@@ -18,6 +30,50 @@ done
 [ -n "$CHROME" ] || { echo "SKIP site-probe: no Chrome/Chromium found (set CHROME_BIN)"; exit 0; }
 command -v python3 >/dev/null || { echo "SKIP site-probe: python3 needed for the local server"; exit 0; }
 
+# One browser process, its window width, and the title of the page it dumped, or the
+# sentinel when it did not finish within SITE_PROBE_TIMEOUT seconds (a hung browser is a
+# finding, never a wait without end; no `timeout` command on BSD userland, so the watchdog
+# is a loop). Chrome fast-forwards the page's timers through --virtual-time-budget.
+TIMED_OUT="(timed out)"; SITE_PROBE_TIMEOUT="${SITE_PROBE_TIMEOUT:-90}"
+dump_title() {
+  local url="$1" width="$2" dom pid i=0
+  dom="$(mktemp "${TMPDIR:-/tmp}/mj-probe-dom.XXXXXX")"
+  "$CHROME" --headless=new --disable-gpu --window-size="$width,1000" --virtual-time-budget=9000 --dump-dom "$url" > "$dom" 2>/dev/null &
+  pid=$!
+  while kill -0 "$pid" 2>/dev/null && [ "$i" -lt "$SITE_PROBE_TIMEOUT" ]; do sleep 1; i=$((i+1)); done
+  if kill -0 "$pid" 2>/dev/null; then kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; rm -f "$dom"; printf '%s' "$TIMED_OUT"; return 0; fi
+  wait "$pid" 2>/dev/null || true
+  grep -oE '<title>[^<]*' "$dom" | sed 's/<title>//' | head -1; rm -f "$dom"
+}
+
+# ---------------------------------------------------------------- one route (a worker)
+# The parent spawns `site-probe --route <n> <route>` through xargs; the worker writes its
+# findings to $SITE_PROBE_WORK/res/<n> and exits 0 whatever it found, so that xargs keeps
+# dispatching. The verdict is the file.
+if [ "${1:-}" = --route ]; then
+  n="$2"; r="$3"; WORK="$SITE_PROBE_WORK"; PREFIX="$SITE_PROBE_PREFIX"; PORT="$SITE_PROBE_PORT"
+  page="$WORK/srv/p$n.html"; out="$WORK/res/$n"; : > "$out"
+  cat > "$page" <<HTML
+<!doctype html><title>probe</title><style>body{margin:0}#row{display:flex;align-items:flex-start}iframe{height:900px;border:0;flex:none}</style>
+<div id=row><iframe id=f320 src="$PREFIX$r" style="width:320px"></iframe><iframe id=f390 src="$PREFIX$r" style="width:390px"></iframe><iframe id=f1280 src="$PREFIX$r" style="width:1280px"></iframe></div>
+<script>const W=[320,390,1280];let loaded=0;
+function measure(f){const d=f.contentDocument;const vw=d.documentElement.clientWidth,sw=d.documentElement.scrollWidth;const pres=d.querySelectorAll('pre.mermaid').length,svg=d.querySelectorAll('pre.mermaid svg').length;const nm=e=>e.tagName.toLowerCase()+'.'+(e.className||'').toString().split(' ').slice(0,2).join('.');const clipped=e=>{for(let p=e;p;p=p.parentElement){const o=getComputedStyle(p);if(o.overflowX==='auto'||o.overflowX==='scroll'||o.overflowX==='hidden')return true}return false};const x=[...d.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>vw+1&&!clipped(e.parentElement||e)).slice(0,2).map(nm);const tw=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT),rg=d.createRange(),tx=[];let nd;while((nd=tw.nextNode())){if(!nd.nodeValue.trim()||clipped(nd.parentElement))continue;rg.selectNodeContents(nd);if(rg.getBoundingClientRect().right>vw+1)tx.push('text \\''+nd.nodeValue.trim().slice(0,22)+'\\' in '+nm(nd.parentElement))}return 'vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' wide='+(x.concat(tx.slice(0,2)).join('|')||'none')}
+W.forEach(w=>document.getElementById('f'+w).addEventListener('load',()=>{loaded++;if(loaded===W.length)setTimeout(()=>{document.title=W.map(w=>'w'+w+' '+measure(document.getElementById('f'+w))).join(' ;; ')},2500)}));</script>
+HTML
+  t="$(dump_title "http://127.0.0.1:$PORT/p$n.html" 2100)"
+  [ "$t" = "$TIMED_OUT" ] && { printf 'FAIL %-10s %s\n' probe "$r: the browser did not answer within ${SITE_PROBE_TIMEOUT}s" >> "$out"; rm -f "$page"; exit 0; }
+  for w in 320 390 1280; do
+    m="$(printf '%s' "$t" | tr ';' '\n' | sed -n "s/^ *w$w //p" | head -1)"
+    vw="$(printf '%s' "$m" | sed -n 's/.*vw=\([0-9]*\).*/\1/p')"; sw="$(printf '%s' "$m" | sed -n 's/.*sw=\([0-9]*\).*/\1/p')"
+    [ -n "$vw" ] || { printf 'FAIL %-10s %s\n' probe "$r @$w: no measurement (page did not load)" >> "$out"; continue; }
+    [ "$sw" -le "$vw" ] || printf 'FAIL %-10s %s\n' overflow "$r @${w}px: scrollWidth $sw > viewport $vw ($(printf '%s' "$m" | sed -n 's/.*wide=//p'))" >> "$out"
+    md="$(printf '%s' "$m" | sed -n 's/.*mermaid=\([0-9]*\/[0-9]*\).*/\1/p')"; [ "${md%/*}" = "${md#*/}" ] || printf 'FAIL %-10s %s\n' mermaid "$r @${w}px: rendered ${md%/*} of ${md#*/} diagrams" >> "$out"
+  done
+  rm -f "$page"
+  exit 0
+fi
+
+# ---------------------------------------------------------------- the run
 PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
 PORT="${SITE_PROBE_PORT:-}"
 if [ -z "$PORT" ]; then for c in 8791 8792 8793 8794 8795 8796; do lsof -ti ":$c" >/dev/null 2>&1 || { PORT=$c; break; }; done; fi
@@ -28,21 +84,15 @@ BASE="http://127.0.0.1:$PORT$PREFIX"
 ( cd "$SITE" && zola build --force --base-url "$BASE" --output-dir "$WORK/out" >/dev/null 2>&1 ) || { echo "site-probe: zola build for the probe origin failed" >&2; exit 12; }
 [ -f "$WORK/out/index.html" ] || { echo "site-probe: probe build produced no index.html in $WORK/out" >&2; exit 12; }
 for a in app.css giallo-light.css giallo-dark.css js images; do [ -e "$PUB/$a" ] && cp -R "$PUB/$a" "$WORK/out/" 2>/dev/null || true; done
-mkdir -p "$WORK/srv"; ln -s "$WORK/out" "$WORK/srv$PREFIX"
+mkdir -p "$WORK/srv" "$WORK/res"; ln -s "$WORK/out" "$WORK/srv$PREFIX"
 ( cd "$WORK/srv" && exec python3 -m http.server "$PORT" >/dev/null 2>&1 ) & SRV=$!
 for _ in 1 2 3 4 5 6 7 8 9 10; do curl -s -o /dev/null "http://127.0.0.1:$PORT$PREFIX/" && break; sleep 0.5; done
 curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT$PREFIX/" | grep -q 200 || { echo "site-probe: local server did not serve $PREFIX/" >&2; exit 12; }
 
 fails=0; ok() { printf 'OK   %-10s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-10s %s\n' "$1" "$2"; fails=$((fails+1)); }
-title_of() { "$CHROME" --headless=new --disable-gpu --window-size=1400,1000 --virtual-time-budget=9000 --dump-dom "$1" 2>/dev/null | grep -oE '<title>[^<]*' | sed 's/<title>//' | head -1; }
+title_of() { dump_title "$1" 1400; }
 
 routes="$(cd "$WORK/out" && find . -name index.html | sed 's#^\.##; s#index.html$##' | sort)"
-# SITE_PROBE_ONLY='/plan/ /guarantees/guaranteed/' narrows the sweep to named routes while a
-# layout fix is iterated on; CI never sets it, so the deploy still waits for every route.
-if [ -n "${SITE_PROBE_ONLY:-}" ]; then
-  routes="$(for r in $routes; do for o in $SITE_PROBE_ONLY; do [ "$r" = "$o" ] && printf '%s\n' "$r"; done; done; true)"
-  [ -n "$routes" ] || { echo "site-probe: SITE_PROBE_ONLY names no built route" >&2; exit 12; }
-fi
 if [ "$QUICK" = 1 ]; then
   # Sample one route per template, not one per section. Pages that share a template share
   # their layout, which is what makes a sample sound; section names are a proxy that stops
@@ -70,19 +120,17 @@ if [ "$QUICK" = 1 ]; then
   routes="$(printf '%s\n' "$SAMPLE" | sort -u)"
   echo "site-probe: --quick, one route per template plus each template's widest page ($(printf '%s\n' "$routes" | wc -l | tr -d ' ') of $(printf '%s\n' "$MAP" | wc -l | tr -d ' '))"
 fi
+# every route through the pool: "<n> <route>" per line, n in route order, so the findings
+# come back in route order whatever the order the processes finished in
+SITE_PROBE_WORK="$WORK" SITE_PROBE_PREFIX="$PREFIX" SITE_PROBE_PORT="$PORT"; export SITE_PROBE_WORK SITE_PROBE_PREFIX SITE_PROBE_PORT
+n_routes="$(printf '%s\n' "$routes" | wc -l | tr -d ' ')"
+printf '%s\n' "$routes" | awk '{ printf "%04d %s\n", NR, $0 }' | xargs -n2 -P"$JOBS" "$ROOT/scripts/site-probe" --route
 n=0
-for r in $routes; do
-  for w in 320 390 1280; do
-    cat > "$WORK/srv/p.html" <<HTML
-<!doctype html><title>probe</title><iframe id=f src="$PREFIX$r" style="width:${w}px;height:900px;border:0"></iframe>
-<script>document.getElementById('f').addEventListener('load',()=>{setTimeout(()=>{const d=document.getElementById('f').contentDocument;const vw=d.documentElement.clientWidth,sw=d.documentElement.scrollWidth;const pres=d.querySelectorAll('pre.mermaid').length,svg=d.querySelectorAll('pre.mermaid svg').length;const nm=e=>e.tagName.toLowerCase()+'.'+(e.className||'').toString().split(' ').slice(0,2).join('.');const clipped=e=>{for(let p=e;p;p=p.parentElement){const o=getComputedStyle(p);if(o.overflowX==='auto'||o.overflowX==='scroll'||o.overflowX==='hidden')return true}return false};const x=[...d.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>vw+1&&!clipped(e.parentElement||e)).slice(0,2).map(nm);const tw=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT),rg=d.createRange(),tx=[];let nd;while((nd=tw.nextNode())){if(!nd.nodeValue.trim()||clipped(nd.parentElement))continue;rg.selectNodeContents(nd);if(rg.getBoundingClientRect().right>vw+1)tx.push('text \''+nd.nodeValue.trim().slice(0,22)+'\' in '+nm(nd.parentElement))}document.title='vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' wide='+(x.concat(tx.slice(0,2)).join('|')||'none')},2500)});</script>
-HTML
-    t="$(title_of "http://127.0.0.1:$PORT/p.html")"; n=$((n+1))
-    vw="$(printf '%s' "$t" | sed -n 's/.*vw=\([0-9]*\).*/\1/p')"; sw="$(printf '%s' "$t" | sed -n 's/.*sw=\([0-9]*\).*/\1/p')"
-    [ -n "$vw" ] || { bad probe "$r @$w: no measurement (page did not load)"; continue; }
-    [ "$sw" -le "$vw" ] || bad overflow "$r @${w}px: scrollWidth $sw > viewport $vw ($(printf '%s' "$t" | sed -n 's/.*wide=//p'))"
-    m="$(printf '%s' "$t" | sed -n 's/.*mermaid=\([0-9]*\/[0-9]*\).*/\1/p')"; [ "${m%/*}" = "${m#*/}" ] || bad mermaid "$r @${w}px: rendered ${m%/*} of ${m#*/} diagrams"
-  done
+for i in $(seq 1 "$n_routes"); do
+  f="$WORK/res/$(printf '%04d' "$i")"
+  [ -f "$f" ] || { bad probe "route $i of $n_routes produced no result file"; continue; }
+  n=$((n+3))
+  while IFS= read -r line; do [ -n "$line" ] || continue; printf '%s\n' "$line"; fails=$((fails+1)); done < "$f"
 done
 ok overflow "$n route×width measurements without horizontal overflow (or listed above)"
 
@@ -109,8 +157,8 @@ printf '%s' "$t" | grep -q 'dropdown=true' && ok dropdown "navigation dropdown o
 # passed once and the full run then found an overflow on a page the sample never opened.
 if [ "$QUICK" = 1 ]; then
   printf 'site-probe: %s failure(s) with %s — sampled %s of %s routes; a clean --quick is not a clean site, run without --quick before claiming one\n' \
-    "$fails" "$CHROME" "$(printf '%s\n' "$routes" | wc -l | tr -d ' ')" "$(cd "$WORK/out" && find . -name index.html | wc -l | tr -d ' ')"
+    "$fails" "$CHROME" "$n_routes" "$(cd "$WORK/out" && find . -name index.html | wc -l | tr -d ' ')"
 else
-  printf 'site-probe: %s failure(s) with %s — every route\n' "$fails" "$CHROME"
+  printf 'site-probe: %s failure(s) with %s — every route, %s at a time\n' "$fails" "$CHROME" "$JOBS"
 fi
 [ "$fails" = 0 ] && exit 0 || exit 10
