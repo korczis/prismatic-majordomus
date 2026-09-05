@@ -32,6 +32,7 @@ pub mod perf;
 pub mod repository;
 pub mod share;
 pub mod shared;
+pub mod synthetic;
 
 pub use error::Error;
 pub use index::Index;

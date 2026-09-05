@@ -363,7 +363,21 @@ just mcp                        # MCP on stdio for the client that spawned it; t
 just serve                      # the shared server alone: http://127.0.0.1:8741, Swagger UI at /docs, /openapi.json, /mcp
 just capabilities               # every capability and its projections
 just generate-check             # the committed projections are current
+just bench-coverage             # every operation is a benchmark target; the denominator is the registry's
+just bench-run                  # time every operation: directly, over MCP (a real child), over HTTP (a real socket)
 ```
+
+**Declare once, derive everything.** A capability is one `capability!` block in its
+module's file; modules compose capabilities with `module!`, the root composes modules
+with `compose_modules!`, and MCP, HTTP, OpenAPI, Swagger UI, the command line, the
+benchmark targets, the cache behaviour and the generated reference are derived from the
+registry those blocks build. Adding a capability is: define the typed input and output
+(with the input's benchmark cases), write the handler, add the block to its module, run
+`just generate` and `just validate`. There is no step that edits an MCP registry, an
+HTTP router, an OpenAPI document, Swagger, a benchmark inventory or a documentation table,
+because none of those is written by hand. Every externally callable operation is
+benchmarked through the real transports and every claim about speed is a recorded
+measurement ([`docs/CAPABILITIES.md`](docs/CAPABILITIES.md), ADR 4).
 
 **One server per repository.** The first `majordomus mcp` binds the loopback HTTP
 projection beside its stdio session and logs the URL (Swagger UI at `/docs`, the OpenAPI

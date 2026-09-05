@@ -1176,6 +1176,58 @@
       "source_route": "/docs/mcp/",
       "command": null,
       "test_case": "90_mcp_shared_server"
+    },
+    {
+      "id": "capability-modules",
+      "claim": "A capability of the Rust executable is declared once and composed into its module, the root composes modules, and the registry refuses a capability outside its module's namespace",
+      "source": "docs/CAPABILITIES.md",
+      "implementation": "apps/majordomus-cli/src/capability/module.rs",
+      "test": "test/cases/91_canonical_architecture.sh",
+      "status": "guaranteed",
+      "note": "capability!, module! and compose_modules! build plain values handed to the registry builder; adding a capability to an existing module touches that module's file alone, and MCP, HTTP, OpenAPI, Swagger UI, the CLI, the benchmark targets, the cache and the generated reference follow. The crate's tests/registry.rs holds the invariants, tests/projections.rs the propagation.",
+      "responsibility": "none",
+      "source_route": "/docs/capabilities/",
+      "command": null,
+      "test_case": "91_canonical_architecture"
+    },
+    {
+      "id": "benchmark-coverage-derived",
+      "claim": "Every externally callable operation of the Rust executable is a benchmark target with a denominator generated from the registry, and a missing case fails the structural check",
+      "source": "docs/CAPABILITIES.md",
+      "implementation": "apps/majordomus-cli/src/bench/coverage.rs",
+      "test": "test/cases/91_canonical_architecture.sh",
+      "status": "guaranteed",
+      "note": "Each required executable is a target directly and on every transport its exposure declares, with the cases its input type provides; the transports' own operations are targets declared once; waivers are typed and never counted. Runners time the executor, a real loopback socket and a real majordomus mcp child; results are majordomus/benchmark-result/v1; the baseline is per platform under .ai/repo/benchmarks/rust/ and the policy is data.",
+      "responsibility": "none",
+      "source_route": "/docs/capabilities/",
+      "command": null,
+      "test_case": "91_canonical_architecture"
+    },
+    {
+      "id": "hot-path-no-rebuild",
+      "claim": "After startup, no MCP or HTTP request of the Rust executable scans the repository, builds the index or the registry, derives a schema or builds a projection, and perf.counters proves it",
+      "source": "docs/CAPABILITIES.md",
+      "implementation": "apps/majordomus-cli/src/perf.rs",
+      "test": "test/cases/91_canonical_architecture.sh",
+      "status": "guaranteed",
+      "note": "Process-wide counters, each incremented at one named place, answered as perf.counters over every transport; tests/hot_path.rs sends hundreds of requests through the real transports and requires the startup counters unchanged; the MCP listings and the OpenAPI document are prepared once.",
+      "responsibility": "none",
+      "source_route": "/docs/capabilities/",
+      "command": null,
+      "test_case": "91_canonical_architecture"
+    },
+    {
+      "id": "execution-cache-equivalence",
+      "claim": "A cached capability of the Rust executable answers the same value uncached, cold and warm, a hit runs no handler, errors and commands are never cached, and the key carries the registry fingerprint",
+      "source": "docs/CAPABILITIES.md",
+      "implementation": "apps/majordomus-cli/src/capability/executor.rs",
+      "test": "test/cases/91_canonical_architecture.sh",
+      "status": "guaranteed",
+      "note": "One executor for every transport; CachePolicy on the descriptor; bounded per capability; the key is the canonical id, the input in canonical form and a sha-256 fingerprint of the repository content and the descriptors. tests/executor.rs and the proptest harness in tests/properties.rs iterate every cached capability with every case and generated inputs.",
+      "responsibility": "none",
+      "source_route": "/docs/capabilities/",
+      "command": null,
+      "test_case": "91_canonical_architecture"
     }
   ]
 }

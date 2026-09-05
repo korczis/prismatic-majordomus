@@ -42,6 +42,10 @@ sha2 = "0.10"
 [dev-dependencies]
 tempfile = "3"
 criterion = { version = "0.8", default-features = false }
+# proptest: the property-based harnesses (cache equivalence, key normalisation, transport
+# equivalence, projection determinism, duplicate detection), strategies derived per
+# capability from its benchmark cases.
+proptest = { version = "1", default-features = false, features = ["std"] }
 
 [[bench]]
 name = "projections"
@@ -49,6 +53,10 @@ harness = false
 
 [[bench]]
 name = "shared"
+harness = false
+
+[[bench]]
+name = "scaling"
 harness = false
 
 [profile.release]

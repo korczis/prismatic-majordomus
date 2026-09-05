@@ -107,6 +107,12 @@ jobs:
       # (docs/generated, share/allow) match the registry and the schemas
       - run: cargo run --quiet -- capabilities validate
       - run: cargo run --quiet -- generate --check
+      # every externally callable operation is a benchmark target; the denominator is the
+      # registry's, and a missing case fails here before it can be merged
+      - run: cargo run --quiet -- bench coverage --check
+      # a conservative measurement through the real transports, compared with this
+      # platform's baseline under .ai/repo/benchmarks/rust/ when one is committed
+      - run: cargo run --quiet -- bench --profile ci --check --no-write
 
   # Line coverage of the crate, with the threshold scripts/rust-check enforces locally.
   coverage:

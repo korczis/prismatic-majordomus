@@ -18,6 +18,7 @@ step "cargo doc -D warnings";        RUSTDOCFLAGS='-D warnings' cargo doc --no-d
 step "cargo bench --no-run";         cargo bench --no-run --quiet
 step "capabilities validate";        cargo run --quiet -- capabilities validate
 step "generate --check";             cargo run --quiet -- generate --check
+step "bench coverage --check";       cargo run --quiet -- bench coverage --check
 threshold="$(cat "$ROOT/scripts/rust-coverage-threshold")"
 if cargo llvm-cov --version >/dev/null 2>&1; then
   step "cargo llvm-cov --fail-under-lines $threshold"
