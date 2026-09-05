@@ -87,10 +87,10 @@ fn every_declared_projection_exists_and_no_projection_is_an_orphan() {
         }
     }
     // present -> declared
-    for t in &tools {
+    for t in tools.iter() {
         assert_eq!(registry.by_mcp_tool(&t.name).unwrap().id.to_string(), t.id);
     }
-    for r in &resources {
+    for r in resources.iter() {
         assert!(
             registry.by_mcp_uri(&r.uri).is_some(),
             "orphan MCP resource {}",

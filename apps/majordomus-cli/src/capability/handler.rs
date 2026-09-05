@@ -12,6 +12,8 @@ use serde_json::Value;
 use crate::index::Index;
 use crate::peers::{PeerBoard, PeerId};
 
+use super::executor::CapabilityExecutor;
+
 use super::model::Capability;
 use super::registry::CapabilityRegistry;
 
@@ -45,18 +47,23 @@ pub struct Context {
     pub registry: Arc<CapabilityRegistry>,
     /// The peers attached to this process.
     pub peers: Arc<PeerBoard>,
+    /// The one execution path: counters, cache, handler dispatch. Shared by every
+    /// transport and every session of this process.
+    pub executor: Arc<CapabilityExecutor>,
     /// The peer this call came from, when it came through an MCP session; `None` for the
     /// command line and for a plain HTTP request.
     pub caller: Option<PeerId>,
 }
 
 impl Context {
-    /// A context over an index and a registry, with an empty board and no caller.
+    /// A context over an index and a registry, with an empty board, a fresh executor and
+    /// no caller.
     pub fn new(index: Arc<Index>, registry: Arc<CapabilityRegistry>) -> Self {
         Context {
             index,
             registry,
             peers: Arc::new(PeerBoard::new()),
+            executor: Arc::new(CapabilityExecutor::new()),
             caller: None,
         }
     }
@@ -67,8 +74,14 @@ impl Context {
             index: Arc::clone(&self.index),
             registry: Arc::clone(&self.registry),
             peers: Arc::clone(&self.peers),
+            executor: Arc::clone(&self.executor),
             caller: Some(caller),
         }
+    }
+
+    /// Execute a capability by id: the one way anything calls a handler.
+    pub fn execute(&self, id: &str, input: Value) -> Result<Value, CapabilityError> {
+        self.executor.execute(self, id, input)
     }
 }
 

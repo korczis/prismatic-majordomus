@@ -27,8 +27,7 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
         } => {
             let input = json!({ "kind": kind, "exposure": exposure });
             let v = ctx
-                .registry
-                .call(ctx, cli_capability(ctx, &["capabilities", "list"])?, input)
+                .execute(cli_capability(ctx, &["capabilities", "list"])?, input)
                 .map_err(map)?;
             match format {
                 OutputFormat::Json => w(&mut out, pretty(&v))?,
@@ -77,9 +76,7 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
         }
         CapabilitiesCommand::Describe { id, format } => {
             let v = ctx
-                .registry
-                .call(
-                    ctx,
+                .execute(
                     cli_capability(ctx, &["capabilities", "describe"])?,
                     json!({ "id": id }),
                 )

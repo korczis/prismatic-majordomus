@@ -8,6 +8,7 @@
 pub mod capabilities;
 pub mod objects;
 pub mod peers;
+pub mod perf;
 pub mod repository;
 mod views;
 
@@ -29,7 +30,7 @@ pub use views::{Empty, ObjectSummary, ObjectView};
 /// The application: its modules, in one place. A new module is one line here; a new
 /// capability in an existing module is no line here.
 pub fn modules() -> Vec<ModuleDescriptor> {
-    compose_modules![repository, objects, capabilities, peers]
+    compose_modules![repository, objects, capabilities, peers, perf]
 }
 
 /// Every executable of every module, flattened, for a registry built without module

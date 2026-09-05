@@ -34,6 +34,8 @@ pub const INFRASTRUCTURE_ROUTES: &[&str] = &["/", "/openapi.json", "/docs", "/mc
 /// assert_eq!(doc["paths"]["/api/v1/object"]["get"]["x-majordomus-mcp"]["tool"], "majordomus_get");
 /// ```
 pub fn document(registry: &CapabilityRegistry, version: &str) -> Result<Value, String> {
+    let _phase = crate::perf::phase(crate::perf::Phase::OpenApiBuild);
+    crate::perf::Counters::bump(&crate::perf::COUNTERS.openapi_builds);
     let mut components: BTreeMap<String, Value> = BTreeMap::new();
     let error_ref = CanonicalSchema::of::<ErrorBody>().openapi_ref(&mut components)?;
     let mut paths: BTreeMap<String, BTreeMap<String, Value>> = BTreeMap::new();

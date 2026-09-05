@@ -358,6 +358,49 @@
         }
       }
     },
+    "/api/v1/perf": {
+      "get": {
+        "operationId": "perf.counters",
+        "summary": "Performance counters",
+        "description": "The counters of this process: repository scans, index and registry builds, schema generations, projection builds, executions, handler invocations, cache hits, misses and evictions, and the phase timings, as they stand now.",
+        "tags": [
+          "perf"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Performance counters: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CounterSnapshot"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "perf.counters",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::perf"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_perf"
+        }
+      }
+    },
     "/api/v1/repository": {
       "get": {
         "operationId": "repository.info",
@@ -878,6 +921,106 @@
         ],
         "description": "What a client said about itself in `initialize`."
       },
+      "CounterSnapshot": {
+        "type": "object",
+        "properties": {
+          "repository_scans": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Enumerations of the repository's declared sources."
+          },
+          "index_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Index builds."
+          },
+          "registry_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Registry builds."
+          },
+          "schema_generations": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "JSON Schemas derived from Rust types."
+          },
+          "mcp_projection_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "MCP tool and resource listings computed."
+          },
+          "openapi_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "OpenAPI documents built."
+          },
+          "http_projection_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "HTTP routers built."
+          },
+          "executions": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Calls through the executor, every transport."
+          },
+          "handler_invocations": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Handlers actually run."
+          },
+          "cache_hits": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Executions answered from the cache."
+          },
+          "cache_misses": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Executions of a cached capability that ran the handler."
+          },
+          "cache_evictions": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Cache entries dropped."
+          },
+          "phases": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PhaseTotals"
+            },
+            "description": "Phase totals by phase name."
+          }
+        },
+        "required": [
+          "repository_scans",
+          "index_builds",
+          "registry_builds",
+          "schema_generations",
+          "mcp_projection_builds",
+          "openapi_builds",
+          "http_projection_builds",
+          "executions",
+          "handler_invocations",
+          "cache_hits",
+          "cache_misses",
+          "cache_evictions",
+          "phases"
+        ],
+        "description": "The counters and phase totals of this process at one moment. Every value is a count\nor a duration this process measured; none is written anywhere by hand."
+      },
       "Diagnostic": {
         "type": "object",
         "properties": {
@@ -1384,6 +1527,28 @@
           "peers"
         ],
         "description": "The answer of `peers.list`: every client attached to this shared server."
+      },
+      "PhaseTotals": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How many times the phase ran."
+          },
+          "total_nanos": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Nanoseconds spent in it, summed."
+          }
+        },
+        "required": [
+          "count",
+          "total_nanos"
+        ],
+        "description": "A phase's totals."
       },
       "RepositoryInfo": {
         "type": "object",

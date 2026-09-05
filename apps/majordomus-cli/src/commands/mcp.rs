@@ -273,8 +273,8 @@ fn inspect(surface: &Surface, format: OutputFormat) -> Result<u8> {
         OutputFormat::Json => {
             let v = json!({
                 "repository": surface.repository_info().map_err(|e| Error::Protocol { reason: e.to_string() })?,
-                "resources": surface.resources(),
-                "tools": surface.tools(),
+                "resources": &*surface.resources(),
+                "tools": &*surface.tools(),
             });
             writeln!(
                 out,
@@ -315,10 +315,10 @@ fn inspect(surface: &Surface, format: OutputFormat) -> Result<u8> {
                     summary.total, summary.builtin, summary.declarative
                 ),
             )?;
-            for r in surface.resources() {
+            for r in surface.resources().iter() {
                 w(&mut out, format!("resource    {}", r.uri))?;
             }
-            for t in surface.tools() {
+            for t in surface.tools().iter() {
                 w(&mut out, format!("tool        {}", t.name))?;
             }
             for d in &index.diagnostics {

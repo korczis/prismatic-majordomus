@@ -123,8 +123,7 @@ fn benches(c: &mut Criterion) {
     });
     c.bench_function("capabilities.list call", |b| {
         b.iter(|| {
-            ctx.registry
-                .call(&ctx, "capabilities.list", serde_json::json!({}))
+            ctx.execute("capabilities.list", serde_json::json!({}))
                 .unwrap()
         })
     });

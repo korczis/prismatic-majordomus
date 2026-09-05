@@ -27,6 +27,7 @@ pub mod mcp;
 pub mod metadata;
 pub mod model;
 pub mod peers;
+pub mod perf;
 pub mod repository;
 pub mod share;
 pub mod shared;

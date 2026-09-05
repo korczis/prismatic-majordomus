@@ -35,6 +35,9 @@ schemars = "1"
 # tiny_http: a synchronous HTTP/1.1 server for the loopback `serve` command. No async
 # runtime, no framework; routes are derived from the capability registry, not declared.
 tiny_http = "0.12"
+# sha2: the registry and index fingerprints (cache keys, generated-file headers, benchmark
+# evidence) need a stable hash across processes; the standard library's is not.
+sha2 = "0.10"
 
 [dev-dependencies]
 tempfile = "3"

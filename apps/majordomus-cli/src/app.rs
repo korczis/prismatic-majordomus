@@ -35,7 +35,10 @@ impl App {
             Some(p) => p.clone(),
             None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
         };
-        let repository = Repository::discover(&start)?;
+        let repository = {
+            let _phase = crate::perf::phase(crate::perf::Phase::RepositoryDiscovery);
+            Repository::discover(&start)?
+        };
         tracing::info!(repository_root = %repository.root().display(), "repository found");
         let share = Share::locate(args.share.as_deref(), repository.root())?;
         tracing::info!(share = %share.dir().display(), origin = share.origin, "share directory");

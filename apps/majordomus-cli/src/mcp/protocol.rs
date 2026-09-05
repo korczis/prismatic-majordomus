@@ -145,7 +145,7 @@ impl Server {
             "initialize" => Ok(self.initialize(params)),
             "ping" => Ok(json!({})),
             "resources/list" => Ok(
-                json!({ "resources": self.surface.resources().iter().map(resource_json).collect::<Vec<_>>() }),
+                json!({ "resources": Value::Array(self.surface.resources_json().as_ref().clone()) }),
             ),
             "resources/templates/list" => Ok(json!({ "resourceTemplates": [] })),
             "resources/read" => {
@@ -164,9 +164,9 @@ impl Server {
                     Err(e) => Err((INVALID_PARAMS, e.to_string())),
                 }
             }
-            "tools/list" => Ok(
-                json!({ "tools": self.surface.tools().iter().map(tool_json).collect::<Vec<_>>() }),
-            ),
+            "tools/list" => {
+                Ok(json!({ "tools": Value::Array(self.surface.tools_json().as_ref().clone()) }))
+            }
             "tools/call" => {
                 let name = params
                     .get("name")
@@ -256,7 +256,7 @@ impl Server {
     }
 }
 
-fn resource_json(r: &super::surface::Resource) -> Value {
+pub(crate) fn resource_json(r: &super::surface::Resource) -> Value {
     let mut v = json!({ "uri": r.uri, "name": r.name, "mimeType": r.media_type, "_meta": { "majordomus": r.meta } });
     if let Some(t) = &r.title {
         v["title"] = Value::String(t.clone());
@@ -267,7 +267,7 @@ fn resource_json(r: &super::surface::Resource) -> Value {
     v
 }
 
-fn tool_json(t: &super::surface::Tool) -> Value {
+pub(crate) fn tool_json(t: &super::surface::Tool) -> Value {
     json!({
         "name": t.name, "title": t.title, "description": t.description,
         "inputSchema": t.input_schema,

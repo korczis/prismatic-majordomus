@@ -16,6 +16,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `objects.search` | query | behaviorally_verified | `majordomus_search` | — | `GET /api/v1/search` | — | builtin majordomus_cli::capability::builtin::objects |
 | `peers.announce` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | builtin majordomus_cli::capability::builtin::peers |
 | `peers.list` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | builtin majordomus_cli::capability::builtin::peers |
+| `perf.counters` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | builtin majordomus_cli::capability::builtin::perf |
 | `repository.info` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | builtin majordomus_cli::capability::builtin::repository |
 
 ### `capabilities.describe` — Describe one capability
@@ -92,6 +93,14 @@ Every client attached to this shared server: id, the client's own name and versi
 Input: none.
 
 Output: `PeerList`.
+
+### `perf.counters` — Performance counters
+
+The counters of this process: repository scans, index and registry builds, schema generations, projection builds, executions, handler invocations, cache hits, misses and evictions, and the phase timings, as they stand now.
+
+Input: none.
+
+Output: `CounterSnapshot`.
 
 ### `repository.info` — Repository and index state
 

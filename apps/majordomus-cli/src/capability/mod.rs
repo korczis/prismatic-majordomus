@@ -11,6 +11,7 @@
 pub mod benchmark;
 pub mod builtin;
 pub mod declarative;
+pub mod executor;
 pub mod handler;
 pub mod model;
 pub mod module;
@@ -18,6 +19,7 @@ pub mod registry;
 pub mod schema;
 
 pub use benchmark::{BenchmarkCases, CaseContext, CaseProvider, NamedCase};
+pub use executor::CapabilityExecutor;
 pub use handler::{CapabilityError, Context, Executable, Handler};
 pub use model::{
     BenchmarkPolicy, CachePolicy, Capability, CapabilityId, CapabilityKind, CliExposure, Exposure,

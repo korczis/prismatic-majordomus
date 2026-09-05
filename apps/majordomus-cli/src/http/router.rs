@@ -145,6 +145,7 @@ pub struct Router {
 impl Router {
     /// A router over a loaded context, without `/mcp`.
     pub fn new(ctx: Arc<Context>, version: &'static str) -> Self {
+        crate::perf::Counters::bump(&crate::perf::COUNTERS.http_projection_builds);
         Router {
             ctx,
             version,
@@ -288,7 +289,7 @@ impl Router {
             }
         };
         tracing::info!(capability_id = %c.id, route = %format!("{} {}", req.method, req.path), "http");
-        match self.ctx.registry.call(&self.ctx, c.id.as_str(), input) {
+        match self.ctx.execute(c.id.as_str(), input) {
             Ok(v) => json_response(200, &v),
             Err(CapabilityError::InvalidInput(m)) => error_response(400, "invalid_input", &m),
             Err(CapabilityError::NotFound(m)) => error_response(404, "not_found", &m),

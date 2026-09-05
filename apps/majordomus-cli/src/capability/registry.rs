@@ -214,6 +214,7 @@ pub enum RegistryError {
 pub struct CapabilityRegistry {
     entries: BTreeMap<CapabilityId, Entry>,
     modules: BTreeMap<ModuleId, ModuleInfo>,
+    fingerprint: String,
     by_mcp_tool: BTreeMap<String, CapabilityId>,
     by_mcp_uri: BTreeMap<String, CapabilityId>,
     by_http: BTreeMap<(HttpMethod, String), CapabilityId>,
@@ -225,6 +226,7 @@ pub struct CapabilityRegistry {
 pub struct Builder {
     pending: Vec<Entry>,
     modules: Vec<ModuleInfo>,
+    index_fingerprint: String,
 }
 
 impl Builder {
@@ -258,8 +260,10 @@ impl Builder {
         self
     }
 
-    /// Every object of the index becomes a resource capability.
+    /// Every object of the index becomes a resource capability; the index's fingerprint
+    /// joins the registry's.
     pub fn with_index(mut self, index: &Index) -> Self {
+        self.index_fingerprint = index.fingerprint.clone();
         for object in &index.objects {
             self.pending.push(Entry {
                 capability: super::declarative::capability_of(object),
@@ -273,6 +277,8 @@ impl Builder {
     /// Validate every invariant and build. Errors are collected, not stopped at the first,
     /// and reported in a deterministic order.
     pub fn build(self) -> Result<CapabilityRegistry, Vec<RegistryError>> {
+        let _phase = crate::perf::phase(crate::perf::Phase::RegistryBuild);
+        crate::perf::Counters::bump(&crate::perf::COUNTERS.registry_builds);
         let mut errors = Vec::new();
         let mut registry = CapabilityRegistry::default();
         for m in self.modules {
@@ -602,11 +608,28 @@ impl Builder {
             registry.entries.insert(c.id.clone(), entry);
         }
         if errors.is_empty() {
+            registry.fingerprint = fingerprint(&self.index_fingerprint, &registry);
             Ok(registry)
         } else {
             Err(errors)
         }
     }
+}
+
+/// The registry's fingerprint: a hash of the index's fingerprint (every declarative
+/// object's path and content) and of every descriptor, in id order. Stable across
+/// processes for the same code and the same repository state.
+fn fingerprint(index: &str, registry: &CapabilityRegistry) -> String {
+    use sha2::{Digest, Sha256};
+    let mut h = Sha256::new();
+    h.update(index.as_bytes());
+    for c in registry.iter() {
+        h.update(c.id.as_str().as_bytes());
+        h.update(b"\0");
+        h.update(serde_json::to_string(c).unwrap_or_default().as_bytes());
+        h.update(b"\n");
+    }
+    format!("{:x}", h.finalize())
 }
 
 fn not_executable(c: &Capability, projection: &str) -> RegistryError {
@@ -703,8 +726,20 @@ impl CapabilityRegistry {
         self.by_cli.get(path).and_then(|id| self.get(id.as_str()))
     }
 
-    /// Execute a query by id. A resource, or an unknown id, is `NotFound`.
-    pub fn call(&self, ctx: &Context, id: &str, input: Value) -> Result<Value, CapabilityError> {
+    /// The fingerprint of this registry and the repository state it was built from.
+    pub fn fingerprint(&self) -> &str {
+        &self.fingerprint
+    }
+
+    /// Run the handler of an executable by id, with no counters and no cache: the raw
+    /// dispatch the executor wraps. Everything else calls [`Context::execute`]. A
+    /// resource, or an unknown id, is `NotFound`.
+    pub fn dispatch(
+        &self,
+        ctx: &Context,
+        id: &str,
+        input: Value,
+    ) -> Result<Value, CapabilityError> {
         let entry = self
             .entries
             .get(&CapabilityId::unchecked(id))

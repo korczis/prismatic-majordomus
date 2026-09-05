@@ -159,6 +159,7 @@ fn handshake_discovery_and_a_real_round_trip() {
             "majordomus_search",
             "majordomus_announce",
             "majordomus_peers",
+            "majordomus_perf",
             "majordomus_repository"
         ]
     );
