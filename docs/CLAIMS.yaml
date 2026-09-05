@@ -957,13 +957,13 @@ claims:
     note: scripts/rust-check --artifact DIR copies the debug executable beside a majordomus-cli.json naming the commit, the target triple, the toolchain and the Cargo.lock digest; the workflow uploads it as majordomus-cli-<target>. rust_bin in test/lib.sh hands a case MAJORDOMUS_BIN when set, refuses one that is not executable, builds once with cargo when unset, and asks the case to skip when there is neither; the launcher bin/majordomus-mcp honours the same variable.
 
   - id: site-deploys-from-verified-run
-    claim: The site deploys from the same workflow run that validated it, after the jobs that guard the site are green, and nothing is rebuilt or measured twice for one commit
-    source: docs/CI.md
-    implementation: .github/workflows/validate.yml
-    test: test/cases/26_ci_wiring.sh
+    claim: Publication is gated on everything that can make the published site wrong and waits for nothing else; the checks that decide whether a change may merge run beside it on the same commit, not in front of it
+    source: docs/GITHUB_PAGES_PERFORMANCE.md
+    implementation: .github/workflows/pages.yml
+    test: test/cases/97_pages_fast_path.sh
     status: guaranteed
     responsibility: none      # the pipeline, not a supervised responsibility
-    note: The site job uploads the site/public it built, checked and probed as the Pages artifact on master; the pages job needs plan, structure, suite, rust and site and deploys it; deployments queue in order and never cancel one another; a pull request's runs are superseded by its next commit. The case proves there is one workflow, that it deploys, what the pages job needs, and the concurrency rule.
+    note: The publication path proves the committed derived data current by its input hash, builds the site from it, runs every static check over the output and pushes gh-pages, in one job triggered directly by a master push on paths derived from the gate model; superseded runs are cancelled; the suite, the crate gates, coverage, the macOS suite, the benchmark check and the browser probe run in validate.yml on the same commit and gate merging. The case proves the trigger, the derived paths, the cancellation, the permissions, that no heavy gate is on the path and none left validate.yml, and that a build which skips the generation is byte for byte one that does not.
 
   - id: openapi-inferred
     claim: The OpenAPI document is inferred, the tags are the modules, the examples are the benchmark cases, the responses are the router's statuses by kind, the prose is the one text every projection shares, and the site's API reference is rendered from the committed document
@@ -1012,7 +1012,7 @@ claims:
     note: The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared.
 
   - id: site-deploy-one-path
-    claim: The site is deployed by one script, scripts/site-deploy, from a terminal or from the Pages workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged
+    claim: The site is deployed by one script, scripts/site-deploy, from a terminal or from the publication workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged
     source: docs/GITHUB_PAGES_ARCHITECTURE.md
     implementation: scripts/site-deploy
     test: test/cases/96_site_deploy.sh

@@ -962,11 +962,11 @@
     {
       "id": "claim:site-deploys-from-verified-run",
       "kind": "claim",
-      "label": "The site deploys from the same workflow run that validated it, after the jobs that guard the site are green, and nothing is rebuilt or measured twice for one commit",
+      "label": "Publication is gated on everything that can make the published site wrong and waits for nothing else; the checks that decide whether a change may merge run beside it on the same commit, not in front of it",
       "status": "guaranteed",
       "route": "/guarantees/site-deploys-from-verified-run/",
       "external": false,
-      "note": "The site job uploads the site/public it built, checked and probed as the Pages artifact on master; the pages job needs plan, structure, suite, rust and site and deploys it; deployments queue in order and never cancel one another; a pull request's runs are superseded by its next commit. The case proves there is one workflow, that it deploys, what the pages job needs, and the concurrency rule."
+      "note": "The publication path proves the committed derived data current by its input hash, builds the site from it, runs every static check over the output and pushes gh-pages, in one job triggered directly by a master push on paths derived from the gate model; superseded runs are cancelled; the suite, the crate gates, coverage, the macOS suite, the benchmark check and the browser probe run in validate.yml on the same commit and gate merging. The case proves the trigger, the derived paths, the cancellation, the permissions, that no heavy gate is on the path and none left validate.yml, and that a build which skips the generation is byte for byte one that does not."
     },
     {
       "id": "claim:openapi-inferred",
@@ -1016,7 +1016,7 @@
     {
       "id": "claim:site-deploy-one-path",
       "kind": "claim",
-      "label": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the Pages workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
+      "label": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the publication workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
       "status": "guaranteed",
       "route": "/guarantees/site-deploy-one-path/",
       "external": false,
@@ -1039,6 +1039,13 @@
       "route": "/guarantees/derivation-one-graph/",
       "external": false,
       "note": "scripts/derive runs majordomus generate (the code-only projections), scripts/generate-site-data (the site's data and content and the derived documents, reading the registry manifest and the OpenAPI document), and majordomus generate again (the site dataset and the benchmark matrix over the index the documents joined); no stage reads its own output. scripts/derive-check composes generate --check and generate-site-data --check and exits 10 with both reports. The commit a page was built from is a fact of the build (site/data/build.json, served at /build.json, never committed), so source.json no longer carries it and the generator is idempotent on a clean tree. just derive, just derive-check and the Pages workflow call the scripts; just test runs the check."
+    },
+    {
+      "id": "impl:.github/workflows/pages.yml",
+      "kind": "implementation",
+      "label": ".github/workflows/pages.yml",
+      "route": null,
+      "external": false
     },
     {
       "id": "impl:.github/workflows/validate.yml",
@@ -1496,6 +1503,13 @@
       "external": false
     },
     {
+      "id": "source:docs/GITHUB_PAGES_PERFORMANCE.md",
+      "kind": "source",
+      "label": "docs/GITHUB_PAGES_PERFORMANCE.md",
+      "route": "/docs/github-pages-performance/",
+      "external": false
+    },
+    {
       "id": "source:docs/MCP.md",
       "kind": "source",
       "label": "docs/MCP.md",
@@ -1713,13 +1727,6 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/25_continuity_lifecycle.sh"
     },
     {
-      "id": "test:test/cases/26_ci_wiring.sh",
-      "kind": "test",
-      "label": "test/cases/26_ci_wiring.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/26_ci_wiring.sh"
-    },
-    {
       "id": "test:test/cases/27_foreign_task.sh",
       "kind": "test",
       "label": "test/cases/27_foreign_task.sh",
@@ -1928,6 +1935,13 @@
       "label": "test/cases/96_site_deploy.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/96_site_deploy.sh"
+    },
+    {
+      "id": "test:test/cases/97_pages_fast_path.sh",
+      "kind": "test",
+      "label": "test/cases/97_pages_fast_path.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_pages_fast_path.sh"
     }
   ],
   "edges": [
@@ -2458,7 +2472,7 @@
     },
     {
       "source": "claim:site-deploys-from-verified-run",
-      "target": "source:docs/CI.md",
+      "target": "source:docs/GITHUB_PAGES_PERFORMANCE.md",
       "kind": "specified_by"
     },
     {
@@ -2988,7 +3002,7 @@
     },
     {
       "source": "claim:site-deploys-from-verified-run",
-      "target": "impl:.github/workflows/validate.yml",
+      "target": "impl:.github/workflows/pages.yml",
       "kind": "implemented_by"
     },
     {
@@ -3518,7 +3532,7 @@
     },
     {
       "source": "claim:site-deploys-from-verified-run",
-      "target": "test:test/cases/26_ci_wiring.sh",
+      "target": "test:test/cases/97_pages_fast_path.sh",
       "kind": "proved_by"
     },
     {

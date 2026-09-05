@@ -9,7 +9,10 @@
 #   scripts/pages current                 is site/data/generated current for this tree? (exit 0/10)
 #   scripts/pages paths                   the paths a push must touch for the site to be able to change
 #   scripts/pages budget [--json]         the controlled budgets, from the model
-#   scripts/pages benchmark [-n N]        build and check N times; JSON (milliseconds) on stdout
+#   scripts/pages benchmark [-n N] [--write-baseline]
+#                                         build and check N times; JSON (milliseconds) on stdout,
+#                                         and with --write-baseline into the tracked baseline of
+#                                         this platform under .ai/repo/benchmarks/pages/
 #   scripts/pages report --timings FILE   the SLO verdict for a run, as a Markdown fragment
 #   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
 #                                         poll the public site until it serves that commit
@@ -137,10 +140,11 @@ cmd_budget() {
 # The controlled build path, repeated. Measured values only: nothing here prints a number it
 # did not time, and the JSON is what docs and the site read rather than a figure in prose.
 cmd_benchmark() {
-  local n=3 json=0
+  local n=3 write=0
   while [ $# -gt 0 ]; do case "$1" in
     -n|--iterations) n="$2"; shift 2 ;;
-    --json) json=1; shift ;;
+    --json) shift ;;
+    --write-baseline) write=1; shift ;;
     *) echo "pages benchmark: unknown option $1" >&2; exit 2 ;;
   esac; done
   case "$n" in ''|*[!0-9]*|0) echo "pages benchmark: --iterations must be a positive integer" >&2; exit 2 ;; esac
@@ -158,15 +162,31 @@ cmd_benchmark() {
     i=$((i+1))
   done
   # min, median and p90 of each phase and of their sum, over the samples actually taken
-  jq -Rn --arg samples "$n" --arg routes "$(find "$ROOT/$OUTPUT" -name index.html | wc -l | tr -d ' ')" --rawfile rows "$tmp" '
+  local out
+  out="$(jq -Rn --arg samples "$n" --arg routes "$(find "$ROOT/$OUTPUT" -name index.html | wc -l | tr -d ' ')" \
+    --arg platform "$(mj_pages_platform)" --rawfile rows "$tmp" '
     def stats(a): (a | sort) as $s | { min: $s[0], median: $s[(($s | length) / 2 | floor)],
                                         p90: $s[((($s | length) * 0.9) - 1 | floor | if . < 0 then 0 else . end)],
                                         max: $s[-1] };
     ($rows | split("\n") | map(select(length > 0)) | map(split("\t") | map(tonumber))) as $r
-    | { schema: 1, samples: ($samples | tonumber), routes: ($routes | tonumber), unit: "milliseconds",
+    | { schema: 1, platform: $platform, samples: ($samples | tonumber), routes: ($routes | tonumber),
+        unit: "milliseconds",
         fingerprint: stats([$r[][0]]), build: stats([$r[][1]]), check: stats([$r[][2]]),
-        controlled: stats([$r[] | add]) }'
+        controlled: stats([$r[] | add]) }')"
   rm -f "$tmp"
+  printf '%s\n' "$out"
+  if [ "$write" = 1 ]; then
+    mkdir -p "$ROOT/.ai/repo/benchmarks/pages"
+    printf '%s\n' "$out" > "$ROOT/.ai/repo/benchmarks/pages/baseline.$(mj_pages_platform).json"
+    printf 'pages benchmark: wrote .ai/repo/benchmarks/pages/baseline.%s.json\n' "$(mj_pages_platform)" >&2
+  fi
+}
+
+# the platform a measurement belongs to: a baseline of one machine says nothing about another,
+# so each is a file of its own, named the way the crate's baselines are
+mj_pages_platform() {
+  case "$(uname -s)" in Darwin) printf 'macos' ;; Linux) printf 'linux' ;; *) printf 'other' ;; esac
+  printf -- '-%s' "$(uname -m)"
 }
 
 # ---------------------------------------------------------------- the run's verdict
