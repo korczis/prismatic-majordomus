@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use crate::bench::{BenchmarkProjection, Coverage, CoverageState, SystemTarget, Transport};
 use crate::capability::registry::ModuleSource;
-use crate::capability::{CapabilityKind, CapabilityRegistry, Context, Provenance};
+use crate::capability::{CapabilityKind, CapabilityRegistry, CaseContext, Context, Provenance};
 use crate::error::{Error, Result};
 use crate::http::openapi;
 use crate::metadata::KindSchema;
@@ -69,6 +69,7 @@ pub struct Artifact {
 pub fn artifacts(
     registry: &CapabilityRegistry,
     version: &str,
+    cases: Option<&CaseContext<'_>>,
     targets: &[Target],
 ) -> Result<Vec<Artifact>> {
     let mut out = Vec::new();
@@ -77,7 +78,7 @@ pub fn artifacts(
             Target::OpenApi => out.push(Artifact {
                 path: format!("{OUT_DIR}/openapi.json"),
                 content: openapi::render(
-                    &openapi::document(registry, version)
+                    &openapi::document(registry, version, cases)
                         .map_err(|reason| Error::Http { reason })?,
                 ),
             }),
@@ -113,7 +114,8 @@ pub fn context_artifacts(
     version: &str,
     targets: &[Target],
 ) -> Result<Vec<Artifact>> {
-    let mut out = artifacts(&ctx.registry, version, targets)?;
+    let cases = CaseContext { index: &ctx.index };
+    let mut out = artifacts(&ctx.registry, version, Some(&cases), targets)?;
     if targets.contains(&Target::Benchmarks) {
         out.push(Artifact {
             path: format!("{OUT_DIR}/benchmarks.md"),
