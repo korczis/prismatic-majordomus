@@ -34,6 +34,9 @@ pub enum Target {
     Registry,
     /// `<share>/allow/<name>.txt` for every schema that carries `x-majordomus-allow`.
     Allow,
+    /// The provider bootstraps the policy's `projections[]` declare, rendered from the
+    /// provider templates: `AGENTS.md`, `CLAUDE.md`, ... (see [`crate::providers`]).
+    Providers,
 }
 
 impl Target {
@@ -44,6 +47,7 @@ impl Target {
         Target::Benchmarks,
         Target::Registry,
         Target::Allow,
+        Target::Providers,
     ];
 }
 
@@ -64,8 +68,8 @@ pub struct Artifact {
 /// The registry's artifacts of the selected targets: the OpenAPI document, the
 /// reference index with one file per builtin module, and the registry manifest.
 /// `Target::Benchmarks` needs the repository's index for its cases and is answered by
-/// [`context_artifacts`]; `Target::Allow` is not the registry's and is answered by
-/// [`allow_artifacts`].
+/// [`context_artifacts`]; `Target::Allow` and `Target::Providers` are not the registry's
+/// and are answered by [`allow_artifacts`] and [`crate::providers::artifacts`].
 pub fn artifacts(
     registry: &CapabilityRegistry,
     version: &str,
@@ -100,7 +104,7 @@ pub fn artifacts(
                 path: format!("{OUT_DIR}/registry.json"),
                 content: registry_manifest(registry, version),
             }),
-            Target::Benchmarks | Target::Allow => {}
+            Target::Benchmarks | Target::Allow | Target::Providers => {}
         }
     }
     Ok(out)

@@ -315,6 +315,11 @@ else: each target carries its own provenance.
 - The always-loaded projection is checked against the budget after generation; over
   budget is `10` and nothing is written. For a region projection the budget measures the
   generated region, and `doctor` reports the host document's own length as `INFO`.
+- The Rust executable renders the same targets from the same inputs, byte for byte:
+  `majordomus generate providers` writes them and `majordomus generate --check` (which CI
+  runs) exits `10` naming every target that differs from the policy or is missing. `update`
+  is the interactive writer with its refusals; `generate --check` is the gate. Test case 93
+  proves the two agree in both directions.
 
 ## `majordomus handover`
 
