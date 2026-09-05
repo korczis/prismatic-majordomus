@@ -51,7 +51,7 @@ for g in $gate_ids; do
   [ -n "$(mj_yget "$FLAT" "gates.$i.job")" ] || { echo "ci-plan: gate $g names no job" >&2; bad=1; }
   [ -n "$(mj_yget "$FLAT" "gates.$i.runs")" ] || { echo "ci-plan: gate $g names no command (runs)" >&2; bad=1; }
   for ref in $(mj_ylist "$FLAT" "gates.$i.implies") $(mj_ylist "$FLAT" "gates.$i.requires"); do
-    printf '%s\n' "$gate_ids" | grep -qx "$ref" || { echo "ci-plan: gate $g refers to a gate that does not exist: $ref" >&2; bad=1; }
+    printf '%s\n' "$gate_ids" | grep -x "$ref" >/dev/null || { echo "ci-plan: gate $g refers to a gate that does not exist: $ref" >&2; bad=1; }
   done
 done
 [ "$(printf '%s\n' "$gate_ids" | sort | uniq -d | wc -l | tr -d ' ')" = 0 ] || { echo "ci-plan: a gate id is declared twice" >&2; bad=1; }
@@ -63,7 +63,7 @@ i=0; while [ "$i" -lt "$n_classes" ]; do
   [ -n "$(mj_ylist "$FLAT" "classes.$i.paths")" ] || { echo "ci-plan: class $c names no paths" >&2; bad=1; }
   if [ "$(mj_yget "$FLAT" "classes.$i.gates")" != full ]; then
     for ref in $(mj_ylist "$FLAT" "classes.$i.gates"); do
-      printf '%s\n' "$gate_ids" | grep -qx "$ref" || { echo "ci-plan: class $c names a gate that does not exist: $ref" >&2; bad=1; }
+      printf '%s\n' "$gate_ids" | grep -x "$ref" >/dev/null || { echo "ci-plan: class $c names a gate that does not exist: $ref" >&2; bad=1; }
     done
   fi
   i=$((i+1))

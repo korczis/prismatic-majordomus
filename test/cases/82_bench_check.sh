@@ -1,3 +1,4 @@
+# majordomus-exclusive: compares measured durations with thresholds; a busy pool would add the noise it refuses
 # majordomus-covers: bench
 # majordomus-negative: bench
 #

@@ -1,3 +1,4 @@
+# majordomus-exclusive: reads the derived API page the site cases generate into this checkout
 # majordomus-covers: none
 # The OpenAPI document is inferred, not written: the tags are the modules, the examples are
 # the capabilities' benchmark cases, the responses are the statuses the router answers for

@@ -144,6 +144,6 @@ printf '#!/bin/sh\necho fake\n' > "$T/fake-majordomus"; chmod +x "$T/fake-majord
 [ "$(MAJORDOMUS_BIN="$T/fake-majordomus" rust_bin)" = "$T/fake-majordomus" ] || { echo "    rust_bin did not hand back MAJORDOMUS_BIN"; exit 1; }
 rc=0; MAJORDOMUS_BIN="$T/no-such-file" rust_bin >/dev/null 2>&1 || rc=$?
 [ "$rc" = 1 ] || { echo "    rust_bin accepted a MAJORDOMUS_BIN that is not executable (rc $rc)"; exit 1; }
-rc=0; PATH="/usr/bin:/bin" rust_bin >/dev/null 2>&1 || rc=$?
+rc=0; MAJORDOMUS_BIN='' PATH="/usr/bin:/bin" rust_bin >/dev/null 2>&1 || rc=$?
 [ "$rc" = 3 ] || { echo "    rust_bin with neither cargo nor MAJORDOMUS_BIN returned $rc, not the skip code 3"; exit 1; }
 echo "    the plan follows the model, the verdict follows the plan, the runner keeps its semantics"

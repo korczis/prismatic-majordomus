@@ -138,7 +138,7 @@ runner image. What a cache holds is never a source of truth: every gate reads th
 | `ci-plan` | `plan` | the verdict, a person asking why | short |
 | `majordomus-cli-<target>` | `rust` | any later job or phase that needs the executable without building it: the debug binary and `majordomus-cli.json` (commit, target triple, rustc, `Cargo.lock` digest, profile) | short |
 | `ci-metrics-<job>`, `ci-performance-metrics` | every job, `ci` | the timing rows of a run, gathered | longer |
-| `github-pages` | `site` on master | the `pages` job | GitHub's |
+| `site-public` | `site` on master | the `pages` job, which publishes it with `scripts/site-deploy --skip-build` | short |
 
 ## The Rust executable as a build output
 
@@ -155,14 +155,15 @@ cases and the crate's own suites drive.
 
 ## Pages
 
-On a push to master the `site` job uploads `site/public`, the bytes it built, checked and
-probed, as the Pages artifact, and the `pages` job deploys it once `structure`, `suite`,
-`rust` and `site` are green: the derived data current, the suite green, the registry
+On a push to master the `site` job keeps `site/public`, the bytes it built, checked and
+probed, as the artifact `site-public`, and the `pages` job publishes it with
+`scripts/site-deploy --skip-build` once `structure`, `suite`, `rust` and `site` are green: the derived data current, the suite green, the registry
 projections current, the site checked and probed. That is what the old `pages.yml`
 required, obtained from one run instead of a second one. Coverage, macOS and the benchmark
 check gate merging (they are in `ci`), not publishing, exactly as before. Deployments queue
-in order and never cancel one another; pull-request runs are superseded by the next commit
-of the same pull request, master runs never are.
+in the `pages` job's own group; pull-request runs are superseded by the next commit of the
+same pull request; every other run is its own group and neither waits for nor cancels
+another, so a run held up by a scarce runner does not hold up the next commit's evidence.
 
 ## Platforms
 
