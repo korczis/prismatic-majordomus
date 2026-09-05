@@ -91,6 +91,23 @@ ${f#"$ROOT"/}"; done
 # stale the moment a new canonical input is added — which is how it went stale before.
 if [ "${1:-}" = --inputs ]; then printf '%s\n' $INPUTS | sed '/^$/d'; exit 0; fi
 for f in $INPUTS; do [ -f "$ROOT/$f" ] || { echo "generate-site-data: canonical input missing: $f" >&2; exit 12; }; done
+# The fingerprint of the canonical inputs: one line "<path> <hash>" per input in the list's
+# own order, hashed. One hashing process for the whole list rather than one per file — the
+# difference between a fifth of a second and eight, and the freshness question is asked on
+# every Pages deployment. The line format is the one source_hash has always been computed
+# from, so the value is comparable with every source.json ever written.
+mj_inputs_hash() {
+  ( cd "$ROOT" && printf '%s\0' $INPUTS | mj_sha256_many | awk -F'\t' '{ printf "%s %s\n", $2, $1 }' ) \
+    | { mj_sha256 /dev/stdin 2>/dev/null || shasum -a 256 | cut -d' ' -f1; }
+}
+# --fingerprint prints the hash of the canonical inputs and exits, without generating
+# anything. It is the same value gen:source.json writes as source_hash below, computed the
+# same way over the same list, in one hashing process instead of one per file: a reader that
+# only needs to know whether the committed data is current pays a fifth of a second rather
+# than a full generation. Byte-identical output is what test/cases/10_site_data.sh holds it to.
+if [ "${1:-}" = --fingerprint ]; then
+  mj_inputs_hash; exit 0
+fi
 
 # link rewriting for derived Markdown (repository paths -> site routes)
 LINKSED='s#\](\.\./AGENTS\.md)#](@/docs/contract.md)#g; s#\](AGENTS\.md)#](@/docs/contract.md)#g; s#\](\.\./CONTRIBUTING\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md)#g; s#\](\.\./SECURITY\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md)#g; s#\](CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](docs/CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](README\.md)#](@/docs/_index.md)#g; s#\]((\.\./)?test/cases/)#](https://github.com/korczis/prismatic-majordomus/tree/master/test/cases/)#g'
@@ -1177,7 +1194,7 @@ fi
 mj_phase_end "gen:plan.json_the_execution_mode" "$GEN_T0"
 # ---------------------------------------------------------------- source.json
 GEN_T0="$(mj_phase_begin "gen:source.json")"
-HASH="$( (cd "$ROOT" && for f in $INPUTS; do printf '%s ' "$f"; mj_sha256 "$f"; done) | mj_sha256 /dev/stdin 2>/dev/null || (cd "$ROOT" && for f in $INPUTS; do printf '%s ' "$f"; mj_sha256 "$f"; done) | shasum -a 256 | cut -d' ' -f1)"
+HASH="$(mj_inputs_hash)"
 # No commit here either: a committed derived file that names the commit it was generated at
 # is stale the moment it lands (test/cases/51_derived_artifacts_committed.sh holds every
 # derived file to that), and the site generator would then never be idempotent on a clean

@@ -1,8 +1,13 @@
 name: setup-site
 description: >-
-  What the derived site needs to build: the pinned Node with npm's cache, the build
-  dependencies from package-lock.json, and the pinned Zola. The same in every job that
-  builds the site or runs the cases that do.
+  What the derived site needs to build: the pinned Node, the build dependencies from
+  package-lock.json, and the pinned Zola. The same in every job that builds the site or runs
+  the cases that do.
+
+  The dependencies are restored as an installed node_modules keyed by the lockfile, the
+  runner and the Node major — the thing the build actually needs — so a hit skips `npm ci`
+  rather than merely making it download less. npm's own cache stays as the fallback for a
+  miss.
 inputs:
   node-version:
     description: the Node major to install
@@ -14,8 +19,8 @@ inputs:
     default: "0.23.4"
 outputs:
   npm-cache-hit:
-    description: whether npm's cache was restored
-    value: ${{ steps.node.outputs.cache-hit }}
+    description: whether an installed node_modules was restored for this lockfile
+    value: ${{ steps.modules.outputs.cache-hit }}
 runs:
   using: composite
   steps:
@@ -24,7 +29,13 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
         cache: npm
-    - shell: bash
+    - id: modules
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: node-modules-${{ runner.os }}-${{ inputs.node-version }}-${{ hashFiles('package-lock.json') }}
+    - if: steps.modules.outputs.cache-hit != 'true'
+      shell: bash
       run: npm ci --no-audit --no-fund
     - uses: taiki-e/install-action@v2
       with:

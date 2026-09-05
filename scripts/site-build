@@ -2,16 +2,21 @@
 # site-build — data → derived content → assets → Tailwind/Flowbite CSS → Zola. Deterministic.
 #   scripts/site-build            build into site/public/
 #   scripts/site-build --no-css   skip the Node steps (CSS and vendored JS are then absent)
+#   scripts/site-build --no-data  build from site/data/generated as committed, without regenerating
+#                                 it. Only for a caller that has already established the data is
+#                                 current — scripts/pages does, by fingerprint. Nothing else may.
 #   scripts/site-build --base-url URL   build for another origin (local previews); get_url is absolute in Zola
 set -eu
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; NOCSS=0; BASE=""
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; NOCSS=0; NODATA=0; BASE=""
 while [ $# -gt 0 ]; do case "$1" in
   --no-css) NOCSS=1; shift ;;
+  --no-data) NODATA=1; shift ;;
   --base-url) BASE="$2"; shift 2 ;;
   *) echo "site-build: unknown option $1" >&2; exit 2 ;;
 esac; done
 command -v zola >/dev/null || { echo "site-build: zola is required (brew install zola / see docs/GITHUB_PAGES_ARCHITECTURE.md)" >&2; exit 12; }
-echo "== data";    "$ROOT/scripts/generate-site-data"
+if [ "$NODATA" = 0 ]; then echo "== data";    "$ROOT/scripts/generate-site-data"
+else echo "== data    (committed, not regenerated)"; fi
 echo "== assets"
 mkdir -p "$SITE/static/images" "$SITE/static/js"
 cp "$ROOT/assets/logo.svg" "$ROOT/assets/logo-mark.svg" "$ROOT/assets/social-card.png" "$SITE/static/images/"
