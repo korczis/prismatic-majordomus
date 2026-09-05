@@ -57,7 +57,7 @@ mj_project_load() {
   done
   [ $# -gt 0 ] && mj_yaml_flatten_many "$MJ_PJ/flat" "$@"
   if [ -f "$MJ_PJ/flat/.errors" ]; then
-    while IFS="$(printf '\t')" read -r id msg; do mj_err "$dir/$id: does not parse ($msg)"; done < "$MJ_PJ/flat/.errors"
+    while IFS="$MJ_TAB" read -r id msg; do mj_err "$dir/$id: does not parse ($msg)"; done < "$MJ_PJ/flat/.errors"
     rc=2
   fi
   set -- ; for id in $MJ_PJ_MILESTONES $MJ_PJ_ISSUES; do set -- "$@" "$MJ_PJ/flat/$id"; done
@@ -69,7 +69,7 @@ mj_project_load() {
     END { if (id != "" && seen != id) { printf "%s\t%s\n", id, seen > "/dev/stderr"; bad = 1 }; exit bad }' \
     FS='=' "$@" >> "$raw" 2>"$MJ_PJ/id.err" || rc=2
   if [ -s "$MJ_PJ/id.err" ]; then
-    while IFS="$(printf '\t')" read -r id msg; do
+    while IFS="$MJ_TAB" read -r id msg; do
       f="$dir/milestones/$id.yaml"; [ -f "$f" ] || f="$dir/issues/$id.yaml"
       mj_err "$f declares id '$msg' but its filename says $id"
     done < "$MJ_PJ/id.err"
@@ -231,7 +231,7 @@ mj_project_mermaid() {
     st="$(mj_pj_i_status "$id")"
     printf '    %s["%s<br/>%s"]:::%s\n' "$id" "$id" "$(mj_pj_i_title "$id" | sed 's/"/\&quot;/g')" "$(printf '%s' "$st" | tr 'A-Z' 'a-z')"
   done
-  mj_pj_rows G | while IFS="$(printf '\t')" read -r _ from to; do
+  mj_pj_rows G | while IFS="$MJ_TAB" read -r _ from to; do
     if [ -n "$m" ]; then
       [ "$(mj_pj_col I "$from" 3)" = "$m" ] || continue
       [ "$(mj_pj_col I "$to" 3)" = "$m" ] || continue

@@ -19,7 +19,6 @@ non_scope:
   - Changing node identities or edge semantics
 depends_on:
   - I0817
-  - I0821
 acceptance_criteria:
   - Byte-identical nodes and edges output before and after
   - Cases 64, 73, 74 and 75 pass unchanged
@@ -29,5 +28,15 @@ validation:
 evidence_required:
   - batch_reads
 risk: "Identity is a content hash per file; one sha256 subprocess per file remains unless hashing is batched, which shasum -a 256 with many arguments allows."
+started_at: 2026-09-05T02:40:00Z
+verified_at: 2026-09-05T03:05:00Z
+completed_at: 2026-09-05T03:05:00Z
+evidence:
+  - covers: batch_reads
+    type: test
+    command: "MJ_TIMING=1 bin/majordomus knowledge nodes"
+    result: "every discovered file is hashed by one process instead of one shasum per file, the YAML kinds and the front-matter kinds are flattened by one awk each, the documents' headings and links and the line stores are read by one awk each, the source classes are variables, and the row formatters use a substring instead of a cut per row; on this repository knowledge nodes went from 6.3 s to 0.63 s and edges to 0.62 s with nodes, edges and sources byte-identical except for the hashes of the edited library files; cases 64, 73, 74 and 75 pass unchanged. The same commit computes the tab once for every IFS loop in lib and the site generator, which forked a subshell per row; cases 10, 11, 40, 43, 61 and 66 pass unchanged"
+    commit: next
+    recorded_at: 2026-09-05T03:05:00Z
 created_at: 2026-09-05
 updated_at: 2026-09-05

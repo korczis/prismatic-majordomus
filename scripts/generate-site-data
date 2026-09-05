@@ -206,7 +206,7 @@ COMMAND_RE="^lib/($COMMAND_NAMES)\\.sh$"
 } | jq . > "$OUT/capabilities.json"
 rm -f "$Cf"
 # every referenced path must exist; a guaranteed claim must name a test
-jq -r '.claims[] | [.id, .status, .source, (.implementation // "-"), (.test // "-")] | @tsv' "$OUT/capabilities.json" | while IFS="$(printf '\t')" read -r id status src impl test; do
+jq -r '.claims[] | [.id, .status, .source, (.implementation // "-"), (.test // "-")] | @tsv' "$OUT/capabilities.json" | while IFS="$MJ_TAB" read -r id status src impl test; do
   for p in "$src" "$impl" "$test"; do
     if [ "$p" != "-" ] && [ ! -e "$ROOT/$p" ]; then echo "generate-site-data: claim $id names missing path $p" >&2; exit 10; fi
   done
@@ -1093,7 +1093,7 @@ i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
 mk_section guarantees "Guaranteed, advisory, planned" "What Majordomus actually does today, row by row, with the file that implements it and the test that proves it." guarantees.html claim.html 40
 i=0; for st in $(jq -r '.statuses | keys_unsorted[]' "$OUT/capabilities.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\ntemplate = "status.html"\n[extra]\nstatus = %s\n+++\n' "$(jstr "$(printf '%s' "$st" | awk '{print toupper(substr($0,1,1)) substr($0,2)}') capabilities")" "$(jq -r --arg s "$st" '.statuses[$s]' "$OUT/capabilities.json" | jq -Rn 'input')" "$i" "$(jstr "$st")" > "$CONTENT_ROOT/guarantees/$st.md"; done
-jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | while IFS="$(printf '\t')" read -r id claim st; do i=$((i+1))
+jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | while IFS="$MJ_TAB" read -r id claim st; do i=$((i+1))
   detail="$ROOT/docs/claims/$id.md"
   [ -f "$detail" ] || { echo "generate-site-data: claim $id has no docs/claims/$id.md (every claim needs its detail page)" >&2; exit 10; }
   summary="$(awk '/^## What it means/{f=1;next} f&&/^## /{exit} f&&NF{print; exit}' "$detail" | sed -E 's/`//g; s/\[([^]]+)\]\([^)]+\)/\1/g')"
@@ -1103,10 +1103,10 @@ jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | whi
 # The count is computed, never written: the repository's own rule is that prose states
 # the command that produces a number rather than the number.
 mk_section supervises "What Majordomus supervises" "$(jq -r '.does | length' "$OUT/readme.json") responsibilities, one layer. Each is a file under .ai/ and a subcommand that reads it." supervises-section.html responsibility.html 20
-i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while IFS="$(printf '\t')" read -r slug title text; do i=$((i+1))
+i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while IFS="$MJ_TAB" read -r slug title text; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$text" | sed -E 's/`([^`]*)`/\1/g' | jq -Rn 'input')" "$i" "$(jstr "$slug")" > "$CONTENT_ROOT/supervises/$slug.md"; done
 mk_section doctrines "Doctrine" "A rule is enforced when it is declared, implemented, wired, executed, failure-propagating, tested and CI-blocking. Each one below shows its whole chain." doctrines-section.html doctrine.html 22
-i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrines.json" | while IFS="$(printf '\t')" read -r id slug title summary; do i=$((i+1))
+i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrines.json" | while IFS="$MJ_TAB" read -r id slug title summary; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" "$(jq -r --arg id "$id" '.doctrines[] | select(.id==$id) | .source' "$OUT/doctrines.json" | jq -Rn 'input')" > "$CONTENT_ROOT/doctrines/$slug.md"; done
 mk_section plan "The plan" "Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .ai/repo/project." plan-section.html issue.html 21
 printf -- '+++\ntitle = "Dependency graph"\ndescription = "Every issue, every dependency, and the execution waves the graph implies — drawn from the canonical edges, never by hand."\nweight = 1\ntemplate = "dag.html"\n+++\n' > "$CONTENT_ROOT/plan/dag.md"
@@ -1121,10 +1121,10 @@ for iid in $(jq -r '.issues[].id' "$OUT/plan.json"); do i=$((i+1))
     "$(jq -r --arg n "$iid" '.issues[] | select(.id==$n) | .objective' "$OUT/plan.json" | jq -Rn 'input')" \
     "$i" "$(jstr "$iid")" "$iid" > "$CONTENT_ROOT/plan/$iid.md"; done
 mk_section use-cases "Use cases" "What people do with it: a situation, the commands that answer it, and what you are left holding. Every step names a real command and every promise a real claim." use-cases-section.html use-case.html 12
-i=0; jq -r '.use_cases[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$(printf '\t')" read -r id title summary; do i=$((i+1))
+i=0; jq -r '.use_cases[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$MJ_TAB" read -r id title summary; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/use-cases.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/use-cases/$id.md"; done
 mk_section applications "Applications" "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description." applications-section.html application.html 14
-i=0; jq -r '.applications[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$(printf '\t')" read -r id title summary; do i=$((i+1))
+i=0; jq -r '.applications[] | [.id, .title, .summary] | @tsv' "$OUT/catalogue.json" | while IFS="$MJ_TAB" read -r id title summary; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = "share/applications.yaml"\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jq -Rn 'input')" "$i" "$(jstr "$id")" > "$CONTENT_ROOT/applications/$id.md"; done
 mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))

@@ -629,7 +629,7 @@ mj_validate_roadmap() {
 mj_validate_dag() {
   local lvl subj msg n
   mj_project_doctrine_load || return 0
-  mj_pj_findings | while IFS="$(printf '\t')" read -r _ lvl _ subj msg; do
+  mj_pj_findings | while IFS="$MJ_TAB" read -r _ lvl _ subj msg; do
     case "$lvl" in
       FAIL) mj_doctrine_fail dag "$subj" "$msg" "majordomus plan validate" ;;
       *)    mj_warn dag "$subj" "$msg" "majordomus plan show $subj" ;;

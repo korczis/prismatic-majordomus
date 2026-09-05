@@ -235,6 +235,9 @@ mj_git_touched() {
 }
 
 # ---------------------------------------------------------------- misc
+# one tab, computed once: a loop that writes IFS="$MJ_TAB" per iteration forks a
+# subshell per line, which is where a listing of a few hundred rows lost a second
+MJ_TAB="$(printf '\t')"
 mj_now()    { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
 # ---------------------------------------------------------------- timing
@@ -373,7 +376,8 @@ MJ_FLATTEN_AWK='
   BEGIN{ ctx[0]="" }
   outdir != "" && FNR == 1 {
     if (out != "") close(out)
-    name = FILENAME; sub(/.*\//, "", name); sub(/\.[A-Za-z0-9]+$/, "", name)
+    if (numbered) name = ++nfile
+    else { name = FILENAME; sub(/.*\//, "", name); sub(/\.[A-Za-z0-9]+$/, "", name) }
     out = outdir "/" name; printf "" > out
     delete ctx; delete pend; delete cnt; ctx[0] = ""; failed = 0; infront = 0; front_done = 0
     if (front) { if ($0 != "---") { fail("no front matter"); nextfile } infront = 1; next }
@@ -412,13 +416,24 @@ mj_yaml_flatten() {
   mj_count yaml_flatten
   awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$1"
 }
+# --numbered names the outputs 1, 2, 3 ... in argument order, for callers whose files
+# may share a basename; the caller keeps the number-to-path map.
 mj_yaml_flatten_many() {
-  local outdir="$1" front=0; shift
-  [ "${1:-}" = --front ] && { front=1; shift; }
+  local outdir="$1" front=0 numbered=0; shift
+  while :; do case "${1:-}" in --front) front=1; shift ;; --numbered) numbered=1; shift ;; *) break ;; esac; done
   [ $# -gt 0 ] || return 0
   mj_count yaml_flatten_many
   rm -f "$outdir/.errors"
-  awk -v outdir="$outdir" -v front="$front" "$MJ_FLATTEN_AWK" "$@"
+  awk -v outdir="$outdir" -v front="$front" -v numbered="$numbered" "$MJ_FLATTEN_AWK" "$@"
+}
+# mj_sha256_many: NUL-separated paths on stdin, one "hash<TAB>path" line per file, one
+# hashing process for all of them. Hashing one file per process costs more than reading
+# it, and the knowledge compiler hashes every source it discovers.
+mj_sha256_many() {
+  mj_count sha256_many
+  if command -v sha256sum >/dev/null 2>&1; then xargs -0 sha256sum
+  elif command -v shasum >/dev/null 2>&1; then xargs -0 shasum -a 256
+  else mj_die "$MJ_EX_MISSING" "need sha256sum or shasum"; fi | awk '{ h = $1; sub(/^[^ ]+  /, ""); printf "%s\t%s\n", h, $0 }'
 }
 # value of a flattened key (first match); empty if absent
 # One process each. These run thousands of times per command — the rule loader alone asks

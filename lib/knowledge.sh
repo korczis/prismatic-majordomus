@@ -48,10 +48,13 @@ mj_ksrc_load() {
     done
   done
   rm -f "$tmp"
+  # the classes become variables once; every field read below is an expansion
+  mj_yload "$MJ_KSRC_FLAT" ksrc; MJ_KSRC_COUNT="$n"
   return 0
 }
-mj_ksrc()       { mj_yget "$MJ_KSRC_FLAT" "sources.$1.$2"; }
-mj_ksrc_count() { local i=0; while [ -n "$(mj_ksrc "$i" id)" ]; do i=$((i + 1)); done; printf '%s' "$i"; }
+MJ_KSRC_COUNT=0
+mj_ksrc()       { mj_yv ksrc "sources.$1.$2"; }
+mj_ksrc_count() { printf '%s' "$MJ_KSRC_COUNT"; }
 
 # ---------------------------------------------------------------- discovery
 # Prints one tab-separated row per discovered source:
@@ -69,6 +72,19 @@ mj_knowledge_discover() {
   local want_scope="${1:-all}" i n cls kind scope disc spec req found
   mj_ksrc_load
   MJ_KDISC_EMPTY=""; MJ_KDISC_COUNT=0
+  # every class lists its files into one buffer; one hashing process then covers all of
+  # them, and the rows come out in the order the classes produced them
+  local buf; buf="$(mktemp "${TMPDIR:-/tmp}/mj.kdb.XXXXXX")"
+  mj_kdisc_collect "$want_scope" > "$buf" || { rm -f "$buf"; return "$MJ_EX_INTERNAL"; }
+  if [ -s "$buf" ]; then
+    awk -F'\t' '{ printf "%s%c", $4, 0 }' "$buf" | mj_sha256_many > "$buf.hash"
+    awk -F'\t' 'NR == FNR { h[$2] = $1; next } { printf "%s\t%s\t%s\t%s\t%s\n", $1, $2, $3, h[$4], $5 }' "$buf.hash" "$buf"
+  fi
+  rm -f "$buf" "$buf.hash"
+  return 0
+}
+mj_kdisc_collect() {
+  local want_scope="$1" i n cls kind scope disc spec req found
   n="$(mj_ksrc_count)"; i=0
   while [ "$i" -lt "$n" ]; do
     cls="$(mj_ksrc "$i" id)"; kind="$(mj_ksrc "$i" kind)"; scope="$(mj_ksrc "$i" scope)"
@@ -102,7 +118,7 @@ mj_kdisc_vcs() {
   while IFS= read -r -d '' p; do
     [ -n "$p" ] || continue
     [ -f "$MJ_ROOT/$p" ] || continue      # tracked but deleted in the working tree
-    printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$(mj_sha256 "$MJ_ROOT/$p")" "$p"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$MJ_ROOT/$p" "$p"
     MJ_KDISC_COUNT=$((MJ_KDISC_COUNT + 1)); any=1
   done < <(mj_git ls-files -z -- "$spec" 2>/dev/null)
   [ "$any" = 1 ]
@@ -115,7 +131,7 @@ mj_kdisc_state() {
   local cls="$1" kind="$2" scope="$3" spec="$4" abs f any=0 rel
   abs="$MJ_STATE_DIR/$spec"; rel="$(mj_rel "$MJ_STATE_DIR")/$spec"
   if [ -f "$abs" ]; then
-    printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$(mj_sha256 "$abs")" "$rel"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$abs" "$rel"
     MJ_KDISC_COUNT=$((MJ_KDISC_COUNT + 1))
     return 0
   fi
@@ -123,7 +139,7 @@ mj_kdisc_state() {
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     [ -f "$abs/$f" ] || continue
-    printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$(mj_sha256 "$abs/$f")" "$rel/$f"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$abs/$f" "$rel/$f"
     MJ_KDISC_COUNT=$((MJ_KDISC_COUNT + 1)); any=1
   done < <(ls -1 "$abs" 2>/dev/null | LC_ALL=C sort)
   [ "$any" = 1 ]
@@ -183,7 +199,7 @@ mj_knowledge_sources() {
   if [ "$MJ_JSON" = 1 ]; then
     local first=1 c s k h p
     printf '{"schema":1,"scope":"%s","sources":[' "$scope"
-    while IFS="$(printf '\t')" read -r c s k h p; do
+    while IFS="$MJ_TAB" read -r c s k h p; do
       [ "$first" = 1 ] || printf ','; first=0
       printf '{"class":"%s","scope":"%s","kind":"%s","hash":"%s","path":"%s"}' \
         "$c" "$s" "$k" "$h" "$(mj_json_esc "$p")"
@@ -193,8 +209,8 @@ mj_knowledge_sources() {
     printf ']}\n'
   else
     local c s k h p
-    while IFS="$(printf '\t')" read -r c s k h p; do
-      printf '%-11s %-11s %-10s %s  %s\n' "$c" "$s" "$k" "$(printf '%s' "$h" | cut -c1-12)" "$p"
+    while IFS="$MJ_TAB" read -r c s k h p; do
+      printf '%-11s %-11s %-10s %s  %s\n' "$c" "$s" "$k" "${h:0:12}" "$p"
     done < "$out"
     printf 'knowledge sources: %s file(s) in scope %s\n' "$(mj_lines "$out")" "$scope"
     for a in $MJ_KDISC_EMPTY; do
@@ -215,53 +231,82 @@ mj_knowledge_sources() {
 # the project model use, so a file that this tool refuses everywhere else is refused here
 # too rather than being parsed by a second, laxer reader.
 mj_knowledge_rows() {
-  local src="$1" cls scope kind hash path abs flat
+  local src="$1" cls scope kind hash path abs tab
+  tab="$(printf '\t')"
   # Every tracked path, so that a link can be told apart three ways: it resolves to a node,
   # it resolves to a real file this compiler does not model, or it resolves to nothing. The
   # list comes from the index rather than from the filesystem, for the same reason discovery
   # does — repository truth, and no untracked file mistaken for a valid target.
   mj_git ls-files -z 2>/dev/null | tr '\0' '\n' | awk 'NF { printf "T\t%s\n", $0 }'
-  while IFS="$(printf '\t')" read -r cls scope kind hash path; do
+  # One source row per discovered file, then the content rows by kind, each kind's files
+  # read by one process: the YAML kinds and the front-matter kinds flattened by one awk
+  # each, the documents' headings and links by one awk, the line stores by one awk. The
+  # extractor keys every content row by its path, so the grouping changes nothing it sees.
+  local work; work="$(mktemp -d "${TMPDIR:-/tmp}/mj.kn.XXXXXX")"
+  mkdir -p "$work/yaml" "$work/front"
+  : > "$work/yaml.map"; : > "$work/front.map"; : > "$work/docs"; : > "$work/lines"
+  local ny=0 nf=0
+  while IFS="$tab" read -r cls scope kind hash path; do
     [ -n "$path" ] || continue
     abs="$MJ_ROOT/$path"
     printf 'S\t%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$hash" "$path"
     case "$kind" in
-      decision|question)
-        # Line-oriented stores: their entries are not YAML and are not pretended to be.
-        awk -v p="$path" '{ gsub(/\t/, " "); printf "L\t%s\t%s\t%s\n", p, NR, $0 }' "$abs"
-        ;;
-      document)
-        # Two things are taken from a document body, and only these two, because only these
-        # two state a fact ABOUT the document rather than in it: its first level-one heading,
-        # and the inline links its author wrote.
-        awk -v p="$path" '/^# / { t = substr($0, 3); gsub(/\t/, " ", t); printf "D\t%s\t%s\n", p, t; exit }' "$abs"
-        mj_knowledge_links "$path" "$abs"
-        ;;
-      implementation|test)
-        # Code and cases are nodes so that the chain a claim declares resolves, and that is
-        # all they are. Nothing reads their contents: a leading comment is a good summary and
-        # reading it would be reading prose, which is the line this compiler does not cross.
-        ;;
-      session|handover|checkpoint|prompt|rule)
-        # Records, prompt assets and rule objects carry YAML front matter and an authored
-        # body. Only the front matter is a source of facts.
-        flat="$(mktemp "${TMPDIR:-/tmp}/mj.kf.XXXXXX")"
-        mj_record_front "$abs" > "$flat" 2>/dev/null || : > "$flat"
-        mj_knowledge_flat_rows "$path" "$flat"
-        rm -f "$flat"
-        ;;
-      policy|profile|milestone|issue|claim|doctrine)
-        mj_knowledge_flat_rows "$path" "$abs"
-        ;;
-      *)
-        # A kind this reader has no rule for gets no content rows at all. Sending it to the
-        # YAML flattener anyway was the shell guessing: a Markdown file handed to the
-        # structured reader produced "does not parse as the restricted YAML subset", which
-        # is a complaint about a file that was never claimed to be YAML. The extractor emits
-        # an `unknown` node for it and says so once, which is the honest report.
-        ;;
+      decision|question) printf '%s\n' "$abs" >> "$work/lines" ;;
+      document) printf '%s\n' "$abs" >> "$work/docs" ;;
+      implementation|test) ;;
+      session|handover|checkpoint|prompt|rule) nf=$((nf + 1)); printf '%s\t%s\n' "$nf" "$path" >> "$work/front.map"; printf '%s\n' "$abs" >> "$work/front.list" ;;
+      policy|profile|milestone|issue|claim|doctrine) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$work/yaml.map"; printf '%s\n' "$abs" >> "$work/yaml.list" ;;
+      *) ;;   # a kind this reader has no rule for gets no content rows; the extractor says so once
     esac
   done < "$src"
+  local group
+  for group in yaml front; do
+    [ -s "$work/$group.list" ] || continue
+    set -- ; while IFS= read -r abs; do set -- "$@" "$abs"; done < "$work/$group.list"
+    if [ "$group" = front ]; then mj_yaml_flatten_many "$work/front" --numbered --front "$@"
+    else mj_yaml_flatten_many "$work/yaml" --numbered "$@"; fi
+    # a file that does not parse has no rows and one warning; a record without front
+    # matter is not an error here, its flat is simply empty, as mj_record_front left it
+    awk -F'\t' -v map="$work/$group.map" -v errs="$work/$group/.errors" -v front="$([ "$group" = front ] && echo 1 || echo 0)" '
+      BEGIN { while ((getline l < map) > 0) { split(l, a, "\t"); path[a[1]] = a[2] }; close(map)
+              while ((getline l < errs) > 0) { split(l, a, "\t"); bad[a[1]] = a[2] }; close(errs)
+              for (n in path) if (n in bad && !(front && bad[n] == "no front matter"))
+                printf "X\tWARN\tunparsed_source\t%s\tdoes not parse as the restricted YAML subset; no node was extracted from it\n", path[n] }
+      FNR == 1 { n = FILENAME; sub(/.*\//, "", n); p = path[n] }
+      n in bad { next }
+      { eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1); gsub(/\t/, " ", v); printf "F\t%s\t%s\t%s\n", p, k, v }' \
+      "$work/$group"/[0-9]*
+  done
+  if [ -s "$work/docs" ]; then
+    set -- ; while IFS= read -r abs; do set -- "$@" "$abs"; done < "$work/docs"
+    awk -v root="$MJ_ROOT/" '
+      FNR == 1 { p = FILENAME; sub("^" root, "", p); fence = 0; seen = 0 }
+      /^[ \t]*(```|~~~)/ { fence = !fence; next }
+      fence { next }
+      /^# / && !seen { t = substr($0, 3); gsub(/\t/, " ", t); printf "D\t%s\t%s\n", p, t; seen = 1 }
+      {
+        line = $0
+        while (match(line, /\[[^]]*\]\([^)]+\)/)) {
+          chunk = substr(line, RSTART, RLENGTH)
+          line = substr(line, RSTART + RLENGTH)
+          t = chunk
+          sub(/^\[[^]]*\]\(/, "", t); sub(/\)$/, "", t)
+          sub(/[ \t].*$/, "", t)              # a link title after the target
+          sub(/#.*$/, "", t)                  # a fragment names a place in a file, not a file
+          if (t == "") continue
+          if (t ~ /^[a-zA-Z][a-zA-Z0-9+.-]*:/) continue   # any scheme
+          if (t ~ /^\/\//) continue                       # protocol relative
+          if (t ~ /^\//) continue                         # absolute: not a repository path
+          gsub(/\t/, " ", t)
+          printf "K\t%s\t%s\t%s\n", p, FNR, t
+        }
+      }' "$@"
+  fi
+  if [ -s "$work/lines" ]; then
+    set -- ; while IFS= read -r abs; do set -- "$@" "$abs"; done < "$work/lines"
+    awk -v root="$MJ_ROOT/" 'FNR == 1 { p = FILENAME; sub("^" root, "", p) } { gsub(/\t/, " "); printf "L\t%s\t%s\t%s\n", p, FNR, $0 }' "$@"
+  fi
+  rm -rf "$work"
 }
 
 # Inline links, and only inline links: `[text](target)` as the author wrote it.
@@ -320,9 +365,14 @@ mj_knowledge_nodes() {
   local scope="${1:-all}" disc rows
   disc="$(mktemp "${TMPDIR:-/tmp}/mj.kd.XXXXXX")"
   rows="$(mktemp "${TMPDIR:-/tmp}/mj.kr.XXXXXX")"
+  local t0
+  t0="$(mj_phase_begin knowledge:discover)"
   mj_knowledge_discover "$scope" > "$disc" || { rm -f "$disc" "$rows"; return "$MJ_EX_INTERNAL"; }
+  mj_phase_end knowledge:discover "$t0"; t0="$(mj_phase_begin knowledge:rows)"
   mj_knowledge_rows "$disc" > "$rows"
+  mj_phase_end knowledge:rows "$t0"; t0="$(mj_phase_begin knowledge:extract)"
   awk -f "$MJ_LIB_DIR/knowledge.awk" "$rows" | LC_ALL=C sort
+  mj_phase_end knowledge:extract "$t0"
   rm -f "$disc" "$rows"
 }
 
@@ -344,11 +394,12 @@ mj_knowledge_nodes_cmd() {
 
   out="$(mktemp "${TMPDIR:-/tmp}/mj.kno.XXXXXX")"
   mj_knowledge_nodes "$scope" > "$out" || { rm -f "$out"; return "$MJ_EX_INTERNAL"; }
+  local t0; t0="$(mj_phase_begin knowledge:format)"
 
   local t a b c d e g first=1
   if [ "$MJ_JSON" = 1 ]; then
     printf '{"schema":1,"scope":"%s","nodes":[' "$scope"
-    while IFS="$(printf '\t')" read -r t a b c d e g; do
+    while IFS="$MJ_TAB" read -r t a b c d e g; do
       [ "$t" = N ] || continue
       [ -n "$want_kind" ] && [ "$b" != "$want_kind" ] && continue
       [ "$first" = 1 ] || printf ','; first=0
@@ -357,7 +408,7 @@ mj_knowledge_nodes_cmd() {
     done < "$out"
     printf '],"findings":['
     first=1
-    while IFS="$(printf '\t')" read -r t a b c d; do
+    while IFS="$MJ_TAB" read -r t a b c d; do
       [ "$t" = X ] || continue
       [ "$first" = 1 ] || printf ','; first=0
       printf '{"level":"%s","code":"%s","subject":"%s","message":"%s"}' \
@@ -365,20 +416,21 @@ mj_knowledge_nodes_cmd() {
     done < "$out"
     printf ']}\n'
   else
-    while IFS="$(printf '\t')" read -r t a b c d e g; do
+    while IFS="$MJ_TAB" read -r t a b c d e g; do
       [ "$t" = N ] || continue
       [ -n "$want_kind" ] && [ "$b" != "$want_kind" ] && continue
-      printf '%-11s %-11s %s  %-52s %s\n' "$b" "$c" "$(printf '%s' "$e" | cut -c1-12)" "$a" "$g"
+      printf '%-11s %-11s %s  %-52s %s\n' "$b" "$c" "${e:0:12}" "$a" "$g"
       n=$((n + 1))
     done < "$out"
     printf 'knowledge nodes: %s in scope %s%s\n' "$n" "$scope" "${want_kind:+, kind $want_kind}"
-    while IFS="$(printf '\t')" read -r t a b c d; do
+    while IFS="$MJ_TAB" read -r t a b c d; do
       [ "$t" = X ] || continue
       case "$a" in FAIL) mj_fail knowledge "$c" "$d" "majordomus knowledge nodes --json"; fails=$((fails + 1)) ;;
                    *)    mj_warn knowledge "$c" "$d" "majordomus knowledge nodes --json" ;; esac
     done < "$out"
   fi
   rm -f "$out"
+  mj_phase_end knowledge:format "$t0"
   [ "$fails" = 0 ] || return "$MJ_EX_CONTRACT"
   return 0
 }
@@ -405,7 +457,7 @@ mj_knowledge_edges_cmd() {
   local t a b c d first=1
   if [ "$MJ_JSON" = 1 ]; then
     printf '{"schema":1,"scope":"%s","edges":[' "$scope"
-    while IFS="$(printf '\t')" read -r t a b c d; do
+    while IFS="$MJ_TAB" read -r t a b c d; do
       [ "$t" = E ] || continue
       [ -n "$want_type" ] && [ "$c" != "$want_type" ] && continue
       [ "$first" = 1 ] || printf ','; first=0
@@ -414,14 +466,14 @@ mj_knowledge_edges_cmd() {
     done < "$out"
     printf ']}\n'
   else
-    while IFS="$(printf '\t')" read -r t a b c d; do
+    while IFS="$MJ_TAB" read -r t a b c d; do
       [ "$t" = E ] || continue
       [ -n "$want_type" ] && [ "$c" != "$want_type" ] && continue
       printf '%-15s %-46s %-46s %s\n' "$c" "$a" "$b" "$d"
       n=$((n + 1))
     done < "$out"
     printf 'knowledge edges: %s in scope %s%s\n' "$n" "$scope" "${want_type:+, type $want_type}"
-    while IFS="$(printf '\t')" read -r t a b c d; do
+    while IFS="$MJ_TAB" read -r t a b c d; do
       [ "$t" = X ] || continue
       case "$a" in FAIL) mj_fail knowledge "$c" "$d" "majordomus knowledge edges --json"; fails=$((fails + 1)) ;;
                    *)    mj_warn knowledge "$c" "$d" "majordomus knowledge edges --json" ;; esac
