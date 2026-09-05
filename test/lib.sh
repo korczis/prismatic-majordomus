@@ -116,4 +116,13 @@ fixture_repo() {
     mkdir -p "$dst/$(dirname "$p")"
     cp "$ROOT/$p" "$dst/$p"
   done
+  # and the Rust file each builtin capability was composed in: the registry manifest names
+  # them and the generator refuses a manifest that names a file the tree does not have
+  if [ -f "$ROOT/docs/generated/registry.json" ] && command -v jq >/dev/null 2>&1; then
+    for p in $(jq -r '[.capabilities[].source_path] | unique[]' "$ROOT/docs/generated/registry.json"); do
+      [ -f "$ROOT/$p" ] && [ ! -e "$dst/$p" ] || continue
+      mkdir -p "$dst/$(dirname "$p")"
+      cp "$ROOT/$p" "$dst/$p"
+    done
+  fi
 }
