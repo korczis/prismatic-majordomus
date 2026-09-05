@@ -984,7 +984,7 @@
       "status": "guaranteed",
       "route": "/guarantees/scope-declared/",
       "external": false,
-      "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns."
+      "note": "The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared."
     },
     {
       "id": "claim:use-case-coverage",
@@ -1011,7 +1011,7 @@
       "status": "guaranteed",
       "route": "/guarantees/use-case-impact/",
       "external": false,
-      "note": "The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared."
+      "note": "usecase impact maps paths through docs/RESPONSIBILITIES.yaml, the dispatch table, the rules' identities and the scenarios' fixtures; usecase scaffold writes drafts from the registry, the command fixture and the claims, and never a guarantee."
     },
     {
       "id": "claim:site-deploy-one-path",
@@ -1020,7 +1020,7 @@
       "status": "guaranteed",
       "route": "/guarantees/site-deploy-one-path/",
       "external": false,
-      "note": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site.md."
+      "note": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site/SKILL.md."
     },
     {
       "id": "claim:executable-reference-derived",
@@ -1039,6 +1039,33 @@
       "route": "/guarantees/derivation-one-graph/",
       "external": false,
       "note": "scripts/derive runs majordomus generate (the code-only projections), scripts/generate-site-data (the site's data and content and the derived documents, reading the registry manifest and the OpenAPI document), and majordomus generate again (the site dataset and the benchmark matrix over the index the documents joined); no stage reads its own output. scripts/derive-check composes generate --check and generate-site-data --check and exits 10 with both reports. The commit a page was built from is a fact of the build (site/data/build.json, served at /build.json, never committed), so source.json no longer carries it and the generator is idempotent on a clean tree. just derive, just derive-check and the Pages workflow call the scripts; just test runs the check."
+    },
+    {
+      "id": "claim:skill-catalogue",
+      "kind": "claim",
+      "label": "A skill is one directory under the layer's skills section holding SKILL.md, discovered by the source class `skill` the shell tool and the Rust executable both read, so that adding the file is the whole registration and the catalogue, the command, doctor, MCP and the site all derive from it",
+      "status": "guaranteed",
+      "route": "/guarantees/skill-catalogue/",
+      "external": false,
+      "note": "share/kinds.yaml declares the kind, share/schemas/skill.schema.json its contract, and the source classes skill and skill_example in .ai/repo/knowledge/sources.yaml which files carry it. Nothing else names a skill. lib/skills.sh derives one catalogue from that discovery for `skills list|show|check`, the doctrine validator and scripts/generate-site-data; the Rust index serves the same files as majordomus://skill/<id> resources, through majordomus_list and majordomus_get, with no code that knows the kind. The case adds, breaks, renames and removes a skill and watches every surface follow."
+    },
+    {
+      "id": "claim:skill-check",
+      "kind": "claim",
+      "label": "Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, a violation names the file and every reason, and a repository with no skills is reported rather than passed",
+      "status": "guaranteed",
+      "route": "/guarantees/skill-check/",
+      "external": false,
+      "note": "`skills check` and the doctrine majordomus.skill-integrity (dispatched by doctor and watch) run one examination — unknown keys, schema version, integer version, closed status set, id equal to the directory, non-empty Purpose, Procedure and Output sections, duplicate ids, related ids that resolve, examples with a heading — and print the counts of what they examined. The site generator refuses to build from a skill that does not validate."
+    },
+    {
+      "id": "claim:skill-site-projection",
+      "kind": "claim",
+      "label": "The website's skills section is rendered from the skills catalogue, one page per skill carrying the skill's own body and examples, and a removed or renamed skill leaves no page, entry or link behind",
+      "status": "guaranteed",
+      "route": "/guarantees/skill-site-projection/",
+      "external": false,
+      "note": "site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds."
     },
     {
       "id": "impl:.github/workflows/validate.yml",
@@ -1321,6 +1348,13 @@
       "external": false
     },
     {
+      "id": "impl:lib/skills.sh",
+      "kind": "implementation",
+      "label": "lib/skills.sh",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:lib/start.sh",
       "kind": "implementation",
       "label": "lib/start.sh",
@@ -1366,6 +1400,13 @@
       "id": "impl:scripts/derive",
       "kind": "implementation",
       "label": "scripts/derive",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:scripts/generate-site-data",
+      "kind": "implementation",
+      "label": "scripts/generate-site-data",
       "route": null,
       "external": false
     },
@@ -1921,6 +1962,13 @@
       "label": "test/cases/95_executable_reference.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/95_executable_reference.sh"
+    },
+    {
+      "id": "test:test/cases/95_skills.sh",
+      "kind": "test",
+      "label": "test/cases/95_skills.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/95_skills.sh"
     },
     {
       "id": "test:test/cases/96_site_deploy.sh",
@@ -2502,6 +2550,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:skill-catalogue",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:skill-check",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:skill-site-projection",
+      "target": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -3032,6 +3095,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:skill-catalogue",
+      "target": "impl:lib/skills.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:skill-check",
+      "target": "impl:lib/skills.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:skill-site-projection",
+      "target": "impl:scripts/generate-site-data",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "test:test/cases/00_yaml_flatten.sh",
       "kind": "proved_by"
@@ -3559,6 +3637,21 @@
     {
       "source": "claim:derivation-one-graph",
       "target": "test:test/cases/51_derived_artifacts_committed.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:skill-catalogue",
+      "target": "test:test/cases/95_skills.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:skill-check",
+      "target": "test:test/cases/95_skills.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:skill-site-projection",
+      "target": "test:test/cases/95_skills.sh",
       "kind": "proved_by"
     }
   ]

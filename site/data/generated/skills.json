@@ -4,6 +4,36 @@
   "contract": "share/schemas/skill.schema.json",
   "skills": [
     {
+      "id": "deploy-site",
+      "uri": "majordomus://skill/deploy-site",
+      "title": "Deploy the site by hand",
+      "description": "Publish the website to GitHub Pages from a terminal, through the one script the Pages workflow runs, when waiting for the Actions queue is not acceptable.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "site",
+        "deploy",
+        "evidence"
+      ],
+      "related": [
+        "repo-review"
+      ],
+      "inputs": [
+        "the commit to publish, checked out with a clean tree and contained in origin/master",
+        "zola, node_modules (npm ci) and, for the full gate, cargo",
+        "the operator's word, in this session, that the site is to go live now"
+      ],
+      "outputs": [
+        "a gh-pages commit naming the source commit, or a refusal naming the gate that stopped it",
+        "a checkpoint recording the deploy and the commit it published"
+      ],
+      "path": ".ai/repo/skills/deploy-site/SKILL.md",
+      "sha256": "1d19158aeeb5ffb5676155dc21cfb2aea397582c85dd05334e984774ffd45200",
+      "examples": [],
+      "valid": true,
+      "route": "/skills/deploy-site/"
+    },
+    {
       "id": "implement",
       "uri": "majordomus://skill/implement",
       "title": "Implement a change",
@@ -118,14 +148,21 @@
       "route": "/skills/repo-review/"
     }
   ],
-  "count": 2,
+  "count": 3,
   "by_tag": {
-    "implementation": [
-      "implement"
+    "site": [
+      "deploy-site"
+    ],
+    "deploy": [
+      "deploy-site"
     ],
     "evidence": [
+      "deploy-site",
       "implement",
       "repo-review"
+    ],
+    "implementation": [
+      "implement"
     ],
     "invariants": [
       "implement",
