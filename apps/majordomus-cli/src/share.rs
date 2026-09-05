@@ -74,6 +74,7 @@ impl Share {
         Ok(Share { dir, origin })
     }
 
+    /// The directory, canonical.
     pub fn dir(&self) -> &Path {
         &self.dir
     }

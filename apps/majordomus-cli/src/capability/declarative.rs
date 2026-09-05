@@ -12,6 +12,7 @@ use super::schema::CanonicalSchema;
 use crate::capability::builtin::ObjectView;
 use crate::model::Object;
 
+/// The resource capability of one object of the index.
 pub fn capability_of(object: &Object) -> Capability {
     Capability {
         id: CapabilityId::unchecked(&format!("{}.{}", object.kind, object.identity)),

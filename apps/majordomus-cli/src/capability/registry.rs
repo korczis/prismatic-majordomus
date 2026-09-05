@@ -15,6 +15,7 @@ use super::model::{Capability, CapabilityId, CapabilityKind, HttpMethod, Provena
 
 /// A capability with, for a query, its handler.
 pub struct Entry {
+    /// The descriptor.
     pub capability: Capability,
     handler: Option<Arc<dyn Handler>>,
 }
@@ -33,65 +34,105 @@ impl std::fmt::Debug for Entry {
 #[serde(tag = "code", rename_all = "snake_case")]
 pub enum RegistryError {
     #[error("capability '{id}' ({provenance}): invalid id: {reason}")]
+    /// The id does not satisfy the grammar.
     InvalidId {
+        /// The id as written.
         id: String,
+        /// Where the descriptor came from.
         provenance: String,
+        /// What the grammar objects to.
         reason: String,
     },
     #[error("capability '{id}' is defined twice: {first} and {second}")]
+    /// Two descriptors claim one id.
     DuplicateId {
+        /// The id.
         id: String,
+        /// The provenance of the descriptor seen first, in id order.
         first: String,
+        /// The provenance of the other.
         second: String,
     },
     #[error("MCP tool '{name}' is claimed by '{first}' and '{second}'")]
+    /// Two capabilities claim one MCP tool name.
     DuplicateMcpName {
+        /// The tool name.
         name: String,
+        /// The id of the capability seen first.
         first: String,
+        /// The id of the other.
         second: String,
     },
     #[error("MCP resource '{uri}' is claimed by '{first}' and '{second}'")]
+    /// Two capabilities claim one MCP resource URI.
     DuplicateMcpUri {
+        /// The URI.
         uri: String,
+        /// The id of the capability seen first.
         first: String,
+        /// The id of the other.
         second: String,
     },
     #[error("HTTP route {method} {path} is claimed by '{first}' and '{second}'")]
+    /// Two capabilities claim one HTTP method and path.
     DuplicateHttpRoute {
+        /// The method.
         method: String,
+        /// The path.
         path: String,
+        /// The id of the capability seen first.
         first: String,
+        /// The id of the other.
         second: String,
     },
     #[error("CLI path '{path}' is claimed by '{first}' and '{second}'")]
+    /// Two capabilities claim one CLI path.
     DuplicateCliPath {
+        /// The words, joined with spaces.
         path: String,
+        /// The id of the capability seen first.
         first: String,
+        /// The id of the other.
         second: String,
     },
     #[error("capability '{id}' ({provenance}): invalid {projection} exposure: {reason}")]
+    /// A declared exposure cannot be served by its projection.
     InvalidExposure {
+        /// The id.
         id: String,
+        /// Where the descriptor came from.
         provenance: String,
+        /// `MCP`, `HTTP` or `CLI`.
         projection: String,
+        /// What is wrong with the exposure.
         reason: String,
     },
     #[error("capability '{id}' ({provenance}) is {stability} and cannot be exposed as executable through {projection}")]
+    /// A planned or unsupported capability declares an executable exposure.
     NotExecutable {
+        /// The id.
         id: String,
+        /// Where the descriptor came from.
         provenance: String,
+        /// The stability that forbids execution.
         stability: String,
+        /// The projection the exposure is for.
         projection: String,
     },
     #[error("capability '{id}' ({provenance}): {reason}")]
+    /// The descriptor's shape contradicts its kind: a query without a handler, a resource with one or with a callable exposure.
     Shape {
+        /// The id.
         id: String,
+        /// Where the descriptor came from.
         provenance: String,
+        /// What is contradictory.
         reason: String,
     },
 }
 
 #[derive(Debug, Default)]
+/// Every capability, once, validated, in id order, with the lookups projections need.
 pub struct CapabilityRegistry {
     entries: BTreeMap<CapabilityId, Entry>,
     by_mcp_tool: BTreeMap<String, CapabilityId>,
@@ -107,6 +148,7 @@ pub struct Builder {
 }
 
 impl Builder {
+    /// Add the executables the code composes.
     pub fn with_builtin(mut self, executables: Vec<Executable>) -> Self {
         for e in executables {
             self.pending.push(Entry {
@@ -317,6 +359,18 @@ fn not_executable(c: &Capability, projection: &str) -> RegistryError {
 }
 
 impl CapabilityRegistry {
+    /// Start composing a registry.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{builtin, CapabilityRegistry, RegistryError};
+    /// let registry = CapabilityRegistry::builder().with_builtin(builtin::all()).build().unwrap();
+    /// assert!(registry.get("repository.info").is_some());
+    /// assert_eq!(registry.by_mcp_tool("majordomus_get").unwrap().id.as_str(), "objects.get");
+    /// // the same executables twice: every id is claimed twice, and the registry says so
+    /// let twice = CapabilityRegistry::builder().with_builtin(builtin::all()).with_builtin(builtin::all()).build();
+    /// let errors = twice.unwrap_err();
+    /// assert!(errors.iter().all(|e| matches!(e, RegistryError::DuplicateId { .. })));
+    /// ```
     pub fn builder() -> Builder {
         Builder::default()
     }
@@ -326,38 +380,45 @@ impl CapabilityRegistry {
         self.entries.values().map(|e| &e.capability)
     }
 
+    /// How many capabilities the registry holds.
     pub fn len(&self) -> usize {
         self.entries.len()
     }
 
+    /// Does the registry hold nothing?
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 
+    /// A capability by canonical id.
     pub fn get(&self, id: &str) -> Option<&Capability> {
         self.entries
             .get(&CapabilityId::unchecked(id))
             .map(|e| &e.capability)
     }
 
+    /// The capability an MCP tool name projects.
     pub fn by_mcp_tool(&self, name: &str) -> Option<&Capability> {
         self.by_mcp_tool
             .get(name)
             .and_then(|id| self.get(id.as_str()))
     }
 
+    /// The capability an MCP resource URI projects.
     pub fn by_mcp_uri(&self, uri: &str) -> Option<&Capability> {
         self.by_mcp_uri
             .get(uri)
             .and_then(|id| self.get(id.as_str()))
     }
 
+    /// The capability an HTTP method and path project.
     pub fn by_http(&self, method: HttpMethod, path: &str) -> Option<&Capability> {
         self.by_http
             .get(&(method, path.to_string()))
             .and_then(|id| self.get(id.as_str()))
     }
 
+    /// The capability a CLI path projects.
     pub fn by_cli(&self, path: &[String]) -> Option<&Capability> {
         self.by_cli.get(path).and_then(|id| self.get(id.as_str()))
     }
@@ -416,14 +477,24 @@ impl CapabilityRegistry {
 #[derive(
     Debug, Default, Clone, PartialEq, Eq, Serialize, serde::Deserialize, schemars::JsonSchema,
 )]
+/// The registry counted: by source, kind, stability and projection.
 pub struct Summary {
+    /// Every capability.
     pub total: usize,
+    /// Composed in Rust.
     pub builtin: usize,
+    /// Read from the layer.
     pub declarative: usize,
+    /// By kind (`query`, `resource`).
     pub by_kind: BTreeMap<String, usize>,
+    /// By stability.
     pub by_stability: BTreeMap<String, usize>,
+    /// With an MCP tool exposure.
     pub mcp_tools: usize,
+    /// With an MCP resource exposure.
     pub mcp_resources: usize,
+    /// With an HTTP exposure.
     pub http_routes: usize,
+    /// With a CLI exposure.
     pub cli_commands: usize,
 }

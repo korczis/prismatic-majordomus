@@ -22,12 +22,23 @@ pub struct Split<'a> {
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum SplitError {
     #[error("front matter opened on line 1 and never closed")]
+    /// The document opens with `---` and no closing fence follows.
     Unclosed,
     #[error("front matter is {0} bytes, over the {MAX_FRONT_MATTER_BYTES} byte limit")]
+    /// The front matter exceeds [`MAX_FRONT_MATTER_BYTES`]; the size is carried.
     Oversized(usize),
 }
 
 /// Split a document. Text that does not open with `---` has no front matter and is all body.
+///
+/// ```
+/// use majordomus_cli::metadata::frontmatter::{split, SplitError};
+/// let s = split("---\nname: x\n---\n# Body\n").unwrap();
+/// assert_eq!(s.front, Some("name: x\n"));
+/// assert_eq!(s.body, "# Body\n");
+/// assert_eq!(split("# No front matter\n").unwrap().front, None);
+/// assert_eq!(split("---\nname: x\n"), Err(SplitError::Unclosed));
+/// ```
 pub fn split(text: &str) -> Result<Split<'_>, SplitError> {
     let Some(rest) = text
         .strip_prefix("---\n")

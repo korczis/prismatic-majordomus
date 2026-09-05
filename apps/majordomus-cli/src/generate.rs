@@ -16,17 +16,22 @@ use crate::share::Share;
 /// Where generated artifacts live, relative to the repository root.
 pub const OUT_DIR: &str = "docs/generated";
 
+/// The first line of every generated Markdown artifact.
 pub const HEADER: &str = "GENERATED FILE — DO NOT EDIT DIRECTLY";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// What can be generated.
 pub enum Target {
+    /// `docs/generated/openapi.json`.
     OpenApi,
+    /// `docs/generated/capabilities.md`.
     Docs,
     /// `<share>/allow/<name>.txt` for every schema that carries `x-majordomus-allow`.
     Allow,
 }
 
 impl Target {
+    /// Every target, in generation order.
     pub const ALL: &'static [Target] = &[Target::OpenApi, Target::Docs, Target::Allow];
 }
 
@@ -34,9 +39,11 @@ impl Target {
 pub const ALLOW_EXTENSION: &str = "x-majordomus-allow";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// One generated file: where it goes and what it holds.
 pub struct Artifact {
     /// Repository-relative path.
     pub path: String,
+    /// The whole file.
     pub content: String,
 }
 /// The registry's artifacts of the selected targets: the OpenAPI document and the
@@ -93,6 +100,21 @@ pub fn allow_artifacts(schema: &KindSchema, share: &Share, root: &Path) -> Vec<A
 /// (`grep -E -f`). A list of scalars is `name(\.[0-9]+)?`, a list of objects recurses
 /// through `name\.[0-9]+\.`, a nested object through `name\.`. Local `$ref`s into
 /// `$defs` are followed. No blank lines and no comments: every line is a pattern.
+///
+/// ```
+/// use majordomus_cli::generate::allow_lines;
+/// use serde_json::json;
+/// let schema = json!({ "type": "object", "properties": {
+///     "id": { "type": "string" },
+///     "tags": { "type": "array", "items": { "type": "string" } },
+///     "x-majordomus": { "type": "object", "properties": { "tests": { "type": "array", "items": { "type": "string" } } } }
+/// } });
+/// assert_eq!(allow_lines(&schema), [
+///     "^id$",
+///     "^tags(\\.[0-9]+)?$",
+///     "^x-majordomus\\.tests(\\.[0-9]+)?$",
+/// ]);
+/// ```
 pub fn allow_lines(schema: &Value) -> Vec<String> {
     let mut out = Vec::new();
     walk_allow(schema, schema, "", &mut out);

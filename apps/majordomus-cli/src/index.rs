@@ -27,17 +27,22 @@ pub const MAX_FILE_BYTES: u64 = 4 * 1024 * 1024;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum State {
+    /// Every discovered file became an object.
     Ok,
+    /// At least one file could not be read; the diagnostics say which.
     Degraded,
 }
 
 /// What the index knows about the repository it was built from.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RepositoryInfo {
+    /// The repository root, absolute.
     pub root: String,
+    /// The manifest's `schema`, `ai-repository/v1`.
     pub layer_schema: String,
     /// Manifest section name to repository-relative path.
     pub sections: BTreeMap<String, String>,
+    /// What `git` said, or why it could not be asked.
     pub git: GitState,
     /// `vcs` or `filesystem`.
     pub discovery: String,
@@ -49,11 +54,15 @@ pub struct RepositoryInfo {
 }
 
 #[derive(Debug)]
+/// The objects of the repository, their diagnostics, and the repository they came from.
 pub struct Index {
+    /// The repository the index was built from.
     pub repository: RepositoryInfo,
     /// Sorted by URI; unique by URI.
     pub objects: Vec<Object>,
+    /// Every finding, in discovery order.
     pub diagnostics: Vec<Diagnostic>,
+    /// Ok, or degraded when a diagnostic is an error.
     pub state: State,
 }
 
@@ -117,6 +126,7 @@ impl Index {
         })
     }
 
+    /// An object by URI.
     pub fn get(&self, uri: &str) -> Option<&Object> {
         self.objects
             .binary_search_by(|o| o.uri.as_str().cmp(uri))
@@ -124,6 +134,7 @@ impl Index {
             .map(|i| &self.objects[i])
     }
 
+    /// How many diagnostics are errors.
     pub fn errors(&self) -> usize {
         self.diagnostics
             .iter()

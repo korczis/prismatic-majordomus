@@ -17,14 +17,25 @@ use super::{openapi, swagger};
 /// and the body.
 #[derive(Debug, Clone)]
 pub struct Request {
+    /// `GET`, `POST`, ... as received.
     pub method: String,
+    /// The path without the query string.
     pub path: String,
+    /// The query pairs, percent-decoded, in order.
     pub query: Vec<(String, String)>,
+    /// The body, raw.
     pub body: Vec<u8>,
 }
 
 impl Request {
     /// Split a request target (`/api/v1/objects?kind=rule`) into path and decoded pairs.
+    ///
+    /// ```
+    /// use majordomus_cli::http::Request;
+    /// let r = Request::parse_target("GET", "/api/v1/search?query=Git%20is&limit=2", vec![]);
+    /// assert_eq!(r.path, "/api/v1/search");
+    /// assert_eq!(r.query, vec![("query".to_string(), "Git is".to_string()), ("limit".to_string(), "2".to_string())]);
+    /// ```
     pub fn parse_target(method: &str, target: &str, body: Vec<u8>) -> Self {
         let (path, query) = match target.split_once('?') {
             Some((p, q)) => (p.to_string(), q),
@@ -48,26 +59,34 @@ impl Request {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// A response as the router produces it; the server adds the wire.
 pub struct Response {
+    /// The HTTP status.
     pub status: u16,
+    /// The `Content-Type` value.
     pub content_type: &'static str,
+    /// The body.
     pub body: String,
 }
 
 /// The body of every error response.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ErrorBody {
+    /// The one error.
     pub error: ErrorDetail,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// What went wrong, as the HTTP projection names it.
 pub struct ErrorDetail {
     /// `invalid_input`, `not_found`, `refused`, `internal`, `method_not_allowed`.
     pub code: String,
+    /// The reason, for a person.
     pub message: String,
 }
 
 #[derive(Clone)]
+/// Routes requests to capabilities by the registry's HTTP exposures, and serves the projection's own three routes.
 pub struct Router {
     ctx: Arc<Context>,
     version: &'static str,
@@ -76,6 +95,7 @@ pub struct Router {
 }
 
 impl Router {
+    /// A router over a loaded context.
     pub fn new(ctx: Arc<Context>, version: &'static str) -> Self {
         Router {
             ctx,
@@ -98,6 +118,7 @@ impl Router {
         }
     }
 
+    /// Answer one request.
     pub fn handle(&self, req: &Request) -> Response {
         match (req.method.as_str(), req.path.as_str()) {
             ("GET", "/") => json_response(

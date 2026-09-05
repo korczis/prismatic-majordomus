@@ -8,11 +8,20 @@ enum Segment {
 }
 
 #[derive(Debug, Clone)]
+/// A compiled `:(glob)` pattern.
+///
+/// ```
+/// use majordomus_cli::discovery::glob::Glob;
+/// let g = Glob::new(".ai/repo/rules/**/*.md");
+/// assert!(g.matches(".ai/repo/rules/project/a.v1.md"));
+/// assert!(!g.matches("docs/a.md"));
+/// ```
 pub struct Glob {
     segments: Vec<Segment>,
 }
 
 impl Glob {
+    /// Compile a pattern; `**` is a segment of its own, `*` and `?` stay inside one segment.
     pub fn new(pattern: &str) -> Self {
         let segments = pattern
             .split('/')

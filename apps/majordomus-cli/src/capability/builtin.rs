@@ -25,15 +25,21 @@ pub struct ObjectView {
     pub uri: String,
     /// The capability id, `<kind>.<identity>`.
     pub id: String,
+    /// The kind the object was read as (`rule`, `prompt`, `document`, ...).
     pub kind: String,
+    /// The identity within the kind (`majordomus.scope-integrity@1`, `continue`, a path).
     pub identity: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The title the kind's title rule found, when it found one.
     pub title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The one-line description the kind's description field held, when it held one.
     pub description: Option<String>,
     /// The parsed front matter or YAML, keys in the file's order.
     pub metadata: Value,
+    /// Where the object came from: path, directory, source class, section, size, member.
     pub provenance: ObjectProvenance,
+    /// IANA media type of `content` (`text/markdown`, `application/yaml`, `application/json`, `text/plain`).
     pub media_type: String,
     /// The file as read.
     pub content: String,
@@ -59,13 +65,19 @@ impl ObjectView {
 /// One object, summarised for a listing.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ObjectSummary {
+    /// `majordomus://<kind>/<identity>`.
     pub uri: String,
+    /// The capability id, `<kind>.<identity>`.
     pub id: String,
+    /// The kind the object was read as.
     pub kind: String,
+    /// The identity within the kind.
     pub identity: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The title, when the kind's title rule found one.
     pub title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The one-line description, when the kind holds one.
     pub description: Option<String>,
     /// Repository-relative source path.
     pub path: String,
@@ -95,9 +107,11 @@ pub struct Empty {}
 /// The repository, its layer, its git state, and the state of this process's index.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct RepositoryReport {
+    /// The repository: root, layer schema, sections, git state, discovery mode, source classes, kind sources.
     pub repository: RepositoryInfo,
     /// `ok` when every discovered file became an object, `degraded` otherwise.
     pub state: State,
+    /// How many objects the index holds.
     pub objects: usize,
     /// Objects per kind.
     pub kinds: std::collections::BTreeMap<String, usize>,
@@ -139,8 +153,11 @@ pub struct ListInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// The answer of `objects.list`: the matching objects, summarised, in URI order.
 pub struct ObjectList {
+    /// How many objects matched.
     pub count: usize,
+    /// The objects, one summary each.
     pub objects: Vec<ObjectSummary>,
 }
 
@@ -178,6 +195,7 @@ fn objects_list(ctx: &Context, input: ListInput) -> Result<ObjectList, Capabilit
 
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+/// The input of `objects.get`: which object.
 pub struct GetInput {
     /// `majordomus://<kind>/<identity>`.
     pub uri: String,
@@ -192,15 +210,19 @@ fn objects_get(ctx: &Context, input: GetInput) -> Result<ObjectView, CapabilityE
 
 // ---------------------------------------------------------------- objects.search
 
+/// Hits returned by `objects.search` when no limit is given.
 pub const SEARCH_DEFAULT_LIMIT: u64 = 20;
+/// The most hits `objects.search` returns; a larger limit is clamped to this.
 pub const SEARCH_MAX_LIMIT: u64 = 200;
 
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+/// The input of `objects.search`: what to look for, where, how much.
 pub struct SearchInput {
     /// Case-insensitive substring, matched against identity, title, description and content.
     pub query: String,
     #[serde(default)]
+    /// Only objects of this kind; a kind the repository does not have is an invalid input.
     pub kind: Option<String>,
     /// At most this many hits (default 20, at most 200).
     #[serde(default)]
@@ -209,8 +231,10 @@ pub struct SearchInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// One search hit: the object, summarised, and the first matching line of its content.
 pub struct SearchHit {
     #[serde(flatten)]
+    /// The object that matched.
     pub object: ObjectSummary,
     /// The first line of content that matched, when one did.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -218,10 +242,15 @@ pub struct SearchHit {
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// The answer of `objects.search`.
 pub struct SearchResult {
+    /// The query as given.
     pub query: String,
+    /// How many hits were returned.
     pub count: usize,
+    /// The limit that applied.
     pub limit: u64,
+    /// The hits, in URI order, at most `limit` of them.
     pub hits: Vec<SearchHit>,
 }
 
@@ -276,6 +305,7 @@ fn objects_search(ctx: &Context, input: SearchInput) -> Result<SearchResult, Cap
 
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+/// The input of `capabilities.list`: optional filters by kind and by projection.
 pub struct CapabilitiesInput {
     /// Only capabilities of this kind: `query` or `resource`.
     #[serde(default)]
@@ -286,9 +316,13 @@ pub struct CapabilitiesInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// The answer of `capabilities.list`: the matching capabilities and the registry counted.
 pub struct CapabilityList {
+    /// How many capabilities matched the filters.
     pub count: usize,
+    /// The whole registry, counted by kind, stability and projection.
     pub summary: Summary,
+    /// The matching capabilities, by id.
     pub capabilities: Vec<Capability>,
 }
 
@@ -338,6 +372,7 @@ fn capabilities_list(
 
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+/// The input of `capabilities.describe`: which capability.
 pub struct DescribeInput {
     /// The canonical id, e.g. `repository.info` or `rule.majordomus.scope-integrity@1`.
     pub id: String,

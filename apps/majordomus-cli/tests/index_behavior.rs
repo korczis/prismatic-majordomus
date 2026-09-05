@@ -184,3 +184,49 @@ fn without_git_vcs_discovery_is_refused_and_the_walk_still_works() {
     assert_eq!(v["repository"]["repository"]["discovery"], "filesystem");
     assert!(common::resource_uris(&v).contains(&"majordomus://rule/project.alpha@1".to_string()));
 }
+
+#[test]
+fn a_file_two_classes_match_is_kept_under_the_first_and_reported_as_a_warning() {
+    let f = Fixture::new();
+    let sources = common::SOURCES.replace(
+        "  - id: readme\n    kind: document",
+        "  - id: docs_again\n    kind: document\n    discovery: vcs\n    pathspec: ':(glob)docs/*.md'\n    required: false\n\n  - id: readme\n    kind: document",
+    );
+    f.write(".ai/repo/knowledge/sources.yaml", &sources);
+    f.commit("overlap");
+    let index = build(&f, false);
+    let warning = index
+        .diagnostics
+        .iter()
+        .find(|d| d.code == "claimed_twice")
+        .expect("warning");
+    assert_eq!(warning.severity, majordomus_cli::Severity::Warning);
+    assert_eq!(warning.path.as_deref(), Some("docs/CLI.md"));
+    assert!(
+        warning
+            .message
+            .contains("'docs_again' after class 'document'"),
+        "{}",
+        warning.message
+    );
+    assert_eq!(
+        index.state,
+        majordomus_cli::index::State::Ok,
+        "a warning does not degrade the index"
+    );
+    assert_eq!(
+        index
+            .get("majordomus://document/docs/CLI.md")
+            .unwrap()
+            .provenance
+            .source_class,
+        "document"
+    );
+    let (code, v, _) = inspect(&f.root(), &[]);
+    assert_eq!(code, 0);
+    assert!(v["repository"]["diagnostics"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|d| d["severity"] == "warning"));
+}

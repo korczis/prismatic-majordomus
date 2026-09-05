@@ -22,6 +22,17 @@ pub const OAS_DIALECT: &str = "https://spec.openapis.org/oas/3.1/dialect/base";
 /// The routes that are the projection's own, not capabilities.
 pub const INFRASTRUCTURE_ROUTES: &[&str] = &["/", "/openapi.json", "/docs"];
 
+/// The OpenAPI document of the registry. Fails only on a schema component name defined twice with different content.
+///
+/// ```
+/// use majordomus_cli::capability::{builtin, CapabilityRegistry};
+/// use majordomus_cli::http::openapi::document;
+/// let registry = CapabilityRegistry::builder().with_builtin(builtin::all()).build().unwrap();
+/// let doc = document(&registry, "0.0.0").unwrap();
+/// assert_eq!(doc["openapi"], "3.1.0");
+/// assert_eq!(doc["paths"]["/api/v1/object"]["get"]["operationId"], "objects.get");
+/// assert_eq!(doc["paths"]["/api/v1/object"]["get"]["x-majordomus-mcp"]["tool"], "majordomus_get");
+/// ```
 pub fn document(registry: &CapabilityRegistry, version: &str) -> Result<Value, String> {
     let mut components: BTreeMap<String, Value> = BTreeMap::new();
     let error_ref = CanonicalSchema::of::<ErrorBody>().openapi_ref(&mut components)?;

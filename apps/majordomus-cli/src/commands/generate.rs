@@ -8,6 +8,7 @@ use crate::cli::{GenerateArgs, GenerateTarget};
 use crate::error::{Error, Result};
 use crate::generate::{self, Target};
 
+/// Run `majordomus generate`.
 pub fn run(args: GenerateArgs) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let targets: &[Target] = match args.target {

@@ -21,15 +21,21 @@ pub const LAYER_SCHEMA: &str = "ai-repository/v1";
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// The tracked half of the layer.
 pub struct RepoHalf {
+    /// Relative to `.ai/`.
     pub path: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
+/// The checkout-local half of the layer, never a source.
 pub struct LocalHalf {
+    /// Relative to `.ai/`.
     pub path: String,
+    /// Tracked in git? The contract says `false`.
     pub tracked: bool,
+    /// Loaded into a worker's context implicitly? The contract says `false`.
     pub implicit_context: bool,
 }
 
@@ -39,6 +45,7 @@ pub struct LocalHalf {
 #[serde(deny_unknown_fields)]
 pub struct ContextConventions {
     #[serde(default)]
+    /// File names, e.g. `README.md`.
     pub documents: Vec<String>,
 }
 
@@ -46,8 +53,11 @@ pub struct ContextConventions {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
+    /// The layer schema, [`LAYER_SCHEMA`].
     pub schema: String,
+    /// Where the tracked half is.
     pub repo: RepoHalf,
+    /// Where the checkout-local half is.
     pub local: LocalHalf,
     /// Section name to path, relative to `.ai/`. Sorted by name.
     pub sections: BTreeMap<String, String>,
@@ -132,10 +142,12 @@ impl Repository {
         })
     }
 
+    /// The root, absolute and canonical.
     pub fn root(&self) -> &Path {
         &self.root
     }
 
+    /// The manifest, typed.
     pub fn manifest(&self) -> &Manifest {
         &self.manifest
     }

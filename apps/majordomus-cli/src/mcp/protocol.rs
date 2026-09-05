@@ -11,6 +11,7 @@ use super::surface::{Surface, SurfaceError, ToolOutcome};
 /// another gets the first one.
 pub const PROTOCOL_VERSIONS: &[&str] = &["2025-06-18", "2025-03-26", "2024-11-05"];
 
+/// The `serverInfo.name` this server announces.
 pub const SERVER_NAME: &str = "majordomus";
 
 const PARSE_ERROR: i64 = -32700;
@@ -22,6 +23,7 @@ const INTERNAL_ERROR: i64 = -32603;
 const RESOURCE_NOT_FOUND: i64 = -32002;
 
 #[derive(Debug)]
+/// The protocol state over a surface: whether the client has initialised, and the version to announce.
 pub struct Server {
     surface: Surface,
     version: &'static str,
@@ -29,6 +31,7 @@ pub struct Server {
 }
 
 impl Server {
+    /// A server over a surface, announcing `version` as its own.
     pub fn new(surface: Surface, version: &'static str) -> Self {
         Server {
             surface,
@@ -37,6 +40,7 @@ impl Server {
         }
     }
 
+    /// The surface being served.
     pub fn surface(&self) -> &Surface {
         &self.surface
     }

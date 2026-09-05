@@ -6,6 +6,7 @@ use tracing_subscriber::EnvFilter;
 /// The environment variable that sets the log filter, e.g. `debug` or `majordomus_cli=trace`.
 pub const LOG_ENV: &str = "MAJORDOMUS_LOG";
 
+/// Install the stderr subscriber once; a second call is a no-op.
 pub fn init() {
     let filter = EnvFilter::try_from_env(LOG_ENV).unwrap_or_else(|_| EnvFilter::new("info"));
     let _ = tracing_subscriber::fmt()

@@ -12,33 +12,49 @@ use crate::capability::{CapabilityError, CapabilityKind, CapabilityRegistry, Con
 use crate::index::Index;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+/// One resource as a client lists it.
 pub struct Resource {
+    /// The URI a client reads.
     pub uri: String,
+    /// The short name: the identity, or `repository`.
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The title, when there is one.
     pub title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The description, when there is one.
     pub description: Option<String>,
+    /// IANA media type of what a read returns.
     pub media_type: String,
     /// Canonical id, kind and provenance, carried as metadata beside the resource.
     pub meta: Value,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// What a read returns.
 pub struct ResourceContent {
+    /// The URI read.
     pub uri: String,
+    /// IANA media type of `text`.
     pub media_type: String,
+    /// The content.
     pub text: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+/// One tool as a client lists it.
 pub struct Tool {
+    /// The tool name a client calls.
     pub name: String,
+    /// The title.
     pub title: String,
+    /// The description.
     pub description: String,
     /// The canonical id the tool projects.
     pub id: String,
+    /// The canonical input schema.
     pub input_schema: Value,
+    /// The canonical output schema.
     pub output_schema: Value,
 }
 
@@ -46,7 +62,9 @@ pub struct Tool {
 /// results, not protocol errors.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolOutcome {
+    /// The value the handler produced.
     Ok(Value),
+    /// The handler declined, with the reason.
     Refused(String),
 }
 
@@ -54,14 +72,18 @@ pub enum ToolOutcome {
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum SurfaceError {
     #[error("unknown resource: {0}")]
+    /// No capability projects this URI.
     UnknownResource(String),
     #[error("unknown tool: {0}")]
+    /// No capability projects this tool name.
     UnknownTool(String),
     #[error("internal: {0}")]
+    /// The handler itself failed.
     Internal(String),
 }
 
 #[derive(Clone)]
+/// The registry seen as resources and tools.
 pub struct Surface {
     ctx: Arc<Context>,
 }
@@ -75,14 +97,17 @@ impl std::fmt::Debug for Surface {
 }
 
 impl Surface {
+    /// A surface over a loaded context.
     pub fn new(ctx: Arc<Context>) -> Self {
         Surface { ctx }
     }
 
+    /// The index behind the surface.
     pub fn index(&self) -> &Index {
         &self.ctx.index
     }
 
+    /// The registry behind the surface.
     pub fn registry(&self) -> &CapabilityRegistry {
         &self.ctx.registry
     }
@@ -133,6 +158,7 @@ impl Surface {
         out.into_iter().map(|(_, r)| r).collect()
     }
 
+    /// Read one resource: an object's content, or a query with a resource exposure answered as JSON.
     pub fn read(&self, uri: &str) -> Result<ResourceContent, SurfaceError> {
         let c = self
             .ctx
@@ -167,6 +193,7 @@ impl Surface {
         }
     }
 
+    /// Every tool, by canonical id.
     pub fn tools(&self) -> Vec<Tool> {
         self.ctx
             .registry
@@ -185,6 +212,7 @@ impl Surface {
             .collect()
     }
 
+    /// Call a tool by name.
     pub fn call(&self, name: &str, args: &Value) -> Result<ToolOutcome, SurfaceError> {
         let c = self
             .ctx

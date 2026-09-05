@@ -9,6 +9,7 @@ use crate::error::{Error, Result};
 use crate::mcp::{stdio, Server, Surface};
 use crate::model::Severity;
 
+/// Run `majordomus mcp`.
 pub fn run(args: McpArgs) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let surface = Surface::new(app.context.clone());

@@ -187,3 +187,129 @@ fn new_commands_have_help_and_honest_exit_codes() {
     assert_ne!(code, 0);
     assert!(err.contains("not query or resource"), "{err}");
 }
+
+#[test]
+fn capabilities_text_output_names_projections_and_provenance() {
+    let f = Fixture::new();
+    let (code, out, _) = run_in(&f.root(), &["capabilities", "list", "--kind", "query"], "");
+    assert_eq!(code, 0);
+    assert!(
+        out.contains("objects.get")
+            && out.contains("mcp=tool:majordomus_get")
+            && out.contains("http=GET /api/v1/object"),
+        "{out}"
+    );
+    assert!(out.contains("cli=capabilities list"), "{out}");
+    assert!(
+        out.lines().last().unwrap().starts_with("capabilities: "),
+        "{out}"
+    );
+    let (code, out, _) = run_in(&f.root(), &["capabilities", "describe", "objects.get"], "");
+    assert_eq!(code, 0);
+    for needle in [
+        "id           objects.get",
+        "kind         query",
+        "http         GET /api/v1/object",
+        "cli          none",
+        "input        GetInput",
+        "output       ObjectView",
+        "provenance   builtin ",
+    ] {
+        assert!(out.contains(needle), "missing {needle:?} in:\n{out}");
+    }
+    let (code, out, _) = run_in(
+        &f.root(),
+        &["capabilities", "describe", "rule.project.alpha@1"],
+        "",
+    );
+    assert_eq!(code, 0);
+    assert!(
+        out.contains("provenance   .ai/repo/rules/project/alpha.v1.md (class rule, section rules)"),
+        "{out}"
+    );
+    assert!(
+        out.contains("mcp          {\"resource\":{\"uri\":\"majordomus://rule/project.alpha@1\""),
+        "{out}"
+    );
+    assert!(out.contains("http         none"), "{out}");
+    let (code, out, _) = run_in(
+        &f.root(),
+        &["capabilities", "describe", "claim.policy-parse"],
+        "",
+    );
+    assert_eq!(code, 0);
+    assert!(
+        out.contains("docs/CLAIMS.yaml#claims.0") || out.contains("docs/CLAIMS.yaml (class claims"),
+        "{out}"
+    );
+    let (code, out, _) = run_in(
+        &f.root(),
+        &["capabilities", "schema", "objects.get", "--side", "output"],
+        "",
+    );
+    assert_eq!(code, 0);
+    let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(v["title"], "ObjectView");
+    let (code, out, _) = run_in(
+        &f.root(),
+        &[
+            "mcp",
+            "--inspect",
+            "--format",
+            "json",
+            "--discovery",
+            "filesystem",
+        ],
+        "",
+    );
+    assert_eq!(code, 0);
+    let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(v["repository"]["repository"]["discovery"], "filesystem");
+}
+
+#[test]
+fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
+    let f = Fixture::new();
+    // a repository that carries the distribution itself, as this one does
+    let dist = common::dist_share();
+    for entry in std::fs::read_dir(dist.join("schemas")).unwrap() {
+        let p = entry.unwrap().path();
+        f.write(
+            &format!("share/schemas/{}", p.file_name().unwrap().to_str().unwrap()),
+            &std::fs::read_to_string(&p).unwrap(),
+        );
+    }
+    f.write(
+        "share/kinds.yaml",
+        &std::fs::read_to_string(dist.join("kinds.yaml")).unwrap(),
+    );
+    f.commit("distribution");
+    let out = std::process::Command::new(BIN)
+        .args(["capabilities", "validate"])
+        .current_dir(f.root())
+        .env_remove("MAJORDOMUS_SHARE")
+        .output()
+        .unwrap();
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert_eq!(
+        out.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert!(text.contains("(repository)"), "{text}");
+    assert!(text.contains("kinds from share/kinds.yaml"), "{text}");
+    // an explicit share without kinds.yaml is an error, never a fallback
+    let (code, _, err) = run_in(
+        &f.root(),
+        &[
+            "capabilities",
+            "validate",
+            "--share",
+            f.path("docs").to_str().unwrap(),
+        ],
+        "",
+    );
+    assert_eq!(code, 12, "{err}");
+    assert!(err.contains("no share directory holds kinds.yaml"), "{err}");
+}

@@ -234,6 +234,16 @@ fn insert(root: &mut Map<String, Value>, path: &str, leaf: Value) -> Result<(), 
 }
 
 /// Parse a document of the subset into an ordered mapping.
+///
+/// ```
+/// use majordomus_cli::metadata::yaml::parse_mapping;
+/// use serde_json::json;
+/// let m = parse_mapping("id: project.x\nversion: 1\ntags: [a, b]\nnote: colons: are text\n").unwrap();
+/// assert_eq!(m["version"], json!(1));
+/// assert_eq!(m["tags"], json!(["a", "b"]));
+/// assert_eq!(m["note"], json!("colons: are text"));
+/// assert_eq!(parse_mapping("a:\tb\n").unwrap_err(), "tab character on line 1");
+/// ```
 pub fn parse_mapping(text: &str) -> Result<Map<String, Value>, String> {
     let mut root = Map::new();
     for flat in flatten(text)? {

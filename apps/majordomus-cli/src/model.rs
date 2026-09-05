@@ -13,8 +13,11 @@ use serde_json::Value;
 )]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
+    /// Worth knowing; changes nothing.
     Info,
+    /// Something to look at; the object is still served.
     Warning,
+    /// The file is excluded and the index is degraded.
     Error,
 }
 
@@ -22,16 +25,26 @@ pub enum Severity {
 /// there is one, and carrying the command that reproduces it where there is one.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Diagnostic {
+    /// How bad.
     pub severity: Severity,
     /// A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.
     pub code: String,
     /// Repository-relative path of the file concerned, when there is one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
+    /// What is wrong, for a person; the code is for a program.
     pub message: String,
 }
 
 impl Diagnostic {
+    /// An error diagnostic.
+    ///
+    /// ```
+    /// use majordomus_cli::{Diagnostic, Severity};
+    /// let d = Diagnostic::error("unknown_key", Some("docs/x.md".into()), "key(s) not in schema 'rule': owner");
+    /// assert_eq!(d.severity, Severity::Error);
+    /// assert_eq!(d.code, "unknown_key");
+    /// ```
     pub fn error(code: &'static str, path: Option<String>, message: impl Into<String>) -> Self {
         Diagnostic {
             severity: Severity::Error,
@@ -40,6 +53,7 @@ impl Diagnostic {
             message: message.into(),
         }
     }
+    /// A warning diagnostic.
     pub fn warning(code: &'static str, path: Option<String>, message: impl Into<String>) -> Self {
         Diagnostic {
             severity: Severity::Warning,
@@ -48,6 +62,7 @@ impl Diagnostic {
             message: message.into(),
         }
     }
+    /// An informational diagnostic.
     pub fn info(code: &'static str, path: Option<String>, message: impl Into<String>) -> Self {
         Diagnostic {
             severity: Severity::Info,
@@ -91,8 +106,10 @@ pub struct Object {
     /// `majordomus://<kind>/<identity>`; unique across the index.
     pub uri: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The title, when the kind's title rule found one.
     pub title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The one-line description, when the kind holds one.
     pub description: Option<String>,
     /// The parsed metadata: the front matter of a Markdown file, or the whole of a YAML
     /// file. Key order is the file's.
@@ -105,6 +122,7 @@ pub struct Object {
     pub content: String,
     /// IANA media type of `content`.
     pub media_type: &'static str,
+    /// Where it came from.
     pub provenance: Provenance,
 }
 
@@ -122,4 +140,26 @@ impl Object {
 /// Build the canonical URI for a kind and identity.
 pub fn uri_for(kind: &str, identity: &str) -> String {
     format!("majordomus://{kind}/{identity}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn diagnostics_carry_their_severity_and_uri_is_canonical() {
+        assert_eq!(
+            Diagnostic::warning("claimed_twice", None, "x").severity,
+            Severity::Warning
+        );
+        assert_eq!(
+            Diagnostic::info("note", Some("a".into()), "x").severity,
+            Severity::Info
+        );
+        assert!(Severity::Error > Severity::Warning && Severity::Warning > Severity::Info);
+        assert_eq!(
+            uri_for("rule", "project.x@1"),
+            "majordomus://rule/project.x@1"
+        );
+    }
 }

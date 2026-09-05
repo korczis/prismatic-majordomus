@@ -19,24 +19,31 @@ use super::registry::CapabilityRegistry;
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum CapabilityError {
     #[error("invalid input: {0}")]
+    /// The input did not deserialize into the handler's type, or a filter named something the repository does not have.
     InvalidInput(String),
     #[error("not found: {0}")]
+    /// The thing asked for does not exist: an object, a capability.
     NotFound(String),
     #[error("refused: {0}")]
+    /// The input is well-formed and the call is declined, with the reason (a blank query).
     Refused(String),
     #[error("internal: {0}")]
+    /// The handler itself failed; never the caller's fault.
     Internal(String),
 }
 
 /// What a handler may read: the index of the repository and the registry it belongs to.
 /// Both are immutable for the life of a process.
 pub struct Context {
+    /// The index of the repository's objects.
     pub index: Arc<Index>,
+    /// The registry the handler belongs to, for introspection capabilities.
     pub registry: Arc<CapabilityRegistry>,
 }
 
 /// The JSON boundary of a handler.
 pub trait Handler: Send + Sync {
+    /// Run the handler on a JSON input and answer with a JSON output.
     fn call(&self, ctx: &Context, input: Value) -> Result<Value, CapabilityError>;
 }
 
@@ -74,7 +81,9 @@ where
 
 /// A descriptor with its behaviour: what the builtin source contributes.
 pub struct Executable {
+    /// The descriptor.
     pub capability: Capability,
+    /// The behaviour, behind the JSON boundary.
     pub handler: Arc<dyn Handler>,
 }
 

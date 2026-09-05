@@ -1,4 +1,5 @@
 //! The executable: parse, log to stderr, run, exit with the contract's code.
+#![warn(missing_docs)]
 
 use std::process::ExitCode;
 

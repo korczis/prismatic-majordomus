@@ -15,10 +15,15 @@ use crate::model::Severity;
 use crate::repository::Repository;
 use crate::share::Share;
 
+/// The loaded application: the repository, the distribution, the kind schema and the context every command works from.
 pub struct App {
+    /// The repository the process was pointed at.
     pub repository: Repository,
+    /// The distribution directory the kinds and schemas were read from.
     pub share: Share,
+    /// The kind schema: the distribution's kinds and schemas plus the repository's additions.
     pub schema: KindSchema,
+    /// The index and the registry, shared by every projection.
     pub context: Arc<Context>,
 }
 
@@ -122,10 +127,12 @@ impl App {
         })
     }
 
+    /// The index of the repository's objects.
     pub fn index(&self) -> &Index {
         &self.context.index
     }
 
+    /// The capability registry.
     pub fn registry(&self) -> &CapabilityRegistry {
         &self.context.registry
     }

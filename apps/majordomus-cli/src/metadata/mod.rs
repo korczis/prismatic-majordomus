@@ -27,7 +27,9 @@ pub const REPO_SCHEMAS_DIR: &str = "schemas";
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Format {
+    /// Markdown, with or without a YAML front matter block.
     Markdown,
+    /// A YAML document of the layer's subset.
     Yaml,
     /// Read as UTF-8 text with no metadata: source files, test cases.
     Text,
@@ -37,9 +39,12 @@ pub enum Format {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum FrontMatterRule {
+    /// A file without front matter is refused, or read as the fallback kind.
     Required,
+    /// Front matter is read when present.
     Optional,
     #[default]
+    /// Front matter is not looked for.
     None,
 }
 
@@ -48,7 +53,9 @@ pub enum FrontMatterRule {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SchemaVersion {
+    /// The field that carries the version.
     pub field: String,
+    /// The values accepted, integers or strings.
     pub supported: Vec<serde_json::Value>,
 }
 
@@ -56,8 +63,10 @@ pub struct SchemaVersion {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct KindSpec {
+    /// How the file is read.
     pub format: Format,
     #[serde(default)]
+    /// For markdown, whether front matter must, may, or must not be present.
     pub front_matter: FrontMatterRule,
     /// For a markdown kind with optional or required front matter: the kind a file that
     /// carries none is read as instead (the rules tree's own README is a document).
@@ -68,12 +77,16 @@ pub struct KindSpec {
     #[serde(default)]
     pub schema: Option<String>,
     #[serde(default)]
+    /// The metadata fields joined with `@` that make the identity; empty means the path.
     pub identity: Vec<String>,
     #[serde(default)]
+    /// The field holding the title, or `@heading` for the first level-one heading.
     pub title: Option<String>,
     #[serde(default)]
+    /// The field holding the one-line description.
     pub description: Option<String>,
     #[serde(default)]
+    /// A field that must carry one of the supported values.
     pub schema_version: Option<SchemaVersion>,
     /// For a yaml kind: the file's list that holds the objects, one object per item
     /// (`claims` for `docs/CLAIMS.yaml`). Identity, title and description are then read
@@ -116,9 +129,11 @@ fn rel_or_abs(path: &std::path::Path, root: &std::path::Path) -> String {
 
 /// One JSON Schema, compiled, with where it came from.
 pub struct Schema {
+    /// The schema name, `<name>.schema.json` without the suffix.
     pub name: String,
     /// Directory the file was read from, repository-relative when inside the repository.
     pub source: String,
+    /// The schema as parsed.
     pub json: Value,
     validator: jsonschema::Validator,
 }
@@ -137,6 +152,7 @@ impl std::fmt::Debug for Schema {
 pub struct Violation {
     /// Dotted key path of the offending value; empty for the document itself.
     pub path: String,
+    /// What the validator said.
     pub message: String,
     /// Set when the violation is a key the schema does not allow.
     pub unknown_keys: Vec<String>,
@@ -215,10 +231,12 @@ impl SchemaSet {
         Ok(())
     }
 
+    /// A schema by name.
     pub fn get(&self, name: &str) -> Option<&Schema> {
         self.schemas.get(name)
     }
 
+    /// Holds no schema?
     pub fn is_empty(&self) -> bool {
         self.schemas.is_empty()
     }
@@ -375,6 +393,7 @@ impl KindSchema {
         &self.sources
     }
 
+    /// A kind by name.
     pub fn kind(&self, name: &str) -> Option<&KindSpec> {
         self.kinds.get(name)
     }
@@ -384,6 +403,7 @@ impl KindSchema {
         self.declared.iter().any(|d| d == name)
     }
 
+    /// Every kind with its spec, by name.
     pub fn kinds(&self) -> impl Iterator<Item = (&String, &KindSpec)> {
         self.kinds.iter()
     }

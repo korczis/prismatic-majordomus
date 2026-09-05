@@ -24,6 +24,15 @@ pub struct CapabilityId(String);
 
 impl CapabilityId {
     /// Parse and validate.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityId;
+    /// let id = CapabilityId::parse("rule.majordomus.scope-integrity@1").unwrap();
+    /// assert_eq!(id.namespace(), "rule");
+    /// assert!(CapabilityId::parse("Repository.info").is_err(), "namespace is lowercase");
+    /// assert!(CapabilityId::parse("repository").is_err(), "a dot is required");
+    /// assert!(CapabilityId::parse("document.docs/Příručka.md").is_ok(), "the local part is opaque");
+    /// ```
     pub fn parse(text: &str) -> Result<Self, String> {
         let bytes = text.as_bytes();
         if bytes.is_empty() {
@@ -52,6 +61,7 @@ impl CapabilityId {
         CapabilityId(text.to_string())
     }
 
+    /// The id as text.
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -89,14 +99,20 @@ pub enum CapabilityKind {
 )]
 #[serde(rename_all = "snake_case")]
 pub enum Stability {
+    /// Implemented, and no behavioural test names it yet.
     Implemented,
+    /// Implemented and proved by a behavioural test.
     BehaviorallyVerified,
+    /// Implemented, executable, and expected to change.
     Experimental,
+    /// Specified and not implemented: listed, never executable.
     Planned,
+    /// Considered and refused: listed with the reason, never executable.
     Unsupported,
 }
 
 impl Stability {
+    /// May this capability be exposed as executable through any projection?
     pub fn executable(self) -> bool {
         matches!(
             self,
@@ -111,15 +127,23 @@ impl Stability {
 #[schemars(rename = "CapabilityProvenance")]
 pub enum Provenance {
     /// Written in Rust, in the named module of this executable.
-    Builtin { module: String },
+    /// Written in Rust, composed in `builtin.rs`.
+    Builtin {
+        /// The Rust module the descriptor was composed in.
+        module: String,
+    },
     /// Read from the repository's layer.
     Declarative {
         /// Repository-relative path.
         path: String,
+        /// The directory the path sits in, repository-relative; `.` for the root.
         directory: String,
+        /// The `sources.yaml` class that discovered the file.
         source_class: String,
         #[serde(skip_serializing_if = "Option::is_none")]
+        /// The manifest section the path falls under, when it falls under one.
         section: Option<String>,
+        /// IANA media type of the object's content.
         media_type: String,
         /// For one member of a collection file, its key path in the file (`claims.3`).
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -144,7 +168,9 @@ impl fmt::Display for Provenance {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// An MCP resource: its URI and the short name a client lists.
 pub struct McpResource {
+    /// `majordomus://<kind>/<identity>`, or `majordomus://repository`.
     pub uri: String,
     /// The short name a client lists; the identity for a declarative object.
     pub name: String,
@@ -165,18 +191,29 @@ pub struct McpExposure {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "UPPERCASE")]
+/// The HTTP methods a capability may be bound to.
 pub enum HttpMethod {
+    /// Read-only; the input is bound from the query string.
     Get,
+    /// The input is bound from the JSON body. No builtin uses it yet.
     Post,
 }
 
 impl HttpMethod {
+    /// The method as it appears on the wire.
     pub fn as_str(self) -> &'static str {
         match self {
             HttpMethod::Get => "GET",
             HttpMethod::Post => "POST",
         }
     }
+    /// The method for a wire name; `None` for one this projection does not serve.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::HttpMethod;
+    /// assert_eq!(HttpMethod::parse("GET"), Some(HttpMethod::Get));
+    /// assert_eq!(HttpMethod::parse("DELETE"), None);
+    /// ```
     pub fn parse(text: &str) -> Option<Self> {
         match text {
             "GET" => Some(HttpMethod::Get),
@@ -191,7 +228,9 @@ impl HttpMethod {
 /// and live under [`HttpExposure::PREFIX`].
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct HttpExposure {
+    /// The method.
     pub method: HttpMethod,
+    /// The absolute path, under [`HttpExposure::PREFIX`].
     pub path: String,
 }
 
@@ -199,6 +238,15 @@ impl HttpExposure {
     /// Every capability route starts here; the version is part of the contract.
     pub const PREFIX: &'static str = "/api/v1/";
 
+    /// Is the path one this projection can serve? The reason when it is not.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{HttpExposure, HttpMethod};
+    /// let ok = HttpExposure { method: HttpMethod::Get, path: "/api/v1/objects".into() };
+    /// assert!(ok.validate().is_ok());
+    /// let bad = HttpExposure { method: HttpMethod::Get, path: "/objects".into() };
+    /// assert!(bad.validate().unwrap_err().contains("/api/v1/"));
+    /// ```
     pub fn validate(&self) -> Result<(), String> {
         let p = &self.path;
         if !p.starts_with(Self::PREFIX) {
@@ -224,6 +272,7 @@ impl HttpExposure {
 /// How a capability appears on the command line: the words after `majordomus`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CliExposure {
+    /// The words after `majordomus`, e.g. `["capabilities", "list"]`.
     pub path: Vec<String>,
 }
 
@@ -232,14 +281,18 @@ pub struct CliExposure {
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
 pub struct Exposure {
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The MCP projection, when declared.
     pub mcp: Option<McpExposure>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The HTTP projection, when declared.
     pub http: Option<HttpExposure>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The command-line projection, when declared.
     pub cli: Option<CliExposure>,
 }
 
 impl Exposure {
+    /// Exposed nowhere?
     pub fn is_empty(&self) -> bool {
         self.mcp.is_none() && self.http.is_none() && self.cli.is_none()
     }
@@ -248,16 +301,26 @@ impl Exposure {
 /// The canonical descriptor. Everything a projection may say about a capability is here.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Capability {
+    /// The canonical identity.
     pub id: CapabilityId,
+    /// Query or resource.
     pub kind: CapabilityKind,
+    /// The short name every projection shows.
     pub title: String,
+    /// The one-paragraph description every projection shows.
     pub description: String,
+    /// The canonical schema of the input; an empty object for a resource.
     pub input: CanonicalSchema,
+    /// The canonical schema of the output; the object view for a resource.
     pub output: CanonicalSchema,
+    /// Where it came from.
     pub provenance: Provenance,
+    /// Where it is projected; absence is explicit.
     pub exposure: Exposure,
+    /// Where it stands.
     pub stability: Stability,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// Free tags, from the declarative object's `tags` or the descriptor.
     pub tags: Vec<String>,
 }
 

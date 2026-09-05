@@ -14,11 +14,17 @@ use crate::error::{Error, Result};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "state", rename_all = "lowercase")]
 pub enum GitState {
+    /// `git` answered; the facts follow.
     Available(GitInfo),
-    Unavailable { reason: String },
+    /// `git` could not be asked, or the root is not a work tree; the reason says which.
+    Unavailable {
+        /// What `git` said, or why it could not be run.
+        reason: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// What `git` said about the repository.
 pub struct GitInfo {
     /// Absolute path of the work tree top level.
     pub toplevel: PathBuf,

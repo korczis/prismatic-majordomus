@@ -19,12 +19,15 @@ AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\n\
 The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus \
 in the same repository; this executable does not implement those commands."
 )]
+/// The command line: one of the commands below.
 pub struct Cli {
     #[command(subcommand)]
+    /// The command to run.
     pub command: Command,
 }
 
 #[derive(Debug, Subcommand)]
+/// The commands. A command listed here is implemented; nothing is advertised ahead of its behaviour.
 pub enum Command {
     /// Serve the repository's AI layer to an MCP client over stdio (read-only)
     Mcp(McpArgs),
@@ -41,7 +44,9 @@ pub enum Command {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
 pub enum OutputFormat {
     #[default]
+    /// Lines for a person.
     Text,
+    /// One JSON document, deterministic.
     Json,
 }
 
@@ -60,6 +65,7 @@ pub enum DiscoveryMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
 pub enum Transport {
     #[default]
+    /// One JSON-RPC frame per line on stdin and stdout.
     Stdio,
 }
 
@@ -85,8 +91,10 @@ pub struct RepoArgs {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus mcp`.
 pub struct McpArgs {
     #[command(flatten)]
+    /// Where and how the repository is read.
     pub repo: RepoArgs,
 
     /// Print what would be served, and every diagnostic, then exit without serving
@@ -106,8 +114,10 @@ pub struct McpArgs {
 pub const DEFAULT_PORT: u16 = 8741;
 
 #[derive(Debug, Args)]
+/// `majordomus serve`.
 pub struct ServeArgs {
     #[command(flatten)]
+    /// Where and how the repository is read.
     pub repo: RepoArgs,
 
     /// Interface to bind; loopback unless you say otherwise
@@ -120,11 +130,14 @@ pub struct ServeArgs {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus capabilities`.
 pub struct CapabilitiesArgs {
     #[command(flatten)]
+    /// Where and how the repository is read.
     pub repo: RepoArgs,
 
     #[command(subcommand)]
+    /// Which introspection.
     pub command: CapabilitiesCommand,
 }
 
@@ -132,11 +145,14 @@ pub struct CapabilitiesArgs {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
 pub enum SchemaSide {
     #[default]
+    /// The schema of the input.
     Input,
+    /// The schema of the output.
     Output,
 }
 
 #[derive(Debug, Subcommand)]
+/// The introspection commands; `list` and `describe` dispatch through the registry's CLI exposure.
 pub enum CapabilitiesCommand {
     /// Every capability, one line each, with its projections
     List {
@@ -147,18 +163,23 @@ pub enum CapabilitiesCommand {
         #[arg(long)]
         exposure: Option<String>,
         #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        /// Output shape.
         format: OutputFormat,
     },
     /// One capability by canonical id: schemas, provenance, every projection
     Describe {
+        /// The canonical id.
         id: String,
         #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        /// Output shape.
         format: OutputFormat,
     },
     /// The canonical input or output JSON Schema of one capability
     Schema {
+        /// The canonical id.
         id: String,
         #[arg(long, value_enum, default_value_t = SchemaSide::Input)]
+        /// Input or output.
         side: SchemaSide,
     },
     /// Build the registry and every projection; exit 10 with every violation named
@@ -166,18 +187,24 @@ pub enum CapabilitiesCommand {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
+/// What `generate` writes.
 pub enum GenerateTarget {
     #[default]
+    /// Every target.
     All,
+    /// `docs/generated/openapi.json`.
     Openapi,
+    /// `docs/generated/capabilities.md`.
     Docs,
     /// The shell tool's allow-lists under share/allow, derived from the schemas
     Allow,
 }
 
 #[derive(Debug, Args)]
+/// `majordomus generate`.
 pub struct GenerateArgs {
     #[command(flatten)]
+    /// Where and how the repository is read.
     pub repo: RepoArgs,
 
     /// What to generate

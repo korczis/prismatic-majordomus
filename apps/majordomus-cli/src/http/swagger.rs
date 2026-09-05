@@ -11,6 +11,7 @@ pub const SWAGGER_UI_VERSION: &str = "5.17.14";
 /// The path the page loads the specification from.
 pub const SPEC_PATH: &str = "/openapi.json";
 
+/// The Swagger UI page.
 pub fn page() -> String {
     format!(
         r##"<!doctype html>

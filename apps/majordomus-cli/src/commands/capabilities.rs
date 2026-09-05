@@ -10,6 +10,7 @@ use crate::capability::{CapabilityError, CapabilityKind};
 use crate::cli::{CapabilitiesArgs, CapabilitiesCommand, OutputFormat, SchemaSide};
 use crate::error::{Error, Result};
 
+/// Run `majordomus capabilities`.
 pub fn run(args: CapabilitiesArgs) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let ctx = &app.context;

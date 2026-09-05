@@ -28,7 +28,9 @@ pub const GLOB_PREFIX: &str = ":(glob)";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
+/// How a class enumerates its files; `vcs` is the only discovery the contract knows.
 pub enum DiscoveryKind {
+    /// Through the version-control index: tracked files only.
     Vcs,
 }
 
@@ -36,17 +38,25 @@ pub enum DiscoveryKind {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceClass {
+    /// The class, unique; also the order sources are reported in.
     pub id: String,
+    /// The kind every source in this class produces.
     pub kind: String,
+    /// How the files are enumerated.
     pub discovery: DiscoveryKind,
+    /// One `:(glob)` pathspec, relative to the repository root.
     pub pathspec: String,
+    /// Must a repository with this layer have at least one file of this class?
     pub required: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+/// `sources.yaml`, typed: the classes in declared order.
 pub struct Sources {
+    /// The format version; only [`SOURCES_VERSION`] is read.
     pub version: u64,
+    /// The classes, in the order they are reported.
     pub sources: Vec<SourceClass>,
 }
 
@@ -64,6 +74,16 @@ impl Sources {
         Self::parse(&path, &text)
     }
 
+    /// Parse and validate the text of a `sources.yaml`.
+    ///
+    /// ```
+    /// use majordomus_cli::discovery::Sources;
+    /// use std::path::Path;
+    /// let text = "version: 1\nsources:\n  - id: rule\n    kind: rule\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/rules/**/*.md'\n    required: true\n";
+    /// let sources = Sources::parse(Path::new("sources.yaml"), text).unwrap();
+    /// assert_eq!(sources.sources[0].kind, "rule");
+    /// assert!(Sources::parse(Path::new("s"), &text.replace("version: 1", "version: 2")).is_err());
+    /// ```
     pub fn parse(path: &Path, text: &str) -> Result<Self> {
         let sources: Sources =
             crate::metadata::yaml::parse_into(text).map_err(|reason| Error::InvalidSources {
@@ -101,7 +121,9 @@ impl Sources {
 /// A file discovered through a class, before it is read.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiscoveredFile {
+    /// The class that discovered the file.
     pub class: String,
+    /// The kind the class declares.
     pub kind: String,
     /// Repository-relative, forward slashes.
     pub rel_path: String,

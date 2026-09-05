@@ -21,6 +21,24 @@ pub struct CanonicalSchema {
 
 impl CanonicalSchema {
     /// The schema of a Rust type.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CanonicalSchema;
+    /// use schemars::JsonSchema;
+    ///
+    /// /// The thing.
+    /// #[derive(JsonSchema)]
+    /// struct Thing {
+    ///     /// A name.
+    ///     name: String,
+    ///     count: Option<u32>,
+    /// }
+    /// let s = CanonicalSchema::of::<Thing>();
+    /// assert_eq!(s.name.as_deref(), Some("Thing"));
+    /// let (props, required) = s.properties();
+    /// assert_eq!(props.iter().map(|(k, _)| k.as_str()).collect::<Vec<_>>(), ["name", "count"]);
+    /// assert_eq!(required, ["name"]);
+    /// ```
     pub fn of<T: JsonSchema>() -> Self {
         let mut schema = schemars::schema_for!(T).to_value();
         let name = schema
@@ -145,6 +163,14 @@ fn rewrite_refs(v: &mut Value) {
 
 /// Convert a query-string value to the JSON type a property schema names: integers and
 /// booleans are parsed, everything else stays a string.
+///
+/// ```
+/// use majordomus_cli::capability::schema::coerce;
+/// use serde_json::json;
+/// assert_eq!(coerce(&json!({ "type": "integer" }), "7").unwrap(), json!(7));
+/// assert_eq!(coerce(&json!({ "type": "string" }), "7").unwrap(), json!("7"));
+/// assert!(coerce(&json!({ "type": "boolean" }), "yes").is_err());
+/// ```
 pub fn coerce(property: &Value, raw: &str) -> Result<Value, String> {
     let ty = property.get("type");
     let types: Vec<&str> = match ty {
