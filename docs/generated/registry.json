@@ -1194,7 +1194,7 @@
       "module": "objects",
       "kind": "query",
       "title": "Get one object",
-      "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content.",
+      "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content; a URI a query projects (majordomus://repository) answers that query as a JSON document. The same resolution serves the MCP resource read.",
       "input": {
         "name": "GetInput",
         "schema": {
@@ -1203,7 +1203,7 @@
           "properties": {
             "uri": {
               "type": "string",
-              "description": "`majordomus://<kind>/<identity>`."
+              "description": "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`)."
             }
           },
           "required": [
@@ -1214,68 +1214,40 @@
         }
       },
       "output": {
-        "name": "ObjectView",
+        "name": "ResourceView",
         "schema": {
-          "type": "object",
-          "properties": {
-            "uri": {
-              "type": "string",
-              "description": "`majordomus://<kind>/<identity>`."
-            },
-            "id": {
-              "type": "string",
-              "description": "The capability id, `<kind>.<identity>`."
-            },
-            "kind": {
-              "type": "string",
-              "description": "The kind the object was read as (`rule`, `prompt`, `document`, ...)."
-            },
-            "identity": {
-              "type": "string",
-              "description": "The identity within the kind (`majordomus.scope-integrity@1`, `continue`, a path)."
-            },
-            "title": {
-              "type": [
-                "string",
-                "null"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ObjectView",
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "const": "declarative"
+                }
+              },
+              "required": [
+                "source"
               ],
-              "description": "The title the kind's title rule found, when it found one."
+              "description": "A file of the layer, read as it is."
             },
-            "description": {
-              "type": [
-                "string",
-                "null"
+            {
+              "$ref": "#/$defs/AnswerView",
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "const": "builtin"
+                }
+              },
+              "required": [
+                "source"
               ],
-              "description": "The one-line description the kind's description field held, when it held one."
-            },
-            "metadata": {
-              "description": "The parsed front matter or YAML, keys in the file's order."
-            },
-            "provenance": {
-              "$ref": "#/$defs/ObjectProvenance",
-              "description": "Where the object came from: path, directory, source class, section, size, member."
-            },
-            "media_type": {
-              "type": "string",
-              "description": "IANA media type of `content` (`text/markdown`, `application/yaml`, `application/json`, `text/plain`)."
-            },
-            "content": {
-              "type": "string",
-              "description": "The file as read."
+              "description": "A query with a resource exposure, executed and rendered as a JSON document."
             }
-          },
-          "required": [
-            "uri",
-            "id",
-            "kind",
-            "identity",
-            "metadata",
-            "provenance",
-            "media_type",
-            "content"
           ],
-          "description": "One declarative object of the repository's layer, as a client reads it.",
-          "title": "ObjectView",
+          "description": "The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a\ncapability's provenance is.",
+          "title": "ResourceView",
           "$defs": {
             "ObjectProvenance": {
               "type": "object",
@@ -1320,6 +1292,216 @@
                 "bytes"
               ],
               "description": "Where an object came from. Every field is computed from the repository, never authored."
+            },
+            "ObjectView": {
+              "type": "object",
+              "properties": {
+                "uri": {
+                  "type": "string",
+                  "description": "`majordomus://<kind>/<identity>`."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "The capability id, `<kind>.<identity>`."
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "The kind the object was read as (`rule`, `prompt`, `document`, ...)."
+                },
+                "identity": {
+                  "type": "string",
+                  "description": "The identity within the kind (`majordomus.scope-integrity@1`, `continue`, a path)."
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The title the kind's title rule found, when it found one."
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The one-line description the kind's description field held, when it held one."
+                },
+                "metadata": {
+                  "description": "The parsed front matter or YAML, keys in the file's order."
+                },
+                "provenance": {
+                  "$ref": "#/$defs/ObjectProvenance",
+                  "description": "Where the object came from: path, directory, source class, section, size, member."
+                },
+                "media_type": {
+                  "type": "string",
+                  "description": "IANA media type of `content` (`text/markdown`, `application/yaml`, `application/json`, `text/plain`)."
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The file as read."
+                }
+              },
+              "required": [
+                "uri",
+                "id",
+                "kind",
+                "identity",
+                "metadata",
+                "provenance",
+                "media_type",
+                "content"
+              ],
+              "description": "One declarative object of the repository's layer, as a client reads it."
+            },
+            "CapabilityKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "query",
+                  "description": "Executable and read-only: a typed handler, an input schema, an output schema."
+                },
+                {
+                  "type": "string",
+                  "const": "command",
+                  "description": "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only."
+                },
+                {
+                  "type": "string",
+                  "const": "resource",
+                  "description": "Declarative content the repository holds: read as it is, never executed."
+                }
+              ],
+              "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository."
+            },
+            "CapabilityProvenance": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "module": {
+                      "type": "string",
+                      "description": "The Rust module the descriptor was composed in."
+                    },
+                    "source": {
+                      "type": "string",
+                      "const": "builtin"
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "module"
+                  ],
+                  "description": "Written in Rust, in the named module of this executable.\nWritten in Rust, composed in `builtin.rs`."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "Repository-relative path."
+                    },
+                    "directory": {
+                      "type": "string",
+                      "description": "The directory the path sits in, repository-relative; `.` for the root."
+                    },
+                    "source_class": {
+                      "type": "string",
+                      "description": "The `sources.yaml` class that discovered the file."
+                    },
+                    "section": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The manifest section the path falls under, when it falls under one."
+                    },
+                    "media_type": {
+                      "type": "string",
+                      "description": "IANA media type of the object's content."
+                    },
+                    "member": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "For one member of a collection file, its key path in the file (`claims.3`)."
+                    },
+                    "source": {
+                      "type": "string",
+                      "const": "declarative"
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "path",
+                    "directory",
+                    "source_class",
+                    "media_type"
+                  ],
+                  "description": "Read from the repository's layer."
+                }
+              ],
+              "description": "Where a capability came from. Never an absolute path."
+            },
+            "AnswerView": {
+              "type": "object",
+              "properties": {
+                "uri": {
+                  "type": "string",
+                  "description": "The URI as given."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "The capability that answered (`repository.info`)."
+                },
+                "kind": {
+                  "$ref": "#/$defs/CapabilityKind",
+                  "description": "Its kind: `query`."
+                },
+                "identity": {
+                  "type": "string",
+                  "description": "The resource name a client lists (`repository`)."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The capability's title."
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The capability's description, when it has one."
+                },
+                "answer": {
+                  "description": "The answer, as the capability's output schema describes it (`capabilities.describe`\ncarries that schema)."
+                },
+                "provenance": {
+                  "$ref": "#/$defs/CapabilityProvenance",
+                  "description": "Where the capability comes from: the Rust module it is composed in."
+                },
+                "media_type": {
+                  "type": "string",
+                  "description": "`application/json`."
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The answer as text: byte for byte what `resources/read` returns for the URI."
+                }
+              },
+              "required": [
+                "uri",
+                "id",
+                "kind",
+                "identity",
+                "title",
+                "answer",
+                "provenance",
+                "media_type",
+                "content"
+              ],
+              "description": "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an [`ObjectView`] where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI."
             }
           }
         }
@@ -2594,7 +2776,6 @@
     "implementation",
     "issue",
     "milestone",
-    "policy",
     "profile",
     "prompt",
     "rule",

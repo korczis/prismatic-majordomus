@@ -9,7 +9,7 @@ Stability: behaviorally_verified. Capabilities: 3.
 
 ## `objects.get` — Get one object
 
-One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content.
+One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content; a URI a query projects (majordomus://repository) answers that query as a JSON document. The same resolution serves the MCP resource read.
 
 | | |
 |---|---|
@@ -24,9 +24,10 @@ One object by URI (majordomus://<kind>/<identity>): metadata, provenance and con
 
 | input | type | required | description |
 |---|---|---|---|
-| `uri` | string | yes | `majordomus://<kind>/<identity>`. |
+| `uri` | string | yes | `majordomus://<kind>/<identity>`, or a URI a query projects
+(`majordomus://repository`). |
 
-Output: `ObjectView`.
+Output: `ResourceView`.
 
 ## `objects.list` — List objects
 
