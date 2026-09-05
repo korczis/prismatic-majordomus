@@ -150,8 +150,10 @@ fn pretty_json(v: &Value) -> String {
 ///         root: "/tmp/doc".into(), layer_schema: "ai-repository/v1".into(),
 ///         sections: Default::default(), git: GitState::Unavailable { reason: "doc".into() },
 ///         discovery: "filesystem".into(), source_classes: vec![], kind_sources: vec![],
+///         scope_origin: majordomus_cli::scope::Origin::Distribution, scope_path: String::new(),
 ///     },
 ///     objects: vec![], diagnostics: vec![], state: State::Ok, fingerprint: String::new(),
+///     scoped: Default::default(),
 /// };
 /// let registry = CapabilityRegistry::builder().with_builtin(builtin::all()).with_index(&index).build().unwrap();
 /// let ctx = Context::new(Arc::new(index), Arc::new(registry));

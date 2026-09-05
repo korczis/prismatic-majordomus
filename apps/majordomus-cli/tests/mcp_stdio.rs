@@ -149,21 +149,18 @@ fn handshake_discovery_and_a_real_round_trip() {
         .iter()
         .map(|t| t["name"].as_str().unwrap())
         .collect();
-    // ordered by canonical id, one per capability with an MCP tool exposure
-    assert_eq!(
-        tools,
-        [
-            "majordomus_capability",
-            "majordomus_capabilities",
-            "majordomus_get",
-            "majordomus_list",
-            "majordomus_search",
-            "majordomus_announce",
-            "majordomus_peers",
-            "majordomus_perf",
-            "majordomus_repository"
-        ]
-    );
+    // ordered by canonical id, one per capability with an MCP tool exposure: the list is
+    // the registry's, never written here
+    let mut expected: Vec<(String, String)> = majordomus_cli::capability::builtin::all()
+        .into_iter()
+        .filter_map(|e| {
+            let tool = e.capability.exposure.mcp.as_ref()?.tool.clone()?;
+            Some((e.capability.id.as_str().to_string(), tool))
+        })
+        .collect();
+    expected.sort();
+    let expected: Vec<&str> = expected.iter().map(|(_, t)| t.as_str()).collect();
+    assert_eq!(tools, expected);
     let list_tool = &r[&5]["result"]["tools"][3];
     assert_eq!(list_tool["_meta"]["majordomus"]["id"], "objects.list");
     assert!(list_tool["inputSchema"]["properties"]["kind"].is_object());

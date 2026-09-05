@@ -1397,6 +1397,19 @@
       "source_route": "/docs/capabilities/",
       "command": null,
       "test_case": "92_openapi_reference"
+    },
+    {
+      "id": "scope-declared",
+      "claim": "What a worker reads of the repository is declared once in .ai/repo/scope.yaml, out wins over in, and the Rust executable discovers, indexes and serves nothing outside it",
+      "source": "docs/SCOPE.md",
+      "implementation": "apps/majordomus-cli/src/scope.rs",
+      "test": "test/cases/93_scope_policy.sh",
+      "status": "guaranteed",
+      "note": "The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared.",
+      "responsibility": "none",
+      "source_route": "/docs/scope/",
+      "command": null,
+      "test_case": "93_scope_policy"
     }
   ]
 }
