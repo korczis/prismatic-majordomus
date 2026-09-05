@@ -164,8 +164,8 @@
 </nav>
 <h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">Use cases</h1><p class="mt-3 max-w-3xl text-lg text-body">What people do with it: a task, the commands that answer it, and what you are left holding, each one proved against the tool. Every step is a real invocation, every rule and promise a real object, and every example below was executed to make this page.</p>
   <dl class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-    <div class="flex gap-1.5"><dt class="text-body-subtle">use cases</dt><dd class="font-mono text-heading">32</dd></div>
-    <div class="flex gap-1.5"><dt class="text-body-subtle">categories</dt><dd class="font-mono text-heading">10</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">guaranteed</dt><dd class="font-mono text-heading">30</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">verified</dt><dd class="font-mono text-heading">2</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">coverage</dt><dd class="font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/coverage/" class="text-fg-brand hover:underline">99 of 106 targets</a></dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">use cases</dt><dd class="font-mono text-heading">34</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">categories</dt><dd class="font-mono text-heading">10</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">guaranteed</dt><dd class="font-mono text-heading">32</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">verified</dt><dd class="font-mono text-heading">2</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">coverage</dt><dd class="font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/coverage/" class="text-fg-brand hover:underline">104 of 109 targets</a></dd></div>
   </dl>
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"><div x-data="{ q: '', app: 'all', actor: 'all', m: 'all' }">
@@ -215,10 +215,18 @@
     </section>
     <section class="mt-10" aria-labelledby="cat-continuity">
       <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="cat-continuity" class="text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/continuity/" class="hover:underline">Sessions and handover</a> <span class="font-mono text-sm text-body-subtle">8</span></h2>
+        <h2 id="cat-continuity" class="text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/continuity/" class="hover:underline">Sessions and handover</a> <span class="font-mono text-sm text-body-subtle">9</span></h2>
         <p class="text-sm text-body">Stopping and resuming work across sessions and workers from durable state, never a transcript.</p>
       </div>
       <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list">
+        <li x-show="(app === 'all' || 'long-running-work'.includes(app)) && (actor === 'all' || 'maintainer agent'.includes(actor)) && (m === 'all' || m === 'guaranteed') && ('capture-the-prompts-that-started-the-work keep the prompts that started the work, below the model rather than around it capture majordomus.prompt-capture'.includes(q.toLowerCase()))">
+          <a href="https://korczis.github.io/prismatic-majordomus/use-cases/capture-the-prompts-that-started-the-work/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="font-mono text-xs text-body-subtle">basic</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Keep the prompts that started the work, below the model rather than around it</h3>
+            <p class="text-sm leading-relaxed text-body">Wire the provider hook, prove it by running a payload through it, and see that a prompt the tool could not parse is reported rather than silently dropped.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">capture</span>
+          </a>
+        </li>
         <li x-show="(app === 'all' || 'long-running-work several-agents-one-repository'.includes(app)) && (actor === 'all' || 'agent reviewer'.includes(actor)) && (m === 'all' || m === 'guaranteed') && ('carry-a-blocker-across-a-handover hand work over with a question still open, and keep it blocking handover start check question finish majordomus.handover-integrity majordomus.blocker-resolution majordomus.questions-store-integrity'.includes(q.toLowerCase()))">
           <a href="https://korczis.github.io/prismatic-majordomus/use-cases/carry-a-blocker-across-a-handover/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
             <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="font-mono text-xs text-body-subtle">intermediate</span></div>
@@ -402,7 +410,7 @@
     </section>
     <section class="mt-10" aria-labelledby="cat-knowledge">
       <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="cat-knowledge" class="text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/knowledge/" class="hover:underline">Repository knowledge</a> <span class="font-mono text-sm text-body-subtle">4</span></h2>
+        <h2 id="cat-knowledge" class="text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/knowledge/" class="hover:underline">Repository knowledge</a> <span class="font-mono text-sm text-body-subtle">5</span></h2>
         <p class="text-sm text-body">What the repository declares about itself: sources, nodes, edges, the plan, and searching them.</p>
       </div>
       <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list">
@@ -428,6 +436,14 @@
             <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Read back what happened, and keep the ledger within its cap</h3>
             <p class="text-sm leading-relaxed text-body">Read the append-only ledger as operational history, filtered by task and event, validate every line, and rotate the oldest lines into an archive rather than deleting them.</p>
             <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">history · search · watch</span>
+          </a>
+        </li>
+        <li x-show="(app === 'all' || 'long-running-work'.includes(app)) && (actor === 'all' || 'maintainer agent'.includes(actor)) && (m === 'all' || m === 'guaranteed') && ('record-a-decision-before-it-is-forgotten record a decision as data, and prove the tool cannot accept it for you adr majordomus.adr-integrity'.includes(q.toLowerCase()))">
+          <a href="https://korczis.github.io/prismatic-majordomus/use-cases/record-a-decision-before-it-is-forgotten/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="font-mono text-xs text-body-subtle">basic</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Record a decision as data, and prove the tool cannot accept it for you</h3>
+            <p class="text-sm leading-relaxed text-body">Read the decisions a repository holds, validate the whole set in one command, and watch the tool refuse to write the one status only a person may write.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">adr</span>
           </a>
         </li>
         <li x-show="(app === 'all' || 'repository-with-authored-governance repository-opened-in-ai-clients'.includes(app)) && (actor === 'all' || 'maintainer reviewer'.includes(actor)) && (m === 'all' || m === 'guaranteed') && ('trace-a-change-to-the-context-it-affects trace a change to the context documents it affects context doctor majordomus.context-integrity majordomus.ai-layout-integrity'.includes(q.toLowerCase()))">
@@ -530,7 +546,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eba8bdbdaccffeee2f6da875de16be16de570775" class="font-mono hover:underline">eba8bdb</a> · inputs <span class="font-mono">4556c4ca0b01</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/de48006e3653dd84019b413021c289c7b629806f" class="font-mono hover:underline">de48006</a> · inputs <span class="font-mono">1443d9744612</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

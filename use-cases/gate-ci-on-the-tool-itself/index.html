@@ -223,10 +223,11 @@ OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, cl
 OK   context     .ai/ — 9 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
 OK   policy      .ai/repo/policy.yaml — parsed, version 1
 OK   profiles    4 files — parsed; default &#39;implementation&#39; exists
+INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   command     surface — 26 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
-OK   doctrine    34 doctrines — validator, dispatch, propagation, test and CI resolve for every one
+OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
+OK   doctrine    35 doctrines — validator, dispatch, propagation, test and CI resolve for every one
 OK   wiring      doctor-on-commit — wired via .githooks/pre-commit
 OK   wiring      finish-on-push — wired via .githooks/pre-push
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
@@ -248,10 +249,10 @@ OK   retention   handovers — 0 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))
-OK   rules       44 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
+OK   rules       45 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
 INFO skill       .ai/repo/skills/ — no skills; nothing to validate
-INFO use-case    26 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
-OK   use-case    0 of 26 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
 INFO env         - — bash &lt;version&gt;, git &lt;version&gt;, jq &lt;version&gt;, shellcheck present
 ·    budget      doctor — &lt;timed against the policy budget&gt;
 doctor: 0 failure(s)</code></pre>
@@ -271,9 +272,10 @@ OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no
 OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions
 OK   context     .ai/ — 9 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
 OK   policy      policy+profiles — match the last update (&lt;hash12&gt;)
+INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   command     surface — 26 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
+OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
 OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
@@ -290,7 +292,7 @@ OK   retention   handovers — 0 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))
-OK   rules       44 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
+OK   rules       45 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
 INFO scope       - — no active task
 INFO skill       .ai/repo/skills/ — no skills; nothing to validate
 INFO state       - — no active task
@@ -311,6 +313,7 @@ majordomus.bootstrap-integrity         blocking  mj_validate_bootstrap    doctor
 majordomus.catalogue-integrity         blocking  mj_validate_catalogue    doctor,watch
 majordomus.context-integrity           blocking  mj_validate_context      doctor,watch
 majordomus.policy-integrity            blocking  mj_validate_policy       doctor,watch
+majordomus.adr-integrity               blocking  mj_validate_adr          doctor,watch
 majordomus.blocker-resolution          blocking  mj_validate_blockers     check,finish
 majordomus.decision-records            advisory  mj_validate_decisions    check,doctor,watch
 majordomus.dag-integrity               blocking  mj_validate_dag          doctor,watch
@@ -411,7 +414,7 @@ wired       yes (lib/doctor.sh defines it)</code></pre>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eba8bdbdaccffeee2f6da875de16be16de570775" class="font-mono hover:underline">eba8bdb</a> · inputs <span class="font-mono">4556c4ca0b01</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/de48006e3653dd84019b413021c289c7b629806f" class="font-mono hover:underline">de48006</a> · inputs <span class="font-mono">1443d9744612</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

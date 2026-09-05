@@ -166,8 +166,8 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
   <dl class="grid max-w-3xl grid-cols-1 gap-4 border-b border-default pb-8 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">34</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">30</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">35</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">31</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">advisory</dt><dd class="mt-1 text-2xl font-semibold text-heading">4</dd></div>
   </dl>
   <p class="mt-4 max-w-3xl text-sm text-body">Counted from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/share/standard/majordomus/" class="text-fg-brand hover:underline">the rule package</a> when this page was built. Every doctrine below resolves to a validator function, a command that dispatches it, a test, and a CI job — or the build fails and this page is not published.</p><div class="mt-8" x-data="{ q: '', cls: 'all' }">
@@ -244,6 +244,13 @@
           <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Policy integrity</h2>
           <p class="text-sm leading-relaxed text-body">The policy and every profile parse, declare version 1, and carry no key the schema does not define.</p>
           <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_policy</span>
+        </a>
+      </li><li x-show="(cls === 'all' || cls === 'blocking') && ('majordomus.adr-integrity architecture decision integrity adr doctor watch'.includes(q.toLowerCase()))">
+        <a href="https://korczis.github.io/prismatic-majordomus/doctrines/adr-integrity/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <div class="mb-2 flex items-start justify-between gap-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">blocking</span><span class="font-mono text-xs text-body-subtle">doctor · watch</span></div>
+          <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Architecture decision integrity</h2>
+          <p class="text-sm leading-relaxed text-body">Every architecture decision the repository holds parses against the decision contract, claims an identity nothing else claims, and every relation and reference it makes resolves.</p>
+          <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_adr</span>
         </a>
       </li><li x-show="(cls === 'all' || cls === 'blocking') && ('majordomus.blocker-resolution blocker resolution blockers check finish'.includes(q.toLowerCase()))">
         <a href="https://korczis.github.io/prismatic-majordomus/doctrines/blocker-resolution/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
@@ -444,7 +451,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eba8bdbdaccffeee2f6da875de16be16de570775" class="font-mono hover:underline">eba8bdb</a> · inputs <span class="font-mono">4556c4ca0b01</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/de48006e3653dd84019b413021c289c7b629806f" class="font-mono hover:underline">de48006</a> · inputs <span class="font-mono">1443d9744612</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

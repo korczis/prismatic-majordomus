@@ -217,6 +217,7 @@ majordomus.bootstrap-integrity         blocking  mj_validate_bootstrap    doctor
 majordomus.catalogue-integrity         blocking  mj_validate_catalogue    doctor,watch
 majordomus.context-integrity           blocking  mj_validate_context      doctor,watch
 majordomus.policy-integrity            blocking  mj_validate_policy       doctor,watch
+majordomus.adr-integrity               blocking  mj_validate_adr          doctor,watch
 majordomus.blocker-resolution          blocking  mj_validate_blockers     check,finish
 majordomus.decision-records            advisory  mj_validate_decisions    check,doctor,watch
 majordomus.dag-integrity               blocking  mj_validate_dag          doctor,watch
@@ -261,10 +262,11 @@ OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, cl
 OK   context     .ai/ — 9 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
 OK   policy      .ai/repo/policy.yaml — parsed, version 1
 OK   profiles    4 files — parsed; default &#39;implementation&#39; exists
+INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   command     surface — 26 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
-OK   doctrine    34 doctrines — validator, dispatch, propagation, test and CI resolve for every one
+OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
+OK   doctrine    35 doctrines — validator, dispatch, propagation, test and CI resolve for every one
 FAIL wiring      doctor-on-commit — hook .git/hooks/pre-commit does not exist  [reproduce: ls -l .git/hooks/pre-commit]
 FAIL wiring      finish-on-push — hook .git/hooks/pre-push does not exist  [reproduce: ls -l .git/hooks/pre-push]
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
@@ -286,10 +288,10 @@ OK   retention   handovers — 0 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))
-OK   rules       44 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
+OK   rules       45 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
 INFO skill       .ai/repo/skills/ — no skills; nothing to validate
-INFO use-case    26 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
-OK   use-case    0 of 26 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
 INFO env         - — bash &lt;version&gt;, git &lt;version&gt;, jq &lt;version&gt;, shellcheck present
 ·    budget      doctor — &lt;timed against the policy budget&gt;
 doctor: 2 failure(s)</code></pre>
@@ -298,8 +300,8 @@ doctor: 2 failure(s)</code></pre>
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span class="font-mono text-xs text-body-subtle">3</span>
           <a href="https://korczis.github.io/prismatic-majordomus/commands/doctrine/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus doctrine status</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the resolved rule set as the tool applies it</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>declared doctrines:   34
-blocking:             30
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the resolved rule set as the tool applies it</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>declared doctrines:   35
+blocking:             31
 advisory:             4
 missing validators:   0
 without a test file:  0
@@ -363,7 +365,7 @@ wiring is verified by: majordomus doctor</code></pre>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eba8bdbdaccffeee2f6da875de16be16de570775" class="font-mono hover:underline">eba8bdb</a> · inputs <span class="font-mono">4556c4ca0b01</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/de48006e3653dd84019b413021c289c7b629806f" class="font-mono hover:underline">de48006</a> · inputs <span class="font-mono">1443d9744612</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

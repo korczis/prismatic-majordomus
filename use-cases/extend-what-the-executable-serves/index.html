@@ -215,6 +215,7 @@ profile     shared      profile    6bfce3aed3da  .ai/repo/profiles/deep-work.yam
 profile     shared      profile    0a1d30700587  .ai/repo/profiles/implementation.yaml
 profile     shared      profile    920cf57bf2c6  .ai/repo/profiles/routine.yaml
 rule        shared      rule       653b383d09e2  .ai/repo/rules/README.md
+rule        shared      rule       a8ecc1553615  .ai/repo/rules/vendor/majordomus/rules/adr-integrity.v1.md
 rule        shared      rule       1c35b4925c67  .ai/repo/rules/vendor/majordomus/rules/ai-layout-integrity.v1.md
 rule        shared      rule       6b737b2767d6  .ai/repo/rules/vendor/majordomus/rules/blocker-resolution.v1.md
 rule        shared      rule       6cba4af62112  .ai/repo/rules/vendor/majordomus/rules/bootstrap-integrity.v1.md
@@ -276,7 +277,7 @@ readme      shared      document   5b11f2037bb5  CLAUDE.md
 readme      shared      document   1d3c2948afc5  GEMINI.md
 decisions   operational decision   0885fc07773e  .ai/local/state/decisions.md
 questions   operational question   ebeb154be99d  .ai/local/state/open-questions.md
-knowledge sources: 68 file(s) in scope all</code></pre>
+knowledge sources: 69 file(s) in scope all</code></pre>
         <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^policy +shared +policy/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^knowledge sources: [0-9]+ file/</li></ul>
       </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -308,10 +309,11 @@ OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, cl
 OK   context     .ai/ — 9 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
 OK   policy      .ai/repo/policy.yaml — parsed, version 1
 OK   profiles    4 files — parsed; default &#39;implementation&#39; exists
+INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   command     surface — 26 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
-OK   doctrine    34 doctrines — validator, dispatch, propagation, test and CI resolve for every one
+OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
+OK   doctrine    35 doctrines — validator, dispatch, propagation, test and CI resolve for every one
 OK   wiring      doctor-on-commit — wired via .githooks/pre-commit
 OK   wiring      finish-on-push — wired via .githooks/pre-push
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
@@ -333,10 +335,10 @@ OK   retention   handovers — 0 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))
-OK   rules       44 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
+OK   rules       45 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
 INFO skill       .ai/repo/skills/ — no skills; nothing to validate
-INFO use-case    26 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
-OK   use-case    0 of 26 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
 INFO env         - — bash &lt;version&gt;, git &lt;version&gt;, jq &lt;version&gt;, shellcheck present
 ·    budget      doctor — &lt;timed against the policy budget&gt;
 doctor: 0 failure(s)</code></pre>
@@ -398,7 +400,7 @@ doctor: 0 failure(s)</code></pre>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eba8bdbdaccffeee2f6da875de16be16de570775" class="font-mono hover:underline">eba8bdb</a> · inputs <span class="font-mono">4556c4ca0b01</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/de48006e3653dd84019b413021c289c7b629806f" class="font-mono hover:underline">de48006</a> · inputs <span class="font-mono">1443d9744612</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

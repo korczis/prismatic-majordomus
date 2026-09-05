@@ -1193,7 +1193,50 @@ where it is absent.</li>
 </ul>
 <p>The same model is projected to GitHub by <code>scripts/github-sync</code> and to the website by
 <code>scripts/generate-site-data</code>. Neither re-derives a status; both read this engine.</p>
-<h2 id="majordomus-usecase"><a class="zola-anchor" href="#majordomus-usecase" aria-label="Anchor link for: majordomus-usecase"><code>majordomus usecase</code></a></h2>
+<h2 id="majordomus-adr"><a class="zola-anchor" href="#majordomus-adr" aria-label="Anchor link for: majordomus-adr"><code>majordomus adr</code></a></h2>
+<p>The repository's architecture decisions as objects: what was decided, why, what it cost,
+and where the record came from. Under the layer's <code>adrs</code> section.</p>
+<p>A decision is a file <code>.ai/repo/adrs/&lt;NNNN&gt;-&lt;slug&gt;.md</code> — YAML front matter satisfying
+<code>share/schemas/adr.schema.json</code> over a body carrying <code># Context</code>, <code># Decision</code> and
+<code># Consequences</code>. Nothing registers it: the source class <code>adr</code> in
+<code>.ai/repo/knowledge/sources.yaml</code> discovers it over the tracked tree, which is the same
+declaration the Rust executable indexes. See <a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/"><code>SCHEMAS.md</code></a> for the contract.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>majordomus adr list [--status &lt;status&gt;] [--json]      every decision: id, status, date, title</span></span>
+<span class="giallo-l"><span>majordomus adr show &lt;id&gt; [--json]                     the path, then the file as written</span></span>
+<span class="giallo-l"><span>majordomus adr propose &quot;&lt;title&gt;&quot; [--from &lt;ref&gt;]...    write a new decision, status proposed</span></span>
+<span class="giallo-l"><span>                       [--tag &lt;tag&gt;]... [--supersedes &lt;id&gt;]</span></span>
+<span class="giallo-l"><span>majordomus adr check [--json]                         validate every decision and every reference</span></span></code></pre>
+<ul>
+<li><code>list</code> prints one line per discovered decision, invalid ones included; <code>--status</code>
+filters to one of <code>proposed</code>, <code>accepted</code>, <code>superseded</code>, <code>rejected</code>.</li>
+<li><code>show</code> prints the repository-relative path on the first line and the file below it. An
+id that is not a decision exits <code>12</code> and names <code>adr list</code>.</li>
+<li><code>propose</code> writes <code>status: proposed</code> and nothing else. <strong>There is no way to write
+<code>accepted</code></strong>: <code>--status</code> exits <code>15</code> naming the reason, because a tool that can write
+<code>accepted</code> turns its own inference into repository truth and a later reader cannot tell
+which decisions a person actually made. The identity is allocated under a lock over the
+section directory, so two worktrees proposing at the same moment get two identities.
+A <code>--from</code> reference is <code>&lt;type&gt;:&lt;value&gt;</code> with the type one of <code>decision</code>, <code>session</code>,
+<code>commit</code>, <code>issue</code>, <code>file</code>, <code>test</code>; a <code>file:</code> or <code>test:</code> path that does not exist exits
+<code>2</code>. Referenced evidence makes the record <code>provenance.origin: extracted</code>, and an
+extracted record with no evidence is refused as an assertion. <code>--supersedes</code> writes both
+halves of the relation, so the chain is walkable from either end.</li>
+<li><code>check</code> validates every record against the allow-list generated from the schema (no
+unknown key), <code>schema: adr/v1</code>, the closed status set, an <code>id</code> whose number equals the
+file-name prefix, the required body sections; and across the set: duplicate identities,
+a <code>superseded</code> record with no <code>superseded_by</code>, one-sided supersession, and a reference
+that resolves to nothing. It exits <code>10</code> on any failure.</li>
+</ul>
+<p><code>doctor</code> and <code>watch</code> run the same examination through the doctrine
+<code>majordomus.adr-integrity</code>.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus adr propose &quot;The registry is the one canonical declaration&quot; --from file:docs/CAPABILITIES.md</span></span>
+<span class="giallo-l"><span>proposed: adr-0011  The registry is the one canonical declaration</span></span>
+<span class="giallo-l"><span>.ai/repo/adrs/0011-the-registry-is-the-one-canonical-declaration.md</span></span>
+<span class="giallo-l"><span>status is &quot;proposed&quot;; accepting it is a person editing that field.</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>$ majordomus adr check</span></span>
+<span class="giallo-l"><span>examined 11 decision(s) in .ai/repo/adrs/</span></span>
+<span class="giallo-l"><span>every identity unique, every status known, every reference resolves</span></span></code></pre><h2 id="majordomus-usecase"><a class="zola-anchor" href="#majordomus-usecase" aria-label="Anchor link for: majordomus-usecase"><code>majordomus usecase</code></a></h2>
 <p>The executable use cases of the repository: the Markdown objects under the manifest's
 <code>use-cases</code> section, each a task somebody performs with the tool, the commands, rules,
 claims, responsibilities and applications it names, and a scenario that proves it against
@@ -1333,7 +1376,7 @@ are inert until the first <code>start</code>.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eba8bdbdaccffeee2f6da875de16be16de570775" class="font-mono hover:underline">eba8bdb</a> · inputs <span class="font-mono">4556c4ca0b01</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/de48006e3653dd84019b413021c289c7b629806f" class="font-mono hover:underline">de48006</a> · inputs <span class="font-mono">1443d9744612</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
