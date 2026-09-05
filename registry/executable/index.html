@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Rust executable — Prismatic Majordomus</title>
+<meta name="description" content="The Rust executable of Majordomus.">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/registry/executable/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="The Rust executable — Prismatic Majordomus">
+<meta property="og:description" content="The Rust executable of Majordomus.">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/registry/executable/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading text-fg-brand">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-fg-brand" aria-current="page">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="font-medium text-body hover:text-fg-brand">Registry</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">The Rust executable</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">The Rust executable</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">The Rust executable of Majordomus.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">The executable</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/README.md" class="font-mono hover:underline">apps/majordomus-cli/README.md</a> — the same Markdown GitHub shows. The command line, the capabilities, the MCP and HTTP surfaces and the benchmarks are not written there: they are generated from the registry, and their pages are the row of links above.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p>The Rust executable of Majordomus. It builds a binary named <code>majordomus</code> that reads the
+repository's provider-neutral AI layer under <code>.ai/</code>, composes one capability registry from
+its own executable capabilities and the layer's objects, and serves that registry through
+several interfaces, all read-only: MCP over stdio (<code>mcp</code>), which also starts, or attaches
+to, the repository's one shared server (HTTP with an OpenAPI document, a Swagger UI shell
+and MCP over HTTP on the loopback interface, the same server <code>serve</code> runs alone),
+introspection on the command line (<code>capabilities</code>), and generated reference files
+(<code>generate</code>). Every client attached to the shared server is a peer the others can see.</p>
+<p>It is not a second implementation of the shell tool: <code>init</code>, <code>start</code>, <code>check</code>, <code>finish</code>,
+<code>doctor</code>, <code>update</code> and the task lifecycle live in <code>bin/majordomus</code> at the repository root,
+and this executable advertises only the commands it implements. The architecture is
+<a href="https://korczis.github.io/prismatic-majordomus/docs/capabilities/"><code>docs/CAPABILITIES.md</code></a>; the MCP surface as a client sees it
+is <a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/"><code>docs/MCP.md</code></a>; the decisions are ADR 1, ADR 2 and ADR 3 under
+<code>.ai/repo/adrs/</code>.</p>
+<h2 id="what-belongs-here-and-what-does-not"><a class="zola-anchor" href="#what-belongs-here-and-what-does-not" aria-label="Anchor link for: what-belongs-here-and-what-does-not">What belongs here, and what does not</a></h2>
+<p>Belongs: reading the layer as the repository declares it, validating what it reads against
+the schemas of the distribution and the repository, composing the registry, projecting it,
+and saying precisely what could not be read. Every capability is read-only and every start
+leaves the repository byte-identical.</p>
+<p>Does not belong: any mutation of the repository, the task lifecycle, projections of the
+policy into provider files, hooks, a daemon, authentication, a database, model invocation,
+or anything Prismatic. The binary depends on no service and no other repository; it needs
+the tool distribution's <code>share/</code> directory at run time and <code>git</code> for the default discovery.</p>
+<h2 id="build-run-test"><a class="zola-anchor" href="#build-run-test" aria-label="Anchor link for: build-run-test">Build, run, test</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> build</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-manifest-path</span><span class="z-l-8 z-d-8"> apps/majordomus-cli/Cargo.toml</span></span>
+<span class="giallo-l"><span>B</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">a</span><span class="z-l-8 z-d-8">p</span><span class="z-l-8 z-d-8">p</span><span class="z-l-8 z-d-8">s</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">m</span><span class="z-l-8 z-d-8">a</span><span class="z-l-8 z-d-8">j</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">d</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">m</span><span class="z-l-8 z-d-8">u</span><span class="z-l-8 z-d-8">s</span><span class="z-l-8 z-d-8">-</span><span class="z-l-8 z-d-8">c</span><span class="z-l-8 z-d-8">l</span><span class="z-l-8 z-d-8">i</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">a</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">g</span><span class="z-l-8 z-d-8">e</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">d</span><span class="z-l-8 z-d-8">e</span><span class="z-l-8 z-d-8">b</span><span class="z-l-8 z-d-8">u</span><span class="z-l-8 z-d-8">g</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">m</span><span class="z-l-8 z-d-8">a</span><span class="z-l-8 z-d-8">j</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">d</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">m</span><span class="z-l-8 z-d-8">u</span><span class="z-l-8 z-d-8">s</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> --help</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> --version</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> mcp --inspect</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what would be served, every diagnostic; exit 10 when degraded</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> mcp</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> MCP on stdio until the client goes; the first one in a repository is the shared server (Swagger UI at the URL it logs), every later one attaches</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> mcp --standalone</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> this client alone: no port, no lease, no peers</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> serve</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the shared server alone: 127.0.0.1:8741, /openapi.json, /docs, /mcp, /api/v1/...; exits 0 when one already runs</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">bin/majordomus-mcp</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> builds $B when needed, then `mcp`: what .mcp.json, .gemini/settings.json and .codex/config.toml name</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">just</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the recipes a person runs, routed to $B wherever it can serve them</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> capabilities list</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every capability with its projections</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> capabilities describe objects.get</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> capabilities schema objects.search --side input</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> capabilities validate</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the registry&#39;s invariants, every projection and the benchmark coverage; exit 10 with the list</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> generate</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> docs/generated/ (openapi.json, capabilities.md, modules/*.md, benchmarks.md, registry.json) and share/allow/*.txt</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> generate --check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> exit 10 naming every stale file; writes nothing</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> bench coverage</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every required benchmark target and whether it is covered; the denominator is the registry&#39;s</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> bench --profile quick</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> time every operation: directly, over MCP (a real child), over HTTP (a real socket); slowest first</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> bench objects.search --transport mcp --profile full --format json</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> bench --check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> against this platform&#39;s baseline under .ai/repo/benchmarks/rust/, under policy.yaml</span></span>
+<span class="giallo-l"><span>$</span><span>B</span><span> bench baseline update</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> record this platform&#39;s baseline (a tracked, reviewable file); refuses a dirty tree</span></span></code></pre>
+<p>Rust 1.85 or newer, <code>git</code> on <code>PATH</code> for the default discovery, and a share directory
+(below). From <code>apps/majordomus-cli/</code>:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> fmt</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-check</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> clippy</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-all-targets</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-all-features</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">D</span><span class="z-l-8 z-d-8"> warnings</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> missing_docs is an error here</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> test</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> unit, integration, doctests</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> doc</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-no-deps</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> RUSTDOCFLAGS=&quot;-D warnings&quot; in CI</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> bench</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> criterion, benches/{projections,shared,scaling}.rs</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> llvm-cov</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-all-targets</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-summary-only</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> coverage; CI enforces the threshold in scripts/rust-check</span></span></code></pre>
+<p><code>scripts/rust-check</code> at the repository root (<code>just rust-check</code>) runs all of it in the order
+CI does; the coverage floor is the one integer in <code>scripts/rust-coverage-threshold</code>, read
+by CI, by the script and by <code>just coverage</code>. The tests build a disposable repository each
+and never read this checkout; <code>test/cases/72_rust_mcp.sh</code>, <code>76_capabilities_projections.sh</code>
+and <code>90_mcp_shared_server.sh</code> at the repository root run the built binary against a
+repository the shell tool's own <code>init</code> wrote, which is the cross-check that the two
+executables read the same layer, and <code>77_rust_evidence.sh</code> proves the gates above are
+wired the same way in the script, the workflow and the justfile (rule
+<code>project.rust-cli-evidence</code>, claims <code>rust-evidence-gates</code>, <code>rust-coverage-floor</code>,
+<code>rust-hot-path-benchmarks</code>).</p>
+<p>The binary shares its name with the shell tool on purpose. Put one or the other on <code>PATH</code>,
+or call this one by path. An MCP client is configured once, at the repository root, and
+this repository ships those files: <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.mcp.json"><code>.mcp.json</code></a> for Claude Code,
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.gemini/settings.json"><code>.gemini/settings.json</code></a> for Gemini CLI and
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.codex/config.toml"><code>.codex/config.toml</code></a> for Codex all start
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/bin/majordomus-mcp"><code>bin/majordomus-mcp</code></a>, which builds this crate when the
+executable is missing or older than its sources, sets <code>MAJORDOMUS_SHARE</code>, and <code>exec</code>s
+<code>majordomus mcp</code>. To name the executable directly:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="json"><span class="giallo-l"><span>{</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">mcpServers</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">majordomus</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">command</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">/path/to/apps/majordomus-cli/target/debug/majordomus</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">args</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">mcp</span><span class="z-l-8 z-d-8">&quot;</span><span>]</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">env</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">MAJORDOMUS_SHARE</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">/path/to/prismatic-majordomus/share</span><span class="z-l-8 z-d-8">&quot;</span><span> }</span><span> }</span><span> }</span><span> }</span></span></code></pre><h2 id="the-share-directory-kinds-and-schemas-at-run-time"><a class="zola-anchor" href="#the-share-directory-kinds-and-schemas-at-run-time" aria-label="Anchor link for: the-share-directory-kinds-and-schemas-at-run-time">The share directory: kinds and schemas at run time</a></h2>
+<p>Nothing about kinds or keys is compiled in. On every start the executable locates a share
+directory and reads <code>kinds.yaml</code> and <code>schemas/&lt;name&gt;.schema.json</code> from it, in this order:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>source</th><th>when</th></tr></thead><tbody>
+<tr><td><code>--share &lt;DIR&gt;</code></td><td>always wins; a directory without <code>kinds.yaml</code> is an error</td></tr>
+<tr><td><code>MAJORDOMUS_SHARE</code></td><td>same</td></tr>
+<tr><td><code>&lt;repository root&gt;/share</code></td><td>when it holds <code>kinds.yaml</code>: this repository supervising itself</td></tr>
+<tr><td><code>&lt;directory of the executable&gt;/../share</code></td><td>an installation laid out as <code>bin/</code> beside <code>share/</code></td></tr>
+</tbody></table>
+</div>
+<p>None found: exit 12, every directory tried named. A repository adds kinds under
+<code>.ai/repo/knowledge/kinds.yaml</code> and schemas under <code>.ai/repo/knowledge/schemas/</code>; a name the
+distribution already declares is an error naming both files.</p>
+<h2 id="command-reference"><a class="zola-anchor" href="#command-reference" aria-label="Anchor link for: command-reference">Command reference</a></h2>
+<p>The command line is declared once, in <code>src/cli.rs</code> (clap). Its reference is generated from
+that declaration and never written by hand: <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.md"><code>docs/generated/cli.md</code></a>
+for a reader on GitHub, the website's <a rel="external" href="https://korczis.github.io/prismatic-majordomus/registry/cli/">command line page</a>
+for everyone else, and <code>majordomus --help</code> at a terminal. <code>majordomus generate</code> writes the
+file and <code>majordomus generate --check</code> refuses a stale one in CI. Every command starts from
+the same options (<code>--repo</code>, <code>--discovery</code>, <code>--strict</code>, <code>--share</code>); the reference lists them
+on each command that accepts them.</p>
+<h3 id="exit-codes"><a class="zola-anchor" href="#exit-codes" aria-label="Anchor link for: exit-codes">Exit codes</a></h3>
+<p>The same contract as <code>docs/CLI.md</code>:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>code</th><th>meaning</th><th>examples</th></tr></thead><tbody>
+<tr><td><code>0</code></td><td>ok</td><td>served until EOF; <code>--inspect</code> or <code>validate</code> with nothing wrong</td></tr>
+<tr><td><code>2</code></td><td>usage</td><td>unknown command or option (clap)</td></tr>
+<tr><td><code>10</code></td><td>contract unmet</td><td>manifest, <code>sources.yaml</code>, kinds or a schema invalid; the registry does not build; <code>--strict</code> with errors; <code>--inspect</code> with errors; stale artifacts under <code>--check</code></td></tr>
+<tr><td><code>12</code></td><td>missing artifact</td><td>no <code>.ai/manifest.yaml</code> in any ancestor; the pre-<code>.ai</code> layout; no share directory; an unknown capability id</td></tr>
+<tr><td><code>13</code></td><td>internal</td><td>I/O failure, <code>git</code> unusable under <code>--discovery vcs</code>, a port that cannot be bound, transport failure</td></tr>
+</tbody></table>
+</div>
+<h3 id="side-effect-table"><a class="zola-anchor" href="#side-effect-table" aria-label="Anchor link for: side-effect-table">Side-effect table</a></h3>
+<div class="overflow-x-auto">
+<table><thead><tr><th>command</th><th>filesystem mutation</th><th>git mutation</th><th>network</th><th>stdout</th></tr></thead><tbody>
+<tr><td><code>--help</code>, <code>--version</code>, <code>capabilities …</code>, <code>mcp --inspect</code>, <code>generate --check</code>, <code>bench coverage</code></td><td>no</td><td>no</td><td>no</td><td>text or JSON</td></tr>
+<tr><td><code>bench</code></td><td><code>.ai/local/benchmarks/&lt;run&gt;.json</code> (the local half, not tracked) unless <code>--no-write</code>; <code>baseline update</code> writes <code>.ai/repo/benchmarks/rust/baseline.&lt;platform&gt;.json</code></td><td>no</td><td>a loopback socket and a <code>majordomus mcp</code> child of its own</td><td>text or JSON</td></tr>
+<tr><td><code>mcp</code></td><td>the lease under <code>.ai/local/state/mcp/</code> (not tracked), removed on exit; none with <code>--standalone</code></td><td>no</td><td>listens on loopback (the server) or connects to it (a bridge); the browser fetches Swagger UI assets</td><td>MCP protocol</td></tr>
+<tr><td><code>serve</code></td><td>the lease, as above</td><td>no</td><td>listens on loopback; the browser fetches Swagger UI assets</td><td>HTTP on the socket, nothing on stdout</td></tr>
+<tr><td><code>generate</code> (without <code>--check</code>)</td><td>writes <code>docs/generated/</code> and <code>share/allow/</code></td><td>no</td><td>no</td><td>the paths written</td></tr>
+</tbody></table>
+</div>
+<p><code>tests/mcp_stdio.rs::serving_mutates_nothing</code>,
+<code>tests/http_serve.rs::serving_from_a_nested_directory_finds_the_same_root_and_writes_nothing</code>
+and <code>test/cases/90_mcp_shared_server.sh</code> compare <code>git status</code> and every tracked blob before
+and after a session; <code>tests/mcp_shared.rs</code> checks that the lease is gone after the server.</p>
+<h2 id="architecture"><a class="zola-anchor" href="#architecture" aria-label="Anchor link for: architecture">Architecture</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>main.rs               parse, init stderr logging, run, map the error to an exit code</span></span>
+<span class="giallo-l"><span>cli.rs                clap declarations; RepoArgs shared by every command</span></span>
+<span class="giallo-l"><span>app.rs                the one composition point: repository -&gt; share -&gt; kinds and schemas -&gt; index -&gt; registry</span></span>
+<span class="giallo-l"><span>commands/             mcp, serve, capabilities, generate, bench: each a function from its arguments to an exit code;</span></span>
+<span class="giallo-l"><span>                      mcp holds the session that is answered locally (this process is the server) or bridged</span></span>
+<span class="giallo-l"><span>perf.rs               the process-wide counters and phase timings behind perf.counters and the structural tests</span></span>
+<span class="giallo-l"><span>bench/                projection.rs (targets from the registry), coverage.rs, runner.rs (direct, HTTP, MCP),</span></span>
+<span class="giallo-l"><span>                      stats.rs, results.rs (the versioned document), baseline.rs (per-platform baseline, the policy), system.rs</span></span>
+<span class="giallo-l"><span>synthetic.rs          a generated repository of any size, for the property tests and the scaling benchmarks</span></span>
+<span class="giallo-l"><span>lease.rs              one shared server per repository: the lease file, the election, the stale-lease takeover</span></span>
+<span class="giallo-l"><span>shared.rs             the shared server: bind, publish the URL, serve until the last peer leaves, release</span></span>
+<span class="giallo-l"><span>peers.rs              the peer board: sessions named by their clients, announcements, in memory only</span></span>
+<span class="giallo-l"><span>repository.rs         root discovery (nearest .ai/manifest.yaml), the typed manifest</span></span>
+<span class="giallo-l"><span>share.rs              locating the distribution&#39;s share directory; reading its schemas</span></span>
+<span class="giallo-l"><span>discovery/            sources.yaml, the DiscoverySource trait, its two implementations, :(glob) matching</span></span>
+<span class="giallo-l"><span>metadata/             kinds.yaml, the schema set (jsonschema), the YAML subset, front matter</span></span>
+<span class="giallo-l"><span>index.rs              read every discovered file into an Object or a Diagnostic; dedupe; sort</span></span>
+<span class="giallo-l"><span>model.rs              Object, Provenance, Diagnostic, Severity: the domain of the layer, no I/O</span></span>
+<span class="giallo-l"><span>capability/           the canonical model: model.rs (descriptor, kinds, cache and benchmark policy), schema.rs</span></span>
+<span class="giallo-l"><span>                      (canonical schemas and their MCP and OpenAPI projections), handler.rs (typed handlers, Context,</span></span>
+<span class="giallo-l"><span>                      the capability! macro), module.rs (module! and compose_modules!), benchmark.rs (BenchmarkCases),</span></span>
+<span class="giallo-l"><span>                      executor.rs (the one execution path and the cache), registry.rs (the registry, its modules and</span></span>
+<span class="giallo-l"><span>                      invariants, the fingerprint), builtin/&lt;module&gt;.rs (the executables, one file per module;</span></span>
+<span class="giallo-l"><span>                      mod.rs composes the application), declarative.rs</span></span>
+<span class="giallo-l"><span>mcp/                  surface.rs (the registry as resources and tools), protocol.rs (JSON-RPC and MCP), stdio.rs,</span></span>
+<span class="giallo-l"><span>                      bridge.rs (a stdio session forwarded to another process&#39;s shared server; its own HTTP client)</span></span>
+<span class="giallo-l"><span>http/                 router.rs (routes and binding from the registry), openapi.rs, swagger.rs, server.rs (tiny_http,</span></span>
+<span class="giallo-l"><span>                      a few worker threads), mcp.rs (MCP over HTTP at /mcp: sessions, expiry)</span></span>
+<span class="giallo-l"><span>generate.rs           the one generator pipeline and the allow-list derivation</span></span>
+<span class="giallo-l"><span>git/                  read-only git: toplevel, head, branch, dirty state, ls-files</span></span>
+<span class="giallo-l"><span>logging.rs, error.rs  tracing to stderr; the typed errors and their exit codes</span></span></code></pre>
+<p>Dependencies flow inward: <code>commands</code> knows clap and everything below; <code>mcp</code> and <code>http</code>
+know the registry and nothing about clap or files; <code>capability</code> knows the index's model;
+<code>index</code>, <code>discovery</code>, <code>metadata</code>, <code>repository</code>, <code>share</code> and <code>git</code> know the model and the
+errors; <code>model</code> knows nothing. No MCP library and no HTTP framework: the read-only subset
+of MCP is eight methods in one file, a handful of loopback routes need a few synchronous
+worker threads over one immutable registry, not an async runtime, and a bridge's request is
+thirty lines over <code>TcpStream</code>. The one trait, <code>DiscoverySource</code>, exists because two
+enumerations ship. Dependencies: <code>clap</code>, <code>serde</code>, <code>serde_json</code>, <code>schemars</code>, <code>jsonschema</code>,
+<code>tiny_http</code>, <code>thiserror</code>, <code>tracing</code>, <code>tracing-subscriber</code>; dev: <code>tempfile</code>, <code>criterion</code>.</p>
+<h2 id="repository-discovery"><a class="zola-anchor" href="#repository-discovery" aria-label="Anchor link for: repository-discovery">Repository discovery</a></h2>
+<p>Walk from the start directory upward. The first ancestor carrying <code>.ai/manifest.yaml</code> is
+the root. A manifest that does not parse, carries a key nothing reads, or declares a schema
+other than <code>ai-repository/v1</code> stops the search with that error: a nearer broken layer is
+never skipped for a farther working one. <code>.git</code> is not a marker, so an ordinary git
+repository is not a Majordomus repository. <code>.majordomus/</code> is not a marker either: with
+<code>bin/majordomus</code> inside it is an installation of the tool and ignored; without one it is
+the pre-<code>.ai</code> layout and refused by name, pointing at <code>majordomus migrate</code>.</p>
+<h2 id="data-driven-model"><a class="zola-anchor" href="#data-driven-model" aria-label="Anchor link for: data-driven-model">Data-driven model</a></h2>
+<p>Nothing in the Rust code names a repository file except the two bootstrap conventions the
+layer itself documents, <code>.ai/manifest.yaml</code> and <code>sources.yaml</code> under the manifest's
+<code>knowledge</code> section, and the file names of the distribution (<code>kinds.yaml</code>,
+<code>schemas/*.schema.json</code>). Everything else is read from data at run time:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>decides</th><th>read from</th><th>owner</th></tr></thead><tbody>
+<tr><td>where the layer is</td><td><code>.ai/manifest.yaml</code> exists</td><td>repository</td></tr>
+<tr><td>which sections exist</td><td><code>sections:</code> in the manifest</td><td>repository</td></tr>
+<tr><td>which file names must carry the context contract</td><td><code>context.documents:</code> in the manifest</td><td>repository</td></tr>
+<tr><td>which files carry which kind</td><td><code>.ai/repo/knowledge/sources.yaml</code></td><td>repository</td></tr>
+<tr><td>how a kind is read</td><td><code>share/kinds.yaml</code>, plus <code>.ai/repo/knowledge/kinds.yaml</code></td><td>distribution, repository</td></tr>
+<tr><td>which keys and values a kind may carry</td><td><code>share/schemas/&lt;kind&gt;.schema.json</code>, plus <code>.ai/repo/knowledge/schemas/</code></td><td>distribution, repository</td></tr>
+</tbody></table>
+</div>
+<p>The YAML reader implements the layer's documented subset (<code>docs/SCHEMAS.md</code>), not general
+YAML, so this executable and the shell tool accept the same files and refuse the same ones
+(one deliberate divergence: this reader trims trailing whitespace before testing quotes;
+the shell keeps the quotes and refuses such a prompt downstream). Failure policy, decided
+once in <code>index.rs</code>: the manifest, <code>sources.yaml</code>, the kinds files and the schemas are
+errors, because without them nothing can be discovered; every other file that cannot
+become an object is excluded with an error diagnostic naming its path and code, and the
+index is <code>degraded</code>. A degraded index still serves; <code>--strict</code> refuses it.</p>
+<p>Diagnostic codes: <code>malformed_front_matter</code>, <code>missing_front_matter</code>, <code>malformed_yaml</code>,
+<code>unknown_key</code>, <code>schema_violation</code>, <code>kind_mismatch</code>, <code>unsupported_version</code>,
+<code>missing_field</code>, <code>missing_context_contract</code>, <code>duplicate_identity</code>, <code>unknown_kind</code>,
+<code>required_source_empty</code>, <code>claimed_twice</code> (warning), <code>invalid_utf8</code>, <code>oversized</code>,
+<code>symlink</code>, <code>not_a_file</code>, <code>unreadable</code>.</p>
+<h2 id="security-boundaries"><a class="zola-anchor" href="#security-boundaries" aria-label="Anchor link for: security-boundaries">Security boundaries</a></h2>
+<p>Repository content is untrusted input: symlinks are never followed or read; a file over
+4 MiB or a front matter over 64 KiB is refused; invalid UTF-8 is refused; only paths the
+declared pathspecs match are read, and only from the repository root; <code>resources/read</code> and
+<code>objects.get</code> answer from the in-memory index and the registry (one resolution of a URI,
+shared by both; <code>majordomus://repository</code> executes <code>repository.info</code>), never from a path a
+client names; the HTTP
+server binds loopback by default, reads at most 1 MiB of body, and trusts no header beyond
+the session id it issued itself, which names a session and grants nothing (every session
+sees the same read-only registry). The lease is trusted only after the server it names has
+answered for this root; a peer's announcement is text other peers read, never a path the
+server opens. Not
+defended against: a hostile <code>sources.yaml</code> naming a huge tree (the walk is bounded by the
+repository, not by a budget), and memory, since every object's content is held for the
+session.</p>
+<h2 id="stability"><a class="zola-anchor" href="#stability" aria-label="Anchor link for: stability">Stability</a></h2>
+<div class="overflow-x-auto">
+<table><thead><tr><th></th><th>status</th></tr></thead><tbody>
+<tr><td><code>--help</code>, <code>--version</code>, <code>mcp --help</code>, exit codes, the new commands' help and codes</td><td>behaviourally verified (<code>tests/cli.rs</code>)</td></tr>
+<tr><td>root discovery, nearest-wins, legacy refusal, <code>--repo</code></td><td>behaviourally verified (<code>tests/repository_discovery.rs</code>)</td></tr>
+<tr><td>the kind schema, run-time schemas, every diagnostic code, repository-defined kinds</td><td>behaviourally verified (<code>tests/metadata_contract.rs</code>, <code>tests/external_extension.rs</code>)</td></tr>
+<tr><td>determinism across enumerations, provenance, classification</td><td>behaviourally verified (<code>tests/index_behavior.rs</code>)</td></tr>
+<tr><td>MCP: handshake, listing, reads, tools, errors, clean EOF, protocol-only stdout, no mutation</td><td>behaviourally verified (<code>tests/mcp_stdio.rs</code>)</td></tr>
+<tr><td>the registry's invariants; every projection present and none orphan; a change reaches every projection</td><td>behaviourally verified (<code>tests/registry.rs</code>, <code>tests/projections.rs</code>)</td></tr>
+<tr><td>HTTP over a socket, OpenAPI, Swagger shell, typed errors, HEAD, <code>/dev/null</code> stdin, MCP/HTTP parity</td><td>behaviourally verified (<code>tests/http_serve.rs</code>)</td></tr>
+<tr><td>one shared server per repository: lease, bridge, <code>/mcp</code> sessions, peers, fallback port, <code>serve</code> deferring, <code>--standalone</code>, takeover, re-attachment, refusal</td><td>behaviourally verified (<code>tests/mcp_shared.rs</code>, <code>tests/shared_units.rs</code>, <code>test/cases/90_mcp_shared_server.sh</code>)</td></tr>
+<tr><td>modules compose capabilities, the root composes modules; the module, cache and benchmark invariants</td><td>behaviourally verified (<code>tests/registry.rs</code>, <code>test/cases/91_canonical_architecture.sh</code>)</td></tr>
+<tr><td>one executor; cache equivalence off/cold/warm, no handler on a hit, errors and commands never cached, the bound, the fingerprint; key order irrelevant</td><td>behaviourally verified (<code>tests/executor.rs</code>, <code>tests/properties.rs</code> with proptest)</td></tr>
+<tr><td>no request rebuilds canonical state; OpenAPI built once; listings prepared once</td><td>behaviourally verified (<code>tests/hot_path.rs</code>, <code>test/cases/91_canonical_architecture.sh</code>)</td></tr>
+<tr><td>every operation a benchmark target with a generated denominator; exposure and policy propagation; direct, HTTP and MCP runners over real transports; the baseline check</td><td>behaviourally verified (<code>tests/bench.rs</code>, <code>tests/bench_units.rs</code>, <code>test/cases/91_canonical_architecture.sh</code>)</td></tr>
+<tr><td>generated reference per module, benchmark matrix, registry manifest: deterministic, reconciled</td><td>behaviourally verified (<code>tests/projections.rs</code>)</td></tr>
+<tr><td><code>generate</code>, byte-identical regeneration, <code>--check</code></td><td>behaviourally verified (<code>tests/generate_check.rs</code>)</td></tr>
+<tr><td>the layer <code>init</code> writes, served with state <code>ok</code>; one capability through every interface</td><td>behaviourally verified (<code>test/cases/72_rust_mcp.sh</code>, <code>76_capabilities_projections.sh</code>)</td></tr>
+<tr><td>CLI names, URIs, tool names, routes, diagnostic codes, <code>kinds.yaml</code>, the schema files</td><td>implemented; pre-1.0, changes are documented, never silent</td></tr>
+<tr><td><code>--discovery filesystem</code></td><td>implemented; a convenience outside the layer's contract</td></tr>
+</tbody></table>
+</div>
+<p>Deferred, deliberately: MCP prompts (prompt assets render <code>{{CONTEXT}}</code> from local state
+the shell tool owns), mutation of the repository over any interface, subscriptions and
+list-change notifications, a server-initiated stream on <code>/mcp</code>, path parameters,
+<code>/openapi.yaml</code>, Swagger UI assets offline, hot reload (a shared server keeps the index it
+built at start until its last client leaves), the <code>.ai/local/</code> half as served content, a
+content hash per object, and persistent coordination (the peer board is one process's
+memory; the task record and scope of the shell tool are the durable form).</p>
+</article><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Claims implemented in the executable</h2>
+<p class="mt-2 max-w-3xl text-sm text-body">Attached by the file that implements each claim; every one links to its page with the implementation and the test that proves it.</p>
+<ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/mcp-data-driven/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">mcp-data-driven</span></span><span class="text-sm text-heading">What the MCP server serves is decided by the manifest, the declared source classes and each file&#39;s front matter, so an object added to the layer is served with no change to the executable</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/72_rust_mcp.sh</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/mcp-degraded-not-silent/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">mcp-degraded-not-silent</span></span><span class="text-sm text-heading">A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/72_rust_mcp.sh</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/capability-registry/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">capability-registry</span></span><span class="text-sm text-heading">Every capability of the Rust executable is defined once, and the registry refuses a duplicate id or a colliding projection name, naming both parties</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/76_capabilities_projections.sh</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/schema-driven-kinds/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">schema-driven-kinds</span></span><span class="text-sm text-heading">How each declarative kind is read and which keys it may carry is data read at run time, and a repository adds a kind with its JSON Schema without a code change</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/76_capabilities_projections.sh</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/generated-projections-checked/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">generated-projections-checked</span></span><span class="text-sm text-heading">The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/76_capabilities_projections.sh</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/capability-modules/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">capability-modules</span></span><span class="text-sm text-heading">A capability of the Rust executable is declared once and composed into its module, the root composes modules, and the registry refuses a capability outside its module&#39;s namespace</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/91_canonical_architecture.sh</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/hot-path-no-rebuild/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">hot-path-no-rebuild</span></span><span class="text-sm text-heading">After startup, no MCP or HTTP request of the Rust executable scans the repository, builds the index or the registry, derives a schema or builds a projection, and perf.counters proves it</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/91_canonical_architecture.sh</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/execution-cache-equivalence/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">execution-cache-equivalence</span></span><span class="text-sm text-heading">A cached capability of the Rust executable answers the same value uncached, cold and warm, a hit runs no handler, errors and commands are never cached, and the key carries the registry fingerprint</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/91_canonical_architecture.sh</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/provider-projections-one-renderer/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">provider-projections-one-renderer</span></span><span class="text-sm text-heading">The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, GEMINI.md, ...) are a target of majordomus generate, rendered from the policy and the provider templates byte for byte as the shell tool renders them, and generate --check refuses a hand-edited or stale one in CI</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/93_rust_provider_projections.sh</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/site-registry-dataset/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">site-registry-dataset</span></span><span class="text-sm text-heading">The site&#39;s Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: apps/majordomus-cli/tests/projections.rs</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/scope-declared/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span> <span class="ms-1 break-all font-mono text-xs text-body-subtle">scope-declared</span></span><span class="text-sm text-heading">What a worker reads of the repository is declared once in .ai/repo/scope.yaml, out wins over in, and the Rust executable discovers, indexes and serves nothing outside it</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/93_scope_policy.sh</span></a></li></ul>
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">at a glance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">version</dt><dd class="font-mono text-heading">majordomus-cli 0.1.0</dd></div>
+        <div><dt class="text-body-subtle">capabilities</dt><dd class="text-heading">11 builtin in 5 modules, 556 declarative</dd></div>
+        <div><dt class="text-body-subtle">surfaces</dt><dd class="text-heading">11 MCP tools · 11 HTTP routes · 6 commands</dd></div>
+        <div><dt class="text-body-subtle">crate</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli" class="break-all font-mono text-fg-brand hover:underline">apps/majordomus-cli</a></dd></div>
+        <div><dt class="text-body-subtle">generated reference</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/docs/generated" class="break-all font-mono text-fg-brand hover:underline">docs/generated/</a></dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aec2cabea91a6d92b0e586a88d936d37bba43978" class="font-mono hover:underline">aec2cab</a> · inputs <span class="font-mono">f86a182bb7c9</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>
