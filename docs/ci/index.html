@@ -271,7 +271,7 @@ runner image. What a cache holds is never a source of truth: every gate reads th
 <tr><td><code>ci-plan</code></td><td><code>plan</code></td><td>the verdict, a person asking why</td><td>short</td></tr>
 <tr><td><code>majordomus-cli-&lt;target&gt;</code></td><td><code>rust</code></td><td>any later job or phase that needs the executable without building it: the debug binary and <code>majordomus-cli.json</code> (commit, target triple, rustc, <code>Cargo.lock</code> digest, profile)</td><td>short</td></tr>
 <tr><td><code>ci-metrics-&lt;job&gt;</code>, <code>ci-performance-metrics</code></td><td>every job, <code>ci</code></td><td>the timing rows of a run, gathered</td><td>longer</td></tr>
-<tr><td><code>github-pages</code></td><td><code>site</code> on master</td><td>the <code>pages</code> job</td><td>GitHub's</td></tr>
+<tr><td><code>site-public</code></td><td><code>site</code> on master</td><td>the <code>pages</code> job, which publishes it with <code>scripts/site-deploy --skip-build</code></td><td>short</td></tr>
 </tbody></table>
 </div>
 <h2 id="the-rust-executable-as-a-build-output"><a class="zola-anchor" href="#the-rust-executable-as-a-build-output" aria-label="Anchor link for: the-rust-executable-as-a-build-output">The Rust executable as a build output</a></h2>
@@ -286,9 +286,9 @@ that come after a run (a release, a scenario runner over the real binary). Relea
 belong to a release workflow; every gate here uses the debug profile, which is what the
 cases and the crate's own suites drive.</p>
 <h2 id="pages"><a class="zola-anchor" href="#pages" aria-label="Anchor link for: pages">Pages</a></h2>
-<p>On a push to master the <code>site</code> job uploads <code>site/public</code>, the bytes it built, checked and
-probed, as the Pages artifact, and the <code>pages</code> job deploys it once <code>structure</code>, <code>suite</code>,
-<code>rust</code> and <code>site</code> are green: the derived data current, the suite green, the registry
+<p>On a push to master the <code>site</code> job keeps <code>site/public</code>, the bytes it built, checked and
+probed, as the artifact <code>site-public</code>, and the <code>pages</code> job publishes it with
+<code>scripts/site-deploy --skip-build</code> once <code>structure</code>, <code>suite</code>, <code>rust</code> and <code>site</code> are green: the derived data current, the suite green, the registry
 projections current, the site checked and probed. That is what the old <code>pages.yml</code>
 required, obtained from one run instead of a second one. Coverage, macOS and the benchmark
 check gate merging (they are in <code>ci</code>), not publishing, exactly as before. Deployments queue
@@ -347,7 +347,7 @@ fixtures.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/31acaf90d47f0be33db413ce3539a118520106f2" class="font-mono hover:underline">31acaf9</a> · inputs <span class="font-mono">59a7aa60d3b2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a7db43652983e52169623925ea2dccc0d0c58620" class="font-mono hover:underline">a7db436</a> · inputs <span class="font-mono">f486180ec6a3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
