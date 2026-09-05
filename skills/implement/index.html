@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Implement a change — Prismatic Majordomus</title>
+<meta name="description" content="Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope.">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/skills/implement/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Implement a change — Prismatic Majordomus">
+<meta property="og:description" content="Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope.">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/skills/implement/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="font-medium text-body hover:text-fg-brand">Skills</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Implement a change</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Implement a change</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <div class="mb-6 flex flex-wrap items-center gap-2 text-sm">
+      <code class="font-mono text-heading">majordomus://skill/implement</code>
+      <span class="bg-neutral-primary-soft text-heading text-xs font-medium px-1.5 py-0.5 rounded font-mono">active</span>
+      <span class="font-mono text-xs text-body-subtle">version 1</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">implementation</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">evidence</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">invariants</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">drift</span>
+    </div>
+    <div class="mb-8 grid gap-4 sm:grid-cols-2">
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">the worker needs</h2>
+        <ul class="list-disc space-y-1 pl-5 text-sm text-body"><li>the requested change, in the requester&#39;s words, with any issue or specification it names</li><li>a checkout with git history and the effective context for every path the change will touch</li><li>the repository&#39;s verification, generation and drift-check commands</li></ul>
+      </div>
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">the procedure leaves</h2>
+        <ul class="list-disc space-y-1 pl-5 text-sm text-body"><li>the change, as coherent commits whose messages name what each proves</li><li>behavioural evidence that distinguishes the new behaviour from the old</li><li>regenerated projections and a clean drift check</li><li>an implementation record naming the invariant, the evidence, what was reconciled and what remains unsupported</li></ul>
+      </div>
+    </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto"><h2 id="purpose"><a class="zola-anchor" href="#purpose" aria-label="Anchor link for: purpose">Purpose</a></h2>
+<p>Make an engineering change the way this repository asks for one: establish what is true
+before touching anything, name the invariant the change keeps or repairs, decide what a
+caller will be able to observe, prove it from the outside, make the smallest correct
+change, and leave every derived surface reconciled. The order is the point. A worker that
+writes the mechanism first and finds the invariant afterwards ships whatever the
+mechanism happened to do.</p>
+<p>This is not a style guide, not a licence to refactor what is near the change, and not a
+task manager. It is the protocol between "please change X" and "X is changed, here is
+the evidence".</p>
+<h2 id="when-to-use"><a class="zola-anchor" href="#when-to-use" aria-label="Anchor link for: when-to-use">When to use</a></h2>
+<p>Any change to the tree that is more than a typo: a defect, a feature, a refactor, a
+performance change, a generated-data or catalogue addition, a migration, a provider
+adapter, a CI or tooling change. Before starting, run <code>repo-review</code> over the scope when
+the state of that part of the tree is not already known; the review's findings are the
+first input here.</p>
+<p>Not this skill: reviewing without changing (<code>repo-review</code>), or deciding whether the
+change should be made at all.</p>
+<h2 id="procedure"><a class="zola-anchor" href="#procedure" aria-label="Anchor link for: procedure">Procedure</a></h2>
+<p>Work through the phases in order; each one produces something the next one reads.
+Record the invariant, the observable behaviour and the evidence plan before writing the
+mechanism, in the checkpoint or handover of the task, so that the next worker (or the
+same one after an interruption) does not re-derive them.</p>
+<h3 id="1-establish-the-scope"><a class="zola-anchor" href="#1-establish-the-scope" aria-label="Anchor link for: 1-establish-the-scope">1. Establish the scope</a></h3>
+<p>State the requested outcome in one sentence, the explicit acceptance criteria, and the
+criteria the repository's rules add implicitly. Classify the change (defect, feature,
+refactor, performance, documentation, generated data, migration, provider integration,
+CI, architecture), and answer: does public behaviour change, do persistence or state
+semantics change, are generated projections affected, is a provider involved, does
+compatibility matter. Declare the paths the work may touch (<code>majordomus start --scope</code>)
+and do not widen them silently; if the request can be met without a new subsystem, meet
+it without one. If the requested behaviour already exists, verify it instead of building
+it again.</p>
+<h3 id="2-load-the-applicable-context"><a class="zola-anchor" href="#2-load-the-applicable-context" aria-label="Anchor link for: 2-load-the-applicable-context">2. Load the applicable context</a></h3>
+<p>Read what applies to the paths in scope and no more: the root instructions, the rules in
+force (<code>majordomus rules list</code>, noting which are machine-enforced), the scoped documents
+from the root down (<code>majordomus context resolve &lt;path&gt;</code>), the architecture decisions
+that touch the subsystem, the existing tests, the surrounding implementation, and the
+public documentation that makes claims about the behaviour.</p>
+<h3 id="3-inspect-before-mutating"><a class="zola-anchor" href="#3-inspect-before-mutating" aria-label="Anchor link for: 3-inspect-before-mutating">3. Inspect before mutating</a></h3>
+<p>Read the current implementation, its callers, its adjacent abstractions, its tests, its
+public interfaces, the generated consumers of its output, its configuration and its
+diagnostics. Read the history of the files where it changes a decision: why the
+abstraction exists, whether the code is transitional, whether an earlier fix addressed
+the same defect, whether a suspicious pattern is deliberate. Do not read history for
+ceremony; read it where it changes what you would do.</p>
+<h3 id="4-name-the-canonical-truth"><a class="zola-anchor" href="#4-name-the-canonical-truth" aria-label="Anchor link for: 4-name-the-canonical-truth">4. Name the canonical truth</a></h3>
+<p>For every artifact the change touches, say which it is: canonical, a generated
+projection, a cache, runtime state, persisted state, external state, documentation, or a
+test fixture. Find the source of every derived artifact before editing it, and never
+repair generated drift by editing the generated file. Two competing canonical sources
+are an architectural defect; repair the direction of derivation rather than reconciling
+the copies by hand.</p>
+<h3 id="5-state-the-invariant"><a class="zola-anchor" href="#5-state-the-invariant" aria-label="Anchor link for: 5-state-the-invariant">5. State the invariant</a></h3>
+<p>Write down, in one falsifiable sentence, the invariant the change introduces, preserves
+or repairs — "for every valid <code>&lt;x&gt;</code>, exactly one <code>&lt;y&gt;</code> exists and every projection is
+derived from it", "a mutation is reported successful only after its record is durable",
+not "make loading better". Where no invariant applies, state the observable behaviour
+instead. Do not invent an invariant for a trivial change.</p>
+<h3 id="6-define-the-observable-behaviour"><a class="zola-anchor" href="#6-define-the-observable-behaviour" aria-label="Anchor link for: 6-define-the-observable-behaviour">6. Define the observable behaviour</a></h3>
+<p>Before implementing, say what a user, a test, a command-line caller, an MCP client or a
+later reader of the records will observe: the happy path, the failure path, edge
+conditions, partial failure and restart where they apply, idempotency, invalid input, an
+absent dependency or provider capability, stale projections, exit status, and the
+machine-readable form. This list becomes the behavioural test. Implementation detail is
+not a substitute for it.</p>
+<h3 id="7-define-the-failure-semantics"><a class="zola-anchor" href="#7-define-the-failure-semantics" aria-label="Anchor link for: 7-define-the-failure-semantics">7. Define the failure semantics</a></h3>
+<p>For every operation that can fail, answer: what fails, at which boundary, what is left
+mutated, what is persisted, whether a retry is safe, whether the operation is idempotent,
+whether a partial result can be mistaken for success, whether the failure is typed and
+distinguishable, whether degraded behaviour is explicit and documented, and whether a
+stale state is detectable. Never leave a swallowed error, a silent fallback to weaker
+semantics, a pass that examined nothing, a success reported before durability, or a mock
+that proves a boundary it bypasses.</p>
+<h3 id="8-map-the-impact-surface"><a class="zola-anchor" href="#8-map-the-impact-surface" aria-label="Anchor link for: 8-map-the-impact-surface">8. Map the impact surface</a></h3>
+<p>List every surface the change may reach — canonical data and schema, implementation,
+command line, MCP, generated projections, documents, the site, diagnostics,
+configuration, CI, benchmarks, provider adapters, examples, decisions — and mark which
+ones it actually touches. Modify those and only those; the list exists so that no
+derived state is forgotten, not to manufacture work.</p>
+<h3 id="9-decide-the-evidence-before-the-mechanism"><a class="zola-anchor" href="#9-decide-the-evidence-before-the-mechanism" aria-label="Anchor link for: 9-decide-the-evidence-before-the-mechanism">9. Decide the evidence before the mechanism</a></h3>
+<p>Choose how the behaviour will be proved: black-box behavioural first, then integration,
+then contract, then focused unit tests. A defect is reproduced, or a regression test is
+written that would have failed before the fix. Property-based tests belong where the
+invariant ranges over many inputs (parsers, normalisation, deterministic generation,
+idempotency, path safety, reconciliation), not as decoration. Where the change is a
+performance claim, record the baseline, the workload and the metric first.</p>
+<h3 id="10-implement-the-smallest-correct-change"><a class="zola-anchor" href="#10-implement-the-smallest-correct-change" aria-label="Anchor link for: 10-implement-the-smallest-correct-change">10. Implement the smallest correct change</a></h3>
+<p>Reuse the abstraction that already matches the invariant; extend a data-driven
+mechanism rather than add a hard-coded branch; add no dependency without the exact
+problem it solves, the alternatives already in the tree, its footprint and its
+replacement cost written down; add no service, queue or store the request does not
+require; add no extension point for a need not yet demonstrated; remove a dead
+transitional path only when it is in scope and safe. Keep the tree provider-neutral: a
+provider-specific difference belongs in an adapter, and a capability a provider does not
+expose is represented as unavailable, never fabricated. Prior art may be consulted and
+never depended on: understand the requirement, name the invariant, drop the source's
+assumptions, design the interface this repository would have, implement independently.</p>
+<h3 id="11-verify-in-layers"><a class="zola-anchor" href="#11-verify-in-layers" aria-label="Anchor link for: 11-verify-in-layers">11. Verify in layers</a></h3>
+<p>After each coherent layer: format the touched code, run the focused tests, run the
+affected validation, read the failure messages, and continue only when the layer holds.
+Do not accumulate unrelated changes and discover at the end which one broke the parse.</p>
+<h3 id="12-reconcile-derived-state"><a class="zola-anchor" href="#12-reconcile-derived-state" aria-label="Anchor link for: 12-reconcile-derived-state">12. Reconcile derived state</a></h3>
+<p>After a canonical change, run the repository's generation and then its drift checks
+(<code>majordomus generate</code>, <code>scripts/generate-site-data</code>, then their <code>--check</code> forms and
+<code>majordomus doctor</code>), and commit the regenerated outputs with the change that caused
+them. Generation is deterministic, owns its output, and must never be replaced by a
+hand-synchronised copy.</p>
+<h3 id="13-update-the-diagnostics"><a class="zola-anchor" href="#13-update-the-diagnostics" aria-label="Anchor link for: 13-update-the-diagnostics">13. Update the diagnostics</a></h3>
+<p>Where the change adds or alters operational behaviour, give <code>doctor</code>, <code>check</code> or <code>watch</code>
+a finding for it that distinguishes configured, discovered, wired, reachable and
+reconciled as they apply, reports what it examined, and never succeeds over nothing.</p>
+<h3 id="14-document-what-is-proved"><a class="zola-anchor" href="#14-document-what-is-proved" aria-label="Anchor link for: 14-document-what-is-proved">14. Document what is proved</a></h3>
+<p>Documentation follows evidence. Update the documents that make claims about the changed
+behaviour, and only to what the tests now prove; keep the distinction between planned,
+implemented, verified and guaranteed, and add a claim to the matrix with its source,
+implementation and test when the change is a capability. Prefer invariants, commands,
+observable behaviour, failure behaviour and examples over description. Keep published
+examples runnable, and project them rather than copying them.</p>
+<h3 id="15-run-the-broader-verification"><a class="zola-anchor" href="#15-run-the-broader-verification" aria-label="Anchor link for: 15-run-the-broader-verification">15. Run the broader verification</a></h3>
+<p>Run the suite that covers the scope, the generation and drift checks, the site build
+where the site reads the change, and the CI-equivalent gates the repository names. A
+result you did not observe is not evidence.</p>
+<h3 id="16-review-the-diff"><a class="zola-anchor" href="#16-review-the-diff" aria-label="Anchor link for: 16-review-the-diff">16. Review the diff</a></h3>
+<p>Read the whole diff as a reviewer would, with <code>repo-review</code>'s checklist: correctness,
+the invariant, failure behaviour, canonical against generated state, duplicated truth,
+manual registration where derivation exists, provider leakage, test quality,
+diagnostics, documentation claims, drift, performance regressions, unnecessary
+abstraction, and scope that crept. Fix what is substantive before continuing.</p>
+<h3 id="17-commit-coherent-work"><a class="zola-anchor" href="#17-commit-coherent-work" aria-label="Anchor link for: 17-commit-coherent-work">17. Commit coherent work</a></h3>
+<p>One commit per independently understandable, verified change, in the repository's
+message convention; neither one commit for everything nor a commit per keystroke. Before
+each commit the relevant tests pass, the formatter and linter pass, generated
+projections are reconciled and no unexplained file is present.</p>
+<h3 id="18-stop"><a class="zola-anchor" href="#18-stop" aria-label="Anchor link for: 18-stop">18. Stop</a></h3>
+<p>Stop expanding when the requested behaviour is observable, the invariant holds, the
+evidence passes, the projections reconcile and the documentation is accurate. A
+possible enhancement, an inelegant neighbour or an unrelated roadmap item is recorded as
+a question or an issue, not implemented "while here".</p>
+<h3 id="19-report"><a class="zola-anchor" href="#19-report" aria-label="Anchor link for: 19-report">19. Report</a></h3>
+<p>Write the record in the shape under Output. Do not report success because files
+changed.</p>
+<h2 id="output"><a class="zola-anchor" href="#output" aria-label="Anchor link for: output">Output</a></h2>
+<p>The implementation record, kept concise, with these sections in this order:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>section</th><th>content</th></tr></thead><tbody>
+<tr><td>requested outcome</td><td>the change as asked, and the criteria it was held to</td></tr>
+<tr><td>repository reality</td><td>what already existed in the scope, and what the review found</td></tr>
+<tr><td>invariant</td><td>the sentence from phase 5</td></tr>
+<tr><td>observable behaviour</td><td>what is now demonstrably different, happy and failure paths</td></tr>
+<tr><td>implementation</td><td>what changed, by file and mechanism, and what was deliberately not changed</td></tr>
+<tr><td>evidence</td><td>the tests, checks and measurements actually run, with their results</td></tr>
+<tr><td>reconciled state</td><td>the projections regenerated or checked, and the drift checks' results</td></tr>
+<tr><td>documentation</td><td>the claims updated and the evidence that now supports each</td></tr>
+<tr><td>commits</td><td>the commits created, one line each</td></tr>
+<tr><td>remaining limitations</td><td>what is unsupported, incomplete or unverified, stated plainly</td></tr>
+</tbody></table>
+</div>
+<p>Every statement in the record is an observed fact, an inference or a recommendation,
+and is labelled when it is not a fact. Ask the requester only when a consequential
+ambiguity cannot be resolved from the repository, its history and its tests, and a wrong
+guess would build the wrong behaviour; prefer the reversible choice otherwise, and act.</p>
+</article>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Examples</h2>
+    <p class="mt-2 text-sm text-body">Read from <code class="font-mono text-heading">examples/</code> beside the skill; the title is each file's first heading.</p>
+    <div class="mt-4 space-y-4">
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="text-base font-semibold text-heading">Add a declarative catalogue item</h3>
+        <p class="mt-1 font-mono text-xs text-body-subtle">.ai/repo/skills/implement/examples/add-a-catalogue-item.md</p>
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full"><pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Apply the implement skill to add a use case to share/use-cases.yaml. Touch canonical</span></span>
+<span class="giallo-l"><span>data only; then validate, regenerate, and prove that the command line, MCP and the site</span></span>
+<span class="giallo-l"><span>show the new item with no code or registry edited; finish with the drift checks.</span></span></code></pre>
+<p>Expected shape: modify canonical data only → validate → regenerate → prove propagation
+through every surface → drift check clean.</p>
+</div>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="text-base font-semibold text-heading">Fix a defect</h3>
+        <p class="mt-1 font-mono text-xs text-body-subtle">.ai/repo/skills/implement/examples/fix-a-defect.md</p>
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full"><pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Apply the implement skill to the defect &quot;finish accepts a completed outcome while an</span></span>
+<span class="giallo-l"><span>open question names the task&quot;. Reproduce it with a case under test/cases/ that fails</span></span>
+<span class="giallo-l"><span>today, make the smallest fix, show the case passing, and review the adjacent gates for</span></span>
+<span class="giallo-l"><span>the same shape of hole.</span></span></code></pre>
+<p>Expected shape: reproduce → regression evidence → smallest fix → the original failure
+no longer occurs → adjacent regression surface reviewed.</p>
+</div>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="text-base font-semibold text-heading">Implement a feature from an issue</h3>
+        <p class="mt-1 font-mono text-xs text-body-subtle">.ai/repo/skills/implement/examples/implement-a-feature.md</p>
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full"><pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Apply the implement skill to issue I0042 (majordomus plan show I0042).</span></span>
+<span class="giallo-l"><span>Scope: the paths the issue declares. Before the mechanism: the invariant, the observable</span></span>
+<span class="giallo-l"><span>behaviour and the test that proves it. After: generate, generate-site-data, both --check,</span></span>
+<span class="giallo-l"><span>doctor; then plan evidence and plan done with the case that proves each criterion.</span></span></code></pre>
+<p>Expected shape: inspect → invariant → observable behaviour → behavioural test →
+implementation → diagnostics and documentation → verify → commit → report.</p>
+</div>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="text-base font-semibold text-heading">Make an operation faster</h3>
+        <p class="mt-1 font-mono text-xs text-body-subtle">.ai/repo/skills/implement/examples/make-an-operation-faster.md</p>
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full"><pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Apply the implement skill to make `majordomus doctor` finish under its budget.</span></span>
+<span class="giallo-l"><span>Record the baseline (MJ_TIMING=1 majordomus doctor, majordomus bench), find the phase</span></span>
+<span class="giallo-l"><span>that dominates, change it, compare against the baseline, and add a regression guard only</span></span>
+<span class="giallo-l"><span>where the contract justifies one.</span></span></code></pre>
+<p>Expected shape: baseline → bottleneck identified → change → comparison → regression
+guard where justified.</p>
+</div>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="text-base font-semibold text-heading">Refactor a subsystem without changing its behaviour</h3>
+        <p class="mt-1 font-mono text-xs text-body-subtle">.ai/repo/skills/implement/examples/refactor-without-behaviour-change.md</p>
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full"><pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Apply the implement skill to refactor lib/knowledge.sh so that discovery is one function.</span></span>
+<span class="giallo-l"><span>First write down the observable behaviour that must be preserved and the cases that pin</span></span>
+<span class="giallo-l"><span>it; run them before and after; prove equivalence with the same outputs byte for byte.</span></span></code></pre>
+<p>Expected shape: preserved observable behaviour stated → tests before → refactor →
+tests after → equivalence shown.</p>
+</div>
+      </section>
+    </div>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related skills</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+      <li><a href="https://korczis.github.io/prismatic-majordomus/skills/repo-review/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><code class="font-mono text-sm font-medium text-fg-brand">repo-review</code><span class="text-sm text-heading">Repository review</span><span class="text-sm text-body">An evidence-driven review of the actual state of the repository, or of one change to it, before meaningful engineering work is recommended or done.</span></a></li>
+    </ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
+    <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/skills/implement/SKILL.md">.ai/repo/skills/implement/SKILL.md</a></dd>
+      <dt class="text-body-subtle">content hash</dt><dd class="min-w-0 break-all font-mono text-heading">cd340fd4381a21f72de216f5af1f43690df1d868da4a0278066e89fadfd719fb</dd>
+      <dt class="text-body-subtle">contract</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/skill.schema.json">share/schemas/skill.schema.json</a></dd>
+      <dt class="text-body-subtle">also served as</dt><dd class="min-w-0 font-mono text-heading">MCP resource <code>majordomus://skill/implement</code> · <code>majordomus skills show implement</code></dd>
+    </dl>
+    <p class="mt-3 text-sm text-body">This page is generated from the file above by <code class="font-mono text-heading">scripts/generate-site-data</code>; editing the page changes nothing, editing the file changes every surface.</p>
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the 3 skills</h2><ol class="space-y-2 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/skills/deploy-site/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading"><code class="font-mono text-xs">deploy-site</code><span class="block text-xs text-body-subtle">Deploy the site by hand</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/implement/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page"><code class="font-mono text-xs">implement</code><span class="block text-xs text-body-subtle">Implement a change</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/repo-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading"><code class="font-mono text-xs">repo-review</code><span class="block text-xs text-body-subtle">Repository review</span></a></li></ol></div></aside>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eba8bdbdaccffeee2f6da875de16be16de570775" class="font-mono hover:underline">eba8bdb</a> · inputs <span class="font-mono">4556c4ca0b01</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

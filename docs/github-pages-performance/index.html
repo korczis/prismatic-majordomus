@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitHub Pages performance — Prismatic Majordomus</title>
+<meta name="description" content="how a push becomes public: the publication path separated from the gates that decide merging, controlled against external latency, the derived trigger, the input fingerprint that replaces a generation, the caches and what each is worth, the budgets and where they live, how publication itself is measured, and the bottlenecks that remain">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-performance/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="GitHub Pages performance — Prismatic Majordomus">
+<meta property="og:description" content="how a push becomes public: the publication path separated from the gates that decide merging, controlled against external latency, the derived trigger, the input fingerprint that replaces a generation, the caches and what each is worth, the budgets and where they live, how publication itself is measured, and the bottlenecks that remain">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/docs/github-pages-performance/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">GitHub Pages performance</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">GitHub Pages performance</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">how a push becomes public: the publication path separated from the gates that decide merging, controlled against external latency, the derived trigger, the input fingerprint that replaces a generation, the caches and what each is worth, the budgets and where they live, how publication itself is measured, and the bottlenecks that remain</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-performance/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">GitHub Pages performance</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/GITHUB_PAGES_PERFORMANCE.md" class="font-mono hover:underline">docs/GITHUB_PAGES_PERFORMANCE.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p>How a push to master becomes public, what it is allowed to cost, how that is measured, and
+what stops the next change from quietly taking the speed back.</p>
+<p><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-architecture/"><code>GITHUB_PAGES_ARCHITECTURE.md</code></a> says what the site <em>is</em> — the
+canonical sources, the generators, the checks. This document is about the <em>path</em>: latency,
+budgets and the evidence behind both. <a href="https://korczis.github.io/prismatic-majordomus/docs/ci/"><code>CI.md</code></a> is the validation pipeline beside it.
+<a href="https://korczis.github.io/prismatic-majordomus/docs/pages-status/"><code>PAGES_STATUS.md</code></a> carries the current numbers, generated; nothing here is
+a measured value, on purpose.</p>
+<h2 id="the-objective"><a class="zola-anchor" href="#the-objective" aria-label="Anchor link for: the-objective">The objective</a></h2>
+<p>The number that matters is not how long a workflow runs. It is</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>T_public = when the public site serves this commit  −  when the push was accepted</span></span></code></pre>
+<p>The target is <code>T_public &lt; 60 s</code> whenever GitHub's own scheduling is not the limiting factor,
+and the distinction in that sentence is load-bearing. Two halves:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>controlled   checkout, tool setup, build, check, the push to gh-pages</span></span>
+<span class="giallo-l"><span>external     the Actions queue, runner allocation, GitHub&#39;s own &quot;pages build and deployment&quot;</span></span></code></pre>
+<p>Only the first is this repository's to spend. Both are measured; only the first is budgeted
+and only the first can fail a run. A deployment whose controlled path was 30 s and whose
+runner waited 4 minutes in a queue is not a regression here, and the job summary says so in
+those words rather than reporting one number that hides which half moved.</p>
+<h2 id="the-shape"><a class="zola-anchor" href="#the-shape" aria-label="Anchor link for: the-shape">The shape</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>push to master (on paths that can change the site)</span></span>
+<span class="giallo-l"><span>        │</span></span>
+<span class="giallo-l"><span>        ├─── validate.yml ── plan ─┬─ structure ─┬─ ci  (the status a branch rule requires)</span></span>
+<span class="giallo-l"><span>        │                          ├─ suite      │</span></span>
+<span class="giallo-l"><span>        │                          ├─ rust       │      decides whether a change may merge</span></span>
+<span class="giallo-l"><span>        │                          ├─ coverage   │</span></span>
+<span class="giallo-l"><span>        │                          ├─ bench      │</span></span>
+<span class="giallo-l"><span>        │                          ├─ site       │      (build, check, browser probe)</span></span>
+<span class="giallo-l"><span>        │                          └─ macos ─────┘</span></span>
+<span class="giallo-l"><span>        │</span></span>
+<span class="giallo-l"><span>        └─── pages.yml ──── one job ───────────────────  decides what the public site shows</span></span>
+<span class="giallo-l"><span>                 checkout → setup → build → check → push gh-pages → measure publication</span></span></code></pre>
+<p>The two run beside each other on the same commit. Publication used to be a job <em>inside</em>
+<code>validate.yml</code> that needed <code>plan</code>, <code>structure</code>, <code>suite</code>, <code>rust</code> and <code>site</code> — the set that
+decides whether a change may merge, most of which cannot change a published byte. The site
+therefore went public tens of minutes after the push that changed it.</p>
+<p>What is on the publication path is everything that can make the published bytes wrong:</p>
+<ul>
+<li>the committed derived data is current for this tree,</li>
+<li>the site builds from it,</li>
+<li>every static check over the output passes (<code>scripts/site-check</code>: metadata and landmarks on
+every route, no unrendered template delimiter, every internal link resolving, no remote
+asset, no credential, every tile a page, the graphs connected, the served provenance this
+commit's).</li>
+</ul>
+<p>What is not, and why it is safe: the behavioural suite, the crate's gates, coverage, the
+macOS suite, the benchmark check and the browser probe. Each of those guards <em>the repository</em>
+rather than <em>the bytes</em>, each still runs on the same commit in <code>validate.yml</code>, and each still
+gates merging through the <code>ci</code> status. Moving a gate off the publication path is only sound
+while it is still somewhere; <code>test/cases/97_pages_fast_path.sh</code> fails if one of them appears
+in <code>pages.yml</code> or disappears from <code>validate.yml</code>.</p>
+<p>The browser probe is the interesting case. It can find a real defect in the published bytes —
+a route that overflows at 320 px — and it costs minutes. It stays in <code>validate.yml</code>, where it
+gates merging, because a route that overflows is a defect to fix rather than a deployment to
+block: holding every publication for it would cost every commit the full probe to protect
+against the rare one that regresses, and the commit that regresses is not published any
+faster by having waited.</p>
+<h2 id="what-made-it-slow-and-the-shape-of-each-fix"><a class="zola-anchor" href="#what-made-it-slow-and-the-shape-of-each-fix" aria-label="Anchor link for: what-made-it-slow-and-the-shape-of-each-fix">What made it slow, and the shape of each fix</a></h2>
+<p>Every value named below is measured, and none of them is written here. The current ones are
+in the tracked baseline of the machine that measured them,
+<a href="../.ai/repo/benchmarks/pages/"><code>.ai/repo/benchmarks/pages/</code></a>, written by
+<code>scripts/pages benchmark --write-baseline</code>; the before-and-after of each change is in the
+commit that made it, which is where <code>project.performance-evidence</code> puts them. Where the time
+goes inside one generation is <code>MJ_TIMING=1 scripts/generate-site-data</code>, ranked by phase.</p>
+<h3 id="the-generator-ran-three-times-for-one-commit"><a class="zola-anchor" href="#the-generator-ran-three-times-for-one-commit" aria-label="Anchor link for: the-generator-ran-three-times-for-one-commit">The generator ran three times for one commit</a></h3>
+<p><code>site-build</code> called <code>generate-site-data</code>; <code>site-check</code>'s first assertion was
+<code>generate-site-data --check</code>; and the <code>site</code> job ran <code>generate-site-data --check</code> before both
+of them. Three full generations of the same data for one commit, each of them dominated by
+<code>majordomus usecase run</code>, which executes all 31 use-case scenarios in a disposable repository
+each — a test suite, sitting inside a data generator, on the deployment critical path.</p>
+<p>The fix is not to make generation faster; it is to stop asking the same question three times.
+<code>site-build --no-data</code> renders committed data; <code>site-check --no-sync</code> skips the sync
+assertion; the <code>site</code> job keeps exactly one generation, the <code>--check</code> pass, which is the only
+one of the three that actually <em>proves</em> anything (it stages a fresh generation from the
+canonical sources and diffs it against what is committed).</p>
+<p>The publication path needs the same answer and cannot afford even one generation, so it asks
+a cheaper question with the same meaning:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/generate-site-data</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-fingerprint</span></span></code></pre>
+<p>This is the generator's own <code>source_hash</code> — the hash of its own 467-entry canonical input
+list, in the line format <code>source.json</code> has always been computed from — evaluated in one
+hashing process instead of 467, which is the difference between a fifth of a second and the
+better part of a minute. <code>mj_inputs_hash</code> is now the single implementation of it, so
+<code>--fingerprint</code> and <code>source.json</code> cannot disagree. <code>scripts/pages current</code> compares the two:
+equal means the committed projection is current for this tree and rendering it <em>is</em> rendering
+the canonical sources.</p>
+<p>A tree whose committed derived data is stale is <strong>refused</strong>, not regenerated. The derived data
+is a projection; a projection that disagrees with its sources is a defect to fix at the
+source, and a publication path that quietly papers over it would be publishing something no
+gate had seen.</p>
+<h3 id="the-derived-content-is-committed-for-the-same-reason"><a class="zola-anchor" href="#the-derived-content-is-committed-for-the-same-reason" aria-label="Anchor link for: the-derived-content-is-committed-for-the-same-reason">The derived content is committed for the same reason</a></h3>
+<p><code>site/data/generated</code> is only half of what the generator produces. The other half is the
+derived <em>content</em> — <code>site/content/{docs,guarantees,commands,doctrines,plan,use-cases, applications,skills,registry,profiles,supervises,why,outcomes}/</code> and the projections of
+<code>site/content-src/*.md</code> — and Zola renders that, not the JSON. So it is committed too. A
+fresh clone has no other way to obtain it: <code>site-build --no-data</code> does not run the generator,
+which is the whole of why the build fits its budget, and generating the content instead would
+cost about twice the twenty seconds <code>build</code> is allowed. Left ignored, the fast path could not
+build a clone at all; the first link into a section that does not exist fails the whole render.</p>
+<p>What keeps a committed projection honest is not ignoring it but the same gate the data lives
+under. <code>scripts/generate-site-data --check</code> diffs every derived page against a fresh staging
+generation and names every orphan, so an edited or stale page is refused exactly as stale data
+is, and <code>scripts/site-check</code> asserts the sections are committed and unignored rather than the
+reverse. Nothing under <code>site/content/</code> is anybody's to edit by hand: the file it is projected
+from is the original, and <code>--check</code> says so the moment the projection moves.</p>
+<h3 id="site-check-spawned-seven-thousand-processes"><a class="zola-anchor" href="#site-check-spawned-seven-thousand-processes" aria-label="Anchor link for: site-check-spawned-seven-thousand-processes"><code>site-check</code> spawned seven thousand processes</a></h3>
+<p>Five loops over the 416 built pages, each spawning grep, sed and awk per page: about eighteen
+processes per route. <code>scripts/lib/site-pages.awk</code> carries all of those assertions in one
+process. It is a transcription, not a redesign — output is byte-identical on this site, and
+fifteen deliberately mutated pages (one per assertion, plus a control) produce the same
+findings from the old implementation and the new.</p>
+<h3 id="the-result"><a class="zola-anchor" href="#the-result" aria-label="Anchor link for: the-result">The result</a></h3>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> benchmark</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">n</span><span class="z-l-9 z-d-11"> 5</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the distribution, as JSON</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> benchmark</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">n</span><span class="z-l-9 z-d-11"> 5</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-write-baseline</span><span class="z-l-10 z-l-i z-d-4 z-d-i">      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> and into this platform&#39;s baseline</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">cat</span><span class="z-l-8 z-d-8"> .ai/repo/benchmarks/pages/baseline.</span><span class="z-l-4 z-l-i z-d-1 z-d-i">*</span><span class="z-l-8 z-d-8">.json</span></span></code></pre>
+<p>An order of magnitude off the controlled build-and-check path, and almost all of what is
+left is <code>site-check</code>. That is the next thing worth attacking, and it is named as such under
+<em>Remaining bottlenecks</em> rather than left implicit.</p>
+<h2 id="the-model"><a class="zola-anchor" href="#the-model" aria-label="Anchor link for: the-model">The model</a></h2>
+<p>Everything the path is allowed to cost, and everything it triggers on, is declared once in
+<a href="../.ai/repo/ci/pages.yaml"><code>.ai/repo/ci/pages.yaml</code></a>. Neither the workflow nor the script
+carries a budget, a path list or a gate name of its own.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> budget</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the controlled budgets</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> budget</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-json</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the same, for a reader that is not a person</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> paths</span><span class="z-l-10 z-l-i z-d-4 z-d-i">           #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what a push must touch for the site to be able to change</span></span></code></pre><h3 id="trigger-invalidation"><a class="zola-anchor" href="#trigger-invalidation" aria-label="Anchor link for: trigger-invalidation">Trigger invalidation</a></h3>
+<p>The trigger paths are <strong>derived</strong>, never written twice. The model names the gate that builds
+the site (<code>site-build</code>); the classes of <a href="../.ai/repo/ci/gates.yaml"><code>gates.yaml</code></a> that name
+that gate are the classes whose paths can change the site; their pathspecs plus the model's
+own <code>extra</code> are the workflow's <code>paths:</code> block.</p>
+<p>A class that escalates the whole plan (<code>gates: full</code>) is deliberately <em>not</em> one of them. That
+escalation says how much validation a change to the pipeline deserves; it says nothing about
+what the published bytes are derived from. Changing <code>scripts/ci-plan</code> or the <code>justfile</code> makes
+every gate run and cannot move a pixel, so it starts no deployment. Zero work is faster than
+optimised useless work.</p>
+<p><code>test/cases/97_pages_fast_path.sh</code> diffs the workflow's block against <code>scripts/pages paths</code>
+and fails on any difference, so the two cannot drift. When you change a class in <code>gates.yaml</code>,
+regenerate the block:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> paths</span><span class="z-l-16 z-d-16"> |</span><span class="z-l-1 z-d-3"> sed</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">s/^/      - /</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> paste into the paths: block of pages.yml</span></span></code></pre><h3 id="budgets"><a class="zola-anchor" href="#budgets" aria-label="Anchor link for: budgets">Budgets</a></h3>
+<p>Budgets are controlled latency only, in seconds, warm, on a GitHub-hosted Linux runner. They
+were set from measurement — the local benchmark above and the timing rows every deployment
+writes — and a change to one is expected to cite the run that justified it
+(<code>project.performance-evidence</code>). A cold run pays for caches it cannot restore and has its own,
+looser bound. The end-to-end target is reported against every deployment and <strong>not</strong> enforced,
+because the larger half of it is GitHub's.</p>
+<h2 id="caches"><a class="zola-anchor" href="#caches" aria-label="Anchor link for: caches">Caches</a></h2>
+<p>Each domain is invalidated by its own inputs and nothing else, so a documentation change does
+not evict a toolchain and a lockfile change does not evict the site.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>cache</th><th>key</th><th>what a hit saves</th></tr></thead><tbody>
+<tr><td><code>node_modules</code></td><td>runner, Node major, <code>package-lock.json</code></td><td>the whole <code>npm ci</code>, not merely its downloads</td></tr>
+<tr><td>npm's own cache</td><td><code>actions/setup-node</code></td><td>the downloads, when the first misses</td></tr>
+<tr><td>Zola</td><td><code>taiki-e/install-action</code></td><td>the release download</td></tr>
+</tbody></table>
+</div>
+<p>There is deliberately <strong>no cache of generated site data or of rendered output</strong>. The committed
+projection already plays that role, it is a tracked file rather than a cache, and it is proved
+current in 169 ms — a cache in front of that would be a second source of truth bought for
+nothing (<code>project.cache-is-invisible</code>, <code>project.derived-once</code>).</p>
+<p>To invalidate a cache on purpose, change its key input: bump the Node major or the lockfile,
+or the Zola version in <code>.github/actions/setup-site/action.yml</code>. Deleting every cache must
+produce the same published bytes; that is not an aspiration but an assertion —
+<code>test/cases/97_pages_fast_path.sh</code> compares a build that skipped the generation with one that
+did not, byte for byte, and <code>test/cases/51_derived_artifacts_committed.sh</code> regenerates every
+derived artifact from its canonical sources and refuses a difference.</p>
+<h2 id="how-publication-is-measured"><a class="zola-anchor" href="#how-publication-is-measured" aria-label="Anchor link for: how-publication-is-measured">How publication is measured</a></h2>
+<p>Workflow success is not publication. Every build writes <code>site/static/build.json</code>, served at
+<code>/build.json</code>, naming the commit it was built from — a fact of the build, never a committed
+file. After the push to <code>gh-pages</code>, the job polls that URL with the cache defeated until it
+names this commit:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> verify</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-commit</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">$(</span><span class="z-l-1 z-d-3">git</span><span class="z-l-8 z-d-8"> rev-parse</span><span class="z-l-8 z-d-8"> HEAD</span><span class="z-l-8 z-d-8">)</span><span class="z-l-8 z-d-8">&quot;</span></span></code></pre>
+<p>That wait is GitHub's own "pages build and deployment", which serves the branch. It is
+reported as external latency; it fails nothing, because GitHub being slow to serve is not this
+repository failing.</p>
+<p>The job summary of every deployment therefore carries the phases against their budgets, the
+controlled total against its budget, the queue and the Pages build beside them, and one
+verdict line:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Pages SLO: PASS — controlled path &lt;n&gt; s / &lt;budget&gt; s, push to public &lt;n&gt; s / &lt;target&gt; s</span></span></code></pre>
+<p>and, when the controlled path is inside its budget and the total is not, the summary says so
+in those words rather than reporting a failure: the remainder is the Actions queue and
+GitHub's own Pages build, which this repository does not spend, and that is an external limit
+rather than a regression here.</p>
+<h2 id="locally"><a class="zola-anchor" href="#locally" aria-label="Anchor link for: locally">Locally</a></h2>
+<p>The same commands CI runs. There is no GitHub-only build semantics.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> current</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> is the committed derived data current for this tree?</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> build</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> render it</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every static check over the output</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> benchmark</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">n</span><span class="z-l-9 z-d-11"> 5</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the controlled path, as JSON</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/site-deploy</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the full gate and the push, the way a person deploys</span></span></code></pre>
+<p><code>scripts/pages build</code> refuses a tree whose derived data is stale and tells you the two hashes.
+The cure is always the same: <code>scripts/generate-site-data</code> (or <code>just derive</code>) and commit the
+result.</p>
+<h2 id="deploying-by-hand-is-still-the-fastest-path"><a class="zola-anchor" href="#deploying-by-hand-is-still-the-fastest-path" aria-label="Anchor link for: deploying-by-hand-is-still-the-fastest-path">Deploying by hand is still the fastest path</a></h2>
+<p>The site is served from the <code>gh-pages</code> branch, and whoever pushes that branch deploys
+(<code>docs/claims/site-deploy-one-path.md</code>). A person at a terminal therefore has no Actions
+queue in front of them at all:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/site-deploy</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> gate, build, check, push</span></span></code></pre>
+<p>This is why publication was <strong>not</strong> moved to the native Pages artifact flow
+(<code>actions/configure-pages</code> → <code>upload-pages-artifact</code> → <code>deploy-pages</code>), which would shave the
+seconds GitHub spends building the branch: pointing GitHub Pages at "GitHub Actions" as its
+source would make a workflow run the <em>only</em> way to publish, and would put the Actions queue in
+front of the one path that today has none. The branch source costs GitHub's own "pages build
+and deployment" and keeps the hand deploy. What that costs is measurable rather than
+memorable:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">gh</span><span class="z-l-8 z-d-8"> run</span><span class="z-l-8 z-d-8"> list</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-workflow</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">pages-build-deployment</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-limit</span><span class="z-l-9 z-d-11"> 20</span><span class="z-l-3 z-d-7"> \</span></span>
+<span class="giallo-l"><span class="z-l-3 z-d-7">  -</span><span class="z-l-3 z-d-7">-json</span><span class="z-l-8 z-d-8"> createdAt,updatedAt</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-jq</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">.[] | (.updatedAt | fromdate) - (.createdAt | fromdate)</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre>
+<p>If the queue ever stops being the dominant term and that becomes the binding constraint, the
+trade is worth revisiting — with the measurement, not with the preference.</p>
+<h2 id="remaining-bottlenecks-by-expected-benefit"><a class="zola-anchor" href="#remaining-bottlenecks-by-expected-benefit" aria-label="Anchor link for: remaining-bottlenecks-by-expected-benefit">Remaining bottlenecks, by expected benefit</a></h2>
+<ol>
+<li><strong><code>site-check</code>, 9.7 s of a 10.3 s controlled build.</strong> Its remaining cost is the per-record
+loops that shell out to <code>jq</code> once per claim, command, capability, use case and plan record.
+The same treatment that took the per-page loops from 25 s to under a second applies:
+one <code>jq</code> program per family instead of one process per record.</li>
+<li><strong>The Actions queue.</strong> On this repository, with several worktrees pushing at once, runs
+have waited minutes for a runner (<code>gh run list --json createdAt,startedAt</code>). Nothing in
+these files shortens that. The escalation, if the controlled path is already comfortably
+inside its budget and the queue is what keeps <code>T_public</code> over a minute, is a warm
+self-hosted runner labelled for this job only — evaluated on measurements, with its own
+security, isolation and maintenance cost stated, and not before.</li>
+<li><strong>GitHub's own Pages build of <code>gh-pages</code>.</strong> Removable only by giving up the hand deploy
+path, as above.</li>
+<li><strong><code>npm ci</code> on a cold cache.</strong> Bounded by the <code>node_modules</code> cache; the cold path is what
+the cold budget covers.</li>
+</ol>
+<h2 id="changing-any-of-this"><a class="zola-anchor" href="#changing-any-of-this" aria-label="Anchor link for: changing-any-of-this">Changing any of this</a></h2>
+<ul>
+<li>A new canonical input of the site generator goes into the <code>INPUTS</code> list of
+<code>scripts/generate-site-data</code> and nowhere else; the fingerprint, the freshness check and the
+trigger follow from it.</li>
+<li>A new path that can change the site goes into a class of <code>gates.yaml</code> that names the
+<code>site-build</code> gate; then regenerate the workflow's <code>paths:</code> block as above.</li>
+<li>A new budget, or a changed one, goes into <code>.ai/repo/ci/pages.yaml</code> and cites the run that
+justified it.</li>
+<li>A new check over the published bytes goes into <code>scripts/site-check</code>, which the publication
+path runs. A new check over the repository goes into the gate model, which it does not.</li>
+</ul>
+</article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
+    <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/site-deploys-from-verified-run/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Publication is gated on everything that can make the published site wrong and waits for nothing else; the checks that decide whether a change may merge run beside it on the same commit, not in front of it</span></a></li></ul></div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eba8bdbdaccffeee2f6da875de16be16de570775" class="font-mono hover:underline">eba8bdb</a> · inputs <span class="font-mono">4556c4ca0b01</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>

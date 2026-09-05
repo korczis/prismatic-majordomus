@@ -1,0 +1,1347 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLI specification — Prismatic Majordomus</title>
+<meta name="description" content="every command: behaviour, reads, writes, exit-code contract, target output">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="CLI specification — Prismatic Majordomus">
+<meta property="og:description" content="every command: behaviour, reads, writes, exit-code contract, target output">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading text-fg-brand">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-fg-brand" aria-current="page">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">CLI specification</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">CLI specification</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">every command: behaviour, reads, writes, exit-code contract, target output</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/CLI.md" class="font-mono hover:underline">docs/CLI.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p>Behaviour of v0.1 as implemented and tested in <code>test/cases/</code>. Where implementation and this
+document disagree, the document is wrong and changes in the same commit as the fix.</p>
+<p>One executable, <code>bin/majordomus</code>, portable shell (bash 3.2 and BSD userland are the floor). Subcommands are dispatched to
+sourced modules in <code>lib/</code>. Every subcommand accepts <code>--help</code> and <code>--repo &lt;path&gt;</code>
+(default: the git toplevel of the current directory).</p>
+<h2 id="exit-code-contract"><a class="zola-anchor" href="#exit-code-contract" aria-label="Anchor link for: exit-code-contract">Exit-code contract</a></h2>
+<p>Exit codes are part of the interface. A caller, including a git hook, must propagate
+them. A hook that receives any non-zero code and continues is a contract violation, and
+<code>doctor</code> scans hook scripts for <code>|| true</code> and <code>|| exit 0</code> around Majordomus invocations.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Code</th><th>Name</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>0</code></td><td><code>OK</code></td><td>the command succeeded; for checks, nothing was found</td></tr>
+<tr><td><code>2</code></td><td><code>USAGE</code></td><td>bad arguments, or not inside a git repository</td></tr>
+<tr><td><code>10</code></td><td><code>CONTRACT_UNMET</code></td><td>a deterministic contract failed: finish contract, policy validation, wiring</td></tr>
+<tr><td><code>11</code></td><td><code>DRIFT_FOUND</code></td><td><code>watch</code> found at least one drift; informational, never used by a hook to block</td></tr>
+<tr><td><code>12</code></td><td><code>MISSING_ARTIFACT</code></td><td>a required file or tool is absent</td></tr>
+<tr><td><code>13</code></td><td><code>INTERNAL_ERROR</code></td><td>Majordomus itself failed; never silently treated as pass</td></tr>
+<tr><td><code>15</code></td><td><code>REFUSED</code></td><td>the command declined to overwrite, or an override was rejected</td></tr>
+</tbody></table>
+</div>
+<p>There is no "warn and continue" code. Fail closed on ambiguity: if it is unclear whether
+a check passed, it failed.</p>
+<h2 id="output-conventions"><a class="zola-anchor" href="#output-conventions" aria-label="Anchor link for: output-conventions">Output conventions</a></h2>
+<ul>
+<li>Human output on stdout, one finding per line, machine-greppable:
+<code>&lt;LEVEL&gt; &lt;category&gt; &lt;subject&gt; — &lt;message&gt;  [reproduce: &lt;command&gt;]</code></li>
+<li>Levels: <code>OK</code>, <code>INFO</code>, <code>WARN</code>, <code>FAIL</code>, <code>DRIFT</code>, <code>REFUSE</code>. Only <code>FAIL</code> and <code>DRIFT</code> affect the
+exit code. <code>WARN</code> is advice about work in progress and never blocks.</li>
+<li><code>--json</code> on any read-only command emits one JSON object per finding on stdout.</li>
+<li>Nothing is written to stderr except usage errors and internal errors.</li>
+<li>A finding without a reproduce command is a bug in Majordomus.</li>
+</ul>
+<hr />
+<h2 id="majordomus-init"><a class="zola-anchor" href="#majordomus-init" aria-label="Anchor link for: majordomus-init"><code>majordomus init</code></a></h2>
+<p>Create the repository's AI layer, <code>.ai/</code>, from the tool's skeleton. It installs nothing:
+the tool stays wherever it was run from, no hook and no shell file is touched, and
+<code>.majordomus/</code> is never created.</p>
+<p><strong>Reads:</strong> the skeleton under <code>share/skeleton/</code> and the standard rule package under
+<code>share/standard/majordomus/</code>.
+<strong>Writes:</strong> <code>.ai/README.md</code> (the protocol, readable without the tool) and
+<code>.ai/manifest.yaml</code> (the section registry, <code>ai-repository/v1</code>); under <code>.ai/repo/</code>, the
+tracked half: its <code>README.md</code>, <code>policy.yaml</code>, <code>profiles/</code>, <code>prompts/</code>, <code>rules/</code> with its
+<code>README.md</code>, the vendored baseline <code>rules/vendor/majordomus/</code> (manifest and rule files,
+byte for byte the package the tool ships) and an empty <code>rules/project/</code>,
+<code>knowledge/sources.yaml</code> beside an empty <code>knowledge/curated/</code>, <code>workflows/</code>, <code>skills/</code>,
+<code>adrs/</code>, <code>project/</code>; under <code>.ai/local/</code>, the checkout's own half: <code>state/</code> seeded with
+<code>decisions.md</code> and <code>open-questions.md</code> and the empty <code>state/handovers/</code> and
+<code>state/checkpoints/</code>, plus <code>cache/</code>, <code>prompts/</code> and <code>session-contexts/</code>; and one
+<code>.ai/local/</code> line in <code>.gitignore</code>, added once. Everything under <code>.ai/repo/</code> belongs to
+the repository from that moment; a newer tool does not rewrite it.</p>
+<p><strong>Refuses</strong> (<code>15</code>) when <code>.ai/</code> already exists, unless <code>--extend</code>, which adds every file
+the skeleton ships and the repository lacks and overwrites nothing; (<code>15</code>) when <code>.ai/</code>
+exists without a manifest, naming the choice between moving it aside and <code>--extend</code>; and
+(<code>15</code>) when project data still lives under <code>.majordomus/</code>, the pre-<code>.ai</code> layout, naming
+<code>majordomus migrate</code>.</p>
+<p><strong>Does not</strong> install git hooks. It prints the two lines a hook needs and the command
+<code>majordomus doctor</code> that will verify they were added.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus init</span></span>
+<span class="giallo-l"><span>created</span></span>
+<span class="giallo-l"><span>  .ai/README.md</span></span>
+<span class="giallo-l"><span>  .ai/manifest.yaml</span></span>
+<span class="giallo-l"><span>  .ai/repo/README.md</span></span>
+<span class="giallo-l"><span>  .ai/repo/policy.yaml</span></span>
+<span class="giallo-l"><span>  .ai/repo/profiles/</span></span>
+<span class="giallo-l"><span>  .ai/repo/prompts/</span></span>
+<span class="giallo-l"><span>  .ai/repo/rules/README.md</span></span>
+<span class="giallo-l"><span>  .ai/repo/rules/vendor/majordomus/</span></span>
+<span class="giallo-l"><span>  .ai/repo/knowledge/</span></span>
+<span class="giallo-l"><span>  .ai/repo/workflows/</span></span>
+<span class="giallo-l"><span>  .ai/repo/skills/</span></span>
+<span class="giallo-l"><span>  .ai/repo/adrs/</span></span>
+<span class="giallo-l"><span>  .gitignore:.ai/local/</span></span>
+<span class="giallo-l"><span>local state: .ai/local/state/ (ignored by git; this checkout&#39;s own)</span></span>
+<span class="giallo-l"><span>next: majordomus update      # generate the provider instruction files named in the policy</span></span>
+<span class="giallo-l"><span>next: majordomus doctor      # verify nothing is declared that is not wired</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>$ majordomus init</span></span>
+<span class="giallo-l"><span>majordomus: .ai/ already exists in … (use --extend to add what is missing; nothing is overwritten)</span></span>
+<span class="giallo-l"><span>$ echo $?</span></span>
+<span class="giallo-l"><span>15</span></span></code></pre><h2 id="majordomus-migrate"><a class="zola-anchor" href="#majordomus-migrate" aria-label="Anchor link for: majordomus-migrate"><code>majordomus migrate</code></a></h2>
+<p>Move a repository's project data from the pre-<code>.ai</code> layout under <code>.majordomus/</code> into the
+portable AI layer under <code>.ai/</code>, once and explicitly. No ordinary command migrates: <code>check</code>,
+<code>doctor</code>, <code>start</code> and the rest refuse (<code>12</code>) a legacy layout and name this command.</p>
+<p><strong>Markers:</strong> legacy is <code>.ai/repo/policy.yaml</code>; new is <code>.ai/manifest.yaml</code>; a
+<code>.majordomus/bin/majordomus</code> is a tool installation and never project data.</p>
+<p><strong>Reads:</strong> every file under <code>.majordomus/</code>, the skeleton manifest (the destinations come
+from it), the tool's templates (to tell an unchanged template from a customised one).
+<strong>Writes:</strong> <code>.ai/README.md</code>, <code>.ai/manifest.yaml</code>; the canonical files moved into
+<code>.ai/repo/</code> (<code>git mv</code> where tracked, so history follows); <code>.ai/local/state/</code> moved to
+<code>.ai/local/state/</code> and taken out of the index; the rest of the layer seeded from the
+skeleton without overwriting anything that moved; one <code>.ai/local/</code> line in <code>.gitignore</code>;
+a byte-for-byte copy of the state under <code>tmp/majordomus-migrate-backup/&lt;utc&gt;/state/</code>,
+and of the legacy <code>providers/</code> under <code>.../providers/</code>, verified and printed, before
+either is touched; a <code>layout.migrated</code> ledger line; then <code>update --force</code> renders the
+projections from the tool's thin bootstraps and <code>doctor</code> judges the result, each exit
+reported on its own line.</p>
+<p><strong>Behaviour:</strong></p>
+<ul>
+<li><code>--dry-run</code> prints the whole plan, one line per file with its action and destination,
+and writes nothing. The same table drives the real run.</li>
+<li><code>templates/*.md</code> identical to the tool's own are dropped; a customised one moves to
+<code>.ai/repo/templates/</code>. <code>generated/</code> is dropped: every projection now carries its own stamp.</li>
+<li><code>providers/</code> — the provider body and the monolithic templates that asked for it — is not
+carried into <code>.ai/</code>. The body no longer exists anywhere and <code>update</code> renders none, so an
+old template would leave a literal token in a generated file. The directory is copied
+to the backup, removed from the index, and reported in one line: the bootstraps are now
+the tool's thin adapters, a repository override goes under <code>.ai/repo/providers/&lt;provider&gt;.tmpl</code>
+in the new format, and the body's rules belong under <code>.ai/repo/rules/project/</code> as rule
+objects (<code>DOCTRINE.md</code> describes the format).</li>
+<li>A file under <code>.majordomus/</code> this version does not know is never deleted. It is reported,
+and <code>.majordomus/</code> is removed only when it is empty.</li>
+<li>Refuses (<code>15</code>) a <code>.majordomus/</code> that holds both <code>policy.yaml</code> and <code>bin/majordomus</code>,
+and names the safe manual step; refuses (<code>15</code>) when a destination under <code>.ai/</code> already
+exists, listing each one. Nothing is written in either case.</li>
+<li>A legacy policy that does not parse, or is not version 1, is refused (<code>10</code>) before
+anything moves: fix it in place first.</li>
+<li>Idempotent: on a repository already on the <code>.ai</code> layout it says so and exits <code>0</code>. With
+neither layout present it exits <code>12</code> and names <code>init</code>.</li>
+<li>The state stops being tracked: its durability is the checkout plus the backup, not the
+branch. Commit the tracked half after reviewing <code>git status</code>.</li>
+</ul>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus migrate --dry-run</span></span>
+<span class="giallo-l"><span>migrate: .majordomus/ (pre-.ai layout) -&gt; .ai/ (ai-repository/v1)</span></span>
+<span class="giallo-l"><span>  move  .ai/repo/policy.yaml -&gt; .ai/repo/policy.yaml</span></span>
+<span class="giallo-l"><span>  move  .ai/repo/profiles/debugging.yaml -&gt; .ai/repo/profiles/debugging.yaml</span></span>
+<span class="giallo-l"><span>  state .ai/local/state/current.yaml -&gt; .ai/local/state/current.yaml</span></span>
+<span class="giallo-l"><span>  drop  .majordomus/templates/handover.md    (identical to the tool&#39;s template)</span></span>
+<span class="giallo-l"><span>  ...</span></span>
+<span class="giallo-l"><span>dry run: nothing written</span></span></code></pre><h2 id="majordomus-doctor"><a class="zola-anchor" href="#majordomus-doctor" aria-label="Anchor link for: majordomus-doctor"><code>majordomus doctor</code></a></h2>
+<p>Is the supervisory layer real here? Read-only. Blocking by design: intended to run
+from a pre-commit hook and from CI.</p>
+<p><strong>Checks, in order:</strong></p>
+<ol>
+<li>
+<p><code>policy.yaml</code> parses; <code>version</code> supported; no unknown keys at any level.</p>
+</li>
+<li>
+<p>Every <code>profiles/*.yaml</code> parses; every profile referenced by policy exists; no unknown
+keys.</p>
+</li>
+<li>
+<p><strong>Enforcement wiring.</strong> For every entry in <code>policy.enforcement</code>: <code>path</code> resolves (on
+<code>PATH</code>, repository-relative, absolute, or as an executable path on the hook line
+itself) and the artifact named by <code>wired_by</code> exists, is executable, invokes
+<code>majordomus &lt;first arg&gt;</code>, and does not swallow its exit code with <code>|| true</code> or
+<code>|| exit 0</code>. When the hook is a dispatcher, the invocation is looked for in the hook
+file <em>and</em> in every file in its <code>&lt;hook&gt;.d/</code> directory; the finding names whichever
+file actually carries it. A subhook that carries the invocation but is not executable
+is reported as not wired, because the dispatcher skips it. <code>wired_by: manual</code> is
+reported as unverified, never as wired. Declared-but-not-wired is <code>10</code>.</p>
+</li>
+<li>
+<p>Every <code>projections[].target</code> exists, its provider has a template, and its entry in
+the content matches the stamp it carries. Missing or unstamped → <code>12</code>; mismatch → <code>10</code> (hand-edited).
+For <code>mode: region</code> the hash is taken over the region alone; absent or malformed
+markers are reported as such.</p>
+</li>
+<li>
+<p>The projection marked <code>always_loaded: true</code> is within
+<code>context.always_loaded_budget_lines</code>.</p>
+</li>
+<li>
+<p>Every repository-relative path referenced from the always-loaded projection resolves.</p>
+</li>
+<li>
+<p>No hardcoded counts in the always-loaded projection (a digit sequence adjacent to
+words like <code>agents</code>, <code>files</code>, <code>apps</code>, <code>commands</code>, <code>skills</code>, <code>rules</code>).</p>
+<p>Checks 5 to 7 judge generated content only. For a region projection that is the
+region and never the host document, so that every failure <code>doctor</code> reports can be
+fixed by editing the policy.</p>
+</li>
+<li>
+<p>Retention caps not exceeded on <code>state/ledger.jsonl</code> and <code>state/handovers/</code>.</p>
+</li>
+<li>
+<p>Environment probes: bash version, <code>git</code>, <code>jq</code> and <code>shellcheck</code> if present. Reported
+as <code>INFO</code>. Nothing in <code>doctor</code> needs a tool beyond bash, git, and a checksum command.</p>
+</li>
+</ol>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus doctor</span></span>
+<span class="giallo-l"><span>OK   policy      .ai/repo/policy.yaml — parsed, version 1</span></span>
+<span class="giallo-l"><span>OK   profiles    4 files — parsed</span></span>
+<span class="giallo-l"><span>FAIL wiring      finish-contract — bin/majordomus is not invoked by .git/hooks/pre-push  [reproduce: grep -n &#39;majordomus finish&#39; .git/hooks/pre-push]</span></span>
+<span class="giallo-l"><span>OK   projection  CLAUDE.md — content matches its stamp</span></span>
+<span class="giallo-l"><span>FAIL budget      CLAUDE.md — 212 lines, budget 150  [reproduce: wc -l CLAUDE.md]</span></span>
+<span class="giallo-l"><span>OK   links       3 projections — all references resolve</span></span>
+<span class="giallo-l"><span>OK   retention   ledger 412 lines, cap 5000</span></span>
+<span class="giallo-l"><span>INFO env         bash 3.2.57, git 2.45, yq 4.44, jq 1.7</span></span>
+<span class="giallo-l"><span>doctor: 2 failures</span></span>
+<span class="giallo-l"><span>$ echo $?</span></span>
+<span class="giallo-l"><span>10</span></span></code></pre><h2 id="majordomus-start-task"><a class="zola-anchor" href="#majordomus-start-task" aria-label="Anchor link for: majordomus-start-task"><code>majordomus start &lt;task&gt;</code></a></h2>
+<p>Begin a scoped task.</p>
+<p><strong>Arguments:</strong> <code>&lt;task&gt;</code> one line. <code>--scope &lt;path&gt;[,&lt;path&gt;...]</code> required. <code>--profile &lt;name&gt;</code> default from <code>policy.profiles.default</code>. <code>--owner &lt;string&gt;</code> free-form, default
+<code>$USER</code>.</p>
+<p><strong>Reads:</strong> policy, profile, git state.
+<strong>Writes:</strong> <code>state/current.yaml</code> and one <code>task.started</code> line to <code>state/ledger.jsonl</code>.</p>
+<p><strong>Behaviour:</strong></p>
+<ul>
+<li>Refuses (<code>15</code>) if <code>state/current.yaml</code> exists and its outcome is not terminal. One
+active task per checkout: hand the existing task over (<code>handover --close</code>) or finish
+it first. No flag discards an active task.</li>
+<li>Normalises each scope path: strips trailing <code>/</code>, canonicalises, refuses paths outside
+the repository. Records the normalised form.</li>
+<li>Reads every other worktree from <code>git worktree list</code> and, where one has an active
+task, reports any scope that contains or is contained by this scope. Reported, not
+blocked: that is a coordination fact for the person, not a rule. Git is the registry;
+there is no sidecar file.</li>
+<li>Records <code>repository_id</code>, <code>branch</code>, <code>head</code>, <code>working_tree</code> from git. Never from
+arguments.</li>
+</ul>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus start &quot;fix OAuth callback&quot; --scope lib/auth --profile debugging</span></span>
+<span class="giallo-l"><span>started t-20260903-193012-a4f1  profile=debugging  scope=lib/auth</span></span>
+<span class="giallo-l"><span>INFO overlap  ../wt-alice-oauth-refresh claims lib/auth/oauth — contained by your scope  [reproduce: majordomus check --overlap]</span></span>
+<span class="giallo-l"><span>next: worker reads AGENTS.md; checkpoint every 15m; majordomus check</span></span></code></pre><h2 id="majordomus-check"><a class="zola-anchor" href="#majordomus-check" aria-label="Anchor link for: majordomus-check"><code>majordomus check</code></a></h2>
+<p>Is the current task consistent with policy, scope, and state? Read-only.</p>
+<p><strong>Checks:</strong></p>
+<ul>
+<li><code>state/current.yaml</code> exists and parses; else <code>12</code>.</li>
+<li>Git divergence label for the record: <code>exact</code>, <code>advanced</code>, <code>diverged</code>,
+<code>different_context</code>. <code>diverged</code> and <code>different_context</code> are findings.</li>
+<li>Touched files (<code>git status --porcelain</code> plus <code>git diff --name-only &lt;base&gt;..HEAD</code>) are
+within the claimed scope. Any outside → finding.</li>
+<li>Checkpoint age against the profile's <code>checkpoint_interval</code> (<code>WARN</code>, never <code>FAIL</code>).</li>
+<li>Files under <code>.ai/</code> and the projection targets are always in scope.</li>
+<li><code>--checkpoint</code> updates <code>checkpoint_at</code> and appends <code>task.checkpoint</code> to the ledger:
+the one documented write in an otherwise read-only command.</li>
+<li><code>state/open-questions.md</code> has no unresolved entry for this task.</li>
+<li><code>--explain</code> prints the effective merged policy and profile for this task and exits
+<code>0</code>.</li>
+<li><code>--overlap</code> prints claim containment against other worktrees.</li>
+</ul>
+<p>Exit <code>0</code> with no <code>FAIL</code> findings, <code>10</code> with any, <code>12</code> with no active task. Intended for
+a worker to run before claiming completion, and for a person to run any time.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus check</span></span>
+<span class="giallo-l"><span>OK   state      t-20260903-193012-a4f1 — exact (head 3f2a9c1)</span></span>
+<span class="giallo-l"><span>FAIL scope      config/secrets.example — outside claimed scope (lib/auth)  [reproduce: git status --porcelain; git diff --name-only 3f2a9c1 HEAD]</span></span>
+<span class="giallo-l"><span>OK   checkpoint 7m ago, interval 15m</span></span>
+<span class="giallo-l"><span>OK   blockers   none open</span></span>
+<span class="giallo-l"><span>check: 4 finding(s), 1 failing</span></span></code></pre><h2 id="majordomus-watch"><a class="zola-anchor" href="#majordomus-watch" aria-label="Anchor link for: majordomus-watch"><code>majordomus watch</code></a></h2>
+<p>What has drifted? Read-only. Never used to block; exit <code>11</code> when findings exist so that
+scripts can tell "drift" from "healthy" without confusing it with a contract failure.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Drift</th><th>Detected how</th></tr></thead><tbody>
+<tr><td>policy</td><td>the policy hash a projection's stamp names is not the policy on disk</td></tr>
+<tr><td>projection</td><td>a projection's content differs from the hash its own stamp names</td></tr>
+<tr><td>state</td><td><code>current.yaml</code> outcome contradicts ledger, or label is <code>diverged</code></td></tr>
+<tr><td>scope</td><td>touched files outside claim (same check as <code>check</code>)</td></tr>
+<tr><td>handover</td><td>task is <code>handed_over</code> but no handover names it, or that handover lacks a required section</td></tr>
+<tr><td>verification</td><td><code>current.yaml</code> has a terminal outcome with no <code>task.finished</code> ledger record for it</td></tr>
+<tr><td>checkpoint</td><td><code>current.yaml</code> older than the profile's checkpoint interval</td></tr>
+<tr><td>retention</td><td><code>ledger.jsonl</code> or <code>handovers/</code> over cap</td></tr>
+</tbody></table>
+</div>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus watch</span></span>
+<span class="giallo-l"><span>DRIFT policy      .ai/repo/policy.yaml modified after last update  [reproduce: majordomus update --dry-run]</span></span>
+<span class="giallo-l"><span>DRIFT projection  AGENTS.md — content differs from its stamp (hand-edited?)  [reproduce: majordomus update --diff AGENTS.md]</span></span>
+<span class="giallo-l"><span>DRIFT checkpoint  t-20260903-193012-a4f1 — last checkpoint 48m ago, interval 15m</span></span>
+<span class="giallo-l"><span>watch: 3 findings</span></span></code></pre><h2 id="majordomus-update"><a class="zola-anchor" href="#majordomus-update" aria-label="Anchor link for: majordomus-update"><code>majordomus update</code></a></h2>
+<p>Regenerate provider projections from policy. Deterministic: same policy, same output,
+byte for byte.</p>
+<p><strong>Reads:</strong> policy, profiles, <code>providers/*.tmpl</code>.
+<strong>Writes:</strong> every <code>projections[].target</code>, one <code>projections.updated</code> ledger line. Nothing
+else: each target carries its own provenance.</p>
+<p><strong>Behaviour:</strong></p>
+<ul>
+<li><code>--dry-run</code> prints what would change; <code>--diff &lt;target&gt;</code> shows the diff for one. For a
+region projection the diff is of the region, not of the host document.</li>
+<li>Refuses (<code>15</code>) to overwrite content whose current hash matches neither the stamp it
+carries nor the new output, unless <code>--force</code>. A target with no stamp at all was not
+written by <code>update</code> and is refused the same way. A hand edit is never silently lost; the refusal
+names the file and the <code>--diff</code> command that shows it.</li>
+<li><code>mode: region</code> (see <code>SCHEMAS.md</code>) generates only the text between the
+<code>majordomus:begin</code> and <code>majordomus:end</code> markers. The rest of the target is copied
+through byte for byte, an absent region is appended once, and malformed markers are
+refused (<code>15</code>). This is how a repository that already has a hand-written <code>CLAUDE.md</code>
+adopts Majordomus without losing it.</li>
+<li>Appends <code>projections.updated</code> to the ledger.</li>
+<li>Every file-mode target begins with a stamp naming this command, the policy hash it
+came from and the hash of the content below it; a region-mode target carries the same
+two hashes in its begin marker. That stamp is the provenance <code>doctor</code> and <code>watch</code>
+compare against, on a fresh clone as much as here.</li>
+<li>The always-loaded projection is checked against the budget after generation; over
+budget is <code>10</code> and nothing is written. For a region projection the budget measures the
+generated region, and <code>doctor</code> reports the host document's own length as <code>INFO</code>.</li>
+<li>The Rust executable renders the same targets from the same inputs, byte for byte:
+<code>majordomus generate providers</code> writes them and <code>majordomus generate --check</code> (which CI
+runs) exits <code>10</code> naming every target that differs from the policy or is missing. <code>update</code>
+is the interactive writer with its refusals; <code>generate --check</code> is the gate. Test case 93
+proves the two agree in both directions.</li>
+</ul>
+<h2 id="majordomus-handover"><a class="zola-anchor" href="#majordomus-handover" aria-label="Anchor link for: majordomus-handover"><code>majordomus handover</code></a></h2>
+<p>Write an append-only continuation record.</p>
+<p><strong>Record resolution</strong> — choosing which prior record is about the work happening here — is the same rule for handovers, checkpoints and <code>context</code>: same worktree and branch, else same branch, else nothing.</p>
+<p><strong>Input:</strong> the authored body on stdin. Required sections are the policy's
+<code>handover.required_sections</code> as level-one headings, each with non-empty content;
+template placeholders in angle brackets count as empty. Optional: <code># Completed</code>,
+<code># Decisions</code>, <code># Verification</code>, <code># Risks</code>, <code># Open Work</code>.</p>
+<p><strong>Writes:</strong> one new file <code>state/handovers/&lt;utc-ts&gt;--&lt;branch-key&gt;--&lt;short-head&gt;--&lt;rand&gt;.md</code>,
+mode <code>0600</code>, created atomically (temp file, then hard link; retry with a new random
+suffix on collision). Front matter is computed from git and from <code>current.yaml</code>; a body
+that tries to set identity fields is rejected.</p>
+<p><strong>Never</strong> stages, commits, or modifies any other file except the task record's
+<code>checkpoint_at</code>. Appends <code>task.handed_over</code> to the ledger. Prints the path.</p>
+<p><code>--close</code> additionally sets the task's outcome to <code>handed_over</code>, so that a new task may
+<code>start</code> in this checkout; the old record is archived by that <code>start</code>. Without
+<code>--close</code> the task stays active for the next session to continue.</p>
+<p><strong>Refuses</strong> (<code>10</code>) if a required section is missing or empty, or if the body contains
+an identity field. Refuses (<code>12</code>) with no active task unless <code>--no-task</code>.</p>
+<p><strong>Resolve:</strong> <code>majordomus handover --resolve</code> finds the most relevant prior handover for
+the current worktree and branch: same worktree and branch first, then same branch, never
+a repository-wide fallback. Prints its git-state label and its body. No candidate is a
+normal outcome and exits <code>0</code> with <code>No relevant handover.</code> <code>--path</code> prints the path
+alone, for scripting; <code>--no-task</code> resolves without an active task.</p>
+<h2 id="majordomus-context"><a class="zola-anchor" href="#majordomus-context" aria-label="Anchor link for: majordomus-context"><code>majordomus context</code></a></h2>
+<p>What does whoever works next need to know? Read-only. Assembles durable state into one
+briefing and prints it. Nothing is persisted, no model is called, and the output is a
+projection: every line is recomputed from the records and git each time it runs.</p>
+<p><strong>Section order is authority order.</strong> Git first, because it is the only thing that cannot
+be stale; then the task and the profile that constrains it; then blockers, which change
+what may be accepted; then authored records; then event history last, because it is the
+weakest evidence about the present.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Section</th><th>Source</th><th>Included when</th></tr></thead><tbody>
+<tr><td><code>GIT</code></td><td>git</td><td>always</td></tr>
+<tr><td><code>TASK</code></td><td><code>state/current.yaml</code></td><td>a task is active and the profile's <code>context.task</code> is not <code>false</code></td></tr>
+<tr><td><code>PROFILE</code></td><td><code>profiles/&lt;name&gt;.yaml</code></td><td>the task names a profile that exists</td></tr>
+<tr><td><code>CONTEXT DOCUMENTS</code></td><td><code>.ai/**/README.md</code> (the context contract)</td><td>a task is active; the effective chain is listed for each of its scope paths</td></tr>
+<tr><td><code>OPEN QUESTIONS</code></td><td><code>state/open-questions.md</code></td><td>any unresolved entry names this task</td></tr>
+<tr><td><code>DECISIONS</code></td><td><code>state/decisions.md</code></td><td><code>context.decisions: true</code> (this task) or <code>context.architecture_notes: true</code> (the repository)</td></tr>
+<tr><td><code>LATEST CHECKPOINT</code></td><td><code>state/checkpoints/</code></td><td>a checkpoint resolves for this task</td></tr>
+<tr><td><code>LATEST COMPATIBLE HANDOVER</code></td><td><code>state/handovers/</code></td><td>a handover resolves for this worktree and branch</td></tr>
+<tr><td><code>FILES TOUCHED IN SCOPE</code></td><td>git</td><td><code>context.relevant_files: true</code></td></tr>
+<tr><td><code>RECENT HISTORY</code></td><td><code>state/ledger.jsonl</code></td><td><code>context.recent_history_depth</code> is above zero</td></tr>
+<tr><td><code>PROMPT</code></td><td><code>prompts/&lt;name&gt;.md</code></td><td><code>--prompt &lt;name&gt;</code> was given</td></tr>
+</tbody></table>
+</div>
+<p>This is the only code that reads a profile's <code>context</code> block, which is what makes those
+fields state rather than documentation.</p>
+<p><strong>Budget.</strong> <code>context.builder_budget_lines</code> in the policy, or <code>--budget-lines</code>. When the
+assembled text exceeds it, sections are dropped in a fixed order — history, files,
+decisions, then the bodies of the checkpoint and the handover, which degrade to a pointer
+rather than disappearing. Git, task, profile and blockers are never dropped. Every drop is
+named under <code>EXCLUDED</code> with its reason, so an under-filled context is debugged from the
+exclusion list instead of guessed at. Exit <code>10</code> if what cannot be dropped is already over
+budget.</p>
+<p><strong><code>--for &lt;provider&gt;</code></strong> wraps the same body with a header naming the provider and its
+always-loaded file. The body does not change: the canonical context is provider-neutral,
+and a provider that needed different facts would be a different policy, not a different
+rendering.</p>
+<p><strong><code>--json</code></strong> emits one object: <code>git</code>, <code>task</code>, <code>sections[]</code> (each with <code>id</code>, <code>lines</code> and
+<code>text</code>), <code>excluded[]</code> (each with <code>item</code> and <code>reason</code>), and <code>budget</code>. The same selection as
+the text form, because both are assembled once and rendered twice.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus context</span></span>
+<span class="giallo-l"><span># Majordomus context — 2026-09-03T19:41:02Z</span></span>
+<span class="giallo-l"><span># a projection of durable state, not a source of truth: validate every line against git</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>## GIT</span></span>
+<span class="giallo-l"><span>repository   /home/dev/app</span></span>
+<span class="giallo-l"><span>branch       main</span></span>
+<span class="giallo-l"><span>head         3f2a9c1e4b7d8a05c1119f2b6e0d7a3c8e5f1b42</span></span>
+<span class="giallo-l"><span>working_tree dirty</span></span>
+<span class="giallo-l"><span>task_record  advanced (recorded head 3f2a9c1)</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>## TASK</span></span>
+<span class="giallo-l"><span>id           t-20260903193012-a4f1</span></span>
+<span class="giallo-l"><span>task         fix the OAuth callback</span></span>
+<span class="giallo-l"><span>profile      debugging</span></span>
+<span class="giallo-l"><span>scope        lib/auth</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>## OPEN QUESTIONS (1 unresolved — every one refuses finish --outcome completed)</span></span>
+<span class="giallo-l"><span>- Does the legacy mobile callback still require the old URI form? (2026-09-03)</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>## EXCLUDED</span></span>
+<span class="giallo-l"><span>- history — profile debugging sets context.recent_history_depth: 50</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>## BUDGET</span></span>
+<span class="giallo-l"><span>41 of 300 lines</span></span></code></pre>
+<p><strong>Context documents.</strong> The same command carries the scoped-context subcommands, all
+read-only, all accepting <code>--json</code>; see <a href="https://korczis.github.io/prismatic-majordomus/docs/context/"><code>CONTEXT.md</code></a> for the model and
+<a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/"><code>SCHEMAS.md</code></a> for the front matter.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>majordomus context list                       every document: id, path, scope, composition, providers, status</span></span>
+<span class="giallo-l"><span>majordomus context resolve &lt;path&gt; [--provider P] [--audience A]</span></span>
+<span class="giallo-l"><span>                                              NN  &lt;id&gt;  &lt;path&gt;  scope=… composition=… providers=…   in effective order</span></span>
+<span class="giallo-l"><span>majordomus context explain &lt;path&gt; [...]       resolve, plus one line per document saying why it is in</span></span>
+<span class="giallo-l"><span>                                              (ancestor at depth N, tracks, directory) and every filtered</span></span>
+<span class="giallo-l"><span>                                              or superseded document with its reason</span></span>
+<span class="giallo-l"><span>majordomus context validate                   the whole tree; findings in the usual format; exit 10 on any FAIL</span></span>
+<span class="giallo-l"><span>majordomus context affected [--base &lt;ref&gt;|--staged|--worktree]</span></span>
+<span class="giallo-l"><span>                                              which documents and scopes a change set touches; a tracked</span></span>
+<span class="giallo-l"><span>                                              path that changed is a WARN naming the document, never the exit code</span></span>
+<span class="giallo-l"><span>majordomus context check-sync [--base &lt;ref&gt;]  validate, projections up to date, affected review items;</span></span>
+<span class="giallo-l"><span>                                              invalid tree FAIL exit 10, hand-edited projection DRIFT exit 11,</span></span>
+<span class="giallo-l"><span>                                              absent projection INFO (doctor owns missing), otherwise 0</span></span></code></pre>
+<p>The target of <code>resolve</code>, <code>explain</code> and the bare briefing is a repository-relative
+directory (a file resolves to its own); a path that does not exist, or a symlink or <code>..</code>
+that escapes the repository, is refused (<code>15</code>, <code>refused-path</code>). Inside the <code>.ai/</code> tree
+the result is the ancestor chain admitted by each document's scope; outside it, the root
+chain plus every document whose <code>tracks</code> matches the target. Order is depth, then
+<code>order</code>, then path. The briefing gains a <code>CONTEXT DOCUMENTS</code> section listing the
+effective chain for the active task's scope paths.</p>
+<p>The error classes, used verbatim in messages and in <code>--json</code>: <code>invalid-front-matter</code>,
+<code>unsupported-schema</code>, <code>unknown-key</code>, <code>duplicate-id</code>, <code>broken-reference</code>, <code>cycle</code>,
+<code>illegal-override</code>, <code>unknown-provider</code>, <code>invalid-manifest</code>, <code>stale-projection</code>,
+<code>out-of-sync</code>, <code>refused-path</code>.</p>
+<h2 id="majordomus-session"><a class="zola-anchor" href="#majordomus-session" aria-label="Anchor link for: majordomus-session"><code>majordomus session</code></a></h2>
+<p>Open, inspect and close one execution episode. A session is the seventh durable record and
+the only one that is not task-shaped.</p>
+<p>A task is a unit of work: it is scoped, it has a profile, and it can outlive the worker
+doing it. A session is one worker's sitting: it claims no paths, gates no acceptance, and
+may cross several tasks — while one task may be crossed by several sessions. Neither
+contains the other, which is why they are two records rather than one field.</p>
+<p>Sessions are optional. A worker that never opens one loses the episode boundary and
+nothing else; every other record is written exactly as before.</p>
+<ul>
+<li><code>start [--owner &lt;who&gt;] [--worker &lt;id&gt;]</code> opens the episode. One open session per
+worktree: a second <code>start</code> is refused rather than replacing the first. <code>--worker</code> is a
+free-form identity string, recorded only when supplied — an unrecorded worker stays
+unrecorded, because a guessed one is indistinguishable from a recorded one the moment it
+is written down.</li>
+<li><code>status</code> prints the open session with the divergence label of the commit it opened at,
+or reports that there is none. Read-only. Absence is an answer, not a failure.</li>
+<li><code>close [--outcome closed|interrupted]</code> closes the episode into an immutable record under
+<code>state/sessions/</code> and removes the open one. An authored summary may arrive on stdin and
+is optional; identity fields in it are refused, as they are in a checkpoint.</li>
+</ul>
+<p><strong>The closed record is an envelope of references.</strong> It names the tasks, issues, milestones,
+checkpoints, handovers, decisions, questions and evidence of the episode, and copies the
+body of none of them. It also carries the commits between the opening and closing commit —
+or the single entry <code>diverged</code> when the opening commit is no longer an ancestor, because a
+list computed across a history that no longer connects is a fiction.</p>
+<p><strong>The lists are derived at close, not accumulated while the session is open.</strong> No other
+command knows sessions exist: <code>checkpoint</code>, <code>decision</code>, <code>question</code> and <code>plan</code> are
+unchanged. The references are read out of the ledger, which is already append-only, already
+written only by Majordomus, and already validated.</p>
+<p><strong>Selection is by the session stamp on each ledger line, not by a time range.</strong> Every line
+carries the session that wrote it, next to the commit and branch it already carried. A time
+range was implemented first and was wrong the first time it ran: the ledger is one file per
+repository, two workers were writing to it, and no timestamp separates them, so one
+episode's envelope claimed the other's tasks, checkpoints and handovers. A line with no
+session belongs to no episode — sessions are optional, and work done outside one is
+attributed to nobody rather than to whoever had a session open nearby.</p>
+<p><code>--outcome</code> takes <code>closed</code> or <code>interrupted</code>. Both are self-reported and neither is
+verified; <code>interrupted</code> exists because "this episode was cut short and its records may be
+incomplete" is the one thing about an ended session that changes what somebody does next.</p>
+<p>Exit <code>12</code> with no open session, <code>10</code> when the summary carries identity fields, <code>15</code> when
+the open record belongs to another checkout.</p>
+<ul>
+<li><code>list [--all]</code> prints closed episodes, newest first, with each one's divergence label.</li>
+<li><code>show &lt;session-id&gt;</code> prints one record whole.</li>
+<li><code>latest [--path]</code> prints the newest record that resolves for this worktree and branch.</li>
+</ul>
+<p>All three are read-only, and all three print the record's divergence label — <code>exact</code>,
+<code>advanced</code>, <code>diverged</code>, <code>different_context</code>. No second vocabulary for staleness is invented,
+because a session written before a branch was rewritten, handed to the next worker as though
+it still described this history, is exactly what those four words exist to prevent.</p>
+<p>Resolution is the rule every other record follows: same repository, same worktree and
+branch, then same branch, then nothing. A record from an unrelated worktree is never
+offered — borrowed context cannot be recognised as wrong until it has been acted on.
+<code>--all</code> lifts the rule explicitly and shows each record's branch, because a record from
+elsewhere is worth seeing when you asked for everything and is never worth being handed
+silently.</p>
+<p><strong>Ordering is by the recorded timestamp, with ledger position breaking a tie inside one
+second.</strong> Filesystem modification time is never read: it does not survive a clone and it is
+not the time the record asserts, so touching an old record does not make it the newest.
+Filename order normally agrees with ledger order, which makes an implementation that fell
+through to the filename look correct; <code>test/cases/62_session_divergence.sh</code> makes the two
+disagree on purpose and fails when the ledger is not what decides.</p>
+<p>A malformed record is skipped with a warning on stderr and never silently, and never
+fatally: one unreadable file must not cost the whole listing.</p>
+<p><strong>Writes:</strong> <code>state/session-current.yaml</code>, mode <code>0600</code>, written atomically, and one
+<code>session.started</code> line in the ledger. <code>session_id</code>, <code>repository_id</code>, <code>worktree</code>, <code>branch</code>,
+<code>start_head</code> and <code>start_working_tree</code> are computed from git and are never authored.</p>
+<p>Nothing under <code>.ai/local/state/</code> is tracked, the open session record included: an open
+session carries nothing anyone else needs, and a record that arrived from another checkout
+would make this one inherit an episode it did not open. A record that names another
+worktree is reported and never obeyed, which keeps the defence in place for every way one
+can still arrive — a copied working directory, a synced folder.</p>
+<p>Exit <code>15</code> when a session is already open here, <code>10</code> when the record does not parse — a
+corrupt record fails loudly rather than being read as "no session", because reading it as
+absent is exactly what would let a second <code>start</code> overwrite it.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus session status</span></span>
+<span class="giallo-l"><span>No open session in this worktree.</span></span>
+<span class="giallo-l"><span>next: majordomus session start</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>$ majordomus session start --worker some-provider/some-model</span></span>
+<span class="giallo-l"><span>session s-20260904153733-fc51 opened at 2026-09-04T15:37:33Z (head 9c13909)</span></span>
+<span class="giallo-l"><span>next: majordomus plan next; majordomus context; majordomus session close when the episode ends</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>$ majordomus session start</span></span>
+<span class="giallo-l"><span>majordomus: session s-20260904153733-fc51 is open here since 2026-09-04T15:37:33Z; run majordomus session close first</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>$ majordomus session close &lt;&lt;&#39;EOF&#39;</span></span>
+<span class="giallo-l"><span>The extraction boundary and the session schema landed; the compiler&#39;s discovery stage is next.</span></span>
+<span class="giallo-l"><span>EOF</span></span>
+<span class="giallo-l"><span>.ai/local/state/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md</span></span></code></pre><h2 id="majordomus-checkpoint"><a class="zola-anchor" href="#majordomus-checkpoint" aria-label="Anchor link for: majordomus-checkpoint"><code>majordomus checkpoint</code></a></h2>
+<p>Record compact progress inside an active task. Append-only; the body arrives on stdin.</p>
+<p>A checkpoint is not a small handover. A handover is a deliberate continuation package
+written when a worker stops; a checkpoint is what was true a moment ago, short enough that
+the next worker's context can quote it whole. <code>checkpoint.max_body_lines</code> in the policy
+enforces that difference — a body over the cap is refused with the suggestion to write a
+handover instead, rather than truncated.</p>
+<p><strong>Writes:</strong> <code>state/checkpoints/&lt;ts&gt;--&lt;branch&gt;--&lt;head&gt;--&lt;rand&gt;.md</code>, mode <code>0600</code>, created
+atomically with <code>link</code>, never staged. Front matter is computed exactly as for a handover; a
+body containing identity fields is refused. Also updates <code>checkpoint_at</code> on the task record
+and appends <code>task.checkpoint</code> to the ledger.</p>
+<p>An empty body is allowed and writes no file: it updates <code>checkpoint_at</code> only, which is what
+<code>check --checkpoint</code> has always done. The two are the same operation; <code>checkpoint</code> is the
+one that can also say what was true.</p>
+<ul>
+<li><code>--show</code> prints the newest checkpoint for the active task in this worktree and branch.</li>
+<li><code>--list</code> lists this worktree's checkpoints, newest first, with each one's git label.</li>
+</ul>
+<p>Exit <code>12</code> with no active task, <code>15</code> when the task is no longer active, <code>10</code> when the body
+carries identity fields or exceeds the cap.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus checkpoint &lt;&lt;&#39;EOF&#39;</span></span>
+<span class="giallo-l"><span>OAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.</span></span>
+<span class="giallo-l"><span>Cause is in callback normalisation, not in the comparison.</span></span>
+<span class="giallo-l"><span>Next: regression test before touching the implementation.</span></span>
+<span class="giallo-l"><span>EOF</span></span>
+<span class="giallo-l"><span>.ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md</span></span></code></pre><h2 id="majordomus-history"><a class="zola-anchor" href="#majordomus-history" aria-label="Anchor link for: majordomus-history"><code>majordomus history</code></a></h2>
+<p>Read the append-only ledger back. Read-only.</p>
+<p>Operational reconstruction, not a transcript. It answers what happened, when, for which
+task, at which git head, and what was accepted — and nothing about what anyone said.</p>
+<p><strong>Filters:</strong> <code>--task &lt;id&gt;</code>, <code>--event &lt;name&gt;</code>, <code>--since &lt;n&gt;m|h|d</code> or an ISO timestamp,
+<code>--limit &lt;n&gt;</code> (default 20, newest), <code>--all</code>. Output is oldest line first, so a filtered run
+reads as a narrative. <code>--json</code> emits the matching ledger lines verbatim.</p>
+<p><code>--validate</code> reports every line that is not a well-formed event and exits <code>10</code> if any is;
+<code>doctor</code>, <code>check</code> and <code>watch</code> run the same test, because a ledger the tool cannot parse is
+a ledger that cannot be used as evidence.</p>
+<p><code>--rotate</code> moves all but the newest <code>ledger.retention_max_lines</code> lines into
+<code>ledger.&lt;utc&gt;.jsonl.archived</code> and appends a <code>ledger.rotated</code> event recording how many moved.
+It never deletes, refuses to overwrite an existing archive, and does nothing when the ledger
+is under the cap.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus history --task t-20260903193012-a4f1</span></span>
+<span class="giallo-l"><span>2026-09-03T19:30:12Z  task.started         t-20260903193012-a4f1  3f2a9c1  profile=debugging scope=lib/auth</span></span>
+<span class="giallo-l"><span>2026-09-03T19:45:00Z  task.checkpoint      t-20260903193012-a4f1  3f2a9c1  20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md</span></span>
+<span class="giallo-l"><span>2026-09-03T19:52:31Z  decision.recorded    t-20260903193012-a4f1  3f2a9c1  Normalise the callback URI before comparing state</span></span>
+<span class="giallo-l"><span>2026-09-03T20:14:08Z  task.finished        t-20260903193012-a4f1  b71e0c9  outcome=completed verify_exit=0</span></span></code></pre><h2 id="majordomus-decision"><a class="zola-anchor" href="#majordomus-decision" aria-label="Anchor link for: majordomus-decision"><code>majordomus decision</code></a></h2>
+<p>Record or read durable decisions. One append-only file: <code>state/decisions.md</code>.</p>
+<p><code>decision add "&lt;what&gt;" --why "&lt;why&gt;"</code> appends an entry with the task id and git head
+computed. <code>--why</code> is required: a decision with no recorded reason cannot be reviewed later,
+only re-argued. <code>--rejected</code> and <code>--evidence</code> are optional and default to <code>-</code>.</p>
+<p>An entry is never edited or deleted. <code>--supersedes "&lt;text&gt;"</code> records that a later decision
+replaced an earlier one and refuses text that matches no recorded decision, so a
+supersession always points at something real.</p>
+<p><code>decision list [--task &lt;id&gt;] [--limit &lt;n&gt;]</code> prints entries newest first; <code>decision show "&lt;text&gt;"</code> prints the first entry whose title contains that text, or exits <code>12</code>.</p>
+<p>The <code>deep-work</code> profile sets <code>verification.decision_record_required: true</code>; <code>finish</code> then
+refuses <code>completed</code> unless an entry names the task.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus decision add &quot;Normalise the callback URI before comparing state&quot; \</span></span>
+<span class="giallo-l"><span>    --why &quot;the mismatch is a trailing-slash difference, not a forged state parameter&quot; \</span></span>
+<span class="giallo-l"><span>    --rejected &quot;relaxing the comparison, which would accept genuinely forged states&quot; \</span></span>
+<span class="giallo-l"><span>    --evidence &quot;test/auth/callback_test.exs:41&quot;</span></span>
+<span class="giallo-l"><span>recorded: Normalise the callback URI before comparing state</span></span></code></pre><h2 id="majordomus-question"><a class="zola-anchor" href="#majordomus-question" aria-label="Anchor link for: majordomus-question"><code>majordomus question</code></a></h2>
+<p>Open, resolve and list the questions that block acceptance. One mutable index:
+<code>state/open-questions.md</code>.</p>
+<p>Unresolved questions are explicit state, not prose inside a handover, because
+<code>finish --outcome completed</code> refuses while any entry names the active task. That gate is
+the reason the file has a machine-written line format, and the reason <code>check</code>, <code>doctor</code> and
+<code>watch</code> fail on an entry that does not parse: a gate that cannot read an entry is a gate
+that can be bypassed by mistyping one.</p>
+<ul>
+<li><code>question add "&lt;question&gt;"</code> appends <code>- [unresolved] &lt;task id&gt; — &lt;question&gt; (&lt;date&gt;)</code>.</li>
+<li><code>question resolve &lt;n|"&lt;text&gt;"&gt; --answer "&lt;answer&gt;"</code> rewrites that one line to
+<code>[resolved &lt;date&gt;]</code> and appends the answer. <code>n</code> is the number <code>question list</code> printed.
+<code>--answer</code> is required, and an ambiguous selector is refused rather than guessed.</li>
+<li><code>question list [--all] [--task &lt;id&gt;]</code> shows every unresolved entry, because every one of
+them refuses a completed finish here; <code>--task</code> narrows to what one task opened and
+<code>--all</code> adds the resolved ones. The numbering is what <code>question resolve &lt;n&gt;</code> selects.
+Any unresolved question can be resolved, not only one the active task opened: a gate
+nobody can clear is a gate that gets worked around.</li>
+</ul>
+<p>Resolving edits the index because an index of what is still open must not accumulate. The
+append-only record of every opening and resolution, with its answer, is the ledger.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus question add &quot;Does the legacy mobile callback still require the old URI form?&quot;</span></span>
+<span class="giallo-l"><span>opened for t-20260903193012-a4f1: Does the legacy mobile callback still require the old URI form?</span></span>
+<span class="giallo-l"><span>$ majordomus finish --outcome completed --verify-command &quot;mix test&quot;</span></span>
+<span class="giallo-l"><span>FAIL blockers   t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: majordomus question list]</span></span>
+<span class="giallo-l"><span>finish: refused, 1 unmet</span></span></code></pre><h2 id="majordomus-prompt"><a class="zola-anchor" href="#majordomus-prompt" aria-label="Anchor link for: majordomus-prompt"><code>majordomus prompt</code></a></h2>
+<p>List, show and render repository-local prompt assets. Read-only.</p>
+<p>An asset is <code>.ai/repo/prompts/&lt;name&gt;.md</code>: YAML front matter with <code>name</code> (matching the
+filename) and a non-empty <code>description</code>, then a body. They are small, versioned with the
+repository, and provider-neutral — a prompt library is not the goal, and nothing here
+invokes a model.</p>
+<p><strong>Rendering substitutes a closed set of tokens and no others.</strong> Inline: <code>{{TASK}}</code>,
+<code>{{TASK_ID}}</code>, <code>{{PROFILE}}</code>, <code>{{SCOPE}}</code>, <code>{{OWNER}}</code>, <code>{{BRANCH}}</code>, <code>{{HEAD}}</code>,
+<code>{{WORKING_TREE}}</code>, <code>{{REPOSITORY}}</code>, <code>{{NOW}}</code>. Alone on a line: <code>{{OPEN_QUESTIONS}}</code>,
+<code>{{DECISIONS}}</code>, <code>{{CHECKPOINT}}</code>, <code>{{HANDOVER}}</code>, <code>{{CONTEXT}}</code>.</p>
+<p>There is no templating language: no conditionals, no loops, no includes, no shell. An
+unknown token is an error, exactly as an unknown configuration key is, because a prompt
+that silently renders <code>{{TSAK}}</code> as literal text is worse than one that refuses. <code>doctor</code>
+and <code>watch</code> validate every asset for the same reason.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus prompt list</span></span>
+<span class="giallo-l"><span>continue               resume a task from durable state instead of from someone&#39;s memory</span></span>
+<span class="giallo-l"><span>debug                  frame a defect so that the fix is proven, not asserted</span></span>
+<span class="giallo-l"><span>handover               produce a continuation record body for the current task</span></span>
+<span class="giallo-l"><span>review                 review the working diff against the claimed scope and the finish contract</span></span>
+<span class="giallo-l"><span>$ majordomus prompt render debug | head -3</span></span>
+<span class="giallo-l"><span>Task t-20260903193012-a4f1 on branch main at 3f2a9c1e...: fix the OAuth callback</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>Scope: lib/auth</span></span></code></pre><h2 id="majordomus-skills"><a class="zola-anchor" href="#majordomus-skills" aria-label="Anchor link for: majordomus-skills"><code>majordomus skills</code></a></h2>
+<p>The repository's skills: provider-neutral procedures for one bounded kind of work each,
+under the layer's skills section. Read-only.</p>
+<p>A skill is a directory <code>.ai/repo/skills/&lt;id&gt;/</code> holding <code>SKILL.md</code> — YAML front matter
+satisfying <code>share/schemas/skill.schema.json</code> over a Markdown body that is the procedure —
+and optionally <code>examples/*.md</code>. Nothing registers it. The source class <code>skill</code> in
+<code>.ai/repo/knowledge/sources.yaml</code> discovers it, and that is the same declaration the
+Rust executable indexes, so a skill exists for <code>skills list</code>, for <code>doctor</code>, for the
+website and for MCP (<code>majordomus://skill/&lt;id&gt;</code>), or for none of them. See
+<a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/"><code>SCHEMAS.md</code></a> for the file contract.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>majordomus skills list [--json]        every skill: id, status, version, description</span></span>
+<span class="giallo-l"><span>majordomus skills show &lt;id&gt; [--json]   the repository-relative path, then the file as written</span></span>
+<span class="giallo-l"><span>majordomus skills check [--json]       validate every skill and every reference it makes</span></span></code></pre>
+<ul>
+<li><code>list</code> prints one line per discovered skill in discovery order, invalid ones included
+(a listing that silently shrank would hide the file that needs fixing). <code>--json</code> adds
+the URI, tags, related ids, inputs, outputs, the path, the content hash and the tracked
+examples.</li>
+<li><code>show</code> prints the path on the first line and the file below it; <code>--json</code> adds the
+body as a field. An id that is not a skill exits <code>12</code> and names <code>skills list</code>.</li>
+<li><code>check</code> validates every skill against the allow-list generated from the schema (no
+unknown key), <code>schema: skill/v1</code>, an integer <code>version</code>, a <code>status</code> from the closed
+set, an <code>id</code> equal to the directory name, non-empty <code># Purpose</code>, <code># Procedure</code> and
+<code># Output</code> sections; refuses two skills claiming one id, a <code>related</code> id that names no
+skill, and an example without a level-one heading. Every finding names the file and
+every reason. It ends with the counts of what it examined — skills, examples,
+references — and exits <code>10</code> on any failure. A repository with no skills is a <code>WARN</code>,
+never a pass over nothing. An absent allow-list (<code>share/allow/skill.txt</code>, a distribution
+that was not generated) is <code>13</code>, naming <code>majordomus generate allow</code>.</li>
+</ul>
+<p><code>doctor</code> and <code>watch</code> run the same examination through the doctrine
+<code>majordomus.skill-integrity</code>; <code>scripts/generate-site-data</code> reads the same catalogue and
+refuses to build the site from a skill that does not validate.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus skills check</span></span>
+<span class="giallo-l"><span>OK   skill       1 skill(s) — every one parses, matches its directory and carries its sections</span></span>
+<span class="giallo-l"><span>OK   skill       5 reference(s) — every related id and every example resolves</span></span>
+<span class="giallo-l"><span>skills: 1 discovered, 1 valid; examples: 5; references: 5 checked; failures: 0</span></span></code></pre><h2 id="majordomus-capture"><a class="zola-anchor" href="#majordomus-capture" aria-label="Anchor link for: majordomus-capture"><code>majordomus capture</code></a></h2>
+<p>Record the person's raw prompts from a provider hook, install that hook, and report what
+each provider actually does in this repository.</p>
+<p><strong>Why a hook and not an instruction.</strong> A worker cannot be asked to record its own prompts.
+It never sees the bytes the person typed, only what the provider assembled from them, and a
+record written by a model is missing exactly the prompts that mattered: the first one of a
+session, which arrives before any instruction has been read, and every one where the model
+was busy doing what it was asked. A line in <code>AGENTS.md</code> is a request, not a mechanism, and
+no behavioural test can prove a request was honoured. So capture happens below the model,
+in the provider's own hook, where running it is the proof that it works.</p>
+<p><code>capture install</code> writes two things and refuses to overwrite either: a shim at
+<code>.claude/hooks/majordomus-capture</code>, and the hook entry in <code>.claude/settings.json</code>. When the
+configuration exists and names something else, the command prints the entry to add and
+exits 15 rather than rewriting a file it did not write. The shim finds the repository from
+its own location: the provider substitutes its project directory into the command string
+textually, so nothing in the environment names the repository, and the working directory a
+hook runs in is not contracted.</p>
+<p><code>capture prompt</code> reads one JSON payload on stdin and writes one record. <strong>It never exits
+2</strong>, because in <code>UserPromptSubmit</code> that exit code rejects the person's prompt, and a broken
+archive must never cost someone their input; a payload it cannot read is written to the
+archive's own log instead — and <strong><code>doctor</code> fails while that log is non-empty</strong>, because a
+capture that failed means prompts were lost. That log is the only thing that can catch the
+failure that matters: if the provider renames the field the prompt arrives in, the hook
+still runs and the self test still passes, since it sends a payload of the tool's own
+making. Read the log and delete it; it is a diagnostic, and unlike a record, nothing is lost
+by removing it. The prompt text itself is the raw span from the payload, copied through
+still escaped, so no decode and re-encode step can lose a character.</p>
+<p><strong>One prompt is one file</strong>, <code>.ai/local/prompts/YYYYMMDDHHMMSS-&lt;slug&gt;.json</code>, where the slug
+is the opening of the prompt itself:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>.ai/local/prompts/</span></span>
+<span class="giallo-l"><span>  20260905113342-why-arent-prompts-saved-automatically.json</span></span>
+<span class="giallo-l"><span>  20260905114501-make-it-a-file-per-prompt.json</span></span></code></pre>
+<p>A record is immutable once written, two hooks cannot interleave inside one file, the name
+sorts chronologically, and the directory listing is already a readable history. The slug is
+a hint and never a faithful rendering — escapes and non-ASCII collapse into hyphens, and
+the prompt itself is inside the file with nothing done to it. Records stay idempotent on
+the provider's prompt identity, which is a field and not the name: a hook delivered twice
+within the day writes once.</p>
+<p><strong>Not every payload is a prompt, and the field it arrives in is not fixed.</strong> The event is
+not what its name suggests: Claude Code also fires <code>UserPromptSubmit</code> for messages it
+injects into the turn — a completed background task, a system reminder — and those are not
+the person's prompts. A payload whose declared origin is not a person, or whose text opens
+with a marker the provider injects, is skipped: no record, and no log line, because a skip
+is normal operation rather than a failure. A payload that says nothing about its origin is
+captured, since losing a real prompt is the worse of the two mistakes.</p>
+<p>The payload keys are candidates rather than one assumed name — the prompt is read from
+<code>prompt</code>, then <code>prompt_text</code>, then <code>text</code>. A payload field is the provider's private shape:
+it is versioned on their schedule, renaming one is not a breaking change to them, and a
+capture built on a single assumed name loses every prompt the day it moves. When none of
+the candidates is present, nothing is written and the log names the keys that <em>were</em> there,
+so the next name is read off a real payload instead of guessed.</p>
+<p><strong>The archive is evidence, not knowledge.</strong> It lives under the ignored half of the layer,
+nothing loads it into a context, no command retrieves from it, and <code>doctor</code> fails if
+anything under it is tracked by Git. The writer emits a closed set of fields, so the
+model's half of the exchange cannot arrive through it.</p>
+<p><strong>Nothing deletes a record.</strong> The ledger, the checkpoints and the handovers rotate under a
+policy cap because each restates state that is still available elsewhere; a prompt is not —
+it existed once, was derived from nothing, and no other file can reconstruct it. So there is
+no cap to configure, the archive grows, <code>doctor</code> reports how many records and how many
+kibibytes it holds, and a person who wants it smaller deletes files themselves rather than
+discovering that the hook meant to keep their prompts had been discarding them.</p>
+<p><strong><code>capture status</code> reports five distinct states, and never a generic pass:</strong></p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>state</th><th>what is true</th></tr></thead><tbody>
+<tr><td><code>unsupported</code></td><td>the provider has no documented event that hands a command the prompt before the model runs</td></tr>
+<tr><td><code>unconfigured</code></td><td>an adapter exists, but this repository does not wire it</td></tr>
+<tr><td><code>named</code></td><td>the configuration declares the hook, but not the shim this tool wrote</td></tr>
+<tr><td><code>wired</code></td><td>the shim is in place and executable, but a payload through it produced no record</td></tr>
+<tr><td><code>verified</code></td><td>a synthetic payload driven through the shim produced a record</td></tr>
+</tbody></table>
+</div>
+<p>A repository holds itself to this by declaring an <code>enforcement</code> entry with
+<code>wired_by: provider-hook:&lt;provider&gt;</code>; <code>doctor</code> then fails unless the state is <code>verified</code>,
+and because <code>doctor</code> runs on <code>pre-commit</code>, a hook that stops capturing stops the commit.
+Only Claude Code has an adapter today. Codex and Gemini are reported <code>unsupported</code> rather
+than assumed, and no other surface — the web, the desktop app, another machine — is
+observable from here at all.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus capture install</span></span>
+<span class="giallo-l"><span>INFO  capture  .claude/hooks/majordomus-capture  written and made executable</span></span>
+<span class="giallo-l"><span>INFO  capture  .claude/settings.json  written with the UserPromptSubmit hook</span></span>
+<span class="giallo-l"><span>$ majordomus capture status</span></span>
+<span class="giallo-l"><span>claude-code    verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record</span></span></code></pre><h2 id="majordomus-search"><a class="zola-anchor" href="#majordomus-search" aria-label="Anchor link for: majordomus-search"><code>majordomus search</code></a></h2>
+<p>Find durable records without reading all of them. Read-only.</p>
+<p>A literal, case-insensitive, fixed-string search across handovers, checkpoints, decisions,
+questions, prompt assets and the ledger, in that order — authority order, so the most
+reliable evidence appears first. <code>--kind</code> restricts it and is repeatable; <code>--task</code> narrows
+to one task; <code>--limit</code> caps each kind.</p>
+<p>Deliberately not an index and not an embedding. The corpus is a handful of Markdown files
+and one JSONL; a scan is faster than the staleness problem an index would introduce, and
+"transparent" is worth more here than "clever". Exit <code>0</code> with matches, <code>12</code> with none.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus search &quot;callback&quot; --kind decision --kind checkpoint</span></span>
+<span class="giallo-l"><span>checkpoint  .ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a.md:12  Cause is in callback normalisation, not in the comparison.</span></span>
+<span class="giallo-l"><span>decision    .ai/local/state/decisions.md:31  ## 2026-09-03 — Normalise the callback URI before comparing state</span></span>
+<span class="giallo-l"><span>search: 2 match(es)</span></span></code></pre><h2 id="majordomus-knowledge"><a class="zola-anchor" href="#majordomus-knowledge" aria-label="Anchor link for: majordomus-knowledge"><code>majordomus knowledge</code></a></h2>
+<p>A compiler over what this repository already states. Read-only in every subcommand
+documented here.</p>
+<p>It is not a wiki, not a database, not a memory service, and not a second place to write
+things down. Every source it reads is a file somebody already maintains, everything it
+produces is derived and regenerable, and none of it outranks the file it came from. A
+result is a pointer to canonical knowledge, never a rewritten answer.</p>
+<p><strong><code>knowledge</code> is not <code>search</code>.</strong> <code>search</code> is a literal scan over the durable operational
+records — handovers, checkpoints, decisions, questions, prompts, the ledger — with no
+index, because that corpus is a handful of files. <code>knowledge</code> covers the repository's
+canonical artifacts: the policy, the profiles, the prompts, the milestone and issue
+contracts, the claims matrix and the documents. Two corpora, two contracts, and neither
+changes the other.</p>
+<ul>
+<li><code>sources [--scope shared|operational|all]</code> lists the curated source classes and the
+files each one discovers, with the class, the scope, the kind, a content hash and the
+repository-relative path.</li>
+<li><code>nodes [--scope ...] [--kind &lt;k&gt;]</code> derives one node per canonical object: its identity,
+its kind, the source it came from and that source's hash. Exits <code>10</code> when two objects
+claim one identity.</li>
+<li><code>edges [--scope ...] [--type &lt;t&gt;]</code> derives one edge per stated relationship, with the file
+and the field or line it was observed in.</li>
+</ul>
+<p><strong>No edge without provenance.</strong> Every edge names where the relationship was stated, and an
+edge missing any of from, to, type or provenance is refused rather than emitted with a
+blank — a blank source reads as "unknown" and is indistinguishable from one nobody recorded.
+An edge nobody can trace to a line is not a fact, it is a guess wearing a fact's clothes, and
+it is a guess the person best placed to notice it is wrong will never see.</p>
+<p><strong>Nothing is inferred from prose.</strong> The repository already states its relationships
+explicitly, in fields somebody maintains, and those are both free and correct. The edge
+types are a closed set; an undeclared one is an error rather than a new vocabulary word:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>type</th><th>from → to</th><th>stated in</th></tr></thead><tbody>
+<tr><td><code>part_of</code></td><td>issue → milestone</td><td>the issue's <code>milestone</code></td></tr>
+<tr><td><code>depends_on</code></td><td>issue → issue, milestone → milestone</td><td>the record's <code>depends_on</code></td></tr>
+<tr><td><code>declares</code></td><td>milestone → claim</td><td>the milestone's <code>claims</code></td></tr>
+<tr><td><code>specified_by</code></td><td>claim → document</td><td><code>docs/CLAIMS.yaml</code>'s <code>source</code></td></tr>
+<tr><td><code>implemented_by</code></td><td>claim → implementation</td><td>its <code>implementation</code></td></tr>
+<tr><td><code>tested_by</code></td><td>claim → test, doctrine → test</td><td>its <code>test</code></td></tr>
+<tr><td><code>supports</code></td><td>doctrine → claim</td><td>the doctrine's <code>claims</code></td></tr>
+<tr><td><code>references</code></td><td>document → document</td><td>an inline Markdown link</td></tr>
+</tbody></table>
+</div>
+<p>Links are the one edge source that is not curated, and they are read conservatively. Fenced
+code is dropped first, because a path inside a code sample is an example of a path and not a
+reference to one. A target with a scheme, a protocol-relative target and an absolute path are
+all skipped; a fragment is trimmed, because <code>docs/CLI.md#session</code> refers to <code>docs/CLI.md</code>.</p>
+<p><strong>Severity distinguishes what Majordomus owns from what an author wrote.</strong> A declared
+relationship pointing at a file the repository does not contain is a <code>FAIL</code>: it is a broken
+promise. A link in a document pointing at nothing is a <code>WARN</code>: a document may deliberately
+point outside the repository and the target alone cannot tell the two apart. A relationship
+pointing at a real file that this compiler does not model as one node — a container of many
+objects, or something outside the curated set — is silent, because a report that is large by
+design is a report people stop reading.</p>
+<p><code>nodes</code> and <code>edges</code> are two views of one derivation, so a defect in either exits <code>10</code> on
+both. There is no clean node listing over a graph that is broken.</p>
+<p><strong>A node's identity is never its content hash.</strong> It is the object's own canonical id where
+it has one — <code>claim:policy-parse</code>, <code>issue:I0801</code>, <code>milestone:M003</code>, <code>profile:debugging</code> —
+and its repository path where it does not, as in <code>document:docs/CONTINUITY.md</code>. A hash says
+whether something <em>changed</em>; it can never say what something <em>is</em>, because then every edit
+would delete a node and create a stranger, and every reference to it would point at nothing
+without anything saying so. The hash rides along on the node and is what freshness is
+measured with.</p>
+<p>The consequence is deliberate: editing a document keeps its node and moves its hash;
+renaming one is a delete and an add, and disturbs no other node.</p>
+<p><strong>A kind comes from structure, never from prose.</strong> It is decided by the source class the
+file was discovered in and by fields the file itself declares. Nothing reads a body looking
+for a word that suggests a type: a document that discusses roadmaps and milestones is a
+document that discusses them. Where no rule applies the kind is <code>unknown</code> and the node is
+still emitted, with one finding naming the class — an explicit unknown is information, and a
+confident wrong answer is not.</p>
+<p><strong>A title is taken or left empty, never invented.</strong> From the record's own <code>title</code> or
+<code>description</code>, or from a document's first level-one heading. A document with no heading gets
+no title rather than its filename, because a filename standing in for a title reads like a
+fact and is a guess.</p>
+<p>Two stores have no id field of their own. A decision is keyed by its title and a question by
+its text — in both cases exactly what the ledger records and what a session envelope
+references, so three places name the same thing the same way and nothing maps between them.
+Answering a question rewrites the line it lives on, and the identity survives that: the
+appended answer is stripped, and only when what remains ends in the entry's opening date, so
+a question whose own text contains a dash is left whole rather than cut at a guess.</p>
+<p><strong>Discovery is driven by the repository index, not by a filesystem walk.</strong> A walk returns
+build output, vendored trees and editor droppings; it returns them in an order that
+differs between two machines; and it can return a file nobody meant to publish. Listing
+tracked files instead gives repository truth in a stable order, and an untracked file is
+never a source. Operational records are discovered from the state directory Majordomus
+itself owns under <code>.ai/local/</code>, which is never tracked — and from nowhere else. No hidden
+directory is scanned because it happens to exist.</p>
+<p>The source classes are declared twice, by two owners: the repository declares its shared
+sources in its AI layer, <code>.ai/repo/knowledge/sources.yaml</code>, and the tool ships the
+operational classes, the records it writes itself, in <code>share/knowledge-sources.yaml</code>. The
+scope of a class is decided by which file declared it; neither file names the other:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>scope</th><th>meaning</th></tr></thead><tbody>
+<tr><td><code>shared</code></td><td>repository knowledge; may be projected to a public surface</td></tr>
+<tr><td><code>operational</code></td><td>this checkout's own working records; never part of a shared projection</td></tr>
+</tbody></table>
+</div>
+<p>The scope is a property of the class, so the publication boundary is decided in one place
+rather than at each producer. Every tracked pathspec carries the <code>:(glob)</code> prefix, under
+which <code>*</code> does not cross a directory separator. That is not tidiness: without it,
+<code>docs/*.md</code> also matches <code>docs/claims/*.md</code>, two classes silently overlap, and one file
+becomes two nodes. <code>test/cases/64_knowledge_discovery.sh</code> fails on that mutation.</p>
+<p>A class marked <code>required</code> that discovers nothing is reported as a <code>WARN</code>. The cost of a
+curated list is that a path can be forgotten, and a forgotten path is indistinguishable
+from a repository that does not have that file unless something says so.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus knowledge sources --scope shared</span></span>
+<span class="giallo-l"><span>policy      shared      policy     4f2a9c1d8b30  .ai/repo/policy.yaml</span></span>
+<span class="giallo-l"><span>profile     shared      profile    a1b2c3d4e5f6  .ai/repo/profiles/debugging.yaml</span></span>
+<span class="giallo-l"><span>...</span></span>
+<span class="giallo-l"><span>issue       shared      issue      0e5a7b9c3f51  .ai/repo/project/issues/I0801.yaml</span></span>
+<span class="giallo-l"><span>claims      shared      claim      7c9e1b3d5f70  docs/CLAIMS.yaml</span></span>
+<span class="giallo-l"><span>document    shared      document   9b1e2d4f8c3a  docs/CONTINUITY.md</span></span>
+<span class="giallo-l"><span>knowledge sources: 169 file(s) in scope shared</span></span></code></pre><h2 id="majordomus-rules"><a class="zola-anchor" href="#majordomus-rules" aria-label="Anchor link for: majordomus-rules"><code>majordomus rules</code></a></h2>
+<p>The effective rule set: every active rule vendored under the repository's rules section
+plus every active rule the repository wrote, resolved as a dependency graph. Read-only in
+every subcommand except <code>vendor update</code>.</p>
+<p>A rule is a Markdown file with YAML front matter. Its identity is the front matter's <code>id</code>
+and <code>version</code>, never the file name. <code>docs/DOCTRINE.md</code> describes the format, the
+<code>x-majordomus</code> block that binds a rule to a validator, and what is authoritative today.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus rules list</span></span>
+<span class="giallo-l"><span>majordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch</span></span>
+<span class="giallo-l"><span>majordomus.sessions-are-workers            v1  advisory  vendor:majordomus not machine-enforced</span></span>
+<span class="giallo-l"><span>project.english-only                       v1  blocking  project          not machine-enforced</span></span></code></pre>
+<ul>
+<li><code>list [--json]</code> prints the effective set in resolved order: identity, class, provenance
+(<code>vendor:&lt;name&gt;</code> or <code>project</code>), and whether the tool enforces it. A rule without an
+<code>x-majordomus</code> block is normative for whoever reads it and enforced by nobody, and the
+listing says <code>not machine-enforced</code> rather than hiding it.</li>
+<li><code>show &lt;id&gt;</code> prints one rule, front matter and body, with the repository-relative path it
+was read from as the first line. An id outside the effective set exits 12.</li>
+<li><code>vendor status</code> compares the vendored baseline with the package the running executable
+ships. It prints both revisions, then the manifest integrity of the vendored copy, then
+whether the two packages are the same.</li>
+<li><code>vendor diff</code> is the reviewable difference between the two, as a unified diff of the two
+directories. It exits 0 whether or not they differ; <code>vendor status</code> carries the exit code.</li>
+<li><code>vendor update [--force]</code> replaces the vendored baseline with the executable's package.
+The write is atomic: the new package is staged beside the target and swapped in. It never
+touches <code>rules/project/</code>.</li>
+</ul>
+<p><strong>Resolution fails closed.</strong> A missing dependency, a dependency on a deprecated rule, a
+cycle, one <code>id@version</code> claimed by two files, a project rule in the vendor namespace,
+malformed or incomplete front matter, an unknown front-matter key, or an <code>x-majordomus</code>
+block that names no validator, no enforcing command or no test — each stops <code>list</code>, <code>show</code>
+and every command that reads the set, with exit 10 and the reason. Nothing is applied
+partially. The order is deterministic: two runs agree, and every dependency is listed before
+the rule that depends on it.</p>
+<p><strong>The repository's vendored copy is authoritative.</strong> A newer executable reports a newer
+baseline through <code>vendor status</code> and <code>vendor diff</code>; it never applies one. <code>update</code>,
+<code>doctor</code> and <code>check</code> leave the vendored directory alone. The baseline changes only when
+<code>vendor update</code> is asked for.</p>
+<p><strong>A hand edit under <code>vendor/</code> is detected.</strong> The package manifest names every rule file
+with its hash. A file whose hash no longer matches, a listed file that is absent, or a file
+present beside the manifest that it does not list, is reported by <code>vendor status</code> and
+refused by <code>vendor update</code> until <code>--force</code>.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>exit</th><th>meaning</th></tr></thead><tbody>
+<tr><td>0</td><td>the set resolves; the vendored baseline is current</td></tr>
+<tr><td>2</td><td>unknown subcommand or option; <code>show</code> without an id</td></tr>
+<tr><td>10</td><td>the set does not resolve, or the vendored copy fails its manifest</td></tr>
+<tr><td>11</td><td><code>vendor status</code>: the executable ships a different package than the one vendored</td></tr>
+<tr><td>12</td><td>no rule with that id; nothing vendored yet; no rules section in this layout</td></tr>
+<tr><td>13</td><td>the executable ships no standard rule package: a broken install, not a repository fault</td></tr>
+<tr><td>15</td><td><code>vendor update</code> refused over a hand-edited vendor directory (<code>--force</code> overrides)</td></tr>
+</tbody></table>
+</div>
+<p><code>test/cases/67_rule_dag.sh</code> proves each refusal by mutation, and proves that a newer
+distribution's package is not applied until asked, that <code>vendor update</code> leaves
+<code>rules/project/</code> byte for byte what it was, and that the resolved order is the same across
+runs.</p>
+<h2 id="majordomus-finish"><a class="zola-anchor" href="#majordomus-finish" aria-label="Anchor link for: majordomus-finish"><code>majordomus finish</code></a></h2>
+<p>Evaluate the finish contract. Refuse if unmet.</p>
+<p><strong>Reads:</strong> policy, profile, <code>current.yaml</code>, git, ledger.
+<strong>Writes:</strong> on success, <code>current.yaml</code> outcome set to the given value, one
+<code>task.finished</code> ledger line carrying the evaluated checklist and the verification
+result, and a copy of <code>--note</code> under <code>state/completed/&lt;id&gt;.md</code> when given.</p>
+<p><strong>Arguments:</strong> <code>--outcome completed|partial|blocked|no_match|failed</code> required.
+<code>--verify-command "&lt;cmd&gt;"</code> runs the project's own verification in the repository root
+and records its exit code, duration, and command. <code>--note &lt;file&gt;</code> supplies the
+completion note; otherwise the newest handover naming this task is used. <code>--check</code>
+evaluates scope and state without writing and exits <code>0</code> when no task is active or the
+task is already finished, so a pre-push hook never blocks a repository with nothing to
+enforce.</p>
+<p>Profile requirements are also evaluated for <code>completed</code>: <code>regression_test_required</code>
+passes when a touched path looks like a test (<code>test/</code>, <code>spec/</code>, <code>_test.</code>, <code>.spec.</code>);
+<code>decision_record_required</code> passes when <code>decisions.md</code> contains <code>Task: &lt;id&gt;</code>. The
+regression check is deliberately crude and says so in its message.</p>
+<p><strong>Contract for <code>completed</code>:</strong></p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>scope respected        touched files within claimed paths</span></span>
+<span class="giallo-l"><span>verification ran       --verify-command exited 0, recorded</span></span>
+<span class="giallo-l"><span>state updated          current.yaml is at HEAD or advanced, not diverged</span></span>
+<span class="giallo-l"><span>no open blockers       open-questions.md has no unresolved entry for this task</span></span>
+<span class="giallo-l"><span>note present           newest handover or completion note has required sections</span></span></code></pre>
+<p>Every line of the contract is evaluated and printed, pass or fail, so that a refusal
+says exactly what is missing. <code>partial</code> and <code>blocked</code> require a note with <code># Next Action</code>; <code>no_match</code> and <code>failed</code> require <code># Reason</code>; all four skip the verification
+line, and <code>blocked</code> skips the blockers line. Nothing is written when any line fails.
+Finishing an already finished task is refused (<code>15</code>).</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus finish --outcome completed --verify-command &quot;make test&quot;</span></span>
+<span class="giallo-l"><span>OK   scope         12 files, all within lib/auth</span></span>
+<span class="giallo-l"><span>OK   verification  make test — exit 0, 41s</span></span>
+<span class="giallo-l"><span>OK   state         exact (head 9b1e2d4)</span></span>
+<span class="giallo-l"><span>FAIL blockers      open-questions.md: &quot;token refresh window — needs product decision&quot; unresolved  [reproduce: grep -n &#39;unresolved&#39; .ai/local/state/open-questions.md]</span></span>
+<span class="giallo-l"><span>OK   note          handover 20260903T201455Z--main--9b1e2d4--c0ffee.md</span></span>
+<span class="giallo-l"><span>finish: refused, 1 unmet</span></span>
+<span class="giallo-l"><span>blocking doctrines:</span></span>
+<span class="giallo-l"><span>- majordomus.blocker-resolution</span></span>
+<span class="giallo-l"><span>$ echo $?</span></span>
+<span class="giallo-l"><span>10</span></span></code></pre>
+<p>The contract is not a list inside <code>finish</code>. It is the set of doctrines whose
+<code>enforced_by</code> names <code>finish</code>, selected by this repository's
+<code>verification.finish_requires</code>. A requirement in the policy that no doctrine defines is
+reported and refuses, rather than being ignored. See
+<a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/"><code>DOCTRINE.md</code></a>.</p>
+<hr />
+<h2 id="majordomus-doctrine"><a class="zola-anchor" href="#majordomus-doctrine" aria-label="Anchor link for: majordomus-doctrine"><code>majordomus doctrine</code></a></h2>
+<p>Report what rules are enforced here, by what, and whether they are wired. Read-only.</p>
+<p><strong>Reads:</strong> the repository's effective rule set (<code>.ai/repo/rules/vendor/majordomus/</code> and
+<code>.ai/repo/rules/project/</code>, resolved as <code>majordomus rules list</code> resolves it), <code>lib/</code>,
+<code>docs/CLAIMS.yaml</code>.
+<strong>Writes:</strong> nothing.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>majordomus doctrine [status]     derived counts</span></span>
+<span class="giallo-l"><span>majordomus doctrine list         id, class, validator, enforcing commands</span></span>
+<span class="giallo-l"><span>majordomus doctrine show &lt;id&gt;    the full record for one doctrine, and the rule file it lives in</span></span></code></pre>
+<p><strong>Behaviour:</strong></p>
+<ul>
+<li><code>status</code> prints how many doctrines are declared, how many block, how many are advisory,
+how many name a validator that does not exist, and how many name a test file that does
+not exist. Every number is derived on the spot; none is stored.</li>
+<li><code>list</code> prints one line per doctrine.</li>
+<li><code>show &lt;id&gt;</code> prints the record, including which claims it backs, the tests that prove it,
+the rules it depends on, the rule file it lives in, and which file defines its
+validator. An unknown id exits <code>12</code>. A doctrine's id is its rule id,
+<code>majordomus.&lt;name&gt;</code> for the baseline.</li>
+<li>A rule set that does not resolve exits <code>10</code> with the reason; nothing is listed
+partially.</li>
+<li>Exits <code>0</code> when no validator and no test file is missing, <code>10</code> otherwise. Whether the
+enforcement is actually <em>reached</em> is a stronger question, and <code>majordomus doctor</code>
+answers it.</li>
+</ul>
+<h2 id="majordomus-plan"><a class="zola-anchor" href="#majordomus-plan" aria-label="Anchor link for: majordomus-plan"><code>majordomus plan</code></a></h2>
+<p>Read the canonical project model, and move one issue through its lifecycle. A milestone is
+an executable specification of an outcome; an issue is a bounded execution contract; the
+dependency graph between the issues decides what may be executed next. See
+<a href="https://korczis.github.io/prismatic-majordomus/docs/planning/"><code>docs/PLANNING.md</code></a> for the semantics.</p>
+<p><strong>Reads:</strong> <code>.ai/repo/project/project.yaml</code>, <code>.ai/repo/project/milestones/*.yaml</code>,
+<code>.ai/repo/project/issues/*.yaml</code>, <code>share/allow/{project,milestone,issue}.txt</code>.
+<strong>Writes:</strong> one lifecycle field in one issue file, and one ledger event — <code>start</code>, <code>verify</code>,
+<code>evidence</code> and <code>done</code> only. Every other subcommand writes nothing.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>majordomus plan validate         schemas, references, the DAG, status consistency</span></span>
+<span class="giallo-l"><span>majordomus plan status           milestone progress and the next executable issue</span></span>
+<span class="giallo-l"><span>majordomus plan list             one line per issue: id, status, wave, milestone, title</span></span>
+<span class="giallo-l"><span>majordomus plan show &lt;id&gt;        the full record of one milestone or issue</span></span>
+<span class="giallo-l"><span>majordomus plan ready            issues whose dependencies are all satisfied</span></span>
+<span class="giallo-l"><span>majordomus plan blocked          issues waiting on a dependency, and on which one</span></span>
+<span class="giallo-l"><span>majordomus plan waves            topological execution waves, derived from the graph</span></span>
+<span class="giallo-l"><span>majordomus plan graph            the dependency DAG as Mermaid</span></span>
+<span class="giallo-l"><span>majordomus plan next             the one issue a worker should take now</span></span>
+<span class="giallo-l"><span>majordomus plan body &lt;id&gt;        the provider-neutral projection body for one record</span></span>
+<span class="giallo-l"><span>majordomus plan start &lt;id&gt;       record that execution began</span></span>
+<span class="giallo-l"><span>majordomus plan verify &lt;id&gt;      record that implementation is complete, evidence pending</span></span>
+<span class="giallo-l"><span>majordomus plan evidence &lt;id&gt;    attach one piece of evidence</span></span>
+<span class="giallo-l"><span>majordomus plan done &lt;id&gt;        record completion</span></span></code></pre>
+<p><strong>Options:</strong> <code>--json</code> on the read subcommands a surface consumes; <code>--milestone &lt;id&gt;</code> to
+restrict <code>list</code>, <code>ready</code>, <code>blocked</code>, <code>waves</code> and <code>graph</code>; <code>--covers</code>, <code>--type</code>, <code>--command</code>,
+<code>--result</code> and <code>--artifact</code> on <code>evidence</code>.</p>
+<p><strong>Behaviour:</strong></p>
+<ul>
+<li>No status is stored anywhere. <code>BLOCKED</code>, <code>READY</code>, <code>ACTIVE</code>, <code>VERIFY</code>, <code>DONE</code> and
+<code>CANCELLED</code> are derived from what an issue records about itself and from the state of its
+dependencies, by <code>lib/project.awk</code>. Writing a <code>status:</code> field is an unknown key.</li>
+<li><code>validate</code> reports unknown keys, unknown and self dependencies, duplicate ids, cycles,
+issues executing ahead of a dependency, and issues with no acceptance criteria. It exits
+<code>10</code> when any finding is a failure, <code>0</code> when only warnings remain.</li>
+<li><code>start</code> refuses (<code>15</code>) an issue that is not <code>READY</code>, naming what it waits on. <code>verify</code>
+refuses an issue that is not <code>ACTIVE</code>.</li>
+<li><code>evidence</code> refuses (<code>15</code>) a token the issue does not declare, and refuses (<code>2</code>) without a
+<code>--command</code> or an <code>--artifact</code>: narrative is not evidence. It appends to the issue's own
+file with the commit and the timestamp.</li>
+<li><code>done</code> refuses (<code>10</code>) while any declared evidence token is uncovered, and refuses (<code>15</code>)
+while a dependency is not <code>DONE</code>. Every writing subcommand prints the next ready issue
+after the graph has been recomputed.</li>
+<li>Exits <code>12</code> when the record named does not exist, or when the repository has no canonical
+project model at all — the model is opt-in, and <code>doctor</code> skips it rather than failing
+where it is absent.</li>
+</ul>
+<p>The same model is projected to GitHub by <code>scripts/github-sync</code> and to the website by
+<code>scripts/generate-site-data</code>. Neither re-derives a status; both read this engine.</p>
+<h2 id="majordomus-usecase"><a class="zola-anchor" href="#majordomus-usecase" aria-label="Anchor link for: majordomus-usecase"><code>majordomus usecase</code></a></h2>
+<p>The executable use cases of the repository: the Markdown objects under the manifest's
+<code>use-cases</code> section, each a task somebody performs with the tool, the commands, rules,
+claims, responsibilities and applications it names, and a scenario that proves it against
+<code>bin/majordomus</code>. <code>docs/USE_CASES.md</code> is the contract; this section is the command.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>majordomus usecase list [--json]</span></span>
+<span class="giallo-l"><span>majordomus usecase show &lt;id&gt;</span></span>
+<span class="giallo-l"><span>majordomus usecase validate [--json]</span></span>
+<span class="giallo-l"><span>majordomus usecase run [&lt;id&gt;...] [--json] [--out &lt;dir&gt;] [--keep]</span></span>
+<span class="giallo-l"><span>majordomus usecase coverage [--json] [--check]</span></span>
+<span class="giallo-l"><span>majordomus usecase impact [--base &lt;ref&gt;] [--json]</span></span>
+<span class="giallo-l"><span>majordomus usecase scaffold [--missing] [--for command:&lt;name&gt;] [--dry-run]</span></span></code></pre>
+<p><code>list</code> prints every use case with its category, status, whether it has a scenario and the
+commands it names; <code>show</code> prints one file and the result of its last run. <code>validate</code>
+resolves every reference (a command against the dispatch table, a doctrine against the
+registry, a claim against <code>docs/CLAIMS.yaml</code>, a responsibility against
+<code>docs/RESPONSIBILITIES.yaml</code>, an application both ways, a category against
+<code>taxonomy.yaml</code>, a setup script and a stdin body against the fixtures, an MCP tool
+against the executable's registry), refuses a key the schema does not declare, an id that
+is not the file name, a duplicate, a body without its sections, a scenario step running a
+command the use case does not list, and an active use case targeting a guarantee with no
+scenario. <code>doctor</code> applies the same validation under <code>majordomus.catalogue-integrity</code>.</p>
+<p><code>run</code> executes each scenario in a disposable repository prepared by its setup script:
+every step is one real invocation with argv from the file, its exit code and output are
+asserted, and the evidence, normalised (paths, timestamps, ids, hashes, durations), is
+written to <code>.ai/local/evidence/use-cases/&lt;id&gt;.json</code>; <code>--out</code> copies it elsewhere,
+<code>--keep</code> leaves the repository for inspection, and the event <code>use_cases.ran</code> is
+appended to the ledger. A use case without a scenario is reported as described, not run.</p>
+<p><code>coverage</code> tallies every public command of the registry, every guaranteed claim with a
+responsibility and every MCP tool the executable projects against the active use cases
+that name it, run it, and have passing evidence; the policy's <code>use_cases.coverage</code> says,
+per class, whether a gap is <code>required</code>, <code>advisory</code> or <code>off</code>; <code>--check</code> exits 10 on a
+required gap, as <code>doctor</code>, <code>check</code> and <code>finish</code> do under <code>majordomus.use-case-coverage</code>.
+<code>impact</code> maps the files changed since <code>--base</code> (the upstream by default) and in the work
+tree to the commands, rules, use cases, scenarios and behavioural cases they reach, and
+names the run to do next. <code>scaffold</code> writes a draft use case for a gap from what the
+registry, the command's fixture and the claims already know; a draft validates and runs
+and never counts.</p>
+<p>Exit codes: 0; 2 for a usage error; 10 when validation, a scenario or a required coverage
+gap fails; 12 when the section, a use case or the registry is absent; 13 when a scenario
+repository cannot be created.</p>
+<h2 id="majordomus-bench"><a class="zola-anchor" href="#majordomus-bench" aria-label="Anchor link for: majordomus-bench"><code>majordomus bench</code></a></h2>
+<p>Time every public command of the registry, cold and warm, and compare with the baseline.</p>
+<p>The targets are the public commands of <code>share/commands.yaml</code> and nothing else: a command
+added to the registry is a target from that moment, and the harness never times itself.
+Each target runs in a disposable repository. When the tool's own suite is present, the
+scenario is the first scenario of the command's fixture under <code>test/fixtures/commands/</code>,
+so what is timed is what the site demonstrates and the suite executes; otherwise it is the
+bare command in an installed repository.</p>
+<p>A read-only command is run once cold, then <code>benchmark.warmup</code> times unsampled, then
+<code>benchmark.samples</code> times warm, all in one repository. A command that mutates state gets a
+fresh repository per sample, so every sample of it is cold and it has no warm
+distribution. A sample is the wall-clock time of the child process alone; setup is never
+inside the clock. Every distribution is recorded with its count, minimum, p50, p90, p95,
+p99, maximum, mean and standard deviation; nothing is averaged away.</p>
+<ul>
+<li><code>bench</code> times every target; <code>bench &lt;command&gt;...</code> only those.</li>
+<li><code>--list</code> prints the targets with their class and scenario, <code>--format json</code> as data.</li>
+<li><code>--samples &lt;n&gt;</code>, <code>--warmup &lt;n&gt;</code> override the policy for this run only; <code>--mode cold|warm|both</code>
+selects the distributions recorded.</li>
+<li><code>--format json</code> prints the run as one document with schema <code>majordomus/benchmark-result/v1</code>:
+the run id, the commit and whether the tree was dirty, the platform, the profile and one
+result per target and mode.</li>
+<li>Every run is written under <code>.ai/local/benchmarks/</code> (<code>runs/&lt;run-id&gt;.json</code>, <code>latest.json</code>,
+one line per run in <code>history.jsonl</code>) unless <code>--no-save</code>. That is local evidence: ignored
+by git, never a baseline.</li>
+<li><code>--write-baseline</code> writes the run as <code>.ai/repo/benchmarks/baseline.json</code>, schema
+<code>majordomus/benchmark-baseline/v1</code>, and prints the old and new p50/p95/p99 per target. It
+refuses a dirty tree without <code>--force</code>, because a baseline records a commit.</li>
+<li><code>--check</code> compares the run with the baseline under <code>benchmark.regression</code>: for each target
+and mode, a p50, p95 or p99 more than the threshold fraction over the baseline is a
+<code>FAIL</code> naming the metric, both values and the threshold, and the command exits <code>10</code>. No
+baseline exits <code>12</code>; a baseline with another schema is not comparable and exits <code>15</code>.</li>
+</ul>
+<p><code>MJ_TIMING=1</code> on any command prints the phases and work counters of that run on stderr,
+which is how a slow target is taken apart.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus bench --list</span></span>
+<span class="giallo-l"><span>command      class                      scenario</span></span>
+<span class="giallo-l"><span>init         generated-output-mutating  fixture fresh</span></span>
+<span class="giallo-l"><span>doctor       read-only                  fixture not-wired</span></span>
+<span class="giallo-l"><span>...</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>$ majordomus bench doctor version</span></span>
+<span class="giallo-l"><span>command      mode  status       n     p50     p95     p99     max  scenario</span></span>
+<span class="giallo-l"><span>doctor       cold  ok           1    2711    2711    2711    2711  fixture not-wired</span></span>
+<span class="giallo-l"><span>doctor       warm  ok          10    2640    2790    2790    2790  fixture not-wired</span></span>
+<span class="giallo-l"><span>version      cold  ok           1      41      41      41      41  fixture prints</span></span>
+<span class="giallo-l"><span>version      warm  ok          10      38      45      45      45  fixture prints</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>slowest by warm p95 (cold where warm does not apply):</span></span>
+<span class="giallo-l"><span>  doctor       p95 2790 ms</span></span>
+<span class="giallo-l"><span>  version      p95 45 ms</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>run b-20260905T031200Z-9f1c saved as .ai/local/benchmarks/runs/b-20260905T031200Z-9f1c.json</span></span></code></pre>
+<p>Exit <code>2</code> on a usage error, <code>12</code> when a named target is not a public command of the
+registry, <code>13</code> when a target did not run cleanly (its row says <code>setup-failed</code> or the exit
+code it produced), <code>10</code>, <code>12</code> and <code>15</code> from <code>--check</code> as above.</p>
+<h2 id="majordomus-version"><a class="zola-anchor" href="#majordomus-version" aria-label="Anchor link for: majordomus-version"><code>majordomus version</code></a></h2>
+<p>Print the version and exit. <code>--version</code> is accepted as a synonym, and <code>version</code> works
+without an installation: it never reads <code>.ai/</code>.</p>
+<p><strong>Reads:</strong> nothing.
+<strong>Writes:</strong> nothing.</p>
+<p><strong>Behaviour:</strong></p>
+<ul>
+<li>Prints <code>majordomus &lt;version&gt;</code> on stdout and exits <code>0</code>.</li>
+<li>The same string is the single source of the version everywhere else, including the
+public site's footer.</li>
+</ul>
+<h2 id="hook-integration-target"><a class="zola-anchor" href="#hook-integration-target" aria-label="Anchor link for: hook-integration-target">Hook integration (target)</a></h2>
+<p><code>init</code> prints these; <code>doctor</code> verifies they are present and executable:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> .git/hooks/pre-commit  (or the file named by core.hooksPath)</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> doctor</span><span class="z-l-16 z-d-16"> |</span><span class="z-l-16 z-d-16">|</span><span class="z-l-15 z-d-14"> exit</span><span class="z-l-4 z-l-i z-d-1 z-d-i"> $</span><span class="z-l-4 z-l-i z-d-1 z-d-i">?</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> .git/hooks/pre-push</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> finish</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-check</span><span class="z-l-16 z-d-16"> |</span><span class="z-l-16 z-d-16">|</span><span class="z-l-15 z-d-14"> exit</span><span class="z-l-4 z-l-i z-d-1 z-d-i"> $</span><span class="z-l-4 z-l-i z-d-1 z-d-i">?</span></span></code></pre>
+<p>Either line may live in a subhook of a dispatching hook instead — <code>doctor</code> looks in
+<code>&lt;hook&gt;.d/</code> as well and names the file it found. A repository that predates Majordomus
+needs no bootstrap flag: <code>finish --check</code> passes while no task is active, so the hooks
+are inert until the first <code>start</code>.</p>
+</article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
+    <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/exit-code-contract/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Exit codes are a contract, and no code means &quot;warn and continue&quot;</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/dispatcher-wiring/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Wiring is found in a hook or in any subhook of the directory that hook dispatches to</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/no-silent-overwrite/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A hand-edited instruction file is never silently overwritten</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/init-refuses/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Installing into a repository that already has an installation is refused</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/scoped-task/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A task is started with a declared file scope and a profile, and only one task is active per checkout</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/consistency-check/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">check reports whether state, scope, blockers and checkpoint age are consistent right now</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/finish-contract/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">finish evaluates the finish contract line by line and refuses when any line is unmet</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/history-ledger-read/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The ledger is readable back as operational history, filtered by task, event and time</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/record-search/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Durable records are searchable literally, across kinds, without an index</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/continuity-reachable/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Every continuity store is proven reachable through its own command, not merely present on disk</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-documents/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The context that applies to a path is composed from the layer&#39;s scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-impact/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/legacy-migration/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A repository on the pre-.ai layout is migrated once, explicitly, with a previewed plan and a verified backup of its local state, and the command is idempotent afterwards</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/skill-check/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, a violation names the file and every reason, and a repository with no skills is reported rather than passed</span></a></li></ul></div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eba8bdbdaccffeee2f6da875de16be16de570775" class="font-mono hover:underline">eba8bdb</a> · inputs <span class="font-mono">4556c4ca0b01</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>

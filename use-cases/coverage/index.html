@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Use-case coverage — Prismatic Majordomus</title>
+<meta name="description" content="Every public command, guaranteed claim and MCP tool against the use cases that name it, run it and carry evidence for it; the policy says which gaps fail.">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/use-cases/coverage/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Use-case coverage — Prismatic Majordomus">
+<meta property="og:description" content="Every public command, guaranteed claim and MCP tool against the use cases that name it, run it and carry evidence for it; the policy says which gaps fail.">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/use-cases/coverage/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="font-medium text-body hover:text-fg-brand">Use cases</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Use-case coverage</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Use-case coverage</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Every public command, guaranteed claim and MCP tool against the use cases that name it, run it and carry evidence for it; the policy says which gaps fail.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="max-w-5xl">
+  <p class="text-base leading-relaxed text-body">Every public command of the registry, every guaranteed claim with a responsibility and every MCP tool the executable projects is a target. For each: how many active use cases name it, how many run it in their scenario, how many carry passing evidence, and what the policy says a gap means. Computed by <code class="font-mono text-heading">majordomus usecase coverage</code> when this site was generated; nothing here is a list somebody maintains.</p>
+  <dl class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+    <div class="flex gap-1.5"><dt class="text-body-subtle">targets</dt><dd class="font-mono text-heading">106</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">covered</dt><dd class="font-mono text-heading">99</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">partial</dt><dd class="font-mono text-heading">0</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">required gaps</dt><dd class="font-mono text-fg-danger-strong">1</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">policy</dt><dd class="font-mono text-heading">commands required · claims advisory · mcp tools advisory</dd></div>
+  </dl>
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Public commands <span class="font-mono text-sm text-body-subtle">26</span></h2>
+  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase text-body-subtle"><tr><th class="px-3 py-2">target</th><th class="px-3 py-2 text-right">use cases</th><th class="px-3 py-2 text-right">executable</th><th class="px-3 py-2 text-right">evidence</th><th class="px-3 py-2">status</th><th class="px-3 py-2">policy</th></tr></thead>
+      <tbody><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/init/" class="text-fg-brand hover:underline">init</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/update/" class="text-fg-brand hover:underline">update</a></td>
+          <td class="px-3 py-2 text-right font-mono">4</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/doctor/" class="text-fg-brand hover:underline">doctor</a></td>
+          <td class="px-3 py-2 text-right font-mono">12</td>
+          <td class="px-3 py-2 text-right font-mono">9</td>
+          <td class="px-3 py-2 text-right font-mono">9</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/watch/" class="text-fg-brand hover:underline">watch</a></td>
+          <td class="px-3 py-2 text-right font-mono">4</td>
+          <td class="px-3 py-2 text-right font-mono">4</td>
+          <td class="px-3 py-2 text-right font-mono">4</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/start/" class="text-fg-brand hover:underline">start</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/context/" class="text-fg-brand hover:underline">context</a></td>
+          <td class="px-3 py-2 text-right font-mono">6</td>
+          <td class="px-3 py-2 text-right font-mono">6</td>
+          <td class="px-3 py-2 text-right font-mono">6</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/checkpoint/" class="text-fg-brand hover:underline">checkpoint</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/handover/" class="text-fg-brand hover:underline">handover</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/check/" class="text-fg-brand hover:underline">check</a></td>
+          <td class="px-3 py-2 text-right font-mono">11</td>
+          <td class="px-3 py-2 text-right font-mono">8</td>
+          <td class="px-3 py-2 text-right font-mono">8</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/finish/" class="text-fg-brand hover:underline">finish</a></td>
+          <td class="px-3 py-2 text-right font-mono">4</td>
+          <td class="px-3 py-2 text-right font-mono">4</td>
+          <td class="px-3 py-2 text-right font-mono">4</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/history/" class="text-fg-brand hover:underline">history</a></td>
+          <td class="px-3 py-2 text-right font-mono">4</td>
+          <td class="px-3 py-2 text-right font-mono">4</td>
+          <td class="px-3 py-2 text-right font-mono">4</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/decision/" class="text-fg-brand hover:underline">decision</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/question/" class="text-fg-brand hover:underline">question</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/prompt/" class="text-fg-brand hover:underline">prompt</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/skills/" class="text-fg-brand hover:underline">skills</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/capture/" class="text-fg-brand hover:underline">capture</a></td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-danger-subtle bg-danger-soft text-fg-danger-strong">gap</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/search/" class="text-fg-brand hover:underline">search</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/doctrine/" class="text-fg-brand hover:underline">doctrine</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/plan/" class="text-fg-brand hover:underline">plan</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/version/" class="text-fg-brand hover:underline">version</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/session/" class="text-fg-brand hover:underline">session</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/knowledge/" class="text-fg-brand hover:underline">knowledge</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/usecase/" class="text-fg-brand hover:underline">usecase</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/rules/" class="text-fg-brand hover:underline">rules</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/migrate/" class="text-fg-brand hover:underline">migrate</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/commands/bench/" class="text-fg-brand hover:underline">bench</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">required</td>
+        </tr></tbody>
+    </table>
+  </div>
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Guaranteed claims <span class="font-mono text-sm text-body-subtle">69</span></h2>
+  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase text-body-subtle"><tr><th class="px-3 py-2">target</th><th class="px-3 py-2 text-right">use cases</th><th class="px-3 py-2 text-right">executable</th><th class="px-3 py-2 text-right">evidence</th><th class="px-3 py-2">status</th><th class="px-3 py-2">policy</th></tr></thead>
+      <tbody><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/policy-parse/" class="text-fg-brand hover:underline">policy-parse</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/profile-validate/" class="text-fg-brand hover:underline">profile-validate</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/wiring-reconciliation/" class="text-fg-brand hover:underline">wiring-reconciliation</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/projection-generation/" class="text-fg-brand hover:underline">projection-generation</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/projection-fingerprint/" class="text-fg-brand hover:underline">projection-fingerprint</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/region-projection/" class="text-fg-brand hover:underline">region-projection</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/dispatcher-wiring/" class="text-fg-brand hover:underline">dispatcher-wiring</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/doctrine-registry/" class="text-fg-brand hover:underline">doctrine-registry</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/doctrine-class-decides/" class="text-fg-brand hover:underline">doctrine-class-decides</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/ledger-integrity/" class="text-fg-brand hover:underline">ledger-integrity</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/blocker-store/" class="text-fg-brand hover:underline">blocker-store</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/prompt-capture/" class="text-fg-brand hover:underline">prompt-capture</a></td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-default bg-neutral-secondary-medium text-heading">gap</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/prompt-assets/" class="text-fg-brand hover:underline">prompt-assets</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/catalogue-resolves/" class="text-fg-brand hover:underline">catalogue-resolves</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/no-silent-overwrite/" class="text-fg-brand hover:underline">no-silent-overwrite</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-budget/" class="text-fg-brand hover:underline">context-budget</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/pointer-integrity/" class="text-fg-brand hover:underline">pointer-integrity</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/no-counts-in-context/" class="text-fg-brand hover:underline">no-counts-in-context</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/retention-caps/" class="text-fg-brand hover:underline">retention-caps</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/scoped-task/" class="text-fg-brand hover:underline">scoped-task</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/git-identity/" class="text-fg-brand hover:underline">git-identity</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/consistency-check/" class="text-fg-brand hover:underline">consistency-check</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/scope-enforcement/" class="text-fg-brand hover:underline">scope-enforcement</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/divergence-label/" class="text-fg-brand hover:underline">divergence-label</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/overlap-report/" class="text-fg-brand hover:underline">overlap-report</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/drift-watch/" class="text-fg-brand hover:underline">drift-watch</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/handover-record/" class="text-fg-brand hover:underline">handover-record</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/no-transcripts/" class="text-fg-brand hover:underline">no-transcripts</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/finish-contract/" class="text-fg-brand hover:underline">finish-contract</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/typed-outcome/" class="text-fg-brand hover:underline">typed-outcome</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-assembly/" class="text-fg-brand hover:underline">context-assembly</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-selection-budget/" class="text-fg-brand hover:underline">context-selection-budget</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-record/" class="text-fg-brand hover:underline">checkpoint-record</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/record-resolution/" class="text-fg-brand hover:underline">record-resolution</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/history-ledger-read/" class="text-fg-brand hover:underline">history-ledger-read</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/record-retention/" class="text-fg-brand hover:underline">record-retention</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/decision-record/" class="text-fg-brand hover:underline">decision-record</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/open-question-gate/" class="text-fg-brand hover:underline">open-question-gate</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/prompt-asset/" class="text-fg-brand hover:underline">prompt-asset</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/record-search/" class="text-fg-brand hover:underline">record-search</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/continuity-reachable/" class="text-fg-brand hover:underline">continuity-reachable</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-documents/" class="text-fg-brand hover:underline">context-documents</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-impact/" class="text-fg-brand hover:underline">context-impact</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/ai-layer-manifest/" class="text-fg-brand hover:underline">ai-layer-manifest</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/local-state-ignored/" class="text-fg-brand hover:underline">local-state-ignored</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/vendored-rule-package/" class="text-fg-brand hover:underline">vendored-rule-package</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/rule-resolution/" class="text-fg-brand hover:underline">rule-resolution</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/bootstrap-chain/" class="text-fg-brand hover:underline">bootstrap-chain</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/legacy-migration/" class="text-fg-brand hover:underline">legacy-migration</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/tool-location-independent/" class="text-fg-brand hover:underline">tool-location-independent</a></td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-default bg-neutral-secondary-medium text-heading">gap</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/derived-not-declared/" class="text-fg-brand hover:underline">derived-not-declared</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/command-surface/" class="text-fg-brand hover:underline">command-surface</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/command-coverage/" class="text-fg-brand hover:underline">command-coverage</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/event-vocabulary/" class="text-fg-brand hover:underline">event-vocabulary</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/worktree-ownership/" class="text-fg-brand hover:underline">worktree-ownership</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/blocker-survives-handover/" class="text-fg-brand hover:underline">blocker-survives-handover</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/project-schema/" class="text-fg-brand hover:underline">project-schema</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/project-status-derived/" class="text-fg-brand hover:underline">project-status-derived</a></td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2 text-right font-mono">3</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/dag-validation/" class="text-fg-brand hover:underline">dag-validation</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/execution-waves/" class="text-fg-brand hover:underline">execution-waves</a></td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/evidence-gates-done/" class="text-fg-brand hover:underline">evidence-gates-done</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/roadmap-derived/" class="text-fg-brand hover:underline">roadmap-derived</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/github-projection/" class="text-fg-brand hover:underline">github-projection</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/provider-projections-one-renderer/" class="text-fg-brand hover:underline">provider-projections-one-renderer</a></td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-default bg-neutral-secondary-medium text-heading">gap</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/use-case-coverage/" class="text-fg-brand hover:underline">use-case-coverage</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/use-case-evidence/" class="text-fg-brand hover:underline">use-case-evidence</a></td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-default bg-neutral-secondary-medium text-heading">gap</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/use-case-impact/" class="text-fg-brand hover:underline">use-case-impact</a></td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-default bg-neutral-secondary-medium text-heading">gap</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/skill-catalogue/" class="text-fg-brand hover:underline">skill-catalogue</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/skill-check/" class="text-fg-brand hover:underline">skill-check</a></td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr></tbody>
+    </table>
+  </div>
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">MCP tools <span class="font-mono text-sm text-body-subtle">11</span></h2>
+  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase text-body-subtle"><tr><th class="px-3 py-2">target</th><th class="px-3 py-2 text-right">use cases</th><th class="px-3 py-2 text-right">executable</th><th class="px-3 py-2 text-right">evidence</th><th class="px-3 py-2">status</th><th class="px-3 py-2">policy</th></tr></thead>
+      <tbody><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_announce</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_capabilities</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_capability</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_get</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_list</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2 text-right font-mono">2</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_peers</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_perf</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2 text-right font-mono">0</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-default bg-neutral-secondary-medium text-heading">gap</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_repository</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_scope</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_scope_classify</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr><tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">majordomus_search</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2 text-right font-mono">1</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">covered</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">advisory</td>
+        </tr></tbody>
+    </table>
+  </div>
+  <p class="mt-8 text-sm text-body">A gap the policy requires fails <code class="font-mono text-heading">doctor</code>, <code class="font-mono text-heading">check</code> and <code class="font-mono text-heading">finish</code>; <code class="font-mono text-heading">majordomus usecase scaffold --missing</code> writes a draft for each. A draft never counts.</p>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eba8bdbdaccffeee2f6da875de16be16de570775" class="font-mono hover:underline">eba8bdb</a> · inputs <span class="font-mono">4556c4ca0b01</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

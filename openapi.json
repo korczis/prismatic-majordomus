@@ -267,7 +267,7 @@
             "description": "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`).",
             "examples": {
               "first-object": {
-                "value": "majordomus://claim/ai-layer-manifest"
+                "value": "majordomus://application/ci-gated-project"
               },
               "repository": {
                 "value": "majordomus://repository"
@@ -364,7 +364,7 @@
             "description": "Only objects of this kind; the kinds present are listed by `repository.info`. A kind\nthe repository does not have is an invalid input, not an empty answer.",
             "examples": {
               "first-kind": {
-                "value": "claim"
+                "value": "application"
               }
             }
           },
@@ -901,7 +901,7 @@
             "description": "Repository-relative, forward slashes; `./` is stripped. An absolute path or a\n`..` segment is an invalid input.",
             "examples": {
               "first-object": {
-                "value": "docs/CLAIMS.yaml"
+                "value": ".ai/repo/applications/ci-gated-project.md"
               },
               "layer-file": {
                 "value": ".ai/manifest.yaml"
