@@ -57,7 +57,7 @@
   {%- for c in r.builtin %}
   {%- set link = [x for x in ex.capabilities if x.id == c.id][0] -%}
   <tr class="align-top">
-    <td class="px-3 py-2"><a href="{{ get_url(path=link.route, trailing_slash=true) }}" class="font-mono text-fg-brand hover:underline">{{ c.id }}</a><p class="mt-1 max-w-md text-xs text-body">{{ c.description }}</p></td>
+    <td class="px-3 py-2"><a href="{{ get_url(path=link.route, trailing_slash=true) }}" class="break-all font-mono text-fg-brand hover:underline">{{ c.id }}</a><p class="mt-1 max-w-md text-xs text-body">{{ c.description }}</p></td>
     <td class="px-3 py-2 font-mono text-xs">{{ c.kind }}</td>
     <td class="px-3 py-2 font-mono text-xs">{% if c.exposure.mcp and c.exposure.mcp.tool %}{{ c.exposure.mcp.tool }}{% elif c.exposure.mcp and c.exposure.mcp.resource %}{{ c.exposure.mcp.resource.uri }}{% else %}—{% endif %}</td>
     <td class="px-3 py-2 font-mono text-xs">{% if c.exposure.http %}{{ c.exposure.http.method }} {{ c.exposure.http.path }}{% else %}—{% endif %}</td>

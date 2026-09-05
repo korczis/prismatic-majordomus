@@ -50,16 +50,19 @@ arbitrary. Most of them were paid for.
    module's file, and every interface, benchmark target, cache behaviour and generated
    document is derived from it (`project.interfaces-are-projections`,
    `project.rust-canonical-declaration`): change the `capability!` block, the declarative
-   file or the schema, never a projection, and run `majordomus generate` so the committed
-   files under `docs/generated/` and the allow-lists under `share/allow/` follow. A new
+   file or the schema, never a projection, and run `just derive` so the committed
+   files under `docs/generated/`, the allow-lists under `share/allow/`, the site's data
+   and the site's registry dataset follow, in the order they depend on each other. A new
    capability's input type implements `BenchmarkCases`, or it does not compile; a request
    that rebuilds canonical state fails `tests/hot_path.rs`; a latency figure in prose
    without a recorded run is refused.
 5. If you changed a file the website reads — `README.md`, `docs/*.md`,
-   `docs/CLAIMS.yaml`, `share/skeleton/**`, `bin/majordomus`, `lib/**` — run
-   `scripts/generate-site-data` and commit the regenerated `site/data/generated/` and
-   `docs/SITE_CLAIMS.md`. CI runs `scripts/generate-site-data --check` and refuses to
-   deploy stale derived files. Never hand-edit a generated file;
+   `docs/CLAIMS.yaml`, `share/skeleton/**`, `share/*.yaml`, `bin/majordomus`, `lib/**`,
+   or anything in the Rust crate — run `just derive` and commit the regenerated
+   `site/data/generated/`, `site/data/registry/`, `docs/generated/`, `docs/SITE_CLAIMS.md`
+   and `docs/PLAN_STATUS.md` with it; `just derive-check` (`scripts/derive-check`) says
+   what is stale, and CI and the Pages workflow run the same script and refuse to deploy
+   stale derived files. Never hand-edit a generated file;
    [`docs/GITHUB_PAGES_ARCHITECTURE.md`](docs/GITHUB_PAGES_ARCHITECTURE.md) lists which
    they are. Renaming a level-2 heading in `README.md` fails the generator on purpose:
    the homepage renders those sections by heading, so update the generator in the same

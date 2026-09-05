@@ -10,7 +10,7 @@
 {%- set current = "benchmarks" -%}{% include "partials/registry-nav.html" %}
 <div class="mt-6 min-w-0">
   <p class="text-lg text-body">Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. <code class="font-mono">majordomus bench coverage</code> computes the same table live, <code class="font-mono">majordomus bench</code> times it, and <code class="font-mono">bench --check</code> compares a run with the accepted baseline of its platform under the policy below.</p>
-  <p class="mt-3 text-sm text-body-subtle">The same matrix as Markdown is <a href="{{ project.repository_url }}/blob/master/docs/generated/benchmarks.md" class="font-mono text-fg-brand hover:underline">docs/generated/benchmarks.md</a>; how to read a measurement is <a href="{{ get_url(path="/docs/performance/", trailing_slash=true) }}" class="text-fg-brand hover:underline">the performance document</a>.</p>
+  <p class="mt-3 text-sm text-body-subtle">The same matrix as Markdown is <a href="{{ project.repository_url }}/blob/master/docs/generated/benchmarks.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/benchmarks.md</a>; how to read a measurement is <a href="{{ get_url(path="/docs/performance/", trailing_slash=true) }}" class="text-fg-brand hover:underline">the performance document</a>.</p>
 
   <h2 id="coverage" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Coverage</h2>
   <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -59,7 +59,7 @@
   </ul>
 
   <h2 id="policy" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Regression policy</h2>
-  <p class="mt-2 text-sm text-body">What <code class="font-mono">bench --check</code> applies, read from <a href="{{ project.repository_url }}/blob/master/{{ b.policy_path }}" class="font-mono text-fg-brand hover:underline">{{ b.policy_path }}</a>: a metric fails when it grows by more than its relative threshold and by at least the absolute floor, and gates only once the run took its minimum samples.</p>
+  <p class="mt-2 text-sm text-body">What <code class="font-mono">bench --check</code> applies, read from <a href="{{ project.repository_url }}/blob/master/{{ b.policy_path }}" class="break-all font-mono text-fg-brand hover:underline">{{ b.policy_path }}</a>: a metric fails when it grows by more than its relative threshold and by at least the absolute floor, and gates only once the run took its minimum samples.</p>
   <div class="mt-3 overflow-x-auto rounded-base border border-default">
     <table class="w-full min-w-[24rem] text-left text-sm">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">metric</th><th class="px-3 py-2">allowed increase</th><th class="px-3 py-2">gates from</th></tr></thead>
@@ -80,7 +80,7 @@
     <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-heading"><code class="font-mono">{{ bl.platform }}</code> <span class="ms-2 font-mono text-xs font-normal text-body-subtle">{{ bl.profile }} profile · {{ bl.results | length }} measurements · {{ bl.finished_at }}</span></summary>
     <div class="border-t border-default px-4 py-3">
       <dl class="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
-        <dt class="text-body-subtle">file</dt><dd class="min-w-0 break-all"><a href="{{ project.repository_url }}/blob/master/{{ bl.path }}" class="font-mono text-fg-brand hover:underline">{{ bl.path }}</a></dd>
+        <dt class="text-body-subtle">file</dt><dd class="min-w-0 break-all"><a href="{{ project.repository_url }}/blob/master/{{ bl.path }}" class="break-all font-mono text-fg-brand hover:underline">{{ bl.path }}</a></dd>
         <dt class="text-body-subtle">host</dt><dd class="font-mono text-heading">{{ bl.provenance.host | default(value="not recorded") }}</dd>
         <dt class="text-body-subtle">build</dt><dd class="font-mono text-heading">{{ bl.provenance.build_profile }} · {{ bl.provenance.os }} {{ bl.provenance.arch }} · majordomus-cli {{ bl.provenance.version }}</dd>
         <dt class="text-body-subtle">commit</dt><dd class="min-w-0 break-all font-mono text-heading">{% if bl.provenance.commit %}<a href="{{ project.repository_url }}/commit/{{ bl.provenance.commit }}" class="text-fg-brand hover:underline">{{ bl.provenance.commit }}</a>{% else %}unknown{% endif %}{% if bl.provenance.dirty %} (dirty tree){% endif %}</dd>

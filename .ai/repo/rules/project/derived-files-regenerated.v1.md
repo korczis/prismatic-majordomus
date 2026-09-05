@@ -21,7 +21,7 @@ A generated file is changed by changing its canonical source and rerunning the g
 
 # Failure behaviour
 
-No command decides this rule; a reviewer does, and a change that violates it is not merged. Where a behavioural case covers part of it, that case is named below.
+No command decides this rule; a reviewer does, and a change that violates it is not merged. The machine-checkable part is `scripts/derive-check`, which CI and the Pages workflow run and which names every stale artifact of either generator; a validator of the wiring itself would have to live in `lib/`, where every installation's `doctor` would carry it without a rule that declares it there, so the wiring is held by the cases named below instead.
 
 # Verification
 

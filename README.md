@@ -366,18 +366,24 @@ Every generated file in the repository comes out of the same executable: `majord
 generate` writes `docs/generated/`, `share/allow/`, the provider bootstraps `AGENTS.md`
 and `CLAUDE.md` (from the policy and the templates), and the site's registry dataset
 `site/data/registry/registry.json`; `majordomus generate --check` says which of them is
-stale, and CI refuses a merge or a deploy from a stale one. The owners of every truth and
-the direction of generation are in
-[ADR 5](.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md);
-the site's [Registry page](https://korczis.github.io/prismatic-majordomus/registry/) is
-rendered from that dataset.
+stale, and CI refuses a merge or a deploy from a stale one. The website's own generator
+consumes two of those files and nothing else of the crate, so `just derive` regenerates
+every derived file of the repository in dependency order and `just derive-check` names
+every stale one, whichever generator owns it. The owners of every truth and the direction
+of generation are in
+[ADR 5](.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md)
+and the graph is drawn in [`docs/GITHUB_PAGES_ARCHITECTURE.md`](docs/GITHUB_PAGES_ARCHITECTURE.md);
+the site's [Executable section](https://korczis.github.io/prismatic-majordomus/registry/) —
+the registry, every module and capability, the command line, the MCP surface, the HTTP API
+and the benchmarks — is rendered from that dataset and from nothing typed by hand.
 
 ```bash
 just build                      # cargo build of apps/majordomus-cli (or: cargo build --manifest-path apps/majordomus-cli/Cargo.toml)
 just mcp                        # MCP on stdio for the client that spawned it; the first one in a repository is the shared server
 just serve                      # the shared server alone: http://127.0.0.1:8741, Swagger UI at /docs, /openapi.json, /mcp
 just capabilities               # every capability and its projections
-just generate-check             # the committed projections are current
+just derive                     # every derived file of the repository, in dependency order
+just derive-check               # every committed derived file is current; exit 10 naming the stale ones
 just bench-coverage             # every operation is a benchmark target; the denominator is the registry's
 just bench-run                  # time every operation: directly, over MCP (a real child), over HTTP (a real socket)
 ```
@@ -388,9 +394,10 @@ with `compose_modules!`, and MCP, HTTP, OpenAPI, Swagger UI, the command line, t
 benchmark targets, the cache behaviour and the generated reference are derived from the
 registry those blocks build. Adding a capability is: define the typed input and output
 (with the input's benchmark cases), write the handler, add the block to its module, run
-`just generate` and `just validate`. There is no step that edits an MCP registry, an
-HTTP router, an OpenAPI document, Swagger, a benchmark inventory or a documentation table,
-because none of those is written by hand. Every externally callable operation is
+`just derive` and `just validate`. There is no step that edits an MCP registry, an
+HTTP router, an OpenAPI document, Swagger, a benchmark inventory, a documentation table or
+a page of the website, because none of those is written by hand: the capability's page,
+its rows on the module, MCP, API and benchmark pages and its links come out of the same run. Every externally callable operation is
 benchmarked through the real transports and every claim about speed is a recorded
 measurement ([`docs/CAPABILITIES.md`](docs/CAPABILITIES.md), ADR 4).
 

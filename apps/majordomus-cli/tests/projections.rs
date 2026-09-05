@@ -739,6 +739,52 @@ fn the_site_dataset_carries_every_surface_and_follows_a_descriptor_mutation() {
         serde_json::to_value(&with_http.http).unwrap(),
         "a description is not a route"
     );
+    // a benchmark policy change: waived, the requirement is reported waived on every
+    // transport, no target is derived, and the benchmark matrix says so; nothing else moves
+    let mut waived_exec = echo::<EchoV2>("Echo, renamed.", CanonicalSchema::of::<EchoV2>(), true);
+    waived_exec.capability.benchmark = BenchmarkPolicy::Waived {
+        reason: majordomus_cli::capability::WaiverReason::ExternalDependency,
+    };
+    let waived = dataset_of(waived_exec);
+    let lines: Vec<_> = waived
+        .benchmarks
+        .coverage
+        .lines
+        .iter()
+        .filter(|l| l.subject == "fixture.echo")
+        .collect();
+    assert!(!lines.is_empty() && lines.iter().all(|l| l.state == CoverageState::Waived));
+    assert!(lines
+        .iter()
+        .all(|l| l.reason.as_deref() == Some("external_dependency")));
+    assert!(!waived
+        .benchmarks
+        .targets
+        .iter()
+        .any(|t| t.id.as_deref() == Some("fixture.echo")));
+    assert_eq!(
+        serde_json::to_value(&waived.http).unwrap(),
+        serde_json::to_value(&renamed.http).unwrap()
+    );
+    assert_eq!(
+        serde_json::to_value(&waived.mcp).unwrap(),
+        serde_json::to_value(&renamed.mcp).unwrap()
+    );
+    let waived_manifest = majordomus_cli::generate::registry_manifest(
+        &CapabilityRegistry::builder()
+            .with_builtin(vec![{
+                let mut e = echo::<EchoV2>("Echo, renamed.", CanonicalSchema::of::<EchoV2>(), true);
+                e.capability.benchmark = BenchmarkPolicy::Waived {
+                    reason: majordomus_cli::capability::WaiverReason::ExternalDependency,
+                };
+                e
+            }])
+            .build()
+            .unwrap(),
+        "test",
+    );
+    assert!(waived_manifest.contains("\"external_dependency\""));
+
     // the registry manifest carries the same descriptor with its source path
     let manifest: Value = serde_json::from_str(&majordomus_cli::generate::registry_manifest(
         &CapabilityRegistry::builder()
