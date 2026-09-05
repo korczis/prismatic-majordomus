@@ -23,6 +23,29 @@ expect_no_grep() {
 # octal permission bits of a file, GNU stat first (BSD stat has no -c and fails), then BSD
 file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 
+# The Rust executable a case drives. MAJORDOMUS_BIN names a prebuilt one (CI hands the
+# artifact of its rust job to a later job this way, a person points at a release build);
+# without it the crate is built once, debug profile, and the target path is printed.
+# Prints the path on stdout and any complaint on stderr (the caller captures stdout).
+# Returns 3 when there is neither cargo nor MAJORDOMUS_BIN, which is the case's cue to skip
+# as the Rust cases always have, and 1 when the build fails or the named executable does
+# not exist, which is a failure and never a skip.
+rust_bin() {
+  local manifest="$ROOT/apps/majordomus-cli/Cargo.toml" log
+  if [ -n "${MAJORDOMUS_BIN:-}" ]; then
+    [ -x "$MAJORDOMUS_BIN" ] || { echo "    MAJORDOMUS_BIN is not an executable: $MAJORDOMUS_BIN" >&2; return 1; }
+    printf '%s' "$MAJORDOMUS_BIN"; return 0
+  fi
+  command -v cargo >/dev/null 2>&1 || return 3
+  log="$(mktemp "${TMPDIR:-/tmp}/mj-rust-bin.XXXXXX")"
+  RUSTFLAGS='' cargo build -q --manifest-path "$manifest" 2>"$log" || { cat "$log" >&2; rm -f "$log"; echo "    cargo build failed" >&2; return 1; }
+  rm -f "$log"
+  printf '%s' "$ROOT/apps/majordomus-cli/target/debug/majordomus"
+}
+# The line a Rust case runs first: the executable into RB, or the skip/failure exit.
+#   RB="$(rust_bin)" || rust_bin_exit $?
+rust_bin_exit() { [ "$1" = 3 ] && { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }; exit 1; }
+
 # restore the seeded policy and profiles from the skeleton after a case mutated them; the
 # files belong to the repository after init, so init itself never rewrites them
 reset_policy() {

@@ -1,3 +1,4 @@
+# majordomus-exclusive: builds the site into site/public of this checkout and runs site-check over it
 # The built site (when zola is present): routes, sections, derived content, prefix, mermaid, and site-check.
 . "$ROOT/test/lib.sh"
 command -v zola >/dev/null || { echo "    zola absent; skipping build test"; exit 0; }

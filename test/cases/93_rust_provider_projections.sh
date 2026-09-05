@@ -5,13 +5,10 @@
 # current to the other, a hand edit is stale to both, and a policy change moves both. When
 # this case fails, two renderers have diverged and one of them is a second source of truth.
 #
-# Skips itself when cargo is absent, as the site cases do for zola.
+# Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the site cases do for zola.
 . "$ROOT/test/lib.sh"
-command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
-MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj93.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }
-RB="$ROOT/apps/majordomus-cli/target/debug/majordomus"
+RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 "$MJ" init >/dev/null

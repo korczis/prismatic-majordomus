@@ -9,9 +9,9 @@
 # the same launcher. No HTTP client is used here (rule project.no-network-no-eval): the
 # socket side is the crate's own suite, tests/mcp_shared.rs, which case 72 and CI run.
 #
-# Skips itself when cargo is absent, as the other Rust cases do.
+# Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
-command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
+[ -n "${MAJORDOMUS_BIN:-}" ] || command -v cargo >/dev/null 2>&1 || { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }
 command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
 LAUNCHER="$ROOT/bin/majordomus-mcp"
 [ -x "$LAUNCHER" ] || { echo "    bin/majordomus-mcp is missing or not executable"; exit 1; }

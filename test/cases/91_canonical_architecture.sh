@@ -8,14 +8,11 @@
 # schema generation, no projection build per request). No HTTP client is used here (rule
 # project.no-network-no-eval): the socket side is the crate's own suite.
 #
-# Skips itself when cargo is absent, as the other Rust cases do.
+# Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
-command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
 command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
-MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj91.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }
-RB="$ROOT/apps/majordomus-cli/target/debug/majordomus"
+RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 # --- the committed projections of this tree are the registry's (generate --check in the root)

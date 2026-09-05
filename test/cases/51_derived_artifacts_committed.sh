@@ -1,3 +1,4 @@
+# majordomus-exclusive: edits docs/PLAN_STATUS.md of this checkout and regenerates the derived files
 # The committed derived artifacts match this repository's canonical files.
 #
 # Every other case that touches the generator runs it inside a fixture, which is right for

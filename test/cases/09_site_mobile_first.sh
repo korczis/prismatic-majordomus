@@ -1,3 +1,4 @@
+# majordomus-exclusive: builds the site into site/public of this checkout
 # The derived site must be mobile-first and responsive. This lints the generated HTML for
 # the constructs that break narrow viewports; it is static, so it catches the causes, not
 # the symptom. Rendered-width checks need a browser and are out of scope for a shell test.

@@ -3,19 +3,14 @@
 # with protocol frames, and asked for what the layer declares. Then the layer is extended
 # with a rule and broken with another, and the executable is asked again.
 #
-# Skips itself when cargo is absent, as the site cases do for zola: a CLI-only change needs
+# Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the site cases do for zola: a CLI-only change needs
 # no Rust toolchain, and CI's rust job runs the crate's own suite on every push.
 . "$ROOT/test/lib.sh"
-command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
-MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
-[ -f "$MANIFEST" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
-# a machine-wide rustflags profile can make a dev build refuse to link; the crate itself
-# sets none, so build with none
+[ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
 # scratch files live outside the repository, so the "nothing changed" check below sees only
 # what the server did
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj72.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }
-RB="$ROOT/apps/majordomus-cli/target/debug/majordomus"
+RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 # the executable reads kinds.yaml and the schemas from the tool distribution at run time
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
