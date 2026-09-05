@@ -108,9 +108,23 @@ pub struct McpArgs {
     /// The transport to serve on
     #[arg(long, value_enum, default_value_t = Transport::Stdio)]
     pub transport: Transport,
+
+    /// Serve this client alone: no shared server, no HTTP, no Swagger UI, no peers, and
+    /// nothing written anywhere. The default is the shared server (below)
+    #[arg(long)]
+    pub standalone: bool,
+
+    /// Interface the shared server binds when this process is the one that starts it
+    #[arg(long, default_value = "127.0.0.1", value_name = "HOST")]
+    pub http_host: String,
+
+    /// Port the shared server binds when this process starts it; when it is taken, a free
+    /// port is used instead and the URL is logged on stderr either way
+    #[arg(long, default_value_t = DEFAULT_PORT, value_name = "PORT")]
+    pub http_port: u16,
 }
 
-/// The default port of `serve`.
+/// The default port of the HTTP projection: `serve`, and the shared server `mcp` starts.
 pub const DEFAULT_PORT: u16 = 8741;
 
 #[derive(Debug, Args)]

@@ -10,6 +10,7 @@ use serde_json::{json, Value};
 
 use crate::capability::{CapabilityError, CapabilityKind, CapabilityRegistry, Context};
 use crate::index::Index;
+use crate::peers::PeerId;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 /// One resource as a client lists it.
@@ -56,6 +57,9 @@ pub struct Tool {
     pub input_schema: Value,
     /// The canonical output schema.
     pub output_schema: Value,
+    /// Does a call leave the process as it found it? Every tool leaves the repository
+    /// untouched; `false` means it changes this process's in-memory state.
+    pub read_only: bool,
 }
 
 /// What a tool call produced: a value, or a refusal with the reason. Refusals are
@@ -102,6 +106,24 @@ impl Surface {
         Surface { ctx }
     }
 
+    /// The same surface, seen from one peer: every call it makes carries that identity,
+    /// which is how `peers.announce` knows who is speaking.
+    pub fn for_peer(&self, peer: PeerId) -> Self {
+        Surface {
+            ctx: Arc::new(self.ctx.for_caller(peer)),
+        }
+    }
+
+    /// The context behind the surface.
+    pub fn context(&self) -> &Arc<Context> {
+        &self.ctx
+    }
+
+    /// The peer this surface speaks for, when it speaks for one.
+    pub fn peer(&self) -> Option<&PeerId> {
+        self.ctx.caller.as_ref()
+    }
+
     /// The index behind the surface.
     pub fn index(&self) -> &Index {
         &self.ctx.index
@@ -121,7 +143,7 @@ impl Surface {
                 continue;
             };
             let (rank, media_type, meta) = match c.kind {
-                CapabilityKind::Query => (
+                CapabilityKind::Query | CapabilityKind::Command => (
                     0,
                     "application/json".to_string(),
                     json!({ "id": c.id, "kind": "query", "provenance": c.provenance }),
@@ -178,7 +200,7 @@ impl Surface {
                     text: object.content.clone(),
                 })
             }
-            CapabilityKind::Query => {
+            CapabilityKind::Query | CapabilityKind::Command => {
                 let value = self
                     .ctx
                     .registry
@@ -207,6 +229,7 @@ impl Surface {
                     id: c.id.to_string(),
                     input_schema: c.input.for_mcp(),
                     output_schema: c.output.for_mcp(),
+                    read_only: c.kind.is_read_only(),
                 })
             })
             .collect()

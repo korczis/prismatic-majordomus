@@ -157,6 +157,8 @@ fn handshake_discovery_and_a_real_round_trip() {
             "majordomus_get",
             "majordomus_list",
             "majordomus_search",
+            "majordomus_announce",
+            "majordomus_peers",
             "majordomus_repository"
         ]
     );
@@ -164,11 +166,17 @@ fn handshake_discovery_and_a_real_round_trip() {
     assert_eq!(list_tool["_meta"]["majordomus"]["id"], "objects.list");
     assert!(list_tool["inputSchema"]["properties"]["kind"].is_object());
     assert!(list_tool["outputSchema"]["properties"]["objects"].is_object());
-    assert!(r[&5]["result"]["tools"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .all(|t| t["annotations"]["readOnlyHint"] == true));
+    // every query is announced read-only; the one command (a peer announcing itself,
+    // this process's memory only) is announced as what it is
+    for t in r[&5]["result"]["tools"].as_array().unwrap() {
+        let expected = t["name"] != "majordomus_announce";
+        assert_eq!(
+            t["annotations"]["readOnlyHint"], expected,
+            "readOnlyHint of {}",
+            t["name"]
+        );
+        assert_eq!(t["annotations"]["destructiveHint"], false);
+    }
 
     let get = &r[&6]["result"];
     assert_eq!(get["isError"], false);

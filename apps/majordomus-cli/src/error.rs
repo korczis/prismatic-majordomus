@@ -128,6 +128,13 @@ pub enum Error {
         reason: String,
     },
 
+    /// The shared server's lease could not be acquired or joined.
+    #[error("lease: {reason}")]
+    Lease {
+        /// What is wrong.
+        reason: String,
+    },
+
     /// No capability has this id.
     #[error("unknown capability: {id} (run: majordomus capabilities list)")]
     CapabilityNotFound {
@@ -163,6 +170,7 @@ impl Error {
             | Error::Io { .. }
             | Error::Transport(_)
             | Error::Http { .. }
+            | Error::Lease { .. }
             | Error::Protocol { .. } => 13,
         }
     }

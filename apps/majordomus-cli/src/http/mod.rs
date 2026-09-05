@@ -3,6 +3,7 @@
 //! loads that document. `router` knows the registry and nothing about sockets; `server`
 //! knows sockets and nothing about capabilities.
 
+pub mod mcp;
 pub mod openapi;
 pub mod router;
 pub mod server;

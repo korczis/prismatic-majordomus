@@ -10,6 +10,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::index::Index;
+use crate::peers::{PeerBoard, PeerId};
 
 use super::model::Capability;
 use super::registry::CapabilityRegistry;
@@ -32,13 +33,43 @@ pub enum CapabilityError {
     Internal(String),
 }
 
-/// What a handler may read: the index of the repository and the registry it belongs to.
-/// Both are immutable for the life of a process.
+/// What a handler may read: the index of the repository, the registry it belongs to, the
+/// board of peers attached to this process, and, when the call came through an MCP
+/// session, which peer made it. Index and registry are immutable for the life of a
+/// process; the board is the one thing that changes, and it lives in memory only.
+#[derive(Clone)]
 pub struct Context {
     /// The index of the repository's objects.
     pub index: Arc<Index>,
     /// The registry the handler belongs to, for introspection capabilities.
     pub registry: Arc<CapabilityRegistry>,
+    /// The peers attached to this process.
+    pub peers: Arc<PeerBoard>,
+    /// The peer this call came from, when it came through an MCP session; `None` for the
+    /// command line and for a plain HTTP request.
+    pub caller: Option<PeerId>,
+}
+
+impl Context {
+    /// A context over an index and a registry, with an empty board and no caller.
+    pub fn new(index: Arc<Index>, registry: Arc<CapabilityRegistry>) -> Self {
+        Context {
+            index,
+            registry,
+            peers: Arc::new(PeerBoard::new()),
+            caller: None,
+        }
+    }
+
+    /// The same context, seen from one peer: what a session hands its handlers.
+    pub fn for_caller(&self, caller: PeerId) -> Self {
+        Context {
+            index: Arc::clone(&self.index),
+            registry: Arc::clone(&self.registry),
+            peers: Arc::clone(&self.peers),
+            caller: Some(caller),
+        }
+    }
 }
 
 /// The JSON boundary of a handler.
@@ -87,7 +118,8 @@ pub struct Executable {
     pub handler: Arc<dyn Handler>,
 }
 
-/// Build an executable capability from its parts. `$I` and `$O` must derive
+/// Build an executable capability from its parts: a query by default, or the kind given
+/// (`kind: CapabilityKind::Command` for one that changes this process's memory). `$I` and `$O` must derive
 /// `schemars::JsonSchema` (and serde); their schemas become the canonical schemas, and
 /// their doc comments the descriptions a client reads. The provenance is the module the
 /// macro is expanded in. Nothing here registers anything: the result is composed
@@ -105,10 +137,28 @@ macro_rules! capability {
         tags: [$($tag:expr),* $(,)?],
         handler: $handler:expr $(,)?
     ) => {
+        $crate::capability! {
+            id: $id, kind: $crate::capability::CapabilityKind::Query, title: $title,
+            description: $description, input: $input, output: $output, stability: $stability,
+            exposure: $exposure, tags: [$($tag),*], handler: $handler,
+        }
+    };
+    (
+        id: $id:expr,
+        kind: $kind:expr,
+        title: $title:expr,
+        description: $description:expr,
+        input: $input:ty,
+        output: $output:ty,
+        stability: $stability:expr,
+        exposure: $exposure:expr,
+        tags: [$($tag:expr),* $(,)?],
+        handler: $handler:expr $(,)?
+    ) => {
         $crate::capability::Executable {
             capability: $crate::capability::Capability {
                 id: $crate::capability::CapabilityId::unchecked($id),
-                kind: $crate::capability::CapabilityKind::Query,
+                kind: $kind,
                 title: String::from($title),
                 description: String::from($description),
                 input: $crate::capability::CanonicalSchema::of::<$input>(),

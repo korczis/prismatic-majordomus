@@ -35,7 +35,7 @@
               ],
               "default": null
             },
-            "description": "Only capabilities of this kind: `query` or `resource`."
+            "description": "Only capabilities of this kind: `query`, `command` or `resource`."
           },
           {
             "name": "exposure",
@@ -263,6 +263,101 @@
         }
       }
     },
+    "/api/v1/peers": {
+      "get": {
+        "operationId": "peers.list",
+        "summary": "List peers",
+        "description": "Every client attached to this shared server: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, and what it announced. In-memory, gone with the process.",
+        "tags": [
+          "peers"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List peers: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeerList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "peers.list",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_peers"
+        }
+      }
+    },
+    "/api/v1/peers/announce": {
+      "post": {
+        "operationId": "peers.announce",
+        "summary": "Announce what this peer is working on",
+        "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+        "tags": [
+          "peers"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnounceInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Announce what this peer is working on: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Peer"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "peers.announce",
+        "x-majordomus-kind": "command",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_announce"
+        }
+      }
+    },
     "/api/v1/repository": {
       "get": {
         "operationId": "repository.info",
@@ -395,6 +490,54 @@
   },
   "components": {
     "schemas": {
+      "AnnounceInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "One line, in the peer's words: the task, the question, the intent."
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it.",
+            "default": []
+          }
+        },
+        "required": [
+          "intent"
+        ],
+        "description": "The input of `peers.announce`: what the calling peer is working on."
+      },
+      "Announcement": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "One line: the task or intent, in the peer's words."
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Repository-relative paths the peer expects to touch; informational, never enforced here."
+          },
+          "at": {
+            "type": "string",
+            "description": "When it was announced, RFC 3339, UTC."
+          }
+        },
+        "required": [
+          "intent",
+          "scope",
+          "at"
+        ],
+        "description": "What a peer said it is working on."
+      },
       "CanonicalSchema": {
         "type": "object",
         "properties": {
@@ -487,11 +630,16 @@
           },
           {
             "type": "string",
+            "const": "command",
+            "description": "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only."
+          },
+          {
+            "type": "string",
             "const": "resource",
             "description": "Declarative content the repository holds: read as it is, never executed."
           }
         ],
-        "description": "What a capability is. Two kinds exist because two semantics exist: something that is\nexecuted with an input and answers with an output, and something that is read."
+        "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository."
       },
       "CapabilityList": {
         "type": "object",
@@ -606,6 +754,31 @@
           "path"
         ],
         "description": "How a capability appears on the command line: the words after `majordomus`."
+      },
+      "ClientInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "`clientInfo.name`: `claude-code`, `codex`, `gemini-cli`, whatever the client sends."
+          },
+          "version": {
+            "type": "string",
+            "description": "`clientInfo.version`."
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`clientInfo.title`, when the client sends one."
+          }
+        },
+        "required": [
+          "name",
+          "version"
+        ],
+        "description": "What a client said about itself in `initialize`."
       },
       "Diagnostic": {
         "type": "object",
@@ -1026,6 +1199,90 @@
         ],
         "description": "One declarative object of the repository's layer, as a client reads it."
       },
+      "Peer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/PeerId",
+            "description": "`p1`, `p2`, ..."
+          },
+          "client": {
+            "$ref": "#/components/schemas/ClientInfo",
+            "description": "The client behind it."
+          },
+          "transport": {
+            "$ref": "#/components/schemas/Transport",
+            "description": "How it is attached."
+          },
+          "connected_at": {
+            "type": "string",
+            "description": "When it attached, RFC 3339, UTC."
+          },
+          "last_seen_seconds_ago": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Seconds since its last message."
+          },
+          "announcement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Announcement"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its announcement, when it made one."
+          }
+        },
+        "required": [
+          "id",
+          "client",
+          "transport",
+          "connected_at",
+          "last_seen_seconds_ago"
+        ],
+        "description": "One peer as the board lists it."
+      },
+      "PeerId": {
+        "type": "string",
+        "description": "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server."
+      },
+      "PeerList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many peers are attached, the caller included."
+          },
+          "caller": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeerId"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The caller's own peer id, when the call came through an MCP session."
+          },
+          "peers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Peer"
+            },
+            "description": "The peers, in attachment order; `p1` started the server."
+          }
+        },
+        "required": [
+          "count",
+          "peers"
+        ],
+        "description": "The answer of `peers.list`: every client attached to this shared server."
+      },
       "RepositoryInfo": {
         "type": "object",
         "properties": {
@@ -1366,6 +1623,21 @@
           "cli_commands"
         ],
         "description": "The registry counted: by source, kind, stability and projection."
+      },
+      "Transport": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "stdio",
+            "description": "The owner's own client, on the process's stdin and stdout."
+          },
+          {
+            "type": "string",
+            "const": "http",
+            "description": "MCP over HTTP at `/mcp`: a `majordomus mcp` bridge, or a client speaking it directly."
+          }
+        ],
+        "description": "How a peer reached the server."
       }
     }
   },
@@ -1374,7 +1646,8 @@
     "infrastructure": [
       "/",
       "/openapi.json",
-      "/docs"
+      "/docs",
+      "/mcp"
     ],
     "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body"
   }

@@ -8,11 +8,12 @@ use serde_json::Value;
 use crate::capability;
 use crate::index::{RepositoryInfo, State};
 use crate::model::{Diagnostic, Object, Provenance as ObjectProvenance};
+use crate::peers::{Peer, PeerId};
 
 use super::handler::{CapabilityError, Context, Executable};
 use super::model::{
-    Capability, CliExposure, Exposure, HttpExposure, HttpMethod, McpExposure, McpResource,
-    Stability,
+    Capability, CapabilityKind, CliExposure, Exposure, HttpExposure, HttpMethod, McpExposure,
+    McpResource, Stability,
 };
 use super::registry::Summary;
 
@@ -307,7 +308,7 @@ fn objects_search(ctx: &Context, input: SearchInput) -> Result<SearchResult, Cap
 #[serde(deny_unknown_fields)]
 /// The input of `capabilities.list`: optional filters by kind and by projection.
 pub struct CapabilitiesInput {
-    /// Only capabilities of this kind: `query` or `resource`.
+    /// Only capabilities of this kind: `query`, `command` or `resource`.
     #[serde(default)]
     pub kind: Option<String>,
     /// Only capabilities exposed through this projection: `mcp`, `http` or `cli`.
@@ -332,11 +333,12 @@ fn capabilities_list(
 ) -> Result<CapabilityList, CapabilityError> {
     let kind = match input.kind.as_deref() {
         None => None,
-        Some("query") => Some(super::model::CapabilityKind::Query),
-        Some("resource") => Some(super::model::CapabilityKind::Resource),
+        Some("query") => Some(CapabilityKind::Query),
+        Some("command") => Some(CapabilityKind::Command),
+        Some("resource") => Some(CapabilityKind::Resource),
         Some(other) => {
             return Err(CapabilityError::InvalidInput(format!(
-                "kind '{other}' is not query or resource"
+                "kind '{other}' is not query, command or resource"
             )))
         }
     };
@@ -388,6 +390,65 @@ fn capabilities_describe(
         .ok_or_else(|| CapabilityError::NotFound(format!("unknown capability: {}", input.id)))
 }
 
+// ---------------------------------------------------------------- peers.list
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// The answer of `peers.list`: every client attached to this shared server.
+pub struct PeerList {
+    /// How many peers are attached, the caller included.
+    pub count: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The caller's own peer id, when the call came through an MCP session.
+    pub caller: Option<PeerId>,
+    /// The peers, in attachment order; `p1` started the server.
+    pub peers: Vec<Peer>,
+}
+
+fn peers_list(ctx: &Context, _: Empty) -> Result<PeerList, CapabilityError> {
+    let peers = ctx.peers.list();
+    Ok(PeerList {
+        count: peers.len(),
+        caller: ctx.caller.clone(),
+        peers,
+    })
+}
+
+// ---------------------------------------------------------------- peers.announce
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `peers.announce`: what the calling peer is working on.
+pub struct AnnounceInput {
+    /// One line, in the peer's words: the task, the question, the intent.
+    pub intent: String,
+    /// Repository-relative paths the peer expects to touch. Informational: other peers
+    /// read it to avoid a collision; nothing here enforces it.
+    #[serde(default)]
+    pub scope: Vec<String>,
+}
+
+fn peers_announce(ctx: &Context, input: AnnounceInput) -> Result<Peer, CapabilityError> {
+    let Some(caller) = &ctx.caller else {
+        return Err(CapabilityError::Refused(
+            "announce needs an MCP session: this call came through an interface with no peer identity (call the majordomus_announce tool)".into(),
+        ));
+    };
+    if input.intent.trim().is_empty() {
+        return Err(CapabilityError::InvalidInput(
+            "argument 'intent' is required and must not be blank".into(),
+        ));
+    }
+    let scope: Vec<String> = input
+        .scope
+        .into_iter()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+    ctx.peers
+        .announce(caller, input.intent.trim(), scope)
+        .ok_or_else(|| CapabilityError::Internal(format!("peer {caller} is not attached")))
+}
+
 // ---------------------------------------------------------------- composition
 
 fn mcp(tool: &str) -> Option<McpExposure> {
@@ -399,6 +460,12 @@ fn mcp(tool: &str) -> Option<McpExposure> {
 fn get(path: &str) -> Option<HttpExposure> {
     Some(HttpExposure {
         method: HttpMethod::Get,
+        path: path.into(),
+    })
+}
+fn post(path: &str) -> Option<HttpExposure> {
+    Some(HttpExposure {
+        method: HttpMethod::Post,
         path: path.into(),
     })
 }
@@ -487,6 +554,29 @@ pub fn all() -> Vec<Executable> {
             },
             tags: ["introspection"],
             handler: capabilities_describe,
+        },
+        capability! {
+            id: "peers.list",
+            title: "List peers",
+            description: "Every client attached to this shared server: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, and what it announced. In-memory, gone with the process.",
+            input: Empty,
+            output: PeerList,
+            stability: Stability::BehaviorallyVerified,
+            exposure: Exposure { mcp: mcp("majordomus_peers"), http: get("/api/v1/peers"), cli: None },
+            tags: ["peers", "coordination"],
+            handler: peers_list,
+        },
+        capability! {
+            id: "peers.announce",
+            kind: CapabilityKind::Command,
+            title: "Announce what this peer is working on",
+            description: "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+            input: AnnounceInput,
+            output: Peer,
+            stability: Stability::BehaviorallyVerified,
+            exposure: Exposure { mcp: mcp("majordomus_announce"), http: post("/api/v1/peers/announce"), cli: None },
+            tags: ["peers", "coordination"],
+            handler: peers_announce,
         },
     ]
 }

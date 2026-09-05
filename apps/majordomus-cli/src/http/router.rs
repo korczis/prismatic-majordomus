@@ -1,7 +1,7 @@
 //! Routing and binding, transport-neutral: a request in, a response out. Every route
-//! under `/api/v1/` is a capability with an HTTP exposure; the three infrastructure
-//! routes (`/`, `/openapi.json`, `/docs`) are the projection's own and are documented as
-//! such. Nothing else exists.
+//! under `/api/v1/` is a capability with an HTTP exposure; the infrastructure routes
+//! (`/`, `/openapi.json`, `/docs`, and `/mcp` when the router serves a shared server) are
+//! the projection's own and are documented as such. Nothing else exists.
 
 use std::sync::Arc;
 
@@ -11,18 +11,21 @@ use serde_json::{json, Value};
 
 use crate::capability::{CapabilityError, Context, HttpMethod};
 
+use super::mcp::McpEndpoint;
 use super::{openapi, swagger};
 
 /// A request as the router sees it: method, path without query, decoded query pairs,
-/// and the body.
+/// headers, and the body.
 #[derive(Debug, Clone)]
 pub struct Request {
-    /// `GET`, `POST`, ... as received.
+    /// `GET`, `POST`, ... as received (a `HEAD` arrives as `GET`).
     pub method: String,
     /// The path without the query string.
     pub path: String,
     /// The query pairs, percent-decoded, in order.
     pub query: Vec<(String, String)>,
+    /// Header names and values as received; looked up case-insensitively.
+    pub headers: Vec<(String, String)>,
     /// The body, raw.
     pub body: Vec<u8>,
 }
@@ -53,8 +56,31 @@ impl Request {
             method: method.to_string(),
             path,
             query,
+            headers: Vec::new(),
             body,
         }
+    }
+
+    /// The same request with its headers.
+    pub fn with_headers(mut self, headers: Vec<(String, String)>) -> Self {
+        self.headers = headers;
+        self
+    }
+
+    /// A header value, by case-insensitive name.
+    ///
+    /// ```
+    /// use majordomus_cli::http::Request;
+    /// let r = Request::parse_target("POST", "/mcp", vec![])
+    ///     .with_headers(vec![("Mcp-Session-Id".into(), "abc".into())]);
+    /// assert_eq!(r.header("mcp-session-id"), Some("abc"));
+    /// assert_eq!(r.header("x-none"), None);
+    /// ```
+    pub fn header(&self, name: &str) -> Option<&str> {
+        self.headers
+            .iter()
+            .find(|(k, _)| k.eq_ignore_ascii_case(name))
+            .map(|(_, v)| v.as_str())
     }
 }
 
@@ -67,6 +93,25 @@ pub struct Response {
     pub content_type: &'static str,
     /// The body.
     pub body: String,
+    /// Further headers (`Mcp-Session-Id`); the server adds `Content-Length` and `Cache-Control`.
+    pub headers: Vec<(String, String)>,
+}
+
+impl Response {
+    /// A response with no further headers.
+    pub fn new(status: u16, content_type: &'static str, body: String) -> Self {
+        Response {
+            status,
+            content_type,
+            body,
+            headers: Vec::new(),
+        }
+    }
+
+    /// The JSON error body every failure of the projection uses.
+    pub fn error(status: u16, code: &str, message: &str) -> Self {
+        error_response(status, code, message)
+    }
 }
 
 /// The body of every error response.
@@ -86,22 +131,32 @@ pub struct ErrorDetail {
 }
 
 #[derive(Clone)]
-/// Routes requests to capabilities by the registry's HTTP exposures, and serves the projection's own three routes.
+/// Routes requests to capabilities by the registry's HTTP exposures, and serves the
+/// projection's own routes. Cheap to clone: every worker thread holds one.
 pub struct Router {
     ctx: Arc<Context>,
     version: &'static str,
     /// The OpenAPI document, rendered once: the registry is immutable for the process.
     openapi: Arc<std::sync::OnceLock<Result<String, String>>>,
+    /// MCP over HTTP at `/mcp`, when this router serves a shared server.
+    mcp: Option<Arc<McpEndpoint>>,
 }
 
 impl Router {
-    /// A router over a loaded context.
+    /// A router over a loaded context, without `/mcp`.
     pub fn new(ctx: Arc<Context>, version: &'static str) -> Self {
         Router {
             ctx,
             version,
             openapi: Arc::new(std::sync::OnceLock::new()),
+            mcp: None,
         }
+    }
+
+    /// The same router, serving MCP over HTTP at `/mcp` through `endpoint`.
+    pub fn with_mcp(mut self, endpoint: Arc<McpEndpoint>) -> Self {
+        self.mcp = Some(endpoint);
+        self
     }
 
     fn openapi(&self) -> Response {
@@ -109,33 +164,42 @@ impl Router {
             openapi::document(&self.ctx.registry, self.version).map(|d| openapi::render(&d))
         });
         match rendered {
-            Ok(text) => Response {
-                status: 200,
-                content_type: "application/json",
-                body: text.clone(),
-            },
+            Ok(text) => Response::new(200, "application/json", text.clone()),
             Err(e) => error_response(500, "internal", e),
         }
     }
 
-    /// Answer one request.
+    /// Answer one request: an infrastructure route, `/mcp`, or a capability.
     pub fn handle(&self, req: &Request) -> Response {
         match (req.method.as_str(), req.path.as_str()) {
-            ("GET", "/") => json_response(
-                200,
-                &json!({
+            ("GET", "/") => {
+                let mut index = json!({
                     "name": "majordomus",
                     "version": self.version,
+                    "root": self.ctx.index.repository.root,
                     "openapi": "/openapi.json",
-                    "docs": "/docs",
+                    "docs": swagger::DOCS_PATH,
                     "capabilities": "/api/v1/capabilities",
-                }),
-            ),
+                    "peers": "/api/v1/peers",
+                });
+                if self.mcp.is_some() {
+                    index["mcp"] = json!(super::mcp::PATH);
+                }
+                json_response(200, &index)
+            }
             ("GET", "/openapi.json") => self.openapi(),
-            ("GET", "/docs") => Response {
-                status: 200,
-                content_type: "text/html; charset=utf-8",
-                body: swagger::page(),
+            ("GET", "/docs") => Response::new(
+                200,
+                "text/html; charset=utf-8",
+                swagger::page().to_string(),
+            ),
+            (_, "/mcp") => match &self.mcp {
+                Some(endpoint) => endpoint.handle(req),
+                None => error_response(
+                    404,
+                    "not_found",
+                    "this server serves no MCP over HTTP; `majordomus mcp` and `majordomus serve` do, at /mcp",
+                ),
             },
             _ => self.capability(req),
         }
@@ -235,11 +299,11 @@ impl Router {
 }
 
 fn json_response(status: u16, v: &Value) -> Response {
-    Response {
+    Response::new(
         status,
-        content_type: "application/json",
-        body: serde_json::to_string_pretty(v).unwrap_or_else(|_| v.to_string()),
-    }
+        "application/json",
+        serde_json::to_string_pretty(v).unwrap_or_else(|_| v.to_string()),
+    )
 }
 
 fn error_response(status: u16, code: &str, message: &str) -> Response {
@@ -249,11 +313,11 @@ fn error_response(status: u16, code: &str, message: &str) -> Response {
             message: message.into(),
         },
     };
-    Response {
+    Response::new(
         status,
-        content_type: "application/json",
-        body: serde_json::to_string_pretty(&body).unwrap_or_default(),
-    }
+        "application/json",
+        serde_json::to_string_pretty(&body).unwrap_or_default(),
+    )
 }
 
 /// `%XX` and `+` decoding; a malformed escape is kept as it is.

@@ -78,8 +78,9 @@ impl fmt::Display for CapabilityId {
     }
 }
 
-/// What a capability is. Two kinds exist because two semantics exist: something that is
-/// executed with an input and answers with an output, and something that is read.
+/// What a capability is. Three kinds exist because three semantics exist: something that
+/// is executed and changes nothing, something that is executed and changes this process's
+/// own memory, and something that is read. Nothing of any kind writes to the repository.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -87,8 +88,30 @@ impl fmt::Display for CapabilityId {
 pub enum CapabilityKind {
     /// Executable and read-only: a typed handler, an input schema, an output schema.
     Query,
+    /// Executable with an effect on this process's in-memory state and nowhere else (a
+    /// peer announcing itself): a typed handler, bound to `POST` over HTTP, and announced
+    /// to MCP clients as not read-only.
+    Command,
     /// Declarative content the repository holds: read as it is, never executed.
     Resource,
+}
+
+impl CapabilityKind {
+    /// Is a capability of this kind called, with a handler, rather than read?
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityKind;
+    /// assert!(CapabilityKind::Query.is_executable() && CapabilityKind::Command.is_executable());
+    /// assert!(!CapabilityKind::Resource.is_executable());
+    /// ```
+    pub fn is_executable(self) -> bool {
+        !matches!(self, CapabilityKind::Resource)
+    }
+
+    /// Does a call of this kind leave the process as it found it?
+    pub fn is_read_only(self) -> bool {
+        !matches!(self, CapabilityKind::Command)
+    }
 }
 
 /// Where a capability stands, in the repository's own vocabulary for claims. A capability

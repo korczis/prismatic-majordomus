@@ -213,6 +213,14 @@ impl Builder {
                     });
                     continue;
                 }
+                (CapabilityKind::Command, false) => {
+                    errors.push(RegistryError::Shape {
+                        id: id.clone(),
+                        provenance: prov.clone(),
+                        reason: "a command needs a handler".into(),
+                    });
+                    continue;
+                }
                 (CapabilityKind::Resource, true) => {
                     errors.push(RegistryError::Shape {
                         id: id.clone(),
@@ -335,6 +343,33 @@ impl Builder {
                     reason: "a resource is read, not called: only an MCP resource exposure applies"
                         .into(),
                 });
+            }
+            if c.kind == CapabilityKind::Command {
+                if c.exposure
+                    .mcp
+                    .as_ref()
+                    .is_some_and(|m| m.resource.is_some())
+                {
+                    errors.push(RegistryError::Shape {
+                        id: id.clone(),
+                        provenance: prov.clone(),
+                        reason: "a command is called, not read: it has no MCP resource exposure"
+                            .into(),
+                    });
+                }
+                if let Some(http) = &c.exposure.http {
+                    if http.method != HttpMethod::Post {
+                        errors.push(RegistryError::InvalidExposure {
+                            id: id.clone(),
+                            provenance: prov.clone(),
+                            projection: "HTTP".into(),
+                            reason: format!(
+                                "a command changes state and is bound to POST, not {}",
+                                http.method.as_str()
+                            ),
+                        });
+                    }
+                }
             }
             registry.entries.insert(c.id.clone(), entry);
         }

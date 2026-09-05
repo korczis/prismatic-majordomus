@@ -76,10 +76,7 @@ fn context(root: &Path) -> Arc<Context> {
         .with_index(&index)
         .build()
         .unwrap();
-    Arc::new(Context {
-        index: Arc::new(index),
-        registry: Arc::new(registry),
-    })
+    Arc::new(Context::new(Arc::new(index), Arc::new(registry)))
 }
 
 fn benches(c: &mut Criterion) {

@@ -115,10 +115,7 @@ impl App {
             .build()
             .map_err(|errors| Error::Registry { errors })?;
         tracing::info!(capabilities = registry.len(), "registry built");
-        let context = Arc::new(Context {
-            index: Arc::new(index),
-            registry: Arc::new(registry),
-        });
+        let context = Arc::new(Context::new(Arc::new(index), Arc::new(registry)));
         Ok(App {
             repository,
             share,
