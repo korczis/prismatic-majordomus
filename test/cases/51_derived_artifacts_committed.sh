@@ -15,15 +15,21 @@ command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 # --- the committed generation is in sync with the canonical sources
 expect_exit 0 "$ROOT/scripts/generate-site-data" --check
 expect_grep 'site data: in sync'
+# --- and so is every projection of the registry: the one gate over both generators, where the
+#     executable can be built (the Rust suite and CI hold it where it cannot be skipped)
+if command -v cargo >/dev/null 2>&1; then
+  expect_exit 0 "$ROOT/scripts/derive-check"
+  expect_grep 'every derived artifact is current'
+fi
 
 # --- and stays in sync across a commit. A derived artifact that records anything about the
 #     commit it lands in is stale the moment it lands; regenerating cannot fix that, it only
-#     moves the stale value forward. This is the property, not the symptom.
+#     moves the stale value forward. This is the property, not the symptom. source.json used
+#     to be exempt: it carried the commit for the footer, so the generator was never idempotent
+#     on a clean tree. The commit is now a fact of the build (site/data/build.json, written by
+#     site-build and never committed), and no derived file is exempt.
 for f in "$ROOT"/site/data/generated/*.json "$ROOT/docs/SITE_CLAIMS.md" "$ROOT/docs/PLAN_STATUS.md"; do
   [ -f "$f" ] || continue
-  case "${f##*/}" in
-    source.json) continue ;;   # carries the commit deliberately, and --check compares only its input hash
-  esac
   cur="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
   [ -n "$cur" ] || continue
   if grep -qF -- "${cur:0:7}" "$f"; then

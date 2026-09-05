@@ -102,6 +102,70 @@ if [ -f "$PUB/openapi.json" ]; then
   [ -n "$ext" ] && [ "$extrel" != "$ext" ] && [ -f "$PUB${extrel%/}/index.html" ] || { bad api "externalDocs.url '$ext' does not land on a built route"; apibad=1; }
 else bad api "site/public/openapi.json missing"; apibad=1; fi
 [ "$apibad" = 0 ] && ok api "/docs/api/ renders every operation, tag and schema; /openapi.json is the committed document; externalDocs lands on the page"
+# 13i. the Rust executable's reference: every module and every capability of the registry
+# dataset (site/data/registry/registry.json, written by the executable) has its page, no page
+# exists without its entry (an orphan route is a capability that was removed and whose page
+# was not), the routes the site generator derived (executable.json) name the same ids the
+# dataset holds (the two projections come from one `generate` run), every capability page
+# links its module and its operation on the API reference, the MCP page lists every tool,
+# the command-line page renders every command, the benchmarks page every target, and no
+# template, generator or navigation file names a capability by hand.
+RDS="$SITE/data/registry/registry.json"; EXJ="$SITE/data/generated/executable.json"; regbad=0
+if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
+  [ "$(jq -r '.source' "$EXJ")" = "docs/generated/registry.json" ] || { bad registry "executable.json does not name docs/generated/registry.json as its source"; regbad=1; }
+  [ "$(jq -S '[.registry.builtin[].id] | sort' "$RDS")" = "$(jq -S '[.capabilities[].id] | sort' "$EXJ")" ] \
+    || { bad registry "the capability ids of site/data/registry/registry.json and executable.json differ (one generate pass wrote them?)"; regbad=1; }
+  [ "$(jq -S '[.registry.modules[] | select(.source=="builtin") | .id] | sort' "$RDS")" = "$(jq -S '[.modules[].id] | sort' "$EXJ")" ] \
+    || { bad registry "the module ids of site/data/registry/registry.json and executable.json differ"; regbad=1; }
+  for r in "" executable/ modules/ capabilities/ cli/ mcp/ benchmarks/; do [ -f "$PUB/registry/${r}index.html" ] || { bad registry "no page at /registry/$r"; regbad=1; }; done
+  jq -r '.modules[] | [.slug, .route] | @tsv' "$EXJ" | while IFS="$(printf '\t')" read -r slug route; do
+    [ -f "$PUB/registry/modules/$slug/index.html" ] || { echo "no page for module $slug"; continue; }
+  done | while read -r l; do bad registry "$l"; done
+  jq -r '.capabilities[] | [.id, .slug, .module_route, .api_anchor // "", .tool // ""] | @tsv' "$EXJ" | while IFS="$(printf '\t')" read -r id slug mroute anchor tool; do
+    pg="$PUB/registry/capabilities/$slug/index.html"
+    [ -f "$pg" ] || { echo "no page for capability $id"; continue; }
+    grep -q "$PREFIX$mroute\"" "$pg" || echo "capability page $id does not link its module $mroute"
+    if [ -n "$anchor" ]; then
+      grep -qF "$PREFIX$anchor\"" "$pg" || echo "capability page $id does not link its operation $anchor"
+      grep -qF "id=\"${anchor#/docs/api/#}\"" "$PUB/docs/api/index.html" || echo "operation anchor ${anchor#/docs/api/#} of $id is not on /docs/api/"
+    fi
+    [ -z "$tool" ] || grep -qF ">$tool<" "$pg" || echo "capability page $id does not show its MCP tool $tool"
+    grep -qF "$PREFIX/registry/benchmarks/" "$pg" || echo "capability page $id does not link the benchmarks page"
+  done | while read -r l; do bad registry "$l"; done
+  # no orphan route: every page under modules/ and capabilities/ is an entry of the dataset
+  for d in "$PUB"/registry/modules/*/; do slug="$(basename "$d")"; jq -e --arg s "$slug" '.modules[] | select(.slug==$s)' "$EXJ" >/dev/null || { bad registry "orphan route /registry/modules/$slug/ names no module of the registry"; regbad=1; }; done
+  for d in "$PUB"/registry/capabilities/*/; do slug="$(basename "$d")"; jq -e --arg s "$slug" '.capabilities[] | select(.slug==$s)' "$EXJ" >/dev/null || { bad registry "orphan route /registry/capabilities/$slug/ names no capability of the registry"; regbad=1; }; done
+  # the surfaces render what the dataset holds
+  for t in $(jq -r '.mcp.tools[].name' "$RDS"); do grep -qF ">$t<" "$PUB/registry/mcp/index.html" || { bad registry "MCP tool $t is not on /registry/mcp/"; regbad=1; }; done
+  for u in $(jq -r '.mcp.resources[].uri' "$RDS"); do grep -qF ">$u<" "$PUB/registry/mcp/index.html" || { bad registry "MCP resource $u is not on /registry/mcp/"; regbad=1; }; done
+  jq -r '[.cli | .. | objects | select(has("path")) | .path | join("-")] | .[]' "$RDS" | while read -r cmd; do
+    grep -qF "id=\"cmd-$cmd\"" "$PUB/registry/cli/index.html" || echo "command $cmd is not on /registry/cli/"
+  done | while read -r l; do bad registry "$l"; done
+  nt="$(jq '.benchmarks.targets | length' "$RDS")"; np="$(grep -o 'id="target-' "$PUB/registry/benchmarks/index.html" | wc -l | tr -d ' ')"
+  [ "$nt" = "$np" ] || { bad registry "/registry/benchmarks/ renders $np targets, the dataset holds $nt"; regbad=1; }
+  for k in $(jq -r '.benchmarks.coverage.lines[].subject' "$RDS" | sort -u); do grep -qF ">$k<" "$PUB/registry/benchmarks/index.html" || { bad registry "coverage subject $k is not on /registry/benchmarks/"; regbad=1; }; done
+  for pl in $(jq -r '.benchmarks.baselines[].platform' "$RDS"); do grep -qF ">$pl<" "$PUB/registry/benchmarks/index.html" || { bad registry "baseline $pl is not on /registry/benchmarks/"; regbad=1; }; done
+  # nothing enumerates the registry by hand: a capability id or a module route typed into a
+  # template, the site generator, its jq programs or the navigation would be a second list
+  for id in $(jq -r '.registry.builtin[].id' "$RDS"); do
+    hit="$(grep -l -F -- "$id" "$SITE"/templates/*.html "$SITE"/templates/partials/*.html "$ROOT"/scripts/generate-site-data "$ROOT"/scripts/lib/*.jq "$SITE"/data/nav.toml 2>/dev/null || true)"
+    [ -z "$hit" ] || { bad registry "capability $id is named by hand in: $(printf '%s' "$hit" | tr '\n' ' ')"; regbad=1; }
+  done
+  grep -qE '/registry/(modules|capabilities)/[a-z]' "$SITE/data/nav.toml" && { bad registry "nav.toml enumerates a module or capability route by hand"; regbad=1; }
+  [ "$regbad" = 0 ] && ok registry "$(jq '.counts.modules' "$EXJ") modules and $(jq '.counts.capabilities' "$EXJ") capabilities: every one has its page and no page is an orphan; the CLI, MCP and benchmark pages render the dataset; nothing names a capability by hand"
+else bad registry "site/data/registry/registry.json or site/data/generated/executable.json missing"; fi
+# 13j. the build's provenance is served at /build.json and is this build's: the commit is
+# HEAD, the input hash is the one the data carries, the fingerprints are the dataset's. A page
+# that names another commit than the one deployed is how a stale deploy hides.
+if [ -f "$PUB/build.json" ]; then
+  bj="$PUB/build.json"; bbad=0
+  head_commit="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
+  [ "$(jq -r .commit "$bj")" = "$head_commit" ] || { bad build "/build.json names commit $(jq -r .commit "$bj" | cut -c1-12), HEAD is ${head_commit:0:12}"; bbad=1; }
+  [ "$(jq -r .source_hash "$bj")" = "$(jq -r .source_hash "$SITE/data/generated/source.json")" ] || { bad build "/build.json input hash differs from source.json"; bbad=1; }
+  [ "$(jq -r .registry_fingerprint "$bj")" = "$(jq -r .registry.fingerprint "$SITE/data/registry/registry.json")" ] || { bad build "/build.json registry fingerprint differs from the dataset"; bbad=1; }
+  grep -qF "$(jq -r .commit "$bj" | cut -c1-12)" "$PUB/index.html" || { bad build "the homepage footer does not carry the built commit"; bbad=1; }
+  [ "$bbad" = 0 ] && ok build "/build.json: commit ${head_commit:0:12}$([ "$(jq -r .dirty "$bj")" = true ] && printf ' (dirty tree)'), input hash $(jq -r .source_hash "$bj" | cut -c1-12), registry fingerprint $(jq -r .registry_fingerprint "$bj" | cut -c1-12)"
+else bad build "site/public/build.json missing (site-build writes it)"; fi
 # 13b. every tile has a page: profiles, claims, statuses, responsibilities, commands
 for slug in $(jq -r '.profiles[].slug' "$SITE/data/generated/profiles.json"); do [ -f "$PUB/profiles/$slug/index.html" ] || bad tiles "no page for profile $slug"; done
 for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do [ -f "$PUB/guarantees/$id/index.html" ] || bad tiles "no page for claim $id"; done

@@ -299,6 +299,35 @@ pub enum Provenance {
     },
 }
 
+/// Where this crate lives in the repository, so that a builtin descriptor's Rust module
+/// path names a file a reader can open. A fact of the tree's layout; the site generator
+/// refuses a path that does not exist.
+pub const CRATE_DIR: &str = "apps/majordomus-cli";
+
+impl Provenance {
+    /// The repository-relative path of the source: a declarative object's file, or the
+    /// Rust file a builtin descriptor was composed in, by the crate's layout
+    /// (`majordomus_cli::capability::builtin::objects` is
+    /// `apps/majordomus-cli/src/capability/builtin/objects.rs`).
+    ///
+    /// ```
+    /// use majordomus_cli::capability::Provenance;
+    /// let p = Provenance::Builtin { module: "majordomus_cli::capability::builtin::objects".into() };
+    /// assert_eq!(p.source_path(), "apps/majordomus-cli/src/capability/builtin/objects.rs");
+    /// ```
+    pub fn source_path(&self) -> String {
+        match self {
+            Provenance::Builtin { module } => {
+                let inner = module
+                    .strip_prefix("majordomus_cli::")
+                    .unwrap_or(module.as_str());
+                format!("{CRATE_DIR}/src/{}.rs", inner.replace("::", "/"))
+            }
+            Provenance::Declarative { path, .. } => path.clone(),
+        }
+    }
+}
+
 impl fmt::Display for Provenance {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

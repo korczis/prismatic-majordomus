@@ -1,0 +1,28 @@
+{% extends "page.html" %}
+{#- The builtin modules, one card each. Data: data/registry/registry.json (the executable's)
+    and the routes of data/generated/executable.json. -#}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = get_section(path="registry/_index.md") -%}
+{%- set reg = load_data(path="data/registry/registry.json") -%}
+{%- set ex = load_data(path="data/generated/executable.json") -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+{%- set current = "modules" -%}{% include "partials/registry-nav.html" %}
+<ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {%- for m in ex.modules -%}
+  {%- set full = [x for x in reg.registry.modules if x.id == m.id][0] -%}
+  <li><a href="{{ get_url(path=m.route, trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+    <span class="flex flex-wrap items-baseline gap-x-2"><code class="font-mono text-lg font-semibold text-heading">{{ m.id }}</code><span class="text-sm text-body">{{ full.title }}</span></span>
+    <span class="mt-2 text-sm text-body">{{ full.description }}</span>
+    <span class="mt-3 flex flex-wrap gap-1">{% for c in m.capabilities %}<code class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">{{ c.id }}</code>{% endfor %}</span>
+    <span class="mt-3 break-all font-mono text-xs text-body-subtle">{{ m.source_path }}{% if full.stability %} · {{ full.stability }}{% endif %}</span>
+  </a></li>
+  {%- endfor -%}
+</ul>
+<p class="mt-8 max-w-3xl text-sm text-body-subtle">The declarative modules — one per kind of the layer, one resource per object — are the kinds table on the <a href="{{ get_url(path=ex.routes.overview, trailing_slash=true) }}" class="text-fg-brand hover:underline">registry page</a>; their objects are the repository's, not the executable's.</p>
+</div>
+{% endblock content %}
