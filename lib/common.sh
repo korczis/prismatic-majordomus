@@ -205,7 +205,7 @@ mj_layout_table() {
   done
 }
 
-mj_git() { git -C "$MJ_ROOT" "$@"; }
+mj_git() { mj_count git; git -C "$MJ_ROOT" "$@"; }
 mj_git_repo_id() { mj_git rev-parse --git-common-dir 2>/dev/null | { read -r d; case "$d" in /*) printf '%s' "$d" ;; *) printf '%s/%s' "$MJ_ROOT" "$d" ;; esac; }; }
 mj_git_branch()  { mj_git symbolic-ref --short HEAD 2>/dev/null || printf 'DETACHED'; }
 # --verify, because plain `rev-parse HEAD` in a repository with no commits prints the
@@ -236,6 +236,53 @@ mj_git_touched() {
 
 # ---------------------------------------------------------------- misc
 mj_now()    { date -u +%Y-%m-%dT%H:%M:%SZ; }
+
+# ---------------------------------------------------------------- timing
+# Phase timing and work counters, on only when MJ_TIMING is set: every phase a command
+# declares is written as one line to a file created here, in the shell that reports at
+# exit, never inside a command substitution. The clock is EPOCHREALTIME where bash has
+# it, otherwise perl, otherwise whole seconds, and the report says which. Off, the cost
+# of a phase or a count is one test.
+MJ_TIMING_FILE=""; MJ_TIMING_T0=""
+if [ -n "${EPOCHREALTIME:-}" ]; then MJ_TIMING_CLOCK=epochrealtime
+elif command -v perl >/dev/null 2>&1; then MJ_TIMING_CLOCK=perl
+else MJ_TIMING_CLOCK=seconds; fi
+mj_ms() {
+  case "$MJ_TIMING_CLOCK" in
+    epochrealtime) local t="${EPOCHREALTIME/./}"; printf '%s' "${t%???}" ;;
+    perl) perl -MTime::HiRes=time -e 'printf("%d", time() * 1000)' ;;
+    *) printf '%s000' "$(date +%s)" ;;
+  esac
+}
+mj_timing_on() { [ -n "${MJ_TIMING:-}" ]; }
+if mj_timing_on && [ -z "${MJ_TIMING_FILE:-}" ]; then
+  MJ_TIMING_FILE="$(mktemp "${TMPDIR:-/tmp}/mj.timing.XXXXXX")"; export MJ_TIMING_FILE
+  MJ_TIMING_T0="$(mj_ms)"
+fi
+# t0="$(mj_phase_begin <name>)" ... mj_phase_end <name> "$t0"
+mj_phase_begin() { mj_timing_on || return 0; mj_ms; }
+mj_phase_end() {
+  mj_timing_on || return 0
+  [ -n "${2:-}" ] || return 0
+  printf 'phase\t%s\t%s\n' "$1" "$(( $(mj_ms) - $2 ))" >> "$MJ_TIMING_FILE"
+}
+# mj_count <name>: one unit of a kind of work worth counting (a parse, a git call)
+mj_count() { mj_timing_on || return 0; printf 'count\t%s\t1\n' "$1" >> "$MJ_TIMING_FILE"; }
+# The report: phases ranked by time, counters summed, on stderr so the command's own
+# output is untouched, in the same shape whatever the command was.
+mj_timing_report() {
+  mj_timing_on || return 0
+  [ -n "$MJ_TIMING_FILE" ] && [ -f "$MJ_TIMING_FILE" ] || return 0
+  local tab; tab="$(printf '\t')"
+  {
+    printf 'TIMING clock=%s total=%s ms\n' "$MJ_TIMING_CLOCK" "$(( $(mj_ms) - MJ_TIMING_T0 ))"
+    awk -F'\t' '$1=="phase" { t[$2]+=$3; n[$2]++ } END { for (k in t) printf "phase\t%d\t%d\t%s\n", t[k], n[k], k }' "$MJ_TIMING_FILE" \
+      | sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "phase  %8d ms  %4d x  %s\n", $2, $3, $4 }'
+    awk -F'\t' '$1=="count" { c[$2]+=$3 } END { for (k in c) printf "count\t%d\t%s\n", c[k], k }' "$MJ_TIMING_FILE" \
+      | sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "count  %8d     %s\n", $2, $3 }'
+  } >&2
+  rm -f "$MJ_TIMING_FILE"
+}
 mj_now_compact() { date -u +%Y%m%dT%H%M%SZ; }
 mj_rand16() { od -An -N8 -tx1 /dev/urandom | tr -d ' \n'; }
 mj_sha256() {
@@ -293,6 +340,7 @@ mj_epoch() {
 # lists of maps (`- key: value` + indented keys), inline lists `[a, b]`, quotes,
 # comments. Tabs, anchors, multi-line scalars and flow maps are rejected.
 mj_yaml_flatten() {
+  mj_count yaml_flatten
   awk '
   function trim(s){ sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
   function unq(v){
@@ -581,7 +629,7 @@ mj_load_profile() {
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
-mj_cleanup() { rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" 2>/dev/null; }
+mj_cleanup() { mj_timing_report; rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" 2>/dev/null; }
 trap mj_cleanup EXIT
 
 # ---------------------------------------------------------------- records

@@ -169,8 +169,8 @@ mj_doctrine_skip() { mj_info "$@"; }
 # Runs every doctrine that names <command> in enforced_by. Records which ran, and how
 # each ended, so that a command can report doctrines that were never reached.
 mj_doctrine_dispatch() {
-  local cmd="$1" i=0 id val cls file fn rc f0
-  mj_doctrine_load
+  local cmd="$1" i=0 id val cls file fn rc f0 t0
+  t0="$(mj_phase_begin doctrine:load)"; mj_doctrine_load; mj_phase_end doctrine:load "$t0"
   MJ_DOCTRINE_RAN=""; MJ_DOCTRINE_RESULTS=""; MJ_DOCTRINE_CMD="$cmd"
   while mj_doc_row "$i"; do
     case ",$MJ_DR_EB," in *",$cmd,"*) ;; *) i=$((i+1)); continue ;; esac
@@ -186,7 +186,9 @@ mj_doctrine_dispatch() {
       MJ_DOCTRINE_ERRORS=$((MJ_DOCTRINE_ERRORS+1)); i=$((i+1)); continue
     fi
     MJ_DOCTRINE_ID="$id"; MJ_DOCTRINE_CLASS="$cls"; MJ_DOCTRINE_SKIPPED=0; f0="$MJ_FAILS"
+    t0="$(mj_phase_begin "validate:$val")"
     rc=0; "$fn" || rc=$?
+    mj_phase_end "validate:$val" "$t0"
     if [ "$MJ_DOCTRINE_SKIPPED" = 1 ]; then MJ_DOCTRINE_RESULTS="$MJ_DOCTRINE_RESULTS $id:skipped"
     elif [ "$MJ_FAILS" -gt "$f0" ]; then MJ_DOCTRINE_RESULTS="$MJ_DOCTRINE_RESULTS $id:fail"
     else MJ_DOCTRINE_RESULTS="$MJ_DOCTRINE_RESULTS $id:pass"; fi
