@@ -122,3 +122,41 @@ must be regenerated and committed with it, exactly as `docs/generated/` already 
 of a capability change; `just generate` does both, and CI names the stale file. A
 bootstrap is never edited: the policy or the template is, and `majordomus generate
 providers` is run. The site has one page that cannot disagree with the executable.
+
+## Addendum, 2026-09-05: the stages, the boundary, and the site as a full view
+
+The decision above gave the site one page of the registry. Finishing it raised two
+questions this ADR had left open, and the answers are recorded here rather than in a new
+ADR because they are the same decision carried through, not another one.
+
+**Where the two generators meet.** The site generator (`scripts/generate-site-data`) does
+not read Rust, and the executable does not know Zola. The boundary is data the executable
+already writes: `docs/generated/registry.json`, a projection that depends on code alone,
+gives the site generator the ids, modules and source files it turns into routes and links
+(`site/data/generated/executable.json`, the content stubs under `site/content/registry/`);
+`site/data/registry/registry.json`, the dataset this ADR introduced, now carries everything
+a page says about the executable — every descriptor in full, the modules, the command line
+as clap declares it, the MCP tools and resources, the HTTP routes, the benchmark targets,
+coverage, policy and accepted baselines — and the templates read it and restate nothing.
+A projection used as an interface between stages is still a projection: `generate --check`
+refuses a manifest that no longer says what the declarations say, and the manifest is among
+the site's inputs, so the site's hash moves with the code.
+
+**The order, and why it is three stages.** The dataset lists every object of the layer,
+and the documents the site generator derives (`docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md`)
+are objects of the layer. So `scripts/derive` runs `majordomus generate` (the code-only
+projections), then the site generator, then `majordomus generate` again for the projections
+that read the index. No stage reads its own output, stage C's outputs are read only by the
+site build, and a second run on a clean tree changes nothing. `scripts/derive-check` is the
+one read-only gate over both generators; CI and the Pages workflow call it.
+
+**What the site owns of it.** The routes, the slug rule (`.` as `-`, shared with the API
+reference's anchors), the grouping of claims by the path of their implementation, and the
+narrative pages (the crate README, `docs/MCP.md`) it projects. Nothing else: a capability
+id typed into a template, a generator or `nav.toml` is refused by `scripts/site-check`.
+
+**The commit left the derived data.** `source.json` carried the commit for the footer, which
+made the site generator non-idempotent on a clean tree and exempted one file from the rule
+every other derived file is held to. The commit is a fact of the build: `scripts/site-build`
+writes `build.json`, served at `/build.json`, and nothing committed names the commit it
+lands in.

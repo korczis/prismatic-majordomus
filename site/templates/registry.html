@@ -1,8 +1,24 @@
 {% extends "page.html" %}
-{% block body %}
+{#- The registry, seen whole. Every figure is data/registry/registry.json, which the Rust
+    executable writes from its own registry and index (`majordomus generate site`) and
+    `generate --check` refuses stale; the routes are data/generated/executable.json, which
+    the site generator derives from the registry manifest. Nothing here is typed. -#}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
 {%- set reg = load_data(path="data/registry/registry.json") -%}
+{%- set ex = load_data(path="data/generated/executable.json") -%}
 {%- set r = reg.registry -%}{%- set ix = reg.index -%}
-<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert">{{ page.content | safe }}</article>
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+{%- set current = "overview" -%}{% include "partials/registry-nav.html" %}
+
+<article class="format mt-6 max-w-3xl break-words dark:format-invert [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal">
+<p>The registry is the one model every interface of the Rust executable answers from. <code>majordomus mcp</code>, the HTTP routes, the OpenAPI document, the <code>capabilities</code> commands, the generated reference and every page under this route are projections of the same entries. This page is rendered from <code>site/data/registry/registry.json</code>, which <code>majordomus generate site</code> writes and <code>majordomus generate --check</code> compares in CI; the routes come from <code>docs/generated/registry.json</code> through <code>scripts/generate-site-data</code>. Nothing below is typed by hand: a number that disagrees with the executable is a stale generated file, and the build refuses it.</p>
+</article>
 
 <div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
   <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
@@ -11,26 +27,37 @@
     <dt class="text-body-subtle">index fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">{{ ix.fingerprint }}</dd>
     <dt class="text-body-subtle">generator</dt><dd class="font-mono text-heading">{{ reg.generator.id }} {{ reg.generator.version }} · dataset {{ reg.schema }}</dd>
     <dt class="text-body-subtle">layer</dt><dd class="font-mono text-heading">{{ ix.layer_schema }} · index {{ ix.state }}</dd>
+    <dt class="text-body-subtle">routes from</dt><dd class="min-w-0 break-all font-mono text-heading">{{ ex.source }} · {{ ex.registry_schema }}</dd>
   </dl>
   <p class="mt-3 text-sm text-body">The registry fingerprint hashes the index fingerprint (every object's path and content) and every capability descriptor in id order. Same tree and same executable, same fingerprint; it is the cache key every executor answer is scoped by.</p>
 </div>
 
 <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-  {{ <card kicker="capabilities" title={r.summary.total ~ " in the registry"} text={r.summary.builtin ~ " builtin (composed in Rust), " ~ r.summary.declarative ~ " declarative (one resource per object of the layer), in " ~ r.summary.modules ~ " modules."} /> }}
-  {{ <card kicker="mcp" title={r.summary.mcp_tools ~ " tools · " ~ r.summary.mcp_resources ~ " resources"} text={"Every tool is a capability with an <code>mcp.tool</code> exposure; every object of the layer is a resource at <code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>."} /> }}
-  {{ <card kicker="http" title={r.summary.http_routes ~ " routes"} text={"The same capabilities as HTTP, and the OpenAPI 3.1 document under <code>/openapi.json</code>; " ~ r.summary.cli_commands ~ " are also command-line subcommands."} /> }}
-  {{ <card kicker="benchmarks" title={r.summary.benchmark_required ~ " required · " ~ r.summary.benchmark_waived ~ " waived"} text={"Every executable capability is a benchmark target through every transport; a case is a compile-time obligation of its input type. " ~ r.summary.cached ~ " are cached by the executor."} /> }}
+  {{ <linkcard href={get_url(path=ex.routes.capabilities, trailing_slash=true)} kicker="capabilities" title={r.summary.total ~ " in the registry"} text={r.summary.builtin ~ " builtin (composed in Rust), " ~ r.summary.declarative ~ " declarative (one resource per object of the layer), in " ~ r.summary.modules ~ " modules."} /> }}
+  {{ <linkcard href={get_url(path=ex.routes.mcp, trailing_slash=true)} kicker="mcp" title={r.summary.mcp_tools ~ " tools · " ~ r.summary.mcp_resources ~ " resources"} text={"Every tool is a capability with an <code>mcp.tool</code> exposure; every object of the layer is a resource at <code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>."} /> }}
+  {{ <linkcard href={get_url(path=ex.routes.http, trailing_slash=true)} kicker="http" title={r.summary.http_routes ~ " routes"} text={"The same capabilities as HTTP, and the OpenAPI 3.1 document under <code>/openapi.json</code>; " ~ r.summary.cli_commands ~ " are also command-line subcommands."} /> }}
+  {{ <linkcard href={get_url(path=ex.routes.benchmarks, trailing_slash=true)} kicker="benchmarks" title={r.summary.benchmark_required ~ " required · " ~ r.summary.benchmark_waived ~ " waived"} text={"Every executable capability is a benchmark target through every transport; a case is a compile-time obligation of its input type. " ~ r.summary.cached ~ " are cached by the executor."} /> }}
 </div>
 
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Modules</h2>
+<p class="mt-2 max-w-3xl text-sm text-body">The builtin modules compose the executable's own capabilities; a declarative module is a kind of the layer, one resource per object, listed under Kinds below.</p>
+<ul class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+  {%- for m in ex.modules -%}
+  {%- set full = [x for x in r.modules if x.id == m.id][0] -%}
+  <li><a href="{{ get_url(path=m.route, trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="flex flex-wrap items-baseline gap-x-2"><code class="font-mono font-semibold text-heading">{{ m.id }}</code><span class="text-sm text-body">{{ full.title }}</span></span><span class="mt-2 text-sm text-body">{{ full.description }}</span><span class="mt-3 font-mono text-xs text-body-subtle">{{ full.capabilities }} capabilities{% if full.stability %} · {{ full.stability }}{% endif %}</span></a></li>
+  {%- endfor -%}
+</ul>
+
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Executable capabilities</h2>
-<p class="mt-2 max-w-3xl text-sm text-body">Composed in Rust, each exposed as the table says. The id is the <code>operationId</code> of the OpenAPI document and the <code>_meta.majordomus.id</code> of the MCP tool.</p>
+<p class="mt-2 max-w-3xl text-sm text-body">Composed in Rust, each exposed as the table says. The id is the <code>operationId</code> of the OpenAPI document and the <code>_meta.majordomus.id</code> of the MCP tool; each links to its own page with schemas, policies, provenance and claims.</p>
 <div class="mt-4 overflow-x-auto rounded-base border border-default">
 <table class="w-full text-left text-sm">
   <thead class="bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">id</th><th class="px-3 py-2">kind</th><th class="px-3 py-2">MCP tool</th><th class="px-3 py-2">HTTP</th><th class="px-3 py-2">CLI</th><th class="px-3 py-2">stability</th><th class="px-3 py-2">benchmark</th><th class="px-3 py-2">cache</th></tr></thead>
   <tbody class="divide-y divide-default">
   {%- for c in r.builtin %}
+  {%- set link = [x for x in ex.capabilities if x.id == c.id][0] -%}
   <tr class="align-top">
-    <td class="px-3 py-2"><code class="font-mono text-heading">{{ c.id }}</code><p class="mt-1 max-w-md text-xs text-body">{{ c.description }}</p></td>
+    <td class="px-3 py-2"><a href="{{ get_url(path=link.route, trailing_slash=true) }}" class="break-all font-mono text-fg-brand hover:underline">{{ c.id }}</a><p class="mt-1 max-w-md text-xs text-body">{{ c.description }}</p></td>
     <td class="px-3 py-2 font-mono text-xs">{{ c.kind }}</td>
     <td class="px-3 py-2 font-mono text-xs">{% if c.exposure.mcp and c.exposure.mcp.tool %}{{ c.exposure.mcp.tool }}{% elif c.exposure.mcp and c.exposure.mcp.resource %}{{ c.exposure.mcp.resource.uri }}{% else %}—{% endif %}</td>
     <td class="px-3 py-2 font-mono text-xs">{% if c.exposure.http %}{{ c.exposure.http.method }} {{ c.exposure.http.path }}{% else %}—{% endif %}</td>
@@ -59,7 +86,7 @@
 
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provider projections</h2>
 <p class="mt-2 max-w-3xl text-sm text-body">The bootstraps the policy declares, rendered by <code>majordomus generate providers</code> and checked in CI. None of them is a source.</p>
-<ul class="mt-4 grid gap-2 text-sm sm:grid-cols-3">{% for pr in reg.projections %}<li class="rounded border border-default px-3 py-2"><code class="font-mono text-heading">{{ pr.target }}</code> <span class="text-body">← {{ pr.provider }} · {{ pr.mode }}</span>{% if pr.always_loaded %} <span class="ms-1 rounded bg-brand-softer px-1 font-mono text-xs text-fg-brand-strong">always loaded</span>{% endif %}</li>{% endfor %}</ul>
+<ul class="mt-4 grid gap-2 text-sm sm:grid-cols-3">{% for pr in reg.projections %}<li class="min-w-0 rounded border border-default px-3 py-2"><code class="break-all font-mono text-heading">{{ pr.target }}</code> <span class="text-body">← {{ pr.provider }} · {{ pr.mode }}</span>{% if pr.always_loaded %} <span class="ms-1 rounded bg-brand-softer px-1 font-mono text-xs text-fg-brand-strong">always loaded</span>{% endif %}</li>{% endfor %}</ul>
 
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objects of the layer</h2>
 <p class="mt-2 max-w-3xl text-sm text-body">{{ ix.objects | length }} objects, each an MCP resource. Grouped by kind; the path is where the object lives in the repository.</p>
@@ -73,4 +100,5 @@
   </ul>
 </details>
 {%- endfor %}
-{% endblock body %}
+</div>
+{% endblock content %}

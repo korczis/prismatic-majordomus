@@ -1,0 +1,14 @@
+{#- The claims that speak about one surface or entity of the executable: `claims` is a list of
+    {id, status, route, test} from data/generated/executable.json, attached by the path of each
+    claim's implementation. Rendered with the claim's own text from capabilities.json. -#}
+{%- set caps_all = load_data(path="data/generated/capabilities.json") -%}
+{%- if claims | length > 0 -%}
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{{ heading }}</h2>
+<p class="mt-2 max-w-3xl text-sm text-body">Attached by the file that implements each claim; every one links to its page with the implementation and the test that proves it.</p>
+<ul class="mt-4 grid gap-3 sm:grid-cols-2">
+  {%- for cl in claims -%}
+  {%- set full = [x for x in caps_all.claims if x.id == cl.id] -%}
+  <li><a href="{{ get_url(path=cl.route, trailing_slash=true) }}" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={cl.status} /> }} <span class="ms-1 break-all font-mono text-xs text-body-subtle">{{ cl.id }}</span></span><span class="text-sm text-heading">{% if full | length > 0 %}{{ full[0].claim }}{% else %}{{ cl.id }}{% endif %}</span>{% if cl.test %}<span class="mt-auto break-all font-mono text-xs text-body-subtle">test: {{ cl.test }}</span>{% endif %}</a></li>
+  {%- endfor -%}
+</ul>
+{%- endif -%}

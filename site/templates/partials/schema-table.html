@@ -1,0 +1,31 @@
+{#- One JSON Schema as a table of its top-level properties, then the schema itself. `schema` is
+    the canonical schema object of a capability's input or output as the registry holds it;
+    `label` names the side. Nothing is summarised: what the table cannot show, the JSON does. -#}
+{%- set req = schema.required | default(value=[]) -%}
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">{{ label }}{% if schema.title %} · {{ schema.title }}{% endif %}</h3>
+  {%- if schema.description %}<p class="mt-1 text-sm text-body">{{ schema.description }}</p>{% endif -%}
+  {%- if schema.properties -%}
+  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[28rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody>
+      {%- for name, prop in schema.properties -%}
+      <tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">{{ name }}</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">{% if prop.type %}{% if prop.type is string %}{{ prop.type }}{% else %}{{ prop.type | join(sep=" | ") }}{% endif %}{% elif "$ref" in prop %}reference{% elif prop.anyOf %}one of {{ prop.anyOf | length }}{% else %}object{% endif %}{% if prop.enum %} · {{ prop.enum | join(sep=", ") }}{% endif %}</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">{% if name in req %}yes{% else %}no{% endif %}</td>
+        <td class="px-3 py-2 text-body">{% if prop.description %}{{ prop.description }}{% endif %}{% if "default" in prop %} <span class="font-mono text-xs text-body-subtle">default {{ prop.default | json_encode }}</span>{% endif %}</td>
+      </tr>
+      {%- endfor -%}
+      </tbody>
+    </table>
+  </div>
+  {%- else -%}
+  <p class="mt-2 text-sm text-body-subtle">No properties{% if label == "input" %}: the capability takes no input{% endif %}.</p>
+  {%- endif -%}
+  <details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading">{{ schema | json_encode(pretty=true) }}</pre></div>
+  </details>
+</div>
