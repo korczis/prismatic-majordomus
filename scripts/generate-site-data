@@ -1043,9 +1043,15 @@ GEN_T0="$(mj_phase_begin "gen:docs_index_from_docs_README.")"
 # here; site-check requires a route for every entry in docs.json.
 DOCS="$(awk '/^## Reference files/{exit} /^\| \[`/{print}' "$ROOT/docs/README.md" | sed -E 's/^\| \[`([^`]+)`\]\(([^)]+)\) \| ([^|]+) \| ([^|]+) \|$/\2|\3|\4/' | grep -vE '^\|' \
   | jq -Rn '[inputs | split("|") | {path: (.[0] | ltrimstr("../")), audience: (.[1]|gsub("^ +| +$";"")), summary: (.[2]|gsub("^ +| +$";""))}]')"
-# the route each document gets, computed once, here, by the rule above
+# the route each document gets, computed once, here, by the rule above. The three documents
+# this run writes into docs/ itself (below, near the end) are routed whether or not they are
+# on disk yet: their absence means this is the first run in a tree that has none, not that
+# they have no page, and deciding a route by the presence of our own output makes the first
+# pass disagree with every later one — which is exactly what --check then reports as drift.
+GENERATED_DOCS="SITE_CLAIMS.md PLAN_STATUS.md PAGES_STATUS.md"
 DOC_ROUTES="$(printf '%s' "$DOCS" | jq -r '.[].path' | grep -E '^[A-Z_]+\.md$' | while read -r p; do
-  n="${p%.md}"; [ -f "$ROOT/docs/$n.md" ] || continue
+  if [ ! -f "$ROOT/docs/$p" ]; then case " $GENERATED_DOCS " in *" $p "*) ;; *) continue ;; esac; fi
+  n="${p%.md}"
   printf '%s\t/docs/%s/\n' "$p" "$(doc_slug "$n")"
 done | jq -Rn '[inputs | split("\t") | {key: .[0], value: .[1]}] | from_entries')"
 printf '%s' "$DOCS" | jq --argjson routes "$DOC_ROUTES" '{schema:1, docs: [.[] | . + {route: ($routes[.path] // null)}]}' > "$OUT/docs.json"

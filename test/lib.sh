@@ -9,6 +9,9 @@ expect_exit() {
     return 1
   fi
 }
+expect_file() {
+  [ -f "$1" ] || { printf '    expected the file %s, which the run did not produce\n' "$1"; return 1; }
+}
 expect_grep() {
   local pat="$1" src="${2:--}"
   if [ "$src" = "-" ]; then grep -qE -- "$pat" <<<"$LAST_OUT" || { printf '    expected /%s/ in output:\n%s\n' "$pat" "$LAST_OUT"; return 1; }

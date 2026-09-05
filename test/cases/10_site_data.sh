@@ -14,8 +14,11 @@ jq -e '.claims | all(.status == "guaranteed" and .test == null | not)' "$T/site/
 jq -e '.principles | length >= 8' "$T/site/data/generated/lifecycle.json" >/dev/null
 jq -e '.diagrams.lifecycle.mermaid | contains("no_match")' "$T/site/data/generated/diagrams.json" >/dev/null
 # derived content exists, has front matter, and projected GitHub-native syntax
-[ -f "$T/site/content/docs/cli.md" ]; expect_grep '^source = "docs/CLI.md"' "$T/site/content/docs/cli.md"
-expect_grep '<div class="overflow-x-auto">' "$T/site/content/docs/cli.md"
+# CLI.md is projected under a slug of its own: /docs/cli/ is the per-command tree, so the
+# specification cannot also live there (doc_slug, CLI_SPEC_SLUG in the generator)
+expect_file "$T/site/content/docs/cli-specification.md"
+expect_grep '^source = "docs/CLI.md"' "$T/site/content/docs/cli-specification.md"
+expect_grep '<div class="overflow-x-auto">' "$T/site/content/docs/cli-specification.md"
 # --check passes when in sync, fails after a canonical edit
 expect_exit 0 "$T/scripts/generate-site-data" --check
 sed -i.bak 's/^effort: high$/effort: xhigh/' "$T/share/skeleton/profiles/debugging.yaml"; rm -f "$T/share/skeleton/profiles/debugging.yaml.bak"
