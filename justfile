@@ -86,7 +86,7 @@ describe id *args: build
 validate: build
     "{{rust_bin}}" capabilities validate
 
-# Regenerate docs/generated/ and share/allow/ from the registry and the schemas.
+# Regenerate every projection: docs/generated/, share/allow/, AGENTS.md/CLAUDE.md/... from the policy, site/data/registry/ from the registry.
 [group('registry')]
 generate: build
     "{{rust_bin}}" generate
@@ -204,6 +204,6 @@ site-build:
 site-serve:
     scripts/site-serve
 
-# Every derived file in one pass: the registry's projections, the provider files, the site data.
+# Every derived file in one pass, in dependency order: site data first (it writes docs the index reads), then generate (registry projections, provider files, site/data/registry/).
 [group('site')]
-derive: generate update site-data
+derive: site-data generate
