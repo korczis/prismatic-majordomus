@@ -1,0 +1,1774 @@
+{
+  "schema": "majordomus/benchmark-result/v1",
+  "finished_at": "2026-09-05T04:49:50Z",
+  "profile": "full",
+  "provenance": {
+    "commit": "1acda1d58673103063054cd14d8b337cd6b417e3",
+    "dirty": false,
+    "build_profile": "debug",
+    "os": "macos",
+    "arch": "aarch64",
+    "version": "0.1.0",
+    "registry_fingerprint": "5f705b58e95eaec6d634b1ffbdba75b30e8804a22e8bcd027b2dd2e1e48f7871"
+  },
+  "results": [
+    {
+      "key": "capabilities.describe|direct|repository-info",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.describe",
+        "module": "capabilities",
+        "transport": "direct",
+        "case": "repository-info",
+        "input": {
+          "id": "repository.info"
+        },
+        "cache": {
+          "policy": "disabled"
+        }
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 29.167,
+        "p50_us": 30.125,
+        "p90_us": 33.083,
+        "p95_us": 43.167,
+        "p99_us": 77.75,
+        "max_us": 91.875,
+        "mean_us": 32.41417500000001,
+        "stddev_us": 8.728972546318094
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "capabilities.describe|mcp|repository-info",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.describe",
+        "module": "capabilities",
+        "transport": "mcp",
+        "case": "repository-info",
+        "input": {
+          "id": "repository.info"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "tool": "majordomus_capability"
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 149.375,
+        "p50_us": 176.792,
+        "p90_us": 224.041,
+        "p95_us": 249.666,
+        "p99_us": 294.959,
+        "max_us": 374.584,
+        "mean_us": 185.63124000000013,
+        "stddev_us": 31.665052388278152
+      }
+    },
+    {
+      "key": "capabilities.describe|http|repository-info",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.describe",
+        "module": "capabilities",
+        "transport": "http",
+        "case": "repository-info",
+        "input": {
+          "id": "repository.info"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "route": [
+          "GET",
+          "/api/v1/capability"
+        ]
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 275.125,
+        "p50_us": 382.458,
+        "p90_us": 484.292,
+        "p95_us": 503.833,
+        "p99_us": 620.667,
+        "max_us": 759.667,
+        "mean_us": 391.58543500000013,
+        "stddev_us": 72.54847791529313
+      }
+    },
+    {
+      "key": "capabilities.list|direct|all",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "direct",
+        "case": "all",
+        "input": {
+          "kind": null,
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        }
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 1298.042,
+        "p50_us": 1518.042,
+        "p90_us": 1979.542,
+        "p95_us": 2136.0,
+        "p99_us": 2393.875,
+        "max_us": 2556.75,
+        "mean_us": 1630.45003,
+        "stddev_us": 251.0209024825604
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "capabilities.list|direct|all",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "direct",
+        "case": "all",
+        "input": {
+          "kind": null,
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        }
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 598.125,
+        "p50_us": 669.166,
+        "p90_us": 755.542,
+        "p95_us": 782.083,
+        "p99_us": 878.833,
+        "max_us": 1043.458,
+        "mean_us": 686.6887749999999,
+        "stddev_us": 57.06980351214095
+      },
+      "handler_invocations": 0
+    },
+    {
+      "key": "capabilities.list|direct|queries",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "direct",
+        "case": "queries",
+        "input": {
+          "kind": "query",
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        }
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 63.083,
+        "p50_us": 65.916,
+        "p90_us": 68.666,
+        "p95_us": 70.5,
+        "p99_us": 94.458,
+        "max_us": 119.5,
+        "mean_us": 66.78874500000002,
+        "stddev_us": 5.940858893289336
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "capabilities.list|direct|queries",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "direct",
+        "case": "queries",
+        "input": {
+          "kind": "query",
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        }
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 9.167,
+        "p50_us": 9.458,
+        "p90_us": 9.708,
+        "p95_us": 12.25,
+        "p99_us": 23.75,
+        "max_us": 29.792,
+        "mean_us": 9.957735000000005,
+        "stddev_us": 2.3455016339314283
+      },
+      "handler_invocations": 0
+    },
+    {
+      "key": "capabilities.list|mcp|all",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "mcp",
+        "case": "all",
+        "input": {
+          "kind": null,
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "tool": "majordomus_capabilities"
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 5067.333,
+        "p50_us": 5702.459,
+        "p90_us": 6729.375,
+        "p95_us": 7035.0,
+        "p99_us": 7841.125,
+        "max_us": 8059.625,
+        "mean_us": 5890.315625000001,
+        "stddev_us": 566.6824020151892
+      }
+    },
+    {
+      "key": "capabilities.list|mcp|all",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "mcp",
+        "case": "all",
+        "input": {
+          "kind": null,
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "tool": "majordomus_capabilities"
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 5099.75,
+        "p50_us": 5641.25,
+        "p90_us": 6611.25,
+        "p95_us": 6891.042,
+        "p99_us": 7581.209,
+        "max_us": 8137.416,
+        "mean_us": 5834.594364999997,
+        "stddev_us": 542.7775330669849
+      }
+    },
+    {
+      "key": "capabilities.list|mcp|queries",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "mcp",
+        "case": "queries",
+        "input": {
+          "kind": "query",
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "tool": "majordomus_capabilities"
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 112.291,
+        "p50_us": 127.458,
+        "p90_us": 159.0,
+        "p95_us": 177.333,
+        "p99_us": 237.625,
+        "max_us": 298.167,
+        "mean_us": 134.90439500000002,
+        "stddev_us": 23.759496064289223
+      }
+    },
+    {
+      "key": "capabilities.list|mcp|queries",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "mcp",
+        "case": "queries",
+        "input": {
+          "kind": "query",
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "tool": "majordomus_capabilities"
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 102.916,
+        "p50_us": 125.041,
+        "p90_us": 160.625,
+        "p95_us": 180.833,
+        "p99_us": 260.584,
+        "max_us": 407.75,
+        "mean_us": 133.99912000000003,
+        "stddev_us": 33.554817474777
+      }
+    },
+    {
+      "key": "capabilities.list|http|all",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "http",
+        "case": "all",
+        "input": {
+          "kind": null,
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "route": [
+          "GET",
+          "/api/v1/capabilities"
+        ]
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 2728.792,
+        "p50_us": 3076.417,
+        "p90_us": 3554.875,
+        "p95_us": 3668.125,
+        "p99_us": 3905.084,
+        "max_us": 4227.375,
+        "mean_us": 3133.5599599999987,
+        "stddev_us": 260.92239882970637
+      }
+    },
+    {
+      "key": "capabilities.list|http|all",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "http",
+        "case": "all",
+        "input": {
+          "kind": null,
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "route": [
+          "GET",
+          "/api/v1/capabilities"
+        ]
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 1889.792,
+        "p50_us": 2323.125,
+        "p90_us": 2681.541,
+        "p95_us": 2874.167,
+        "p99_us": 3227.75,
+        "max_us": 3963.583,
+        "mean_us": 2366.1364699999995,
+        "stddev_us": 279.1379763024357
+      }
+    },
+    {
+      "key": "capabilities.list|http|queries",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "http",
+        "case": "queries",
+        "input": {
+          "kind": "query",
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "route": [
+          "GET",
+          "/api/v1/capabilities"
+        ]
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 271.292,
+        "p50_us": 368.583,
+        "p90_us": 481.416,
+        "p95_us": 521.875,
+        "p99_us": 576.541,
+        "max_us": 592.875,
+        "mean_us": 383.73977499999995,
+        "stddev_us": 71.38988327784529
+      }
+    },
+    {
+      "key": "capabilities.list|http|queries",
+      "kind": {
+        "kind": "capability",
+        "id": "capabilities.list",
+        "module": "capabilities",
+        "transport": "http",
+        "case": "queries",
+        "input": {
+          "kind": "query",
+          "exposure": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "route": [
+          "GET",
+          "/api/v1/capabilities"
+        ]
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 165.083,
+        "p50_us": 243.541,
+        "p90_us": 316.0,
+        "p95_us": 349.416,
+        "p99_us": 382.875,
+        "max_us": 452.125,
+        "mean_us": 246.80891999999997,
+        "stddev_us": 53.41915308607578
+      }
+    },
+    {
+      "key": "objects.get|direct|first-object",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.get",
+        "module": "objects",
+        "transport": "direct",
+        "case": "first-object",
+        "input": {
+          "uri": "majordomus://claim/ai-layer-manifest"
+        },
+        "cache": {
+          "policy": "disabled"
+        }
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 2.25,
+        "p50_us": 2.334,
+        "p90_us": 2.542,
+        "p95_us": 3.375,
+        "p99_us": 3.833,
+        "max_us": 23.125,
+        "mean_us": 2.5947799999999996,
+        "stddev_us": 1.7374615971583371
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "objects.get|direct|repository",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.get",
+        "module": "objects",
+        "transport": "direct",
+        "case": "repository",
+        "input": {
+          "uri": "majordomus://repository"
+        },
+        "cache": {
+          "policy": "disabled"
+        }
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 59.041,
+        "p50_us": 65.625,
+        "p90_us": 102.209,
+        "p95_us": 114.792,
+        "p99_us": 146.084,
+        "max_us": 148.417,
+        "mean_us": 73.86812499999998,
+        "stddev_us": 18.45608511221638
+      },
+      "handler_invocations": 400
+    },
+    {
+      "key": "objects.get|mcp|first-object",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.get",
+        "module": "objects",
+        "transport": "mcp",
+        "case": "first-object",
+        "input": {
+          "uri": "majordomus://claim/ai-layer-manifest"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "tool": "majordomus_get"
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 39.541,
+        "p50_us": 55.166,
+        "p90_us": 74.375,
+        "p95_us": 85.25,
+        "p99_us": 104.292,
+        "max_us": 178.583,
+        "mean_us": 58.85123499999999,
+        "stddev_us": 15.597742129544745
+      }
+    },
+    {
+      "key": "objects.get|mcp|repository",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.get",
+        "module": "objects",
+        "transport": "mcp",
+        "case": "repository",
+        "input": {
+          "uri": "majordomus://repository"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "tool": "majordomus_get"
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 151.541,
+        "p50_us": 171.5,
+        "p90_us": 191.0,
+        "p95_us": 196.084,
+        "p99_us": 241.792,
+        "max_us": 351.917,
+        "mean_us": 175.52686500000004,
+        "stddev_us": 20.880158711244867
+      }
+    },
+    {
+      "key": "objects.get|http|first-object",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.get",
+        "module": "objects",
+        "transport": "http",
+        "case": "first-object",
+        "input": {
+          "uri": "majordomus://claim/ai-layer-manifest"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "route": [
+          "GET",
+          "/api/v1/object"
+        ]
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 162.75,
+        "p50_us": 238.0,
+        "p90_us": 325.667,
+        "p95_us": 360.875,
+        "p99_us": 441.167,
+        "max_us": 576.875,
+        "mean_us": 246.4758900000001,
+        "stddev_us": 64.12154870695107
+      }
+    },
+    {
+      "key": "objects.get|http|repository",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.get",
+        "module": "objects",
+        "transport": "http",
+        "case": "repository",
+        "input": {
+          "uri": "majordomus://repository"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "route": [
+          "GET",
+          "/api/v1/object"
+        ]
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 225.75,
+        "p50_us": 261.542,
+        "p90_us": 329.75,
+        "p95_us": 357.625,
+        "p99_us": 424.875,
+        "max_us": 463.917,
+        "mean_us": 274.17608500000017,
+        "stddev_us": 40.441911780450916
+      }
+    },
+    {
+      "key": "objects.list|direct|all",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.list",
+        "module": "objects",
+        "transport": "direct",
+        "case": "all",
+        "input": {
+          "kind": null,
+          "tag": null
+        },
+        "cache": {
+          "policy": "disabled"
+        }
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 307.958,
+        "p50_us": 348.75,
+        "p90_us": 406.5,
+        "p95_us": 430.416,
+        "p99_us": 474.583,
+        "max_us": 584.333,
+        "mean_us": 356.690845,
+        "stddev_us": 39.71180954163353
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "objects.list|direct|first-kind",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.list",
+        "module": "objects",
+        "transport": "direct",
+        "case": "first-kind",
+        "input": {
+          "kind": "claim",
+          "tag": null
+        },
+        "cache": {
+          "policy": "disabled"
+        }
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 67.209,
+        "p50_us": 70.5,
+        "p90_us": 90.084,
+        "p95_us": 118.375,
+        "p99_us": 160.166,
+        "max_us": 165.209,
+        "mean_us": 77.07439000000001,
+        "stddev_us": 18.47979378802426
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "objects.list|mcp|all",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.list",
+        "module": "objects",
+        "transport": "mcp",
+        "case": "all",
+        "input": {
+          "kind": null,
+          "tag": null
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "tool": "majordomus_list"
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 1846.792,
+        "p50_us": 2063.875,
+        "p90_us": 2407.125,
+        "p95_us": 2541.541,
+        "p99_us": 2801.417,
+        "max_us": 2954.584,
+        "mean_us": 2126.57105,
+        "stddev_us": 214.36932440173783
+      }
+    },
+    {
+      "key": "objects.list|mcp|first-kind",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.list",
+        "module": "objects",
+        "transport": "mcp",
+        "case": "first-kind",
+        "input": {
+          "kind": "claim",
+          "tag": null
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "tool": "majordomus_list"
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 398.959,
+        "p50_us": 464.25,
+        "p90_us": 563.25,
+        "p95_us": 590.375,
+        "p99_us": 617.25,
+        "max_us": 658.084,
+        "mean_us": 478.05353999999994,
+        "stddev_us": 51.892348675391425
+      }
+    },
+    {
+      "key": "objects.list|http|all",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.list",
+        "module": "objects",
+        "transport": "http",
+        "case": "all",
+        "input": {
+          "kind": null,
+          "tag": null
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "route": [
+          "GET",
+          "/api/v1/objects"
+        ]
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 840.792,
+        "p50_us": 1144.625,
+        "p90_us": 1482.542,
+        "p95_us": 1551.125,
+        "p99_us": 1744.458,
+        "max_us": 1818.083,
+        "mean_us": 1177.8408800000004,
+        "stddev_us": 219.25587265988023
+      }
+    },
+    {
+      "key": "objects.list|http|first-kind",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.list",
+        "module": "objects",
+        "transport": "http",
+        "case": "first-kind",
+        "input": {
+          "kind": "claim",
+          "tag": null
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "route": [
+          "GET",
+          "/api/v1/objects"
+        ]
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 355.916,
+        "p50_us": 524.167,
+        "p90_us": 659.042,
+        "p95_us": 686.917,
+        "p99_us": 722.542,
+        "max_us": 758.125,
+        "mean_us": 531.01959,
+        "stddev_us": 91.37603168978121
+      }
+    },
+    {
+      "key": "objects.search|direct|common-word",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "direct",
+        "case": "common-word",
+        "input": {
+          "query": "the",
+          "kind": null,
+          "limit": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        }
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 33.709,
+        "p50_us": 34.959,
+        "p90_us": 39.0,
+        "p95_us": 60.458,
+        "p99_us": 118.291,
+        "max_us": 143.709,
+        "mean_us": 38.793135,
+        "stddev_us": 14.419185498382875
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "objects.search|direct|common-word",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "direct",
+        "case": "common-word",
+        "input": {
+          "query": "the",
+          "kind": null,
+          "limit": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        }
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 7.458,
+        "p50_us": 7.583,
+        "p90_us": 7.709,
+        "p95_us": 7.75,
+        "p99_us": 7.875,
+        "max_us": 19.375,
+        "mean_us": 7.659794999999994,
+        "stddev_us": 0.8415744666843212
+      },
+      "handler_invocations": 0
+    },
+    {
+      "key": "objects.search|direct|no-hit",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "direct",
+        "case": "no-hit",
+        "input": {
+          "query": "zqx-nothing-carries-this",
+          "kind": null,
+          "limit": 5
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        }
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 4417.375,
+        "p50_us": 4857.583,
+        "p90_us": 5538.209,
+        "p95_us": 5661.25,
+        "p99_us": 6542.916,
+        "max_us": 6795.583,
+        "mean_us": 5003.433534999998,
+        "stddev_us": 415.2479629682593
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "objects.search|direct|no-hit",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "direct",
+        "case": "no-hit",
+        "input": {
+          "query": "zqx-nothing-carries-this",
+          "kind": null,
+          "limit": 5
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        }
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 0.791,
+        "p50_us": 0.833,
+        "p90_us": 0.875,
+        "p95_us": 0.917,
+        "p99_us": 1.041,
+        "max_us": 1.042,
+        "mean_us": 0.8458650000000002,
+        "stddev_us": 0.039727657557424655
+      },
+      "handler_invocations": 0
+    },
+    {
+      "key": "objects.search|mcp|common-word",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "mcp",
+        "case": "common-word",
+        "input": {
+          "query": "the",
+          "kind": null,
+          "limit": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        },
+        "tool": "majordomus_search"
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 114.042,
+        "p50_us": 147.958,
+        "p90_us": 191.166,
+        "p95_us": 209.0,
+        "p99_us": 248.083,
+        "max_us": 334.667,
+        "mean_us": 155.88995500000001,
+        "stddev_us": 29.34288813567906
+      }
+    },
+    {
+      "key": "objects.search|mcp|common-word",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "mcp",
+        "case": "common-word",
+        "input": {
+          "query": "the",
+          "kind": null,
+          "limit": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        },
+        "tool": "majordomus_search"
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 111.292,
+        "p50_us": 137.0,
+        "p90_us": 166.458,
+        "p95_us": 177.708,
+        "p99_us": 195.709,
+        "max_us": 221.084,
+        "mean_us": 141.59877499999996,
+        "stddev_us": 16.543687677612116
+      }
+    },
+    {
+      "key": "objects.search|mcp|no-hit",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "mcp",
+        "case": "no-hit",
+        "input": {
+          "query": "zqx-nothing-carries-this",
+          "kind": null,
+          "limit": 5
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        },
+        "tool": "majordomus_search"
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 27.042,
+        "p50_us": 40.542,
+        "p90_us": 60.0,
+        "p95_us": 69.708,
+        "p99_us": 97.167,
+        "max_us": 101.5,
+        "mean_us": 44.58981500000001,
+        "stddev_us": 11.87765382686223
+      }
+    },
+    {
+      "key": "objects.search|mcp|no-hit",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "mcp",
+        "case": "no-hit",
+        "input": {
+          "query": "zqx-nothing-carries-this",
+          "kind": null,
+          "limit": 5
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        },
+        "tool": "majordomus_search"
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 24.958,
+        "p50_us": 44.5,
+        "p90_us": 70.625,
+        "p95_us": 75.334,
+        "p99_us": 85.042,
+        "max_us": 177.958,
+        "mean_us": 48.483315000000005,
+        "stddev_us": 17.388297731974085
+      }
+    },
+    {
+      "key": "objects.search|http|common-word",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "http",
+        "case": "common-word",
+        "input": {
+          "query": "the",
+          "kind": null,
+          "limit": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        },
+        "route": [
+          "GET",
+          "/api/v1/search"
+        ]
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 266.708,
+        "p50_us": 406.459,
+        "p90_us": 522.125,
+        "p95_us": 574.291,
+        "p99_us": 670.917,
+        "max_us": 873.25,
+        "mean_us": 416.72128500000014,
+        "stddev_us": 90.94588554549226
+      }
+    },
+    {
+      "key": "objects.search|http|common-word",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "http",
+        "case": "common-word",
+        "input": {
+          "query": "the",
+          "kind": null,
+          "limit": null
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        },
+        "route": [
+          "GET",
+          "/api/v1/search"
+        ]
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 177.0,
+        "p50_us": 232.209,
+        "p90_us": 285.292,
+        "p95_us": 328.792,
+        "p99_us": 405.166,
+        "max_us": 424.917,
+        "mean_us": 239.65981000000008,
+        "stddev_us": 43.6594522141987
+      }
+    },
+    {
+      "key": "objects.search|http|no-hit",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "http",
+        "case": "no-hit",
+        "input": {
+          "query": "zqx-nothing-carries-this",
+          "kind": null,
+          "limit": 5
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        },
+        "route": [
+          "GET",
+          "/api/v1/search"
+        ]
+      },
+      "cache_mode": "cold",
+      "stats": {
+        "samples": 200,
+        "min_us": 5107.583,
+        "p50_us": 5588.25,
+        "p90_us": 6300.958,
+        "p95_us": 6571.75,
+        "p99_us": 6828.875,
+        "max_us": 7215.541,
+        "mean_us": 5704.227110000002,
+        "stddev_us": 407.1564987336539
+      }
+    },
+    {
+      "key": "objects.search|http|no-hit",
+      "kind": {
+        "kind": "capability",
+        "id": "objects.search",
+        "module": "objects",
+        "transport": "http",
+        "case": "no-hit",
+        "input": {
+          "query": "zqx-nothing-carries-this",
+          "kind": null,
+          "limit": 5
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        },
+        "route": [
+          "GET",
+          "/api/v1/search"
+        ]
+      },
+      "cache_mode": "warm",
+      "stats": {
+        "samples": 200,
+        "min_us": 159.25,
+        "p50_us": 295.541,
+        "p90_us": 435.583,
+        "p95_us": 490.292,
+        "p99_us": 567.958,
+        "max_us": 603.125,
+        "mean_us": 311.3572900000001,
+        "stddev_us": 91.23056653428115
+      }
+    },
+    {
+      "key": "peers.announce|direct|default",
+      "kind": {
+        "kind": "capability",
+        "id": "peers.announce",
+        "module": "peers",
+        "transport": "direct",
+        "case": "default",
+        "input": {
+          "intent": "benchmark: announcing",
+          "scope": [
+            "apps/majordomus-cli"
+          ]
+        },
+        "cache": {
+          "policy": "disabled"
+        }
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 1.375,
+        "p50_us": 1.458,
+        "p90_us": 1.541,
+        "p95_us": 1.542,
+        "p99_us": 1.625,
+        "max_us": 25.25,
+        "mean_us": 1.5891549999999999,
+        "stddev_us": 1.6779347844821029
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "peers.announce|mcp|default",
+      "kind": {
+        "kind": "capability",
+        "id": "peers.announce",
+        "module": "peers",
+        "transport": "mcp",
+        "case": "default",
+        "input": {
+          "intent": "benchmark: announcing",
+          "scope": [
+            "apps/majordomus-cli"
+          ]
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "tool": "majordomus_announce"
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 29.458,
+        "p50_us": 45.042,
+        "p90_us": 67.375,
+        "p95_us": 82.583,
+        "p99_us": 102.416,
+        "max_us": 124.25,
+        "mean_us": 49.99854999999998,
+        "stddev_us": 14.591239515459266
+      }
+    },
+    {
+      "key": "peers.announce|http|default",
+      "kind": {
+        "kind": "capability",
+        "id": "peers.announce",
+        "module": "peers",
+        "transport": "http",
+        "case": "default",
+        "input": {
+          "intent": "benchmark: announcing",
+          "scope": [
+            "apps/majordomus-cli"
+          ]
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "route": [
+          "POST",
+          "/api/v1/peers/announce"
+        ]
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 134.584,
+        "p50_us": 174.875,
+        "p90_us": 256.708,
+        "p95_us": 287.833,
+        "p99_us": 312.75,
+        "max_us": 416.75,
+        "mean_us": 190.7125,
+        "stddev_us": 46.746321247345236
+      }
+    },
+    {
+      "key": "peers.list|direct|default",
+      "kind": {
+        "kind": "capability",
+        "id": "peers.list",
+        "module": "peers",
+        "transport": "direct",
+        "case": "default",
+        "input": {},
+        "cache": {
+          "policy": "disabled"
+        }
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 1.166,
+        "p50_us": 1.25,
+        "p90_us": 1.25,
+        "p95_us": 1.292,
+        "p99_us": 1.292,
+        "max_us": 1.458,
+        "mean_us": 1.232085,
+        "stddev_us": 0.034240002555490534
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "peers.list|mcp|default",
+      "kind": {
+        "kind": "capability",
+        "id": "peers.list",
+        "module": "peers",
+        "transport": "mcp",
+        "case": "default",
+        "input": {},
+        "cache": {
+          "policy": "disabled"
+        },
+        "tool": "majordomus_peers"
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 23.25,
+        "p50_us": 36.709,
+        "p90_us": 54.125,
+        "p95_us": 61.333,
+        "p99_us": 78.208,
+        "max_us": 117.625,
+        "mean_us": 40.815414999999994,
+        "stddev_us": 12.572870106016962
+      }
+    },
+    {
+      "key": "peers.list|http|default",
+      "kind": {
+        "kind": "capability",
+        "id": "peers.list",
+        "module": "peers",
+        "transport": "http",
+        "case": "default",
+        "input": {},
+        "cache": {
+          "policy": "disabled"
+        },
+        "route": [
+          "GET",
+          "/api/v1/peers"
+        ]
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 125.25,
+        "p50_us": 180.916,
+        "p90_us": 268.916,
+        "p95_us": 298.834,
+        "p99_us": 373.583,
+        "max_us": 1311.542,
+        "mean_us": 197.19706,
+        "stddev_us": 94.58419407547119
+      }
+    },
+    {
+      "key": "perf.counters|direct|default",
+      "kind": {
+        "kind": "capability",
+        "id": "perf.counters",
+        "module": "perf",
+        "transport": "direct",
+        "case": "default",
+        "input": {},
+        "cache": {
+          "policy": "disabled"
+        }
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 1.917,
+        "p50_us": 2.041,
+        "p90_us": 2.084,
+        "p95_us": 2.167,
+        "p99_us": 2.416,
+        "max_us": 3.458,
+        "mean_us": 2.0391849999999963,
+        "stddev_us": 0.12501484221883416
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "perf.counters|mcp|default",
+      "kind": {
+        "kind": "capability",
+        "id": "perf.counters",
+        "module": "perf",
+        "transport": "mcp",
+        "case": "default",
+        "input": {},
+        "cache": {
+          "policy": "disabled"
+        },
+        "tool": "majordomus_perf"
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 32.375,
+        "p50_us": 42.0,
+        "p90_us": 59.667,
+        "p95_us": 71.416,
+        "p99_us": 97.917,
+        "max_us": 100.917,
+        "mean_us": 46.08205000000002,
+        "stddev_us": 11.785267853023113
+      }
+    },
+    {
+      "key": "perf.counters|http|default",
+      "kind": {
+        "kind": "capability",
+        "id": "perf.counters",
+        "module": "perf",
+        "transport": "http",
+        "case": "default",
+        "input": {},
+        "cache": {
+          "policy": "disabled"
+        },
+        "route": [
+          "GET",
+          "/api/v1/perf"
+        ]
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 136.416,
+        "p50_us": 163.042,
+        "p90_us": 225.0,
+        "p95_us": 249.625,
+        "p99_us": 308.125,
+        "max_us": 358.667,
+        "mean_us": 176.247515,
+        "stddev_us": 35.51486454373401
+      }
+    },
+    {
+      "key": "repository.info|direct|default",
+      "kind": {
+        "kind": "capability",
+        "id": "repository.info",
+        "module": "repository",
+        "transport": "direct",
+        "case": "default",
+        "input": {},
+        "cache": {
+          "policy": "disabled"
+        }
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 52.542,
+        "p50_us": 55.167,
+        "p90_us": 83.125,
+        "p95_us": 93.917,
+        "p99_us": 178.916,
+        "max_us": 248.291,
+        "mean_us": 63.119345,
+        "stddev_us": 23.72172541587089
+      },
+      "handler_invocations": 200
+    },
+    {
+      "key": "repository.info|mcp|default",
+      "kind": {
+        "kind": "capability",
+        "id": "repository.info",
+        "module": "repository",
+        "transport": "mcp",
+        "case": "default",
+        "input": {},
+        "cache": {
+          "policy": "disabled"
+        },
+        "tool": "majordomus_repository"
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 98.583,
+        "p50_us": 123.334,
+        "p90_us": 164.417,
+        "p95_us": 179.208,
+        "p99_us": 214.167,
+        "max_us": 262.125,
+        "mean_us": 129.254195,
+        "stddev_us": 24.981226527073787
+      }
+    },
+    {
+      "key": "repository.info|http|default",
+      "kind": {
+        "kind": "capability",
+        "id": "repository.info",
+        "module": "repository",
+        "transport": "http",
+        "case": "default",
+        "input": {},
+        "cache": {
+          "policy": "disabled"
+        },
+        "route": [
+          "GET",
+          "/api/v1/repository"
+        ]
+      },
+      "cache_mode": "uncached",
+      "stats": {
+        "samples": 200,
+        "min_us": 200.667,
+        "p50_us": 242.5,
+        "p90_us": 320.958,
+        "p95_us": 345.167,
+        "p99_us": 414.625,
+        "max_us": 467.583,
+        "mean_us": 256.67774000000003,
+        "stddev_us": 45.942331157576234
+      }
+    },
+    {
+      "key": "system.mcp.process_cold",
+      "kind": {
+        "kind": "system",
+        "target": "mcp_process_cold"
+      },
+      "cache_mode": "not_applicable",
+      "stats": {
+        "samples": 10,
+        "min_us": 98887.833,
+        "p50_us": 103962.292,
+        "p90_us": 127027.958,
+        "p95_us": 140111.375,
+        "p99_us": 140111.375,
+        "max_us": 140111.375,
+        "mean_us": 111820.579,
+        "stddev_us": 13365.24310184513
+      }
+    },
+    {
+      "key": "system.mcp.initialize",
+      "kind": {
+        "kind": "system",
+        "target": "mcp_initialize"
+      },
+      "cache_mode": "not_applicable",
+      "stats": {
+        "samples": 200,
+        "min_us": 69.458,
+        "p50_us": 89.708,
+        "p90_us": 117.208,
+        "p95_us": 130.708,
+        "p99_us": 159.208,
+        "max_us": 232.917,
+        "mean_us": 96.40228,
+        "stddev_us": 19.443595858832285
+      }
+    },
+    {
+      "key": "system.mcp.ping",
+      "kind": {
+        "kind": "system",
+        "target": "mcp_ping"
+      },
+      "cache_mode": "not_applicable",
+      "stats": {
+        "samples": 200,
+        "min_us": 8.958,
+        "p50_us": 18.125,
+        "p90_us": 29.792,
+        "p95_us": 33.375,
+        "p99_us": 38.791,
+        "max_us": 42.209,
+        "mean_us": 19.732099999999996,
+        "stddev_us": 6.778607948539285
+      }
+    },
+    {
+      "key": "system.mcp.tools_list",
+      "kind": {
+        "kind": "system",
+        "target": "mcp_tools_list"
+      },
+      "cache_mode": "not_applicable",
+      "stats": {
+        "samples": 200,
+        "min_us": 191.125,
+        "p50_us": 212.583,
+        "p90_us": 330.458,
+        "p95_us": 372.209,
+        "p99_us": 427.333,
+        "max_us": 532.041,
+        "mean_us": 242.08623999999998,
+        "stddev_us": 59.28530232091593
+      }
+    },
+    {
+      "key": "system.mcp.resources_list",
+      "kind": {
+        "kind": "system",
+        "target": "mcp_resources_list"
+      },
+      "cache_mode": "not_applicable",
+      "stats": {
+        "samples": 200,
+        "min_us": 887.125,
+        "p50_us": 1018.459,
+        "p90_us": 1258.584,
+        "p95_us": 1311.291,
+        "p99_us": 1506.958,
+        "max_us": 1682.708,
+        "mean_us": 1062.6750099999995,
+        "stddev_us": 141.01467431905766
+      }
+    },
+    {
+      "key": "system.mcp.resources_read",
+      "kind": {
+        "kind": "system",
+        "target": "mcp_resources_read"
+      },
+      "cache_mode": "not_applicable",
+      "stats": {
+        "samples": 200,
+        "min_us": 21.375,
+        "p50_us": 25.958,
+        "p90_us": 31.334,
+        "p95_us": 33.375,
+        "p99_us": 43.333,
+        "max_us": 68.292,
+        "mean_us": 26.92108499999999,
+        "stddev_us": 4.87582631435688
+      }
+    },
+    {
+      "key": "system.http.index",
+      "kind": {
+        "kind": "system",
+        "target": "http_index"
+      },
+      "cache_mode": "not_applicable",
+      "stats": {
+        "samples": 200,
+        "min_us": 147.25,
+        "p50_us": 248.292,
+        "p90_us": 390.0,
+        "p95_us": 444.709,
+        "p99_us": 596.5,
+        "max_us": 628.375,
+        "mean_us": 278.1557999999999,
+        "stddev_us": 89.7214435434473
+      }
+    },
+    {
+      "key": "system.http.openapi",
+      "kind": {
+        "kind": "system",
+        "target": "http_open_api"
+      },
+      "cache_mode": "not_applicable",
+      "stats": {
+        "samples": 200,
+        "min_us": 173.958,
+        "p50_us": 210.833,
+        "p90_us": 271.542,
+        "p95_us": 300.833,
+        "p99_us": 391.666,
+        "max_us": 486.417,
+        "mean_us": 222.89976499999995,
+        "stddev_us": 45.25146049333408
+      }
+    },
+    {
+      "key": "system.http.docs",
+      "kind": {
+        "kind": "system",
+        "target": "http_docs"
+      },
+      "cache_mode": "not_applicable",
+      "stats": {
+        "samples": 200,
+        "min_us": 127.375,
+        "p50_us": 152.375,
+        "p90_us": 215.458,
+        "p95_us": 241.25,
+        "p99_us": 278.291,
+        "max_us": 328.708,
+        "mean_us": 166.26225499999993,
+        "stddev_us": 35.25869966178524
+      }
+    }
+  ]
+}
