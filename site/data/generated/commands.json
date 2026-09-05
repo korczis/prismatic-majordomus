@@ -289,7 +289,8 @@
           "29_prompt_capture",
           "36_command_doctrines",
           "83_doctor_budget",
-          "95_skills"
+          "95_skills",
+          "99_adr"
         ]
       },
       "demo_data": {
@@ -2449,6 +2450,146 @@
         ]
       },
       "doc_md": "\nA compiler over what this repository already states. Read-only in every subcommand\ndocumented here.\n\nIt is not a wiki, not a database, not a memory service, and not a second place to write\nthings down. Every source it reads is a file somebody already maintains, everything it\nproduces is derived and regenerable, and none of it outranks the file it came from. A\nresult is a pointer to canonical knowledge, never a rewritten answer.\n\n**`knowledge` is not `search`.** `search` is a literal scan over the durable operational\nrecords — handovers, checkpoints, decisions, questions, prompts, the ledger — with no\nindex, because that corpus is a handful of files. `knowledge` covers the repository's\ncanonical artifacts: the policy, the profiles, the prompts, the milestone and issue\ncontracts, the claims matrix and the documents. Two corpora, two contracts, and neither\nchanges the other.\n\n- `sources [--scope shared|operational|all]` lists the curated source classes and the\n  files each one discovers, with the class, the scope, the kind, a content hash and the\n  repository-relative path.\n- `nodes [--scope ...] [--kind <k>]` derives one node per canonical object: its identity,\n  its kind, the source it came from and that source's hash. Exits `10` when two objects\n  claim one identity.\n- `edges [--scope ...] [--type <t>]` derives one edge per stated relationship, with the file\n  and the field or line it was observed in.\n\n**No edge without provenance.** Every edge names where the relationship was stated, and an\nedge missing any of from, to, type or provenance is refused rather than emitted with a\nblank — a blank source reads as \"unknown\" and is indistinguishable from one nobody recorded.\nAn edge nobody can trace to a line is not a fact, it is a guess wearing a fact's clothes, and\nit is a guess the person best placed to notice it is wrong will never see.\n\n**Nothing is inferred from prose.** The repository already states its relationships\nexplicitly, in fields somebody maintains, and those are both free and correct. The edge\ntypes are a closed set; an undeclared one is an error rather than a new vocabulary word:\n\n| type | from → to | stated in |\n|---|---|---|\n| `part_of` | issue → milestone | the issue's `milestone` |\n| `depends_on` | issue → issue, milestone → milestone | the record's `depends_on` |\n| `declares` | milestone → claim | the milestone's `claims` |\n| `specified_by` | claim → document | `docs/CLAIMS.yaml`'s `source` |\n| `implemented_by` | claim → implementation | its `implementation` |\n| `tested_by` | claim → test, doctrine → test | its `test` |\n| `supports` | doctrine → claim | the doctrine's `claims` |\n| `references` | document → document | an inline Markdown link |\n\nLinks are the one edge source that is not curated, and they are read conservatively. Fenced\ncode is dropped first, because a path inside a code sample is an example of a path and not a\nreference to one. A target with a scheme, a protocol-relative target and an absolute path are\nall skipped; a fragment is trimmed, because `docs/CLI.md#session` refers to `docs/CLI.md`.\n\n**Severity distinguishes what Majordomus owns from what an author wrote.** A declared\nrelationship pointing at a file the repository does not contain is a `FAIL`: it is a broken\npromise. A link in a document pointing at nothing is a `WARN`: a document may deliberately\npoint outside the repository and the target alone cannot tell the two apart. A relationship\npointing at a real file that this compiler does not model as one node — a container of many\nobjects, or something outside the curated set — is silent, because a report that is large by\ndesign is a report people stop reading.\n\n`nodes` and `edges` are two views of one derivation, so a defect in either exits `10` on\nboth. There is no clean node listing over a graph that is broken.\n\n**A node's identity is never its content hash.** It is the object's own canonical id where\nit has one — `claim:policy-parse`, `issue:I0801`, `milestone:M003`, `profile:debugging` —\nand its repository path where it does not, as in `document:docs/CONTINUITY.md`. A hash says\nwhether something *changed*; it can never say what something *is*, because then every edit\nwould delete a node and create a stranger, and every reference to it would point at nothing\nwithout anything saying so. The hash rides along on the node and is what freshness is\nmeasured with.\n\nThe consequence is deliberate: editing a document keeps its node and moves its hash;\nrenaming one is a delete and an add, and disturbs no other node.\n\n**A kind comes from structure, never from prose.** It is decided by the source class the\nfile was discovered in and by fields the file itself declares. Nothing reads a body looking\nfor a word that suggests a type: a document that discusses roadmaps and milestones is a\ndocument that discusses them. Where no rule applies the kind is `unknown` and the node is\nstill emitted, with one finding naming the class — an explicit unknown is information, and a\nconfident wrong answer is not.\n\n**A title is taken or left empty, never invented.** From the record's own `title` or\n`description`, or from a document's first level-one heading. A document with no heading gets\nno title rather than its filename, because a filename standing in for a title reads like a\nfact and is a guess.\n\nTwo stores have no id field of their own. A decision is keyed by its title and a question by\nits text — in both cases exactly what the ledger records and what a session envelope\nreferences, so three places name the same thing the same way and nothing maps between them.\nAnswering a question rewrites the line it lives on, and the identity survives that: the\nappended answer is stripped, and only when what remains ends in the entry's opening date, so\na question whose own text contains a dash is left whole rather than cut at a guess.\n\n**Discovery is driven by the repository index, not by a filesystem walk.** A walk returns\nbuild output, vendored trees and editor droppings; it returns them in an order that\ndiffers between two machines; and it can return a file nobody meant to publish. Listing\ntracked files instead gives repository truth in a stable order, and an untracked file is\nnever a source. Operational records are discovered from the state directory Majordomus\nitself owns under `.ai/local/`, which is never tracked — and from nowhere else. No hidden\ndirectory is scanned because it happens to exist.\n\nThe source classes are declared twice, by two owners: the repository declares its shared\nsources in its AI layer, `.ai/repo/knowledge/sources.yaml`, and the tool ships the\noperational classes, the records it writes itself, in `share/knowledge-sources.yaml`. The\nscope of a class is decided by which file declared it; neither file names the other:\n\n| scope | meaning |\n|---|---|\n| `shared` | repository knowledge; may be projected to a public surface |\n| `operational` | this checkout's own working records; never part of a shared projection |\n\nThe scope is a property of the class, so the publication boundary is decided in one place\nrather than at each producer. Every tracked pathspec carries the `:(glob)` prefix, under\nwhich `*` does not cross a directory separator. That is not tidiness: without it,\n`docs/*.md` also matches `docs/claims/*.md`, two classes silently overlap, and one file\nbecomes two nodes. `test/cases/64_knowledge_discovery.sh` fails on that mutation.\n\nA class marked `required` that discovers nothing is reported as a `WARN`. The cost of a\ncurated list is that a path can be forgotten, and a forgotten path is indistinguishable\nfrom a repository that does not have that file unless something says so.\n\n```\n$ majordomus knowledge sources --scope shared\npolicy      shared      policy     4f2a9c1d8b30  .ai/repo/policy.yaml\nprofile     shared      profile    a1b2c3d4e5f6  .ai/repo/profiles/debugging.yaml\n...\nissue       shared      issue      0e5a7b9c3f51  .ai/repo/project/issues/I0801.yaml\nclaims      shared      claim      7c9e1b3d5f70  docs/CLAIMS.yaml\ndocument    shared      document   9b1e2d4f8c3a  docs/CONTINUITY.md\nknowledge sources: 169 file(s) in scope shared\n```"
+    },
+    {
+      "name": "adr",
+      "summary": "The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.",
+      "category": "memory",
+      "stage": "conclude",
+      "class": "state-mutating",
+      "read_only": false,
+      "requires_task": "none",
+      "requires_repository": true,
+      "requires_installed": true,
+      "json_output": true,
+      "syntax": "majordomus adr <list|show <id>|propose \"<title>\"|check> [--json]",
+      "demo": "adr-propose",
+      "note": "propose writes status 'proposed' and refuses --status: accepting a decision is a person editing the field. The identity is allocated under a lock over the section directory, so two worktrees proposing at once get two identities; check refuses duplicate identities, a superseded record with no replacement, and one-sided supersession.",
+      "reads": [
+        ".ai/repo/adrs/",
+        ".ai/repo/knowledge/sources.yaml",
+        "share/allow/adr.txt"
+      ],
+      "writes": [
+        ".ai/repo/adrs/",
+        ".ai/local/state/ledger.jsonl"
+      ],
+      "exit_codes": [
+        0,
+        2,
+        10,
+        12,
+        13,
+        15
+      ],
+      "tests": {
+        "behaviour": [
+          "99_adr"
+        ],
+        "negative": [
+          "99_adr"
+        ]
+      },
+      "demo_data": {
+        "schema": 1,
+        "command": "adr",
+        "title": "Decisions the tool proposes and only a person accepts",
+        "intro": "An architecture decision is a file under the repository's adrs section: front matter that satisfies the decision schema over a body carrying the context, the decision and its consequences. Nothing registers it — the source class `adr` in the knowledge sources discovers it over the tracked tree, and list, show, check, the doctrine and MCP all read that one catalogue. What the tool writes is always `proposed`, because acceptance is the person's act.",
+        "scenarios": [
+          {
+            "id": "lists",
+            "title": "A decision exists because its file does",
+            "given": {
+              "decision tracked": true
+            },
+            "setup": "adr-recorded",
+            "run": [
+              "adr",
+              "list"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "adr-0001",
+                "proposed"
+              ]
+            },
+            "explain": "One line per decision, in discovery order: the identity, the status, the date it reached it, and the title.",
+            "setup_sh": "# Installed, with one decision proposed and committed. Discovery is over the tracked tree,\n# so a decision the working copy holds and git does not is not yet part of the layer: the\n# commit is what makes the record discoverable, exactly as it is for every other kind.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" adr propose \"The registry is the one canonical declaration\" --from file:docs/d --tag architecture >/dev/null\ngit add . && git commit -qm \"adr: the registry is the one canonical declaration\"",
+            "stdin_body": null
+          },
+          {
+            "id": "checks",
+            "title": "What check examined",
+            "given": {
+              "decision tracked": true
+            },
+            "setup": "adr-recorded",
+            "run": [
+              "adr",
+              "check"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "examined 1 decision(s)",
+                "every identity unique"
+              ]
+            },
+            "explain": "A clean result states what it examined, so that a pass over an empty directory cannot look like a pass over the set.",
+            "setup_sh": "# Installed, with one decision proposed and committed. Discovery is over the tracked tree,\n# so a decision the working copy holds and git does not is not yet part of the layer: the\n# commit is what makes the record discoverable, exactly as it is for every other kind.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" adr propose \"The registry is the one canonical declaration\" --from file:docs/d --tag architecture >/dev/null\ngit add . && git commit -qm \"adr: the registry is the one canonical declaration\"",
+            "stdin_body": null
+          },
+          {
+            "id": "cannot-accept",
+            "title": "The status is not the tool's to choose",
+            "given": {
+              "decision tracked": true
+            },
+            "setup": "adr-recorded",
+            "run": [
+              "adr",
+              "propose",
+              "A decision that accepts itself",
+              "--status",
+              "accepted"
+            ],
+            "expect": {
+              "exit": 15,
+              "stdout_contains": [
+                "not yours to choose",
+                "a person editing the record"
+              ]
+            },
+            "explain": "Exit 15 is REFUSED. A tool that can write `accepted` turns its own inference into repository truth, and a reader months later cannot tell which decisions a person actually made.",
+            "setup_sh": "# Installed, with one decision proposed and committed. Discovery is over the tracked tree,\n# so a decision the working copy holds and git does not is not yet part of the layer: the\n# commit is what makes the record discoverable, exactly as it is for every other kind.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" adr propose \"The registry is the one canonical declaration\" --from file:docs/d --tag architecture >/dev/null\ngit add . && git commit -qm \"adr: the registry is the one canonical declaration\"",
+            "stdin_body": null
+          },
+          {
+            "id": "missing",
+            "title": "Asking for one that does not exist",
+            "given": {
+              "decision tracked": false
+            },
+            "setup": "installed",
+            "run": [
+              "adr",
+              "show",
+              "adr-9999"
+            ],
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "adr list"
+              ]
+            },
+            "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the command that lists what does exist.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          }
+        ]
+      },
+      "doc_md": "\nThe repository's architecture decisions as objects: what was decided, why, what it cost,\nand where the record came from. Under the layer's `adrs` section.\n\nA decision is a file `.ai/repo/adrs/<NNNN>-<slug>.md` — YAML front matter satisfying\n`share/schemas/adr.schema.json` over a body carrying `# Context`, `# Decision` and\n`# Consequences`. Nothing registers it: the source class `adr` in\n`.ai/repo/knowledge/sources.yaml` discovers it over the tracked tree, which is the same\ndeclaration the Rust executable indexes. See [`SCHEMAS.md`](SCHEMAS.md) for the contract.\n\n```\nmajordomus adr list [--status <status>] [--json]      every decision: id, status, date, title\nmajordomus adr show <id> [--json]                     the path, then the file as written\nmajordomus adr propose \"<title>\" [--from <ref>]...    write a new decision, status proposed\n                       [--tag <tag>]... [--supersedes <id>]\nmajordomus adr check [--json]                         validate every decision and every reference\n```\n\n- `list` prints one line per discovered decision, invalid ones included; `--status`\n  filters to one of `proposed`, `accepted`, `superseded`, `rejected`.\n- `show` prints the repository-relative path on the first line and the file below it. An\n  id that is not a decision exits `12` and names `adr list`.\n- `propose` writes `status: proposed` and nothing else. **There is no way to write\n  `accepted`**: `--status` exits `15` naming the reason, because a tool that can write\n  `accepted` turns its own inference into repository truth and a later reader cannot tell\n  which decisions a person actually made. The identity is allocated under a lock over the\n  section directory, so two worktrees proposing at the same moment get two identities.\n  A `--from` reference is `<type>:<value>` with the type one of `decision`, `session`,\n  `commit`, `issue`, `file`, `test`; a `file:` or `test:` path that does not exist exits\n  `2`. Referenced evidence makes the record `provenance.origin: extracted`, and an\n  extracted record with no evidence is refused as an assertion. `--supersedes` writes both\n  halves of the relation, so the chain is walkable from either end.\n- `check` validates every record against the allow-list generated from the schema (no\n  unknown key), `schema: adr/v1`, the closed status set, an `id` whose number equals the\n  file-name prefix, the required body sections; and across the set: duplicate identities,\n  a `superseded` record with no `superseded_by`, one-sided supersession, and a reference\n  that resolves to nothing. It exits `10` on any failure.\n\n`doctor` and `watch` run the same examination through the doctrine\n`majordomus.adr-integrity`.\n\n```\n$ majordomus adr propose \"The registry is the one canonical declaration\" --from file:docs/CAPABILITIES.md\nproposed: adr-0011  The registry is the one canonical declaration\n.ai/repo/adrs/0011-the-registry-is-the-one-canonical-declaration.md\nstatus is \"proposed\"; accepting it is a person editing that field.\n\n$ majordomus adr check\nexamined 11 decision(s) in .ai/repo/adrs/\nevery identity unique, every status known, every reference resolves\n```"
     },
     {
       "name": "usecase",

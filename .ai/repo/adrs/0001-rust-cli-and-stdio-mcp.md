@@ -1,6 +1,19 @@
-# 1. A Rust executable with a data-driven, read-only MCP surface over stdio
+---
+schema: adr/v1
+id: adr-0001
+kind: adr
+title: A Rust executable with a data-driven, read-only MCP surface over stdio
+status: accepted
+date: 2026-09-05
+tags:
+  - rust
+  - mcp
+  - architecture
+provenance:
+  origin: authored
+---
 
-Status: accepted, 2026-09-05.
+# 1. A Rust executable with a data-driven, read-only MCP surface over stdio
 
 ## Context
 

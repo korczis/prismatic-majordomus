@@ -1,7 +1,20 @@
+---
+schema: adr/v1
+id: adr-0007
+kind: adr
+title: Skills are data under the layer's skills section, and every surface that shows one is a projection
+status: accepted
+date: 2026-09-05
+tags:
+  - skills
+  - projections
+provenance:
+  origin: authored
+---
+
 # 7. Skills are data under the layer's skills section, and every surface that shows one is a projection
 
-Status: accepted, 2026-09-05. Extends ADR 2 and ADR 5.
-
+Extends ADR 2 and ADR 5.
 ## Context
 
 The manifest has named a `skills` section since the layer existed, and it held a README

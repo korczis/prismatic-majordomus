@@ -1,6 +1,18 @@
-# 6. CI planned from one model of what affects what, gates as repository-owned scripts, and the site deployed from the run that verified it
+---
+schema: adr/v1
+id: adr-0006
+kind: adr
+title: CI planned from one model of what affects what, gates as repository-owned scripts, and the site deployed from the run that verified it
+status: accepted
+date: 2026-09-05
+tags:
+  - ci
+  - deployment
+provenance:
+  origin: authored
+---
 
-Status: accepted, 2026-09-05.
+# 6. CI planned from one model of what affects what, gates as repository-owned scripts, and the site deployed from the run that verified it
 
 ## Context
 

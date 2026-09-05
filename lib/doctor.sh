@@ -26,6 +26,9 @@
 # the skill validator reads the catalogue every skill surface reads
 # shellcheck source=skills.sh
 . "$MJ_LIB_DIR/skills.sh"
+# the decision and knowledge validators read the catalogues their own commands read
+# shellcheck source=adr.sh
+. "$MJ_LIB_DIR/adr.sh"
 # the capture doctrine and the provider states the wiring verifier reports
 # shellcheck source=capture.sh
 . "$MJ_LIB_DIR/capture.sh"

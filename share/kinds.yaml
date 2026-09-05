@@ -124,6 +124,30 @@ kinds:
       field: schema
       supported: [context/v1]
 
+  adr:
+    format: markdown
+    front_matter: required
+    without_front_matter: document
+    schema: adr
+    identity: [id]
+    title: title
+    description: title
+    schema_version:
+      field: schema
+      supported: [adr/v1]
+
+  knowledge:
+    format: markdown
+    front_matter: required
+    without_front_matter: document
+    schema: knowledge
+    identity: [id]
+    title: title
+    description: description
+    schema_version:
+      field: schema
+      supported: [knowledge/v1]
+
   use-case:
     format: markdown
     front_matter: required

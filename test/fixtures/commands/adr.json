@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "command": "adr",
+  "title": "Decisions the tool proposes and only a person accepts",
+  "intro": "An architecture decision is a file under the repository's adrs section: front matter that satisfies the decision schema over a body carrying the context, the decision and its consequences. Nothing registers it — the source class `adr` in the knowledge sources discovers it over the tracked tree, and list, show, check, the doctrine and MCP all read that one catalogue. What the tool writes is always `proposed`, because acceptance is the person's act.",
+  "scenarios": [
+    {
+      "id": "lists",
+      "title": "A decision exists because its file does",
+      "given": {
+        "decision tracked": true
+      },
+      "setup": "adr-recorded",
+      "run": [
+        "adr",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "adr-0001",
+          "proposed"
+        ]
+      },
+      "explain": "One line per decision, in discovery order: the identity, the status, the date it reached it, and the title."
+    },
+    {
+      "id": "checks",
+      "title": "What check examined",
+      "given": {
+        "decision tracked": true
+      },
+      "setup": "adr-recorded",
+      "run": [
+        "adr",
+        "check"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "examined 1 decision(s)",
+          "every identity unique"
+        ]
+      },
+      "explain": "A clean result states what it examined, so that a pass over an empty directory cannot look like a pass over the set."
+    },
+    {
+      "id": "cannot-accept",
+      "title": "The status is not the tool's to choose",
+      "given": {
+        "decision tracked": true
+      },
+      "setup": "adr-recorded",
+      "run": [
+        "adr",
+        "propose",
+        "A decision that accepts itself",
+        "--status",
+        "accepted"
+      ],
+      "expect": {
+        "exit": 15,
+        "stdout_contains": [
+          "not yours to choose",
+          "a person editing the record"
+        ]
+      },
+      "explain": "Exit 15 is REFUSED. A tool that can write `accepted` turns its own inference into repository truth, and a reader months later cannot tell which decisions a person actually made."
+    },
+    {
+      "id": "missing",
+      "title": "Asking for one that does not exist",
+      "given": {
+        "decision tracked": false
+      },
+      "setup": "installed",
+      "run": [
+        "adr",
+        "show",
+        "adr-9999"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "adr list"
+        ]
+      },
+      "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the command that lists what does exist."
+    }
+  ]
+}

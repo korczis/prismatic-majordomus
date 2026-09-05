@@ -1,7 +1,21 @@
+---
+schema: adr/v1
+id: adr-0002
+kind: adr
+title: A canonical capability registry, with MCP, HTTP, OpenAPI, Swagger UI, the CLI and the reference as projections
+status: accepted
+date: 2026-09-05
+tags:
+  - registry
+  - projections
+  - architecture
+provenance:
+  origin: authored
+---
+
 # 2. A canonical capability registry, with MCP, HTTP, OpenAPI, Swagger UI, the CLI and the reference as projections
 
-Status: accepted, 2026-09-05. Extends ADR 1.
-
+Extends ADR 1.
 ## Context
 
 ADR 1 added a Rust executable with one command, `mcp`, and a hand-written table of four
