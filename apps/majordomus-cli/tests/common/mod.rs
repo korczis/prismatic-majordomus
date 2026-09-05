@@ -184,6 +184,7 @@ context:
 
 profiles:
   default: implementation
+  checkpoint_interval_default: 15m
 
 projections:
   - provider: agents

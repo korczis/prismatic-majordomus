@@ -7,6 +7,8 @@ use crate::app::App;
 use crate::cli::{GenerateArgs, GenerateTarget};
 use crate::error::{Error, Result};
 use crate::generate::{self, Target};
+use crate::policy::LoadedPolicy;
+use crate::providers;
 
 /// Run `majordomus generate`.
 pub fn run(args: GenerateArgs) -> Result<u8> {
@@ -18,6 +20,7 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         GenerateTarget::Benchmarks => &[Target::Benchmarks],
         GenerateTarget::Registry => &[Target::Registry],
         GenerateTarget::Allow => &[Target::Allow],
+        GenerateTarget::Providers => &[Target::Providers],
     };
     let mut artifacts = generate::context_artifacts(&app.context, crate::VERSION, targets)?;
     if targets.contains(&Target::Allow) {
@@ -26,6 +29,10 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
             &app.share,
             app.repository.root(),
         ));
+    }
+    if targets.contains(&Target::Providers) {
+        let policy = LoadedPolicy::load(&app.repository)?;
+        artifacts.extend(providers::artifacts(&app.repository, &app.share, &policy)?);
     }
     let root = args
         .out
