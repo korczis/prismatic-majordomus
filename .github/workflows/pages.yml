@@ -1,8 +1,9 @@
 # Deploys the derived documentation site to GitHub Pages.
 #
 # The site is generated from canonical repository files: scripts/generate-site-data normalises
-# them into site/data/generated/, Zola renders templates over that data, Tailwind compiles the
-# Flowbite stylesheet. There is no second, hand-maintained content tree. The job first proves the
+# them into site/data/generated/, the Rust executable derives site/data/registry/ from its
+# registry, Zola renders templates over that data, Tailwind compiles the Flowbite stylesheet.
+# There is no second, hand-maintained content tree. The job first proves the
 # tree is healthy (tests, doctor), then that the committed derived data matches the sources, then
 # builds and checks the output, and only then deploys.
 name: pages
@@ -47,6 +48,16 @@ jobs:
           bin/majordomus doctor
       - name: derived data is in sync with canonical sources
         run: scripts/generate-site-data --check
+      # The Registry page reads site/data/registry/registry.json, which the Rust executable
+      # derives from the registry and the index; the provider bootstraps come from the same
+      # executable. A stale one does not deploy. (The behavioural tests above already built
+      # the crate in target/debug; the cache keeps that build across runs.)
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/majordomus-cli
+      - name: generated projections are in sync with the registry
+        run: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- generate --check
       - name: build the site
         run: scripts/site-build
       - name: check the site
