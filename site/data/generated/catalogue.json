@@ -5779,6 +5779,244 @@
       ]
     },
     {
+      "id": "capture-the-prompts-that-started-the-work",
+      "kind": "use-case",
+      "title": "Keep the prompts that started the work, below the model rather than around it",
+      "summary": "Wire the provider hook, prove it by running a payload through it, and see that a prompt the tool could not parse is reported rather than silently dropped.",
+      "category": "continuity",
+      "status": "active",
+      "target": "guaranteed",
+      "actors": [
+        "maintainer",
+        "agent"
+      ],
+      "difficulty": "basic",
+      "commands": [
+        "capture"
+      ],
+      "doctrines": [
+        "majordomus.prompt-capture"
+      ],
+      "claims": [
+        "prompt-capture"
+      ],
+      "responsibilities": [
+        "state"
+      ],
+      "applications": [
+        "long-running-work"
+      ],
+      "scenario": {
+        "setup": "capture-installed",
+        "given": [
+          "Majordomus installed, with the provider hook written and the executable on PATH"
+        ],
+        "steps": [
+          {
+            "id": "is-it-real",
+            "run": [
+              "capture",
+              "status"
+            ],
+            "note": "the state is read from the provider configuration and a payload driven through the shim, not from a flag somebody set",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "claude-code",
+                "majordomus-capture"
+              ]
+            }
+          },
+          {
+            "id": "one-prompt-one-record",
+            "run": [
+              "capture",
+              "prompt",
+              "--provider",
+              "claude-code"
+            ],
+            "stdin": "claude-code-prompt.json",
+            "note": "what the provider sends on UserPromptSubmit; the record is the person half of the exchange",
+            "expect": {
+              "exit": 0,
+              "files_exist": [
+                ".ai/local/prompts"
+              ]
+            }
+          },
+          {
+            "id": "never-rejects-a-prompt",
+            "run": [
+              "capture",
+              "prompt",
+              "--provider",
+              "claude-code"
+            ],
+            "stdin": "not-a-payload.txt",
+            "note": "in a hook, exit 2 rejects the person prompt, so a payload the tool cannot read is written to the failure log and the turn goes on",
+            "expect": {
+              "exit": 0,
+              "files_exist": [
+                ".ai/local/prompts/.capture.log"
+              ]
+            }
+          },
+          {
+            "id": "a-subcommand-that-is-not-one",
+            "run": [
+              "capture",
+              "nonsense"
+            ],
+            "note": "the command line still refuses what a person typed wrong: only the hook path is forbidden to exit 2",
+            "expect": {
+              "exit": 2,
+              "stdout_contains": [
+                "unknown subcommand"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the archive is written under the ignored half of the layer and never committed",
+          "a prompt the tool could not read is a named failure, not a silence"
+        ]
+      },
+      "path": ".ai/repo/use-cases/capture-the-prompts-that-started-the-work.md",
+      "maturity": "guaranteed",
+      "evidence": {
+        "schema": "majordomus/use-case-evidence/v1",
+        "use_case": "capture-the-prompts-that-started-the-work",
+        "setup": "capture-installed",
+        "result": "pass",
+        "steps": [
+          {
+            "id": "is-it-real",
+            "command": "majordomus capture status",
+            "argv": [
+              "capture",
+              "status"
+            ],
+            "stdin": null,
+            "exit": 0,
+            "expected_exit": 0,
+            "output": "claude-code    wired        .claude/hooks/majordomus-capture is in place but a synthetic payload through it produced no record",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 0,
+                "observed": 0,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "claude-code",
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "majordomus-capture",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "one-prompt-one-record",
+            "command": "majordomus capture prompt --provider claude-code",
+            "argv": [
+              "capture",
+              "prompt",
+              "--provider",
+              "claude-code"
+            ],
+            "stdin": "claude-code-prompt.json",
+            "exit": 0,
+            "expected_exit": 0,
+            "output": "",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 0,
+                "observed": 0,
+                "result": "pass"
+              },
+              {
+                "kind": "file_exists",
+                "path": ".ai/local/prompts",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "never-rejects-a-prompt",
+            "command": "majordomus capture prompt --provider claude-code",
+            "argv": [
+              "capture",
+              "prompt",
+              "--provider",
+              "claude-code"
+            ],
+            "stdin": "not-a-payload.txt",
+            "exit": 0,
+            "expected_exit": 0,
+            "output": "",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 0,
+                "observed": 0,
+                "result": "pass"
+              },
+              {
+                "kind": "file_exists",
+                "path": ".ai/local/prompts/.capture.log",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "a-subcommand-that-is-not-one",
+            "command": "majordomus capture nonsense",
+            "argv": [
+              "capture",
+              "nonsense"
+            ],
+            "stdin": null,
+            "exit": 2,
+            "expected_exit": 2,
+            "output": "majordomus: capture: unknown subcommand 'nonsense' (prompt|install|status)",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 2,
+                "observed": 2,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "unknown subcommand",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          }
+        ]
+      },
+      "related_ids": [
+        "carry-a-blocker-across-a-handover",
+        "checkpoint-long-work",
+        "hand-work-between-sessions",
+        "keep-decisions-out-of-the-transcript",
+        "open-and-close-a-session"
+      ]
+    },
+    {
       "id": "follow-a-skill-the-repository-defines",
       "kind": "use-case",
       "title": "Follow a procedure the repository defines, and add another one",
@@ -7626,7 +7864,7 @@
         "read-back-what-happened",
         "accept-or-refuse-finished-work",
         "block-acceptance-on-an-open-question",
-        "carry-a-blocker-across-a-handover"
+        "capture-the-prompts-that-started-the-work"
       ]
     },
     {
@@ -7980,6 +8218,7 @@
       ],
       "use_cases": [
         "record-a-decision-before-it-is-forgotten",
+        "capture-the-prompts-that-started-the-work",
         "hand-work-between-sessions",
         "find-out-what-drifted",
         "accept-or-refuse-finished-work",
@@ -7997,6 +8236,7 @@
       ],
       "doctrines": [
         "majordomus.adr-integrity",
+        "majordomus.prompt-capture",
         "majordomus.ledger-integrity",
         "majordomus.decision-records",
         "majordomus.blocker-resolution",
@@ -8071,8 +8311,9 @@
       "title": "Sessions and handover",
       "summary": "Stopping and resuming work across sessions and workers from durable state, never a transcript.",
       "order": 20,
-      "count": 8,
+      "count": 9,
       "use_cases": [
+        "capture-the-prompts-that-started-the-work",
         "carry-a-blocker-across-a-handover",
         "checkpoint-long-work",
         "hand-work-between-sessions",
@@ -8083,7 +8324,7 @@
         "resume-in-the-right-worktree"
       ],
       "maturity": {
-        "guaranteed": 6,
+        "guaranteed": 7,
         "verified": 2
       },
       "applications": [
@@ -8411,10 +8652,10 @@
       {
         "class": "command",
         "id": "capture",
-        "use_cases": 0,
-        "executable": 0,
-        "evidence": 0,
-        "status": "gap",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
         "policy": "required"
       },
       {
@@ -8618,10 +8859,10 @@
       {
         "class": "claim",
         "id": "prompt-capture",
-        "use_cases": 0,
-        "executable": 0,
-        "evidence": 0,
-        "status": "gap",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
         "policy": "advisory"
       },
       {
@@ -9256,17 +9497,17 @@
       }
     ],
     "total": 109,
-    "covered": 102,
+    "covered": 104,
     "partial": 0,
-    "gaps_required": 1
+    "gaps_required": 0
   },
   "counts": {
-    "use_cases": 33,
+    "use_cases": 34,
     "drafts": 0,
     "applications": 5,
     "categories": 10,
     "maturity": {
-      "guaranteed": 31,
+      "guaranteed": 32,
       "verified": 2
     }
   },
@@ -9295,15 +9536,16 @@
     "classify-what-belongs-in-the-context": 21,
     "find-an-object-without-reading-everything": 22,
     "add-a-use-case-and-prove-it": 23,
-    "follow-a-skill-the-repository-defines": 24,
-    "keep-decisions-out-of-the-transcript": 25,
-    "know-which-tool-is-running": 26,
-    "migrate-from-the-old-layout": 27,
-    "open-and-close-a-session": 28,
-    "plan-the-work-as-data": 29,
-    "read-the-rules-the-tool-applies": 30,
-    "record-a-decision-before-it-is-forgotten": 31,
-    "resume-from-a-prompt-asset": 32
+    "capture-the-prompts-that-started-the-work": 24,
+    "follow-a-skill-the-repository-defines": 25,
+    "keep-decisions-out-of-the-transcript": 26,
+    "know-which-tool-is-running": 27,
+    "migrate-from-the-old-layout": 28,
+    "open-and-close-a-session": 29,
+    "plan-the-work-as-data": 30,
+    "read-the-rules-the-tool-applies": 31,
+    "record-a-decision-before-it-is-forgotten": 32,
+    "resume-from-a-prompt-asset": 33
   },
   "ap_index": {
     "repository-with-authored-governance": 0,

@@ -1271,6 +1271,59 @@ restrict `list`, `ready`, `blocked`, `waves` and `graph`; `--covers`, `--type`, 
 The same model is projected to GitHub by `scripts/github-sync` and to the website by
 `scripts/generate-site-data`. Neither re-derives a status; both read this engine.
 
+## `majordomus adr`
+
+The repository's architecture decisions as objects: what was decided, why, what it cost,
+and where the record came from. Under the layer's `adrs` section.
+
+A decision is a file `.ai/repo/adrs/<NNNN>-<slug>.md` — YAML front matter satisfying
+`share/schemas/adr.schema.json` over a body carrying `# Context`, `# Decision` and
+`# Consequences`. Nothing registers it: the source class `adr` in
+`.ai/repo/knowledge/sources.yaml` discovers it over the tracked tree, which is the same
+declaration the Rust executable indexes. See [`SCHEMAS.md`](@/docs/schemas.md) for the contract.
+
+```
+majordomus adr list [--status <status>] [--json]      every decision: id, status, date, title
+majordomus adr show <id> [--json]                     the path, then the file as written
+majordomus adr propose "<title>" [--from <ref>]...    write a new decision, status proposed
+                       [--tag <tag>]... [--supersedes <id>]
+majordomus adr check [--json]                         validate every decision and every reference
+```
+
+- `list` prints one line per discovered decision, invalid ones included; `--status`
+  filters to one of `proposed`, `accepted`, `superseded`, `rejected`.
+- `show` prints the repository-relative path on the first line and the file below it. An
+  id that is not a decision exits `12` and names `adr list`.
+- `propose` writes `status: proposed` and nothing else. **There is no way to write
+  `accepted`**: `--status` exits `15` naming the reason, because a tool that can write
+  `accepted` turns its own inference into repository truth and a later reader cannot tell
+  which decisions a person actually made. The identity is allocated under a lock over the
+  section directory, so two worktrees proposing at the same moment get two identities.
+  A `--from` reference is `<type>:<value>` with the type one of `decision`, `session`,
+  `commit`, `issue`, `file`, `test`; a `file:` or `test:` path that does not exist exits
+  `2`. Referenced evidence makes the record `provenance.origin: extracted`, and an
+  extracted record with no evidence is refused as an assertion. `--supersedes` writes both
+  halves of the relation, so the chain is walkable from either end.
+- `check` validates every record against the allow-list generated from the schema (no
+  unknown key), `schema: adr/v1`, the closed status set, an `id` whose number equals the
+  file-name prefix, the required body sections; and across the set: duplicate identities,
+  a `superseded` record with no `superseded_by`, one-sided supersession, and a reference
+  that resolves to nothing. It exits `10` on any failure.
+
+`doctor` and `watch` run the same examination through the doctrine
+`majordomus.adr-integrity`.
+
+```
+$ majordomus adr propose "The registry is the one canonical declaration" --from file:docs/CAPABILITIES.md
+proposed: adr-0011  The registry is the one canonical declaration
+.ai/repo/adrs/0011-the-registry-is-the-one-canonical-declaration.md
+status is "proposed"; accepting it is a person editing that field.
+
+$ majordomus adr check
+examined 11 decision(s) in .ai/repo/adrs/
+every identity unique, every status known, every reference resolves
+```
+
 ## `majordomus usecase`
 
 The executable use cases of the repository: the Markdown objects under the manifest's

@@ -1,7 +1,7 @@
 +++
 title = "Check the version before trusting a diagnosis"
 description = "Print the version every other surface derives from, and see the argument it refuses."
-weight = 27
+weight = 28
 [extra]
 id = "know-which-tool-is-running"
 source = ".ai/repo/use-cases/know-which-tool-is-running.md"

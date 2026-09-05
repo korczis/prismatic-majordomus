@@ -1,7 +1,7 @@
 +++
 title = "Follow a procedure the repository defines, and add another one"
 description = "Read the repository''s skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined."
-weight = 25
+weight = 26
 [extra]
 id = "follow-a-skill-the-repository-defines"
 source = ".ai/repo/use-cases/follow-a-skill-the-repository-defines.md"

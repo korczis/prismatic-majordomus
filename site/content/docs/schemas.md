@@ -946,6 +946,77 @@ heading. See [`CLI.md`](@/docs/cli-specification.md) for `majordomus skills`.
 
 ---
 
+## `.ai/repo/adrs/<NNNN>-<slug>.md`
+
+An architecture decision: what was decided, why, and what it costs. Front matter is
+authored or proposed by the tool, validated against `share/schemas/adr.schema.json` (the
+allow-list `share/allow/adr.txt` is generated from it); the body is the narrative. The
+identity is `adr-NNNN`, allocated once, never reused, and it fixes the file-name prefix, so
+a retitle moves the slug and never the number. Discovery is the source class `adr` in
+`.ai/repo/knowledge/sources.yaml`; nothing else registers a decision.
+
+```markdown
+---
+schema: adr/v1
+id: adr-0004
+kind: adr
+title: One canonical declaration, composed modules, derived projections
+status: accepted
+date: 2026-09-05
+tags: [architecture, capabilities]
+supersedes: [adr-0002]
+provenance:
+  origin: extracted
+  derived_from:
+    - decision:t-2026-09-05-a
+    - file:docs/CAPABILITIES.md
+---
+# Context
+...
+# Decision
+...
+# Consequences
+...
+```
+
+<div class="overflow-x-auto">
+
+| Key | Required | Meaning |
+|---|---|---|
+| `schema` | yes | `adr/v1` |
+| `id` | yes | `^adr-[0-9]{4}$`; the number equals the file-name prefix |
+| `kind` | yes | `adr` |
+| `title` | yes | one line, the decision rather than the topic |
+| `status` | yes | `proposed`, `accepted`, `superseded` or `rejected` |
+| `date` | yes | `YYYY-MM-DD`, the day it reached that status |
+| `tags` | no | ids, same pattern as elsewhere |
+| `supersedes` | no | decisions this one stands in for; each must exist and name this one back |
+| `superseded_by` | no | present exactly when the status is `superseded` |
+| `provenance.origin` | no | `authored` (a person wrote it) or `extracted` (`adr propose` derived it) |
+| `provenance.derived_from` | no | typed references: `decision:`, `session:`, `commit:`, `issue:`, `file:`, `test:` |
+
+</div>
+
+
+Unknown keys are errors. The body carries non-empty level-one sections `# Context`,
+`# Decision` and `# Consequences`; `# Alternatives rejected` is optional.
+
+**`propose` never writes `accepted`.** It writes `status: proposed` and has no flag that
+says otherwise, because acceptance is the person's act: a tool that can write `accepted`
+can turn its own inference into repository truth, and a reader months later cannot tell
+which. An `extracted` record must name what it was derived from — a candidate without
+evidence is an assertion — and is refused if it claims `accepted`. It may be `superseded`
+without ever having been accepted, because that is something a later record did to it
+rather than a decision it claims for itself.
+
+**Supersession is reciprocal.** A chain walkable from one end only is not a chain:
+`supersedes` on one record requires `superseded_by` on the other, and `adr check` reports
+either half missing. Identities are allocated under a lock over the section directory, so
+two worktrees proposing at the same moment get two numbers rather than one number twice.
+See [`CLI.md`](@/docs/cli-specification.md) for `majordomus adr`.
+
+---
+
 ## `.ai/repo/knowledge/sources.yaml`
 
 The repository's declared knowledge sources: which tracked files are knowledge, in which

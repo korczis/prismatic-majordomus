@@ -1,7 +1,7 @@
 +++
 title = "Keep the plan as milestones and issues the tool can validate"
 description = "Declare milestones as outcomes and issues as execution contracts, and let the tool say what is ready and what is blocked."
-weight = 30
+weight = 31
 [extra]
 id = "plan-the-work-as-data"
 source = ".ai/repo/use-cases/plan-the-work-as-data.md"

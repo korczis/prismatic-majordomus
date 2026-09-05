@@ -1,7 +1,7 @@
 +++
 title = "Record a decision so the next worker can find it"
 description = "Write down what was decided and why as state, then find it again without reading a conversation."
-weight = 26
+weight = 27
 [extra]
 id = "keep-decisions-out-of-the-transcript"
 source = ".ai/repo/use-cases/keep-decisions-out-of-the-transcript.md"
