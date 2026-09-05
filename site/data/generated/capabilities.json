@@ -1399,32 +1399,6 @@
       "test_case": "92_openapi_reference"
     },
     {
-      "id": "provider-projections-one-renderer",
-      "claim": "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, GEMINI.md, ...) are a target of majordomus generate, rendered from the policy and the provider templates byte for byte as the shell tool renders them, and generate --check refuses a hand-edited or stale one in CI",
-      "source": "docs/CAPABILITIES.md",
-      "implementation": "apps/majordomus-cli/src/providers.rs",
-      "test": "test/cases/93_rust_provider_projections.sh",
-      "status": "guaranteed",
-      "note": "One renderer, two entry points that agree on every stamp; the policy is the only input (its hash and the profiles' is the stamp's first hash). A target outside the repository, a provider without a template, a token the policy cannot fill, and an always_loaded target over the budget are refused with the reason, and nothing is written. Region mode keeps the host document outside the markers. apps/majordomus-cli/tests/providers_projection.rs covers the fixture side; CI runs generate --check on every push.",
-      "responsibility": "projection",
-      "source_route": "/docs/capabilities/",
-      "command": null,
-      "test_case": "93_rust_provider_projections"
-    },
-    {
-      "id": "site-registry-dataset",
-      "claim": "The site's Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI",
-      "source": "docs/CAPABILITIES.md",
-      "implementation": "apps/majordomus-cli/src/site.rs",
-      "test": "apps/majordomus-cli/tests/projections.rs",
-      "status": "guaranteed",
-      "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns.",
-      "responsibility": "none",
-      "source_route": "/docs/capabilities/",
-      "command": null,
-      "test_case": "apps/majordomus-cli/tests/projections.rs"
-    },
-    {
       "id": "scope-declared",
       "claim": "What a worker reads of the repository is declared once in .ai/repo/scope.yaml, out wins over in, and the Rust executable discovers, indexes and serves nothing outside it",
       "source": "docs/SCOPE.md",
@@ -1438,43 +1412,17 @@
       "test_case": "93_scope_policy"
     },
     {
-      "id": "use-case-coverage",
-      "claim": "Every public command is named and run by an active use case, a guaranteed claim or an MCP tool without one is a named gap, and the policy says which gaps fail doctor, check and finish",
-      "source": "docs/USE_CASES.md",
-      "implementation": "lib/usecase.sh",
-      "test": "test/cases/94_use_cases.sh",
+      "id": "site-deploy-one-path",
+      "claim": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the Pages workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
+      "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "implementation": "scripts/site-deploy",
+      "test": "test/cases/96_site_deploy.sh",
       "status": "guaranteed",
-      "note": "The tally is computed from the command registry, docs/CLAIMS.yaml, the executable's registry and the use cases under .ai/repo/use-cases/; a draft never counts. The doctrine is majordomus.use-case-coverage, gated by policy use_cases.coverage and the finish key use_cases_covered.",
-      "responsibility": "doctor",
-      "source_route": "/docs/use-cases/",
-      "command": "usecase",
-      "test_case": "94_use_cases"
-    },
-    {
-      "id": "use-case-evidence",
-      "claim": "A use case's scenario executes against the real tool in a disposable repository, every step's exit code and output are asserted, and the normalised evidence is what the site shows",
-      "source": "docs/USE_CASES.md",
-      "implementation": "lib/usecase.sh",
-      "test": "test/cases/94_use_cases.sh",
-      "status": "guaranteed",
-      "note": "majordomus usecase run writes .ai/local/evidence/use-cases/<id>.json; scripts/generate-site-data runs the same scenarios and embeds the evidence into site/data/generated/catalogue.json, so --check proves the pages show what the tool did. Paths, timestamps, ids, hashes and durations are normalised; nothing behavioural is.",
-      "responsibility": "doctor",
-      "source_route": "/docs/use-cases/",
-      "command": "usecase",
-      "test_case": "94_use_cases"
-    },
-    {
-      "id": "use-case-impact",
-      "claim": "From the files a change touched, the tool names the commands, rules, use cases, scenarios and behavioural cases affected, and scaffolds a draft for a capability no use case covers",
-      "source": "docs/USE_CASES.md",
-      "implementation": "lib/usecase.sh",
-      "test": "test/cases/94_use_cases.sh",
-      "status": "guaranteed",
-      "note": "usecase impact maps paths through docs/RESPONSIBILITIES.yaml, the dispatch table, the rules' identities and the scenarios' fixtures; usecase scaffold writes drafts from the registry, the command fixture and the claims, and never a guarantee.",
-      "responsibility": "doctor",
-      "source_route": "/docs/use-cases/",
-      "command": "usecase",
-      "test_case": "94_use_cases"
+      "note": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site.md.",
+      "responsibility": "none",
+      "source_route": "/docs/github-pages-architecture/",
+      "command": null,
+      "test_case": "96_site_deploy"
     }
   ]
 }

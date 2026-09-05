@@ -2875,7 +2875,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/object?uri=majordomus%3A%2F%2Fapplication%2Fci-gated-project\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/object?uri=majordomus%3A%2F%2Fclaim%2Fai-layer-manifest\"",
           "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content; a URI a query projects (majordomus://repository) answers that query as a JSON document. The same resolution serves the MCP resource read.",
           "id": "objects.get",
           "kind": "query",
@@ -2888,7 +2888,7 @@
               "examples": [
                 {
                   "case": "first-object",
-                  "value": "\"majordomus://application/ci-gated-project\""
+                  "value": "\"majordomus://claim/ai-layer-manifest\""
                 },
                 {
                   "case": "repository",
@@ -2944,7 +2944,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/objects?kind=application\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/objects?kind=claim\"",
           "description": "List the declarative objects of the repository's AI layer, optionally by kind or tag.",
           "id": "objects.list",
           "kind": "query",
@@ -2957,7 +2957,7 @@
               "examples": [
                 {
                   "case": "first-kind",
-                  "value": "\"application\""
+                  "value": "\"claim\""
                 }
               ],
               "name": "kind",
@@ -3398,7 +3398,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "scope classify",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/scope/classify?path=.ai%2Frepo%2Fapplications%2Fci-gated-project.md\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/scope/classify?path=docs%2FCLAIMS.yaml\"",
           "description": "Whether a repository-relative path is in or out of the scope, the reason when it is out, and the pattern or limit that decided; an existing file is judged by name, then size, then content.",
           "id": "repository.scope_classify",
           "kind": "query",
@@ -3411,7 +3411,7 @@
               "examples": [
                 {
                   "case": "first-object",
-                  "value": "\".ai/repo/applications/ci-gated-project.md\""
+                  "value": "\"docs/CLAIMS.yaml\""
                 },
                 {
                   "case": "layer-file",
