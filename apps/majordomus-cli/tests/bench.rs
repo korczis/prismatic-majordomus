@@ -401,7 +401,7 @@ fn a_check_reports_every_line_and_never_attaches_a_stale_baseline_to_a_renamed_t
     let policy = Policy::default();
     let base = doc(
         vec![
-            ("a|direct|x", CacheMode::Uncached, 1000.0),
+            ("a|direct|x", CacheMode::Uncached, 10000.0),
             ("old|direct|x", CacheMode::Uncached, 500.0),
             ("tiny", CacheMode::Uncached, 10.0),
         ],
@@ -409,7 +409,7 @@ fn a_check_reports_every_line_and_never_attaches_a_stale_baseline_to_a_renamed_t
     );
     let run = doc(
         vec![
-            ("a|direct|x", CacheMode::Uncached, 1400.0),
+            ("a|direct|x", CacheMode::Uncached, 14000.0),
             ("new|direct|x", CacheMode::Uncached, 5.0),
             ("tiny", CacheMode::Uncached, 100.0),
         ],
@@ -439,6 +439,13 @@ fn a_check_reports_every_line_and_never_attaches_a_stale_baseline_to_a_renamed_t
         tiny.verdict, "NOISE",
         "+900% but 90 µs: under the absolute floor"
     );
+    // five samples per target in this helper: p95 (50) and p99 (200) do not gate
+    let a_p99 = check
+        .lines
+        .iter()
+        .find(|l| l.key == "a|direct|x" && l.metric == "p99")
+        .unwrap();
+    assert_eq!(a_p99.verdict, "SHORT", "{a_p99:?}");
     assert!(check.failed());
     let text = check.render();
     assert!(
@@ -448,7 +455,7 @@ fn a_check_reports_every_line_and_never_attaches_a_stale_baseline_to_a_renamed_t
         "{text}"
     );
     // within policy
-    let run = doc(vec![("a|direct|x", CacheMode::Uncached, 1100.0)], "fp1");
+    let run = doc(vec![("a|direct|x", CacheMode::Uncached, 11000.0)], "fp1");
     let check = Check::compare(&run, Some(&base), &policy);
     assert!(!check.failed() && !check.registry_changed);
     assert!(check.render().contains("within policy"));

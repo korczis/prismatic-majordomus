@@ -30,6 +30,11 @@ pub const POLICY_FILE: &str = "policy.yaml";
 pub struct Threshold {
     /// The allowed relative increase (`0.25` is a quarter).
     pub relative: f64,
+    /// The metric gates only when the run took at least this many samples; under it the
+    /// comparison is reported as `SHORT` and does not fail. A p99 of twenty samples is the
+    /// slowest sample, which one scheduler hiccup decides.
+    #[serde(default)]
+    pub minimum_samples: usize,
 }
 
 /// The regression policy.
@@ -45,13 +50,31 @@ impl Default for Policy {
     fn default() -> Self {
         Policy {
             regression: [
-                ("p50".to_string(), Threshold { relative: 0.25 }),
-                ("p95".to_string(), Threshold { relative: 0.30 }),
-                ("p99".to_string(), Threshold { relative: 0.50 }),
+                (
+                    "p50".to_string(),
+                    Threshold {
+                        relative: 0.25,
+                        minimum_samples: 0,
+                    },
+                ),
+                (
+                    "p95".to_string(),
+                    Threshold {
+                        relative: 0.30,
+                        minimum_samples: 50,
+                    },
+                ),
+                (
+                    "p99".to_string(),
+                    Threshold {
+                        relative: 0.50,
+                        minimum_samples: 200,
+                    },
+                ),
             ]
             .into_iter()
             .collect(),
-            minimum_absolute_us: 200.0,
+            minimum_absolute_us: 1000.0,
         }
     }
 }
@@ -85,9 +108,26 @@ impl Policy {
                         path: path.clone(),
                         reason: format!("regression.{metric}.relative is not a number"),
                     })?;
-                policy
-                    .regression
-                    .insert(metric.clone(), Threshold { relative });
+                let minimum_samples = match t.get("minimum_samples") {
+                    None => 0,
+                    Some(x) => x
+                        .as_str()
+                        .and_then(|s| s.parse::<usize>().ok())
+                        .or_else(|| x.as_u64().map(|n| n as usize))
+                        .ok_or_else(|| Error::InvalidManifest {
+                            path: path.clone(),
+                            reason: format!(
+                                "regression.{metric}.minimum_samples is not a whole number"
+                            ),
+                        })?,
+                };
+                policy.regression.insert(
+                    metric.clone(),
+                    Threshold {
+                        relative,
+                        minimum_samples,
+                    },
+                );
             }
         }
         if let Some(m) = v.get("minimum_absolute_us") {
@@ -137,7 +177,8 @@ pub struct CheckLine {
     pub delta: f64,
     /// The allowed relative increase.
     pub allowed: f64,
-    /// `PASS`, `FAIL`, or `NOISE` (under the absolute floor).
+    /// `PASS`, `FAIL`, `NOISE` (the increase is under the absolute floor), or `SHORT` (the
+    /// run took fewer samples than the metric's `minimum_samples`).
     pub verdict: String,
 }
 
@@ -191,7 +232,9 @@ impl Check {
                     continue;
                 };
                 let delta = if bas > 0.0 { cur / bas - 1.0 } else { 0.0 };
-                let verdict = if cur - bas < policy.minimum_absolute_us {
+                let verdict = if r.stats.samples < threshold.minimum_samples {
+                    "SHORT"
+                } else if cur - bas < policy.minimum_absolute_us {
                     "NOISE"
                 } else if delta > threshold.relative {
                     "FAIL"
