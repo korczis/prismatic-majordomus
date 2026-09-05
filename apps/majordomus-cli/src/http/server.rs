@@ -189,10 +189,19 @@ fn answer(router: &Router, mut request: tiny_http::Request) {
 }
 
 /// Is stdin a pipe or a socket, as when a parent process spawned us and holds the other end?
+/// Asked of descriptor 0 itself (`fstat`), never of the path `/dev/stdin`: the path
+/// resolves through `/dev/fd`, which some harnesses (a coverage runner, a sandbox) do not
+/// expose, and a wrong "no" here sends `serve` into the run-forever branch while its
+/// parent waits for it to end.
 #[cfg(unix)]
 pub fn stdin_is_a_pipe() -> bool {
+    use std::os::fd::FromRawFd;
     use std::os::unix::fs::FileTypeExt;
-    std::fs::metadata("/dev/stdin")
+    // SAFETY: descriptor 0 is the process's stdin for the process's lifetime; ManuallyDrop
+    // keeps this `File` from closing it.
+    let stdin = std::mem::ManuallyDrop::new(unsafe { std::fs::File::from_raw_fd(0) });
+    stdin
+        .metadata()
         .map(|m| m.file_type().is_fifo() || m.file_type().is_socket())
         .unwrap_or(false)
 }
