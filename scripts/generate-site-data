@@ -108,6 +108,19 @@ doc_slug() { case "$1" in CLI) printf '%s' "$CLI_SPEC_SLUG" ;; *) printf '%s' "$
 DOCLINK='{ while (match($0, /\]\([A-Z_]+\.md\)/)) { t=substr($0,RSTART+2,RLENGTH-3); gsub(/_/,"-",t); t=tolower(t); if (t == "cli.md") t = spec ".md"; $0=substr($0,1,RSTART-1) "](@/docs/" t ")" substr($0,RSTART+RLENGTH) } print }'
 
 # link rewriting for derived Markdown (repository paths -> site routes)
+SITE_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml" | sed 's#/$##')"
+# README fragments render on the homepage through Zola's `markdown` filter, which resolves no
+# `@/` links, so a repository path to a document under docs/ becomes that document's route
+# under the site base (docs/MCP.md -> <base>/docs/mcp/, docs/PLAN_STATUS.md -> /docs/plan-status/).
+readme_links() {
+  sed -E "$LINKSED" | awk -v base="$SITE_BASE" '{
+    while (match($0, /\]\(docs\/[A-Z_]+\.md\)/)) {
+      t = substr($0, RSTART + 7, RLENGTH - 11); gsub(/_/, "-", t)
+      $0 = substr($0, 1, RSTART - 1) "](" base "/docs/" tolower(t) "/)" substr($0, RSTART + RLENGTH)
+    }
+    print
+  }'
+}
 LINKSED='s#\](\.\./AGENTS\.md)#](@/docs/contract.md)#g; s#\](AGENTS\.md)#](@/docs/contract.md)#g; s#\](\.\./CONTRIBUTING\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md)#g; s#\](\.\./SECURITY\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md)#g; s#\](CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](docs/CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](README\.md)#](@/docs/_index.md)#g; s#\]((\.\./)?test/cases/)#](https://github.com/korczis/prismatic-majordomus/tree/master/test/cases/)#g'
 
 flat() { local t; t="$(mktemp "${TMPDIR:-/tmp}/mj.f.XXXXXX")"; mj_yaml_flatten "$1" > "$t" || { echo "generate-site-data: $1 does not parse" >&2; exit 10; }; printf '%s' "$t"; }
@@ -335,11 +348,22 @@ FINISH_CHECKS="$(printf '%s\n' "$FINISH_BLOCK" | awk '/^(OK|FAIL)[[:space:]]/{pr
 [ "$(printf '%s' "$FINISH_CHECKS" | jq length)" -ge 4 ] || { echo "generate-site-data: the README finish transcript no longer lists its checks" >&2; exit 10; }
 DOES_ROWS="$(section_of "$ROOT/README.md" "What it does" "Quick start" | grep -E '^\| \*\*' | sed -E 's/^\| \*\*([^*]+)\*\* \| (.*) \|$/\1|\2/' | jq -Rn '[inputs | split("|") | {title: .[0], text: .[1]}]')"
 PROBLEM_MD="$(section_of "$ROOT/README.md" "The problem" "What it does")"
+NOT_MD="$(section_of "$ROOT/README.md" "What this is not" "Limitations")"
+LIMITS_MD="$(section_of "$ROOT/README.md" "Limitations" "Roadmap")"
+# captured first, rewritten second: a pipe would hide section_of's exit and a missing heading
+# would become an empty section instead of a refused run (case 12b)
+PROBLEM_MD="$(printf '%s\n' "$PROBLEM_MD" | readme_links)"
+NOT_MD="$(printf '%s\n' "$NOT_MD" | readme_links)"
+LIMITS_MD="$(printf '%s\n' "$LIMITS_MD" | readme_links)"
 jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" --argjson checks "$FINISH_CHECKS" \
   --arg problem_bullets "$(printf '%s' "$PROBLEM_MD" | awk '/^- /{f=1} f&&/^$/{exit} f')" \
-  --arg notwhat "$(section_of "$ROOT/README.md" "What this is not" "Limitations")" --argjson does "$DOES_ROWS" \
-  --arg limits "$(section_of "$ROOT/README.md" "Limitations" "Roadmap")" \
+  --arg notwhat "$NOT_MD" --argjson does "$DOES_ROWS" \
+  --arg limits "$LIMITS_MD" \
   '{schema:1, finish_transcript:$finish, finish_checks:$checks, problem_md:$problem, problem_bullets_md:$problem_bullets, not_md:$notwhat, limitations_md:$limits, does:$does}' > "$OUT/readme.json"
+if jq -r '.problem_md, .not_md, .limitations_md' "$OUT/readme.json" | grep -qE '\]\((\.\./)?[A-Za-z_./-]+\.(md|yaml)\)'; then
+  echo "generate-site-data: a README fragment the homepage renders still links a repository path (the site would 404 on it):" >&2
+  jq -r '.problem_md, .not_md, .limitations_md' "$OUT/readme.json" | grep -oE '\]\((\.\./)?[A-Za-z_./-]+\.(md|yaml)\)' >&2; exit 10
+fi
 
 mj_phase_end "gen:readme.json_fragments_the_ho" "$GEN_T0"
 # ---------------------------------------------------------------- commands.json (from share/commands.yaml)
@@ -1031,7 +1055,6 @@ source = "AGENTS.md"
 # (operations by tag, schemas as property tables, one curl per operation from its first
 # example), and this is the only place that projection runs. Nothing here is authored.
 OA="$ROOT/docs/generated/openapi.json"
-SITE_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml" | sed 's#/$##')"
 [ -f "$OA" ] || { echo "generate-site-data: docs/generated/openapi.json is missing (run: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
 jq -e '.openapi | startswith("3.1")' "$OA" >/dev/null 2>&1 || { echo "generate-site-data: docs/generated/openapi.json is not an OpenAPI 3.1 document" >&2; exit 10; }
 # the document names the page this generator writes; the two must agree or the executable's
