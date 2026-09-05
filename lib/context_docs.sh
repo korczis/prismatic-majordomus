@@ -36,8 +36,9 @@ MJ_CTXD_TAB="$(printf '\t')"
 mj_ctxd_tree()      { mj_rel "$MJ_AI_DIR"; }
 mj_ctxd_cleanup()   { rm -f "${MJ_CTXD_FLAT:-}" "${MJ_CTXD_PROBLEMS:-}" 2>/dev/null; }
 mj_ctxd_problem()   { printf '%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "${4:-}" >> "$MJ_CTXD_PROBLEMS"; }
-mj_ctxd()           { mj_yget "$MJ_CTXD_FLAT" "docs.$1.$2"; }
-mj_ctxd_list()      { mj_ylist "$MJ_CTXD_FLAT" "docs.$1.$2"; }
+# the documents are loaded into variables once (mj_yload); a field read is an expansion
+mj_ctxd()           { mj_yv ctxd "docs.$1.$2"; }
+mj_ctxd_list()      { mj_yvlist ctxd "docs.$1.$2"; }
 mj_ctxd_problems()  { [ -s "$MJ_CTXD_PROBLEMS" ]; }
 
 # the file conventions the manifest declares: names that must carry the contract
@@ -187,6 +188,9 @@ mj_ctxd_load() {
     [ -n "$f" ] || continue
     if mj_ctxd_scan "$f" "$MJ_CTXD_COUNT" "$conv" "$providers"; then MJ_CTXD_COUNT=$((MJ_CTXD_COUNT + 1)); fi
   done < <(mj_ctxd_files)
+  # every field of every document becomes a variable once; the cross checks and every
+  # later reader expand them instead of running one awk per field
+  mj_yload "$MJ_CTXD_FLAT" ctxd
   mj_ctxd_cross_check
   return 0
 }

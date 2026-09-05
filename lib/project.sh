@@ -170,20 +170,22 @@ mj_pj_ready_ranked() {
 # Same contract as the policy and profile files: a key nobody reads is an error, not a
 # comment. The allowlists live beside the ones for policy and profiles.
 mj_project_unknown_keys() {
-  local bad=0 f id allow out
-  for f in "$MJ_PJ/flat"/*; do
-    [ -f "$f" ] || continue
-    id="$(basename "$f")"
-    if [ "$id" = PROJECT ]; then allow="project"
-    elif mj_pj_is_milestone "$id"; then allow="milestone"
-    else allow="issue"; fi
-    out="$(mj_yaml_unknown_keys "$f" "$MJ_ALLOW_DIR/$allow.txt" || true)"
-    if [ -n "$out" ]; then
-      printf '%s %s\n' "$id" "$(printf '%s' "$out" | tr '\n' ' ')"
-      bad=1
-    fi
-  done
-  return $bad
+  # one awk over every flattened record and the three allow-lists: a key is unknown when
+  # no pattern of its record kind matches it. The per-file, per-key shape before this
+  # ran thousands of processes and was most of plan validate.
+  local out
+  out="$(awk -v ms=" $MJ_PJ_MILESTONES " -v allow="$MJ_ALLOW_DIR" '
+    function load(kind,   f, line) { f = allow "/" kind ".txt"; while ((getline line < f) > 0) if (line != "") pat[kind, ++np[kind]] = line; close(f) }
+    BEGIN { load("project"); load("milestone"); load("issue") }
+    FNR == 1 { id = FILENAME; sub(/.*\//, "", id)
+      kind = (id == "PROJECT") ? "project" : (index(ms, " " id " ") ? "milestone" : "issue") }
+    { key = $0; sub(/=.*/, "", key); ok = 0
+      for (i = 1; i <= np[kind]; i++) if (key ~ pat[kind, i]) { ok = 1; break }
+      if (!ok) bad[id] = bad[id] " " key }
+    END { for (id in bad) print id bad[id] }' "$MJ_PJ"/flat/* | LC_ALL=C sort)"
+  [ -n "$out" ] || return 0
+  printf '%s\n' "$out"
+  return 1
 }
 
 # ---------------------------------------------------------------- Mermaid

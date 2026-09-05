@@ -393,6 +393,26 @@ mj_yaml_flatten() {
 # One process each. These run thousands of times per command — the rule loader alone asks
 # for well over a thousand keys — and the sed|sed|head form they replaced cost four forks
 # per lookup, which was most of a command's wall time.
+# ---------------------------------------------------------------- flat file -> variables
+# mj_yload <flat> <prefix>: every key=value of a flattened file becomes one shell variable
+# <prefix>__<key>, with each "." of the key written "__" and each "-" written "___", so a
+# reader that needs many keys of one file pays one awk and one eval instead of one awk per
+# key. Keys outside [A-Za-z0-9_.-] are skipped: they fail every allow-list anyway and could
+# not be variable names. Values are single-quoted for eval, with the quote itself escaped.
+mj_yload() {
+  local code
+  code="$(awk -F= -v p="$2" '{
+      k = $1; if (k !~ /^[A-Za-z0-9_.-]+$/) next
+      gsub(/-/, "___", k); gsub(/\./, "__", k)
+      v = $0; sub(/^[^=]*=/, "", v); gsub(/\047/, "\047\\\047\047", v)
+      printf "%s__%s=\047%s\047\n", p, k, v }' "$1")"
+  eval "$code"
+}
+# mj_yv <prefix> <key>: the value loaded for a key, empty when absent
+mj_yv() { local k="${2//-/___}"; k="${k//./__}"; eval "printf '%s' \"\${$1__$k:-}\""; }
+# mj_yvlist <prefix> <key>: the items of a loaded list, one per line
+mj_yvlist() { local i=0 v; while v="$(mj_yv "$1" "$2.$i")"; [ -n "$v" ]; do printf '%s\n' "$v"; i=$((i+1)); done; }
+
 mj_yget()  { awk -v k="$2" 'index($0, k "=") == 1 { print substr($0, length(k) + 2); exit }' "$1"; }
 # list values under a key prefix: key.0, key.1 ...
 mj_ylist() { awk -v k="$2" 'index($0, k ".") == 1 { r = substr($0, length(k) + 2); if (r ~ /^[0-9]+=/) { sub(/^[0-9]+=/, "", r); print r } }' "$1"; }
