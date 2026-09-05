@@ -13,6 +13,7 @@ use serde_json::{json, Value};
 fn observe(f: &Fixture) -> (Vec<String>, Vec<Value>) {
     let mut child = Command::new(BIN)
         .arg("mcp")
+        .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -158,4 +159,82 @@ fn a_new_source_class_of_a_known_kind_is_data_too() {
     assert_eq!(adr["meta"]["provenance"]["source_class"], "adr");
     assert_eq!(adr["meta"]["provenance"]["section"], "adrs");
     assert_eq!(adr["title"], "1. Example decision");
+}
+
+#[test]
+fn a_repository_defines_a_new_kind_with_its_schema_and_it_is_served_without_a_rust_change() {
+    let f = Fixture::new();
+    // the repository adds a kind, a schema for it, a source class naming it, and one object
+    f.write(
+        ".ai/repo/knowledge/kinds.yaml",
+        "schema: majordomus-kinds/v1\nkinds:\n  note:\n    format: markdown\n    front_matter: required\n    schema: note\n    identity: [id]\n    title: title\n    description: summary\n",
+    );
+    f.write(
+        ".ai/repo/knowledge/schemas/note.schema.json",
+        r#"{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Note", "type": "object", "additionalProperties": false, "required": ["id", "title"], "properties": { "id": { "type": "string" }, "title": { "type": "string" }, "summary": { "type": "string" }, "weight": { "type": "integer", "minimum": 1 } } }"#,
+    );
+    f.write(
+        ".ai/repo/knowledge/sources.yaml",
+        &common::SOURCES.replace(
+            "  - id: readme\n    kind: document",
+            "  - id: note\n    kind: note\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/notes/*.md'\n    required: false\n\n  - id: readme\n    kind: document",
+        ),
+    );
+    f.write(".ai/repo/notes/first.md", "---\nid: first\ntitle: The first note\nsummary: A note the repository invented.\nweight: 2\n---\n\nBody.\n");
+    f.commit("a repository kind");
+    let (uris, diags) = observe(&f);
+    assert!(diags.is_empty(), "{diags:?}");
+    assert!(
+        uris.contains(&"majordomus://note/first".to_string()),
+        "{uris:?}"
+    );
+    let (code, out, _) = common::run_in(
+        &f.root(),
+        &["capabilities", "describe", "note.first", "--format", "json"],
+        "",
+    );
+    assert_eq!(code, 0);
+    let v: Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(v["title"], "The first note");
+    assert_eq!(v["description"], "A note the repository invented.");
+    assert_eq!(v["provenance"]["source_class"], "note");
+    let (_, out, _) = common::run_in(&f.root(), &["capabilities", "validate"], "");
+    assert!(out.contains(".ai/repo/knowledge/kinds.yaml"), "{out}");
+
+    // the repository's schema is enforced: a note with a wrong type and an unknown key is named
+    f.write(
+        ".ai/repo/notes/second.md",
+        "---\nid: second\ntitle: T\nweight: zero\ncolour: red\n---\n",
+    );
+    f.commit("bad note");
+    let (uris, diags) = observe(&f);
+    assert!(!uris.iter().any(|u| u.contains("second")));
+    let d = diags
+        .iter()
+        .find(|d| d["path"] == ".ai/repo/notes/second.md")
+        .expect("named");
+    assert_eq!(d["code"], "unknown_key");
+    assert!(d["message"].as_str().unwrap().contains("colour"));
+    f.write(
+        ".ai/repo/notes/second.md",
+        "---\nid: second\ntitle: T\nweight: zero\n---\n",
+    );
+    f.commit("typed");
+    let (_, diags) = observe(&f);
+    let d = diags
+        .iter()
+        .find(|d| d["path"] == ".ai/repo/notes/second.md")
+        .expect("named");
+    assert_eq!(d["code"], "schema_violation");
+    assert!(d["message"].as_str().unwrap().contains("weight"), "{d}");
+
+    // a repository may add a kind, not redefine one the distribution declares
+    f.write(
+        ".ai/repo/knowledge/kinds.yaml",
+        "schema: majordomus-kinds/v1\nkinds:\n  rule:\n    format: yaml\n",
+    );
+    f.commit("redefine");
+    let (code, _, err) = common::run_in(&f.root(), &["mcp", "--inspect"], "");
+    assert_eq!(code, 10, "{err}");
+    assert!(err.contains("kind 'rule' is declared by both"), "{err}");
 }

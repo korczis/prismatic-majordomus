@@ -128,7 +128,7 @@ fn unknown_keys_are_named_per_file() {
     assert!(
         msg.contains("owner")
             && msg.contains("x-majordomus.colour")
-            && msg.contains("share/allow/rule.txt"),
+            && msg.contains("schema 'rule'"),
         "{msg}"
     );
 }
@@ -149,7 +149,7 @@ fn missing_identity_field_and_bad_identity_values() {
     let codes = diagnostic_codes(&v);
     assert!(
         codes.contains(&(
-            "missing_field".into(),
+            "schema_violation".into(),
             Some(".ai/repo/rules/project/nover.v1.md".into())
         )),
         "{codes:?}"
@@ -232,13 +232,14 @@ fn kind_mismatch_is_refused() {
     f.commit("gamma");
     let (_, v, _) = inspect(&f.root(), &[]);
     let codes = diagnostic_codes(&v);
-    assert!(
-        codes.contains(&(
-            "kind_mismatch".into(),
-            Some(".ai/repo/rules/project/gamma.v1.md".into())
-        )),
-        "{codes:?}"
-    );
+    // the rule schema pins kind to "rule", so the mismatch is a schema violation naming kind
+    assert!(!codes.is_empty());
+    let hit = diagnostics(&v)
+        .into_iter()
+        .find(|d| d["path"] == ".ai/repo/rules/project/gamma.v1.md")
+        .expect("gamma named");
+    assert_eq!(hit["code"], "schema_violation");
+    assert!(hit["message"].as_str().unwrap().contains("kind"), "{hit}");
 }
 
 #[test]
@@ -509,4 +510,118 @@ fn text_kinds_carry_content_and_no_metadata() {
         .unwrap();
     assert_eq!(t["meta"]["kind"], "test");
     assert!(t["title"].is_null() || t["title"] == "test/cases/00_x.sh");
+}
+
+#[test]
+fn a_schema_violation_names_the_field_and_the_constraint() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/rules/project/typed.v1.md",
+        &rule("project.typed", 1, "Typed")
+            .replace("class: advisory", "class: fatal")
+            .replace("version: 1", "version: one"),
+    );
+    f.commit("typed");
+    let (code, v, _) = inspect(&f.root(), &[]);
+    assert_eq!(code, 10);
+    let d = diagnostics(&v);
+    let hit = d
+        .iter()
+        .find(|d| d["code"] == "schema_violation")
+        .expect("schema_violation");
+    let msg = hit["message"].as_str().unwrap();
+    assert!(
+        msg.contains("schema 'rule'") && msg.contains("class") && msg.contains("version"),
+        "{msg}"
+    );
+    assert!(!resource_uris(&v)
+        .iter()
+        .any(|u| u.contains("project.typed")));
+}
+
+#[test]
+fn without_a_share_directory_nothing_starts_and_the_search_is_named() {
+    let f = Fixture::new();
+    let child = std::process::Command::new(common::BIN)
+        .args(["mcp", "--inspect"])
+        .current_dir(f.root())
+        .env_remove("MAJORDOMUS_SHARE")
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    let out = child.wait_with_output().unwrap();
+    // the test binary sits under target/debug, beside no share/; the fixture has none either
+    assert_eq!(
+        out.status.code(),
+        Some(12),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        err.contains("no share directory holds kinds.yaml") && err.contains("--share"),
+        "{err}"
+    );
+    let (code, _, _) = common::run_in(
+        &f.root(),
+        &[
+            "mcp",
+            "--inspect",
+            "--share",
+            common::dist_share().to_str().unwrap(),
+        ],
+        "",
+    );
+    assert_eq!(code, 0);
+}
+
+#[test]
+fn a_non_ascii_identity_is_served_not_fatal() {
+    let f = Fixture::new();
+    f.write("docs/Příručka.md", "# Příručka\n\nČeský text.\n");
+    f.write(
+        ".ai/repo/rules/project/priklad.v1.md",
+        &rule("project.příklad", 1, "Příklad"),
+    );
+    f.commit("unicode");
+    let (code, v, _) = inspect(&f.root(), &[]);
+    assert_eq!(code, 0);
+    let uris = resource_uris(&v);
+    assert!(
+        uris.contains(&"majordomus://document/docs/Příručka.md".to_string()),
+        "{uris:?}"
+    );
+    assert!(
+        uris.contains(&"majordomus://rule/project.příklad@1".to_string()),
+        "{uris:?}"
+    );
+}
+
+#[test]
+fn a_layer_readme_without_the_context_contract_is_named_by_the_manifest_convention() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/rules/README.md",
+        "# Repository rules\n\nNo front matter.\n",
+    );
+    f.commit("plain readme");
+    let (code, v, _) = inspect(&f.root(), &[]);
+    assert_eq!(code, 10);
+    let codes = diagnostic_codes(&v);
+    assert!(
+        codes.contains(&(
+            "missing_context_contract".into(),
+            Some(".ai/repo/rules/README.md".into())
+        )),
+        "{codes:?}"
+    );
+    assert!(!resource_uris(&v)
+        .iter()
+        .any(|u| u.contains("rules/README.md")));
+    // a README outside the layer is under no such convention
+    f.write("docs/README.md", "# Docs\n");
+    f.commit("docs readme");
+    let (_, v, _) = inspect(&f.root(), &[]);
+    assert!(resource_uris(&v).contains(&"majordomus://document/docs/README.md".to_string()));
 }

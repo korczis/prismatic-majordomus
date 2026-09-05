@@ -26,7 +26,9 @@ serde_json = { version = "1", features = ["preserve_order"] }
 thiserror = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "std"] }
-regex-lite = "0.1"
+# jsonschema validates every declarative object against the JSON Schema of its kind, read
+# at run time from share/schemas/ (and a repository's own). No network resolution.
+jsonschema = { version = "0.53", default-features = false }
 # schemars derives the one canonical JSON Schema of every typed input and output; MCP and
 # OpenAPI schemas are projections of it.
 schemars = "1"

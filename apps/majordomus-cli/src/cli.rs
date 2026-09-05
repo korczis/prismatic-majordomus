@@ -77,6 +77,11 @@ pub struct RepoArgs {
     /// Refuse to proceed when any file of the layer carries an error diagnostic
     #[arg(long, global = true)]
     pub strict: bool,
+
+    /// The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE,
+    /// then the repository's own share/, then the one beside the executable
+    #[arg(long, value_name = "DIR", global = true)]
+    pub share: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -166,6 +171,8 @@ pub enum GenerateTarget {
     All,
     Openapi,
     Docs,
+    /// The shell tool's allow-lists under share/allow, derived from the schemas
+    Allow,
 }
 
 #[derive(Debug, Args)]

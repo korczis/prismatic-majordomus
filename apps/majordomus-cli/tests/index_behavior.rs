@@ -5,13 +5,12 @@ mod common;
 use common::{inspect, rule, Fixture};
 use majordomus_cli::discovery::{FileSystem, Sources, VcsIndex};
 use majordomus_cli::git::GitState;
-use majordomus_cli::metadata::KindSchema;
 use majordomus_cli::{Index, Repository};
 
 fn build(f: &Fixture, filesystem: bool) -> Index {
     let repo = Repository::discover(&f.root()).unwrap();
     let sources = Sources::load(&repo).unwrap();
-    let schema = KindSchema::embedded().unwrap();
+    let schema = common::dist_schema(&repo);
     let git = GitState::Unavailable {
         reason: "not asked".into(),
     };

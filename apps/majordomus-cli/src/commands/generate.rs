@@ -14,8 +14,16 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         GenerateTarget::All => Target::ALL,
         GenerateTarget::Openapi => &[Target::OpenApi],
         GenerateTarget::Docs => &[Target::Docs],
+        GenerateTarget::Allow => &[Target::Allow],
     };
-    let artifacts = generate::artifacts(app.registry(), crate::VERSION, targets)?;
+    let mut artifacts = generate::artifacts(app.registry(), crate::VERSION, targets)?;
+    if targets.contains(&Target::Allow) {
+        artifacts.extend(generate::allow_artifacts(
+            &app.schema,
+            &app.share,
+            app.repository.root(),
+        ));
+    }
     let root = args
         .out
         .clone()

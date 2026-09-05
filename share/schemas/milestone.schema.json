@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/milestone.schema.json",
+  "title": "Milestone",
+  "description": "A milestone under .ai/repo/project/milestones/: an outcome specification; no status is stored, it is derived from the issues and the evidence.",
+  "x-majordomus-allow": "milestone",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "slug", "order", "priority", "problem", "outcome", "acceptance_criteria", "validation", "evidence_required"],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "slug": { "type": "string" },
+    "version": { "type": "string" },
+    "order": { "type": "integer" },
+    "priority": { "type": "string" },
+    "cancelled": { "type": "boolean" },
+    "superseded_by": { "type": "string" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "problem": { "type": "string" },
+    "outcome": { "type": "string" },
+    "current_state": { "type": "string" },
+    "desired_state": { "type": "string" },
+    "scope": { "type": "array", "items": { "type": "string" } },
+    "non_scope": { "type": "array", "items": { "type": "string" } },
+    "acceptance_criteria": { "type": "array", "items": { "type": "string" } },
+    "validation": { "type": "array", "items": { "type": "string" } },
+    "evidence_required": { "type": "array", "items": { "type": "string" } },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "depends_on": { "type": "array", "items": { "type": "string" } },
+    "claims": { "type": "array", "items": { "type": "string" } },
+    "evidence": { "$ref": "#/$defs/evidence" }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "covers": { "type": "string" },
+          "type": { "type": "string" },
+          "command": { "type": "string" },
+          "result": { "type": "string" },
+          "artifact": { "type": "string" },
+          "url": { "type": "string" },
+          "commit": { "type": "string" },
+          "recorded_at": { "type": "string" }
+        }
+      }
+    }
+  }
+}

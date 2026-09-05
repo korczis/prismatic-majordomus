@@ -17,6 +17,10 @@ S="$(mktemp -d "${TMPDIR:-/tmp}/mj72.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }
 RB="$ROOT/apps/majordomus-cli/target/debug/majordomus"
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
+# the executable reads kinds.yaml and the schemas from the tool distribution at run time
+MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
+# without a distribution nothing starts, and the search is named
+( unset MAJORDOMUS_SHARE; expect_exit 12 "$RB" mcp --inspect; expect_grep 'no share directory holds kinds.yaml' ) || exit 1
 
 # --- the executable's public surface, black-box
 expect_exit 0 "$RB" --help
@@ -53,7 +57,7 @@ req() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,\"
   req 4 tools/call '{"name":"majordomus_get","arguments":{"uri":"majordomus://prompt/continue"}}'
   req 5 tools/call '{"name":"majordomus_repository","arguments":{}}'
 } > "$S/session.in"
-MAJORDOMUS_LOG=debug "$RB" mcp < "$S/session.in" > "$S/session.out" 2> "$S/session.err"; rc=$?
+rc=0; MAJORDOMUS_LOG=debug "$RB" mcp < "$S/session.in" > "$S/session.out" 2> "$S/session.err" || rc=$?
 [ "$rc" = 0 ] || { echo "    the server exited $rc at EOF"; cat "$S/session.err"; exit 1; }
 # stdout: exactly one JSON frame per request, nothing else
 [ "$(wc -l < "$S/session.out" | tr -d ' ')" = 5 ] || { echo "    expected 5 frames on stdout, got:"; cat "$S/session.out"; exit 1; }
@@ -128,6 +132,14 @@ expect_grep '^FAIL duplicate_identity +\.ai/repo/rules/project/copy\.v1\.md'
 expect_grep '^FAIL duplicate_identity +\.ai/repo/rules/vendor/majordomus/rules/scope-integrity\.v1\.md'
 expect_no_grep '^resource    majordomus://rule/majordomus\.scope-integrity@1$'
 rm .ai/repo/rules/project/broken.v1.md .ai/repo/rules/project/copy.v1.md; git add -A >/dev/null
+
+# --- the shell tool's allow-lists are a projection of the schemas: derived and in sync
+expect_exit 0 "$RB" generate allow --check
+expect_grep 'generate --check: in sync'
+for f in "$ROOT"/share/allow/*.txt; do
+  grep -qvE '^\^' "$f" && { echo "    $f carries a line that is not a pattern"; exit 1; }
+  true
+done
 
 # --- not a Majordomus repository: named, exit 12, nothing served
 mkdir -p "$S/plain" && ( cd "$S/plain" && git init -q . )

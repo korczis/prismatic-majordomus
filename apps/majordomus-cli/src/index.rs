@@ -43,6 +43,9 @@ pub struct RepositoryInfo {
     pub discovery: String,
     /// Source class id to kind, in declared order.
     pub source_classes: Vec<(String, String)>,
+    /// The kinds files the reader was configured from: the distribution's, then the
+    /// repository's own when it has one.
+    pub kind_sources: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -98,6 +101,7 @@ impl Index {
                 .iter()
                 .map(|c| (c.id.clone(), c.kind.clone()))
                 .collect(),
+            kind_sources: schema.sources().to_vec(),
         };
         tracing::info!(
             objects = objects.len(),
@@ -246,6 +250,19 @@ fn read_objects(
         }
     };
 
+    // the manifest names the file names that must carry the context contract wherever they
+    // appear under the layer; one that does not is a broken context document, not a plain one
+    if let Some(conventions) = &repo.manifest().context {
+        let name = rel.rsplit('/').next().unwrap_or(rel);
+        let under_layer = rel.starts_with(".ai/");
+        if under_layer && conventions.documents.iter().any(|d| d == name) && kind != "context" {
+            return Err(d(
+                "missing_context_contract",
+                format!("the manifest lists {name} among the context documents, and this one declares no schema: context/v1"),
+            ));
+        }
+    }
+
     if let Some(sv) = &spec.schema_version {
         check_version(sv, &metadata).map_err(|(code, msg)| d(code, msg))?;
     }
@@ -284,18 +301,8 @@ fn read_objects(
         return Ok((objects, diagnostics));
     }
 
-    if let Some(allow) = schema.allow_for(spec) {
-        let unknown = allow.unknown(yaml::key_paths(&metadata).iter().map(String::as_str));
-        if !unknown.is_empty() {
-            return Err(d(
-                "unknown_key",
-                format!(
-                    "key(s) not in share/allow/{}.txt: {}",
-                    allow.name(),
-                    unknown.join(", ")
-                ),
-            ));
-        }
+    if let Some(sch) = schema.schema_for(spec) {
+        conforms(sch, &Value::Object(metadata.clone()), &d, "")?;
     }
     if let Some(declared) = metadata.get("kind").and_then(Value::as_str) {
         if declared != kind {
@@ -317,6 +324,49 @@ fn read_objects(
             ..object
         }],
         Vec::new(),
+    ))
+}
+
+/// Validate a document against its kind's schema: keys the schema does not allow are one
+/// `unknown_key` diagnostic naming them all; any other violation is `schema_violation`
+/// naming every failed constraint with its path.
+fn conforms(
+    sch: &crate::metadata::Schema,
+    instance: &Value,
+    d: &dyn Fn(&'static str, String) -> Diagnostic,
+    prefix: &str,
+) -> std::result::Result<(), Diagnostic> {
+    let violations = sch.validate(instance);
+    if violations.is_empty() {
+        return Ok(());
+    }
+    let unknown: Vec<String> = violations
+        .iter()
+        .flat_map(|v| v.unknown_keys.clone())
+        .collect();
+    if !unknown.is_empty() {
+        return Err(d(
+            "unknown_key",
+            format!(
+                "{prefix}key(s) not in schema '{}': {}",
+                sch.name,
+                unknown.join(", ")
+            ),
+        ));
+    }
+    let list: Vec<String> = violations
+        .iter()
+        .map(|v| {
+            if v.path.is_empty() {
+                v.message.clone()
+            } else {
+                format!("{}: {}", v.path, v.message)
+            }
+        })
+        .collect();
+    Err(d(
+        "schema_violation",
+        format!("{prefix}schema '{}': {}", sch.name, list.join("; ")),
     ))
 }
 

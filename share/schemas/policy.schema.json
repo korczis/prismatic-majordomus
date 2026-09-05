@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/policy.schema.json",
+  "title": "Policy",
+  "description": "The one provider-neutral policy, .ai/repo/policy.yaml: budgets, verification, retention, enforcement and projections.",
+  "x-majordomus-allow": "policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "version": { "const": 1 },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "always_loaded_budget_lines": { "type": "integer", "minimum": 1 },
+        "builder_budget_lines": { "type": "integer", "minimum": 1 },
+        "recent_decisions": { "type": "integer", "minimum": 0 },
+        "max_list_items": { "type": "integer", "minimum": 1 },
+        "strategy": { "type": "string" },
+        "transcript_is_state": { "type": "boolean" }
+      }
+    },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default": { "type": "string" },
+        "checkpoint_interval_default": { "type": "string" }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required_for_changes": { "type": "boolean" },
+        "finish_requires": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_body_lines": { "type": "integer", "minimum": 1 },
+        "retention_max_files": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "handover": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required_sections": { "type": "array", "items": { "type": "string" } },
+        "retention_max_files": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "ledger": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "retention_max_lines": { "type": "integer", "minimum": 1 } }
+    },
+    "enforcement": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "path", "wired_by"],
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" },
+          "wired_by": { "type": "string" },
+          "args": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "projections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["provider", "target"],
+        "properties": {
+          "provider": { "type": "string" },
+          "target": { "type": "string" },
+          "always_loaded": { "type": "boolean" },
+          "mode": { "type": "string" }
+        }
+      }
+    }
+  }
+}

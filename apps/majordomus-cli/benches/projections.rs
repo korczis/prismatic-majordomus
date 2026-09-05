@@ -12,6 +12,7 @@ use majordomus_cli::git::GitState;
 use majordomus_cli::http::openapi;
 use majordomus_cli::mcp::{Server, Surface};
 use majordomus_cli::metadata::{frontmatter, yaml, KindSchema};
+use majordomus_cli::share::Share;
 use majordomus_cli::{Index, Repository};
 use std::sync::Arc;
 
@@ -47,7 +48,12 @@ fn repository(n: usize) -> (tempfile::TempDir, PathBuf) {
 fn build_index(root: &Path) -> Index {
     let repo = Repository::discover(root).unwrap();
     let sources = Sources::load(&repo).unwrap();
-    let schema = KindSchema::embedded().unwrap();
+    let share = Share::locate(
+        Some(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+        root,
+    )
+    .unwrap();
+    let schema = KindSchema::load(&share, &repo).unwrap();
     let fs = FileSystem {
         excluded: vec![".git".into(), repo.local_path()],
     };

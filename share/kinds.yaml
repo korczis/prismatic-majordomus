@@ -1,11 +1,13 @@
-# The object kinds this executable knows how to read, one entry each. Embedded into the
-# binary at build time; the repository never needs a copy.
+# The object kinds the Rust executable (apps/majordomus-cli) knows how to read, one entry
+# each. Read at run time from the tool distribution, beside share/schemas/; a repository
+# adds kinds of its own in .ai/repo/knowledge/kinds.yaml and schemas of its own under
+# .ai/repo/knowledge/schemas/, and may not redefine a kind or a schema declared here.
 #
-# Rust carries the mechanism (read a file in a format, validate its keys, take an identity
-# and a title from named fields). This file carries the knowledge of which fields mean what
-# for each kind. Which files are of which kind is not decided here either: the repository's
-# own .ai/repo/knowledge/sources.yaml maps pathspecs to kinds, and a kind it names that this
-# file does not know is reported, never guessed.
+# Rust carries the mechanism (read a file in a format, validate its keys against a list,
+# take an identity and a title from named fields). This file carries the knowledge of which
+# fields mean what for each kind. Which files are of which kind is not decided here either:
+# the repository's own .ai/repo/knowledge/sources.yaml maps pathspecs to kinds, and a kind
+# it names that no kinds file knows is reported, never guessed.
 #
 # fields:
 #   format          markdown | yaml | text — how the file is read; text carries no metadata
@@ -15,9 +17,12 @@
 #                   for markdown, the kind a file with no front matter is read as instead
 #                   of being refused: a README inside the rules tree is a document, not a
 #                   broken rule. The named kind must itself accept such a file.
-#   allow           the allow-list under share/allow/<name>.txt that every flattened key
-#                   path of the metadata must match; absent means the kind declares no key
-#                   contract and its metadata is carried through unvalidated
+#   schema          the JSON Schema (draft 2020-12) under share/schemas/<name>.schema.json,
+#                   or under the repository's .ai/repo/knowledge/schemas/, that the metadata
+#                   must satisfy; absent means the kind declares no contract and its
+#                   metadata is carried through unvalidated. The shell tool's allow-lists
+#                   under share/allow/ are generated from these schemas
+#                   (`majordomus generate allow`), never written by hand.
 #   identity        the metadata fields joined with '@' that make the object's identity;
 #                   empty means the repository-relative path is the identity
 #   title           the metadata field holding the title, or '@heading' for the first
@@ -41,7 +46,7 @@ kinds:
     format: markdown
     front_matter: required
     without_front_matter: document
-    allow: rule
+    schema: rule
     identity: [id, version]
     title: title
     description: description
@@ -49,21 +54,21 @@ kinds:
   prompt:
     format: markdown
     front_matter: required
-    allow: prompt
+    schema: prompt
     identity: [name]
     title: name
     description: description
 
   profile:
     format: yaml
-    allow: profile
+    schema: profile
     identity: [name]
     title: name
     description: description
 
   policy:
     format: yaml
-    allow: policy
+    schema: policy
     identity: []
     schema_version:
       field: version
@@ -71,14 +76,14 @@ kinds:
 
   milestone:
     format: yaml
-    allow: milestone
+    schema: milestone
     identity: [id]
     title: title
     description: outcome
 
   issue:
     format: yaml
-    allow: issue
+    schema: issue
     identity: [id]
     title: title
     description: objective
@@ -92,7 +97,7 @@ kinds:
   context:
     format: markdown
     front_matter: required
-    allow: context
+    schema: context
     identity: [id]
     title: title
     description: description
@@ -103,6 +108,7 @@ kinds:
   claim:
     format: yaml
     members: claims
+    schema: claim
     identity: [id]
     title: claim
     description: note

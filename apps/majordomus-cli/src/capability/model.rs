@@ -13,9 +13,9 @@ use super::schema::CanonicalSchema;
 /// declarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,
 /// `policy..ai/repo/policy.yaml`).
 ///
-/// Grammar: the namespace matches `[a-z][a-z0-9_-]*`, the local part is non-empty, and
-/// every character is printable ASCII and not whitespace. The local part is opaque: a
-/// path, a versioned identity, or a name, as the kind's identity rule produced it.
+/// Grammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and
+/// carries no whitespace or control character, any other Unicode included, because it is
+/// opaque: a path, a versioned identity, or a name, as the kind's identity rule produced it.
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
@@ -29,8 +29,8 @@ impl CapabilityId {
         if bytes.is_empty() {
             return Err("empty".into());
         }
-        if !text.is_ascii() || bytes.iter().any(|b| !(0x21..0x7f).contains(b)) {
-            return Err("carries whitespace or a non-printable or non-ASCII character".into());
+        if text.chars().any(|c| c.is_whitespace() || c.is_control()) {
+            return Err("carries whitespace or a control character".into());
         }
         let Some((namespace, local)) = text.split_once('.') else {
             return Err("needs a namespace, a dot, and a local part".into());
@@ -277,7 +277,7 @@ mod tests {
             "a.",
             "a b.c",
             "1a.b",
-            "a.b\u{e9}",
+            "a.b\u{7}",
         ] {
             assert!(CapabilityId::parse(bad).is_err(), "{bad:?} accepted");
         }

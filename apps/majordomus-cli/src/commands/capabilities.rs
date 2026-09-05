@@ -27,7 +27,7 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
             let input = json!({ "kind": kind, "exposure": exposure });
             let v = ctx
                 .registry
-                .call(ctx, "capabilities.list", input)
+                .call(ctx, cli_capability(ctx, &["capabilities", "list"])?, input)
                 .map_err(map)?;
             match format {
                 OutputFormat::Json => w(&mut out, pretty(&v))?,
@@ -77,7 +77,11 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
         CapabilitiesCommand::Describe { id, format } => {
             let v = ctx
                 .registry
-                .call(ctx, "capabilities.describe", json!({ "id": id }))
+                .call(
+                    ctx,
+                    cli_capability(ctx, &["capabilities", "describe"])?,
+                    json!({ "id": id }),
+                )
                 .map_err(|e| match e {
                     CapabilityError::NotFound(_) => Error::CapabilityNotFound { id: id.clone() },
                     other => map(other),
@@ -186,6 +190,16 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
                 .iter()
                 .filter(|c| c.kind == CapabilityKind::Query)
                 .count();
+            w(
+                &mut out,
+                format!(
+                    "OK   share       {} ({}) — kinds from {}; {} schema(s)",
+                    app.share.dir().display(),
+                    app.share.origin,
+                    app.schema.sources().join(" + "),
+                    app.schema.schemas().count()
+                ),
+            )?;
             w(&mut out, format!("OK   registry    {} capabilities — every id, MCP name, MCP uri, HTTP route and CLI path unique; {} queries carry a handler", s.total, queries))?;
             w(&mut out, format!("OK   mcp         {} tool(s), {} resource(s) — every exposure names an executable capability", s.mcp_tools, s.mcp_resources))?;
             w(
@@ -211,6 +225,21 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
         }
     }
     Ok(0)
+}
+
+/// The capability the registry binds to a CLI path; the command line dispatches on the
+/// registry's CLI exposure rather than on a name of its own.
+fn cli_capability<'a>(ctx: &'a crate::capability::Context, path: &[&str]) -> Result<&'a str> {
+    let words: Vec<String> = path.iter().map(|w| w.to_string()).collect();
+    ctx.registry
+        .by_cli(&words)
+        .map(|c| c.id.as_str())
+        .ok_or_else(|| Error::Protocol {
+            reason: format!(
+                "no capability is exposed as `majordomus {}`",
+                path.join(" ")
+            ),
+        })
 }
 
 fn map(e: CapabilityError) -> Error {

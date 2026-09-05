@@ -1,10 +1,11 @@
 //! The socket: bind, read requests, hand them to the router, write responses. Loopback by
 //! default; the bound address is logged so that a caller who asked for port 0 learns it.
 //!
-//! Lifecycle: the server lives as long as its stdin. When stdin reaches end of file (the
-//! parent closed the pipe, or a person pressed Ctrl-D) the accept loop is unblocked and
-//! the process ends with 0. There is no daemon mode: whoever started the process owns it,
-//! as with `majordomus mcp`.
+//! Lifecycle: when stdin is a pipe or a socket, the server lives as long as it: end of file
+//! (the parent closed its end) unblocks the accept loop and the process ends with 0, the
+//! lifecycle `majordomus mcp` has. When stdin is anything else (a terminal, `/dev/null`
+//! under nohup or a service manager, a file) nothing is watched and the process runs until
+//! it is stopped. There is no daemon mode either way: whoever started the process owns it.
 
 use std::io::Read;
 use std::sync::Arc;
@@ -29,15 +30,22 @@ pub fn serve(router: Router, host: &str, port: u16) -> Result<()> {
         .map(|a| a.to_string())
         .unwrap_or_else(|| format!("{host}:{port}"));
     tracing::info!(address = %addr, "listening on http://{addr} (openapi at /openapi.json, docs at /docs); ends when stdin closes");
-    let stop = Arc::clone(&server);
-    std::thread::spawn(move || {
-        let mut sink = Vec::new();
-        let _ = std::io::stdin().lock().read_to_end(&mut sink);
-        tracing::info!("stdin closed; stopping");
-        stop.unblock();
-    });
+    if stdin_is_a_pipe() {
+        tracing::info!("stdin is a pipe; the server stops when it closes");
+        let stop = Arc::clone(&server);
+        std::thread::spawn(move || {
+            let mut sink = Vec::new();
+            let _ = std::io::stdin().lock().read_to_end(&mut sink);
+            tracing::info!("stdin closed; stopping");
+            stop.unblock();
+        });
+    } else {
+        tracing::info!("stdin is not a pipe; the server runs until the process is stopped");
+    }
     for mut request in server.incoming_requests() {
         let method = request.method().to_string();
+        let head = method == "HEAD";
+        let method = if head { "GET".to_string() } else { method };
         let target = request.url().to_string();
         let mut body = Vec::new();
         if let Err(e) = request
@@ -54,8 +62,10 @@ pub fn serve(router: Router, host: &str, port: u16) -> Result<()> {
             router.handle(&super::Request::parse_target(&method, &target, body))
         };
         tracing::debug!(method = %method, target = %target, status = response.status, "response");
-        // always Content-Length, never chunked: one less thing a small client must decode
-        let out = HttpResponse::from_string(response.body)
+        // always Content-Length, never chunked: one less thing a small client must decode;
+        // a HEAD gets the GET's headers and no body
+        let body = if head { String::new() } else { response.body };
+        let out = HttpResponse::from_string(body)
             .with_chunked_threshold(usize::MAX)
             .with_status_code(response.status)
             .with_header(
@@ -68,4 +78,18 @@ pub fn serve(router: Router, host: &str, port: u16) -> Result<()> {
     }
     tracing::info!("stopped");
     Ok(())
+}
+
+/// Is stdin a pipe or a socket, as when a parent process spawned us and holds the other end?
+#[cfg(unix)]
+fn stdin_is_a_pipe() -> bool {
+    use std::os::unix::fs::FileTypeExt;
+    std::fs::metadata("/dev/stdin")
+        .map(|m| m.file_type().is_fifo() || m.file_type().is_socket())
+        .unwrap_or(false)
+}
+
+#[cfg(not(unix))]
+fn stdin_is_a_pipe() -> bool {
+    false
 }

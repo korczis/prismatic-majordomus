@@ -13,9 +13,12 @@ use crate::index::Index;
 use crate::metadata::KindSchema;
 use crate::model::Severity;
 use crate::repository::Repository;
+use crate::share::Share;
 
 pub struct App {
     pub repository: Repository,
+    pub share: Share,
+    pub schema: KindSchema,
     pub context: Arc<Context>,
 }
 
@@ -29,8 +32,35 @@ impl App {
         };
         let repository = Repository::discover(&start)?;
         tracing::info!(repository_root = %repository.root().display(), "repository found");
+        let share = Share::locate(args.share.as_deref(), repository.root())?;
+        tracing::info!(share = %share.dir().display(), origin = share.origin, "share directory");
+        let schema = KindSchema::load(&share, &repository)?;
+        if let Some(manifest_schema) = schema.schema("manifest") {
+            let violations = manifest_schema.validate(&repository.manifest_value()?);
+            if !violations.is_empty() {
+                let unknown: Vec<String> = violations
+                    .iter()
+                    .flat_map(|v| v.unknown_keys.clone())
+                    .collect();
+                let path = repository.root().join(crate::repository::MANIFEST);
+                return Err(if unknown.is_empty() {
+                    Error::InvalidManifest {
+                        path,
+                        reason: violations
+                            .iter()
+                            .map(|v| format!("{}: {}", v.path, v.message))
+                            .collect::<Vec<_>>()
+                            .join("; "),
+                    }
+                } else {
+                    Error::UnknownKeys {
+                        path,
+                        keys: unknown,
+                    }
+                });
+            }
+        }
         let sources = Sources::load(&repository)?;
-        let schema = KindSchema::embedded()?;
         let git_state = git::inspect(repository.root());
         let source: Box<dyn DiscoverySource> = match args.discovery {
             DiscoveryMode::Vcs => {
@@ -64,11 +94,16 @@ impl App {
         if args.strict && errors > 0 {
             return Err(Error::StrictDiagnostics { count: errors });
         }
-        Self::compose(repository, index)
+        Self::compose(repository, share, schema, index)
     }
 
     /// Compose the registry over an index already built (tests build their own).
-    pub fn compose(repository: Repository, index: Index) -> Result<Self> {
+    pub fn compose(
+        repository: Repository,
+        share: Share,
+        schema: KindSchema,
+        index: Index,
+    ) -> Result<Self> {
         let registry = CapabilityRegistry::builder()
             .with_builtin(builtin::all())
             .with_index(&index)
@@ -81,6 +116,8 @@ impl App {
         });
         Ok(App {
             repository,
+            share,
+            schema,
             context,
         })
     }

@@ -10,6 +10,14 @@ use serde_json::Value;
 
 pub const BIN: &str = env!("CARGO_BIN_EXE_majordomus");
 
+/// The tool distribution beside this crate: `../../share`, with kinds.yaml and schemas/.
+pub fn dist_share() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../share")
+        .canonicalize()
+        .expect("share beside the crate")
+}
+
 pub const MANIFEST: &str = "schema: ai-repository/v1
 
 repo:
@@ -366,6 +374,7 @@ pub fn run_in(cwd: &Path, args: &[&str], stdin: &str) -> (i32, String, String) {
         .args(args)
         .current_dir(cwd)
         .env("MAJORDOMUS_LOG", "debug")
+        .env("MAJORDOMUS_SHARE", dist_share())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -434,6 +443,7 @@ impl Served {
             .args(&args)
             .current_dir(cwd)
             .env("MAJORDOMUS_LOG", "info")
+            .env("MAJORDOMUS_SHARE", dist_share())
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -551,7 +561,15 @@ pub fn openapi_refs_resolve(doc: &Value) -> Vec<String> {
 pub fn load_app(f: &Fixture) -> majordomus_cli::app::App {
     let args = majordomus_cli::cli::RepoArgs {
         repo: Some(f.root()),
+        share: Some(dist_share()),
         ..Default::default()
     };
     majordomus_cli::app::App::load(&args).expect("app loads")
+}
+
+/// The kind schema of the distribution, loaded for a repository.
+pub fn dist_schema(repo: &majordomus_cli::Repository) -> majordomus_cli::metadata::KindSchema {
+    let share =
+        majordomus_cli::share::Share::locate(Some(&dist_share()), repo.root()).expect("share");
+    majordomus_cli::metadata::KindSchema::load(&share, repo).expect("kind schema")
 }

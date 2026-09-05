@@ -106,6 +106,7 @@ fn flatten(text: &str) -> Result<Vec<Flat>, String> {
     let mut ctx: BTreeMap<usize, String> = BTreeMap::new();
     let mut pend: BTreeMap<usize, String> = BTreeMap::new();
     let mut cnt: BTreeMap<String, usize> = BTreeMap::new();
+    let mut seen: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     let mut out = Vec::new();
     ctx.insert(0, String::new());
     for (n, raw) in text.lines().enumerate() {
@@ -161,6 +162,9 @@ fn flatten(text: &str) -> Result<Vec<Flat>, String> {
         ctx.retain(|kk, _| *kk <= ind);
         pend.retain(|kk, _| *kk < ind);
         let p = join(&base, k);
+        if !seen.insert(p.clone()) {
+            return Err(format!("'{p}' is given twice, on line {n}"));
+        }
         if v.is_empty() {
             pend.insert(ind, p.clone());
             pend.insert(ind + 2, p.clone());
@@ -387,6 +391,12 @@ mod tests {
             "unexpected indentation on line 2"
         );
         assert!(parse_mapping("a: 1\na: 2\n").unwrap_err().contains("twice"));
+        assert!(parse_mapping("tags:\n  - a\ntags:\n  - b\n")
+            .unwrap_err()
+            .contains("'tags' is given twice"));
+        assert!(parse_mapping("x:\n  a: 1\n  a: 2\n")
+            .unwrap_err()
+            .contains("'x.a' is given twice"));
     }
 
     #[test]

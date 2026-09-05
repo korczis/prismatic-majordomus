@@ -129,7 +129,8 @@ fn repository_info(ctx: &Context, _: Empty) -> Result<RepositoryReport, Capabili
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ListInput {
-    /// Only objects of this kind (rule, prompt, profile, policy, milestone, issue, document).
+    /// Only objects of this kind; the kinds present are listed by `repository.info`. A kind
+    /// the repository does not have is an invalid input, not an empty answer.
     #[serde(default)]
     pub kind: Option<String>,
     /// Only objects whose metadata tags include this tag.
@@ -143,7 +144,22 @@ pub struct ObjectList {
     pub objects: Vec<ObjectSummary>,
 }
 
+/// A kind filter must name a kind the index holds.
+fn known_kind(ctx: &Context, kind: Option<&str>) -> Result<(), CapabilityError> {
+    let Some(kind) = kind else { return Ok(()) };
+    let kinds = ctx.index.kinds();
+    if kinds.contains_key(kind) {
+        Ok(())
+    } else {
+        Err(CapabilityError::InvalidInput(format!(
+            "kind '{kind}' is not among the kinds this repository has: {}",
+            kinds.keys().copied().collect::<Vec<_>>().join(", ")
+        )))
+    }
+}
+
 fn objects_list(ctx: &Context, input: ListInput) -> Result<ObjectList, CapabilityError> {
+    known_kind(ctx, input.kind.as_deref())?;
     let objects: Vec<ObjectSummary> = ctx
         .index
         .objects

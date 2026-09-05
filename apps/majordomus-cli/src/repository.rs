@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use serde::Deserialize;
 
 use crate::error::{Error, Result};
-use crate::metadata::{yaml, AllowList};
+use crate::metadata::yaml;
 
 /// The file whose presence makes a directory the root of a Majordomus repository.
 pub const MANIFEST: &str = ".ai/manifest.yaml";
@@ -57,19 +57,14 @@ pub struct Manifest {
 }
 
 impl Manifest {
+    /// Parse the manifest. The typed struct refuses a key it does not read and names it;
+    /// the distribution's `manifest` schema is applied by the application once the share
+    /// directory is located, for the constraints a type cannot express.
     pub fn parse(path: &Path, text: &str) -> Result<Self> {
         let map = yaml::parse_mapping(text).map_err(|reason| Error::InvalidManifest {
             path: path.to_path_buf(),
             reason,
         })?;
-        let allow = AllowList::embedded("manifest")?;
-        let unknown = allow.unknown(yaml::key_paths(&map).iter().map(String::as_str));
-        if !unknown.is_empty() {
-            return Err(Error::UnknownKeys {
-                path: path.to_path_buf(),
-                keys: unknown,
-            });
-        }
         let schema = map
             .get("schema")
             .and_then(|v| v.as_str())
@@ -82,9 +77,18 @@ impl Manifest {
                 supported: LAYER_SCHEMA.to_string(),
             });
         }
-        serde_json::from_value(serde_json::Value::Object(map)).map_err(|e| Error::InvalidManifest {
-            path: path.to_path_buf(),
-            reason: e.to_string(),
+        serde_json::from_value(serde_json::Value::Object(map)).map_err(|e| {
+            let reason = e.to_string();
+            match reason.strip_prefix("unknown field `") {
+                Some(rest) => Error::UnknownKeys {
+                    path: path.to_path_buf(),
+                    keys: vec![rest.split('`').next().unwrap_or(rest).to_string()],
+                },
+                None => Error::InvalidManifest {
+                    path: path.to_path_buf(),
+                    reason,
+                },
+            }
         })
     }
 }
@@ -134,6 +138,15 @@ impl Repository {
 
     pub fn manifest(&self) -> &Manifest {
         &self.manifest
+    }
+
+    /// The manifest as a JSON value, for schema validation.
+    pub fn manifest_value(&self) -> Result<serde_json::Value> {
+        let path = self.root.join(MANIFEST);
+        let text = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+        let map =
+            yaml::parse_mapping(&text).map_err(|reason| Error::InvalidManifest { path, reason })?;
+        Ok(serde_json::Value::Object(map))
     }
 
     /// `.ai/`, absolute.

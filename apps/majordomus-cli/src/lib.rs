@@ -25,6 +25,7 @@ pub mod mcp;
 pub mod metadata;
 pub mod model;
 pub mod repository;
+pub mod share;
 
 pub use error::Error;
 pub use index::Index;

@@ -1,13 +1,17 @@
-//! Generated projections that are committed for review: the OpenAPI document and the
-//! capability reference. Both come from the registry through this one pipeline; the
-//! committed files are caches of it, never sources, and `--check` says when they are
-//! stale.
+//! Generated projections that are committed for review: the OpenAPI document, the
+//! capability reference, and the shell tool's key allow-lists derived from the JSON
+//! Schemas. All come through this one pipeline; the committed files are caches of it,
+//! never sources, and `--check` says when they are stale.
 
 use std::path::{Path, PathBuf};
+
+use serde_json::Value;
 
 use crate::capability::{CapabilityKind, CapabilityRegistry, Provenance};
 use crate::error::{Error, Result};
 use crate::http::openapi;
+use crate::metadata::KindSchema;
+use crate::share::Share;
 
 /// Where generated artifacts live, relative to the repository root.
 pub const OUT_DIR: &str = "docs/generated";
@@ -18,18 +22,16 @@ pub const HEADER: &str = "GENERATED FILE — DO NOT EDIT DIRECTLY";
 pub enum Target {
     OpenApi,
     Docs,
+    /// `<share>/allow/<name>.txt` for every schema that carries `x-majordomus-allow`.
+    Allow,
 }
 
 impl Target {
-    pub const ALL: &'static [Target] = &[Target::OpenApi, Target::Docs];
-
-    pub fn file_name(self) -> &'static str {
-        match self {
-            Target::OpenApi => "openapi.json",
-            Target::Docs => "capabilities.md",
-        }
-    }
+    pub const ALL: &'static [Target] = &[Target::OpenApi, Target::Docs, Target::Allow];
 }
+
+/// The schema extension that names the allow-list a schema derives.
+pub const ALLOW_EXTENSION: &str = "x-majordomus-allow";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Artifact {
@@ -37,8 +39,9 @@ pub struct Artifact {
     pub path: String,
     pub content: String,
 }
-
-/// Every artifact of the selected targets, derived from the registry.
+/// The registry's artifacts of the selected targets: the OpenAPI document and the
+/// reference. `Target::Allow` is not the registry's and is answered by
+/// [`allow_artifacts`].
 pub fn artifacts(
     registry: &CapabilityRegistry,
     version: &str,
@@ -46,18 +49,100 @@ pub fn artifacts(
 ) -> Result<Vec<Artifact>> {
     let mut out = Vec::new();
     for t in targets {
-        let content = match t {
-            Target::OpenApi => openapi::render(
-                &openapi::document(registry, version).map_err(|reason| Error::Http { reason })?,
-            ),
-            Target::Docs => reference(registry, version),
-        };
-        out.push(Artifact {
-            path: format!("{OUT_DIR}/{}", t.file_name()),
-            content,
-        });
+        match t {
+            Target::OpenApi => out.push(Artifact {
+                path: format!("{OUT_DIR}/openapi.json"),
+                content: openapi::render(
+                    &openapi::document(registry, version)
+                        .map_err(|reason| Error::Http { reason })?,
+                ),
+            }),
+            Target::Docs => out.push(Artifact {
+                path: format!("{OUT_DIR}/capabilities.md"),
+                content: reference(registry, version),
+            }),
+            Target::Allow => {}
+        }
     }
     Ok(out)
+}
+
+/// The shell tool's allow-lists, one per schema that carries `x-majordomus-allow`, under
+/// the share directory: a repository-relative path when the share is inside the
+/// repository, absolute otherwise.
+pub fn allow_artifacts(schema: &KindSchema, share: &Share, root: &Path) -> Vec<Artifact> {
+    let dir = share.allow_dir();
+    let dir = dir
+        .strip_prefix(root)
+        .map(|p| p.to_path_buf())
+        .unwrap_or(dir);
+    schema
+        .schemas()
+        .filter_map(|(_, sch)| {
+            let name = sch.json.get(ALLOW_EXTENSION).and_then(Value::as_str)?;
+            Some(Artifact {
+                path: format!("{}/{name}.txt", dir.display()),
+                content: allow_lines(&sch.json).join("\n") + "\n",
+            })
+        })
+        .collect()
+}
+
+/// The allow-list a JSON Schema derives: one anchored pattern per key path the schema
+/// allows, in the schema's order, as the shell tool's `mj_yaml_unknown_keys` reads them
+/// (`grep -E -f`). A list of scalars is `name(\.[0-9]+)?`, a list of objects recurses
+/// through `name\.[0-9]+\.`, a nested object through `name\.`. Local `$ref`s into
+/// `$defs` are followed. No blank lines and no comments: every line is a pattern.
+pub fn allow_lines(schema: &Value) -> Vec<String> {
+    let mut out = Vec::new();
+    walk_allow(schema, schema, "", &mut out);
+    out
+}
+
+fn resolve<'a>(root: &'a Value, node: &'a Value) -> &'a Value {
+    match node
+        .get("$ref")
+        .and_then(Value::as_str)
+        .and_then(|r| r.strip_prefix("#/"))
+    {
+        Some(pointer) => pointer.split('/').fold(root, |v, seg| &v[seg]),
+        None => node,
+    }
+}
+
+fn escape(key: &str) -> String {
+    let mut s = String::with_capacity(key.len());
+    for c in key.chars() {
+        if ".+*?()[]{}^$|\\".contains(c) {
+            s.push('\\');
+        }
+        s.push(c);
+    }
+    s
+}
+
+fn walk_allow(root: &Value, node: &Value, prefix: &str, out: &mut Vec<String>) {
+    let node = resolve(root, node);
+    let Some(props) = node.get("properties").and_then(Value::as_object) else {
+        return;
+    };
+    for (key, prop) in props {
+        let prop = resolve(root, prop);
+        let path = format!("{prefix}{}", escape(key));
+        let is_object = prop.get("properties").is_some();
+        let items = prop.get("items").map(|i| resolve(root, i));
+        if is_object {
+            walk_allow(root, prop, &format!("{path}\\."), out);
+        } else if let Some(items) = items {
+            if items.get("properties").is_some() {
+                walk_allow(root, items, &format!("{path}\\.[0-9]+\\."), out);
+            } else {
+                out.push(format!("^{path}(\\.[0-9]+)?$"));
+            }
+        } else {
+            out.push(format!("^{path}$"));
+        }
+    }
 }
 
 /// Write every artifact under `root`, creating the directory. Returns the paths written.

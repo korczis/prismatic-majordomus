@@ -35,8 +35,11 @@ pub enum Error {
     #[error("{path}: unknown key(s): {}", keys.join(", "))]
     UnknownKeys { path: PathBuf, keys: Vec<String> },
 
-    #[error("embedded kind schema is invalid: {reason}")]
+    #[error("kind schema: {reason}")]
     KindSchema { reason: String },
+
+    #[error("no share directory holds kinds.yaml; tried {}; pass --share <dir> or set MAJORDOMUS_SHARE", tried.iter().map(|p| p.display().to_string()).collect::<Vec<_>>().join(", "))]
+    ShareNotFound { tried: Vec<PathBuf> },
 
     #[error("declarative state carries {count} error(s); refusing to serve under --strict (run: majordomus mcp --inspect)")]
     StrictDiagnostics { count: usize },
@@ -76,17 +79,19 @@ impl Error {
     /// The process exit code this error maps to, per the exit-code contract.
     pub fn exit_code(&self) -> u8 {
         match self {
-            Error::RepositoryNotFound { .. } | Error::LegacyLayout { .. } => 12,
+            Error::RepositoryNotFound { .. }
+            | Error::LegacyLayout { .. }
+            | Error::ShareNotFound { .. } => 12,
             Error::InvalidManifest { .. }
             | Error::UnsupportedSchema { .. }
             | Error::InvalidSources { .. }
             | Error::UnknownKeys { .. }
             | Error::StrictDiagnostics { .. }
+            | Error::KindSchema { .. }
             | Error::Registry { .. }
             | Error::Stale { .. } => 10,
             Error::CapabilityNotFound { .. } => 12,
-            Error::KindSchema { .. }
-            | Error::Git { .. }
+            Error::Git { .. }
             | Error::Io { .. }
             | Error::Transport(_)
             | Error::Http { .. }

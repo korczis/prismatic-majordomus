@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/profile.schema.json",
+  "title": "Profile",
+  "description": "An execution profile under .ai/repo/profiles/: capability class, effort, verbosity, presentation, context toggles, verification requirements, checkpoint interval and output contract, each an independent axis.",
+  "x-majordomus-allow": "profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "description",
+    "capability",
+    "effort",
+    "verbosity",
+    "presentation",
+    "checkpoint_interval"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "capability": {
+      "enum": [
+        "fast",
+        "standard",
+        "strong",
+        "strongest"
+      ],
+      "description": "A capability class, never a vendor model name."
+    },
+    "effort": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ]
+    },
+    "verbosity": {
+      "enum": [
+        "terse",
+        "concise",
+        "detailed"
+      ]
+    },
+    "presentation": {
+      "enum": [
+        "machine",
+        "engineering",
+        "summary"
+      ]
+    },
+    "checkpoint_interval": {
+      "type": "string",
+      "pattern": "^[0-9]+[smh]$"
+    },
+    "effort_escalation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "after_blocked_attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "to": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "task": {
+          "type": "boolean"
+        },
+        "current_state": {
+          "type": "boolean"
+        },
+        "decisions": {
+          "type": "boolean"
+        },
+        "relevant_files": {
+          "type": "boolean"
+        },
+        "failing_output": {
+          "type": "boolean"
+        },
+        "recent_history_depth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "architecture_notes": {
+          "type": "boolean"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "verify_command_required": {
+          "description": "true, false, or if_files_changed: the verify command is required only when the task changed files.",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "const": "if_files_changed"
+            }
+          ]
+        },
+        "regression_test_required": {
+          "type": "boolean"
+        },
+        "decision_record_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "output_contract": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

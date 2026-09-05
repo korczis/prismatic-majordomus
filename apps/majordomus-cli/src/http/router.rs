@@ -71,11 +71,31 @@ pub struct ErrorDetail {
 pub struct Router {
     ctx: Arc<Context>,
     version: &'static str,
+    /// The OpenAPI document, rendered once: the registry is immutable for the process.
+    openapi: Arc<std::sync::OnceLock<Result<String, String>>>,
 }
 
 impl Router {
     pub fn new(ctx: Arc<Context>, version: &'static str) -> Self {
-        Router { ctx, version }
+        Router {
+            ctx,
+            version,
+            openapi: Arc::new(std::sync::OnceLock::new()),
+        }
+    }
+
+    fn openapi(&self) -> Response {
+        let rendered = self.openapi.get_or_init(|| {
+            openapi::document(&self.ctx.registry, self.version).map(|d| openapi::render(&d))
+        });
+        match rendered {
+            Ok(text) => Response {
+                status: 200,
+                content_type: "application/json",
+                body: text.clone(),
+            },
+            Err(e) => error_response(500, "internal", e),
+        }
     }
 
     pub fn handle(&self, req: &Request) -> Response {
@@ -90,10 +110,7 @@ impl Router {
                     "capabilities": "/api/v1/capabilities",
                 }),
             ),
-            ("GET", "/openapi.json") => match openapi::document(&self.ctx.registry, self.version) {
-                Ok(doc) => json_response(200, &doc),
-                Err(e) => error_response(500, "internal", &e),
-            },
+            ("GET", "/openapi.json") => self.openapi(),
             ("GET", "/docs") => Response {
                 status: 200,
                 content_type: "text/html; charset=utf-8",

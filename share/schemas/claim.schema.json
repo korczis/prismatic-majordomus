@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/claim.schema.json",
+  "title": "Claim",
+  "description": "One entry of the claims matrix, docs/CLAIMS.yaml: a capability sentence with its status, the file that defines it, the file that implements it and the test that proves it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "claim", "source", "implementation", "test", "status"],
+  "properties": {
+    "id": { "type": "string" },
+    "claim": { "type": "string" },
+    "source": { "type": "string" },
+    "implementation": { "type": "string" },
+    "test": { "type": "string" },
+    "status": { "type": "string" },
+    "responsibility": { "type": "string" },
+    "note": { "type": "string" }
+  }
+}

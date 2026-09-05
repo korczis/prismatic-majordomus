@@ -15,6 +15,10 @@ use super::router::ErrorBody;
 /// The OpenAPI version emitted.
 pub const OPENAPI_VERSION: &str = "3.1.0";
 
+/// The schema dialect declared: OpenAPI 3.1's base dialect, which is JSON Schema 2020-12
+/// plus the OAS vocabulary, and the only value Swagger UI accepts without a warning.
+pub const OAS_DIALECT: &str = "https://spec.openapis.org/oas/3.1/dialect/base";
+
 /// The routes that are the projection's own, not capabilities.
 pub const INFRASTRUCTURE_ROUTES: &[&str] = &["/", "/openapi.json", "/docs"];
 
@@ -85,7 +89,7 @@ pub fn document(registry: &CapabilityRegistry, version: &str) -> Result<Value, S
     }
     Ok(json!({
         "openapi": OPENAPI_VERSION,
-        "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+        "jsonSchemaDialect": OAS_DIALECT,
         "info": {
             "title": "Majordomus",
             "version": version,

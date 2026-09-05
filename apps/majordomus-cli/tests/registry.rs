@@ -11,7 +11,6 @@ use majordomus_cli::capability::{
 };
 use majordomus_cli::discovery::{Sources, VcsIndex};
 use majordomus_cli::git::GitState;
-use majordomus_cli::metadata::KindSchema;
 use majordomus_cli::{Index, Repository};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -139,7 +138,7 @@ fn duplicate_ids_rust_and_declarative() {
     let index = Index::build(
         &repo,
         &sources,
-        &KindSchema::embedded().unwrap(),
+        &common::dist_schema(&repo),
         &VcsIndex,
         GitState::Unavailable {
             reason: "test".into(),

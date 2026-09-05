@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/issue.schema.json",
+  "title": "Issue",
+  "description": "An issue under .ai/repo/project/issues/: an execution contract inside a milestone; status is derived from started_at, verified_at, completed_at and the dependency graph.",
+  "x-majordomus-allow": "issue",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "milestone", "title", "slug", "priority", "profile", "objective", "scope", "acceptance_criteria", "validation", "evidence_required"],
+  "properties": {
+    "id": { "type": "string" },
+    "milestone": { "type": "string" },
+    "title": { "type": "string" },
+    "slug": { "type": "string" },
+    "priority": { "type": "string" },
+    "profile": { "type": "string" },
+    "parallel_safe": { "type": "boolean" },
+    "risk": { "type": "string" },
+    "owner": { "type": "string" },
+    "cancelled": { "type": "boolean" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "objective": { "type": "string" },
+    "why": { "type": "string" },
+    "current_state": { "type": "string" },
+    "desired_state": { "type": "string" },
+    "completion": { "type": "string" },
+    "started_at": { "type": "string" },
+    "verified_at": { "type": "string" },
+    "completed_at": { "type": "string" },
+    "scope": { "type": "array", "items": { "type": "string" } },
+    "non_scope": { "type": "array", "items": { "type": "string" } },
+    "depends_on": { "type": "array", "items": { "type": "string" } },
+    "acceptance_criteria": { "type": "array", "items": { "type": "string" } },
+    "validation": { "type": "array", "items": { "type": "string" } },
+    "evidence_required": { "type": "array", "items": { "type": "string" } },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "covers": { "type": "string" },
+          "type": { "type": "string" },
+          "command": { "type": "string" },
+          "result": { "type": "string" },
+          "artifact": { "type": "string" },
+          "url": { "type": "string" },
+          "commit": { "type": "string" },
+          "recorded_at": { "type": "string" }
+        }
+      }
+    }
+  }
+}

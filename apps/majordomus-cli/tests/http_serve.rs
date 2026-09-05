@@ -5,7 +5,7 @@
 mod common;
 
 use std::collections::BTreeSet;
-use std::io::Write;
+use std::io::{BufRead, Write};
 use std::process::{Command, Stdio};
 
 use common::{rule, Fixture, Served, BIN};
@@ -141,6 +141,7 @@ fn errors_are_typed_and_the_server_survives_them() {
 fn mcp_call(cwd: &std::path::Path, tool: &str, args: Value) -> Value {
     let mut child = Command::new(BIN)
         .arg("mcp")
+        .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(cwd)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -256,4 +257,75 @@ fn outside_a_repository_serve_refuses_with_exit_12() {
     let (code, out, err) = common::run_in(&f.root(), &["serve", "--port", "0"], "");
     assert_eq!(code, 12, "{err}");
     assert!(out.is_empty());
+}
+
+#[test]
+fn head_is_answered_and_a_bad_kind_filter_is_an_invalid_input() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+    let (status, headers, body) = s.request("HEAD", "/docs", None);
+    assert_eq!(status, 200);
+    assert!(headers
+        .iter()
+        .any(|(k, v)| k == "content-type" && v.starts_with("text/html")));
+    assert!(body.is_empty(), "a HEAD carries no body");
+    let (status, v) = s.get("/api/v1/objects?kind=clam");
+    assert_eq!(
+        (status, v["error"]["code"].as_str()),
+        (400, Some("invalid_input"))
+    );
+    assert!(
+        v["error"]["message"].as_str().unwrap().contains("rule"),
+        "names the kinds present: {v}"
+    );
+    // the document is rendered once per process and served identically afterwards
+    let (_, a) = s.get("/openapi.json");
+    let (_, b) = s.get("/openapi.json");
+    assert_eq!(a, b);
+    assert_eq!(
+        a["jsonSchemaDialect"],
+        "https://spec.openapis.org/oas/3.1/dialect/base"
+    );
+}
+
+#[test]
+fn with_stdin_at_dev_null_the_server_keeps_running() {
+    let f = Fixture::new();
+    let mut child = Command::new(BIN)
+        .args(["serve", "--port", "0"])
+        .current_dir(f.root())
+        .env("MAJORDOMUS_LOG", "info")
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let stderr = child.stderr.take().unwrap();
+    let mut lines = std::io::BufReader::new(stderr).lines();
+    let mut address = None;
+    for line in lines.by_ref() {
+        let line = line.unwrap();
+        if let Some(rest) = line.split("listening on http://").nth(1) {
+            address = Some(rest.split_whitespace().next().unwrap().to_string());
+            break;
+        }
+    }
+    let address = address.expect("bound");
+    std::thread::sleep(std::time::Duration::from_millis(300));
+    assert!(
+        child.try_wait().unwrap().is_none(),
+        "the server exited on /dev/null stdin"
+    );
+    let mut stream = std::net::TcpStream::connect(&address).unwrap();
+    stream
+        .write_all(
+            format!("GET / HTTP/1.1\r\nHost: {address}\r\nConnection: close\r\n\r\n").as_bytes(),
+        )
+        .unwrap();
+    let mut raw = String::new();
+    std::io::Read::read_to_string(&mut stream, &mut raw).unwrap();
+    assert!(raw.starts_with("HTTP/1.1 200"), "{raw}");
+    child.kill().unwrap();
+    let _ = child.wait();
 }

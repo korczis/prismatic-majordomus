@@ -21,6 +21,7 @@ fn session(
     args.extend_from_slice(extra_args);
     let mut child = Command::new(BIN)
         .args(&args)
+        .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(cwd)
         .env("MAJORDOMUS_LOG", "debug")
         .stdin(Stdio::piped())
@@ -206,6 +207,7 @@ fn protocol_errors_are_protocol_shaped() {
     let f = Fixture::new();
     let mut child = Command::new(BIN)
         .arg("mcp")
+        .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -271,6 +273,7 @@ fn stdout_is_protocol_only_even_at_trace_level_with_a_degraded_layer() {
     f.commit("broken");
     let mut child = Command::new(BIN)
         .arg("mcp")
+        .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())
         .env("MAJORDOMUS_LOG", "trace")
         .stdin(Stdio::piped())
@@ -353,6 +356,7 @@ fn a_client_that_closes_its_read_end_ends_the_session() {
     let f = Fixture::new();
     let mut child = Command::new(BIN)
         .arg("mcp")
+        .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
