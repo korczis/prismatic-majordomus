@@ -255,7 +255,7 @@ mj_knowledge_rows() {
       document) printf '%s\n' "$abs" >> "$tmp/docs" ;;
       implementation|test) ;;
       session|handover|checkpoint|prompt|rule) nf=$((nf + 1)); printf '%s\t%s\n' "$nf" "$path" >> "$tmp/front.map"; printf '%s\n' "$abs" >> "$tmp/front.list" ;;
-      policy|profile|milestone|issue|claim|doctrine) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$tmp/yaml.map"; printf '%s\n' "$abs" >> "$tmp/yaml.list" ;;
+      policy|scope|profile|milestone|issue|claim|doctrine) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$tmp/yaml.map"; printf '%s\n' "$abs" >> "$tmp/yaml.list" ;;
       *) ;;   # a kind this reader has no rule for gets no content rows; the extractor says so once
     esac
   done < "$src"

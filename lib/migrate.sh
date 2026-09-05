@@ -235,6 +235,7 @@ mj_migrate_seed() {
   MJ_INIT_CREATED=""
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/README.md" "$MJ_AI_REPO_DIR/README.md"
   mj_init_file "$MJ_SKELETON_DIR/policy.yaml" "$MJ_POLICY_FILE"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/scope.yaml" "$MJ_AI_REPO_DIR/scope.yaml"
   mj_init_tree "$MJ_SKELETON_DIR/profiles" "$MJ_PROFILES_DIR" '*.yaml'
   mj_init_tree "$MJ_SKELETON_DIR/prompts" "$MJ_PROMPTS_DIR" '*.md'
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/rules/README.md" "$MJ_RULES_DIR/README.md"
