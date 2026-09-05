@@ -1152,6 +1152,19 @@
       "test_case": "90_mcp_shared_server"
     },
     {
+      "id": "mcp-lease-resilience",
+      "claim": "Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies",
+      "source": "docs/MCP.md",
+      "implementation": "apps/majordomus-cli/src/lease.rs",
+      "test": "test/cases/90_mcp_shared_server.sh",
+      "status": "guaranteed",
+      "note": "The election classifies the lease on every attempt and is bounded by time; commands/mcp.rs degrades to a standalone session when the lease or the server cannot be used; SIGTERM, SIGINT and SIGHUP unlink the lease in the handler. The crate's tests/mcp_shared.rs proves each path over real processes, and case 90 plants a corrupt lease behind the launcher. The doctrine is project.shared-server-resilience.",
+      "responsibility": "none",
+      "source_route": "/docs/mcp/",
+      "command": null,
+      "test_case": "90_mcp_shared_server"
+    },
+    {
       "id": "mcp-peers",
       "claim": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
       "source": "docs/MCP.md",

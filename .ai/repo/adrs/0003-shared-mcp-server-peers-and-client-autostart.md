@@ -91,6 +91,22 @@ of workers; the decision below has to answer it line by line, as ADR 1 did.
 5. Nothing under the repository's tracked tree is written by any mode; the lease lives
    where the layer's contract already puts operational state.
 
+### Amendment, 2026-09-05: nothing left behind locks a client out
+
+Adversarial probes of the first implementation found two ways for a client to get no
+server at all: a lease file that was not a lease document made every `majordomus mcp`
+exit, and a lease directory that refused writes did the same. Three invariants were added;
+they are the doctrine `project.shared-server-resilience`, proved by `tests/mcp_shared.rs`
+and `test/cases/90_mcp_shared_server.sh`, and claimed as `mcp-lease-resilience`:
+
+6. Whatever the lease file contains after a crash, a kill or a copied checkout, the next
+   process takes it over and names what it found; the election is bounded by time.
+7. A process that cannot share (the lease cannot be written or replaced, the server cannot
+   start) serves its own client alone, as `--standalone` does, and says why; only the
+   layer's own errors turn a client away.
+8. `SIGTERM`, `SIGINT` and `SIGHUP` remove the lease before the process dies of the
+   signal; `kill -9` leaves a stale lease for the next process, which is invariant 6.
+
 ## Alternatives rejected
 
 - **A daemon or a system service.** Refused by the list, and unnecessary: a server that

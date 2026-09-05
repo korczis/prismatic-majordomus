@@ -226,7 +226,8 @@ after a kill, the re-attachment, the refusal when the taker cannot serve, a corr
 empty or abandoned lease being taken over, two clients starting in the same instant, an
 unwritable lease directory degrading to a standalone session, `SIGTERM` removing the lease,
 malformed traffic on `/mcp`, and the bridge's transparency: a bridged session and a
-restarted server answer byte for byte what the first server did. `tests/hot_path.rs` sends
+restarted server answer byte for byte what the first server did. The doctrine behind the
+failure table is the rule `project.shared-server-resilience`. `tests/hot_path.rs` sends
 hundreds of frames and requires the startup counters (`majordomus_perf`) unchanged;
 `majordomus bench` times every tool through a real child process
 ([`CAPABILITIES.md`](CAPABILITIES.md)). The claims are in [`CLAIMS.yaml`](CLAIMS.yaml)
