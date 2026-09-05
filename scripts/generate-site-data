@@ -1134,9 +1134,14 @@ mj_phase_end "gen:plan.json_the_execution_mode" "$GEN_T0"
 # ---------------------------------------------------------------- source.json
 GEN_T0="$(mj_phase_begin "gen:source.json")"
 HASH="$( (cd "$ROOT" && for f in $INPUTS; do printf '%s ' "$f"; mj_sha256 "$f"; done) | mj_sha256 /dev/stdin 2>/dev/null || (cd "$ROOT" && for f in $INPUTS; do printf '%s ' "$f"; mj_sha256 "$f"; done) | shasum -a 256 | cut -d' ' -f1)"
-COMMIT="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
-jq -n --arg v "$VERSION" --arg c "$COMMIT" --arg h "$HASH" --argjson g "$GEN_VERSION" --arg inputs "$INPUTS" \
-  '{schema:1, source_version:$v, source_commit:$c, source_hash:$h, generator_version:$g, input_files: ($inputs | split("\n"))}' > "$OUT/source.json"
+# No commit here either: a committed derived file that names the commit it was generated at
+# is stale the moment it lands (test/cases/51_derived_artifacts_committed.sh holds every
+# derived file to that), and the site generator would then never be idempotent on a clean
+# tree. The commit a page was built from is a fact of the build, not of the derivation:
+# scripts/site-build writes it into site/data/build.json (for the templates) and
+# site/static/build.json (served at /build.json), neither of them committed.
+jq -n --arg v "$VERSION" --arg h "$HASH" --argjson g "$GEN_VERSION" --arg inputs "$INPUTS" \
+  '{schema:1, source_version:$v, source_hash:$h, generator_version:$g, input_files: ($inputs | split("\n"))}' > "$OUT/source.json"
 
 mj_phase_end "gen:source.json" "$GEN_T0"
 # ---------------------------------------------------------------- derived section pages (every tile is a page)

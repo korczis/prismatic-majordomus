@@ -17,12 +17,12 @@ expect_grep 'site data: in sync'
 
 # --- and stays in sync across a commit. A derived artifact that records anything about the
 #     commit it lands in is stale the moment it lands; regenerating cannot fix that, it only
-#     moves the stale value forward. This is the property, not the symptom.
+#     moves the stale value forward. This is the property, not the symptom. source.json used
+#     to be exempt: it carried the commit for the footer, so the generator was never idempotent
+#     on a clean tree. The commit is now a fact of the build (site/data/build.json, written by
+#     site-build and never committed), and no derived file is exempt.
 for f in "$ROOT"/site/data/generated/*.json "$ROOT/docs/SITE_CLAIMS.md" "$ROOT/docs/PLAN_STATUS.md"; do
   [ -f "$f" ] || continue
-  case "${f##*/}" in
-    source.json) continue ;;   # carries the commit deliberately, and --check compares only its input hash
-  esac
   cur="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
   [ -n "$cur" ] || continue
   if grep -qF -- "${cur:0:7}" "$f"; then

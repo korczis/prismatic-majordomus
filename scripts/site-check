@@ -154,6 +154,18 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
   grep -qE '/registry/(modules|capabilities)/[a-z]' "$SITE/data/nav.toml" && { bad registry "nav.toml enumerates a module or capability route by hand"; regbad=1; }
   [ "$regbad" = 0 ] && ok registry "$(jq '.counts.modules' "$EXJ") modules and $(jq '.counts.capabilities' "$EXJ") capabilities: every one has its page and no page is an orphan; the CLI, MCP and benchmark pages render the dataset; nothing names a capability by hand"
 else bad registry "site/data/registry/registry.json or site/data/generated/executable.json missing"; fi
+# 13j. the build's provenance is served at /build.json and is this build's: the commit is
+# HEAD, the input hash is the one the data carries, the fingerprints are the dataset's. A page
+# that names another commit than the one deployed is how a stale deploy hides.
+if [ -f "$PUB/build.json" ]; then
+  bj="$PUB/build.json"; bbad=0
+  head_commit="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
+  [ "$(jq -r .commit "$bj")" = "$head_commit" ] || { bad build "/build.json names commit $(jq -r .commit "$bj" | cut -c1-12), HEAD is ${head_commit:0:12}"; bbad=1; }
+  [ "$(jq -r .source_hash "$bj")" = "$(jq -r .source_hash "$SITE/data/generated/source.json")" ] || { bad build "/build.json input hash differs from source.json"; bbad=1; }
+  [ "$(jq -r .registry_fingerprint "$bj")" = "$(jq -r .registry.fingerprint "$SITE/data/registry/registry.json")" ] || { bad build "/build.json registry fingerprint differs from the dataset"; bbad=1; }
+  grep -qF "$(jq -r .commit "$bj" | cut -c1-12)" "$PUB/index.html" || { bad build "the homepage footer does not carry the built commit"; bbad=1; }
+  [ "$bbad" = 0 ] && ok build "/build.json: commit ${head_commit:0:12}$([ "$(jq -r .dirty "$bj")" = true ] && printf ' (dirty tree)'), input hash $(jq -r .source_hash "$bj" | cut -c1-12), registry fingerprint $(jq -r .registry_fingerprint "$bj" | cut -c1-12)"
+else bad build "site/public/build.json missing (site-build writes it)"; fi
 # 13b. every tile has a page: profiles, claims, statuses, responsibilities, commands
 for slug in $(jq -r '.profiles[].slug' "$SITE/data/generated/profiles.json"); do [ -f "$PUB/profiles/$slug/index.html" ] || bad tiles "no page for profile $slug"; done
 for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do [ -f "$PUB/guarantees/$id/index.html" ] || bad tiles "no page for claim $id"; done

@@ -12,6 +12,6 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from {{ project.name }} v{{ source.source_version }} · commit <a href="{{ project.repository_url }}/commit/{{ source.source_commit }}" class="font-mono hover:underline">{{ source.source_commit | truncate(length=7, end="") }}</a> · inputs <span class="font-mono">{{ source.source_hash | truncate(length=12, end="") }}</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from {{ project.name }} v{{ source.source_version }} · commit <a href="{{ project.repository_url }}/commit/{{ build.commit }}" class="font-mono hover:underline">{{ build.commit | truncate(length=7, end="") }}</a> · inputs <span class="font-mono">{{ source.source_hash | truncate(length=12, end="") }}</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>

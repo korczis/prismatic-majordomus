@@ -149,7 +149,7 @@ update *args:
 
 # Every gate: the shell suite, the Rust gate, the site data check.
 [group('test')]
-test: test-shell rust-check site-data-check
+test: test-shell rust-check derive-check
 
 # The behavioural suite of the shell tool and the cross-checks of the Rust executable (test/cases/*.sh). `just test-shell 72_rust_mcp` runs one.
 [group('test')]
@@ -204,6 +204,12 @@ site-build:
 site-serve:
     scripts/site-serve
 
-# Every derived file in one pass, in dependency order: site data first (it writes docs the index reads), then generate (registry projections, provider files, site/data/registry/).
+# Every committed derived artifact, regenerated in dependency order (scripts/derive: generate, site data, generate again over the index the site data changed).
 [group('site')]
-derive: site-data generate
+derive:
+    scripts/derive
+
+# Exit 10 naming every stale derived artifact — the registry's projections and the site's data — and write nothing (scripts/derive-check).
+[group('site')]
+derive-check:
+    scripts/derive-check
