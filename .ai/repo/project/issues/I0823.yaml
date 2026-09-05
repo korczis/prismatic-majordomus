@@ -35,5 +35,15 @@ validation:
 evidence_required:
   - bench_targets_derived
 risk: "Commands that read stdin or need an active task need a fixture per target; the fixtures under test/fixtures/commands already describe one scenario per command and are reused."
+started_at: 2026-09-05T03:33:10Z
+verified_at: 2026-09-05T03:33:10Z
+completed_at: 2026-09-05T03:33:10Z
+evidence:
+  - covers: bench_targets_derived
+    type: test
+    command: "bash test/run.sh 79_bench_command"
+    result: "lib/bench.sh derives its targets from mj_cmdreg_public minus itself and its scenario per target from the first scenario of test/fixtures/commands/<command>.json; case 79 asserts --list equals the registry public set, that a public command added to a copy of the registry appears in the copy's --list with no edit to the harness, that a read-only run records one cold and N warm results with count, min, p50, p90, p95, p99, max, mean and stddev ordered, and that a state-mutating target records only a cold distribution over fresh repositories; bench is registered in share/commands.yaml, dispatched by bin/majordomus, demonstrated by test/fixtures/commands/bench.json and documented in docs/CLI.md and docs/SCHEMAS.md; the fixture and coverage cases 30, 31, 34 and 15 pass"
+    commit: next
+    recorded_at: 2026-09-05T03:33:10Z
 created_at: 2026-09-05
 updated_at: 2026-09-05

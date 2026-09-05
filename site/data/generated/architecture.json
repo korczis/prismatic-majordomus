@@ -30,6 +30,26 @@
       "external": false
     },
     {
+      "id": "lib/bench.sh",
+      "kind": "module",
+      "label": "bench",
+      "command": "bench",
+      "summary": "time every public command, cold and warm, against the baseline",
+      "read_only": null,
+      "route": "/commands/bench/",
+      "external": false
+    },
+    {
+      "id": "lib/commands.sh",
+      "kind": "module",
+      "label": "commands",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/check.sh",
       "kind": "module",
       "label": "check",
@@ -147,16 +167,6 @@
       "summary": "write an append-only continuation record (body on stdin)",
       "read_only": null,
       "route": "/commands/handover/",
-      "external": false
-    },
-    {
-      "id": "lib/commands.sh",
-      "kind": "module",
-      "label": "commands",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
       "external": false
     },
     {
@@ -718,6 +728,11 @@
     },
     {
       "source": "bin/majordomus",
+      "target": "lib/bench.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
       "target": "lib/check.sh",
       "kind": "sources"
     },
@@ -824,6 +839,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/watch.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/bench.sh",
+      "target": "lib/commands.sh",
       "kind": "sources"
     },
     {

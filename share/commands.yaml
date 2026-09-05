@@ -443,6 +443,24 @@ commands:
     demo: layout-migration
     note: Runs on the legacy layout only. It copies the local state aside before anything moves, never deletes a file it does not know, and refuses a directory that holds both project data and a tool installation.
 
+  - id: bench
+    title: bench
+    summary: Time every public command of the registry, cold and warm, and compare with the baseline.
+    category: system
+    stage: inspect
+    visibility: public
+    class: generated-output-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: true
+    syntax: majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]
+    reads: [share/commands.yaml, test/fixtures/commands/, .ai/repo/policy.yaml, .ai/repo/benchmarks/baseline.json]
+    writes: [.ai/local/benchmarks/, .ai/repo/benchmarks/baseline.json]
+    exit_codes: [0, 2, 10, 12, 13, 15]
+    demo: benchmark-run
+    note: The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds.
+
   - id: help
     title: help
     summary: Print the usage text, which is the list of every public command.

@@ -16,6 +16,7 @@ mj_cmd_watch() {
     --help|-h) echo "usage: majordomus watch [--json]   (read-only; exit 0 no drift, 11 drift found)"; return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "watch: unknown option $a" ;; esac; done
   mj_require_installed
+  local t_start; t_start="$(mj_ms)"
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
 
   # The task-scoped doctrines need the task loaded before they run; the rest do not care.
@@ -29,6 +30,7 @@ mj_cmd_watch() {
   fi
 
   mj_doctrine_dispatch watch
+  mj_report_budget watch "$t_start"
 
   if [ "$have_task" = 1 ]; then
     local id; id="$(mj_cur id)"

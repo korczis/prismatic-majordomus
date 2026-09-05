@@ -34,6 +34,21 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+# `majordomus bench` samples every public command this many times after the warm-up runs;
+# `bench --check` refuses a regression larger than these fractions of the baseline's
+# p50, p95 and p99; doctor and watch report their own wall time against these budgets
+# (WARN, never the exit code). Measured, not guessed: change a budget with a run.
+benchmark:
+  samples: 10
+  warmup: 2
+  regression:
+    p50: 0.5
+    p95: 0.5
+    p99: 0.6
+  budget:
+    doctor_ms: 3000
+    watch_ms: 3000
+
 # Every entry here is reconciled by `majordomus doctor`: the path must resolve (on PATH,
 # repo-relative, or absolute in the hook line), be executable, and be invoked by the
 # artifact named in wired_by without its exit code being swallowed.

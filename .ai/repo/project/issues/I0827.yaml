@@ -26,5 +26,15 @@ validation:
 evidence_required:
   - docs_integrated
 risk: "The peer branch generates allow-lists from schemas; the keys are added in the anchored one-per-line form so the fold is mechanical."
+started_at: 2026-09-05T03:33:10Z
+verified_at: 2026-09-05T03:33:10Z
+completed_at: 2026-09-05T03:33:10Z
+evidence:
+  - covers: docs_integrated
+    type: test
+    command: "bin/majordomus doctor"
+    result: "share/schemas/policy.schema.json declares benchmark.samples, benchmark.warmup, benchmark.regression.{p50,p95,p99} and benchmark.budget.{doctor_ms,watch_ms}; share/allow/policy.txt is regenerated from it by the Rust generate command and generate --check reports in sync; share/skeleton/policy.yaml and .ai/repo/policy.yaml carry the block; doctor reports every policy key the code reads as declared, with the key scanner widened to keys carrying digits; docs/SCHEMAS.md documents the keys"
+    commit: next
+    recorded_at: 2026-09-05T03:33:10Z
 created_at: 2026-09-05
 updated_at: 2026-09-05

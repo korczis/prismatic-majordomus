@@ -50,6 +50,7 @@ SYSTEM
   doctrine             what rules are enforced, by what, and whether they are wired (read-only)
   watch                what has drifted: state, policy, projections, retention    (read-only)
   version              print the version
+  bench                time every public command, cold and warm, against the baseline
 
 global options:
   --repo <path>        repository to operate on (default: the git toplevel of the cwd)
@@ -81,7 +82,7 @@ case "$cmd" in
     # version is dispatched before the option parser and has to say so for itself
     [ "$nargs" -eq 0 ] || { mj_err "version: unknown option $1"; exit "$MJ_EX_USAGE"; }
     echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session|knowledge|migrate|rules)
+  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session|knowledge|migrate|rules|bench)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"

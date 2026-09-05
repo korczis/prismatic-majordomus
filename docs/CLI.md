@@ -1076,6 +1076,70 @@ restrict `list`, `ready`, `blocked`, `waves` and `graph`; `--covers`, `--type`, 
 The same model is projected to GitHub by `scripts/github-sync` and to the website by
 `scripts/generate-site-data`. Neither re-derives a status; both read this engine.
 
+## `majordomus bench`
+
+Time every public command of the registry, cold and warm, and compare with the baseline.
+
+The targets are the public commands of `share/commands.yaml` and nothing else: a command
+added to the registry is a target from that moment, and the harness never times itself.
+Each target runs in a disposable repository. When the tool's own suite is present, the
+scenario is the first scenario of the command's fixture under `test/fixtures/commands/`,
+so what is timed is what the site demonstrates and the suite executes; otherwise it is the
+bare command in an installed repository.
+
+A read-only command is run once cold, then `benchmark.warmup` times unsampled, then
+`benchmark.samples` times warm, all in one repository. A command that mutates state gets a
+fresh repository per sample, so every sample of it is cold and it has no warm
+distribution. A sample is the wall-clock time of the child process alone; setup is never
+inside the clock. Every distribution is recorded with its count, minimum, p50, p90, p95,
+p99, maximum, mean and standard deviation; nothing is averaged away.
+
+- `bench` times every target; `bench <command>...` only those.
+- `--list` prints the targets with their class and scenario, `--format json` as data.
+- `--samples <n>`, `--warmup <n>` override the policy for this run only; `--mode cold|warm|both`
+  selects the distributions recorded.
+- `--format json` prints the run as one document with schema `majordomus/benchmark-result/v1`:
+  the run id, the commit and whether the tree was dirty, the platform, the profile and one
+  result per target and mode.
+- Every run is written under `.ai/local/benchmarks/` (`runs/<run-id>.json`, `latest.json`,
+  one line per run in `history.jsonl`) unless `--no-save`. That is local evidence: ignored
+  by git, never a baseline.
+- `--write-baseline` writes the run as `.ai/repo/benchmarks/baseline.json`, schema
+  `majordomus/benchmark-baseline/v1`, and prints the old and new p50/p95/p99 per target. It
+  refuses a dirty tree without `--force`, because a baseline records a commit.
+- `--check` compares the run with the baseline under `benchmark.regression`: for each target
+  and mode, a p50, p95 or p99 more than the threshold fraction over the baseline is a
+  `FAIL` naming the metric, both values and the threshold, and the command exits `10`. No
+  baseline exits `12`; a baseline with another schema is not comparable and exits `15`.
+
+`MJ_TIMING=1` on any command prints the phases and work counters of that run on stderr,
+which is how a slow target is taken apart.
+
+```
+$ majordomus bench --list
+command      class                      scenario
+init         generated-output-mutating  fixture fresh
+doctor       read-only                  fixture not-wired
+...
+
+$ majordomus bench doctor version
+command      mode  status       n     p50     p95     p99     max  scenario
+doctor       cold  ok           1    2711    2711    2711    2711  fixture not-wired
+doctor       warm  ok          10    2640    2790    2790    2790  fixture not-wired
+version      cold  ok           1      41      41      41      41  fixture prints
+version      warm  ok          10      38      45      45      45  fixture prints
+
+slowest by warm p95 (cold where warm does not apply):
+  doctor       p95 2790 ms
+  version      p95 45 ms
+
+run b-20260905T031200Z-9f1c saved as .ai/local/benchmarks/runs/b-20260905T031200Z-9f1c.json
+```
+
+Exit `2` on a usage error, `12` when a named target is not a public command of the
+registry, `13` when a target did not run cleanly (its row says `setup-failed` or the exit
+code it produced), `10`, `12` and `15` from `--check` as above.
+
 ## `majordomus version`
 
 Print the version and exit. `--version` is accepted as a synonym, and `version` works

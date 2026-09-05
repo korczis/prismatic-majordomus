@@ -38,6 +38,7 @@ mj_cmd_doctor() {
   esac; done
   mj_require_installed
   MJ_DOCTOR_MISSING=0
+  local t_start; t_start="$(mj_ms)"
 
   # The policy has to parse before anything can be judged against it. This is the one
   # ordering doctor imposes; everything after it is the registry's order.
@@ -48,7 +49,17 @@ mj_cmd_doctor() {
 
   mj_doctrine_dispatch doctor
   mj_report_environment
+  mj_report_budget doctor "$t_start"
   mj_finish_doctor
+}
+
+# The command's own wall time against the policy's budget for it: WARN over budget, INFO
+# under, never the exit code. The budget is measured, not guessed, and changing it is a
+# policy edit with a run behind it (majordomus bench doctor).
+mj_report_budget() { # command, start ms
+  local elapsed budget; elapsed=$(( $(mj_ms) - $2 )); budget="$(mj_pol_req "benchmark.budget.${1}_ms")"
+  if [ "$elapsed" -gt "$budget" ]; then mj_warn budget "$1" "$elapsed ms, over the budget of $budget ms (policy benchmark.budget.${1}_ms)" "MJ_TIMING=1 majordomus $1"
+  else mj_info budget "$1" "$elapsed ms of $budget ms" "MJ_TIMING=1 majordomus $1"; fi
 }
 
 # ---------------------------------------------------------------- validators
@@ -300,8 +311,9 @@ mj_validate_policy_defaults() {
   [ -f "$skel" ] || { mj_doctrine_skip policy "skeleton" "no skeleton policy to compare against"; MJ_DOCTRINE_SKIPPED=1; return 0; }
   flat="$(mktemp "${TMPDIR:-/tmp}/mj.sk.XXXXXX")"
   mj_yaml_flatten "$skel" > "$flat" 2>/dev/null || { rm -f "$flat"; mj_doctrine_fail policy "skeleton" "share/skeleton/policy.yaml does not parse" "majordomus doctor"; return 0; }
-  for k in $(grep -rhE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' "$MJ_LIB_DIR" | grep -v '^[[:space:]]*#' \
-             | grep -oE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
+  # a key is letters, digits and underscores per segment (benchmark.regression.p95 is one)
+  for k in $(grep -rhE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' "$MJ_LIB_DIR" | grep -v '^[[:space:]]*#' \
+             | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
     n=$((n + 1))
     if [ -z "$(mj_yget "$flat" "$k")" ] && ! grep -qE "^${k}\." "$flat"; then
       mj_doctrine_fail policy "$k" "read by lib/ but absent from share/skeleton/policy.yaml" "grep -rn 'mj_pol_req $k' lib/"; bad=1
