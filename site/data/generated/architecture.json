@@ -290,6 +290,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/scope.yaml",
+      "kind": "artifact",
+      "label": "repo/scope.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/README.md",
       "kind": "artifact",
       "label": "README.md",
@@ -657,6 +667,11 @@
       "kind": "reads"
     },
     {
+      "source": "lib/doctor.sh",
+      "target": ".ai/repo/scope.yaml",
+      "kind": "reads"
+    },
+    {
       "source": "lib/finish.sh",
       "target": ".ai/local/state/checkpoints",
       "kind": "reads"
@@ -674,6 +689,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/rules/vendor",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/scope.yaml",
       "kind": "reads"
     },
     {

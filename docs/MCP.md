@@ -129,6 +129,7 @@ Consequences a repository can rely on:
 | URI | content |
 |---|---|
 | `majordomus://repository` | JSON: root, layer schema, sections, git state, discovery mode, kinds present, every diagnostic |
+| `majordomus://scope` | JSON: the repository scope as read, its origin, and every tracked file tallied against it ([`SCOPE.md`](SCOPE.md)) |
 | `majordomus://<kind>/<identity>` | the file as read, `text/markdown` or `application/yaml` |
 
 A URI is resolved once, by one function, wherever it is asked for: `resources/read`,
@@ -154,6 +155,8 @@ manifest section it falls under, and its size.
 | `majordomus_get` | `objects.get` | `uri` | tagged by `source`: `declarative`, a file of the layer with metadata, provenance, media type and content; or `builtin`, a query the URI projects (`majordomus://repository`) with its `answer`, the capability's provenance and the same text as `content` |
 | `majordomus_search` | `objects.search` | `query`, `kind?`, `limit?` | case-insensitive substring hits with one snippet line each |
 | `majordomus_repository` | `repository.info` | none | the `majordomus://repository` document |
+| `majordomus_scope` | `repository.scope` | none | the `majordomus://scope` document: the declaration, its origin, the tally |
+| `majordomus_scope_classify` | `repository.scope_classify` | `path` | whether a repository-relative path is in or out of the scope, the reason, and the rule that decided |
 | `majordomus_capabilities` | `capabilities.list` | `kind?`, `exposure?` | every capability with its projections |
 | `majordomus_capability` | `capabilities.describe` | `id` | one capability: schemas, provenance, every projection |
 | `majordomus_peers` | `peers.list` | none | the clients attached to this shared server (above) |
