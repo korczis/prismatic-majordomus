@@ -1,0 +1,39 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set cat = load_data(path="data/generated/catalogue.json") -%}
+{%- set cov = cat.coverage -%}
+<div class="max-w-5xl">
+  <p class="text-base leading-relaxed text-body">Every public command of the registry, every guaranteed claim with a responsibility and every MCP tool the executable projects is a target. For each: how many active use cases name it, how many run it in their scenario, how many carry passing evidence, and what the policy says a gap means. Computed by <code class="font-mono text-heading">majordomus usecase coverage</code> when this site was generated; nothing here is a list somebody maintains.</p>
+  <dl class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+    <div class="flex gap-1.5"><dt class="text-body-subtle">targets</dt><dd class="font-mono text-heading">{{ cov.total }}</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">covered</dt><dd class="font-mono text-heading">{{ cov.covered }}</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">partial</dt><dd class="font-mono text-heading">{{ cov.partial }}</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">required gaps</dt><dd class="font-mono {% if cov.gaps_required > 0 %}text-fg-danger-strong{% else %}text-fg-success-strong{% endif %}">{{ cov.gaps_required }}</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">policy</dt><dd class="font-mono text-heading">commands {{ cov.policy.commands }} · claims {{ cov.policy.claims }} · mcp tools {{ cov.policy.mcp_tools }}</dd></div>
+  </dl>
+  {%- for cls in ["command", "claim", "mcp_tool"] %}
+  {%- set rows = [r for r in cov.rows if r.class == cls] -%}
+  {%- if rows | length > 0 %}
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{% if cls == "command" %}Public commands{% elif cls == "claim" %}Guaranteed claims{% else %}MCP tools{% endif %} <span class="font-mono text-sm text-body-subtle">{{ rows | length }}</span></h2>
+  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase text-body-subtle"><tr><th class="px-3 py-2">target</th><th class="px-3 py-2 text-right">use cases</th><th class="px-3 py-2 text-right">executable</th><th class="px-3 py-2 text-right">evidence</th><th class="px-3 py-2">status</th><th class="px-3 py-2">policy</th></tr></thead>
+      <tbody>
+        {%- for r in rows -%}
+        <tr class="border-t border-default">
+          <td class="px-3 py-2 font-mono text-heading">{% if cls == "command" %}<a href="{{ get_url(path='/commands/' ~ r.id ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ r.id }}</a>{% elif cls == "claim" %}<a href="{{ get_url(path='/guarantees/' ~ r.id ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ r.id }}</a>{% else %}{{ r.id }}{% endif %}</td>
+          <td class="px-3 py-2 text-right font-mono">{{ r.use_cases }}</td>
+          <td class="px-3 py-2 text-right font-mono">{{ r.executable }}</td>
+          <td class="px-3 py-2 text-right font-mono">{{ r.evidence }}</td>
+          <td class="px-3 py-2"><span class="rounded border px-1.5 py-0.5 font-mono text-xs {% if r.status == 'covered' %}border-success-subtle bg-success-soft text-fg-success-strong{% elif r.status == 'partial' %}border-warning-subtle bg-warning-soft text-fg-warning{% elif r.policy == 'required' %}border-danger-subtle bg-danger-soft text-fg-danger-strong{% else %}border-default bg-neutral-secondary-medium text-heading{% endif %}">{{ r.status }}</span></td>
+          <td class="px-3 py-2 font-mono text-xs text-body">{{ r.policy }}</td>
+        </tr>
+        {%- endfor -%}
+      </tbody>
+    </table>
+  </div>
+  {%- endif %}
+  {%- endfor %}
+  <p class="mt-8 text-sm text-body">A gap the policy requires fails <code class="font-mono text-heading">doctor</code>, <code class="font-mono text-heading">check</code> and <code class="font-mono text-heading">finish</code>; <code class="font-mono text-heading">majordomus usecase scaffold --missing</code> writes a draft for each. A draft never counts.</p>
+</div>
+{% endblock body %}

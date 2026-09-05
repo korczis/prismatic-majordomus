@@ -6,7 +6,7 @@
 {%- set a = cat.applications[cat.ap_index[page.extra.id]] -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="text-base leading-relaxed text-body">{{ a.context }}</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
 
     <div class="mt-8 grid gap-4 md:grid-cols-2">
       <div class="rounded-base border border-success-subtle bg-success-soft p-5">
@@ -23,7 +23,7 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What you would do here</h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
       {%- for u in a.use_cases -%}{%- set uu = cat.use_cases[cat.uc_index[u]] -%}
-      <li><a href="{{ get_url(path='/use-cases/' ~ u ~ '/', trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">{{ uu.title }}</span><span class="text-sm text-body">{{ uu.summary }}</span><span class="mt-auto pt-2 font-mono text-xs text-body-subtle">{% for s in uu.steps %}{{ s.command }}{% if not loop.last %} → {% endif %}{% endfor %}</span></a></li>
+      <li><a href="{{ get_url(path='/use-cases/' ~ u ~ '/', trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">{{ uu.title }}</span><span class="text-sm text-body">{{ uu.summary }}</span><span class="mt-auto flex flex-wrap items-center gap-2 pt-2 font-mono text-xs text-body-subtle"><span>{{ <maturity status={uu.maturity} /> }}</span>{% for cn in uu.commands %}{{ cn }}{% if not loop.last %} · {% endif %}{% endfor %}</span></a></li>
       {%- endfor -%}
     </ul>
 

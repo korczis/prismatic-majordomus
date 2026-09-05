@@ -21,9 +21,7 @@ expect_exit 10 "$MJ" doctor
 out_checkout="$LAST_OUT"
 expect_exit 10 "$DIST/bin/majordomus" doctor
 out_dist="$LAST_OUT"
-# the wall time doctor reports against its budget is the one line that legitimately differs
-# between two runs (and appears in one and not the other on a loaded machine); the
-# comparison is about what the two locations say, not how long they took
+# the budget line carries a measured wall time, which two runs never share; every other line is data
 a="$(printf '%s\n' "$out_checkout" | grep -E '^(OK|FAIL|WARN)' | grep -v '^WARN budget' | sed 's/  \[reproduce:.*//' | sort)"
 b="$(printf '%s\n' "$out_dist" | grep -E '^(OK|FAIL|WARN)' | grep -v '^WARN budget' | sed 's/  \[reproduce:.*//' | sort)"
 [ "$a" = "$b" ] || { echo "    two locations of one version disagree about one repository"; diff <(printf '%s\n' "$a") <(printf '%s\n' "$b"); exit 1; }

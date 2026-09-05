@@ -49,6 +49,14 @@ benchmark:
     doctor_ms: 3000
     watch_ms: 3000
 
+# Use-case coverage: which gaps `doctor` reports and which it fails on. A fresh repository
+# has no use cases yet, so nothing is required until it says so.
+use_cases:
+  coverage:
+    commands: advisory
+    claims: advisory
+    mcp_tools: advisory
+
 # Every entry here is reconciled by `majordomus doctor`: the path must resolve (on PATH,
 # repo-relative, or absolute in the hook line), be executable, and be invoked by the
 # artifact named in wired_by without its exit code being swallowed.

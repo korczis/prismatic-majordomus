@@ -23,6 +23,7 @@ Each of these is rendered on the website as well, from this same Markdown.
 | [`EXTRACTION_REPORT.md`](EXTRACTION_REPORT.md) | humans | how the design was derived: root cause, pattern ledger, rejected patterns, risks, plan |
 | [`DYNAMICITY.md`](DYNAMICITY.md) | maintainers | canonical ownership: what may be written down twice, what must be derived, and which entities still have no owner |
 | [`CAPABILITIES.md`](CAPABILITIES.md) | everyone, integrators | the Rust executable's capability model: one definition, and MCP, HTTP, OpenAPI, Swagger UI, the command line and the generated reference derived from it; what is canonical, how to extend it, how it fails |
+| [`USE_CASES.md`](USE_CASES.md) | everyone, AI workers | executable use cases: one file each under `.ai/repo/use-cases/`, the scenario that proves it against the tool, evidence, observed maturity, coverage gated by policy, impact analysis, scaffolding, and what the site derives from it |
 | [`SCOPE.md`](SCOPE.md) | everyone, AI workers | the repository scope: what a worker reads and what it never reads, declared once in `.ai/repo/scope.yaml`, how a path is judged (name, size, content), what the executable does with it, and `majordomus scope` |
 | [`MCP.md`](MCP.md) | everyone, MCP clients | the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve |
 | [`GITHUB_PAGES_ARCHITECTURE.md`](GITHUB_PAGES_ARCHITECTURE.md) | maintainers | how the website is derived from the repository and checked for drift |

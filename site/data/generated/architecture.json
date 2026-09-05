@@ -150,6 +150,16 @@
       "external": false
     },
     {
+      "id": "lib/usecase.sh",
+      "kind": "module",
+      "label": "usecase",
+      "command": "usecase",
+      "summary": "the executable use cases: list, show, validate, run, coverage, impact, scaffold",
+      "read_only": null,
+      "route": "/commands/usecase/",
+      "external": false
+    },
+    {
       "id": "lib/checkpoint.sh",
       "kind": "module",
       "label": "checkpoint",
@@ -430,6 +440,26 @@
       "external": false
     },
     {
+      "id": ".ai/repo/use-cases",
+      "kind": "artifact",
+      "label": "repo/use-cases",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/applications",
+      "kind": "artifact",
+      "label": "repo/applications",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/prompts",
       "kind": "artifact",
       "label": "local/prompts",
@@ -577,6 +607,16 @@
       "summary": "regenerate provider projections from policy",
       "read_only": null,
       "route": "/commands/update/",
+      "external": false
+    },
+    {
+      "id": ".ai/local/evidence/use-cases",
+      "kind": "artifact",
+      "label": "local/evidence/use-cases",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
       "external": false
     },
     {
@@ -858,11 +898,21 @@
     },
     {
       "source": "bin/majordomus",
+      "target": "lib/usecase.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
       "target": "lib/watch.sh",
       "kind": "sources"
     },
     {
       "source": "lib/bench.sh",
+      "target": "lib/commands.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
       "target": "lib/commands.sh",
       "kind": "sources"
     },
@@ -884,6 +934,11 @@
     {
       "source": "lib/check.sh",
       "target": "lib/start.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": "lib/usecase.sh",
       "kind": "sources"
     },
     {
@@ -957,6 +1012,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/doctor.sh",
+      "target": "lib/usecase.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/doctrine.sh",
       "target": "lib/rules.sh",
       "kind": "sources"
@@ -1014,6 +1074,16 @@
     {
       "source": "lib/start.sh",
       "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/usecase.sh",
+      "target": "lib/commands.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/usecase.sh",
+      "target": "lib/rules.sh",
       "kind": "sources"
     },
     {
@@ -1168,6 +1238,11 @@
     },
     {
       "source": "lib/init.sh",
+      "target": ".ai/repo/applications",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
       "target": ".ai/repo/policy.yaml",
       "kind": "uses"
     },
@@ -1189,6 +1264,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/skills",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/use-cases",
       "kind": "uses"
     },
     {
@@ -1474,6 +1554,11 @@
     {
       "source": "lib/start.sh",
       "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/usecase.sh",
+      "target": ".ai/local/evidence/use-cases",
       "kind": "writes"
     }
   ]

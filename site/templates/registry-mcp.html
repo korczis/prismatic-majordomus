@@ -9,7 +9,7 @@
 {%- set current = "mcp" -%}{% include "partials/registry-nav.html" %}
 <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="text-lg text-body">An MCP client sees the registry as tools and resources. Every tool is a capability with an <code class="font-mono">mcp.tool</code> exposure; every builtin capability with a resource exposure answers its URI; every object of the layer is one more resource. Nothing is listed here that the registry does not hold.</p>
+    <p class="break-words text-lg text-body">An MCP client sees the registry as tools and resources. Every tool is a capability with an <code class="font-mono">mcp.tool</code> exposure; every builtin capability with a resource exposure answers its URI; every object of the layer is one more resource. Nothing is listed here that the registry does not hold.</p>
     <p class="mt-3 text-sm text-body-subtle">How a client reaches the server — <code class="font-mono">majordomus mcp</code> over stdio, the one shared server per repository with MCP over HTTP, the lease, the peers, what the server refuses — is <a href="{{ get_url(path="/docs/mcp/", trailing_slash=true) }}" class="text-fg-brand hover:underline">the MCP document</a>; the shared server's resilience is <a href="{{ get_url(path="/doctrines/", trailing_slash=true) }}" class="text-fg-brand hover:underline">doctrine</a>.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Tools</h2>
@@ -21,7 +21,7 @@
         {%- for t in mcp.tools -%}
         {%- set link = [x for x in ex.capabilities if x.id == t.id][0] -%}
         <tr class="border-t border-default align-top">
-          <td class="px-3 py-2"><code class="break-all font-mono font-semibold text-heading">{{ t.name }}</code><p class="mt-1 max-w-md text-xs text-body">{{ t.description }}</p></td>
+          <td class="px-3 py-2"><code class="break-all font-mono font-semibold text-heading">{{ t.name }}</code><p class="mt-1 max-w-md break-words text-xs text-body">{{ t.description }}</p></td>
           <td class="px-3 py-2"><a href="{{ get_url(path=link.route, trailing_slash=true) }}" class="break-all font-mono text-fg-brand hover:underline">{{ t.id }}</a></td>
           <td class="px-3 py-2 font-mono text-xs text-body">{{ t.kind }}</td>
           <td class="px-3 py-2 font-mono text-xs text-body">{{ t.input }} → {{ t.output }}</td>

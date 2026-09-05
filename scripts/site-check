@@ -195,10 +195,29 @@ jq -r '.use_cases[] | .id as $u | .applications[] | "\($u) \(.)"' "$SITE/data/ge
   grep -q "/applications/$a/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to application $a"
   grep -q "/use-cases/$u/" "$PUB/applications/$a/index.html" || bad catalogue "application $a does not link back to use case $u"
 done
-jq -r '.use_cases[] | .id as $u | .steps[] | "\($u) \(.command)"' "$SITE/data/generated/catalogue.json" | while read -r u c; do
+jq -r '.use_cases[] | .id as $u | .commands[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" | while read -r u c; do
   grep -q "/commands/$c/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to the command page for $c"
 done
-ok catalogue "$(jq -r '.counts.use_cases' "$SITE/data/generated/catalogue.json") use case(s) and $(jq -r '.counts.applications' "$SITE/data/generated/catalogue.json") application(s): every step, rule and cross-reference is a link that resolves"
+# every use case with a scenario shows the evidence of its run: the command lines the tool
+# executed, and the result; a page that shows a demonstration nobody ran is what this refuses
+jq -r '.use_cases[] | select(.scenario != null) | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \($e.steps | length)"' "$SITE/data/generated/catalogue.json" | while read -r u res n; do
+  [ "$res" = pass ] || bad evidence "use case $u carries evidence '$res'; a page shows only a scenario that passed"
+  [ "$(grep -c '\$ majordomus ' "$PUB/use-cases/$u/index.html")" -ge "$n" ] || bad evidence "use case $u renders fewer executed commands than its evidence has ($n)"
+done
+# every category is a page, every category link resolves, related links resolve, coverage is a page
+for cid in $(jq -r '.categories[].id' "$SITE/data/generated/catalogue.json"); do [ -f "$PUB/use-cases/$cid/index.html" ] || bad tiles "no page for use-case category $cid"; done
+[ -f "$PUB/use-cases/coverage/index.html" ] || bad tiles "no page for /use-cases/coverage/"
+jq -r '.use_cases[] | .id as $u | "\($u) \(.category)"' "$SITE/data/generated/catalogue.json" | while read -r u c; do
+  grep -q "/use-cases/$c/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to its category $c"
+  grep -q "/use-cases/$u/" "$PUB/use-cases/$c/index.html" || { jq -e --arg u "$u" '.use_cases[] | select(.id==$u) | .status == "draft"' "$SITE/data/generated/catalogue.json" >/dev/null || bad catalogue "category $c does not list use case $u"; }
+done
+jq -r '.use_cases[] | .id as $u | (.related_ids // [])[] | "\($u) \(.)"' "$SITE/data/generated/catalogue.json" | while read -r u r; do
+  grep -q "/use-cases/$r/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to its related use case $r"
+done
+jq -r '.coverage.rows[] | select(.class=="command") | .id' "$SITE/data/generated/catalogue.json" | while read -r c; do
+  grep -q "/commands/$c/" "$PUB/use-cases/coverage/index.html" || bad catalogue "the coverage page does not link command $c"
+done
+ok catalogue "$(jq -r '.counts.use_cases' "$SITE/data/generated/catalogue.json") use case(s) in $(jq -r '.counts.categories' "$SITE/data/generated/catalogue.json") categor(y/ies) and $(jq -r '.counts.applications' "$SITE/data/generated/catalogue.json") application(s): every command, rule, category, related and cross-reference is a link that resolves, and every scenario shown was executed"
 for f in "$SITE"/content-src/why/*.md; do slug="$(basename "$f" .md)"; [ "$slug" = _index ] && continue; [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
 for r in limitations roadmap why supervises commands plan plan/dag; do [ -f "$PUB/$r/index.html" ] || bad tiles "no page for /$r/"; done
 # the plan: every milestone and every issue is a page, and the DAG the page draws is the DAG

@@ -38,6 +38,7 @@ MEMORY
 
 RULES
   rules                the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)
+  usecase              the executable use cases: list, show, validate, run, coverage, impact, scaffold
 
 PLAN
   plan                 the milestone and issue model: validate, read, and move an issue
@@ -82,7 +83,7 @@ case "$cmd" in
     # version is dispatched before the option parser and has to say so for itself
     [ "$nargs" -eq 0 ] || { mj_err "version: unknown option $1"; exit "$MJ_EX_USAGE"; }
     echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session|knowledge|migrate|rules|bench)
+  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|search|plan|session|knowledge|migrate|rules|bench|usecase)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"

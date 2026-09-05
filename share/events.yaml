@@ -147,3 +147,11 @@ events:
     emitted_by: rules
     requires: [package]
     public: true
+
+  - id: use_cases.ran
+    title: Use-case scenarios ran
+    summary: The scenarios of the use cases named were executed against the tool and their evidence recorded under the local half.
+    emitted_by: usecase
+    requires: [ran, failed]
+    public: true
+    note: Counts only; the evidence files carry each step's command, exit code, output and assertions.

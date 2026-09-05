@@ -99,7 +99,9 @@ it always has. The semantics are the serial runner's: a failing case turns the r
 filter that matches nothing is a usage error, an empty case directory is a usage error, and
 `MJ_TEST_REPORT` writes one row per case (name, result, seconds, phase) for the summary.
 
-A case may read the checkout it lives in but must not write into it while other cases run;
+The jobs that run the suite check out the whole history: a case that clones the checkout
+into a fixture and pushes cannot push a shallow clone. A case may read the checkout it
+lives in but must not write into it while other cases run;
 the parallel phase checks `git status` before and after and fails naming the paths when
 something changed. The cases that must write there (the two that build the site into
 `site/public`, the one that edits and regenerates a derived document) carry the exclusive
