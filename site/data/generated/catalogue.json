@@ -267,6 +267,138 @@
         "repository-with-authored-governance",
         "long-running-work"
       ]
+    },
+    {
+      "id": "serve-the-layer-to-ai-clients",
+      "title": "Serve the repository's AI layer to every AI client through one shared server",
+      "weight": 7,
+      "summary": "Open the repository in Claude Code, Codex or Gemini CLI and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other.",
+      "situation": "Three AI clients are open in one checkout. Each reads .ai/ by hand, none knows the others exist, and the first thing two of them do is edit the same file. The layer is the contract, but nothing serves it and nothing shows who is working where.",
+      "outcome": "The first client to open the repository is the shared server; every later one attaches to it. Each client sees the same objects as majordomus:// resources and the same tools, lists the other clients with majordomus_peers, and announces its intent and the paths it will touch with majordomus_announce. A lease a client leaves behind never locks the others out, and a client that cannot serve says so instead of serving a degraded layer silently.",
+      "steps": [
+        {
+          "command": "init",
+          "note": "writes the .ai/ layer the executable serves; the client configurations at the root (.mcp.json, .gemini/settings.json, .codex/config.toml) start bin/majordomus-mcp, which builds the Rust executable when it must"
+        },
+        {
+          "command": "doctor",
+          "note": "proves the layer and its projections are consistent before a client reads them, and that the MCP client autostart is wired"
+        }
+      ],
+      "commands": [
+        "init",
+        "doctor"
+      ],
+      "doctrines": [
+        "majordomus.ai-layout-integrity",
+        "majordomus.projection-integrity",
+        "majordomus.scope-integrity"
+      ],
+      "claims": [
+        "mcp-client-autostart",
+        "mcp-shared-server",
+        "mcp-peers",
+        "mcp-lease-resilience",
+        "mcp-stdio-surface",
+        "mcp-uri-resolution",
+        "mcp-degraded-not-silent"
+      ],
+      "responsibilities": [
+        "layer",
+        "scope",
+        "doctor"
+      ],
+      "applications": [
+        "repository-opened-in-ai-clients",
+        "several-agents-one-repository"
+      ]
+    },
+    {
+      "id": "prove-performance-with-benchmarks",
+      "title": "Prove the tool is fast, not assume it, and refuse a regression",
+      "weight": 8,
+      "summary": "Measure every public command and every capability of the executable against a committed baseline, and let the check fail on a regression rather than a reviewer noticing later.",
+      "situation": "A refactor made doctor slower and nobody measured; a hot path in the executable rebuilds the index on every request and the only evidence is a feeling that MCP calls got sluggish. Performance claims exist in the README and nowhere else.",
+      "outcome": "Every externally callable operation is a benchmark target derived from the registry, directly and over each transport it is exposed on, with a coverage table that CI checks is complete. Hundreds of MCP or HTTP requests rebuild nothing, and the counters prove it. The hot paths of the executable carry criterion benchmarks that build on every push, and the thresholds and budgets are policy, measured and changed with a run.",
+      "steps": [
+        {
+          "command": "bench",
+          "note": "samples every public command of the shell tool, cold and warm, after warm-up runs, and writes a result document under the local half; --check refuses a regression larger than the fractions the policy declares"
+        },
+        {
+          "command": "doctor",
+          "note": "reports its own wall time against the budget in the policy, as a warning that names the key and never as the exit code"
+        }
+      ],
+      "commands": [
+        "bench",
+        "doctor"
+      ],
+      "doctrines": [
+        "majordomus.verification-integrity",
+        "majordomus.enforcement-wiring",
+        "majordomus.policy-completeness"
+      ],
+      "claims": [
+        "benchmark-coverage-derived",
+        "hot-path-no-rebuild",
+        "rust-hot-path-benchmarks",
+        "rust-evidence-gates"
+      ],
+      "responsibilities": [
+        "doctor"
+      ],
+      "applications": [
+        "ci-gated-project"
+      ]
+    },
+    {
+      "id": "extend-what-the-executable-serves",
+      "title": "Extend what the executable serves by adding a file, never by rebuilding it",
+      "weight": 9,
+      "summary": "Add a rule, a prompt or a knowledge node to .ai/ and have it appear as an MCP resource, an HTTP route and a reference entry, with the same binary.",
+      "situation": "A team wants its own kind of object served to its AI clients. With most tools that means a fork and a build; the knowledge would then live in the binary, and the binary would own it.",
+      "outcome": "The executable discovers the file through the version-control index, validates it against the schema of its kind, and serves it as a resource; MCP, HTTP, OpenAPI, Swagger UI and the generated reference all show it because they are projections of one registry. A broken file is excluded and named; nothing was compiled and nothing was rebuilt.",
+      "steps": [
+        {
+          "command": "init",
+          "note": "writes the layer; kinds and their JSON Schemas are read at run time from the share directory, and a repository may add its own"
+        },
+        {
+          "command": "update",
+          "note": "regenerates the projections (AGENTS.md, CLAUDE.md) from the policy, so the bootstrap every worker reads names the new object"
+        },
+        {
+          "command": "doctor",
+          "note": "validates every declarative object against the schema of its kind and reports a duplicate identity or an unknown key as a diagnostic, never as a crash"
+        }
+      ],
+      "commands": [
+        "init",
+        "update",
+        "doctor"
+      ],
+      "doctrines": [
+        "majordomus.ai-layout-integrity",
+        "majordomus.projection-integrity",
+        "majordomus.policy-integrity"
+      ],
+      "claims": [
+        "mcp-data-driven",
+        "capability-registry",
+        "interfaces-are-projections",
+        "capability-modules",
+        "mcp-degraded-not-silent"
+      ],
+      "responsibilities": [
+        "layer",
+        "projection",
+        "doctor"
+      ],
+      "applications": [
+        "repository-with-authored-governance",
+        "repository-opened-in-ai-clients"
+      ]
     }
   ],
   "applications": [
@@ -288,7 +420,8 @@
       "use_cases": [
         "adopt-an-existing-repository",
         "prove-a-rule-is-enforced",
-        "find-out-what-drifted"
+        "find-out-what-drifted",
+        "extend-what-the-executable-serves"
       ],
       "doctrines": [
         "majordomus.projection-integrity",
@@ -317,7 +450,8 @@
       ],
       "use_cases": [
         "run-several-workers-at-once",
-        "hand-work-between-sessions"
+        "hand-work-between-sessions",
+        "serve-the-layer-to-ai-clients"
       ],
       "doctrines": [
         "majordomus.scope-integrity",
@@ -347,7 +481,8 @@
       ],
       "use_cases": [
         "accept-or-refuse-finished-work",
-        "prove-a-rule-is-enforced"
+        "prove-a-rule-is-enforced",
+        "prove-performance-with-benchmarks"
       ],
       "doctrines": [
         "majordomus.verification-integrity",
@@ -389,11 +524,39 @@
         "handover",
         "finish"
       ]
+    },
+    {
+      "id": "repository-opened-in-ai-clients",
+      "title": "A repository opened in AI clients, not only by people",
+      "weight": 5,
+      "summary": "Claude Code, Codex, Gemini CLI or another MCP client is a regular reader of the repository, and what it reads should be the layer, served, rather than files it happens to find.",
+      "context": "The repository already has a .ai/ layer. The clients that read it differ in how they load nested instruction files, and each one reading by hand means each one reading differently. Serving the layer over MCP from one process makes the contract the same for all of them, and makes the clients visible to each other.",
+      "fits_when": [
+        "More than one AI client opens the repository, in one checkout or across sessions, and they should read one layer",
+        "The layer's objects are worth exposing as resources and tools rather than as files a client may or may not open",
+        "You want a client to be able to say what it is working on and see what the others said"
+      ],
+      "does_not_fit_when": [
+        "No AI client ever opens the repository; the shell tool alone supervises the work",
+        "You want the server to route work or refuse writes outside an announced scope; announcements are informational and the task record is the enforced form"
+      ],
+      "use_cases": [
+        "serve-the-layer-to-ai-clients",
+        "extend-what-the-executable-serves"
+      ],
+      "doctrines": [
+        "majordomus.ai-layout-integrity",
+        "majordomus.projection-integrity"
+      ],
+      "responsibilities": [
+        "layer",
+        "projection"
+      ]
     }
   ],
   "counts": {
-    "use_cases": 6,
-    "applications": 4
+    "use_cases": 9,
+    "applications": 5
   },
   "uc_index": {
     "adopt-an-existing-repository": 0,
@@ -401,12 +564,16 @@
     "prove-a-rule-is-enforced": 2,
     "run-several-workers-at-once": 3,
     "accept-or-refuse-finished-work": 4,
-    "find-out-what-drifted": 5
+    "find-out-what-drifted": 5,
+    "serve-the-layer-to-ai-clients": 6,
+    "prove-performance-with-benchmarks": 7,
+    "extend-what-the-executable-serves": 8
   },
   "ap_index": {
     "repository-with-authored-governance": 0,
     "several-agents-one-repository": 1,
     "ci-gated-project": 2,
-    "long-running-work": 3
+    "long-running-work": 3,
+    "repository-opened-in-ai-clients": 4
   }
 }

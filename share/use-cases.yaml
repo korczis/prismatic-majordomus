@@ -126,3 +126,56 @@ use_cases:
     claims: [drift-watch, projection-fingerprint, reproduce-command]
     responsibilities: [watch, projection]
     applications: [repository-with-authored-governance, long-running-work]
+
+  - id: serve-the-layer-to-ai-clients
+    title: Serve the repository's AI layer to every AI client through one shared server
+    weight: 7
+    summary: Open the repository in Claude Code, Codex or Gemini CLI and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other.
+    situation: "Three AI clients are open in one checkout. Each reads .ai/ by hand, none knows the others exist, and the first thing two of them do is edit the same file. The layer is the contract, but nothing serves it and nothing shows who is working where."
+    steps:
+      - command: init
+        note: writes the .ai/ layer the executable serves; the client configurations at the root (.mcp.json, .gemini/settings.json, .codex/config.toml) start bin/majordomus-mcp, which builds the Rust executable when it must
+      - command: doctor
+        note: proves the layer and its projections are consistent before a client reads them, and that the MCP client autostart is wired
+    outcome: "The first client to open the repository is the shared server; every later one attaches to it. Each client sees the same objects as majordomus:// resources and the same tools, lists the other clients with majordomus_peers, and announces its intent and the paths it will touch with majordomus_announce. A lease a client leaves behind never locks the others out, and a client that cannot serve says so instead of serving a degraded layer silently."
+    commands: [init, doctor]
+    doctrines: [majordomus.ai-layout-integrity, majordomus.projection-integrity, majordomus.scope-integrity]
+    claims: [mcp-client-autostart, mcp-shared-server, mcp-peers, mcp-lease-resilience, mcp-stdio-surface, mcp-uri-resolution, mcp-degraded-not-silent]
+    responsibilities: [layer, scope, doctor]
+    applications: [repository-opened-in-ai-clients, several-agents-one-repository]
+
+  - id: prove-performance-with-benchmarks
+    title: Prove the tool is fast, not assume it, and refuse a regression
+    weight: 8
+    summary: Measure every public command and every capability of the executable against a committed baseline, and let the check fail on a regression rather than a reviewer noticing later.
+    situation: "A refactor made doctor slower and nobody measured; a hot path in the executable rebuilds the index on every request and the only evidence is a feeling that MCP calls got sluggish. Performance claims exist in the README and nowhere else."
+    steps:
+      - command: bench
+        note: samples every public command of the shell tool, cold and warm, after warm-up runs, and writes a result document under the local half; --check refuses a regression larger than the fractions the policy declares
+      - command: doctor
+        note: reports its own wall time against the budget in the policy, as a warning that names the key and never as the exit code
+    outcome: "Every externally callable operation is a benchmark target derived from the registry, directly and over each transport it is exposed on, with a coverage table that CI checks is complete. Hundreds of MCP or HTTP requests rebuild nothing, and the counters prove it. The hot paths of the executable carry criterion benchmarks that build on every push, and the thresholds and budgets are policy, measured and changed with a run."
+    commands: [bench, doctor]
+    doctrines: [majordomus.verification-integrity, majordomus.enforcement-wiring, majordomus.policy-completeness]
+    claims: [benchmark-coverage-derived, hot-path-no-rebuild, rust-hot-path-benchmarks, rust-evidence-gates]
+    responsibilities: [doctor]
+    applications: [ci-gated-project]
+
+  - id: extend-what-the-executable-serves
+    title: Extend what the executable serves by adding a file, never by rebuilding it
+    weight: 9
+    summary: Add a rule, a prompt or a knowledge node to .ai/ and have it appear as an MCP resource, an HTTP route and a reference entry, with the same binary.
+    situation: "A team wants its own kind of object served to its AI clients. With most tools that means a fork and a build; the knowledge would then live in the binary, and the binary would own it."
+    steps:
+      - command: init
+        note: writes the layer; kinds and their JSON Schemas are read at run time from the share directory, and a repository may add its own
+      - command: update
+        note: regenerates the projections (AGENTS.md, CLAUDE.md) from the policy, so the bootstrap every worker reads names the new object
+      - command: doctor
+        note: validates every declarative object against the schema of its kind and reports a duplicate identity or an unknown key as a diagnostic, never as a crash
+    outcome: "The executable discovers the file through the version-control index, validates it against the schema of its kind, and serves it as a resource; MCP, HTTP, OpenAPI, Swagger UI and the generated reference all show it because they are projections of one registry. A broken file is excluded and named; nothing was compiled and nothing was rebuilt."
+    commands: [init, update, doctor]
+    doctrines: [majordomus.ai-layout-integrity, majordomus.projection-integrity, majordomus.policy-integrity]
+    claims: [mcp-data-driven, capability-registry, interfaces-are-projections, capability-modules, mcp-degraded-not-silent]
+    responsibilities: [layer, projection, doctor]
+    applications: [repository-with-authored-governance, repository-opened-in-ai-clients]

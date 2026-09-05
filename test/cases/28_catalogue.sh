@@ -55,8 +55,10 @@ restore
 
 # 5. a one-sided cross-reference: the application exists but does not name it back.
 #    This is the failure a single-direction check would miss entirely.
-sed 's/^    use_cases: \[adopt-an-existing-repository, prove-a-rule-is-enforced, find-out-what-drifted\]$/    use_cases: [prove-a-rule-is-enforced, find-out-what-drifted]/' "$AP.orig" > "$AP"
-grep -q 'use_cases: \[prove-a-rule-is-enforced, find-out-what-drifted\]' "$AP" || { echo "    the probe did not take: application use_cases unchanged"; exit 1; }
+#    Drop adopt-an-existing-repository from whichever application names it, and leave the
+#    rest of that list alone, so the probe survives a use case added to the catalogue.
+sed -E '/^    use_cases: \[/ s/adopt-an-existing-repository, //' "$AP.orig" > "$AP"
+grep -qE '^    use_cases: .*adopt-an-existing-repository' "$AP" && { echo "    the probe did not take: application use_cases unchanged"; exit 1; }
 expect_exit 10 "$MJ" doctor
 expect_grep "FAIL catalogue .* does not name it back"
 restore
