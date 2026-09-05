@@ -1,0 +1,1014 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why you need this — Prismatic Majordomus</title>
+<meta name="description" content="The moments every AI-heavy team recognises, what actually causes them, and what Majordomus does and does not do about each.">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/why/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Why you need this — Prismatic Majordomus">
+<meta property="og:description" content="The moments every AI-heavy team recognises, what actually causes them, and what Majordomus does and does not do about each.">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/why/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-fg-brand" aria-current="page">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"><nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Why you need this</li>
+  </ol>
+</nav>
+<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Why you need this</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">The moments every AI-heavy team recognises, what actually causes them, and what Majordomus does and does not do about each.</p></div></div>
+
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"
+     x-data="{ cmd: '' }"><div class="mb-6 flex flex-wrap items-center gap-2" x-cloak>
+    <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">show moments answered by</span>
+    <button type="button" x-on:click="cmd = ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any command</button>
+    <button type="button" x-on:click="cmd = (cmd === 'check' ? '' : 'check')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'check' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">check <span class="text-body-subtle">3</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'checkpoint' ? '' : 'checkpoint')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'checkpoint' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">checkpoint <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'context' ? '' : 'context')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'context' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">context <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'decision' ? '' : 'decision')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'decision' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">decision <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'doctor' ? '' : 'doctor')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'doctor' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">doctor <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'finish' ? '' : 'finish')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'finish' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">finish <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'handover' ? '' : 'handover')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'handover' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">handover <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'history' ? '' : 'history')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'history' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">history <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'plan' ? '' : 'plan')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'plan' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">plan <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'question' ? '' : 'question')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'question' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">question <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'rules' ? '' : 'rules')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'rules' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">rules <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'search' ? '' : 'search')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'search' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">search <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'start' ? '' : 'start')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'start' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">start <span class="text-body-subtle">2</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'update' ? '' : 'update')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'update' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">update <span class="text-body-subtle">1</span></button>
+    <button type="button" x-on:click="cmd = (cmd === 'watch' ? '' : 'watch')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === 'watch' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">watch <span class="text-body-subtle">1</span></button>
+  </div>
+
+  <ol class="grid gap-5 lg:grid-cols-2">
+    <li class="min-w-0" x-show="cmd === '' || [&quot;handover&quot;,&quot;check&quot;].includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">re-explained the same context to a brand-new session</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">Why every fresh session starts from zero, and how durable state and handovers replace the transcript.</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/handover/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">handover</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/check/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">check</a></dd>
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/state/" class="text-xs text-fg-brand hover:underline">State</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/handover/" class="text-xs text-fg-brand hover:underline">Handover</a></dd>
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by 4 claims</dt>
+            <dd><ul class="space-y-1">
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/handover-record/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">handover writes an append-only record with computed front matter and required sections</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/no-transcripts/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Handovers carry durable facts, never conversation transcripts</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/git-identity/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Identity fields on every state record are computed from git and never authored</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/divergence-label/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">State read back is labelled exact, advanced, diverged or different_context against git</a></li>
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+    <li class="min-w-0" x-show="cmd === '' || [&quot;start&quot;,&quot;check&quot;].includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">found two agents fixing the same bug in two branches</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">Why isolation alone defers the collision, and how declared scope and overlap reports prevent duplicated work.</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/start/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">start</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/check/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">check</a></dd>
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/scope/" class="text-xs text-fg-brand hover:underline">Scope</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/state/" class="text-xs text-fg-brand hover:underline">State</a></dd>
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by 3 claims</dt>
+            <dd><ul class="space-y-1">
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/scoped-task/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A task is started with a declared file scope and a profile, and only one task is active per checkout</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/overlap-report/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Overlap between parallel workers is computed on claimed paths in both containment directions</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/scope-enforcement/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A touched file outside the claimed scope is a failure, not a warning</a></li>
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+    <li class="min-w-0" x-show="cmd === '' || [&quot;start&quot;].includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="https://korczis.github.io/prismatic-majordomus/why/strongest-model-renames-a-variable/" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">watched the strongest model, at maximum effort, rename a variable</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">Why effort and capability drift to maximum by default, and how named profiles make them a decision instead of a habit.</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/start/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">start</a></dd>
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/profiles/" class="text-xs text-fg-brand hover:underline">Profiles</a></dd>
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by 4 claims</dt>
+            <dd><ul class="space-y-1">
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/profile-axes/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Capability class, reasoning effort, output verbosity, context and verification are five independent axes</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/capability-class/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A profile names a capability class rather than a vendor model</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/effort-escalation/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/minimum-context/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A profile declares which context a worker should load and no more</a></li>
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="https://korczis.github.io/prismatic-majordomus/why/strongest-model-renames-a-variable/" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+    <li class="min-w-0" x-show="cmd === '' || [&quot;finish&quot;].includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">accepted &quot;done&quot; because the model said so, and paid for it the next morning</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">Why a sentence is not a completion criterion, and how a finish contract with typed outcomes replaces it.</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/finish/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">finish</a></dd>
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/finish/" class="text-xs text-fg-brand hover:underline">Finish</a></dd>
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by 3 claims</dt>
+            <dd><ul class="space-y-1">
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/finish-contract/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">finish evaluates the finish contract line by line and refuses when any line is unmet</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/typed-outcome/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">An outcome is a value from a closed vocabulary, not free text</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/reproduce-command/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Every finding carries the command that reproduces it</a></li>
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+    <li class="min-w-0" x-show="cmd === '' || [&quot;update&quot;,&quot;doctor&quot;].includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">Why CLAUDE.md and AGENTS.md drift apart, and how one policy generates every instruction file with its own stamp.</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/update/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">update</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/doctor/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">doctor</a></dd>
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/policy/" class="text-xs text-fg-brand hover:underline">Policy</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/projection/" class="text-xs text-fg-brand hover:underline">Projection</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/doctor/" class="text-xs text-fg-brand hover:underline">Doctor</a></dd>
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by 5 claims</dt>
+            <dd><ul class="space-y-1">
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/projection-generation/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Provider instruction files are generated from the one policy, deterministically</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/projection-fingerprint/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Every generated instruction file carries its own stamp, and a hand edit is detected</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/no-silent-overwrite/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A hand-edited instruction file is never silently overwritten</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-budget/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The always-loaded instruction file has a line budget with a failing check</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/wiring-reconciliation/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Every enforcement the policy declares is reconciled against what actually runs</a></li>
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+    <li class="min-w-0" x-show="cmd === '' || [&quot;decision&quot;,&quot;question&quot;].includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="https://korczis.github.io/prismatic-majordomus/why/re-arguing-a-settled-decision/" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">watched a session undo last week&#39;s decision, for the reason it was made</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">Why a decision that lives only in a transcript is reopened by the next session, and how a recorded reason and an explicit open question replace the argument.</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/decision/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">decision</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/question/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">question</a></dd>
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/state/" class="text-xs text-fg-brand hover:underline">State</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/finish/" class="text-xs text-fg-brand hover:underline">Finish</a></dd>
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by 5 claims</dt>
+            <dd><ul class="space-y-1">
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/decision-record/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/decision-attribution/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A decision record without a task, a head and a reason is reported, and does not block</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/open-question-gate/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/blocker-survives-handover/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A blocking question keeps blocking after the work is handed to a new task</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/blocker-store/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does</a></li>
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="https://korczis.github.io/prismatic-majordomus/why/re-arguing-a-settled-decision/" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+    <li class="min-w-0" x-show="cmd === '' || [&quot;checkpoint&quot;,&quot;watch&quot;,&quot;check&quot;].includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">found a task &quot;in progress&quot; that nobody had touched for three weeks</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">Why an abandoned task looks active, and how computed identity, checkpoint intervals and drift reports tell a live task from a dead one.</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/checkpoint/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">checkpoint</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/watch/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">watch</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/check/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">check</a></dd>
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/state/" class="text-xs text-fg-brand hover:underline">State</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/watch/" class="text-xs text-fg-brand hover:underline">Watch</a></dd>
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by 6 claims</dt>
+            <dd><ul class="space-y-1">
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/git-identity/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Identity fields on every state record are computed from git and never authored</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/worktree-ownership/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A task record names the checkout it belongs to, and another checkout is never held to its scope</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-record/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-interval/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A profile sets how often a worker should checkpoint, and a stale task is reported</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/consistency-check/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">check reports whether state, scope, blockers and checkpoint age are consistent right now</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/drift-watch/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">watch reports policy, projection, state, scope, handover, verification, staleness and retention drift</a></li>
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+    <li class="min-w-0" x-show="cmd === '' || [&quot;history&quot;,&quot;search&quot;].includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">asked what the workers did last night and had only transcripts to grep</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">Why a conversation log cannot answer an operational question, and how an append-only ledger with a closed vocabulary can.</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/history/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">history</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/search/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">search</a></dd>
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/watch/" class="text-xs text-fg-brand hover:underline">Watch</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/state/" class="text-xs text-fg-brand hover:underline">State</a></dd>
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by 7 claims</dt>
+            <dd><ul class="space-y-1">
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/history-ledger-read/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The ledger is readable back as operational history, filtered by task, event and time</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/ledger-integrity/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/event-vocabulary/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The ledger&#39;s event vocabulary is closed, on the way in and on the way out</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/record-search/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Durable records are searchable literally, across kinds, without an index</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/record-retention/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Rotating the ledger archives the oldest lines and never deletes them</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/retention-caps/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The append-only ledger and handover store have retention caps that are checked</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">rejected</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/semantic-retrieval/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Ranked or semantic retrieval over durable records is deliberately not implemented</a></li>
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+    <li class="min-w-0" x-show="cmd === '' || [&quot;context&quot;,&quot;rules&quot;].includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="https://korczis.github.io/prismatic-majordomus/why/rule-in-a-readme-nobody-loaded/" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">found the rule for that directory in a README no session ever loaded</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">Why one always-loaded file cannot carry every local rule, and how a tree of scoped documents is composed for the path a worker is about to touch.</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/context/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">context</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/rules/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">rules</a></dd>
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/layer/" class="text-xs text-fg-brand hover:underline">Layer</a></dd>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/policy/" class="text-xs text-fg-brand hover:underline">Policy</a></dd>
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by 6 claims</dt>
+            <dd><ul class="space-y-1">
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-documents/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The context that applies to a path is composed from the layer&#39;s scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-impact/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/ai-layer-manifest/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The repository&#39;s AI layer is one directory whose manifest names every section, readable without the tool</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-selection-budget/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The assembled context obeys a line budget, and every section it drops is named with its reason</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/rule-resolution/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The effective rule set is resolved as a dependency graph in a deterministic order, and a set that does not resolve is applied by nothing</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/vendored-rule-package/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The rule baseline is vendored into the repository with a manifest naming every file and its hash, and a hand edit is detected and refused</a></li>
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="https://korczis.github.io/prismatic-majordomus/why/rule-in-a-readme-nobody-loaded/" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+    <li class="min-w-0" x-show="cmd === '' || [&quot;plan&quot;].includes(cmd)">
+      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+        <a href="https://korczis.github.io/prismatic-majordomus/why/three-roadmaps-none-of-them-true/" class="group">
+          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">read three roadmaps for one project and believed none of them</span></p>
+        </a>
+        <p class="mt-3 min-w-0 text-sm text-body">Why a plan kept in prose disagrees with itself the first time anything changes, and how a dependency graph with derived status replaces it.</p>
+
+        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/commands/plan/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">plan</a></dd>
+          </div>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
+            <dd><a href="https://korczis.github.io/prismatic-majordomus/supervises/plan/" class="text-xs text-fg-brand hover:underline">Plan</a></dd>
+          </div>
+          <div>
+            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by 7 claims</dt>
+            <dd><ul class="space-y-1">
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/project-schema/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Milestones and issues are canonical repository files, and a key nobody reads is an error</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/project-status-derived/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Issue and milestone status is derived from recorded facts and is stored nowhere</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/dag-validation/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/execution-waves/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/evidence-gates-done/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">An issue cannot be completed while a required piece of evidence is missing</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/roadmap-derived/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">The roadmap is derived from milestone state, and no document may be a second authority for it</a></li>
+              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><a href="https://korczis.github.io/prismatic-majordomus/guarantees/github-projection/" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten</a></li>
+            </ul></dd>
+          </div>
+        </dl>
+        <p class="mt-4 pt-1"><a href="https://korczis.github.io/prismatic-majordomus/why/three-roadmaps-none-of-them-true/" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+      </article>
+    </li>
+  </ol>
+
+  <p class="mt-8 max-w-3xl text-base font-medium text-heading">None of these are model problems. They are operations problems, and operations is what Majordomus does.</p>
+
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">How the 10 connect to the tool</h2>
+  <p class="mt-2 max-w-3xl text-body">Every arrow below is read out of the pages themselves. Nothing on this page is a second list.</p>
+  <figure class="not-format my-8" data-graph="why-data" data-graph-base="https://korczis.github.io/prismatic-majordomus" data-graph-rings="moment,command,claim">
+  <div class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-default px-4 py-3">
+      <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">site/content-src/why/ front matter</span>
+      <div class="ms-auto flex flex-wrap items-center gap-x-3 gap-y-2">
+        
+        <label class="inline-flex items-center gap-1.5 text-xs text-body" title="the command this moment is answered by">
+          <input type="checkbox" checked data-graph-filter="addressed_by" class="h-3.5 w-3.5 rounded border-default text-brand focus:ring-2 focus:ring-brand">
+          <span class="font-mono">addressed_by</span>
+        </label>
+        
+        <label class="inline-flex items-center gap-1.5 text-xs text-body" title="the claim that says what the tool guarantees here">
+          <input type="checkbox" checked data-graph-filter="backed_by" class="h-3.5 w-3.5 rounded border-default text-brand focus:ring-2 focus:ring-brand">
+          <span class="font-mono">backed_by</span>
+        </label>
+        
+        <label class="inline-flex items-center gap-1.5 text-xs text-body" title="the responsibility this moment falls under">
+          <input type="checkbox" checked data-graph-filter="supervises" class="h-3.5 w-3.5 rounded border-default text-brand focus:ring-2 focus:ring-brand">
+          <span class="font-mono">supervises</span>
+        </label>
+        
+        <button type="button" data-graph-reset class="rounded-base border border-default px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Reset</button>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-[minmax(0,1fr)_17rem]">
+      <div class="h-80 min-w-0 sm:h-96 lg:h-[34rem]" data-graph-canvas aria-hidden="true"></div>
+      <div class="min-w-0 border-t border-default p-4 md:border-s md:border-t-0" data-graph-detail aria-live="polite"
+           data-empty="&lt;p class=&quot;text-sm text-body-subtle&quot;&gt;Select a node to see what it is and what it touches.&lt;/p&gt;">
+        <p class="text-sm text-body-subtle">Select a node to see what it is and what it touches.</p>
+      </div>
+    </div>
+    <p class="border-t border-default px-4 py-2 text-xs text-body-subtle" data-graph-note hidden>
+      The interactive view could not load. The list below is the same graph.
+    </p>
+  </div>
+  <figcaption class="mt-3 text-sm text-body-subtle">Each moment, the commands that answer it, the responsibility it falls under, and the claims that say what is guaranteed. Generated from the pages themselves — a moment that named something that did not exist would fail the build.</figcaption>
+
+  <details class="mt-4 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">
+      The same graph as text — 85 nodes, 86 edges
+    </summary>
+    <ul class="divide-y divide-default border-t border-default" data-graph-fallback>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" data-graph-node="moment:re-explaining-context">re-explained the same context to a brand-new session</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">moment</span>
+        </p><p class="mt-1 text-sm text-body">Why every fresh session starts from zero, and how durable state and handovers replace the transcript.</p>
+        <ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><span class="font-mono text-heading">addressed_by</span> command:check</li><li><span class="font-mono text-heading">addressed_by</span> command:handover</li><li><span class="font-mono text-heading">backed_by</span> claim:divergence-label</li><li><span class="font-mono text-heading">backed_by</span> claim:git-identity</li><li><span class="font-mono text-heading">backed_by</span> claim:handover-record</li><li><span class="font-mono text-heading">backed_by</span> claim:no-transcripts</li><li><span class="font-mono text-heading">supervises</span> responsibility:handover</li><li><span class="font-mono text-heading">supervises</span> responsibility:state</li></ul>
+        </li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/" data-graph-node="moment:two-agents-one-bug">found two agents fixing the same bug in two branches</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">moment</span>
+        </p><p class="mt-1 text-sm text-body">Why isolation alone defers the collision, and how declared scope and overlap reports prevent duplicated work.</p>
+        <ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><span class="font-mono text-heading">addressed_by</span> command:check</li><li><span class="font-mono text-heading">addressed_by</span> command:start</li><li><span class="font-mono text-heading">backed_by</span> claim:overlap-report</li><li><span class="font-mono text-heading">backed_by</span> claim:scope-enforcement</li><li><span class="font-mono text-heading">backed_by</span> claim:scoped-task</li><li><span class="font-mono text-heading">supervises</span> responsibility:scope</li><li><span class="font-mono text-heading">supervises</span> responsibility:state</li></ul>
+        </li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/why/strongest-model-renames-a-variable/" data-graph-node="moment:strongest-model-renames-a-variable">watched the strongest model, at maximum effort, rename a variable</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">moment</span>
+        </p><p class="mt-1 text-sm text-body">Why effort and capability drift to maximum by default, and how named profiles make them a decision instead of a habit.</p>
+        <ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><span class="font-mono text-heading">addressed_by</span> command:start</li><li><span class="font-mono text-heading">backed_by</span> claim:capability-class</li><li><span class="font-mono text-heading">backed_by</span> claim:effort-escalation</li><li><span class="font-mono text-heading">backed_by</span> claim:minimum-context</li><li><span class="font-mono text-heading">backed_by</span> claim:profile-axes</li><li><span class="font-mono text-heading">supervises</span> responsibility:profiles</li></ul>
+        </li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" data-graph-node="moment:done-because-the-model-said-so">accepted &quot;done&quot; because the model said so, and paid for it the next morning</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">moment</span>
+        </p><p class="mt-1 text-sm text-body">Why a sentence is not a completion criterion, and how a finish contract with typed outcomes replaces it.</p>
+        <ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><span class="font-mono text-heading">addressed_by</span> command:finish</li><li><span class="font-mono text-heading">backed_by</span> claim:finish-contract</li><li><span class="font-mono text-heading">backed_by</span> claim:reproduce-command</li><li><span class="font-mono text-heading">backed_by</span> claim:typed-outcome</li><li><span class="font-mono text-heading">supervises</span> responsibility:finish</li></ul>
+        </li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" data-graph-node="moment:two-rulebooks-one-repository">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">moment</span>
+        </p><p class="mt-1 text-sm text-body">Why CLAUDE.md and AGENTS.md drift apart, and how one policy generates every instruction file with its own stamp.</p>
+        <ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><span class="font-mono text-heading">addressed_by</span> command:doctor</li><li><span class="font-mono text-heading">addressed_by</span> command:update</li><li><span class="font-mono text-heading">backed_by</span> claim:context-budget</li><li><span class="font-mono text-heading">backed_by</span> claim:no-silent-overwrite</li><li><span class="font-mono text-heading">backed_by</span> claim:projection-fingerprint</li><li><span class="font-mono text-heading">backed_by</span> claim:projection-generation</li><li><span class="font-mono text-heading">backed_by</span> claim:wiring-reconciliation</li><li><span class="font-mono text-heading">supervises</span> responsibility:doctor</li><li><span class="font-mono text-heading">supervises</span> responsibility:policy</li><li><span class="font-mono text-heading">supervises</span> responsibility:projection</li></ul>
+        </li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/why/re-arguing-a-settled-decision/" data-graph-node="moment:re-arguing-a-settled-decision">watched a session undo last week&#39;s decision, for the reason it was made</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">moment</span>
+        </p><p class="mt-1 text-sm text-body">Why a decision that lives only in a transcript is reopened by the next session, and how a recorded reason and an explicit open question replace the argument.</p>
+        <ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><span class="font-mono text-heading">addressed_by</span> command:decision</li><li><span class="font-mono text-heading">addressed_by</span> command:question</li><li><span class="font-mono text-heading">backed_by</span> claim:blocker-store</li><li><span class="font-mono text-heading">backed_by</span> claim:blocker-survives-handover</li><li><span class="font-mono text-heading">backed_by</span> claim:decision-attribution</li><li><span class="font-mono text-heading">backed_by</span> claim:decision-record</li><li><span class="font-mono text-heading">backed_by</span> claim:open-question-gate</li><li><span class="font-mono text-heading">supervises</span> responsibility:finish</li><li><span class="font-mono text-heading">supervises</span> responsibility:state</li></ul>
+        </li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" data-graph-node="moment:task-in-progress-for-three-weeks">found a task &quot;in progress&quot; that nobody had touched for three weeks</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">moment</span>
+        </p><p class="mt-1 text-sm text-body">Why an abandoned task looks active, and how computed identity, checkpoint intervals and drift reports tell a live task from a dead one.</p>
+        <ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><span class="font-mono text-heading">addressed_by</span> command:check</li><li><span class="font-mono text-heading">addressed_by</span> command:checkpoint</li><li><span class="font-mono text-heading">addressed_by</span> command:watch</li><li><span class="font-mono text-heading">backed_by</span> claim:checkpoint-interval</li><li><span class="font-mono text-heading">backed_by</span> claim:checkpoint-record</li><li><span class="font-mono text-heading">backed_by</span> claim:consistency-check</li><li><span class="font-mono text-heading">backed_by</span> claim:drift-watch</li><li><span class="font-mono text-heading">backed_by</span> claim:git-identity</li><li><span class="font-mono text-heading">backed_by</span> claim:worktree-ownership</li><li><span class="font-mono text-heading">supervises</span> responsibility:state</li><li><span class="font-mono text-heading">supervises</span> responsibility:watch</li></ul>
+        </li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" data-graph-node="moment:what-the-workers-did-last-night">asked what the workers did last night and had only transcripts to grep</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">moment</span>
+        </p><p class="mt-1 text-sm text-body">Why a conversation log cannot answer an operational question, and how an append-only ledger with a closed vocabulary can.</p>
+        <ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><span class="font-mono text-heading">addressed_by</span> command:history</li><li><span class="font-mono text-heading">addressed_by</span> command:search</li><li><span class="font-mono text-heading">backed_by</span> claim:event-vocabulary</li><li><span class="font-mono text-heading">backed_by</span> claim:history-ledger-read</li><li><span class="font-mono text-heading">backed_by</span> claim:ledger-integrity</li><li><span class="font-mono text-heading">backed_by</span> claim:record-retention</li><li><span class="font-mono text-heading">backed_by</span> claim:record-search</li><li><span class="font-mono text-heading">backed_by</span> claim:retention-caps</li><li><span class="font-mono text-heading">backed_by</span> claim:semantic-retrieval</li><li><span class="font-mono text-heading">supervises</span> responsibility:state</li><li><span class="font-mono text-heading">supervises</span> responsibility:watch</li></ul>
+        </li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/why/rule-in-a-readme-nobody-loaded/" data-graph-node="moment:rule-in-a-readme-nobody-loaded">found the rule for that directory in a README no session ever loaded</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">moment</span>
+        </p><p class="mt-1 text-sm text-body">Why one always-loaded file cannot carry every local rule, and how a tree of scoped documents is composed for the path a worker is about to touch.</p>
+        <ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><span class="font-mono text-heading">addressed_by</span> command:context</li><li><span class="font-mono text-heading">addressed_by</span> command:rules</li><li><span class="font-mono text-heading">backed_by</span> claim:ai-layer-manifest</li><li><span class="font-mono text-heading">backed_by</span> claim:context-documents</li><li><span class="font-mono text-heading">backed_by</span> claim:context-impact</li><li><span class="font-mono text-heading">backed_by</span> claim:context-selection-budget</li><li><span class="font-mono text-heading">backed_by</span> claim:rule-resolution</li><li><span class="font-mono text-heading">backed_by</span> claim:vendored-rule-package</li><li><span class="font-mono text-heading">supervises</span> responsibility:layer</li><li><span class="font-mono text-heading">supervises</span> responsibility:policy</li></ul>
+        </li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/why/three-roadmaps-none-of-them-true/" data-graph-node="moment:three-roadmaps-none-of-them-true">read three roadmaps for one project and believed none of them</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">moment</span>
+        </p><p class="mt-1 text-sm text-body">Why a plan kept in prose disagrees with itself the first time anything changes, and how a dependency graph with derived status replaces it.</p>
+        <ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><span class="font-mono text-heading">addressed_by</span> command:plan</li><li><span class="font-mono text-heading">backed_by</span> claim:dag-validation</li><li><span class="font-mono text-heading">backed_by</span> claim:evidence-gates-done</li><li><span class="font-mono text-heading">backed_by</span> claim:execution-waves</li><li><span class="font-mono text-heading">backed_by</span> claim:github-projection</li><li><span class="font-mono text-heading">backed_by</span> claim:project-schema</li><li><span class="font-mono text-heading">backed_by</span> claim:project-status-derived</li><li><span class="font-mono text-heading">backed_by</span> claim:roadmap-derived</li><li><span class="font-mono text-heading">supervises</span> responsibility:plan</li></ul>
+        </li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/ai-layer-manifest/" data-graph-node="claim:ai-layer-manifest">ai-layer-manifest</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The repository&#39;s AI layer is one directory whose manifest names every section, readable without the tool</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/blocker-store/" data-graph-node="claim:blocker-store">blocker-store</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/blocker-survives-handover/" data-graph-node="claim:blocker-survives-handover">blocker-survives-handover</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">A blocking question keeps blocking after the work is handed to a new task</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/capability-class/" data-graph-node="claim:capability-class">capability-class</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · advisory</span>
+        </p><p class="mt-1 text-sm text-body">A profile names a capability class rather than a vendor model</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-interval/" data-graph-node="claim:checkpoint-interval">checkpoint-interval</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · advisory</span>
+        </p><p class="mt-1 text-sm text-body">A profile sets how often a worker should checkpoint, and a stale task is reported</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-record/" data-graph-node="claim:checkpoint-record">checkpoint-record</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/consistency-check/" data-graph-node="claim:consistency-check">consistency-check</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">check reports whether state, scope, blockers and checkpoint age are consistent right now</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/context-budget/" data-graph-node="claim:context-budget">context-budget</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The always-loaded instruction file has a line budget with a failing check</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/context-documents/" data-graph-node="claim:context-documents">context-documents</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The context that applies to a path is composed from the layer&#39;s scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/context-impact/" data-graph-node="claim:context-impact">context-impact</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/context-selection-budget/" data-graph-node="claim:context-selection-budget">context-selection-budget</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The assembled context obeys a line budget, and every section it drops is named with its reason</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/dag-validation/" data-graph-node="claim:dag-validation">dag-validation</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/decision-attribution/" data-graph-node="claim:decision-attribution">decision-attribution</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · advisory</span>
+        </p><p class="mt-1 text-sm text-body">A decision record without a task, a head and a reason is reported, and does not block</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/decision-record/" data-graph-node="claim:decision-record">decision-record</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/divergence-label/" data-graph-node="claim:divergence-label">divergence-label</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">State read back is labelled exact, advanced, diverged or different_context against git</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/drift-watch/" data-graph-node="claim:drift-watch">drift-watch</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">watch reports policy, projection, state, scope, handover, verification, staleness and retention drift</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/effort-escalation/" data-graph-node="claim:effort-escalation">effort-escalation</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · advisory</span>
+        </p><p class="mt-1 text-sm text-body">Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/event-vocabulary/" data-graph-node="claim:event-vocabulary">event-vocabulary</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The ledger&#39;s event vocabulary is closed, on the way in and on the way out</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/evidence-gates-done/" data-graph-node="claim:evidence-gates-done">evidence-gates-done</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">An issue cannot be completed while a required piece of evidence is missing</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/execution-waves/" data-graph-node="claim:execution-waves">execution-waves</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/finish-contract/" data-graph-node="claim:finish-contract">finish-contract</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">finish evaluates the finish contract line by line and refuses when any line is unmet</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/git-identity/" data-graph-node="claim:git-identity">git-identity</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Identity fields on every state record are computed from git and never authored</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/github-projection/" data-graph-node="claim:github-projection">github-projection</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/handover-record/" data-graph-node="claim:handover-record">handover-record</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">handover writes an append-only record with computed front matter and required sections</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/history-ledger-read/" data-graph-node="claim:history-ledger-read">history-ledger-read</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The ledger is readable back as operational history, filtered by task, event and time</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/ledger-integrity/" data-graph-node="claim:ledger-integrity">ledger-integrity</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/minimum-context/" data-graph-node="claim:minimum-context">minimum-context</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · advisory</span>
+        </p><p class="mt-1 text-sm text-body">A profile declares which context a worker should load and no more</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/no-silent-overwrite/" data-graph-node="claim:no-silent-overwrite">no-silent-overwrite</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">A hand-edited instruction file is never silently overwritten</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/no-transcripts/" data-graph-node="claim:no-transcripts">no-transcripts</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Handovers carry durable facts, never conversation transcripts</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/open-question-gate/" data-graph-node="claim:open-question-gate">open-question-gate</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/overlap-report/" data-graph-node="claim:overlap-report">overlap-report</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Overlap between parallel workers is computed on claimed paths in both containment directions</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/profile-axes/" data-graph-node="claim:profile-axes">profile-axes</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · advisory</span>
+        </p><p class="mt-1 text-sm text-body">Capability class, reasoning effort, output verbosity, context and verification are five independent axes</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/project-schema/" data-graph-node="claim:project-schema">project-schema</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Milestones and issues are canonical repository files, and a key nobody reads is an error</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/project-status-derived/" data-graph-node="claim:project-status-derived">project-status-derived</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Issue and milestone status is derived from recorded facts and is stored nowhere</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/projection-fingerprint/" data-graph-node="claim:projection-fingerprint">projection-fingerprint</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Every generated instruction file carries its own stamp, and a hand edit is detected</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/projection-generation/" data-graph-node="claim:projection-generation">projection-generation</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Provider instruction files are generated from the one policy, deterministically</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/record-retention/" data-graph-node="claim:record-retention">record-retention</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Rotating the ledger archives the oldest lines and never deletes them</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/record-search/" data-graph-node="claim:record-search">record-search</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Durable records are searchable literally, across kinds, without an index</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/reproduce-command/" data-graph-node="claim:reproduce-command">reproduce-command</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Every finding carries the command that reproduces it</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/retention-caps/" data-graph-node="claim:retention-caps">retention-caps</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The append-only ledger and handover store have retention caps that are checked</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/roadmap-derived/" data-graph-node="claim:roadmap-derived">roadmap-derived</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The roadmap is derived from milestone state, and no document may be a second authority for it</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/rule-resolution/" data-graph-node="claim:rule-resolution">rule-resolution</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The effective rule set is resolved as a dependency graph in a deterministic order, and a set that does not resolve is applied by nothing</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/scope-enforcement/" data-graph-node="claim:scope-enforcement">scope-enforcement</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">A touched file outside the claimed scope is a failure, not a warning</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/scoped-task/" data-graph-node="claim:scoped-task">scoped-task</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">A task is started with a declared file scope and a profile, and only one task is active per checkout</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/semantic-retrieval/" data-graph-node="claim:semantic-retrieval">semantic-retrieval</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · rejected</span>
+        </p><p class="mt-1 text-sm text-body">Ranked or semantic retrieval over durable records is deliberately not implemented</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/typed-outcome/" data-graph-node="claim:typed-outcome">typed-outcome</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">An outcome is a value from a closed vocabulary, not free text</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/vendored-rule-package/" data-graph-node="claim:vendored-rule-package">vendored-rule-package</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">The rule baseline is vendored into the repository with a manifest naming every file and its hash, and a hand edit is detected and refused</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/wiring-reconciliation/" data-graph-node="claim:wiring-reconciliation">wiring-reconciliation</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">Every enforcement the policy declares is reconciled against what actually runs</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/guarantees/worktree-ownership/" data-graph-node="claim:worktree-ownership">worktree-ownership</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">claim · guaranteed</span>
+        </p><p class="mt-1 text-sm text-body">A task record names the checkout it belongs to, and another checkout is never held to its scope</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/check/" data-graph-node="command:check">majordomus check</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">is the current task consistent with policy, scope, state?</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/checkpoint/" data-graph-node="command:checkpoint">majordomus checkpoint</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">record compact progress inside the active task</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/context/" data-graph-node="command:context">majordomus context</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">what the next worker needs to know now, within budget</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/decision/" data-graph-node="command:decision">majordomus decision</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">record or read durable decisions</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/doctor/" data-graph-node="command:doctor">majordomus doctor</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">is Majordomus itself healthy and actually wired here?</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/finish/" data-graph-node="command:finish">majordomus finish</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">evaluate the finish contract; refuse if unmet</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/handover/" data-graph-node="command:handover">majordomus handover</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">write an append-only continuation record (body on stdin)</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/history/" data-graph-node="command:history">majordomus history</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">read the append-only ledger back</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/plan/" data-graph-node="command:plan">majordomus plan</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">the milestone and issue model: validate, read, and move an issue</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/question/" data-graph-node="command:question">majordomus question</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">open, resolve and list questions that block acceptance</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/rules/" data-graph-node="command:rules">majordomus rules</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/search/" data-graph-node="command:search">majordomus search</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">find durable records without reading all of them</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/start/" data-graph-node="command:start">majordomus start</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">begin a scoped task under a profile</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/update/" data-graph-node="command:update">majordomus update</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">regenerate provider projections from policy</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/commands/watch/" data-graph-node="command:watch">majordomus watch</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">command</span>
+        </p><p class="mt-1 text-sm text-body">what has drifted: state, policy, projections, retention</p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/doctor/" data-graph-node="responsibility:doctor">Doctor</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/finish/" data-graph-node="responsibility:finish">Finish</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/handover/" data-graph-node="responsibility:handover">Handover</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/layer/" data-graph-node="responsibility:layer">Layer</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/plan/" data-graph-node="responsibility:plan">Plan</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/policy/" data-graph-node="responsibility:policy">Policy</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/profiles/" data-graph-node="responsibility:profiles">Profiles</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/projection/" data-graph-node="responsibility:projection">Projection</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/scope/" data-graph-node="responsibility:scope">Scope</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/state/" data-graph-node="responsibility:state">State</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+      <li class="px-4 py-3">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="https://korczis.github.io/prismatic-majordomus/supervises/watch/" data-graph-node="responsibility:watch">Watch</a>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">responsibility</span>
+        </p></li>
+    </ul>
+  </details>
+  <script type="application/json" id="why-data">{"edge_kinds":{"addressed_by":"the command this moment is answered by","backed_by":"the claim that says what the tool guarantees here","supervises":"the responsibility this moment falls under"},"edges":[{"kind":"addressed_by","source":"moment:done-because-the-model-said-so","target":"command:finish"},{"kind":"addressed_by","source":"moment:re-arguing-a-settled-decision","target":"command:decision"},{"kind":"addressed_by","source":"moment:re-arguing-a-settled-decision","target":"command:question"},{"kind":"addressed_by","source":"moment:re-explaining-context","target":"command:check"},{"kind":"addressed_by","source":"moment:re-explaining-context","target":"command:handover"},{"kind":"addressed_by","source":"moment:rule-in-a-readme-nobody-loaded","target":"command:context"},{"kind":"addressed_by","source":"moment:rule-in-a-readme-nobody-loaded","target":"command:rules"},{"kind":"addressed_by","source":"moment:strongest-model-renames-a-variable","target":"command:start"},{"kind":"addressed_by","source":"moment:task-in-progress-for-three-weeks","target":"command:check"},{"kind":"addressed_by","source":"moment:task-in-progress-for-three-weeks","target":"command:checkpoint"},{"kind":"addressed_by","source":"moment:task-in-progress-for-three-weeks","target":"command:watch"},{"kind":"addressed_by","source":"moment:three-roadmaps-none-of-them-true","target":"command:plan"},{"kind":"addressed_by","source":"moment:two-agents-one-bug","target":"command:check"},{"kind":"addressed_by","source":"moment:two-agents-one-bug","target":"command:start"},{"kind":"addressed_by","source":"moment:two-rulebooks-one-repository","target":"command:doctor"},{"kind":"addressed_by","source":"moment:two-rulebooks-one-repository","target":"command:update"},{"kind":"addressed_by","source":"moment:what-the-workers-did-last-night","target":"command:history"},{"kind":"addressed_by","source":"moment:what-the-workers-did-last-night","target":"command:search"},{"kind":"backed_by","source":"moment:done-because-the-model-said-so","target":"claim:finish-contract"},{"kind":"backed_by","source":"moment:done-because-the-model-said-so","target":"claim:reproduce-command"},{"kind":"backed_by","source":"moment:done-because-the-model-said-so","target":"claim:typed-outcome"},{"kind":"backed_by","source":"moment:re-arguing-a-settled-decision","target":"claim:blocker-store"},{"kind":"backed_by","source":"moment:re-arguing-a-settled-decision","target":"claim:blocker-survives-handover"},{"kind":"backed_by","source":"moment:re-arguing-a-settled-decision","target":"claim:decision-attribution"},{"kind":"backed_by","source":"moment:re-arguing-a-settled-decision","target":"claim:decision-record"},{"kind":"backed_by","source":"moment:re-arguing-a-settled-decision","target":"claim:open-question-gate"},{"kind":"backed_by","source":"moment:re-explaining-context","target":"claim:divergence-label"},{"kind":"backed_by","source":"moment:re-explaining-context","target":"claim:git-identity"},{"kind":"backed_by","source":"moment:re-explaining-context","target":"claim:handover-record"},{"kind":"backed_by","source":"moment:re-explaining-context","target":"claim:no-transcripts"},{"kind":"backed_by","source":"moment:rule-in-a-readme-nobody-loaded","target":"claim:ai-layer-manifest"},{"kind":"backed_by","source":"moment:rule-in-a-readme-nobody-loaded","target":"claim:context-documents"},{"kind":"backed_by","source":"moment:rule-in-a-readme-nobody-loaded","target":"claim:context-impact"},{"kind":"backed_by","source":"moment:rule-in-a-readme-nobody-loaded","target":"claim:context-selection-budget"},{"kind":"backed_by","source":"moment:rule-in-a-readme-nobody-loaded","target":"claim:rule-resolution"},{"kind":"backed_by","source":"moment:rule-in-a-readme-nobody-loaded","target":"claim:vendored-rule-package"},{"kind":"backed_by","source":"moment:strongest-model-renames-a-variable","target":"claim:capability-class"},{"kind":"backed_by","source":"moment:strongest-model-renames-a-variable","target":"claim:effort-escalation"},{"kind":"backed_by","source":"moment:strongest-model-renames-a-variable","target":"claim:minimum-context"},{"kind":"backed_by","source":"moment:strongest-model-renames-a-variable","target":"claim:profile-axes"},{"kind":"backed_by","source":"moment:task-in-progress-for-three-weeks","target":"claim:checkpoint-interval"},{"kind":"backed_by","source":"moment:task-in-progress-for-three-weeks","target":"claim:checkpoint-record"},{"kind":"backed_by","source":"moment:task-in-progress-for-three-weeks","target":"claim:consistency-check"},{"kind":"backed_by","source":"moment:task-in-progress-for-three-weeks","target":"claim:drift-watch"},{"kind":"backed_by","source":"moment:task-in-progress-for-three-weeks","target":"claim:git-identity"},{"kind":"backed_by","source":"moment:task-in-progress-for-three-weeks","target":"claim:worktree-ownership"},{"kind":"backed_by","source":"moment:three-roadmaps-none-of-them-true","target":"claim:dag-validation"},{"kind":"backed_by","source":"moment:three-roadmaps-none-of-them-true","target":"claim:evidence-gates-done"},{"kind":"backed_by","source":"moment:three-roadmaps-none-of-them-true","target":"claim:execution-waves"},{"kind":"backed_by","source":"moment:three-roadmaps-none-of-them-true","target":"claim:github-projection"},{"kind":"backed_by","source":"moment:three-roadmaps-none-of-them-true","target":"claim:project-schema"},{"kind":"backed_by","source":"moment:three-roadmaps-none-of-them-true","target":"claim:project-status-derived"},{"kind":"backed_by","source":"moment:three-roadmaps-none-of-them-true","target":"claim:roadmap-derived"},{"kind":"backed_by","source":"moment:two-agents-one-bug","target":"claim:overlap-report"},{"kind":"backed_by","source":"moment:two-agents-one-bug","target":"claim:scope-enforcement"},{"kind":"backed_by","source":"moment:two-agents-one-bug","target":"claim:scoped-task"},{"kind":"backed_by","source":"moment:two-rulebooks-one-repository","target":"claim:context-budget"},{"kind":"backed_by","source":"moment:two-rulebooks-one-repository","target":"claim:no-silent-overwrite"},{"kind":"backed_by","source":"moment:two-rulebooks-one-repository","target":"claim:projection-fingerprint"},{"kind":"backed_by","source":"moment:two-rulebooks-one-repository","target":"claim:projection-generation"},{"kind":"backed_by","source":"moment:two-rulebooks-one-repository","target":"claim:wiring-reconciliation"},{"kind":"backed_by","source":"moment:what-the-workers-did-last-night","target":"claim:event-vocabulary"},{"kind":"backed_by","source":"moment:what-the-workers-did-last-night","target":"claim:history-ledger-read"},{"kind":"backed_by","source":"moment:what-the-workers-did-last-night","target":"claim:ledger-integrity"},{"kind":"backed_by","source":"moment:what-the-workers-did-last-night","target":"claim:record-retention"},{"kind":"backed_by","source":"moment:what-the-workers-did-last-night","target":"claim:record-search"},{"kind":"backed_by","source":"moment:what-the-workers-did-last-night","target":"claim:retention-caps"},{"kind":"backed_by","source":"moment:what-the-workers-did-last-night","target":"claim:semantic-retrieval"},{"kind":"supervises","source":"moment:done-because-the-model-said-so","target":"responsibility:finish"},{"kind":"supervises","source":"moment:re-arguing-a-settled-decision","target":"responsibility:finish"},{"kind":"supervises","source":"moment:re-arguing-a-settled-decision","target":"responsibility:state"},{"kind":"supervises","source":"moment:re-explaining-context","target":"responsibility:handover"},{"kind":"supervises","source":"moment:re-explaining-context","target":"responsibility:state"},{"kind":"supervises","source":"moment:rule-in-a-readme-nobody-loaded","target":"responsibility:layer"},{"kind":"supervises","source":"moment:rule-in-a-readme-nobody-loaded","target":"responsibility:policy"},{"kind":"supervises","source":"moment:strongest-model-renames-a-variable","target":"responsibility:profiles"},{"kind":"supervises","source":"moment:task-in-progress-for-three-weeks","target":"responsibility:state"},{"kind":"supervises","source":"moment:task-in-progress-for-three-weeks","target":"responsibility:watch"},{"kind":"supervises","source":"moment:three-roadmaps-none-of-them-true","target":"responsibility:plan"},{"kind":"supervises","source":"moment:two-agents-one-bug","target":"responsibility:scope"},{"kind":"supervises","source":"moment:two-agents-one-bug","target":"responsibility:state"},{"kind":"supervises","source":"moment:two-rulebooks-one-repository","target":"responsibility:doctor"},{"kind":"supervises","source":"moment:two-rulebooks-one-repository","target":"responsibility:policy"},{"kind":"supervises","source":"moment:two-rulebooks-one-repository","target":"responsibility:projection"},{"kind":"supervises","source":"moment:what-the-workers-did-last-night","target":"responsibility:state"},{"kind":"supervises","source":"moment:what-the-workers-did-last-night","target":"responsibility:watch"}],"nodes":[{"external":false,"id":"moment:re-explaining-context","kind":"moment","label":"re-explained the same context to a brand-new session","route":"/why/re-explaining-context/","summary":"Why every fresh session starts from zero, and how durable state and handovers replace the transcript."},{"external":false,"id":"moment:two-agents-one-bug","kind":"moment","label":"found two agents fixing the same bug in two branches","route":"/why/two-agents-one-bug/","summary":"Why isolation alone defers the collision, and how declared scope and overlap reports prevent duplicated work."},{"external":false,"id":"moment:strongest-model-renames-a-variable","kind":"moment","label":"watched the strongest model, at maximum effort, rename a variable","route":"/why/strongest-model-renames-a-variable/","summary":"Why effort and capability drift to maximum by default, and how named profiles make them a decision instead of a habit."},{"external":false,"id":"moment:done-because-the-model-said-so","kind":"moment","label":"accepted \"done\" because the model said so, and paid for it the next morning","route":"/why/done-because-the-model-said-so/","summary":"Why a sentence is not a completion criterion, and how a finish contract with typed outcomes replaces it."},{"external":false,"id":"moment:two-rulebooks-one-repository","kind":"moment","label":"opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository","route":"/why/two-rulebooks-one-repository/","summary":"Why CLAUDE.md and AGENTS.md drift apart, and how one policy generates every instruction file with its own stamp."},{"external":false,"id":"moment:re-arguing-a-settled-decision","kind":"moment","label":"watched a session undo last week's decision, for the reason it was made","route":"/why/re-arguing-a-settled-decision/","summary":"Why a decision that lives only in a transcript is reopened by the next session, and how a recorded reason and an explicit open question replace the argument."},{"external":false,"id":"moment:task-in-progress-for-three-weeks","kind":"moment","label":"found a task \"in progress\" that nobody had touched for three weeks","route":"/why/task-in-progress-for-three-weeks/","summary":"Why an abandoned task looks active, and how computed identity, checkpoint intervals and drift reports tell a live task from a dead one."},{"external":false,"id":"moment:what-the-workers-did-last-night","kind":"moment","label":"asked what the workers did last night and had only transcripts to grep","route":"/why/what-the-workers-did-last-night/","summary":"Why a conversation log cannot answer an operational question, and how an append-only ledger with a closed vocabulary can."},{"external":false,"id":"moment:rule-in-a-readme-nobody-loaded","kind":"moment","label":"found the rule for that directory in a README no session ever loaded","route":"/why/rule-in-a-readme-nobody-loaded/","summary":"Why one always-loaded file cannot carry every local rule, and how a tree of scoped documents is composed for the path a worker is about to touch."},{"external":false,"id":"moment:three-roadmaps-none-of-them-true","kind":"moment","label":"read three roadmaps for one project and believed none of them","route":"/why/three-roadmaps-none-of-them-true/","summary":"Why a plan kept in prose disagrees with itself the first time anything changes, and how a dependency graph with derived status replaces it."},{"external":false,"id":"claim:ai-layer-manifest","kind":"claim","label":"ai-layer-manifest","route":"/guarantees/ai-layer-manifest/","status":"guaranteed","summary":"The repository's AI layer is one directory whose manifest names every section, readable without the tool"},{"external":false,"id":"claim:blocker-store","kind":"claim","label":"blocker-store","route":"/guarantees/blocker-store/","status":"guaranteed","summary":"An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does"},{"external":false,"id":"claim:blocker-survives-handover","kind":"claim","label":"blocker-survives-handover","route":"/guarantees/blocker-survives-handover/","status":"guaranteed","summary":"A blocking question keeps blocking after the work is handed to a new task"},{"external":false,"id":"claim:capability-class","kind":"claim","label":"capability-class","route":"/guarantees/capability-class/","status":"advisory","summary":"A profile names a capability class rather than a vendor model"},{"external":false,"id":"claim:checkpoint-interval","kind":"claim","label":"checkpoint-interval","route":"/guarantees/checkpoint-interval/","status":"advisory","summary":"A profile sets how often a worker should checkpoint, and a stale task is reported"},{"external":false,"id":"claim:checkpoint-record","kind":"claim","label":"checkpoint-record","route":"/guarantees/checkpoint-record/","status":"guaranteed","summary":"A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated"},{"external":false,"id":"claim:consistency-check","kind":"claim","label":"consistency-check","route":"/guarantees/consistency-check/","status":"guaranteed","summary":"check reports whether state, scope, blockers and checkpoint age are consistent right now"},{"external":false,"id":"claim:context-budget","kind":"claim","label":"context-budget","route":"/guarantees/context-budget/","status":"guaranteed","summary":"The always-loaded instruction file has a line budget with a failing check"},{"external":false,"id":"claim:context-documents","kind":"claim","label":"context-documents","route":"/guarantees/context-documents/","status":"guaranteed","summary":"The context that applies to a path is composed from the layer's scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing"},{"external":false,"id":"claim:context-impact","kind":"claim","label":"context-impact","route":"/guarantees/context-impact/","status":"guaranteed","summary":"The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing"},{"external":false,"id":"claim:context-selection-budget","kind":"claim","label":"context-selection-budget","route":"/guarantees/context-selection-budget/","status":"guaranteed","summary":"The assembled context obeys a line budget, and every section it drops is named with its reason"},{"external":false,"id":"claim:dag-validation","kind":"claim","label":"dag-validation","route":"/guarantees/dag-validation/","status":"guaranteed","summary":"A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name"},{"external":false,"id":"claim:decision-attribution","kind":"claim","label":"decision-attribution","route":"/guarantees/decision-attribution/","status":"advisory","summary":"A decision record without a task, a head and a reason is reported, and does not block"},{"external":false,"id":"claim:decision-record","kind":"claim","label":"decision-record","route":"/guarantees/decision-record/","status":"guaranteed","summary":"A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited"},{"external":false,"id":"claim:divergence-label","kind":"claim","label":"divergence-label","route":"/guarantees/divergence-label/","status":"guaranteed","summary":"State read back is labelled exact, advanced, diverged or different_context against git"},{"external":false,"id":"claim:drift-watch","kind":"claim","label":"drift-watch","route":"/guarantees/drift-watch/","status":"guaranteed","summary":"watch reports policy, projection, state, scope, handover, verification, staleness and retention drift"},{"external":false,"id":"claim:effort-escalation","kind":"claim","label":"effort-escalation","route":"/guarantees/effort-escalation/","status":"advisory","summary":"Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed"},{"external":false,"id":"claim:event-vocabulary","kind":"claim","label":"event-vocabulary","route":"/guarantees/event-vocabulary/","status":"guaranteed","summary":"The ledger's event vocabulary is closed, on the way in and on the way out"},{"external":false,"id":"claim:evidence-gates-done","kind":"claim","label":"evidence-gates-done","route":"/guarantees/evidence-gates-done/","status":"guaranteed","summary":"An issue cannot be completed while a required piece of evidence is missing"},{"external":false,"id":"claim:execution-waves","kind":"claim","label":"execution-waves","route":"/guarantees/execution-waves/","status":"guaranteed","summary":"Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised"},{"external":false,"id":"claim:finish-contract","kind":"claim","label":"finish-contract","route":"/guarantees/finish-contract/","status":"guaranteed","summary":"finish evaluates the finish contract line by line and refuses when any line is unmet"},{"external":false,"id":"claim:git-identity","kind":"claim","label":"git-identity","route":"/guarantees/git-identity/","status":"guaranteed","summary":"Identity fields on every state record are computed from git and never authored"},{"external":false,"id":"claim:github-projection","kind":"claim","label":"github-projection","route":"/guarantees/github-projection/","status":"guaranteed","summary":"GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten"},{"external":false,"id":"claim:handover-record","kind":"claim","label":"handover-record","route":"/guarantees/handover-record/","status":"guaranteed","summary":"handover writes an append-only record with computed front matter and required sections"},{"external":false,"id":"claim:history-ledger-read","kind":"claim","label":"history-ledger-read","route":"/guarantees/history-ledger-read/","status":"guaranteed","summary":"The ledger is readable back as operational history, filtered by task, event and time"},{"external":false,"id":"claim:ledger-integrity","kind":"claim","label":"ledger-integrity","route":"/guarantees/ledger-integrity/","status":"guaranteed","summary":"Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record"},{"external":false,"id":"claim:minimum-context","kind":"claim","label":"minimum-context","route":"/guarantees/minimum-context/","status":"advisory","summary":"A profile declares which context a worker should load and no more"},{"external":false,"id":"claim:no-silent-overwrite","kind":"claim","label":"no-silent-overwrite","route":"/guarantees/no-silent-overwrite/","status":"guaranteed","summary":"A hand-edited instruction file is never silently overwritten"},{"external":false,"id":"claim:no-transcripts","kind":"claim","label":"no-transcripts","route":"/guarantees/no-transcripts/","status":"guaranteed","summary":"Handovers carry durable facts, never conversation transcripts"},{"external":false,"id":"claim:open-question-gate","kind":"claim","label":"open-question-gate","route":"/guarantees/open-question-gate/","status":"guaranteed","summary":"An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass"},{"external":false,"id":"claim:overlap-report","kind":"claim","label":"overlap-report","route":"/guarantees/overlap-report/","status":"guaranteed","summary":"Overlap between parallel workers is computed on claimed paths in both containment directions"},{"external":false,"id":"claim:profile-axes","kind":"claim","label":"profile-axes","route":"/guarantees/profile-axes/","status":"advisory","summary":"Capability class, reasoning effort, output verbosity, context and verification are five independent axes"},{"external":false,"id":"claim:project-schema","kind":"claim","label":"project-schema","route":"/guarantees/project-schema/","status":"guaranteed","summary":"Milestones and issues are canonical repository files, and a key nobody reads is an error"},{"external":false,"id":"claim:project-status-derived","kind":"claim","label":"project-status-derived","route":"/guarantees/project-status-derived/","status":"guaranteed","summary":"Issue and milestone status is derived from recorded facts and is stored nowhere"},{"external":false,"id":"claim:projection-fingerprint","kind":"claim","label":"projection-fingerprint","route":"/guarantees/projection-fingerprint/","status":"guaranteed","summary":"Every generated instruction file carries its own stamp, and a hand edit is detected"},{"external":false,"id":"claim:projection-generation","kind":"claim","label":"projection-generation","route":"/guarantees/projection-generation/","status":"guaranteed","summary":"Provider instruction files are generated from the one policy, deterministically"},{"external":false,"id":"claim:record-retention","kind":"claim","label":"record-retention","route":"/guarantees/record-retention/","status":"guaranteed","summary":"Rotating the ledger archives the oldest lines and never deletes them"},{"external":false,"id":"claim:record-search","kind":"claim","label":"record-search","route":"/guarantees/record-search/","status":"guaranteed","summary":"Durable records are searchable literally, across kinds, without an index"},{"external":false,"id":"claim:reproduce-command","kind":"claim","label":"reproduce-command","route":"/guarantees/reproduce-command/","status":"guaranteed","summary":"Every finding carries the command that reproduces it"},{"external":false,"id":"claim:retention-caps","kind":"claim","label":"retention-caps","route":"/guarantees/retention-caps/","status":"guaranteed","summary":"The append-only ledger and handover store have retention caps that are checked"},{"external":false,"id":"claim:roadmap-derived","kind":"claim","label":"roadmap-derived","route":"/guarantees/roadmap-derived/","status":"guaranteed","summary":"The roadmap is derived from milestone state, and no document may be a second authority for it"},{"external":false,"id":"claim:rule-resolution","kind":"claim","label":"rule-resolution","route":"/guarantees/rule-resolution/","status":"guaranteed","summary":"The effective rule set is resolved as a dependency graph in a deterministic order, and a set that does not resolve is applied by nothing"},{"external":false,"id":"claim:scope-enforcement","kind":"claim","label":"scope-enforcement","route":"/guarantees/scope-enforcement/","status":"guaranteed","summary":"A touched file outside the claimed scope is a failure, not a warning"},{"external":false,"id":"claim:scoped-task","kind":"claim","label":"scoped-task","route":"/guarantees/scoped-task/","status":"guaranteed","summary":"A task is started with a declared file scope and a profile, and only one task is active per checkout"},{"external":false,"id":"claim:semantic-retrieval","kind":"claim","label":"semantic-retrieval","route":"/guarantees/semantic-retrieval/","status":"rejected","summary":"Ranked or semantic retrieval over durable records is deliberately not implemented"},{"external":false,"id":"claim:typed-outcome","kind":"claim","label":"typed-outcome","route":"/guarantees/typed-outcome/","status":"guaranteed","summary":"An outcome is a value from a closed vocabulary, not free text"},{"external":false,"id":"claim:vendored-rule-package","kind":"claim","label":"vendored-rule-package","route":"/guarantees/vendored-rule-package/","status":"guaranteed","summary":"The rule baseline is vendored into the repository with a manifest naming every file and its hash, and a hand edit is detected and refused"},{"external":false,"id":"claim:wiring-reconciliation","kind":"claim","label":"wiring-reconciliation","route":"/guarantees/wiring-reconciliation/","status":"guaranteed","summary":"Every enforcement the policy declares is reconciled against what actually runs"},{"external":false,"id":"claim:worktree-ownership","kind":"claim","label":"worktree-ownership","route":"/guarantees/worktree-ownership/","status":"guaranteed","summary":"A task record names the checkout it belongs to, and another checkout is never held to its scope"},{"external":false,"id":"command:check","kind":"command","label":"majordomus check","route":"/commands/check/","summary":"is the current task consistent with policy, scope, state?"},{"external":false,"id":"command:checkpoint","kind":"command","label":"majordomus checkpoint","route":"/commands/checkpoint/","summary":"record compact progress inside the active task"},{"external":false,"id":"command:context","kind":"command","label":"majordomus context","route":"/commands/context/","summary":"what the next worker needs to know now, within budget"},{"external":false,"id":"command:decision","kind":"command","label":"majordomus decision","route":"/commands/decision/","summary":"record or read durable decisions"},{"external":false,"id":"command:doctor","kind":"command","label":"majordomus doctor","route":"/commands/doctor/","summary":"is Majordomus itself healthy and actually wired here?"},{"external":false,"id":"command:finish","kind":"command","label":"majordomus finish","route":"/commands/finish/","summary":"evaluate the finish contract; refuse if unmet"},{"external":false,"id":"command:handover","kind":"command","label":"majordomus handover","route":"/commands/handover/","summary":"write an append-only continuation record (body on stdin)"},{"external":false,"id":"command:history","kind":"command","label":"majordomus history","route":"/commands/history/","summary":"read the append-only ledger back"},{"external":false,"id":"command:plan","kind":"command","label":"majordomus plan","route":"/commands/plan/","summary":"the milestone and issue model: validate, read, and move an issue"},{"external":false,"id":"command:question","kind":"command","label":"majordomus question","route":"/commands/question/","summary":"open, resolve and list questions that block acceptance"},{"external":false,"id":"command:rules","kind":"command","label":"majordomus rules","route":"/commands/rules/","summary":"the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)"},{"external":false,"id":"command:search","kind":"command","label":"majordomus search","route":"/commands/search/","summary":"find durable records without reading all of them"},{"external":false,"id":"command:start","kind":"command","label":"majordomus start","route":"/commands/start/","summary":"begin a scoped task under a profile"},{"external":false,"id":"command:update","kind":"command","label":"majordomus update","route":"/commands/update/","summary":"regenerate provider projections from policy"},{"external":false,"id":"command:watch","kind":"command","label":"majordomus watch","route":"/commands/watch/","summary":"what has drifted: state, policy, projections, retention"},{"external":false,"id":"responsibility:doctor","kind":"responsibility","label":"Doctor","route":"/supervises/doctor/"},{"external":false,"id":"responsibility:finish","kind":"responsibility","label":"Finish","route":"/supervises/finish/"},{"external":false,"id":"responsibility:handover","kind":"responsibility","label":"Handover","route":"/supervises/handover/"},{"external":false,"id":"responsibility:layer","kind":"responsibility","label":"Layer","route":"/supervises/layer/"},{"external":false,"id":"responsibility:plan","kind":"responsibility","label":"Plan","route":"/supervises/plan/"},{"external":false,"id":"responsibility:policy","kind":"responsibility","label":"Policy","route":"/supervises/policy/"},{"external":false,"id":"responsibility:profiles","kind":"responsibility","label":"Profiles","route":"/supervises/profiles/"},{"external":false,"id":"responsibility:projection","kind":"responsibility","label":"Projection","route":"/supervises/projection/"},{"external":false,"id":"responsibility:scope","kind":"responsibility","label":"Scope","route":"/supervises/scope/"},{"external":false,"id":"responsibility:state","kind":"responsibility","label":"State","route":"/supervises/state/"},{"external":false,"id":"responsibility:watch","kind":"responsibility","label":"Watch","route":"/supervises/watch/"}],"schema":1,"source":"site/content-src/why/ front matter"}</script>
+</figure>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/31acaf90d47f0be33db413ce3539a118520106f2" class="font-mono hover:underline">31acaf9</a> · inputs <span class="font-mono">59a7aa60d3b2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script>document.body.setAttribute('data-cytoscape-src', 'https://korczis.github.io/prismatic-majordomus/js/cytoscape.min.js');</script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/graph.js"></script>
+
+</body>
+</html>

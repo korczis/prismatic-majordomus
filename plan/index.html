@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The plan — Prismatic Majordomus</title>
+<meta name="description" content="Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .ai/repo/project.">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/plan/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="The plan — Prismatic Majordomus">
+<meta property="og:description" content="Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .ai/repo/project.">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/plan/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading text-fg-brand">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-fg-brand" aria-current="page">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"><nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">The plan</li>
+  </ol>
+</nav>
+<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">The plan</h1><p class="mt-3 max-w-3xl text-lg text-body">Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .ai/repo/project.</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  <dl class="grid max-w-3xl grid-cols-2 gap-4 border-b border-default pb-8 sm:grid-cols-3 lg:grid-cols-6">
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">10</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">42</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">38</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cancelled</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+  </dl>
+  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/project" class="text-fg-brand hover:underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="text-fg-brand hover:underline">How that works</a>.</p><div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5">
+    <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">next ready issue</p>
+    <p class="mt-2 text-lg font-semibold text-heading"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0806/" class="text-fg-brand hover:underline">I0806</a> — Make the session rules doctrines, with retention and archiving</p>
+    <p class="mt-2 text-sm text-body">Declare the session rules in share/standard/majordomus/ with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites.</p>
+    <p class="mt-3 font-mono text-xs text-body-subtle">majordomus plan next</p>
+  </div>
+
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Milestones</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">A milestone is an executable specification of an outcome, not a folder for tickets. Its state follows from its issues and from its own acceptance evidence — never from a count of closed tickets reaching a total.</p>
+  <ul class="mt-6 grid gap-4 lg:grid-cols-2">
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/m000/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">M000</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Milestone and DAG driven development</h3>
+        <p class="text-sm leading-relaxed text-body">Every non-trivial change in this repository belongs to a milestone specification and to one dependency-linked issue execution contract, validated as a DAG, with status derived rather than asserted, and projected to GitHub and to the website from that one canonical model.</p><p class="mt-4 font-mono text-xs text-body-subtle">15 of 15 done</p>
+      </a>
+    </li>
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/m001/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">M001</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">A blocking question survives a handover</h3>
+        <p class="text-sm leading-relaxed text-body">An unresolved question keeps refusing a completed finish after the work moves to a new task, or the alternative is chosen deliberately and the reason is recorded where the next worker will read it.</p><p class="mt-4 font-mono text-xs text-body-subtle">4 of 4 done</p>
+      </a>
+    </li>
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/m002/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">M002</span><span class="bg-neutral-primary-soft text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">PLANNED</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">A durable record names the worker that wrote it</h3>
+        <p class="text-sm leading-relaxed text-body">A durable record either names the worker that produced it or is refused, and a record written from one session can never arrive attributed to another session&#39;s task.</p><p class="mt-4 font-mono text-xs text-body-subtle">0 of 4 done · 1 ready · 3 blocked</p>
+      </a>
+    </li>
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/m003/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">M003</span><span class="bg-brand-softer text-fg-brand-strong border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">ACTIVE</span><span class="rounded bg-brand-softer px-1.5 py-0.5 font-mono text-xs text-fg-brand-strong">active</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">A session is a durable envelope, and knowledge is compiled from what is already canonical</h3>
+        <p class="text-sm leading-relaxed text-body">A worker with no conversation history can answer what happened, why, what was decided, which evidence supports it, where the canonical source lives, and what to do next — from records and a derived index, with git still the authority over both.</p><p class="mt-4 font-mono text-xs text-body-subtle">8 of 16 done · 2 ready · 6 blocked</p>
+      </a>
+    </li>
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/m004/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">M004</span><span class="bg-brand-softer text-fg-brand-strong border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">ACTIVE</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Performance is executable evidence, and the hot path does no canonical work twice</h3>
+        <p class="text-sm leading-relaxed text-body">Every public command can be benchmarked from the command registry with cold and warm distributions, the phases and work counters of any run can be printed, the caches and batch reads that remove repeated work preserve every observable result, an accepted baseline lives in the repository and a check refuses a regression by policy, and the pre-commit hook is fast enough that nobody routes around it.</p><p class="mt-4 font-mono text-xs text-body-subtle">11 of 27 done · 6 ready · 10 blocked</p>
+      </a>
+    </li>
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/foundation/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">foundation</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">A supervisory control layer that is real rather than described</h3>
+        <p class="text-sm leading-relaxed text-body">A repository carries one policy, a small set of profiles, durable task state, and a set of commands that refuse work which does not meet a declared contract — with every rule dispatched from a registry that proves it reaches the command claiming to run it.</p><p class="mt-4 font-mono text-xs text-body-subtle">0 of 0 done</p>
+      </a>
+    </li>
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/runtime-adapters/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">runtime-adapters</span><span class="bg-neutral-primary-soft text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">PLANNED</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Profiles become runtime constraints rather than advice</h3>
+        <p class="text-sm leading-relaxed text-body">A profile&#39;s axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice.</p><p class="mt-4 font-mono text-xs text-body-subtle">0 of 6 done · 1 ready · 5 blocked</p>
+      </a>
+    </li>
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/execution-telemetry/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">execution-telemetry</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Execution telemetry, only from providers that expose it honestly</h3>
+        <p class="text-sm leading-relaxed text-body">Execution telemetry is recorded for providers that report it truthfully, and absence is recorded as absence rather than estimated.</p><p class="mt-4 font-mono text-xs text-body-subtle">0 of 5 done · 5 blocked</p>
+      </a>
+    </li>
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/cost-per-accepted-outcome/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">cost-per-accepted-outcome</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Cost per accepted outcome, only on measured data</h3>
+        <p class="text-sm leading-relaxed text-body">The cost of an accepted outcome is computed from measured telemetry and the finish contract that accepted it, and is reported only where both exist.</p><p class="mt-4 font-mono text-xs text-body-subtle">0 of 4 done · 4 blocked</p>
+      </a>
+    </li>
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/routing-recommendations/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">routing-recommendations</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Routing recommendations derived from measured cost</h3>
+        <p class="text-sm leading-relaxed text-body">The profile a task should run under is recommended from measured cost per accepted outcome, and the recommendation names the data it came from.</p><p class="mt-4 font-mono text-xs text-body-subtle">0 of 4 done · 4 blocked</p>
+      </a>
+    </li>
+    <li>
+      <a href="https://korczis.github.io/prismatic-majordomus/plan/shared-policy/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">shared-policy</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Shared policy across repositories and workers</h3>
+        <p class="text-sm leading-relaxed text-body">A policy can be shared across repositories and workers, with local override remaining explicit and drift from the shared source detectable in one command.</p><p class="mt-4 font-mono text-xs text-body-subtle">0 of 5 done · 5 blocked</p>
+      </a>
+    </li>
+  </ul>
+
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Execution waves</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">A wave is a layer of the dependency graph: an issue sits one layer past its deepest dependency. Sharing a wave is necessary for two issues to run at the same time and is not sufficient — overlapping declared scope serialises them, and that is reported below the graph on each milestone.</p>
+  <div class="mt-6 space-y-6">
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 0</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0001/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0001</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Audit what actually plans work in this repository</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0101/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0101</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Reproduce the escaped blocker as an executable case</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0201/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0201</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="min-w-0 break-words text-sm text-heading">Declare which profile axis may become which runtime limit</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0301/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0301</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Define the execution record, including what an absence looks like</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0401/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0401</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Define an accepted outcome, and join it to its measurements without storing the join</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0501/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0501</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Group comparable work from what the records already carry</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0601/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0601</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Let a policy name a shared source it does not copy</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0701/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0701</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="min-w-0 break-words text-sm text-heading">Reproduce the misattribution as an executable case</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0801/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0801</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Narrow the Clean Extraction Boundary and record what was adopted</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0802/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0802</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Specify the session record before writing one</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0817/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0817</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Phase timing and work counters behind MJ_TIMING</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0829/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0829</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Performance doctrine as project rules</span></a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 1</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0002/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0002</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Define the canonical milestone and issue schema</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0102/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0102</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Decide whether a question transfers or the gate widens</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0202/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0202</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Resolve a task&#39;s effective limits and print them as data</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0302/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0302</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Record telemetry a provider reports, and refuse anything it did not</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0402/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0402</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Report cost only where measurement and acceptance both exist</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0502/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0502</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Recommend a profile from measured cost, naming the measurements</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0602/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0602</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Make a local override explicit and prove it survives an update of the shared source</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0702/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0702</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Decide how a record is attributed, between named alternatives</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0803/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0803</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Open a session and report its status</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0807/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0807</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Discover knowledge sources from git, not from the filesystem</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0818/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0818</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">The command registry is read in one pass</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0819/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0819</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">The project model is loaded with one flatten per file and no per-file lookups</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0821/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0821</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="min-w-0 break-words text-sm text-heading">Flattened YAML is cached under .ai/local/cache by content hash</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0823/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0823</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">majordomus bench: targets derived from the command registry</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0833/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0833</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">knowledge nodes and edges read each source once</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0837/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0837</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="min-w-0 break-words text-sm text-heading">Timing report as JSON</span></a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 2</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0003/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0003</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Implement the model loader and the status derivation engine</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0103/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0103</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Implement the decision and prove it holds</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0203/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0203</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Make enforcement opt-in, and prove a repository that declines is unaffected</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0303/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0303</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Prove a silent provider produces an explicit absence, never a guess</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0403/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0403</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Make a thin denominator say so rather than average it away</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0503/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0503</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Return no recommendation where the data is too thin, and say why</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0603/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0603</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Report drift from the shared policy in one command</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0703/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0703</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Implement the decision and prove it holds</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0804/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0804</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Close a session into an envelope derived from the ledger</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0808/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0808</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Extract nodes with identities that survive a rebuild</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0820/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0820</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="min-w-0 break-words text-sm text-heading">Catalogue, DAG, context and command-surface validators read their inputs once</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0824/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0824</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Bench persists local runs and keeps a latest projection</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0827/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0827</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">The benchmark policy block</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0832/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0832</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="min-w-0 break-words text-sm text-heading">generate-site-data instrumented and its hot spots removed</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0836/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0836</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="min-w-0 break-words text-sm text-heading">A synthetic repository generator for scaling cases</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0841/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0841</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Cache equivalence proved by property-shaped cases</span></a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 3</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0004/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0004</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Implement DAG validation and execution waves</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0104/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0104</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Move the claim from planned to guaranteed</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0204/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0204</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Apply one derived limit for real and prove it changes what happens</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0304/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0304</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Read the measurements back through the history surface, under a bound</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0404/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0404</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Publish the cost-per-outcome claim with its unit defined beside it</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0504/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0504</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Prove the recommendation is advisory and publish it as such</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0604/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0604</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Prove the offline guarantee survives sharing</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0704/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0704</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Publish what attribution guarantees, and what it still cannot</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0805/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0805</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Read sessions back with a divergence label</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0809/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0809</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Record only edges that a file states, each with where it was observed</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0822/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0822</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Every canonical file is flattened at most once per command</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0825/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0825</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">An explicit committed baseline</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0828/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0828</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">doctor under a declared budget, and the hook inherits it</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0840/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0840</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">context and its subcommands under a second</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0842/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0842</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Before and after evidence for every optimisation</span></a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 4</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0005/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0005</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Implement the plan command surface</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0006/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0006</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Generate the Mermaid DAG from the graph</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0010/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0010</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Behavioural tests for schema, status, graph and command</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0205/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0205</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Declare the clamp as a doctrine so the mapping and the adapter cannot drift</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0305/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0305</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Publish the telemetry claim and record what remains unmeasured</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0605/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0605</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Publish the shared-policy claim and what sharing still cannot do</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0806/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0806</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="min-w-0 break-words text-sm text-heading">Make the session rules doctrines, with retention and archiving</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0810/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0810</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="min-w-0 break-words text-sm text-heading">A content-hash manifest that makes a second sync cheap</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0826/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0826</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">bench --check refuses a regression by policy</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0834/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0834</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">The test runner reports per-case time and the suite budget</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0839/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0839</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">watch inherits every doctor fix and its own budget</span></a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 5</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0007/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0007</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Enforce the canonical model as doctrine</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0008/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0008</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Project the model to GitHub milestones and issues</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0009/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0009</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Project the model into the website</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0013/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0013</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Document the semantics and the dogfooding rule</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0206/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0206</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Publish the runtime-adapters claim with the test that proves it and the limits it does not cover</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0811/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0811</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Read-only knowledge lookup with an ordering that can be explained</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0830/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0830</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0831/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0831</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Performance claims at their proven status</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0835/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0835</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">CI runs the structural performance checks</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0838/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0838</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="min-w-0 break-words text-sm text-heading">bench compare and the top regressions report</span></a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 6</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0011/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0011</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Cross-surface consistency and mutation tests</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0014/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0014</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Make the worker instructions require the model</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0812/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0812</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Validate the graph, and let doctor and watch ask the same validator</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0814/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0814</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Give the worker a bounded slice of knowledge, not the knowledge base</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0843/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0843</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">The performance workflow is discoverable and complete</span></a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 7</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0012/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0012</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Make CI refuse an invalid model or a stale projection</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0813/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0813</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">A closed session becomes a node that points at its episode</span></a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 8</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0015/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0015</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="min-w-0 break-words text-sm text-heading">Open the first real milestone and execute one issue through it</span></a></li><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0815/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0815</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Say what is now true in the claims, the documentation and the worker instructions</span></a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 9</p>
+      <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0816/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0816</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Prove the loop on a real issue, without a transcript</span></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The graph</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Generated from the same edges the command reads, by <code class="font-mono text-heading">majordomus plan graph</code>. No diagram on this site is drawn by hand.</p>
+  
+<figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
+  <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">Every issue, every dependency</span><span class="font-mono text-xs text-body-subtle">from .ai/repo/project</span></figcaption>
+  <div class="overflow-x-auto p-4"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading">flowchart LR
+    I0001[&quot;I0001&lt;br/&gt;Audit what actually plans work in this repository&quot;]:::done
+    I0002[&quot;I0002&lt;br/&gt;Define the canonical milestone and issue schema&quot;]:::done
+    I0003[&quot;I0003&lt;br/&gt;Implement the model loader and the status derivation engine&quot;]:::done
+    I0004[&quot;I0004&lt;br/&gt;Implement DAG validation and execution waves&quot;]:::done
+    I0005[&quot;I0005&lt;br/&gt;Implement the plan command surface&quot;]:::done
+    I0006[&quot;I0006&lt;br/&gt;Generate the Mermaid DAG from the graph&quot;]:::done
+    I0007[&quot;I0007&lt;br/&gt;Enforce the canonical model as doctrine&quot;]:::done
+    I0008[&quot;I0008&lt;br/&gt;Project the model to GitHub milestones and issues&quot;]:::done
+    I0009[&quot;I0009&lt;br/&gt;Project the model into the website&quot;]:::done
+    I0010[&quot;I0010&lt;br/&gt;Behavioural tests for schema, status, graph and command&quot;]:::done
+    I0011[&quot;I0011&lt;br/&gt;Cross-surface consistency and mutation tests&quot;]:::done
+    I0012[&quot;I0012&lt;br/&gt;Make CI refuse an invalid model or a stale projection&quot;]:::done
+    I0013[&quot;I0013&lt;br/&gt;Document the semantics and the dogfooding rule&quot;]:::done
+    I0014[&quot;I0014&lt;br/&gt;Make the worker instructions require the model&quot;]:::done
+    I0015[&quot;I0015&lt;br/&gt;Open the first real milestone and execute one issue through it&quot;]:::done
+    I0101[&quot;I0101&lt;br/&gt;Reproduce the escaped blocker as an executable case&quot;]:::done
+    I0102[&quot;I0102&lt;br/&gt;Decide whether a question transfers or the gate widens&quot;]:::done
+    I0103[&quot;I0103&lt;br/&gt;Implement the decision and prove it holds&quot;]:::done
+    I0104[&quot;I0104&lt;br/&gt;Move the claim from planned to guaranteed&quot;]:::done
+    I0201[&quot;I0201&lt;br/&gt;Declare which profile axis may become which runtime limit&quot;]:::ready
+    I0202[&quot;I0202&lt;br/&gt;Resolve a task&#39;s effective limits and print them as data&quot;]:::blocked
+    I0203[&quot;I0203&lt;br/&gt;Make enforcement opt-in, and prove a repository that declines is unaffected&quot;]:::blocked
+    I0204[&quot;I0204&lt;br/&gt;Apply one derived limit for real and prove it changes what happens&quot;]:::blocked
+    I0205[&quot;I0205&lt;br/&gt;Declare the clamp as a doctrine so the mapping and the adapter cannot drift&quot;]:::blocked
+    I0206[&quot;I0206&lt;br/&gt;Publish the runtime-adapters claim with the test that proves it and the limits it does not cover&quot;]:::blocked
+    I0301[&quot;I0301&lt;br/&gt;Define the execution record, including what an absence looks like&quot;]:::blocked
+    I0302[&quot;I0302&lt;br/&gt;Record telemetry a provider reports, and refuse anything it did not&quot;]:::blocked
+    I0303[&quot;I0303&lt;br/&gt;Prove a silent provider produces an explicit absence, never a guess&quot;]:::blocked
+    I0304[&quot;I0304&lt;br/&gt;Read the measurements back through the history surface, under a bound&quot;]:::blocked
+    I0305[&quot;I0305&lt;br/&gt;Publish the telemetry claim and record what remains unmeasured&quot;]:::blocked
+    I0401[&quot;I0401&lt;br/&gt;Define an accepted outcome, and join it to its measurements without storing the join&quot;]:::blocked
+    I0402[&quot;I0402&lt;br/&gt;Report cost only where measurement and acceptance both exist&quot;]:::blocked
+    I0403[&quot;I0403&lt;br/&gt;Make a thin denominator say so rather than average it away&quot;]:::blocked
+    I0404[&quot;I0404&lt;br/&gt;Publish the cost-per-outcome claim with its unit defined beside it&quot;]:::blocked
+    I0501[&quot;I0501&lt;br/&gt;Group comparable work from what the records already carry&quot;]:::blocked
+    I0502[&quot;I0502&lt;br/&gt;Recommend a profile from measured cost, naming the measurements&quot;]:::blocked
+    I0503[&quot;I0503&lt;br/&gt;Return no recommendation where the data is too thin, and say why&quot;]:::blocked
+    I0504[&quot;I0504&lt;br/&gt;Prove the recommendation is advisory and publish it as such&quot;]:::blocked
+    I0601[&quot;I0601&lt;br/&gt;Let a policy name a shared source it does not copy&quot;]:::blocked
+    I0602[&quot;I0602&lt;br/&gt;Make a local override explicit and prove it survives an update of the shared source&quot;]:::blocked
+    I0603[&quot;I0603&lt;br/&gt;Report drift from the shared policy in one command&quot;]:::blocked
+    I0604[&quot;I0604&lt;br/&gt;Prove the offline guarantee survives sharing&quot;]:::blocked
+    I0605[&quot;I0605&lt;br/&gt;Publish the shared-policy claim and what sharing still cannot do&quot;]:::blocked
+    I0701[&quot;I0701&lt;br/&gt;Reproduce the misattribution as an executable case&quot;]:::ready
+    I0702[&quot;I0702&lt;br/&gt;Decide how a record is attributed, between named alternatives&quot;]:::blocked
+    I0703[&quot;I0703&lt;br/&gt;Implement the decision and prove it holds&quot;]:::blocked
+    I0704[&quot;I0704&lt;br/&gt;Publish what attribution guarantees, and what it still cannot&quot;]:::blocked
+    I0801[&quot;I0801&lt;br/&gt;Narrow the Clean Extraction Boundary and record what was adopted&quot;]:::done
+    I0802[&quot;I0802&lt;br/&gt;Specify the session record before writing one&quot;]:::done
+    I0803[&quot;I0803&lt;br/&gt;Open a session and report its status&quot;]:::done
+    I0804[&quot;I0804&lt;br/&gt;Close a session into an envelope derived from the ledger&quot;]:::done
+    I0805[&quot;I0805&lt;br/&gt;Read sessions back with a divergence label&quot;]:::done
+    I0806[&quot;I0806&lt;br/&gt;Make the session rules doctrines, with retention and archiving&quot;]:::ready
+    I0807[&quot;I0807&lt;br/&gt;Discover knowledge sources from git, not from the filesystem&quot;]:::done
+    I0808[&quot;I0808&lt;br/&gt;Extract nodes with identities that survive a rebuild&quot;]:::done
+    I0809[&quot;I0809&lt;br/&gt;Record only edges that a file states, each with where it was observed&quot;]:::done
+    I0810[&quot;I0810&lt;br/&gt;A content-hash manifest that makes a second sync cheap&quot;]:::ready
+    I0811[&quot;I0811&lt;br/&gt;Read-only knowledge lookup with an ordering that can be explained&quot;]:::blocked
+    I0812[&quot;I0812&lt;br/&gt;Validate the graph, and let doctor and watch ask the same validator&quot;]:::blocked
+    I0813[&quot;I0813&lt;br/&gt;A closed session becomes a node that points at its episode&quot;]:::blocked
+    I0814[&quot;I0814&lt;br/&gt;Give the worker a bounded slice of knowledge, not the knowledge base&quot;]:::blocked
+    I0815[&quot;I0815&lt;br/&gt;Say what is now true in the claims, the documentation and the worker instructions&quot;]:::blocked
+    I0816[&quot;I0816&lt;br/&gt;Prove the loop on a real issue, without a transcript&quot;]:::blocked
+    I0817[&quot;I0817&lt;br/&gt;Phase timing and work counters behind MJ_TIMING&quot;]:::done
+    I0818[&quot;I0818&lt;br/&gt;The command registry is read in one pass&quot;]:::done
+    I0819[&quot;I0819&lt;br/&gt;The project model is loaded with one flatten per file and no per-file lookups&quot;]:::done
+    I0820[&quot;I0820&lt;br/&gt;Catalogue, DAG, context and command-surface validators read their inputs once&quot;]:::ready
+    I0821[&quot;I0821&lt;br/&gt;Flattened YAML is cached under .ai/local/cache by content hash&quot;]:::ready
+    I0822[&quot;I0822&lt;br/&gt;Every canonical file is flattened at most once per command&quot;]:::blocked
+    I0823[&quot;I0823&lt;br/&gt;majordomus bench: targets derived from the command registry&quot;]:::done
+    I0824[&quot;I0824&lt;br/&gt;Bench persists local runs and keeps a latest projection&quot;]:::done
+    I0825[&quot;I0825&lt;br/&gt;An explicit committed baseline&quot;]:::done
+    I0826[&quot;I0826&lt;br/&gt;bench --check refuses a regression by policy&quot;]:::done
+    I0827[&quot;I0827&lt;br/&gt;The benchmark policy block&quot;]:::done
+    I0828[&quot;I0828&lt;br/&gt;doctor under a declared budget, and the hook inherits it&quot;]:::blocked
+    I0829[&quot;I0829&lt;br/&gt;Performance doctrine as project rules&quot;]:::done
+    I0830[&quot;I0830&lt;br/&gt;docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference&quot;]:::done
+    I0831[&quot;I0831&lt;br/&gt;Performance claims at their proven status&quot;]:::blocked
+    I0832[&quot;I0832&lt;br/&gt;generate-site-data instrumented and its hot spots removed&quot;]:::ready
+    I0833[&quot;I0833&lt;br/&gt;knowledge nodes and edges read each source once&quot;]:::done
+    I0834[&quot;I0834&lt;br/&gt;The test runner reports per-case time and the suite budget&quot;]:::blocked
+    I0835[&quot;I0835&lt;br/&gt;CI runs the structural performance checks&quot;]:::blocked
+    I0836[&quot;I0836&lt;br/&gt;A synthetic repository generator for scaling cases&quot;]:::ready
+    I0837[&quot;I0837&lt;br/&gt;Timing report as JSON&quot;]:::ready
+    I0838[&quot;I0838&lt;br/&gt;bench compare and the top regressions report&quot;]:::ready
+    I0839[&quot;I0839&lt;br/&gt;watch inherits every doctor fix and its own budget&quot;]:::blocked
+    I0840[&quot;I0840&lt;br/&gt;context and its subcommands under a second&quot;]:::blocked
+    I0841[&quot;I0841&lt;br/&gt;Cache equivalence proved by property-shaped cases&quot;]:::blocked
+    I0842[&quot;I0842&lt;br/&gt;Before and after evidence for every optimisation&quot;]:::blocked
+    I0843[&quot;I0843&lt;br/&gt;The performance workflow is discoverable and complete&quot;]:::blocked
+    I0001 --&gt; I0002
+    I0002 --&gt; I0003
+    I0003 --&gt; I0004
+    I0004 --&gt; I0005
+    I0004 --&gt; I0006
+    I0004 --&gt; I0010
+    I0005 --&gt; I0007
+    I0005 --&gt; I0008
+    I0005 --&gt; I0009
+    I0005 --&gt; I0013
+    I0005 --&gt; I0014
+    I0006 --&gt; I0009
+    I0008 --&gt; I0011
+    I0009 --&gt; I0011
+    I0010 --&gt; I0011
+    I0011 --&gt; I0012
+    I0012 --&gt; I0015
+    I0013 --&gt; I0014
+    I0014 --&gt; I0015
+    I0101 --&gt; I0102
+    I0102 --&gt; I0103
+    I0103 --&gt; I0104
+    I0201 --&gt; I0202
+    I0202 --&gt; I0203
+    I0203 --&gt; I0204
+    I0204 --&gt; I0205
+    I0205 --&gt; I0206
+    I0301 --&gt; I0302
+    I0302 --&gt; I0303
+    I0303 --&gt; I0304
+    I0304 --&gt; I0305
+    I0401 --&gt; I0402
+    I0402 --&gt; I0403
+    I0403 --&gt; I0404
+    I0501 --&gt; I0502
+    I0502 --&gt; I0503
+    I0503 --&gt; I0504
+    I0601 --&gt; I0602
+    I0602 --&gt; I0603
+    I0603 --&gt; I0604
+    I0604 --&gt; I0605
+    I0701 --&gt; I0702
+    I0702 --&gt; I0703
+    I0703 --&gt; I0704
+    I0801 --&gt; I0807
+    I0802 --&gt; I0803
+    I0803 --&gt; I0804
+    I0804 --&gt; I0805
+    I0805 --&gt; I0806
+    I0806 --&gt; I0813
+    I0807 --&gt; I0808
+    I0808 --&gt; I0809
+    I0809 --&gt; I0810
+    I0810 --&gt; I0811
+    I0811 --&gt; I0812
+    I0811 --&gt; I0814
+    I0812 --&gt; I0813
+    I0813 --&gt; I0815
+    I0814 --&gt; I0815
+    I0815 --&gt; I0816
+    I0817 --&gt; I0818
+    I0817 --&gt; I0819
+    I0817 --&gt; I0821
+    I0817 --&gt; I0823
+    I0817 --&gt; I0832
+    I0817 --&gt; I0833
+    I0817 --&gt; I0837
+    I0818 --&gt; I0820
+    I0818 --&gt; I0822
+    I0818 --&gt; I0828
+    I0818 --&gt; I0842
+    I0819 --&gt; I0820
+    I0819 --&gt; I0822
+    I0819 --&gt; I0828
+    I0819 --&gt; I0832
+    I0819 --&gt; I0836
+    I0819 --&gt; I0842
+    I0820 --&gt; I0822
+    I0820 --&gt; I0828
+    I0820 --&gt; I0840
+    I0820 --&gt; I0842
+    I0821 --&gt; I0840
+    I0821 --&gt; I0841
+    I0822 --&gt; I0831
+    I0822 --&gt; I0835
+    I0823 --&gt; I0824
+    I0823 --&gt; I0827
+    I0823 --&gt; I0830
+    I0824 --&gt; I0825
+    I0825 --&gt; I0826
+    I0826 --&gt; I0830
+    I0826 --&gt; I0831
+    I0826 --&gt; I0835
+    I0826 --&gt; I0838
+    I0827 --&gt; I0828
+    I0828 --&gt; I0834
+    I0828 --&gt; I0839
+    I0829 --&gt; I0830
+    I0830 --&gt; I0843
+    I0831 --&gt; I0843
+    I0832 --&gt; I0842
+    I0833 --&gt; I0842
+    I0835 --&gt; I0843
+    I0841 --&gt; I0843
+    I0842 --&gt; I0843
+    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px
+    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px
+    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px
+    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px
+    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px
+    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px</pre></div>
+</figure>
+
+  <p class="mt-2 text-sm text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="text-fg-brand hover:underline">The graph on its own page</a>, with the edge list.</p>
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Findings</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">What validation says about the model as published. A failure would have stopped this build; anything below is a warning the model reports and does not block.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[32rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">level</th><th scope="col" class="px-4 py-2">code</th><th scope="col" class="px-4 py-2">subject</th><th scope="col" class="px-4 py-2">message</th></tr></thead>
+      <tbody><tr class="border-t border-default"><td class="px-4 py-2 font-mono text-xs text-heading">WARN</td><td class="px-4 py-2 font-mono text-xs text-body">scope_conflict</td><td class="px-4 py-2 font-mono text-xs text-body">I0821</td><td class="px-4 py-2 text-body">shares lib/common.sh with I0837; they may not run concurrently</td></tr></tbody>
+    </table>
+  </div>
+
+  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">How to work through it</h2>
+  <div class="mt-4 max-w-3xl">
+<figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ copied: false }">
+  <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
+    <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">a worker with no conversation history</span>
+    <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="copied ? 'Copied' : 'Copy to clipboard'">
+      <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
+      <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+    </button>
+  </figcaption>
+  <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src"><code class="language-bash">majordomus plan next
+majordomus plan show &lt;id&gt;
+majordomus plan start &lt;id&gt;
+majordomus plan evidence &lt;id&gt; --covers &lt;token&gt; --type test --command &quot;&lt;cmd&gt;&quot; --result &quot;&lt;what it showed&gt;&quot;
+majordomus plan done &lt;id&gt;</code></pre></div>
+</figure>
+
+  </div>
+  <p class="mt-4 max-w-3xl text-sm text-body">Read <a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="text-fg-brand hover:underline">the planning model</a> for what the terms mean, and <a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="text-fg-brand hover:underline">dogfooding</a> for why this repository holds itself to it. The release roadmap — what each version adds — is <a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="text-fg-brand hover:underline">a separate page</a>.</p>
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/31acaf90d47f0be33db413ce3539a118520106f2" class="font-mono hover:underline">31acaf9</a> · inputs <span class="font-mono">59a7aa60d3b2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>

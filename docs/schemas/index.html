@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>File schemas — Prismatic Majordomus</title>
+<meta name="description" content="every file: schema, a concrete example, which command reads and writes it">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/docs/schemas/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="File schemas — Prismatic Majordomus">
+<meta property="og:description" content="every file: schema, a concrete example, which command reads and writes it">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/docs/schemas/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading text-fg-brand">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-fg-brand" aria-current="page">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">File schemas</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">File schemas</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">every file: schema, a concrete example, which command reads and writes it</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Use cases and applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/SCHEMAS.md" class="font-mono hover:underline">docs/SCHEMAS.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p>As implemented in v0.1. Every field listed here is both written by something and read by
+something. A field that loses one of those is removed, not kept "for later".</p>
+<p>Conventions:</p>
+<ul>
+<li>YAML for anything a person edits. JSON Lines for anything only Majordomus appends to.</li>
+<li>Unknown keys are errors at every level.</li>
+<li>Identity fields (<code>repository_id</code>, <code>branch</code>, <code>head</code>, <code>working_tree</code>, <code>changed_files</code>)
+are always computed from git at write time. A worker or a person supplying them is an
+error, not an override.</li>
+<li>Timestamps are UTC ISO 8601 with seconds: <code>2026-09-03T19:30:12Z</code>.</li>
+</ul>
+<hr />
+<h2 id="ai-manifest-yaml"><a class="zola-anchor" href="#ai-manifest-yaml" aria-label="Anchor link for: ai-manifest-yaml"><code>.ai/manifest.yaml</code></a></h2>
+<p>The section registry of the repository's AI layer. Discovery reads this file and never
+walks <code>.ai/</code>; a file under <code>repo/</code> that no section covers is not context and carries no
+authority. <code>init</code> writes it from the skeleton; the format version is what an executable
+checks before reading anything else, and one it does not read is refused with the reason.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">chema</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">i-repository/v1</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">epo</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  p</span><span class="z-l-4 z-d-1">ath</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">epo</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> tracked canonical context</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">l</span><span class="z-l-4 z-d-1">ocal</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  p</span><span class="z-l-4 z-d-1">ath</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> l</span><span class="z-l-8 z-d-8">ocal</span><span class="z-l-10 z-l-i z-d-4 z-d-i">             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> this checkout&#39;s own; ignored by git</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  t</span><span class="z-l-4 z-d-1">racked</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> false</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  i</span><span class="z-l-4 z-d-1">mplicit_context</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> false</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">ections</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> relative to .ai/; each one resolves to a path the tool reads</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  p</span><span class="z-l-4 z-d-1">olicy</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">epo/policy.yaml</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  p</span><span class="z-l-4 z-d-1">rofiles</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">epo/profiles</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">ules</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">epo/rules</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  p</span><span class="z-l-4 z-d-1">rompts</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">epo/prompts</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  s</span><span class="z-l-4 z-d-1">kills</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">epo/skills</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  w</span><span class="z-l-4 z-d-1">orkflows</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">epo/workflows</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  k</span><span class="z-l-4 z-d-1">nowledge</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">epo/knowledge</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  a</span><span class="z-l-4 z-d-1">drs</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">epo/adrs</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  p</span><span class="z-l-4 z-d-1">roject</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">epo/project</span></span></code></pre>
+<p>Every key is required except that <code>project</code> may resolve to a directory that does not
+exist, which is a repository with no plan. Unknown keys are errors (<code>share/allow/manifest.txt</code>).
+<code>doctor</code> fails when a section the manifest names is absent, when <code>local/</code> is not ignored
+or carries a tracked file, or when pre-.ai project data still sits under <code>.majordomus/</code>.</p>
+<hr />
+<h2 id="ai-repo-policy-yaml"><a class="zola-anchor" href="#ai-repo-policy-yaml" aria-label="Anchor link for: ai-repo-policy-yaml"><code>.ai/repo/policy.yaml</code></a></h2>
+<p>The one canonical, provider-neutral policy.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">ersion</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> schema version; only 1 is valid in v0.1</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">ontext</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  a</span><span class="z-l-4 z-d-1">lways_loaded_budget_lines</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 150</span><span class="z-l-10 z-l-i z-d-4 z-d-i">        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> hard cap on the always-loaded projection</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  b</span><span class="z-l-4 z-d-1">uilder_budget_lines</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 300</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> hard cap on what `majordomus context` prints</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">ecent_decisions</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 5</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> decisions offered to a worker, newest first</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  m</span><span class="z-l-4 z-d-1">ax_list_items</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 20</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> cap on any list inside the assembled context</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  s</span><span class="z-l-4 z-d-1">trategy</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">inimum-sufficient</span><span class="z-l-10 z-l-i z-d-4 z-d-i">           #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> documentation of intent; projected into instructions</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  t</span><span class="z-l-4 z-d-1">ranscript_is_state</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> false</span><span class="z-l-10 z-l-i z-d-4 z-d-i">             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> projected as a rule; never true in v0.1</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rofiles</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  d</span><span class="z-l-4 z-d-1">efault</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> i</span><span class="z-l-8 z-d-8">mplementation</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> must name a file in profiles/</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  c</span><span class="z-l-4 z-d-1">heckpoint_interval_default</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 1</span><span class="z-l-8 z-d-8">5m</span><span class="z-l-10 z-l-i z-d-4 z-d-i">       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> profiles may override</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">erification</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">equired_for_changes</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span><span class="z-l-10 z-l-i z-d-4 z-d-i">             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> finish requires --verify-command when files changed</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  f</span><span class="z-l-4 z-d-1">inish_requires</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the contract; order is display order</span></span>
+<span class="giallo-l"><span>    -</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">cope_respected</span></span>
+<span class="giallo-l"><span>    -</span><span class="z-l-8 z-d-8"> v</span><span class="z-l-8 z-d-8">erification_ran</span></span>
+<span class="giallo-l"><span>    -</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">tate_updated</span></span>
+<span class="giallo-l"><span>    -</span><span class="z-l-8 z-d-8"> n</span><span class="z-l-8 z-d-8">o_open_blockers</span></span>
+<span class="giallo-l"><span>    -</span><span class="z-l-8 z-d-8"> n</span><span class="z-l-8 z-d-8">ote_present</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">heckpoint</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  m</span><span class="z-l-4 z-d-1">ax_body_lines</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 40</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> a body over this is refused, not truncated</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">etention_max_files</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 500</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> doctor reports when exceeded</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">h</span><span class="z-l-4 z-d-1">andover</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">equired_sections</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">O</span><span class="z-l-8 z-d-8">bjective</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> C</span><span class="z-l-8 z-d-8">urrent State</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> N</span><span class="z-l-8 z-d-8">ext Action</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">etention_max_files</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 200</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> doctor reports when exceeded</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">l</span><span class="z-l-4 z-d-1">edger</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">etention_max_lines</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 5000</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">enchmark</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  s</span><span class="z-l-4 z-d-1">amples</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 10</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> warm samples per target in `majordomus bench`</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  w</span><span class="z-l-4 z-d-1">armup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 2</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> unsampled runs before them</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">egression</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> fractions over the baseline that `bench --check` refuses</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    p</span><span class="z-l-4 z-d-1">50</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0.5</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    p</span><span class="z-l-4 z-d-1">95</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0.5</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    p</span><span class="z-l-4 z-d-1">99</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0.6</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  b</span><span class="z-l-4 z-d-1">udget</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> doctor and watch report their own wall time against these (WARN, never the exit code)</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    d</span><span class="z-l-4 z-d-1">octor_ms</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 3000</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    w</span><span class="z-l-4 z-d-1">atch_ms</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 3000</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">e</span><span class="z-l-4 z-d-1">nforcement</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what doctor reconciles; each must be wired</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> n</span><span class="z-l-4 z-d-1">ame</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">octor-on-commit</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    p</span><span class="z-l-4 z-d-1">ath</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ajordomus</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> on PATH, repo-relative, absolute, or named in the hook line</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    a</span><span class="z-l-4 z-d-1">rgs</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">d</span><span class="z-l-8 z-d-8">octor</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    w</span><span class="z-l-4 z-d-1">ired_by</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> g</span><span class="z-l-8 z-d-8">it-hook:pre-commit</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> n</span><span class="z-l-4 z-d-1">ame</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> f</span><span class="z-l-8 z-d-8">inish-on-push</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    p</span><span class="z-l-4 z-d-1">ath</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ajordomus</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    a</span><span class="z-l-4 z-d-1">rgs</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">f</span><span class="z-l-8 z-d-8">inish</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> --</span><span class="z-l-8 z-d-8">check</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    w</span><span class="z-l-4 z-d-1">ired_by</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> g</span><span class="z-l-8 z-d-8">it-hook:pre-push</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rojections</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> p</span><span class="z-l-4 z-d-1">rovider</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">laude-code</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    t</span><span class="z-l-4 z-d-1">arget</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> C</span><span class="z-l-8 z-d-8">LAUDE.md</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    m</span><span class="z-l-4 z-d-1">ode</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">egion</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> file (default) | region</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    a</span><span class="z-l-4 z-d-1">lways_loaded</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> exactly one projection may be always_loaded</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> p</span><span class="z-l-4 z-d-1">rovider</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">odex</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    t</span><span class="z-l-4 z-d-1">arget</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> A</span><span class="z-l-8 z-d-8">GENTS.md</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> p</span><span class="z-l-4 z-d-1">rovider</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> g</span><span class="z-l-8 z-d-8">emini</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    t</span><span class="z-l-4 z-d-1">arget</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> G</span><span class="z-l-8 z-d-8">EMINI.md</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> p</span><span class="z-l-4 z-d-1">rovider</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> g</span><span class="z-l-8 z-d-8">eneric</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    t</span><span class="z-l-4 z-d-1">arget</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">ocs/AI_INSTRUCTIONS.md</span></span></code></pre>
+<p><code>mode: file</code> generates the whole target and owns every byte of it. <code>mode: region</code>
+generates only the text between two markers and owns nothing else in the file:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span>Whatever the repository already wrote. Majordomus never reads or rewrites this.</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">&lt;!--</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> majordomus:begin 7b88abe0f22a </span><span class="z-l-10 z-l-i z-d-4 z-d-i">--&gt;</span></span>
+<span class="giallo-l"><span>... generated from the policy ...</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">&lt;!--</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> majordomus:end </span><span class="z-l-10 z-l-i z-d-4 z-d-i">--&gt;</span></span></code></pre>
+<p>The hash in the begin marker names the policy the region came from; it is not part of
+the hashed content, so re-running <code>update</code> after an unrelated policy edit is not a hand
+edit. <code>update</code> replaces an existing region in place and appends one to a file that has
+none. Markers that are unclosed, out of order, or repeated are refused (<code>15</code>), never
+guessed at. <code>fingerprints.yaml</code> records <code>mode</code> alongside the hash, and for a region the
+hash covers the region — an edit outside the markers is the repository's business and is
+never reported as drift.</p>
+<p><code>wired_by</code> values in v0.1: <code>git-hook:&lt;name&gt;</code> (resolved through <code>core.hooksPath</code> or
+<code>.git/hooks/</code>), <code>ci:&lt;path&gt;</code> (a file that must exist and contain the invocation),
+<code>manual</code> (documented, not verified; doctor lists it as unverified, never as wired).
+The hook line must not swallow the exit code (<code>|| true</code>, <code>|| exit 0</code>).</p>
+<hr />
+<h2 id="ai-repo-scope-yaml"><a class="zola-anchor" href="#ai-repo-scope-yaml" aria-label="Anchor link for: ai-repo-scope-yaml"><code>.ai/repo/scope.yaml</code></a></h2>
+<p>The repository scope: what a worker reads and what it never reads. Named by the
+manifest's <code>scope</code> section; a manifest naming none means the distribution's default
+applies (<code>share/skeleton/ai/repo/scope.yaml</code>). The schema is
+<code>share/schemas/scope.schema.json</code>; the shell tool's allow-list is generated from it.
+<a href="https://korczis.github.io/prismatic-majordomus/docs/scope/"><code>SCOPE.md</code></a> explains the judgement.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">ersion</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">n</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> pathspecs anchored at the root; a trailing / is the directory and everything beneath</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> .</span><span class="z-l-8 z-d-8">ai/repo/**</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">rc/**</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">ut</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> wins over in; every key optional</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  p</span><span class="z-l-4 z-d-1">aths</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">.git/</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">.ai/local/</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">**/target/</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  b</span><span class="z-l-4 z-d-1">inary</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> a NUL byte in the first 8 KiB</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  m</span><span class="z-l-4 z-d-1">ax_bytes</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1048576</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  a</span><span class="z-l-4 z-d-1">rchive</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> n</span><span class="z-l-4 z-d-1">ames</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span> }</span><span class="z-l-10 z-l-i z-d-4 z-d-i">           #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> written as a block mapping; the subset has no flow maps</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  i</span><span class="z-l-4 z-d-1">mage</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> n</span><span class="z-l-4 z-d-1">ames</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span> }</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  v</span><span class="z-l-4 z-d-1">ideo</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> n</span><span class="z-l-4 z-d-1">ames</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span> }</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  p</span><span class="z-l-4 z-d-1">df</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> n</span><span class="z-l-4 z-d-1">ames</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span> }</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  d</span><span class="z-l-4 z-d-1">atabase_dump</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> n</span><span class="z-l-4 z-d-1">ames</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span> }</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  g</span><span class="z-l-4 z-d-1">enerated</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> p</span><span class="z-l-4 z-d-1">aths</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> n</span><span class="z-l-4 z-d-1">ames</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span> }</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  s</span><span class="z-l-4 z-d-1">ecret</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> p</span><span class="z-l-4 z-d-1">aths</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> n</span><span class="z-l-4 z-d-1">ames</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span> }</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  f</span><span class="z-l-4 z-d-1">ixtures</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> p</span><span class="z-l-4 z-d-1">aths</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> n</span><span class="z-l-4 z-d-1">ames</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> m</span><span class="z-l-4 z-d-1">ax_bytes</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 65536</span><span> }</span></span></code></pre>
+<p><code>names</code> are matched against the file name alone and may not carry a slash; a pattern
+with a leading slash, a <code>:(</code> prefix or a <code>..</code> segment is refused with the key named.</p>
+<hr />
+<h2 id="ai-repo-profiles-name-yaml"><a class="zola-anchor" href="#ai-repo-profiles-name-yaml" aria-label="Anchor link for: ai-repo-profiles-name-yaml"><code>.ai/repo/profiles/&lt;name&gt;.yaml</code></a></h2>
+<p>Five independent axes. Nothing here names a vendor model.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">n</span><span class="z-l-4 z-d-1">ame</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">ebugging</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">escription</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">eproduce, isolate, fix, and prove a defect fixed</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">apability</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">trong</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> fast | standard | strong | strongest — projections map this</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">e</span><span class="z-l-4 z-d-1">ffort</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> h</span><span class="z-l-8 z-d-8">igh</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> low | medium | high | xhigh | max; omit to inherit the default</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">e</span><span class="z-l-4 z-d-1">ffort_escalation</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> optional; projected as guidance, not enforced in v0.1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  a</span><span class="z-l-4 z-d-1">fter_blocked_attempts</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 2</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  t</span><span class="z-l-4 z-d-1">o</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> x</span><span class="z-l-8 z-d-8">high</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">erbosity</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">oncise</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> terse | concise | detailed</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">resentation</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> e</span><span class="z-l-8 z-d-8">ngineering</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> machine | engineering | summary</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">ontext</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> toggles; projections turn them into loading guidance</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  t</span><span class="z-l-4 z-d-1">ask</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  c</span><span class="z-l-4 z-d-1">urrent_state</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  d</span><span class="z-l-4 z-d-1">ecisions</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">elevant_files</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  f</span><span class="z-l-4 z-d-1">ailing_output</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">ecent_history_depth</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 50</span><span class="z-l-10 z-l-i z-d-4 z-d-i">    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> commits; 0 disables</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  a</span><span class="z-l-4 z-d-1">rchitecture_notes</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> false</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">erification</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  v</span><span class="z-l-4 z-d-1">erify_command_required</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">egression_test_required</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  d</span><span class="z-l-4 z-d-1">ecision_record_required</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> false</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">heckpoint_interval</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 1</span><span class="z-l-8 z-d-8">5m</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">utput_contract</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> fields a completion note must carry for this profile</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> o</span><span class="z-l-8 z-d-8">utcome</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">hanges</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> v</span><span class="z-l-8 z-d-8">erification</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> b</span><span class="z-l-8 z-d-8">lockers</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> n</span><span class="z-l-8 z-d-8">ext_action</span></span></code></pre>
+<p>The four shipped profiles:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th></th><th><code>routine</code></th><th><code>implementation</code></th><th><code>debugging</code></th><th><code>deep-work</code></th></tr></thead><tbody>
+<tr><td>capability</td><td>fast</td><td>standard</td><td>strong</td><td>strongest</td></tr>
+<tr><td>effort</td><td>low</td><td>medium</td><td>high</td><td>high, escalates to xhigh</td></tr>
+<tr><td>verbosity</td><td>terse</td><td>concise</td><td>concise</td><td>detailed</td></tr>
+<tr><td>presentation</td><td>machine</td><td>engineering</td><td>engineering</td><td>engineering</td></tr>
+<tr><td>context</td><td>task, state</td><td>+ decisions, files</td><td>+ failing output, history 50</td><td>+ architecture, history 200</td></tr>
+<tr><td>verify command</td><td>if files changed</td><td>required</td><td>required</td><td>required</td></tr>
+<tr><td>regression test</td><td>no</td><td>no</td><td>required</td><td>no</td></tr>
+<tr><td>decision record</td><td>no</td><td>no</td><td>no</td><td>required</td></tr>
+<tr><td>checkpoint</td><td>30m</td><td>15m</td><td>15m</td><td>30m</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="ai-repo-rules-md-rule-objects"><a class="zola-anchor" href="#ai-repo-rules-md-rule-objects" aria-label="Anchor link for: ai-repo-rules-md-rule-objects"><code>.ai/repo/rules/**/*.md</code> — rule objects</a></h2>
+<p>A rule is a Markdown file with YAML front matter. The baseline the tool ships lives in
+<code>share/standard/majordomus/</code> and is vendored into the repository under
+<code>.ai/repo/rules/vendor/majordomus/</code> (a <code>manifest.yaml</code> naming every file with its hash,
+and <code>rules/*.md</code>); the repository's own rules live under <code>.ai/repo/rules/project/</code>. See
+<a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/"><code>DOCTRINE.md</code></a> for the model and <code>.ai/repo/rules/README.md</code> for the format
+as a repository reads it.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ajordomus.scope-integrity</span><span class="z-l-10 z-l-i z-d-4 z-d-i">        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> identity, with version; never the file name</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">ersion</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">k</span><span class="z-l-4 z-d-1">ind</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">ule</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">itle</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> S</span><span class="z-l-8 z-d-8">cope integrity</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">escription</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> A</span><span class="z-l-8 z-d-8"> task touches only the paths it claimed; work found elsewhere is not accepted as done.</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tatement</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> W</span><span class="z-l-8 z-d-8">ork outside the paths a task claimed is not accepted as that task&#39;s work.</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tatus</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">ctive</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> active | deprecated</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">lass</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> b</span><span class="z-l-8 z-d-8">locking</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> blocking | advisory — nothing else parses</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">epends_on</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">m</span><span class="z-l-8 z-d-8">ajordomus.one-worker-one-scope@1</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> exact id@version references, or []</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">ags</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">s</span><span class="z-l-8 z-d-8">cope</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> v</span><span class="z-l-8 z-d-8">erification</span><span>]</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">x</span><span class="z-l-4 z-d-1">-majordomus</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> present only on a rule the tool enforces</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  v</span><span class="z-l-4 z-d-1">alidator</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">cope</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> runs mj_validate_scope; a name with no function is a failure</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  c</span><span class="z-l-4 z-d-1">ategory</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">cope</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the finding category a violation is reported under</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  e</span><span class="z-l-4 z-d-1">nforced_by</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">c</span><span class="z-l-8 z-d-8">heck</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> f</span><span class="z-l-8 z-d-8">inish</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> w</span><span class="z-l-8 z-d-8">atch</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  p</span><span class="z-l-4 z-d-1">olicy_key</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">cope_respected</span><span class="z-l-10 z-l-i z-d-4 z-d-i">         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> finish doctrines only: the name used in verification.finish_requires</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  e</span><span class="z-l-4 z-d-1">xit_code</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 10</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> from the existing contract; a rule invents no code</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  c</span><span class="z-l-4 z-d-1">laims</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">s</span><span class="z-l-8 z-d-8">cope-enforcement</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">coped-task</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> ids in docs/CLAIMS.yaml</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  t</span><span class="z-l-4 z-d-1">ests</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">est/cases/04_start_check.sh</span><span>]</span></span>
+<span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Rationale</span></span>
+<span class="giallo-l"><span>...</span></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Required behaviour</span></span>
+<span class="giallo-l"><span>...</span></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Failure behaviour</span></span>
+<span class="giallo-l"><span>...</span></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Verification</span></span>
+<span class="giallo-l"><span>...</span></span></code></pre><div class="overflow-x-auto">
+<table><thead><tr><th>field</th><th>required</th><th>meaning</th></tr></thead><tbody>
+<tr><td><code>id</code>, <code>version</code></td><td>yes</td><td>identity; a project rule may not use the <code>majordomus.</code> namespace. The URL slug on the site is the id without its namespace</td></tr>
+<tr><td><code>kind</code></td><td>yes</td><td><code>rule</code></td></tr>
+<tr><td><code>title</code>, <code>description</code>, <code>statement</code></td><td>yes</td><td>one line each, rendered verbatim</td></tr>
+<tr><td><code>status</code></td><td>yes</td><td><code>active</code> or <code>deprecated</code>; a deprecated rule is not in the effective set and may not be depended on</td></tr>
+<tr><td><code>class</code></td><td>yes</td><td><code>blocking</code> stops the command; <code>advisory</code> reports and lets it pass. Any other value fails the whole set closed</td></tr>
+<tr><td><code>depends_on</code></td><td>yes</td><td>exact <code>id@version</code> references; a missing one or a cycle fails the set</td></tr>
+<tr><td><code>tags</code></td><td>no</td><td>free labels; <code>principle</code> marks the ten principles</td></tr>
+<tr><td><code>x-majordomus.validator</code></td><td>with the block</td><td>the suffix of <code>mj_validate_&lt;validator&gt;</code>; the function must exist in <code>lib/</code></td></tr>
+<tr><td><code>x-majordomus.category</code></td><td>with the block</td><td>the finding category, so output stays one vocabulary</td></tr>
+<tr><td><code>x-majordomus.enforced_by</code></td><td>with the block</td><td>commands that dispatch it; each must exist and call <code>mj_doctrine_dispatch</code></td></tr>
+<tr><td><code>x-majordomus.exit_code</code></td><td>with the block</td><td><code>0</code> for advisory, otherwise a code from the exit-code contract</td></tr>
+<tr><td><code>x-majordomus.policy_key</code></td><td>no</td><td>present only on doctrines a repository can select in <code>verification.finish_requires</code></td></tr>
+<tr><td><code>x-majordomus.claims</code></td><td>no</td><td>claim ids this doctrine backs; each must exist in <code>docs/CLAIMS.yaml</code></td></tr>
+<tr><td><code>x-majordomus.tests</code></td><td>with the block</td><td>the cases that prove the behaviour; each file must exist</td></tr>
+</tbody></table>
+</div>
+<p>The allowed keys are <code>share/allow/rule.txt</code>; any other key is an error. <code>majordomus doctor</code>
+verifies every one of those constraints against the source, that the vendored package
+matches its manifest, and additionally that no <code>mj_validate_*</code> function exists which no
+rule declares.</p>
+<h2 id="ai-readme-md-context-documents"><a class="zola-anchor" href="#ai-readme-md-context-documents" aria-label="Anchor link for: ai-readme-md-context-documents"><code>.ai/**/README.md</code> — context documents</a></h2>
+<p>A context document is a Markdown file under the <code>.ai/</code> tree (minus <code>local/</code> and
+<code>rules/vendor/</code>) whose front matter declares the contract below. The manifest's
+<code>context.documents</code> names the file names that must carry it wherever they appear in the
+tree; today that is <code>README.md</code>. See <a href="https://korczis.github.io/prismatic-majordomus/docs/context/"><code>CONTEXT.md</code></a> for the model.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">chema</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">ontext/v1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">i.repo.rules</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> identity; ^[a-z][a-z0-9-]*(\.[a-z0-9-]+)*$ ; unique across the tree; survives a move</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">k</span><span class="z-l-4 z-d-1">ind</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">ontext</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">itle</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> R</span><span class="z-l-8 z-d-8">epository rules</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">escription</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> O</span><span class="z-l-8 z-d-8">ne sentence.</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tatus</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">ctive</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> active | deprecated (discovered and listed, never applied)</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">cope</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">ubtree</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> directory | subtree | explicit</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">aths</span><span class="z-l-6 z-d-9">:</span><span> [</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> explicit only: repo-relative directories inside the tree</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">roviders</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">*</span><span class="z-l-8 z-d-8">&quot;</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> &quot;*&quot; or provider names from the policy&#39;s projections</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">a</span><span class="z-l-4 z-d-1">udience</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">h</span><span class="z-l-8 z-d-8">uman</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">gent</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> who it addresses; resolve --audience filters</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">omposition</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> e</span><span class="z-l-8 z-d-8">xtend</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> extend | replace | final</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">rder</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 100</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> integer; ties within one depth are broken by path</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">upersedes</span><span class="z-l-6 z-d-9">:</span><span> [</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> replace only: ids of ancestor-chain documents, none of them final</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">racks</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">l</span><span class="z-l-8 z-d-8">ib/rules.sh</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> git pathspecs this document describes</span></span>
+<span class="giallo-l"><span>---</span></span></code></pre><div class="overflow-x-auto">
+<table><thead><tr><th>field</th><th>required</th><th>meaning</th></tr></thead><tbody>
+<tr><td><code>schema</code></td><td>yes</td><td><code>context/v1</code>; a newer value is refused, never guessed at</td></tr>
+<tr><td><code>id</code></td><td>yes</td><td>identity, unique across the tree; the file name is a convention</td></tr>
+<tr><td><code>kind</code></td><td>yes</td><td><code>context</code>; another kind is another kind of file</td></tr>
+<tr><td><code>title</code>, <code>description</code></td><td>yes</td><td>one line each</td></tr>
+<tr><td><code>status</code></td><td>yes</td><td><code>active</code> or <code>deprecated</code></td></tr>
+<tr><td><code>scope</code></td><td>yes</td><td><code>directory</code>, <code>subtree</code> or <code>explicit</code></td></tr>
+<tr><td><code>paths</code></td><td>with <code>explicit</code></td><td>repository-relative directories inside the tree the document applies to</td></tr>
+<tr><td><code>providers</code></td><td>yes</td><td><code>"*"</code> or names of projections in the policy; an unknown name fails validation</td></tr>
+<tr><td><code>audience</code></td><td>no</td><td><code>human</code>, <code>agent</code>; a filter, never a permission</td></tr>
+<tr><td><code>composition</code></td><td>yes</td><td><code>extend</code>, <code>replace</code> or <code>final</code></td></tr>
+<tr><td><code>order</code></td><td>yes</td><td>an integer; less is earlier within one depth</td></tr>
+<tr><td><code>supersedes</code></td><td>with <code>replace</code></td><td>ids in the ancestor chain this document stands in for; a <code>final</code> ancestor cannot be named</td></tr>
+<tr><td><code>tracks</code></td><td>no</td><td>pathspecs whose change names this document for review</td></tr>
+</tbody></table>
+</div>
+<p>The allowed keys are <code>share/allow/context.txt</code>; any other key is an error. There are no
+defaults: a required key that is missing is <code>invalid-front-matter</code>, not a silent value.
+<code>majordomus context validate</code> checks every constraint over the whole tree, and
+<code>majordomus doctor</code> dispatches the same check through <code>majordomus.context-integrity</code>.</p>
+<h2 id="ai-repo-rules-vendor-majordomus-manifest-yaml"><a class="zola-anchor" href="#ai-repo-rules-vendor-majordomus-manifest-yaml" aria-label="Anchor link for: ai-repo-rules-vendor-majordomus-manifest-yaml"><code>.ai/repo/rules/vendor/majordomus/manifest.yaml</code></a></h2>
+<p>The package manifest: every rule file the vendored baseline holds, its identity and the
+hash of the file. Written by <code>init</code> and by <code>majordomus rules vendor update</code>, never by
+hand; <code>doctor</code> fails when a listed file is absent, differs from its hash, declares another
+identity, or when a file under <code>rules/</code> is not listed.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">endor</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ajordomus</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">ackage</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ajordomus-standard-rules</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">ersion</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">f</span><span class="z-l-4 z-d-1">ormat</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">i-rules/v1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">ource_revision</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0.1.0</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the executable version the package was taken from</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">ules</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ajordomus.scope-integrity</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    v</span><span class="z-l-4 z-d-1">ersion</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    f</span><span class="z-l-4 z-d-1">ile</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">ules/scope-integrity.v1.md</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    s</span><span class="z-l-4 z-d-1">ha256</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 6</span><span class="z-l-8 z-d-8">b737b27...</span></span></code></pre>
+<p>The same manifest describes the package the distribution ships in
+<code>share/standard/majordomus/</code>; <code>rules vendor status</code> compares the two and reports a newer
+distribution package without applying it.</p>
+<hr />
+<h2 id="ai-repo-project-project-yaml"><a class="zola-anchor" href="#ai-repo-project-project-yaml" aria-label="Anchor link for: ai-repo-project-project-yaml"><code>.ai/repo/project/project.yaml</code></a></h2>
+<p>The canonical project model's root. Present only in a repository that plans through
+milestones and issues; the model is opt-in and <code>doctor</code> skips it where it is absent.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">chema_version</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">n</span><span class="z-l-4 z-d-1">ame</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> P</span><span class="z-l-8 z-d-8">rismatic Majordomus</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">epository</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> k</span><span class="z-l-8 z-d-8">orczis/prismatic-majordomus</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> owner/name; the projection target</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">efault_branch</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">aster</span></span></code></pre>
+<p>Nothing derived is stored here. There is no <code>active_milestone</code> field: the active milestone
+is the lowest-ordered one that is <code>ACTIVE</code>, or failing that the lowest-ordered one that is
+not finished, computed on every read.</p>
+<hr />
+<h2 id="ai-repo-project-milestones-id-yaml"><a class="zola-anchor" href="#ai-repo-project-milestones-id-yaml" aria-label="Anchor link for: ai-repo-project-milestones-id-yaml"><code>.ai/repo/project/milestones/&lt;ID&gt;.yaml</code></a></h2>
+<p>One executable specification of an outcome. The filename is the id; a record whose <code>id</code>
+disagrees with its filename is refused rather than reconciled.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> M</span><span class="z-l-8 z-d-8">000</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">itle</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> M</span><span class="z-l-8 z-d-8">ilestone and DAG driven development</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">lug</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ilestone-dag-driven-development</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">rder</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> integer; decides which milestone is active</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">riority</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> p</span><span class="z-l-8 z-d-8">0</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> p0 | p1 | p2 | p3</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">roblem</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">What is wrong today.</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> single-line scalars; the YAML subset has no folding</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">utcome</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">What is true when it ends.</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">urrent_state</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">Where it stands.</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">esired_state</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">Where it is going.</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">cope</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what this outcome covers</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">n</span><span class="z-l-4 z-d-1">on_scope</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what it deliberately does not</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">a</span><span class="z-l-4 z-d-1">cceptance_criteria</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what would make the outcome true</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">alidation</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> commands that demonstrate it</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">e</span><span class="z-l-4 z-d-1">vidence_required</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> tokens gating milestone acceptance</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">isks</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">ancelled</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> false</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> optional</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">e</span><span class="z-l-4 z-d-1">vidence</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> appended; each entry covers one required token</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> c</span><span class="z-l-4 z-d-1">overs</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">uite</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    t</span><span class="z-l-4 z-d-1">ype</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">est</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> test | build | ci | artifact | manual</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    c</span><span class="z-l-4 z-d-1">ommand</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">bash test/run.sh</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">esult</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">every case passed</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    a</span><span class="z-l-4 z-d-1">rtifact</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">…</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> optional: a path, URL or hash</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    c</span><span class="z-l-4 z-d-1">ommit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 6</span><span class="z-l-8 z-d-8">0f83e3…</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> written by the tool</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">ecorded_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04T03:14:00Z</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> written by the tool</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">reated_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">u</span><span class="z-l-4 z-d-1">pdated_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04</span></span></code></pre>
+<p>There is no <code>issues:</code> list. An issue names its milestone and the relation is read in that
+one direction, so the two records cannot disagree about which issues belong to the outcome.
+There is no <code>status:</code> field; see below.</p>
+<hr />
+<h2 id="ai-repo-project-issues-id-yaml"><a class="zola-anchor" href="#ai-repo-project-issues-id-yaml" aria-label="Anchor link for: ai-repo-project-issues-id-yaml"><code>.ai/repo/project/issues/&lt;ID&gt;.yaml</code></a></h2>
+<p>One bounded execution contract, carrying enough for a worker with no conversation history.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> I</span><span class="z-l-8 z-d-8">0007</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">m</span><span class="z-l-4 z-d-1">ilestone</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> M</span><span class="z-l-8 z-d-8">000</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">itle</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> E</span><span class="z-l-8 z-d-8">nforce the canonical model as doctrine</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">lug</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">odel-doctrine</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">riority</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> p</span><span class="z-l-8 z-d-8">1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rofile</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> i</span><span class="z-l-8 z-d-8">mplementation</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> which execution profile suits this work</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">arallel_safe</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> false forces serialisation regardless of the graph</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">bjective</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">What this issue produces.</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">hy</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">Why it exists.</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">urrent_state</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">…</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">esired_state</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">…</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">cope</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the paths this issue may touch</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">n</span><span class="z-l-4 z-d-1">on_scope</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">epends_on</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">I</span><span class="z-l-8 z-d-8">0005</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> issue ids; the edges of the DAG</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">a</span><span class="z-l-4 z-d-1">cceptance_criteria</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> required; an issue without one is a placeholder</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">alidation</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> required; the commands that demonstrate it</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">e</span><span class="z-l-4 z-d-1">vidence_required</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-9 z-d-11">...</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> tokens that gate completion</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">isk</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">…</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">wner</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">lice</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> optional</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">ompletion</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">…</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> optional one-line completion report</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> lifecycle markers — written only by `majordomus plan`, never by hand</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tarted_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04T03:00:00Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">erified_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04T03:20:00Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">ompleted_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04T03:31:00Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">ancelled</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> false</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">e</span><span class="z-l-4 z-d-1">vidence</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> same shape as a milestone&#39;s</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> c</span><span class="z-l-4 z-d-1">overs</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">octrine_test</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    t</span><span class="z-l-4 z-d-1">ype</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">est</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    c</span><span class="z-l-4 z-d-1">ommand</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">bash test/run.sh 44_model_doctrine</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">esult</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">1 passed, 0 failed</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    c</span><span class="z-l-4 z-d-1">ommit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">a90a8b…</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">ecorded_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04T03:30:11Z</span></span></code></pre>
+<p><strong>There is no <code>status</code> field on either record.</strong> <code>BLOCKED</code>, <code>READY</code>, <code>ACTIVE</code>, <code>VERIFY</code>,
+<code>DONE</code> and <code>CANCELLED</code> are derived by <code>lib/project.awk</code> from the lifecycle markers, the
+evidence coverage, and the state of the issue's dependencies; a milestone's status is
+derived from its issues and its own evidence. Writing <code>status:</code> into either file is an
+unknown key and fails <code>majordomus plan validate</code> and <code>majordomus doctor</code>.</p>
+<p>Unknown keys are checked against <code>share/allow/project.txt</code>, <code>share/allow/milestone.txt</code> and
+<code>share/allow/issue.txt</code>, the same mechanism the policy and the profiles use.</p>
+<hr />
+<h2 id="ai-local-state-current-yaml"><a class="zola-anchor" href="#ai-local-state-current-yaml" aria-label="Anchor link for: ai-local-state-current-yaml"><code>.ai/local/state/current.yaml</code></a></h2>
+<p>The one active task. Absent when nothing is active.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">-20260903-193012-a4f1</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> t-&lt;utc compact&gt;-&lt;4 hex&gt;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">ask</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> f</span><span class="z-l-8 z-d-8">ix OAuth callback</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rofile</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">ebugging</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">wner</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">lice</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> free-form string</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">cope</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> normalised at start; no trailing slashes</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> l</span><span class="z-l-8 z-d-8">ib/auth</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tarted_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-03T19:30:12Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">heckpoint_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-03T20:02:41Z</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> updated by check --checkpoint and by finish</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">utcome</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">ctive</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> active | completed | partial | blocked | no_match | failed | handed_over</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> computed from git at start; refreshed at finish; never authored</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">epository_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> /</span><span class="z-l-8 z-d-8">abs/path/.git</span><span class="z-l-10 z-l-i z-d-4 z-d-i">         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> git rev-parse --git-common-dir</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orktree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> /</span><span class="z-l-8 z-d-8">abs/path</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the checkout this task belongs to</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">ranch</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ain</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">h</span><span class="z-l-4 z-d-1">ead</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 3</span><span class="z-l-8 z-d-8">f2a9c1e...</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> full SHA</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orking_tree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">irty</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> clean | dirty</span></span></code></pre>
+<p><code>.ai/local/state/</code> is never tracked, so this record stays with the checkout that wrote it. A copy that reaches another
+worktree on the same branch reads it and must not be held to a scope it never claimed, so
+<code>worktree</code> says which checkout the task belongs to. <code>check</code>, <code>finish --check</code> and <code>watch</code>
+report a record from another checkout and enforce nothing from it; <code>finish</code> refuses to write
+to it at all. A record written before this field existed has no opinion and is treated as
+local, so upgrading does not turn an existing installation red.</p>
+<p><code>outcome</code> and <code>checkpoint_at</code> are the only fields a command changes after <code>start</code>.
+<code>active</code> refuses a new <code>start</code>; every other outcome lets <code>start</code> archive the record to
+<code>state/archive/&lt;id&gt;.yaml</code> and begin a new task.</p>
+<hr />
+<h2 id="ai-local-state-decisions-md"><a class="zola-anchor" href="#ai-local-state-decisions-md" aria-label="Anchor link for: ai-local-state-decisions-md"><code>.ai/local/state/decisions.md</code></a></h2>
+<p>Append-only, dated, one entry per decision. Human-authored. Read by <code>decision list</code>,
+by <code>context</code> (which prints as many entries as <code>context.recent_decisions</code> allows, for this
+task or for the repository depending on the profile), by <code>search</code>, and by a prompt asset
+that uses <code>{{DECISIONS}}</code>. <code>check</code> reads it only to report entries that no task or head can
+be attributed to. Projections reference it by path and never inline it.</p>
+<p>Append-only. <code>decision add</code> writes one entry with <code>Task</code> and <code>Head</code> computed; the
+remaining fields come from its options. <code>--why</code> is required, because a decision with no
+recorded reason cannot be reviewed later, only re-argued. Absent optional fields are
+written as <code>-</code> rather than omitted, so every entry has the same shape.</p>
+<p>An entry is never edited or deleted. <code>--supersedes</code> records that a later decision replaced
+an earlier one, and refuses text that matches no recorded decision.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">##</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> 2026-09-03 — token refresh uses the existing session store</span></span>
+<span class="giallo-l"><span>Task: t-20260903193012-a4f1</span></span>
+<span class="giallo-l"><span>Head: 9b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b</span></span>
+<span class="giallo-l"><span>Why: one source of truth for expiry; a second cache would mean two expiry clocks</span></span>
+<span class="giallo-l"><span>Rejected: a separate refresh cache</span></span>
+<span class="giallo-l"><span>Evidence: lib/auth/session_store.rb#expiry</span></span>
+<span class="giallo-l"><span>Supersedes: -</span></span></code></pre>
+<p><code>check</code>, <code>doctor</code> and <code>watch</code> report an entry missing <code>Task</code>, <code>Head</code> or <code>Why</code> as a
+warning: the file is hand-editable by design, and an entry nothing can attribute is a
+decision that no gate will ever find. Text inside an HTML comment is the file's own
+template and is not an entry.</p>
+<h2 id="ai-local-state-open-questions-md"><a class="zola-anchor" href="#ai-local-state-open-questions-md" aria-label="Anchor link for: ai-local-state-open-questions-md"><code>.ai/local/state/open-questions.md</code></a></h2>
+<p>Things blocked on a human. <code>finish --outcome completed</code> refuses while any entry for the
+current task is <code>unresolved</code>.</p>
+<p>Written by <code>question add</code> and rewritten in place by <code>question resolve</code>. Resolving edits the
+line because an index of what is still open must not accumulate; the append-only record of
+every opening and resolution, with its answer, is the ledger.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span class="z-l-14 z-d-18">-</span><span> [</span><span class="z-l-4 z-d-1">unresolved</span><span>]</span><span> t-20260903193012-a4f1 — token refresh window: 15 or 60 minutes? (2026-09-03)</span></span>
+<span class="giallo-l"><span class="z-l-14 z-d-18">-</span><span> [resolved 2026-09-02] t-20260902120000-b3d1 — keep the legacy callback path — yes, until Q4</span></span></code></pre>
+<p>Exactly two line shapes are valid:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>- [unresolved] &lt;task id&gt; — &lt;question&gt; (&lt;YYYY-MM-DD&gt;)</span></span>
+<span class="giallo-l"><span>- [resolved &lt;YYYY-MM-DD&gt;] &lt;task id&gt; — &lt;question&gt; — &lt;answer&gt;</span></span></code></pre>
+<p><code>—</code> separates the fields, so a question may not contain it. Any other <code>- [</code> line is a
+<strong>failure</strong> in <code>check</code>, <code>doctor</code> and <code>watch</code>, not a warning: this file is a gate on
+acceptance, and a gate that cannot read an entry is a gate that can be bypassed by
+mistyping one.</p>
+<hr />
+<h2 id="ai-local-state-handovers-file-md"><a class="zola-anchor" href="#ai-local-state-handovers-file-md" aria-label="Anchor link for: ai-local-state-handovers-file-md"><code>.ai/local/state/handovers/&lt;file&gt;.md</code></a></h2>
+<p>Filename: <code>&lt;utc-compact&gt;--&lt;branch-key&gt;--&lt;short-head&gt;--&lt;16 hex&gt;.md</code>, e.g.
+<code>20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md</code>. <code>branch-key</code> is the branch
+with any character outside <code>[A-Za-z0-9._-]</code> replaced by <code>-</code>, or <code>DETACHED</code>.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">chema_version</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">reated_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-03T20:14:55Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">ask_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">-20260903-193012-a4f1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rofile</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">ebugging</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">wner</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">alice</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">epository_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> /</span><span class="z-l-8 z-d-8">abs/path/.git</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orktree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> /</span><span class="z-l-8 z-d-8">abs/path</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">ranch</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ain</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">h</span><span class="z-l-4 z-d-1">ead</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 9</span><span class="z-l-8 z-d-8">b1e2d4f...</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orking_tree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">lean</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">hanged_files</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> l</span><span class="z-l-8 z-d-8">ib/auth/oauth.rb</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">est/auth/oauth_test.rb</span></span>
+<span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Objective</span></span>
+<span class="giallo-l"><span>Fix the OAuth callback dropping state on redirect.</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Current State</span></span>
+<span class="giallo-l"><span>Root cause found: state param stripped by the proxy rewrite. Fix in oauth.rb applied,</span></span>
+<span class="giallo-l"><span>regression test added, suite green.</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Next Action</span></span>
+<span class="giallo-l"><span>Decide the refresh window (open question) and then finish.</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Decisions</span></span>
+<span class="giallo-l"><span>See decisions.md 2026-09-03.</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Verification</span></span>
+<span class="giallo-l"><span>make test — exit 0, 41s, at head 9b1e2d4.</span></span></code></pre>
+<p>Front matter is written by Majordomus. A body containing a line that looks like a
+front-matter key is rejected. Mode <code>0600</code>. Created atomically. Never staged.</p>
+<hr />
+<h2 id="ai-local-state-checkpoints-file-md"><a class="zola-anchor" href="#ai-local-state-checkpoints-file-md" aria-label="Anchor link for: ai-local-state-checkpoints-file-md"><code>.ai/local/state/checkpoints/&lt;file&gt;.md</code></a></h2>
+<p>Filename and front matter are exactly a handover's; only the directory and the body rules
+differ. Written by <code>checkpoint</code>, mode <code>0600</code>, created atomically, never staged.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">chema_version</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">reated_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-03T19:45:00Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">ask_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">-20260903193012-a4f1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rofile</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">ebugging</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">wner</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">alice</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">epository_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> /</span><span class="z-l-8 z-d-8">abs/path/.git</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orktree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> /</span><span class="z-l-8 z-d-8">abs/path</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">ranch</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ain</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">h</span><span class="z-l-4 z-d-1">ead</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 9</span><span class="z-l-8 z-d-8">b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orking_tree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">irty</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">hanged_files</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> l</span><span class="z-l-8 z-d-8">ib/auth/oauth.rb</span></span>
+<span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>OAuth state mismatch reproduced with test/fixtures/callback.json.</span></span>
+<span class="giallo-l"><span>The cause is in callback normalisation, not in the comparison.</span></span>
+<span class="giallo-l"><span>Next: regression test before touching the implementation.</span></span></code></pre>
+<p>The body is free text, not sections, and is capped at <code>checkpoint.max_body_lines</code> lines. A
+body over the cap is <strong>refused</strong>, not truncated, with the suggestion to write a handover
+instead: the cap is what keeps a checkpoint short enough to quote whole into the next
+briefing rather than becoming a second kind of report.</p>
+<p>A body containing any identity field is refused, as for a handover. An empty body is
+allowed and writes no file — it updates <code>checkpoint_at</code> only, which is what
+<code>check --checkpoint</code> does.</p>
+<p>Read by <code>checkpoint --show</code> and <code>--list</code>, and by <code>context</code>, all through the same resolver
+as handovers: same worktree and branch, else same branch, else nothing.</p>
+<hr />
+<h2 id="ai-local-state-session-current-yaml"><a class="zola-anchor" href="#ai-local-state-session-current-yaml" aria-label="Anchor link for: ai-local-state-session-current-yaml"><code>.ai/local/state/session-current.yaml</code></a></h2>
+<p>The open session in this worktree. One at a time; <code>session start</code> refuses while one is
+open rather than replacing it. Removed by <code>session close</code>, which is the only writer that
+removes it.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">ession_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">-20260904153733-fc51</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tarted_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04T15:37:33Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">wner</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">alice</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orker</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">some-provider/some-model</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> optional; recorded only when supplied</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> computed from git; never authored</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">epository_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> /</span><span class="z-l-8 z-d-8">abs/path/.git</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orktree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> /</span><span class="z-l-8 z-d-8">abs/path</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">ranch</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">aster</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tart_head</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 9</span><span class="z-l-8 z-d-8">b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tart_working_tree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">irty</span></span></code></pre>
+<p><code>session_id</code> is <code>s-</code> followed by the compact UTC timestamp with its <code>T</code> and <code>Z</code> removed
+and four hex characters, which is the shape a task id already has. <code>worker</code> is a free-form
+string and is the only field a person or a worker supplies beyond <code>owner</code>; nothing
+validates it, and nothing infers it when it is absent — an unrecorded worker stays
+unrecorded rather than becoming a plausible guess.</p>
+<p>Unknown keys are an error, as in every other Majordomus YAML file.</p>
+<p>This file is <strong>not tracked</strong>. The other state files are, because something outside the
+checkout reads them: a task record carries the scope claim other worktrees compare
+against, the question store is scoped to a branch by version control, and the append-only
+records have to travel. An open session carries none of that, so committing one would only
+make every checkout on the branch inherit an episode it did not open. Closed sessions are
+durable records and are tracked.</p>
+<p>The defence stays in place regardless: a session record from another worktree is reported and is not treated as this checkout's
+open session, exactly as a foreign task record is.</p>
+<hr />
+<h2 id="ai-local-state-sessions-file-md"><a class="zola-anchor" href="#ai-local-state-sessions-file-md" aria-label="Anchor link for: ai-local-state-sessions-file-md"><code>.ai/local/state/sessions/&lt;file&gt;.md</code></a></h2>
+<p>The immutable record of a closed session. Filename:
+<code>&lt;utc-compact&gt;--&lt;session-id&gt;--&lt;branch-key&gt;--&lt;short-head&gt;--&lt;16 hex&gt;.md</code>, e.g.
+<code>20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md</code>.</p>
+<p>The grammar is the handover's with the session id inserted after the timestamp, and it
+carries the same four properties. The leading UTC timestamp makes lexicographic order
+chronological order. <code>branch-key</code> is branch-safe by construction. The short head says
+which history the record was written against. The sixteen random hex characters plus an
+atomic hard-link publish make it collision-safe: a name already in use is retried, never
+overwritten. Nothing reads filesystem modification time, which does not survive a clone
+and is not the time the record asserts.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">chema_version</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">reated_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04T17:14:02Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">ask_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">-20260904153733-fc51</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rofile</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">eep-work</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">wner</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">alice</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">epository_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> /</span><span class="z-l-8 z-d-8">abs/path/.git</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orktree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> /</span><span class="z-l-8 z-d-8">abs/path</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">ranch</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">aster</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">h</span><span class="z-l-4 z-d-1">ead</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 3</span><span class="z-l-8 z-d-8">c9ba2f1d0e5a7b9c3f5e7a9b1d3f5e7a9b1d3f5</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orking_tree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">irty</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">hanged_files</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> l</span><span class="z-l-8 z-d-8">ib/session.sh</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">ession_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">-20260904153733-fc51</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tarted_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04T15:37:33Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">losed_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-04T17:14:02Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">utcome</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">losed</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orker</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">some-provider/some-model</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tart_head</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 9</span><span class="z-l-8 z-d-8">b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tart_working_tree</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">irty</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">ommits</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> 2</span><span class="z-l-8 z-d-8">c4dc6f</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> 3</span><span class="z-l-8 z-d-8">c9ba2f</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">asks</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">-20260904153733-fc51</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">ssues</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> I</span><span class="z-l-8 z-d-8">0801</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">m</span><span class="z-l-4 z-d-1">ilestones</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> M</span><span class="z-l-8 z-d-8">003</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">heckpoints</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> .</span><span class="z-l-8 z-d-8">ai/local/state/checkpoints/20260904T161122Z--master--2c4dc6f--a1b2c3d4e5f60718.md</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">h</span><span class="z-l-4 z-d-1">andovers</span><span class="z-l-6 z-d-9">:</span><span> [</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">ecisions</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">2026-09-04 — The session envelope is derived from the ledger, not accumulated</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">q</span><span class="z-l-4 z-d-1">uestions</span><span class="z-l-6 z-d-9">:</span><span> [</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">e</span><span class="z-l-4 z-d-1">vidence</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> I</span><span class="z-l-8 z-d-8">0801:boundary_rewritten</span></span>
+<span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>Optional. Free text, written by whoever closed the session, or absent.</span></span></code></pre>
+<p><code>created_at</code>, <code>head</code> and <code>working_tree</code> describe the close, so the record reads back
+through the same resolver and the same divergence label as a handover: <code>head</code> is the
+commit the session ended at, and the label compares it with the current one. <code>start_head</code>
+and <code>start_working_tree</code> describe the open.</p>
+<p><code>commits</code> is the list of commits between <code>start_head</code> and <code>head</code>, shortest form. When the
+start commit is not an ancestor of the end commit — a rebase during the episode — the
+value is the single entry <code>diverged</code> rather than a list computed across a history that no
+longer connects.</p>
+<p>The reference lists carry the identity each kind actually has, and nothing invents one:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Field</th><th>Identity used</th><th>Why that one</th></tr></thead><tbody>
+<tr><td><code>tasks</code></td><td>task id</td><td>It exists and is stable.</td></tr>
+<tr><td><code>issues</code>, <code>milestones</code></td><td>canonical id</td><td>Same.</td></tr>
+<tr><td><code>checkpoints</code>, <code>handovers</code></td><td>repository-relative path</td><td>The files are immutable, so the path is the identity.</td></tr>
+<tr><td><code>decisions</code></td><td>the dated title</td><td><code>decisions.md</code> has no id field; the dated title is the heading it already uses, and it is what the ledger records.</td></tr>
+<tr><td><code>questions</code></td><td>the question text</td><td><code>open-questions.md</code> has no id field either; the text is what its line format keys on.</td></tr>
+<tr><td><code>evidence</code></td><td><code>&lt;issue&gt;:&lt;token&gt;</code></td><td>The pair an evidence record is attached to.</td></tr>
+</tbody></table>
+</div>
+<p>Two of those are weaker identities than the rest, and that is recorded rather than
+papered over: a decision or a question is referenced by text, so editing that text breaks
+the reference, and session validation reports it as a dangling reference rather than
+silently resolving to nothing.</p>
+<p><strong>The lists are derived, not accumulated.</strong> They are computed at close time by reading
+<code>ledger.jsonl</code>, and by nothing else. No other command writes to the session record;
+<code>checkpoint</code>, <code>decision</code>, <code>question</code> and <code>plan</code> are unchanged and know nothing about
+sessions.</p>
+<p>The alternative — every command appending its reference to the open session file as it
+runs — was rejected twice over: it puts a write on the hot path of commands that
+currently only append one ledger line, and it creates a second mutable store of facts the
+ledger already holds, which is the thing this record exists to avoid being.</p>
+<p><strong>Selection is by the session stamp on each line, not by a time range.</strong> Every ledger line
+carries a <code>session</code> field naming the episode that wrote it, alongside the <code>head</code> and
+<code>branch</code> it already carried; all three are computed, none is authored. A time range was
+tried first and was wrong: the ledger is one file per repository, and the first real run
+of it collected another worker's tasks, checkpoints and handovers, because nothing in a
+timestamp tells two concurrent workers apart.</p>
+<p>A line carrying no <code>session</code> belongs to no episode, and no envelope claims it. That is the
+correct answer rather than a gap — sessions are optional, and work done outside one is
+attributed to nobody instead of to whoever happened to have a session open nearby.</p>
+<p>The cost is that the ledger becomes load-bearing for a second purpose. It is append-only,
+written only by Majordomus, and already validated by <code>majordomus.ledger-integrity</code>, which is what
+makes it a safe thing to derive from. Ledger line order is preserved, so two events
+written inside the same second need no tiebreak at all.</p>
+<p>Front matter is written by Majordomus. A body containing a line that looks like a
+front-matter key is rejected, as for a handover. Mode <code>0600</code>. Created atomically. Never
+overwritten, never edited after the fact: a closed session is superseded by later
+information, not corrected.</p>
+<hr />
+<h2 id="ai-repo-prompts-name-md"><a class="zola-anchor" href="#ai-repo-prompts-name-md" aria-label="Anchor link for: ai-repo-prompts-name-md"><code>.ai/repo/prompts/&lt;name&gt;.md</code></a></h2>
+<p>A reusable framing, versioned with the repository. Front matter is authored, not computed —
+these are not records of work.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">n</span><span class="z-l-4 z-d-1">ame</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">ebug</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">escription</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> f</span><span class="z-l-8 z-d-8">rame a defect so that the fix is proven, not asserted</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rofile</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">ebugging</span></span>
+<span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span>Task {{TASK_ID}} on branch {{BRANCH}} at {{HEAD}}: {{TASK}}</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>Open questions that block acceptance:</span></span>
+<span class="giallo-l"><span>{{OPEN_QUESTIONS}}</span></span></code></pre><div class="overflow-x-auto">
+<table><thead><tr><th>Key</th><th>Required</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>name</code></td><td>yes</td><td>must equal the filename without <code>.md</code></td></tr>
+<tr><td><code>description</code></td><td>yes</td><td>non-empty; shown by <code>prompt list</code></td></tr>
+<tr><td><code>profile</code></td><td>no</td><td>the profile this framing suits; documentation only, nothing selects on it</td></tr>
+</tbody></table>
+</div>
+<p>Unknown keys are errors, as everywhere else.</p>
+<p><strong>Tokens are a closed set.</strong> Inline, substituted anywhere in a line: <code>{{TASK}}</code>,
+<code>{{TASK_ID}}</code>, <code>{{PROFILE}}</code>, <code>{{SCOPE}}</code>, <code>{{OWNER}}</code>, <code>{{BRANCH}}</code>, <code>{{HEAD}}</code>,
+<code>{{WORKING_TREE}}</code>, <code>{{REPOSITORY}}</code>, <code>{{NOW}}</code>. Block, valid only alone on a line:
+<code>{{OPEN_QUESTIONS}}</code>, <code>{{DECISIONS}}</code>, <code>{{CHECKPOINT}}</code>, <code>{{HANDOVER}}</code>, <code>{{CONTEXT}}</code>.</p>
+<p>Any other <code>{{...}}</code>, or a block token used inline, is an <strong>error</strong>. There is no templating
+language: no conditionals, no loops, no includes, no shell. A prompt that silently renders
+<code>{{TSAK}}</code> as literal text is worse than one that refuses. <code>doctor</code> and <code>watch</code> validate
+every asset for the same reason.</p>
+<p>An asset whose body contains <code>{{CONTEXT}}</code> is excluded from <code>context --prompt</code> rather than
+rendered, and the exclusion is named: the result would be the same context nested inside
+itself, which the budget then pays for twice.</p>
+<hr />
+<h2 id="ai-repo-knowledge-sources-yaml"><a class="zola-anchor" href="#ai-repo-knowledge-sources-yaml" aria-label="Anchor link for: ai-repo-knowledge-sources-yaml"><code>.ai/repo/knowledge/sources.yaml</code></a></h2>
+<p>The repository's declared knowledge sources: which tracked files are knowledge, in which
+class. Discovery goes through the version-control index with the pathspec given here,
+never through a filesystem walk, so an untracked file, build output or a vendored tree is
+never a source and two machines report the same list in the same order. The tool ships
+the operational classes (the records it writes under the state directory) in
+<code>share/knowledge-sources.yaml</code>, with paths relative to that directory; a class's scope
+(<code>shared</code> or <code>operational</code>) is decided by which of the two files declared it.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">ersion</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">ources</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> p</span><span class="z-l-8 z-d-8">olicy</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the class, unique; also the order sources are reported in</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    k</span><span class="z-l-4 z-d-1">ind</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> p</span><span class="z-l-8 z-d-8">olicy</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the node kind every source in this class produces</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    d</span><span class="z-l-4 z-d-1">iscovery</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> v</span><span class="z-l-8 z-d-8">cs</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the tracked files matching the pathspec</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    p</span><span class="z-l-4 z-d-1">athspec</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">:(glob).ai/repo/policy.yaml</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">equired</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> a class that discovers nothing is a finding, not a silence</span></span></code></pre>
+<p>Every <code>vcs</code> pathspec carries the <code>:(glob)</code> prefix so that <code>*</code> never crosses a directory
+separator and no two classes claim one file. Read back with <code>majordomus knowledge sources</code>.</p>
+<hr />
+<h2 id="ai-local-state-ledger-jsonl"><a class="zola-anchor" href="#ai-local-state-ledger-jsonl" aria-label="Anchor link for: ai-local-state-ledger-jsonl"><code>.ai/local/state/ledger.jsonl</code></a></h2>
+<p>Append-only. Written only by Majordomus. One JSON object per line. Retention-capped;
+<code>doctor</code> reports when over cap, and <code>history --rotate</code> moves the oldest lines to
+<code>ledger.&lt;utc&gt;.jsonl.archived</code> (never deletes).</p>
+<p>One line is one <strong>history event</strong>: what happened, when, for which task, at which head, and
+in which session. <code>majordomus history</code> reads them back.</p>
+<p>Common envelope:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="json"><span class="giallo-l"><span>{</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">ts</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">2026-09-03T19:30:12Z</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">event</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">task.started</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">head</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">3f2a9c1e...</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">branch</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">main</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">by</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">majordomus/0.1.0</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">session</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">s-20260903193010-a4f1</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">task_id</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">t-20260903193012-b7c2</span><span class="z-l-8 z-d-8">&quot;</span><span>}</span></span></code></pre>
+<p><code>session</code> is present when a session is open in this worktree and absent otherwise. Like
+<code>head</code> and <code>branch</code> it is computed, never authored. It is what a closed session's
+reference lists are selected by, and it exists because the alternative does not work: the
+ledger is one file per repository, so a selection by time range cannot tell two concurrent
+workers apart, and the first real run of one claimed another worker's records. A line with
+no <code>session</code> belongs to no episode, which is the honest answer for work done outside one.</p>
+<p>The event vocabulary is closed. <code>share/events.yaml</code> declares every name the ledger
+accepts, what writes it, and the payload keys it must carry; <code>mj_ledger_append</code> refuses
+an unregistered name, <code>history --event</code> refuses to filter on one, and
+<code>history --validate</code> reports a stored line whose name no reader recognises. Adding an
+event means adding an entry there — the same rule that makes an unknown policy key an
+error.</p>
+<p>Events and their extra fields:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>event</th><th>extra fields</th></tr></thead><tbody>
+<tr><td><code>task.started</code></td><td><code>profile</code>, <code>scope[]</code>, <code>owner</code></td></tr>
+<tr><td><code>task.checkpoint</code></td><td><code>checkpoint_path</code> when a body was written; absent when only <code>checkpoint_at</code> moved</td></tr>
+<tr><td><code>task.finished</code></td><td><code>outcome</code>, <code>contract</code> (object of doctrine id → <code>pass</code>/<code>fail</code>/<code>skipped</code>), <code>verify</code> (<code>command</code>, <code>exit</code>, <code>seconds</code>) or null, <code>checkpoints</code> (count)</td></tr>
+<tr><td><code>task.handed_over</code></td><td><code>handover_path</code>, <code>closed</code> (true with <code>--close</code>)</td></tr>
+<tr><td><code>decision.recorded</code></td><td><code>decision</code> (the entry's title)</td></tr>
+<tr><td><code>question.opened</code></td><td><code>question</code></td></tr>
+<tr><td><code>question.resolved</code></td><td><code>question</code>, <code>answer</code></td></tr>
+<tr><td><code>session.started</code></td><td><code>owner</code>, <code>worker</code> when one was supplied</td></tr>
+<tr><td><code>session.closed</code></td><td><code>outcome</code>, <code>session_path</code></td></tr>
+<tr><td><code>ledger.rotated</code></td><td><code>archived</code> (lines moved), <code>kept</code>, <code>archive</code> (path)</td></tr>
+<tr><td><code>projections.updated</code></td><td><code>policy_sha256</code>, <code>targets</code> (count)</td></tr>
+<tr><td><code>plan_start</code></td><td><code>issue</code></td></tr>
+<tr><td><code>plan_verify</code></td><td><code>issue</code></td></tr>
+<tr><td><code>plan_evidence</code></td><td><code>issue</code>, <code>covers</code> (the requirement it satisfies), <code>type</code></td></tr>
+<tr><td><code>plan_done</code></td><td><code>issue</code></td></tr>
+<tr><td><code>layout.migrated</code></td><td><code>from</code>, <code>to</code>, <code>backup</code> (the copy of local state made before it moved, or empty)</td></tr>
+<tr><td><code>rules.vendored</code></td><td><code>package</code> (the revision of the package now vendored)</td></tr>
+</tbody></table>
+</div>
+<p><code>doctor</code>, <code>check</code> (without <code>--checkpoint</code>), <code>watch</code>, <code>context</code>, <code>history</code>, <code>search</code>, and
+<code>prompt</code> write nothing, the ledger included.</p>
+<p>Every line must be a JSON object carrying <code>ts</code> and <code>event</code>. A line that is not is a
+<strong>failure</strong> in <code>history --validate</code>, <code>check</code>, <code>doctor</code> and <code>watch</code>: a ledger the tool
+cannot parse is a ledger that cannot be used as evidence. The reader skips such a line
+rather than crashing, so a corrupted ledger is still readable while it is being reported.</p>
+<p>Because <code>created_at</code> has second resolution, two records written inside one second would
+resolve in an order decided by their random filename suffixes. The ledger is append-only
+and written in the order the commands ran, which makes it the tiebreak the resolver uses —
+the one portable monotonic ordering available without sub-second timestamps.</p>
+<p><code>history --rotate</code> moves all but the newest <code>ledger.retention_max_lines</code> lines into
+<code>ledger.&lt;utc-compact&gt;.jsonl.archived</code> and appends a <code>ledger.rotated</code> event. It never
+deletes and refuses to overwrite an existing archive.</p>
+<hr />
+<h2 id="ai-local-benchmarks-runs-run-id-json-a-benchmark-run"><a class="zola-anchor" href="#ai-local-benchmarks-runs-run-id-json-a-benchmark-run" aria-label="Anchor link for: ai-local-benchmarks-runs-run-id-json-a-benchmark-run"><code>.ai/local/benchmarks/runs/&lt;run-id&gt;.json</code> — a benchmark run</a></h2>
+<p>Written by <code>majordomus bench</code>, one file per run, plus <code>latest.json</code> (the newest run) and
+<code>history.jsonl</code> (one compact line per run). Local evidence under the ignored half of the
+layer; never a baseline.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="json"><span class="giallo-l"><span>{</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">schema</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">majordomus/benchmark-result/v1</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">run_id</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">b-20260905T031200Z-9f1c</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">recorded_at</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">2026-09-05T03:12:00Z</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">repository</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span>{</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">commit</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">&lt;40 hex&gt;</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">branch</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">main</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">dirty</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">false</span><span>}</span><span class="z-l-6 z-d-9">,</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">environment</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span>{</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">os</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">Darwin</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">arch</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">arm64</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">bash</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">5.3.15</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">clock</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">epochrealtime</span><span class="z-l-8 z-d-8">&quot;</span><span>}</span><span class="z-l-6 z-d-9">,</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">profile</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span>{</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">samples</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">10</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">warmup</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">2</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">mode</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">both</span><span class="z-l-8 z-d-8">&quot;</span><span>}</span><span class="z-l-6 z-d-9">,</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">results</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span>[</span><span>{</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">command</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">doctor</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">mode</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">warm</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">class</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">read-only</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">scenario</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">fixture not-wired</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">             &quot;</span><span class="z-l-4 z-d-1">status</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">ok</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">samples</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">10</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">min_ms</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">2601</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">p50_ms</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">2640</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">p90_ms</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">2760</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">p95_ms</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">2790</span><span class="z-l-6 z-d-9">,</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">             &quot;</span><span class="z-l-4 z-d-1">p99_ms</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">2790</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">max_ms</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">2790</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">mean_ms</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">2655.2</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-4 z-d-1">stddev_ms</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11">58.1</span><span>}</span><span>]</span><span>}</span></span></code></pre>
+<p><code>status</code> is <code>ok</code>, <code>setup-failed</code>, or <code>exit-&lt;code&gt;</code> when the command exited with a code its
+scenario does not accept. Percentiles are nearest-rank over the sorted samples. <code>clock</code>
+names the source of the milliseconds (<code>epochrealtime</code>, <code>perl</code> or <code>seconds</code>).</p>
+<h2 id="ai-repo-benchmarks-baseline-json-the-accepted-baseline"><a class="zola-anchor" href="#ai-repo-benchmarks-baseline-json-the-accepted-baseline" aria-label="Anchor link for: ai-repo-benchmarks-baseline-json-the-accepted-baseline"><code>.ai/repo/benchmarks/baseline.json</code> — the accepted baseline</a></h2>
+<p>The same document with schema <code>majordomus/benchmark-baseline/v1</code>, written only by
+<code>majordomus bench --write-baseline</code> on a clean tree (or with <code>--force</code>), tracked and
+reviewed like any other change. <code>bench --check</code> compares a fresh run's p50, p95 and p99 per
+target and mode against it under the policy's <code>benchmark.regression</code> fractions; a baseline
+with another schema is reported as not comparable, never as a number.</p>
+<h2 id="projection-stamp"><a class="zola-anchor" href="#projection-stamp" aria-label="Anchor link for: projection-stamp">Projection stamp</a></h2>
+<p>Every generated target describes itself; there is no provenance file beside it, so a
+fresh clone carries the same evidence as the checkout that generated it.</p>
+<p>A file-mode target begins:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">&lt;!--</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> generated by `majordomus update` from .ai/repo/policy.yaml (policy 8e1d2c3b4a5f, content 4b2f9a01c7d3e6f8) — do not edit; edit the policy and regenerate </span><span class="z-l-10 z-l-i z-d-4 z-d-i">--&gt;</span></span></code></pre>
+<p><code>policy</code> is the hash of the policy and every profile, concatenated, at generation time.
+<code>content</code> is the hash of everything below the stamp line. A region-mode target carries
+the same two values in its begin marker:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">&lt;!--</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> majordomus:begin 8e1d2c3b4a5f 4b2f9a01c7d3e6f8 </span><span class="z-l-10 z-l-i z-d-4 z-d-i">--&gt;</span></span>
+<span class="giallo-l"><span>...generated region...</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">&lt;!--</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> majordomus:end </span><span class="z-l-10 z-l-i z-d-4 z-d-i">--&gt;</span></span></code></pre>
+<p>and <code>content</code> then covers the region body only, never the host document around it.</p>
+<p><code>doctor</code> fails on any target whose content differs from the hash its stamp names
+(hand-edited) and on a target with no stamp at all (not written by <code>update</code>). <code>watch</code>
+reports policy drift when a stamp names a policy hash that is no longer the policy on
+disk, and <code>update</code> refuses to overwrite a target whose content matches neither its stamp
+nor the new output.</p>
+<hr />
+<h2 id="worktree-coordination"><a class="zola-anchor" href="#worktree-coordination" aria-label="Anchor link for: worktree-coordination">Worktree coordination</a></h2>
+<p>There is no sidecar registry. <code>start</code> and <code>check --overlap</code> read <code>git worktree list</code>
+and each worktree's own <code>.ai/local/state/current.yaml</code>. Git is the authority; nothing
+can rot.</p>
+<hr />
+<h2 id="completion-note-when-no-handover-is-written"><a class="zola-anchor" href="#completion-note-when-no-handover-is-written" aria-label="Anchor link for: completion-note-when-no-handover-is-written">Completion note (when no handover is written)</a></h2>
+<p><code>finish</code> accepts <code>--note &lt;file&gt;</code>. For <code>completed</code> it needs the handover's required
+sections; for <code>partial</code>/<code>blocked</code> a <code># Next Action</code>; for <code>no_match</code>/<code>failed</code> a
+<code># Reason</code>. The profile's <code>output_contract</code> fields may lead as a YAML block; v0.1 records
+the note but does not validate that block. On success the note is copied to
+<code>state/completed/&lt;id&gt;.md</code>.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">utcome</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">ompleted</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">hanges</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 2</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">erification</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ake test — exit 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">lockers</span><span class="z-l-6 z-d-9">:</span><span> [</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">n</span><span class="z-l-4 z-d-1">ext_action</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> n</span><span class="z-l-8 z-d-8">one</span></span>
+<span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Objective</span></span>
+<span class="giallo-l"><span>...</span></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Current State</span></span>
+<span class="giallo-l"><span>...</span></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Next Action</span></span>
+<span class="giallo-l"><span>none</span></span></code></pre></article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
+    <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/policy-parse/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The canonical policy is parsed and rejected if it contains an unknown key</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/profile-validate/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Every profile is parsed, its unknown keys rejected, and the default profile proven to exist</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/projection-fingerprint/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Every generated instruction file carries its own stamp, and a hand edit is detected</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/region-projection/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A projection can own only the region between its markers, leaving the rest of the file untouched</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/git-identity/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Identity fields on every state record are computed from git and never authored</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/divergence-label/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">State read back is labelled exact, advanced, diverged or different_context against git</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/handover-record/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">handover writes an append-only record with computed front matter and required sections</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/typed-outcome/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">An outcome is a value from a closed vocabulary, not free text</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-record/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/record-retention/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Rotating the ledger archives the oldest lines and never deletes them</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/decision-record/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/open-question-gate/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/prompt-asset/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A repository-local prompt renders against a closed set of state tokens, and an unknown token is an error</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/ai-layer-manifest/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The repository&#39;s AI layer is one directory whose manifest names every section, readable without the tool</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/local-state-ignored/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Checkout-local state lives under .ai/local/, is ignored by git, and is absent on a fresh clone or worktree</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/event-vocabulary/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The ledger&#39;s event vocabulary is closed, on the way in and on the way out</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/worktree-ownership/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A task record names the checkout it belongs to, and another checkout is never held to its scope</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/project-schema/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Milestones and issues are canonical repository files, and a key nobody reads is an error</span></a></li></ul></div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/31acaf90d47f0be33db413ce3539a118520106f2" class="font-mono hover:underline">31acaf9</a> · inputs <span class="font-mono">59a7aa60d3b2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>

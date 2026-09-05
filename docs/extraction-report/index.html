@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extraction Report — Prismatic Majordomus</title>
+<meta name="description" content="how the design was derived: root cause, pattern ledger, rejected patterns, risks, plan">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Extraction Report — Prismatic Majordomus">
+<meta property="og:description" content="how the design was derived: root cause, pattern ledger, rejected patterns, risks, plan">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading text-fg-brand">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-fg-brand" aria-current="page">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Extraction Report</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Extraction Report</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">how the design was derived: root cause, pattern ledger, rejected patterns, risks, plan</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Use cases and applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Extraction Report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/EXTRACTION_REPORT.md" class="font-mono hover:underline">docs/EXTRACTION_REPORT.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p>This is the record of how <a href="https://korczis.github.io/prismatic-majordomus/docs/design/"><code>DESIGN.md</code></a> was derived. It exists so that every
+design decision can be traced to an observed failure or an observed success, and so that
+a reader can see what was considered and rejected, not only what was kept.</p>
+<p>The source material was a large private engineering environment: instruction files across
+roughly twenty repositories, one very large monorepo with a mature policy and hook
+corpus, several years of session notes and retrospectives, and four earlier attempts at a
+supervisory tool. Nothing from that material is reproduced here. Paths, names, quotations,
+and internal vocabulary have been removed. Magnitudes are kept because they are the
+evidence.</p>
+<p>Method: study → abstract → challenge → synthesise. Not copy → rename → publish.</p>
+<hr />
+<h2 id="1-product-definition"><a class="zola-anchor" href="#1-product-definition" aria-label="Anchor link for: 1-product-definition">1. Product Definition</a></h2>
+<p><strong>Prismatic Majordomus</strong> is a lightweight supervisory control layer for AI-assisted work.
+It holds one canonical policy, projects it into whatever instruction format each AI
+worker reads, keeps durable task state outside every conversation, coordinates scope
+between concurrent workers, and refuses to call work finished until a finish contract is
+met.</p>
+<p>It is not a model, not an agent framework, and not a runtime. It supervises workers; it
+does not run them.</p>
+<p>One sentence: <em>AI workers should not manage themselves.</em></p>
+<h2 id="2-the-single-root-cause"><a class="zola-anchor" href="#2-the-single-root-cause" aria-label="Anchor link for: 2-the-single-root-cause">2. The single root cause</a></h2>
+<p>Every extraction thread converged on one finding, and it is stated first because the
+rest of the design is downstream of it.</p>
+<p><strong>Enforcement is declared in prose and never reconciled against what actually runs.</strong></p>
+<p>Independent instances found in the source material, each verified by reading the wiring
+rather than the documentation:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>#</th><th>Declared</th><th>Actual</th></tr></thead><tbody>
+<tr><td>1</td><td>39 pre-commit scripts, README describing a fallback dispatch loop</td><td>dispatcher hard-codes 5; 34 orphaned; no loop exists</td></tr>
+<tr><td>2</td><td>two worktree guard hooks, policy frontmatter reads <code>BLOCKING</code></td><td>never dispatched; their self-test is <code>echo OK; exit 0</code></td></tr>
+<tr><td>3</td><td>a filename-convention hook "enforced since" a given date</td><td>not wired for months; then wired with a flag bug that matched zero files on every platform</td></tr>
+<tr><td>4</td><td>catalogue of 546 AI agents cited as headline capability</td><td>1 of 183 sampled entries actually registered with the runtime</td></tr>
+<tr><td>5</td><td>7 runtime hooks under a tool's config directory</td><td>no settings file in the repository had a hooks key</td></tr>
+<tr><td>6</td><td>a well-engineered commit guard with self-test and rationale</td><td>registration lost when unrelated tooling rewrote the settings file; hook, tests, and docs all still present</td></tr>
+<tr><td>7</td><td>a tool-call budget governor (read clamp, subagent cap, output condensation)</td><td>installed, never registered, state directory empty</td></tr>
+<tr><td>8</td><td>a session guard with digest-based drift detection</td><td>ran for one day; 18 status files; nothing since</td></tr>
+<tr><td>9</td><td>two audit ledgers mandated by the enforcement contract</td><td>never created</td></tr>
+<tr><td>10</td><td>a protected-branch config file read by the override validator</td><td>does not exist</td></tr>
+<tr><td>11</td><td>a compression module with byte-exact validation table, "Production Ready"</td><td>module does not exist</td></tr>
+<tr><td>12</td><td>a prior extraction attempt claiming 106 artefacts</td><td>shipped 2</td></tr>
+<tr><td>13</td><td>a claims registry reporting "100 % verified, zero violations"</td><td>the baseline file one directory away records 27,263</td></tr>
+<tr><td>14</td><td>a doctrine pillar with module, policy, and hook</td><td>registered in no pillar list; never executed</td></tr>
+<tr><td>15</td><td>a process-timeout option on a runtime call</td><td>the function has no such option; the rescue branch is dead code</td></tr>
+<tr><td>16</td><td>five scripts headlined as the recommended onboarding workflow</td><td>none exist</td></tr>
+<tr><td>17</td><td>a <code>--changed</code> scoping flag on a CI job</td><td>computes the list, prints it, runs unscoped anyway</td></tr>
+</tbody></table>
+</div>
+<p>Seventeen is not exhaustive. It is the count at which the pattern stopped being
+interesting to extend.</p>
+<p>The consequence for the design: <code>doctor</code>'s primary deterministic guarantee is that every
+enforcement the policy declares resolves to an artifact that exists, is executable, and
+is reachable from the named dispatcher. That check is roughly sixty lines. The source
+environment described it in five places and implemented it in none.</p>
+<h2 id="3-pattern-ledger"><a class="zola-anchor" href="#3-pattern-ledger" aria-label="Anchor link for: 3-pattern-ledger">3. Pattern Ledger</a></h2>
+<p>Columns: <strong>Proven</strong> means observed to work in production, not merely designed.
+<strong>Generalizable</strong> means usable by an ordinary team with git and a shell, no other
+runtime. <strong>Complexity</strong> is an estimate for a portable-shell implementation.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Pattern</th><th>Problem it addresses</th><th>Evidence</th><th>Proven</th><th>Generalizable</th><th>Complexity</th><th>Include</th></tr></thead><tbody>
+<tr><td>Enforcement wiring reconciliation</td><td>declared-but-not-wired checks</td><td>17 instances above</td><td>no — never built</td><td>yes</td><td>~60 lines</td><td><strong>yes, core</strong></td></tr>
+<tr><td>Git-derived identity on state records</td><td>workers hallucinate branch/head</td><td>handover writer forbids authored identity; resolver validates</td><td>yes</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Read-time divergence label (<code>exact/advanced/diverged/different_context</code>)</td><td>stale state trusted silently</td><td>handover resolver via merge-base</td><td>yes</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Scoped recovery, never repo-wide fallback</td><td>unrelated note leaks into context</td><td>resolver tiers; absence exits 0</td><td>yes</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Append-only, atomic, never-staged handover</td><td>overwritten or auto-committed state</td><td>hard-link publish with retry</td><td>yes</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Required handover sections enforced at write</td><td>empty continuation records</td><td>awk section check refuses write</td><td>yes</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Always-loaded budget with failing check + pointer integrity</td><td>contract grew 0→1,100 lines over 200 edits</td><td>200-line cap held at 49; the uncapped sibling regrew 3.6×</td><td>yes</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>"Unscoped rule is always-loaded context"</td><td>hidden context growth</td><td>linter line flagged it</td><td>yes</td><td>yes</td><td>trivial</td><td><strong>yes</strong></td></tr>
+<tr><td>Counts computed, never written</td><td>five contradictory app counts, three agent counts, five pillar counts across authority files</td><td>a validator exists and still found 15 discrepancies</td><td>partly</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Separate axes: model / effort / verbosity / context / verification</td><td>"Sonnet with Reasoning" treated as a model</td><td>current rubric separates model and effort; verbosity absent everywhere</td><td>yes (2 axes)</td><td>yes</td><td>trivial</td><td><strong>yes, extended</strong></td></tr>
+<tr><td>Effort as delta from default</td><td>profile sprawl</td><td>"set only where it differs"</td><td>yes</td><td>yes</td><td>trivial</td><td><strong>yes</strong></td></tr>
+<tr><td>Named execution profile bundling the axes</td><td>no such bundle existed</td><td>a budget governor had an implicit unnamed profile with drift alarms</td><td>no</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Typed outcomes (closed vocabulary)</td><td><code>no_match</code> vs <code>failed</code> indistinguishable in prose</td><td>157 of 298 notes carried a free-text status; four inconsistent enums</td><td>no</td><td>yes</td><td>trivial</td><td><strong>yes</strong></td></tr>
+<tr><td>Count-ratchet (one integer baseline; increase fails; missing baseline warns)</td><td>legacy dirt blocks everyone or is allowlisted away</td><td>four live ratchets; absolute gates hit 1,400 findings and were allowlisted to 8</td><td>yes</td><td>yes</td><td>~40 lines/metric</td><td><strong>yes</strong></td></tr>
+<tr><td>Hard-zero for catastrophic classes, never ratchet</td><td>a ratchet permits the worst instance</td><td>decision matrix in source</td><td>yes</td><td>yes</td><td>trivial</td><td><strong>yes</strong></td></tr>
+<tr><td>Exit-code contract; no "warn and continue"</td><td>fail-open hooks</td><td>contract states it; scanner catches <code>|| true</code></td><td>yes</td><td>yes</td><td>trivial</td><td><strong>yes</strong></td></tr>
+<tr><td>Trailer proves authorship, never that a gate ran</td><td>commit-message markers accepted as evidence</td><td>postmortem in source</td><td>yes</td><td>yes</td><td>policy</td><td><strong>yes</strong></td></tr>
+<tr><td>Authorization inputs derived or corroborated, never ambient</td><td>override validator defeated by env vars</td><td>postmortem in source</td><td>yes</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Self-disabling bootstrap hatch</td><td>shipping a gate into a repo that predates it</td><td>one record, worked as designed</td><td>yes</td><td>yes</td><td>~10 lines</td><td><strong>yes</strong></td></tr>
+<tr><td>Claim normalisation + containment both directions</td><td>trailing-slash and subtree overlaps undetected</td><td>live registry shows both classes</td><td>no — was broken</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Overlap on touched files, not declarations</td><td>3,200 collisions invisible to declaration checks</td><td>forensic collision matrix</td><td>no</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Claim folded into <code>start</code>, not optional</td><td>10 of 18 worktrees had empty claims</td><td>compliance audit</td><td>no</td><td>yes</td><td>trivial</td><td><strong>yes</strong></td></tr>
+<tr><td>Registry rebuildable from git</td><td>82 % stale registry entries at one audit</td><td>repair command existed</td><td>partly</td><td>yes</td><td>low</td><td><strong>yes</strong></td></tr>
+<tr><td>Retention cap on append-only stores</td><td>10 GB of unread metrics snapshots</td><td>none existed</td><td>no</td><td>yes</td><td>trivial</td><td><strong>yes</strong></td></tr>
+<tr><td>Tool self-applies its own checks</td><td>500-line anti-sprawl linter decayed in 19 days</td><td>regression measured</td><td>no</td><td>yes</td><td>policy</td><td><strong>yes</strong></td></tr>
+<tr><td>Published "intentionally absent" list</td><td>readers assume omissions are oversights</td><td>one protocol README did this</td><td>yes</td><td>yes</td><td>prose</td><td><strong>yes</strong></td></tr>
+<tr><td>Reproduce command on every finding</td><td>audits contained false claims caught only by a second reader</td><td>multiple</td><td>no</td><td>yes</td><td>policy</td><td><strong>yes</strong></td></tr>
+<tr><td>Semantic output condensation (head + diagnostic lines + tail, self-stamped)</td><td>oversized tool output</td><td>governor implementation</td><td>yes, briefly</td><td>provider-specific</td><td>low</td><td><strong>deferred v0.2</strong></td></tr>
+<tr><td>Read-size clamp at tool boundary</td><td>worker inhales 5,000-line file</td><td>governor implementation</td><td>yes, briefly</td><td>provider-specific</td><td>trivial</td><td><strong>deferred v0.2</strong></td></tr>
+<tr><td>Subagent count budget</td><td>fan-out cost</td><td>governor set it to 1 globally; rolled back within days</td><td>yes, then rejected</td><td>yes if task-derived</td><td>low</td><td><strong>deferred v0.2</strong></td></tr>
+<tr><td>Exclusion telemetry on context packing</td><td>under-filled context is undebuggable</td><td>packer manifest</td><td>yes</td><td>yes</td><td>low</td><td><strong>deferred</strong></td></tr>
+<tr><td>Compliance markers as scoped greppable exemptions</td><td>invisible suppressions</td><td>convention in source; one marker documented as not working</td><td>partly</td><td>yes</td><td>low</td><td><strong>deferred</strong></td></tr>
+<tr><td>Task dependency edges</td><td>—</td><td>one demo file, subtasks pending a year later</td><td>no</td><td>unclear</td><td>medium</td><td><strong>rejected v0.1</strong></td></tr>
+<tr><td>Description-based routing with trigger phrases</td><td>choosing procedures</td><td>works in source</td><td>yes</td><td>tool-specific</td><td>—</td><td><strong>projection concern only</strong></td></tr>
+</tbody></table>
+</div>
+<h2 id="4-patterns-rejected"><a class="zola-anchor" href="#4-patterns-rejected" aria-label="Anchor link for: 4-patterns-rejected">4. Patterns Rejected</a></h2>
+<p>Rejected outright, with the failure that justifies rejection:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Rejected</th><th>Why</th></tr></thead><tbody>
+<tr><td>Named agents, personas, roles, tiers, commanders, registries</td><td>546 entries; 305 were naming variants with no functional difference; 139 were stubs whose capabilities equalled their responsibilities; 109 were pitch-deck slides. A supervisory tool that adds nouns becomes the thing it supervises.</td></tr>
+<tr><td>An advisory tier that calls itself enforcement</td><td>Every advisory tier decayed into decoration. Two-tier "advisory/blocking" was documented and did not exist.</td></tr>
+<tr><td>Closed enum for worker identity</td><td>An 8-value enum used only to build filenames, unvalidated on read, already violated in its own live registry.</td></tr>
+<tr><td>Hand-maintained dispatcher with meaningful-looking numeric prefixes</td><td>5 of 39 invoked; ordering was decorative; <code>chmod -x</code> silently removed a gate.</td></tr>
+<tr><td>Fail-open guard pattern <code>if [ -x hook ]; then hook; fi</code></td><td>Missing executable bit deletes the gate with no error. The correct shape blocks with a restore instruction.</td></tr>
+<tr><td>Owning the merge</td><td>The source implementation force-moved the target branch after rebasing, discarding unpushed commits, with no ancestry assertion.</td></tr>
+<tr><td>Bundled quality-gate runner inside the coordination tool</td><td>Duplicated CI logic; the source audit recommended collapsing it. Shell out to a configured verify command.</td></tr>
+<tr><td>Global constant budgets (subagents = 1, always haiku)</td><td>Rolled back within days. Budgets must be task-derived or the human disables the governor and nothing is measured.</td></tr>
+<tr><td>Silent mutation of a worker's tool input</td><td>Invisible to the worker; drift should be surfaced before it is forced.</td></tr>
+<tr><td>Bytes ÷ 4 labelled as a token count</td><td>Indistinguishable from a measurement in the manifest. Estimates are labelled and excluded from enforcement.</td></tr>
+<tr><td>Documented metrics with no producer</td><td>A compression subsystem with byte-exact retention percentages for code that was never written. The tool refuses to display a metric with no producer.</td></tr>
+<tr><td>Multiple overlapping state stores</td><td>Four coexisting namespaces required a disambiguation table. Ship one store.</td></tr>
+<tr><td>Hand-rolled restricted-JSON serialiser in shell</td><td>Correct only because the writer rejected escaping; cost a sort-key bug, a regex portability trap, and a durability hole. Use a real serialiser.</td></tr>
+<tr><td>Vestigial schema fields</td><td>Four always-null routing fields ported from an earlier system. Every field is written and read or it is removed.</td></tr>
+<tr><td>Minimum fan-out / minimum agent count</td><td>44 procedures were marked failed unless they spawned 3–6 agents, taxing even trivial ones.</td></tr>
+<tr><td>Rename accepted as fix</td><td>The migration caught itself mechanically renaming a doctrine and reverted. If a check can be satisfied by search-and-replace it is not a check.</td></tr>
+<tr><td>Mythological vocabulary</td><td>2,850 files still carried banned phrasing a year after the removal order. Ordinary engineering language only.</td></tr>
+<tr><td>Unbounded session-note directories</td><td>10 GB, 1,496 files, a manual fifteen-to-thirty-minute recovery runbook.</td></tr>
+<tr><td>Any daemon, server, database, queue, MCP surface, background monitor, vector store</td><td>No evidence any of these solved a problem the file-based mechanisms did not. The stdio MCP reader added later in <code>apps/majordomus-cli/</code> is none of these: no process outlives its client, no state outlives a process; see <code>.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md</code>.</td></tr>
+</tbody></table>
+</div>
+<h2 id="5-proposed-file-tree"><a class="zola-anchor" href="#5-proposed-file-tree" aria-label="Anchor link for: 5-proposed-file-tree">5. Proposed File Tree</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>.</span></span>
+<span class="giallo-l"><span>├── README.md</span></span>
+<span class="giallo-l"><span>├── LICENSE</span></span>
+<span class="giallo-l"><span>├── SECURITY.md</span></span>
+<span class="giallo-l"><span>├── CONTRIBUTING.md</span></span>
+<span class="giallo-l"><span>├── AGENTS.md                    # canonical AI-readable contract for this repo</span></span>
+<span class="giallo-l"><span>├── CLAUDE.md                    # pointer to AGENTS.md until `update` generates it</span></span>
+<span class="giallo-l"><span>│</span></span>
+<span class="giallo-l"><span>├── bin/</span></span>
+<span class="giallo-l"><span>│   └── majordomus               # single portable-shell entry point</span></span>
+<span class="giallo-l"><span>│</span></span>
+<span class="giallo-l"><span>├── lib/                         # sourced shell modules, one per subcommand</span></span>
+<span class="giallo-l"><span>│   ├── common.sh</span></span>
+<span class="giallo-l"><span>│   ├── doctor.sh</span></span>
+<span class="giallo-l"><span>│   ├── start.sh</span></span>
+<span class="giallo-l"><span>│   ├── check.sh</span></span>
+<span class="giallo-l"><span>│   ├── watch.sh</span></span>
+<span class="giallo-l"><span>│   ├── update.sh</span></span>
+<span class="giallo-l"><span>│   ├── handover.sh</span></span>
+<span class="giallo-l"><span>│   └── finish.sh</span></span>
+<span class="giallo-l"><span>│</span></span>
+<span class="giallo-l"><span>├── share/</span></span>
+<span class="giallo-l"><span>│   ├── skeleton/                # what `init` copies into a project&#39;s .majordomus/</span></span>
+<span class="giallo-l"><span>│   │   ├── policy.yaml</span></span>
+<span class="giallo-l"><span>│   │   ├── profiles/            # routine · implementation · debugging · deep-work</span></span>
+<span class="giallo-l"><span>│   │   ├── templates/           # handover, completion, decisions, open-questions</span></span>
+<span class="giallo-l"><span>│   │   └── providers/           # body.md + one wrapper template per provider</span></span>
+<span class="giallo-l"><span>│   └── allow/                   # key allowlists: unknown keys are errors</span></span>
+<span class="giallo-l"><span>│</span></span>
+<span class="giallo-l"><span>├── .majordomus/                 # this repository supervising itself</span></span>
+<span class="giallo-l"><span>├── .githooks/                   # pre-commit runs doctor, pre-push runs finish --check</span></span>
+<span class="giallo-l"><span>│</span></span>
+<span class="giallo-l"><span>├── test/</span></span>
+<span class="giallo-l"><span>│   ├── run.sh</span></span>
+<span class="giallo-l"><span>│   └── cases/                   # one script per behaviour, disposable repo each</span></span>
+<span class="giallo-l"><span>│</span></span>
+<span class="giallo-l"><span>├── examples/</span></span>
+<span class="giallo-l"><span>│   └── minimal/                 # a scratch repo walked through start → finish</span></span>
+<span class="giallo-l"><span>│</span></span>
+<span class="giallo-l"><span>└── docs/</span></span>
+<span class="giallo-l"><span>    ├── README.md                # index</span></span>
+<span class="giallo-l"><span>    ├── DESIGN.md                # specification</span></span>
+<span class="giallo-l"><span>    ├── CLI.md                   # commands, exit codes, target output</span></span>
+<span class="giallo-l"><span>    ├── SCHEMAS.md               # every file, with a concrete example</span></span>
+<span class="giallo-l"><span>    └── EXTRACTION_REPORT.md     # this document</span></span></code></pre>
+<p>Removed from the initial proposal: <code>principles/</code> (folds into <code>policy.yaml</code> and README),
+<code>workflows/</code> (the lifecycle is the CLI; a workflows directory would be a second
+description of it), a <code>scripts/majordomus-*</code> fan of executables (one entry point,
+sourced modules). Nothing was kept because the prompt proposed it.</p>
+<h2 id="6-canonical-concepts"><a class="zola-anchor" href="#6-canonical-concepts" aria-label="Anchor link for: 6-canonical-concepts">6. Canonical Concepts</a></h2>
+<p>Ordinary engineering vocabulary. No court.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><strong>policy</strong></td><td>the one canonical YAML file; provider-neutral</td></tr>
+<tr><td><strong>profile</strong></td><td>a named bundle fixing effort, verbosity, context toggles, verification, and output contract for a task class</td></tr>
+<tr><td><strong>projection</strong></td><td>a provider-specific instruction file generated from policy; fingerprinted</td></tr>
+<tr><td><strong>task</strong></td><td>the one active unit of work; <code>state/current.yaml</code></td></tr>
+<tr><td><strong>scope</strong></td><td>the normalised path set a task may touch</td></tr>
+<tr><td><strong>claim</strong></td><td>scope recorded for overlap detection; part of <code>start</code></td></tr>
+<tr><td><strong>checkpoint</strong></td><td>an update to <code>current.yaml</code>; staleness is measured from the last one</td></tr>
+<tr><td><strong>handover</strong></td><td>an append-only continuation record with required sections</td></tr>
+<tr><td><strong>outcome</strong></td><td>one of <code>completed / partial / blocked / no_match / failed</code></td></tr>
+<tr><td><strong>finish contract</strong></td><td>the checklist <code>finish</code> evaluates before accepting <code>completed</code></td></tr>
+<tr><td><strong>ledger</strong></td><td><code>state/ledger.jsonl</code>, append-only, retention-capped, written only by Majordomus</td></tr>
+<tr><td><strong>ratchet</strong></td><td>a one-integer baseline that may fall but not rise</td></tr>
+<tr><td><strong>wired</strong></td><td>an enforcement whose artifact exists, is executable, and is reachable from its dispatcher</td></tr>
+<tr><td><strong>drift</strong></td><td>any deterministic disagreement between policy, projection, state, and git</td></tr>
+</tbody></table>
+</div>
+<h2 id="7-mvp-boundary"><a class="zola-anchor" href="#7-mvp-boundary" aria-label="Anchor link for: 7-mvp-boundary">7. MVP Boundary</a></h2>
+<p><strong>v0.1 can:</strong> hold canonical policy; define four profiles; start a scoped task with a
+normalised claim; keep durable state with git-derived identity; label state staleness
+at read time; write and resolve handovers; evaluate a finish contract; detect the drift
+classes in the design; generate fingerprinted projections for four providers; prove its
+own enforcement is wired; run entirely offline in portable shell.</p>
+<p><strong>v0.1 cannot:</strong> invoke a model; measure tokens or cost; route dynamically; hook a
+worker's runtime; run anything in the background; coordinate across machines; represent
+task dependencies.</p>
+<p>The boundary is stated in the README with equal prominence for both halves.</p>
+<h2 id="8-extraction-confidentiality-audit"><a class="zola-anchor" href="#8-extraction-confidentiality-audit" aria-label="Anchor link for: 8-extraction-confidentiality-audit">8. Extraction / Confidentiality Audit</a></h2>
+<p>Performed on this repository's contents before each push.</p>
+<ul>
+<li>No internal paths, hostnames, URLs, customer or case identifiers, or secrets appear.
+Checked by grep for the source environment's directory names, host patterns, and
+vocabulary; zero hits.</li>
+<li>No quotation from private material appears. Magnitudes are reported; sentences are
+not.</li>
+<li>The source environment's doctrine vocabulary (pillar names, acronyms, theatrical
+labels) does not appear.</li>
+<li>The only brand reference is "Prismatic" in the product name and in the one-way
+origin statement.</li>
+<li>The working ledger used during extraction lives in a session scratch directory
+outside this repository and is not committed.</li>
+<li>Dependency direction: none. This repository imports nothing and links to nothing in
+the source environment.</li>
+</ul>
+<h2 id="9-risks"><a class="zola-anchor" href="#9-risks" aria-label="Anchor link for: 9-risks">9. Risks</a></h2>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Risk</th><th>Mitigation in design</th></tr></thead><tbody>
+<tr><td>Majordomus itself decays like the four tools before it</td><td><code>doctor</code> runs against its own installation first; every check has a reproduce command; the README states what is guaranteed versus observed</td></tr>
+<tr><td>Portable shell limits (macOS ships bash 3.2; BSD awk and sed differ)</td><td>no associative arrays, no <code>mapfile</code>, no GNU-only flags; tested on both; YAML handled by a small dependency with a documented fallback</td></tr>
+<tr><td>YAML parsing in shell is fragile</td><td>v0.1 restricts the policy schema to a flat, parseable subset and validates it; a real parser is used where available</td></tr>
+<tr><td>Projections get hand-edited</td><td>fingerprints make it visible in one command; the generated header names the regeneration command</td></tr>
+<tr><td>Users skip <code>start</code> and work unsupervised</td><td><code>check</code> and <code>finish</code> refuse without <code>current.yaml</code>; the projected instructions tell the worker to run <code>start</code></td></tr>
+<tr><td>Over-blocking creates bypass culture</td><td>blocking is limited to cheap, deterministic, self-evidently correct checks; everything about work-in-progress is reported, not blocked</td></tr>
+<tr><td>Scope creep during implementation</td><td>the "intentionally absent" list is a public commitment; the next phase's review asks, for each responsibility, documented / represented / validatable / enforced / measurable, and does not confuse the first with the last</td></tr>
+<tr><td>Two concurrent AI writers in one checkout, which the design says should be two worktrees</td><td>Observed while building v0.1 itself: the CLI and the derived website were written by two sessions in one working copy. It held because the scopes were disjoint by directory and both sides declared them to each other before touching anything, which is the claim step the design makes mandatory. The tool cannot yet enforce this on the checkout it lives in; <code>start</code> refuses a second task, so the second writer simply did not run it. Recorded as a limitation, not hidden. The cleaner example from the same evening: the site generator was correct against a base URL it never actually resolved against, so every asset 404ed once deployed under the repository path, and neither writer could have caught it alone; it took one screenshot from one side and one fix from the other, and the fix shipped with a check that fails on any unprefixed path. That is the repository's own rule applied to itself: no claim without an executable behind it</td></tr>
+<tr><td>The brand invites reading it as a slice of the source platform</td><td>the origin statement is one-way and explicit; there is no shared code</td></tr>
+</tbody></table>
+</div>
+<h2 id="10-recommended-implementation-plan"><a class="zola-anchor" href="#10-recommended-implementation-plan" aria-label="Anchor link for: 10-recommended-implementation-plan">10. Recommended Implementation Plan</a></h2>
+<p>Five phases, each gated by the reality of the previous one, none started before the
+previous is reviewed.</p>
+<ol>
+<li><strong>Design</strong> — this document and <code>DESIGN.md</code>. Complete.</li>
+<li><strong>Implement v0.1</strong> — complete; see <code>CLI.md</code>, <code>SCHEMAS.md</code>, <code>test/cases/</code>. Original brief: — the file tree above; behavioural tests in disposable
+repositories for: init happy path, missing policy, invalid YAML, unknown key, missing
+scope, unfinished task, valid completion, handover write and resolve, refusal to
+overwrite, each drift class, and the healthy no-finding case. Every README claim is
+compared against implementation before the phase closes.</li>
+<li><strong>Make supervision real</strong> — for each responsibility, answer documented /
+represented / validatable / enforced / measurable honestly; close the highest-value
+gaps in this order: state integrity, policy integrity, drift detection, lifecycle
+integrity, handover integrity, projection drift, budget visibility, coordination
+visibility. Produce a supervision model document that separates guaranteed from
+observed.</li>
+<li><strong>Hostile review</strong> — claim/implementation matrix; attempt to delete 30 % of the
+repository; ten-minute new-user walk-through; clean-extraction scan including git
+history; security and portability audit; terminology audit. Returns READY or NOT
+READY with blockers.</li>
+<li><strong>Release</strong> — only after READY. Template repository, minimal CI, <code>v0.1.0</code>, release
+notes without inflation, remote validation including a fresh template-generated
+repository.</li>
+</ol>
+<p>Phase 3 is the next action.</p>
+<hr />
+<h2 id="11-second-pass-session-records-and-a-knowledge-compiler"><a class="zola-anchor" href="#11-second-pass-session-records-and-a-knowledge-compiler" aria-label="Anchor link for: 11-second-pass-session-records-and-a-knowledge-compiler">11. Second pass — session records and a knowledge compiler</a></h2>
+<p>The first pass studied instruction files, hooks, state stores and coordination. It did
+not study two subsystems that turn out to matter for the same problem: a file-based
+session-note discipline, and a stateless Markdown compiler that produced a browsable
+generated note vault from a repository's own documents.</p>
+<p>They were re-examined when <a href="../.ai/repo/project/milestones/M003.yaml"><code>M003</code></a> was
+planned. The method is unchanged — study, abstract, challenge, synthesise — and so is the
+confidentiality rule: mechanisms and magnitudes are reported, code and vocabulary are not.</p>
+<p>The two are of very different quality, and the difference is itself the finding. The
+session-note discipline is filename-shaped: it enforces a naming grammar and has no model
+of what a record contains. The compiler is properly built, and nearly every guard in it
+carries a comment naming the failure it prevents.</p>
+<h3 id="what-the-evidence-says"><a class="zola-anchor" href="#what-the-evidence-says" aria-label="Anchor link for: what-the-evidence-says">What the evidence says</a></h3>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Observation</th><th>Magnitude</th><th>Consequence for this design</th></tr></thead><tbody>
+<tr><td>A session-note directory with a stated retention of "most recent 50 files"</td><td>roughly 10 GB across 585 entries at this pass; section 4 records 1,496 files at the first pass, and both are kept rather than reconciled — the count moved, the volume did not</td><td>The bloat was not a retention failure. A second producer wrote non-Markdown snapshots into a directory whose every tool filtered on one extension, so no threshold applied and no audit saw them. Retention has to be a property of a store, not of a file pattern.</td></tr>
+<tr><td>Its records</td><td>free text end to end; a machine-checkable field count of zero, including an identifier field labelled auto-generated that nothing generated</td><td>A record that asserts a commit hash nobody computed is worse than no record. Every identity field of a Majordomus session is computed from git and refused in an authored body.</td></tr>
+<tr><td>Its "compression" step</td><td>replaced the original in place with a <code>grep</code>-derived digest, keeping the only full copy untracked</td><td>Majordomus archives and never rewrites. Nothing summarises a record, because nothing here calls a model and a regex digest is a lossy model with worse failure modes.</td></tr>
+<tr><td>That step's file selector</td><td>a hardcoded year prefix that stopped matching when the year changed; it exits reporting success having done nothing</td><td>A maintenance command that can do nothing and report success is indistinguishable from one that works.</td></tr>
+<tr><td>Its ordering and selection</td><td>files selected by filesystem mtime, then grouped by the date parsed out of the filename</td><td>Two clocks in one loop, and mtime does not survive a clone. Majordomus orders by the recorded timestamp and breaks ties with the ledger.</td></tr>
+<tr><td>Its enforcement hook</td><td>documented as blocking; silently matched nothing on every platform because NUL-delimited input was piped into a line-oriented filter</td><td>The same failure class the first pass found seventeen times, found again in the subsystem meant to prevent it.</td></tr>
+<tr><td>Its retention numbers</td><td>four destination-and-threshold pairs for one dataset, across a policy, a README and two scripts, none reconciled, none with a stated derivation</td><td>Retention is one policy block, read by one command.</td></tr>
+<tr><td>Its compliance percentage</td><td>counted exempt files in the denominator</td><td>A number that systematically understates the thing it exists to report.</td></tr>
+<tr><td>The compiler's discovery</td><td>driven by <code>git ls-files</code>; a last recorded run classified 25,539 tracked Markdown files into 3,655 curated, 2,662 session logs and 19,222 excluded</td><td>Repository truth, no exclusion globs to maintain, no build output, no untracked files. Adopted directly.</td></tr>
+<tr><td>The compiler's edges</td><td>7,731 edges, every one explicit, none inferred</td><td>The graph knows only what somebody typed. That is the property worth having first.</td></tr>
+<tr><td>Its broken links and orphans</td><td>roughly a third of its nodes</td><td>Reported, never gated, with the reasoning recorded: gating on a count that is large by design trains people to ignore the failure.</td></tr>
+<tr><td>Its cold run</td><td>about 2.1 seconds over 3,655 sources, with the manifest short-circuiting rendering but not analysis</td><td>A manifest that only skips writes is worth much less than one that skips work. Measure before believing.</td></tr>
+</tbody></table>
+</div>
+<h3 id="adopted-by-re-derivation"><a class="zola-anchor" href="#adopted-by-re-derivation" aria-label="Anchor link for: adopted-by-re-derivation">Adopted, by re-derivation</a></h3>
+<p>Each of these is an idea, re-implemented from scratch in portable shell and awk against
+Majordomus's own records. No code, no schema and no vocabulary was carried across.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Idea</th><th>What it becomes here</th></tr></thead><tbody>
+<tr><td>Identity from a stable source fact; hashes only for change detection</td><td>A node id is a canonical id or a repository path. <code>source_hash</code> says whether it moved, never what it is.</td></tr>
+<tr><td>Provenance required on every edge</td><td>An edge carries the file it was observed in, and an edge without one is a validation failure rather than a silent drop.</td></tr>
+<tr><td>A confidence vocabulary whose "inferred" value is currently unused</td><td>The graph's trustworthiness becomes a checkable claim: the count of inferred edges is zero, and a command says so.</td></tr>
+<tr><td>Classify from structure and declared metadata, never from prose</td><td>A node's kind comes from its source class or an explicit field. A document containing the word "roadmap" does not become a roadmap.</td></tr>
+<tr><td><code>unknown</code> as a first-class answer</td><td>An unrecognised source is a node of kind <code>unknown</code>, reported, not guessed at and not dropped.</td></tr>
+<tr><td>Never default a status to a plausible value</td><td>Already the rule for issue status, which is derived and has no stored field. Extended to node kind.</td></tr>
+<tr><td>Gate only on defects this run caused</td><td>A broken reference between two things Majordomus owns is a failure. A link to a deliberately external resource is not.</td></tr>
+<tr><td>Absent is not corrupt</td><td>A missing manifest is a first run. A manifest that does not parse fails loudly, because treating it as absent would silently disable the guarantee it exists to provide.</td></tr>
+<tr><td>Tag a link by the syntax it was written in, not by the shape of its target</td><td>An extension-less relative link is a link because of how it was written.</td></tr>
+<tr><td>Strip fenced code before scanning for links</td><td>A path inside a code sample is an example, not a reference.</td></tr>
+<tr><td>Order-independent, hash-backed collision disambiguation</td><td>A readable fragment is a hint; the hash is the guarantee.</td></tr>
+<tr><td>Record both values when two sources of one fact disagree</td><td>Report the drift rather than picking a winner and hiding it.</td></tr>
+<tr><td>A per-file failure is an error, not an aborted run</td><td>One malformed input must not cost the build.</td></tr>
+<tr><td>Sorted, de-duplicated generated output</td><td>The artefact is diffable, so a rebuild's effect is reviewable.</td></tr>
+<tr><td>Project a high-volume, low-durability corpus as one index</td><td>Checkpoints are referenced from their session, not made one node each.</td></tr>
+<tr><td>Filename-carried UTC timestamps for chronological records</td><td>Already the shape of a checkpoint and a handover here, and it already carries the sub-day resolution and the uniqueness component the studied grammar lacked.</td></tr>
+<tr><td>Skip the heavy runtime when the job does not need it</td><td>Already true by construction: there is no runtime to skip.</td></tr>
+</tbody></table>
+</div>
+<h3 id="refused"><a class="zola-anchor" href="#refused" aria-label="Anchor link for: refused">Refused</a></h3>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Refused</th><th>Why</th></tr></thead><tbody>
+<tr><td>Any database — embedded, relational, columnar or graph</td><td>The corpus is a few thousand small files. A database is a dependency, a migration story and a second source of truth bought before anything measured a need for one. Measure first.</td></tr>
+<tr><td>Embeddings, vector search, similarity, clustering, automatic taxonomy</td><td>None can name the line that justifies the relation, which is the test the extraction boundary now uses. They are also unfalsifiable by the person best placed to notice they are wrong.</td></tr>
+<tr><td>Any generated summary of a session, by a model or by a regex</td><td>Majordomus calls no model, and the studied regex digest is the case study in why the cheap substitute is worse. A worker writes its own summary or the record has none.</td></tr>
+<tr><td>A note-vault renderer, and any dependency on a particular note-taking application</td><td>The graph is renderer-independent. A renderer can be added later against the same generated data; nothing in the core may assume one.</td></tr>
+<tr><td>Copying record bodies into a session note</td><td>The single most consequential defect of the studied session store. A session is an envelope of references.</td></tr>
+<tr><td>A mutable session file that other commands append references to as they run</td><td>It puts a write on the hot path of every command and recreates the second store. The envelope is derived from the ledger at close.</td></tr>
+<tr><td>Destructive compression or in-place rewriting of any record</td><td>Archiving moves; it never rewrites and never overwrites an archive.</td></tr>
+<tr><td>Filesystem mtime as an ordering or selection input</td><td>It does not survive a clone and it is not the time the record asserts.</td></tr>
+<tr><td>A retention rule that names a file pattern rather than a store</td><td>The 10 GB directory is what that costs.</td></tr>
+<tr><td>Bypass channels for an enforced rule</td><td>Two existed there, in a discipline whose own policy said it could not be bypassed.</td></tr>
+<tr><td>A second "search" whose contract quietly replaces the first</td><td><code>search</code> stays a literal scan over durable records with no index. <code>knowledge search</code> is a different corpus with a different contract, and both say so.</td></tr>
+</tbody></table>
+</div>
+</article></div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/31acaf90d47f0be33db413ce3539a118520106f2" class="font-mono hover:underline">31acaf9</a> · inputs <span class="font-mono">59a7aa60d3b2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>

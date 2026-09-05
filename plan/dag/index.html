@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dependency graph — Prismatic Majordomus</title>
+<meta name="description" content="Every issue, every dependency, and the execution waves the graph implies — drawn from the canonical edges, never by hand.">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/plan/dag/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Dependency graph — Prismatic Majordomus">
+<meta property="og:description" content="Every issue, every dependency, and the execution waves the graph implies — drawn from the canonical edges, never by hand.">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/plan/dag/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading text-fg-brand">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-fg-brand" aria-current="page">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="font-medium text-body hover:text-fg-brand">The plan</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Dependency graph</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Dependency graph</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Every issue, every dependency, and the execution waves the graph implies — drawn from the canonical edges, never by hand.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="min-w-0">
+  <p class="max-w-3xl text-base leading-relaxed text-body">Every node below is an issue in the canonical model and every arrow is a <code class="font-mono text-heading">depends_on</code> entry. The diagram is generated by <code class="font-mono text-heading">majordomus plan graph</code>; the table under it is the same edge list in text, for a reader who cannot see the picture.</p>
+
+  
+<figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
+  <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">Issue dependency graph</span><span class="font-mono text-xs text-body-subtle">from .ai/repo/project</span></figcaption>
+  <div class="overflow-x-auto p-4"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading">flowchart LR
+    I0001[&quot;I0001&lt;br/&gt;Audit what actually plans work in this repository&quot;]:::done
+    I0002[&quot;I0002&lt;br/&gt;Define the canonical milestone and issue schema&quot;]:::done
+    I0003[&quot;I0003&lt;br/&gt;Implement the model loader and the status derivation engine&quot;]:::done
+    I0004[&quot;I0004&lt;br/&gt;Implement DAG validation and execution waves&quot;]:::done
+    I0005[&quot;I0005&lt;br/&gt;Implement the plan command surface&quot;]:::done
+    I0006[&quot;I0006&lt;br/&gt;Generate the Mermaid DAG from the graph&quot;]:::done
+    I0007[&quot;I0007&lt;br/&gt;Enforce the canonical model as doctrine&quot;]:::done
+    I0008[&quot;I0008&lt;br/&gt;Project the model to GitHub milestones and issues&quot;]:::done
+    I0009[&quot;I0009&lt;br/&gt;Project the model into the website&quot;]:::done
+    I0010[&quot;I0010&lt;br/&gt;Behavioural tests for schema, status, graph and command&quot;]:::done
+    I0011[&quot;I0011&lt;br/&gt;Cross-surface consistency and mutation tests&quot;]:::done
+    I0012[&quot;I0012&lt;br/&gt;Make CI refuse an invalid model or a stale projection&quot;]:::done
+    I0013[&quot;I0013&lt;br/&gt;Document the semantics and the dogfooding rule&quot;]:::done
+    I0014[&quot;I0014&lt;br/&gt;Make the worker instructions require the model&quot;]:::done
+    I0015[&quot;I0015&lt;br/&gt;Open the first real milestone and execute one issue through it&quot;]:::done
+    I0101[&quot;I0101&lt;br/&gt;Reproduce the escaped blocker as an executable case&quot;]:::done
+    I0102[&quot;I0102&lt;br/&gt;Decide whether a question transfers or the gate widens&quot;]:::done
+    I0103[&quot;I0103&lt;br/&gt;Implement the decision and prove it holds&quot;]:::done
+    I0104[&quot;I0104&lt;br/&gt;Move the claim from planned to guaranteed&quot;]:::done
+    I0201[&quot;I0201&lt;br/&gt;Declare which profile axis may become which runtime limit&quot;]:::ready
+    I0202[&quot;I0202&lt;br/&gt;Resolve a task&#39;s effective limits and print them as data&quot;]:::blocked
+    I0203[&quot;I0203&lt;br/&gt;Make enforcement opt-in, and prove a repository that declines is unaffected&quot;]:::blocked
+    I0204[&quot;I0204&lt;br/&gt;Apply one derived limit for real and prove it changes what happens&quot;]:::blocked
+    I0205[&quot;I0205&lt;br/&gt;Declare the clamp as a doctrine so the mapping and the adapter cannot drift&quot;]:::blocked
+    I0206[&quot;I0206&lt;br/&gt;Publish the runtime-adapters claim with the test that proves it and the limits it does not cover&quot;]:::blocked
+    I0301[&quot;I0301&lt;br/&gt;Define the execution record, including what an absence looks like&quot;]:::blocked
+    I0302[&quot;I0302&lt;br/&gt;Record telemetry a provider reports, and refuse anything it did not&quot;]:::blocked
+    I0303[&quot;I0303&lt;br/&gt;Prove a silent provider produces an explicit absence, never a guess&quot;]:::blocked
+    I0304[&quot;I0304&lt;br/&gt;Read the measurements back through the history surface, under a bound&quot;]:::blocked
+    I0305[&quot;I0305&lt;br/&gt;Publish the telemetry claim and record what remains unmeasured&quot;]:::blocked
+    I0401[&quot;I0401&lt;br/&gt;Define an accepted outcome, and join it to its measurements without storing the join&quot;]:::blocked
+    I0402[&quot;I0402&lt;br/&gt;Report cost only where measurement and acceptance both exist&quot;]:::blocked
+    I0403[&quot;I0403&lt;br/&gt;Make a thin denominator say so rather than average it away&quot;]:::blocked
+    I0404[&quot;I0404&lt;br/&gt;Publish the cost-per-outcome claim with its unit defined beside it&quot;]:::blocked
+    I0501[&quot;I0501&lt;br/&gt;Group comparable work from what the records already carry&quot;]:::blocked
+    I0502[&quot;I0502&lt;br/&gt;Recommend a profile from measured cost, naming the measurements&quot;]:::blocked
+    I0503[&quot;I0503&lt;br/&gt;Return no recommendation where the data is too thin, and say why&quot;]:::blocked
+    I0504[&quot;I0504&lt;br/&gt;Prove the recommendation is advisory and publish it as such&quot;]:::blocked
+    I0601[&quot;I0601&lt;br/&gt;Let a policy name a shared source it does not copy&quot;]:::blocked
+    I0602[&quot;I0602&lt;br/&gt;Make a local override explicit and prove it survives an update of the shared source&quot;]:::blocked
+    I0603[&quot;I0603&lt;br/&gt;Report drift from the shared policy in one command&quot;]:::blocked
+    I0604[&quot;I0604&lt;br/&gt;Prove the offline guarantee survives sharing&quot;]:::blocked
+    I0605[&quot;I0605&lt;br/&gt;Publish the shared-policy claim and what sharing still cannot do&quot;]:::blocked
+    I0701[&quot;I0701&lt;br/&gt;Reproduce the misattribution as an executable case&quot;]:::ready
+    I0702[&quot;I0702&lt;br/&gt;Decide how a record is attributed, between named alternatives&quot;]:::blocked
+    I0703[&quot;I0703&lt;br/&gt;Implement the decision and prove it holds&quot;]:::blocked
+    I0704[&quot;I0704&lt;br/&gt;Publish what attribution guarantees, and what it still cannot&quot;]:::blocked
+    I0801[&quot;I0801&lt;br/&gt;Narrow the Clean Extraction Boundary and record what was adopted&quot;]:::done
+    I0802[&quot;I0802&lt;br/&gt;Specify the session record before writing one&quot;]:::done
+    I0803[&quot;I0803&lt;br/&gt;Open a session and report its status&quot;]:::done
+    I0804[&quot;I0804&lt;br/&gt;Close a session into an envelope derived from the ledger&quot;]:::done
+    I0805[&quot;I0805&lt;br/&gt;Read sessions back with a divergence label&quot;]:::done
+    I0806[&quot;I0806&lt;br/&gt;Make the session rules doctrines, with retention and archiving&quot;]:::ready
+    I0807[&quot;I0807&lt;br/&gt;Discover knowledge sources from git, not from the filesystem&quot;]:::done
+    I0808[&quot;I0808&lt;br/&gt;Extract nodes with identities that survive a rebuild&quot;]:::done
+    I0809[&quot;I0809&lt;br/&gt;Record only edges that a file states, each with where it was observed&quot;]:::done
+    I0810[&quot;I0810&lt;br/&gt;A content-hash manifest that makes a second sync cheap&quot;]:::ready
+    I0811[&quot;I0811&lt;br/&gt;Read-only knowledge lookup with an ordering that can be explained&quot;]:::blocked
+    I0812[&quot;I0812&lt;br/&gt;Validate the graph, and let doctor and watch ask the same validator&quot;]:::blocked
+    I0813[&quot;I0813&lt;br/&gt;A closed session becomes a node that points at its episode&quot;]:::blocked
+    I0814[&quot;I0814&lt;br/&gt;Give the worker a bounded slice of knowledge, not the knowledge base&quot;]:::blocked
+    I0815[&quot;I0815&lt;br/&gt;Say what is now true in the claims, the documentation and the worker instructions&quot;]:::blocked
+    I0816[&quot;I0816&lt;br/&gt;Prove the loop on a real issue, without a transcript&quot;]:::blocked
+    I0817[&quot;I0817&lt;br/&gt;Phase timing and work counters behind MJ_TIMING&quot;]:::done
+    I0818[&quot;I0818&lt;br/&gt;The command registry is read in one pass&quot;]:::done
+    I0819[&quot;I0819&lt;br/&gt;The project model is loaded with one flatten per file and no per-file lookups&quot;]:::done
+    I0820[&quot;I0820&lt;br/&gt;Catalogue, DAG, context and command-surface validators read their inputs once&quot;]:::ready
+    I0821[&quot;I0821&lt;br/&gt;Flattened YAML is cached under .ai/local/cache by content hash&quot;]:::ready
+    I0822[&quot;I0822&lt;br/&gt;Every canonical file is flattened at most once per command&quot;]:::blocked
+    I0823[&quot;I0823&lt;br/&gt;majordomus bench: targets derived from the command registry&quot;]:::done
+    I0824[&quot;I0824&lt;br/&gt;Bench persists local runs and keeps a latest projection&quot;]:::done
+    I0825[&quot;I0825&lt;br/&gt;An explicit committed baseline&quot;]:::done
+    I0826[&quot;I0826&lt;br/&gt;bench --check refuses a regression by policy&quot;]:::done
+    I0827[&quot;I0827&lt;br/&gt;The benchmark policy block&quot;]:::done
+    I0828[&quot;I0828&lt;br/&gt;doctor under a declared budget, and the hook inherits it&quot;]:::blocked
+    I0829[&quot;I0829&lt;br/&gt;Performance doctrine as project rules&quot;]:::done
+    I0830[&quot;I0830&lt;br/&gt;docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference&quot;]:::done
+    I0831[&quot;I0831&lt;br/&gt;Performance claims at their proven status&quot;]:::blocked
+    I0832[&quot;I0832&lt;br/&gt;generate-site-data instrumented and its hot spots removed&quot;]:::ready
+    I0833[&quot;I0833&lt;br/&gt;knowledge nodes and edges read each source once&quot;]:::done
+    I0834[&quot;I0834&lt;br/&gt;The test runner reports per-case time and the suite budget&quot;]:::blocked
+    I0835[&quot;I0835&lt;br/&gt;CI runs the structural performance checks&quot;]:::blocked
+    I0836[&quot;I0836&lt;br/&gt;A synthetic repository generator for scaling cases&quot;]:::ready
+    I0837[&quot;I0837&lt;br/&gt;Timing report as JSON&quot;]:::ready
+    I0838[&quot;I0838&lt;br/&gt;bench compare and the top regressions report&quot;]:::ready
+    I0839[&quot;I0839&lt;br/&gt;watch inherits every doctor fix and its own budget&quot;]:::blocked
+    I0840[&quot;I0840&lt;br/&gt;context and its subcommands under a second&quot;]:::blocked
+    I0841[&quot;I0841&lt;br/&gt;Cache equivalence proved by property-shaped cases&quot;]:::blocked
+    I0842[&quot;I0842&lt;br/&gt;Before and after evidence for every optimisation&quot;]:::blocked
+    I0843[&quot;I0843&lt;br/&gt;The performance workflow is discoverable and complete&quot;]:::blocked
+    I0001 --&gt; I0002
+    I0002 --&gt; I0003
+    I0003 --&gt; I0004
+    I0004 --&gt; I0005
+    I0004 --&gt; I0006
+    I0004 --&gt; I0010
+    I0005 --&gt; I0007
+    I0005 --&gt; I0008
+    I0005 --&gt; I0009
+    I0005 --&gt; I0013
+    I0005 --&gt; I0014
+    I0006 --&gt; I0009
+    I0008 --&gt; I0011
+    I0009 --&gt; I0011
+    I0010 --&gt; I0011
+    I0011 --&gt; I0012
+    I0012 --&gt; I0015
+    I0013 --&gt; I0014
+    I0014 --&gt; I0015
+    I0101 --&gt; I0102
+    I0102 --&gt; I0103
+    I0103 --&gt; I0104
+    I0201 --&gt; I0202
+    I0202 --&gt; I0203
+    I0203 --&gt; I0204
+    I0204 --&gt; I0205
+    I0205 --&gt; I0206
+    I0301 --&gt; I0302
+    I0302 --&gt; I0303
+    I0303 --&gt; I0304
+    I0304 --&gt; I0305
+    I0401 --&gt; I0402
+    I0402 --&gt; I0403
+    I0403 --&gt; I0404
+    I0501 --&gt; I0502
+    I0502 --&gt; I0503
+    I0503 --&gt; I0504
+    I0601 --&gt; I0602
+    I0602 --&gt; I0603
+    I0603 --&gt; I0604
+    I0604 --&gt; I0605
+    I0701 --&gt; I0702
+    I0702 --&gt; I0703
+    I0703 --&gt; I0704
+    I0801 --&gt; I0807
+    I0802 --&gt; I0803
+    I0803 --&gt; I0804
+    I0804 --&gt; I0805
+    I0805 --&gt; I0806
+    I0806 --&gt; I0813
+    I0807 --&gt; I0808
+    I0808 --&gt; I0809
+    I0809 --&gt; I0810
+    I0810 --&gt; I0811
+    I0811 --&gt; I0812
+    I0811 --&gt; I0814
+    I0812 --&gt; I0813
+    I0813 --&gt; I0815
+    I0814 --&gt; I0815
+    I0815 --&gt; I0816
+    I0817 --&gt; I0818
+    I0817 --&gt; I0819
+    I0817 --&gt; I0821
+    I0817 --&gt; I0823
+    I0817 --&gt; I0832
+    I0817 --&gt; I0833
+    I0817 --&gt; I0837
+    I0818 --&gt; I0820
+    I0818 --&gt; I0822
+    I0818 --&gt; I0828
+    I0818 --&gt; I0842
+    I0819 --&gt; I0820
+    I0819 --&gt; I0822
+    I0819 --&gt; I0828
+    I0819 --&gt; I0832
+    I0819 --&gt; I0836
+    I0819 --&gt; I0842
+    I0820 --&gt; I0822
+    I0820 --&gt; I0828
+    I0820 --&gt; I0840
+    I0820 --&gt; I0842
+    I0821 --&gt; I0840
+    I0821 --&gt; I0841
+    I0822 --&gt; I0831
+    I0822 --&gt; I0835
+    I0823 --&gt; I0824
+    I0823 --&gt; I0827
+    I0823 --&gt; I0830
+    I0824 --&gt; I0825
+    I0825 --&gt; I0826
+    I0826 --&gt; I0830
+    I0826 --&gt; I0831
+    I0826 --&gt; I0835
+    I0826 --&gt; I0838
+    I0827 --&gt; I0828
+    I0828 --&gt; I0834
+    I0828 --&gt; I0839
+    I0829 --&gt; I0830
+    I0830 --&gt; I0843
+    I0831 --&gt; I0843
+    I0832 --&gt; I0842
+    I0833 --&gt; I0842
+    I0835 --&gt; I0843
+    I0841 --&gt; I0843
+    I0842 --&gt; I0843
+    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px
+    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px
+    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px
+    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px
+    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px
+    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px</pre></div>
+</figure>
+
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Edges</h2>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[30rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">must finish</th><th scope="col" class="px-4 py-2">before</th><th scope="col" class="px-4 py-2">which is</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0001/" class="text-fg-brand hover:underline">I0001</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0002/" class="text-fg-brand hover:underline">I0002</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Define the canonical milestone and issue schema</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0002/" class="text-fg-brand hover:underline">I0002</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0003/" class="text-fg-brand hover:underline">I0003</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Implement the model loader and the status derivation engine</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0003/" class="text-fg-brand hover:underline">I0003</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0004/" class="text-fg-brand hover:underline">I0004</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Implement DAG validation and execution waves</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0004/" class="text-fg-brand hover:underline">I0004</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0005/" class="text-fg-brand hover:underline">I0005</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Implement the plan command surface</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0004/" class="text-fg-brand hover:underline">I0004</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0006/" class="text-fg-brand hover:underline">I0006</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Generate the Mermaid DAG from the graph</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0004/" class="text-fg-brand hover:underline">I0004</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0010/" class="text-fg-brand hover:underline">I0010</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Behavioural tests for schema, status, graph and command</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0005/" class="text-fg-brand hover:underline">I0005</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0007/" class="text-fg-brand hover:underline">I0007</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Enforce the canonical model as doctrine</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0005/" class="text-fg-brand hover:underline">I0005</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0008/" class="text-fg-brand hover:underline">I0008</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Project the model to GitHub milestones and issues</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0005/" class="text-fg-brand hover:underline">I0005</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0009/" class="text-fg-brand hover:underline">I0009</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Project the model into the website</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0005/" class="text-fg-brand hover:underline">I0005</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0013/" class="text-fg-brand hover:underline">I0013</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Document the semantics and the dogfooding rule</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0005/" class="text-fg-brand hover:underline">I0005</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0014/" class="text-fg-brand hover:underline">I0014</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Make the worker instructions require the model</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0006/" class="text-fg-brand hover:underline">I0006</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0009/" class="text-fg-brand hover:underline">I0009</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Project the model into the website</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0008/" class="text-fg-brand hover:underline">I0008</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0011/" class="text-fg-brand hover:underline">I0011</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Cross-surface consistency and mutation tests</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0009/" class="text-fg-brand hover:underline">I0009</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0011/" class="text-fg-brand hover:underline">I0011</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Cross-surface consistency and mutation tests</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0010/" class="text-fg-brand hover:underline">I0010</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0011/" class="text-fg-brand hover:underline">I0011</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Cross-surface consistency and mutation tests</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0011/" class="text-fg-brand hover:underline">I0011</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0012/" class="text-fg-brand hover:underline">I0012</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Make CI refuse an invalid model or a stale projection</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0012/" class="text-fg-brand hover:underline">I0012</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0015/" class="text-fg-brand hover:underline">I0015</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Open the first real milestone and execute one issue through it</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0013/" class="text-fg-brand hover:underline">I0013</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0014/" class="text-fg-brand hover:underline">I0014</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Make the worker instructions require the model</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0014/" class="text-fg-brand hover:underline">I0014</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0015/" class="text-fg-brand hover:underline">I0015</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Open the first real milestone and execute one issue through it</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0101/" class="text-fg-brand hover:underline">I0101</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0102/" class="text-fg-brand hover:underline">I0102</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Decide whether a question transfers or the gate widens</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0102/" class="text-fg-brand hover:underline">I0102</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0103/" class="text-fg-brand hover:underline">I0103</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Implement the decision and prove it holds</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0103/" class="text-fg-brand hover:underline">I0103</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0104/" class="text-fg-brand hover:underline">I0104</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Move the claim from planned to guaranteed</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0201/" class="text-fg-brand hover:underline">I0201</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0202/" class="text-fg-brand hover:underline">I0202</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Resolve a task&#39;s effective limits and print them as data</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0202/" class="text-fg-brand hover:underline">I0202</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0203/" class="text-fg-brand hover:underline">I0203</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Make enforcement opt-in, and prove a repository that declines is unaffected</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0203/" class="text-fg-brand hover:underline">I0203</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0204/" class="text-fg-brand hover:underline">I0204</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Apply one derived limit for real and prove it changes what happens</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0204/" class="text-fg-brand hover:underline">I0204</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0205/" class="text-fg-brand hover:underline">I0205</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Declare the clamp as a doctrine so the mapping and the adapter cannot drift</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0205/" class="text-fg-brand hover:underline">I0205</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0206/" class="text-fg-brand hover:underline">I0206</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Publish the runtime-adapters claim with the test that proves it and the limits it does not cover</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0301/" class="text-fg-brand hover:underline">I0301</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0302/" class="text-fg-brand hover:underline">I0302</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Record telemetry a provider reports, and refuse anything it did not</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0302/" class="text-fg-brand hover:underline">I0302</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0303/" class="text-fg-brand hover:underline">I0303</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Prove a silent provider produces an explicit absence, never a guess</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0303/" class="text-fg-brand hover:underline">I0303</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0304/" class="text-fg-brand hover:underline">I0304</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Read the measurements back through the history surface, under a bound</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0304/" class="text-fg-brand hover:underline">I0304</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0305/" class="text-fg-brand hover:underline">I0305</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Publish the telemetry claim and record what remains unmeasured</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0401/" class="text-fg-brand hover:underline">I0401</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0402/" class="text-fg-brand hover:underline">I0402</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Report cost only where measurement and acceptance both exist</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0402/" class="text-fg-brand hover:underline">I0402</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0403/" class="text-fg-brand hover:underline">I0403</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Make a thin denominator say so rather than average it away</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0403/" class="text-fg-brand hover:underline">I0403</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0404/" class="text-fg-brand hover:underline">I0404</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Publish the cost-per-outcome claim with its unit defined beside it</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0501/" class="text-fg-brand hover:underline">I0501</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0502/" class="text-fg-brand hover:underline">I0502</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Recommend a profile from measured cost, naming the measurements</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0502/" class="text-fg-brand hover:underline">I0502</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0503/" class="text-fg-brand hover:underline">I0503</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Return no recommendation where the data is too thin, and say why</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0503/" class="text-fg-brand hover:underline">I0503</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0504/" class="text-fg-brand hover:underline">I0504</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Prove the recommendation is advisory and publish it as such</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0601/" class="text-fg-brand hover:underline">I0601</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0602/" class="text-fg-brand hover:underline">I0602</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Make a local override explicit and prove it survives an update of the shared source</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0602/" class="text-fg-brand hover:underline">I0602</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0603/" class="text-fg-brand hover:underline">I0603</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Report drift from the shared policy in one command</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0603/" class="text-fg-brand hover:underline">I0603</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0604/" class="text-fg-brand hover:underline">I0604</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Prove the offline guarantee survives sharing</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0604/" class="text-fg-brand hover:underline">I0604</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0605/" class="text-fg-brand hover:underline">I0605</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Publish the shared-policy claim and what sharing still cannot do</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0701/" class="text-fg-brand hover:underline">I0701</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0702/" class="text-fg-brand hover:underline">I0702</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Decide how a record is attributed, between named alternatives</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0702/" class="text-fg-brand hover:underline">I0702</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0703/" class="text-fg-brand hover:underline">I0703</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Implement the decision and prove it holds</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0703/" class="text-fg-brand hover:underline">I0703</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0704/" class="text-fg-brand hover:underline">I0704</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Publish what attribution guarantees, and what it still cannot</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0801/" class="text-fg-brand hover:underline">I0801</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0807/" class="text-fg-brand hover:underline">I0807</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Discover knowledge sources from git, not from the filesystem</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0802/" class="text-fg-brand hover:underline">I0802</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0803/" class="text-fg-brand hover:underline">I0803</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Open a session and report its status</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0803/" class="text-fg-brand hover:underline">I0803</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0804/" class="text-fg-brand hover:underline">I0804</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Close a session into an envelope derived from the ledger</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0804/" class="text-fg-brand hover:underline">I0804</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0805/" class="text-fg-brand hover:underline">I0805</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Read sessions back with a divergence label</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0805/" class="text-fg-brand hover:underline">I0805</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0806/" class="text-fg-brand hover:underline">I0806</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span> <span class="text-heading">Make the session rules doctrines, with retention and archiving</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0806/" class="text-fg-brand hover:underline">I0806</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0813/" class="text-fg-brand hover:underline">I0813</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">A closed session becomes a node that points at its episode</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0807/" class="text-fg-brand hover:underline">I0807</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0808/" class="text-fg-brand hover:underline">I0808</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Extract nodes with identities that survive a rebuild</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0808/" class="text-fg-brand hover:underline">I0808</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0809/" class="text-fg-brand hover:underline">I0809</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Record only edges that a file states, each with where it was observed</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0809/" class="text-fg-brand hover:underline">I0809</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0810/" class="text-fg-brand hover:underline">I0810</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span> <span class="text-heading">A content-hash manifest that makes a second sync cheap</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0810/" class="text-fg-brand hover:underline">I0810</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0811/" class="text-fg-brand hover:underline">I0811</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Read-only knowledge lookup with an ordering that can be explained</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0811/" class="text-fg-brand hover:underline">I0811</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0812/" class="text-fg-brand hover:underline">I0812</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Validate the graph, and let doctor and watch ask the same validator</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0811/" class="text-fg-brand hover:underline">I0811</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0814/" class="text-fg-brand hover:underline">I0814</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Give the worker a bounded slice of knowledge, not the knowledge base</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0812/" class="text-fg-brand hover:underline">I0812</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0813/" class="text-fg-brand hover:underline">I0813</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">A closed session becomes a node that points at its episode</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0813/" class="text-fg-brand hover:underline">I0813</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0815/" class="text-fg-brand hover:underline">I0815</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Say what is now true in the claims, the documentation and the worker instructions</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0814/" class="text-fg-brand hover:underline">I0814</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0815/" class="text-fg-brand hover:underline">I0815</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Say what is now true in the claims, the documentation and the worker instructions</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0815/" class="text-fg-brand hover:underline">I0815</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0816/" class="text-fg-brand hover:underline">I0816</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Prove the loop on a real issue, without a transcript</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0817/" class="text-fg-brand hover:underline">I0817</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0818/" class="text-fg-brand hover:underline">I0818</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">The command registry is read in one pass</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0817/" class="text-fg-brand hover:underline">I0817</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0819/" class="text-fg-brand hover:underline">I0819</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">The project model is loaded with one flatten per file and no per-file lookups</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0817/" class="text-fg-brand hover:underline">I0817</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0821/" class="text-fg-brand hover:underline">I0821</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span> <span class="text-heading">Flattened YAML is cached under .ai/local/cache by content hash</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0817/" class="text-fg-brand hover:underline">I0817</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0823/" class="text-fg-brand hover:underline">I0823</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">majordomus bench: targets derived from the command registry</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0817/" class="text-fg-brand hover:underline">I0817</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0832/" class="text-fg-brand hover:underline">I0832</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span> <span class="text-heading">generate-site-data instrumented and its hot spots removed</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0817/" class="text-fg-brand hover:underline">I0817</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0833/" class="text-fg-brand hover:underline">I0833</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">knowledge nodes and edges read each source once</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0817/" class="text-fg-brand hover:underline">I0817</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0837/" class="text-fg-brand hover:underline">I0837</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span> <span class="text-heading">Timing report as JSON</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0818/" class="text-fg-brand hover:underline">I0818</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0820/" class="text-fg-brand hover:underline">I0820</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span> <span class="text-heading">Catalogue, DAG, context and command-surface validators read their inputs once</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0818/" class="text-fg-brand hover:underline">I0818</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0822/" class="text-fg-brand hover:underline">I0822</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Every canonical file is flattened at most once per command</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0818/" class="text-fg-brand hover:underline">I0818</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0828/" class="text-fg-brand hover:underline">I0828</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">doctor under a declared budget, and the hook inherits it</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0818/" class="text-fg-brand hover:underline">I0818</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0842/" class="text-fg-brand hover:underline">I0842</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Before and after evidence for every optimisation</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0819/" class="text-fg-brand hover:underline">I0819</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0820/" class="text-fg-brand hover:underline">I0820</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span> <span class="text-heading">Catalogue, DAG, context and command-surface validators read their inputs once</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0819/" class="text-fg-brand hover:underline">I0819</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0822/" class="text-fg-brand hover:underline">I0822</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Every canonical file is flattened at most once per command</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0819/" class="text-fg-brand hover:underline">I0819</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0828/" class="text-fg-brand hover:underline">I0828</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">doctor under a declared budget, and the hook inherits it</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0819/" class="text-fg-brand hover:underline">I0819</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0832/" class="text-fg-brand hover:underline">I0832</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span> <span class="text-heading">generate-site-data instrumented and its hot spots removed</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0819/" class="text-fg-brand hover:underline">I0819</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0836/" class="text-fg-brand hover:underline">I0836</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span> <span class="text-heading">A synthetic repository generator for scaling cases</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0819/" class="text-fg-brand hover:underline">I0819</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0842/" class="text-fg-brand hover:underline">I0842</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Before and after evidence for every optimisation</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0820/" class="text-fg-brand hover:underline">I0820</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0822/" class="text-fg-brand hover:underline">I0822</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Every canonical file is flattened at most once per command</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0820/" class="text-fg-brand hover:underline">I0820</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0828/" class="text-fg-brand hover:underline">I0828</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">doctor under a declared budget, and the hook inherits it</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0820/" class="text-fg-brand hover:underline">I0820</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0840/" class="text-fg-brand hover:underline">I0840</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">context and its subcommands under a second</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0820/" class="text-fg-brand hover:underline">I0820</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0842/" class="text-fg-brand hover:underline">I0842</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Before and after evidence for every optimisation</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0821/" class="text-fg-brand hover:underline">I0821</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0840/" class="text-fg-brand hover:underline">I0840</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">context and its subcommands under a second</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0821/" class="text-fg-brand hover:underline">I0821</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0841/" class="text-fg-brand hover:underline">I0841</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Cache equivalence proved by property-shaped cases</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0822/" class="text-fg-brand hover:underline">I0822</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0831/" class="text-fg-brand hover:underline">I0831</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Performance claims at their proven status</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0822/" class="text-fg-brand hover:underline">I0822</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0835/" class="text-fg-brand hover:underline">I0835</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">CI runs the structural performance checks</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0823/" class="text-fg-brand hover:underline">I0823</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0824/" class="text-fg-brand hover:underline">I0824</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">Bench persists local runs and keeps a latest projection</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0823/" class="text-fg-brand hover:underline">I0823</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0827/" class="text-fg-brand hover:underline">I0827</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">The benchmark policy block</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0823/" class="text-fg-brand hover:underline">I0823</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0830/" class="text-fg-brand hover:underline">I0830</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0824/" class="text-fg-brand hover:underline">I0824</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0825/" class="text-fg-brand hover:underline">I0825</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">An explicit committed baseline</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0825/" class="text-fg-brand hover:underline">I0825</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0826/" class="text-fg-brand hover:underline">I0826</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">bench --check refuses a regression by policy</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0826/" class="text-fg-brand hover:underline">I0826</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0830/" class="text-fg-brand hover:underline">I0830</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0826/" class="text-fg-brand hover:underline">I0826</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0831/" class="text-fg-brand hover:underline">I0831</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Performance claims at their proven status</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0826/" class="text-fg-brand hover:underline">I0826</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0835/" class="text-fg-brand hover:underline">I0835</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">CI runs the structural performance checks</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0826/" class="text-fg-brand hover:underline">I0826</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0838/" class="text-fg-brand hover:underline">I0838</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span> <span class="text-heading">bench compare and the top regressions report</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0827/" class="text-fg-brand hover:underline">I0827</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0828/" class="text-fg-brand hover:underline">I0828</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">doctor under a declared budget, and the hook inherits it</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0828/" class="text-fg-brand hover:underline">I0828</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0834/" class="text-fg-brand hover:underline">I0834</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">The test runner reports per-case time and the suite budget</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0828/" class="text-fg-brand hover:underline">I0828</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0839/" class="text-fg-brand hover:underline">I0839</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">watch inherits every doctor fix and its own budget</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0829/" class="text-fg-brand hover:underline">I0829</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0830/" class="text-fg-brand hover:underline">I0830</a></td>
+          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span> <span class="text-heading">docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0830/" class="text-fg-brand hover:underline">I0830</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0843/" class="text-fg-brand hover:underline">I0843</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">The performance workflow is discoverable and complete</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0831/" class="text-fg-brand hover:underline">I0831</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0843/" class="text-fg-brand hover:underline">I0843</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">The performance workflow is discoverable and complete</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0832/" class="text-fg-brand hover:underline">I0832</a> <span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0842/" class="text-fg-brand hover:underline">I0842</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Before and after evidence for every optimisation</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0833/" class="text-fg-brand hover:underline">I0833</a> <span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0842/" class="text-fg-brand hover:underline">I0842</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">Before and after evidence for every optimisation</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0835/" class="text-fg-brand hover:underline">I0835</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0843/" class="text-fg-brand hover:underline">I0843</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">The performance workflow is discoverable and complete</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0841/" class="text-fg-brand hover:underline">I0841</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0843/" class="text-fg-brand hover:underline">I0843</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">The performance workflow is discoverable and complete</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0842/" class="text-fg-brand hover:underline">I0842</a> <span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0843/" class="text-fg-brand hover:underline">I0843</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span> <span class="text-heading">The performance workflow is discoverable and complete</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Waves</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">The layering the graph implies. Nothing in wave <em>n</em> can start before everything it depends on in earlier waves is done.</p>
+  <div class="mt-4 space-y-4">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 0</p>
+      <p class="mt-2 flex flex-wrap gap-2"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0001/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0001</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0101/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0101</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0201/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0201</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0301/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0301</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0401/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0401</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0501/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0501</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0601/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0601</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0701/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0701</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0801/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0801</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0802/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0802</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0817/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0817</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0829/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0829</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a></p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 1</p>
+      <p class="mt-2 flex flex-wrap gap-2"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0002/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0002</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0102/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0102</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0202/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0202</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0302/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0302</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0402/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0402</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0502/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0502</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0602/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0602</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0702/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0702</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0803/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0803</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0807/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0807</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0818/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0818</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0819/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0819</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0821/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0821</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0823/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0823</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0833/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0833</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0837/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0837</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></a></p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 2</p>
+      <p class="mt-2 flex flex-wrap gap-2"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0003/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0003</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0103/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0103</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0203/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0203</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0303/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0303</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0403/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0403</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0503/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0503</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0603/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0603</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0703/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0703</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0804/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0804</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0808/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0808</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0820/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0820</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0824/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0824</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0827/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0827</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0832/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0832</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0836/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0836</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0841/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0841</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a></p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 3</p>
+      <p class="mt-2 flex flex-wrap gap-2"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0004/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0004</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0104/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0104</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0204/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0204</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0304/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0304</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0404/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0404</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0504/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0504</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0604/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0604</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0704/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0704</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0805/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0805</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0809/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0809</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0822/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0822</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0825/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0825</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0828/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0828</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0840/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0840</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0842/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0842</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a></p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 4</p>
+      <p class="mt-2 flex flex-wrap gap-2"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0005/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0005</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0006/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0006</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0010/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0010</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0205/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0205</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0305/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0305</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0605/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0605</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0806/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0806</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0810/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0810</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0826/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0826</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0834/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0834</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0839/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0839</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a></p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 5</p>
+      <p class="mt-2 flex flex-wrap gap-2"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0007/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0007</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0008/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0008</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0009/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0009</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0013/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0013</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0206/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0206</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0811/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0811</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0830/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0830</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0831/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0831</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0835/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0835</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0838/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0838</span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></a></p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 6</p>
+      <p class="mt-2 flex flex-wrap gap-2"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0011/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0011</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0014/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0014</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0812/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0812</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0814/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0814</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0843/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0843</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a></p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 7</p>
+      <p class="mt-2 flex flex-wrap gap-2"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0012/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0012</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0813/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0813</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a></p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 8</p>
+      <p class="mt-2 flex flex-wrap gap-2"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0015/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0015</span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></a><a href="https://korczis.github.io/prismatic-majordomus/plan/i0815/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0815</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a></p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave 9</p>
+      <p class="mt-2 flex flex-wrap gap-2"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0816/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0816</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></a></p>
+    </div>
+  </div>
+
+  <p class="mt-8 text-sm text-body">Read the same thing at a terminal with <code class="font-mono text-heading">majordomus plan graph</code> and <code class="font-mono text-heading">majordomus plan waves</code>, or the whole model at <a href="https://korczis.github.io/prismatic-majordomus/plan/" class="text-fg-brand hover:underline">the plan</a>.</p>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/31acaf90d47f0be33db413ce3539a118520106f2" class="font-mono hover:underline">31acaf9</a> · inputs <span class="font-mono">59a7aa60d3b2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>

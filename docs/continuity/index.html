@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Continuity — Prismatic Majordomus</title>
+<meta name="description" content="how work survives the session doing it: the durable records, why transcripts are not state, how context is selected and records resolved">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/docs/continuity/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Continuity — Prismatic Majordomus">
+<meta property="og:description" content="how work survives the session doing it: the durable records, why transcripts are not state, how context is selected and records resolved">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/docs/continuity/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Continuity</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Continuity</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">how work survives the session doing it: the durable records, why transcripts are not state, how context is selected and records resolved</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/continuity/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Continuity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Use cases and applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/CONTINUITY.md" class="font-mono hover:underline">docs/CONTINUITY.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p>A conversation with an AI worker is not a place to keep anything. It ends, it is
+compacted, it is replaced by a different worker with a different context window, and
+none of that is under your control. The work, meanwhile, has to continue.</p>
+<p>Majordomus's answer is that operational state lives in the repository, in files that
+outlive every conversation, and that the next worker is given a briefing assembled from
+those files rather than a transcript to re-read.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Conversation is ephemeral.</span></span>
+<span class="giallo-l"><span>Operational state is durable.</span></span>
+<span class="giallo-l"><span>Context is selected.</span></span>
+<span class="giallo-l"><span>History is reconstructable.</span></span>
+<span class="giallo-l"><span>Handovers are explicit.</span></span>
+<span class="giallo-l"><span>Completion is independently verified.</span></span></code></pre><h2 id="the-problem-stated-precisely"><a class="zola-anchor" href="#the-problem-stated-precisely" aria-label="Anchor link for: the-problem-stated-precisely">The problem, stated precisely</a></h2>
+<p>A worker stops. Something must survive, or the next worker begins by reconstructing what
+the last one knew — from commit messages, from a diff, from a human's memory of a
+conversation they were not part of. That reconstruction is slow, and worse, it is
+confidently wrong often enough to matter.</p>
+<p>The obvious fix is to save the conversation. That fix is wrong for three reasons.</p>
+<p>A transcript is not state. It is a record of how someone arrived at a conclusion,
+including every wrong turn, in an order optimised for nothing. What the next worker needs
+is the conclusion, the current facts, and the next action.</p>
+<p>A transcript is unbounded. It grows with the length of the session rather than with the
+size of the work, and the tenth session's context is filled with the first session's
+false starts.</p>
+<p>A transcript goes stale silently. It records what was true when it was written and says
+nothing when the repository moves past it. A worker that trusts a stale narrative makes
+decisions against a repository that no longer exists.</p>
+<p>So Majordomus stores none of it. What it stores is small, typed, and each piece has one
+home.</p>
+<h2 id="six-kinds-of-durable-record-and-a-seventh-that-is-not-task-shaped"><a class="zola-anchor" href="#six-kinds-of-durable-record-and-a-seventh-that-is-not-task-shaped" aria-label="Anchor link for: six-kinds-of-durable-record-and-a-seventh-that-is-not-task-shaped">Six kinds of durable record, and a seventh that is not task-shaped</a></h2>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Record</th><th>Answers</th><th>Mutability</th><th>Where</th></tr></thead><tbody>
+<tr><td><strong>task</strong></td><td>what is being worked on, under what constraints, within which paths</td><td>mutable; one active per checkout</td><td><code>state/current.yaml</code></td></tr>
+<tr><td><strong>checkpoint</strong></td><td>what was true a few minutes ago, and what comes next</td><td>append-only</td><td><code>state/checkpoints/</code></td></tr>
+<tr><td><strong>handover</strong></td><td>the deliberate package for whoever continues</td><td>append-only</td><td><code>state/handovers/</code></td></tr>
+<tr><td><strong>decision</strong></td><td>what was decided, why, and what was rejected</td><td>append-only</td><td><code>state/decisions.md</code></td></tr>
+<tr><td><strong>open question</strong></td><td>what is unresolved, and what it blocks</td><td>mutable index; the ledger keeps the history</td><td><code>state/open-questions.md</code></td></tr>
+<tr><td><strong>history event</strong></td><td>what happened, when, for which task, at which commit</td><td>append-only</td><td><code>state/ledger.jsonl</code></td></tr>
+</tbody></table>
+</div>
+<p>Prompt assets in <code>.ai/repo/prompts/</code> are a seventh thing, but they are not records of
+work — they are reusable framings, versioned with the repository.</p>
+<h2 id="the-seventh-kind-the-session"><a class="zola-anchor" href="#the-seventh-kind-the-session" aria-label="Anchor link for: the-seventh-kind-the-session">The seventh kind: the session</a></h2>
+<p>The six above are all task-shaped. Each one hangs off the work, which is right, and it
+leaves one question with nowhere to live: <em>what did one worker do between sitting down and
+stopping?</em></p>
+<p>That question is not the same as any of the six. A task can outlive a worker; a worker can
+touch three tasks in an afternoon. Nothing in the six records that two decisions an hour
+apart, filed under different tasks, were made by the same person in the same sitting — and
+that is exactly the causal thread a later reader is trying to pick up.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Record</th><th>Answers</th><th>Mutability</th><th>Where</th></tr></thead><tbody>
+<tr><td><strong>session</strong></td><td>what one execution episode did, between which commits, producing which records</td><td>one open per worktree, then immutable</td><td><code>state/session-current.yaml</code>, then <code>state/sessions/</code></td></tr>
+</tbody></table>
+</div>
+<p>A session opens, may cross several tasks, and closes. <code>task != session</code> in both
+directions: a task spanning two sessions is named by both, and a session spanning two
+tasks names both.</p>
+<h3 id="a-session-is-an-envelope-not-a-narrative"><a class="zola-anchor" href="#a-session-is-an-envelope-not-a-narrative" aria-label="Anchor link for: a-session-is-an-envelope-not-a-narrative">A session is an envelope, not a narrative</a></h3>
+<p>The closed record is identity, a temporal boundary, and references. It names the tasks,
+issues, milestones, checkpoints, handovers, decisions, questions and evidence of its
+episode, and it copies the body of none of them. An authored summary is allowed and is
+not authority; the records it points at are.</p>
+<p>The temptation is to write the episode down instead — one document with the decisions
+quoted, the checkpoint bodies inlined, the git log pasted, the reasoning narrated. That
+document is a transcript with better formatting, and it fails the same three ways any
+transcript does: it is a record of how somebody arrived somewhere rather than where they
+are, it grows with the length of the session rather than the size of the work, and it goes
+stale silently while the repository moves past it.</p>
+<p>So the session file holds pointers, and the pointers are checked. A reference to a
+checkpoint that does not exist is a reported defect, not a broken link nobody notices.</p>
+<h3 id="the-envelope-is-derived-not-accumulated"><a class="zola-anchor" href="#the-envelope-is-derived-not-accumulated" aria-label="Anchor link for: the-envelope-is-derived-not-accumulated">The envelope is derived, not accumulated</a></h3>
+<p>Nothing writes into an open session. <code>checkpoint</code>, <code>decision</code>, <code>question</code> and <code>plan</code> are
+unchanged and know nothing about sessions. At close, the reference lists are computed from
+the ledger.</p>
+<p>The ledger is already append-only, already written only by Majordomus, already ordered by
+the order the commands ran, and already validated. It knows every fact the envelope needs.
+Having each command additionally append to a session file would put a write on the hot path
+of commands that today append one line, and would create a second mutable account of
+events the ledger already holds — which is the second source of truth this whole design
+refuses. The cost is that the ledger is now load-bearing for two purposes, and that is
+stated rather than hidden.</p>
+<p>What it selects, and why it is not a time range, is worth stating because the obvious
+implementation is wrong. Every ledger line now carries the session that wrote it, next to
+the commit and branch it already carried. A first version selected every line between the
+session's two timestamps instead, and the first time it ran for real it claimed another
+worker's tasks, checkpoints and handovers: the ledger is one file per repository, two
+workers were writing to it, and no timestamp can separate them. Which episode wrote an
+event is something the machine knows when it writes it, so it is recorded then.</p>
+<p>A line with no session belongs to no episode. Sessions are optional, and work done outside
+one is attributed to nobody rather than to whoever had a session open nearby.</p>
+<h3 id="sessions-are-read-with-the-same-rules-as-everything-else"><a class="zola-anchor" href="#sessions-are-read-with-the-same-rules-as-everything-else" aria-label="Anchor link for: sessions-are-read-with-the-same-rules-as-everything-else">Sessions are read with the same rules as everything else</a></h3>
+<p>Resolution is the two-tier rule: same repository, same worktree, same branch; then same
+repository, same branch; then nothing. A session from another branch is never offered.</p>
+<p>Divergence uses the same four labels — <code>exact</code>, <code>advanced</code>, <code>diverged</code>,
+<code>different_context</code> — computed at read time from the commit the session closed at. A
+session whose branch was rewritten underneath it is labelled <code>diverged</code> wherever it is
+printed, and is never quietly presented as current knowledge.</p>
+<p>Ordering comes from the recorded timestamp, with ledger line order breaking ties inside
+one second. Nothing reads filesystem modification time: it does not survive a clone, and
+it is not the time the record asserts.</p>
+<h3 id="what-a-session-is-not"><a class="zola-anchor" href="#what-a-session-is-not" aria-label="Anchor link for: what-a-session-is-not">What a session is not</a></h3>
+<p>It is not a scope. A task claims paths; an episode does not, and giving one paths would
+create a second, weaker claim for the coordination check to disagree with.</p>
+<p>It is not a unit of acceptance. <code>finish</code> evaluates a task against its contract. Closing a
+session asserts only that the episode ended.</p>
+<p>It is not required. A worker that never opens a session loses the episode boundary and
+nothing else; every other record is written exactly as before.</p>
+<h2 id="checkpoint-and-handover-are-different-objects"><a class="zola-anchor" href="#checkpoint-and-handover-are-different-objects" aria-label="Anchor link for: checkpoint-and-handover-are-different-objects">Checkpoint and handover are different objects</a></h2>
+<p>They are easy to conflate and expensive to conflate.</p>
+<p>A <strong>checkpoint</strong> is a progress note inside an active task. It is written often, it is
+short by policy (<code>checkpoint.max_body_lines</code>), and its job is to be quotable whole into
+the next briefing. "Reproduced the fault with the fixture; the cause is in normalisation,
+not comparison; next, write the regression test."</p>
+<p>A <strong>handover</strong> is a deliberate continuation package written when a worker stops. It has
+required sections, it is refused if any of them is empty, and it is the thing another
+worker resumes from. It is written rarely.</p>
+<p>A checkpoint that grows into a report is refused rather than truncated, with the
+suggestion to write a handover instead. The cap is the mechanism that keeps the two
+objects distinct.</p>
+<h2 id="identity-comes-from-reality"><a class="zola-anchor" href="#identity-comes-from-reality" aria-label="Anchor link for: identity-comes-from-reality">Identity comes from reality</a></h2>
+<p><code>repository_id</code>, <code>worktree</code>, <code>branch</code>, <code>head</code>, <code>working_tree</code> and <code>changed_files</code> on every
+record are computed from git at write time. A body that contains any of them is refused.</p>
+<p>This is not fussiness. A worker asked to summarise its own state will produce a plausible
+summary, and a plausible summary that includes a commit hash the worker did not verify is
+worse than no summary, because it looks checkable. The fields a machine can determine are
+determined by the machine; the fields only a person or a worker can supply are supplied by
+them and marked as such.</p>
+<h2 id="records-are-read-with-a-divergence-label"><a class="zola-anchor" href="#records-are-read-with-a-divergence-label" aria-label="Anchor link for: records-are-read-with-a-divergence-label">Records are read with a divergence label</a></h2>
+<p>Nothing is trusted because it exists. On read, the recorded <code>head</code> is compared with the
+current <code>HEAD</code> through <code>git merge-base</code>, and the record is labelled:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Label</th><th>Meaning</th><th>What to do</th></tr></thead><tbody>
+<tr><td><code>exact</code></td><td>written at this commit</td><td>trust it</td></tr>
+<tr><td><code>advanced</code></td><td>git has moved forward since</td><td>trust it, expect some of it to be done</td></tr>
+<tr><td><code>diverged</code></td><td>the recorded commit is not an ancestor</td><td>history was rewritten; trust git, not the record</td></tr>
+<tr><td><code>different_context</code></td><td>another branch</td><td>this record is not about your work</td></tr>
+</tbody></table>
+</div>
+<p><code>context</code> prints the label. <code>check</code> and <code>watch</code> report it as a finding. A record is
+evidence, never authority.</p>
+<h2 id="resolution-is-deterministic-and-absence-is-a-valid-answer"><a class="zola-anchor" href="#resolution-is-deterministic-and-absence-is-a-valid-answer" aria-label="Anchor link for: resolution-is-deterministic-and-absence-is-a-valid-answer">Resolution is deterministic, and absence is a valid answer</a></h2>
+<p><code>handover --resolve</code>, <code>checkpoint --show</code> and <code>context</code> all use the same rule:</p>
+<ol>
+<li>Same repository, same worktree, same branch.</li>
+<li>Same repository, same branch, when the branch is not detached.</li>
+<li>Nothing.</li>
+</ol>
+<p>There is no third tier. A record from an unrelated worktree or branch is never offered,
+because a globally newer record silently becoming your context is worse than having no
+context at all — you cannot tell that it is wrong until you have acted on it.</p>
+<p>Records written inside the same second would otherwise resolve in an order decided by a
+random filename suffix, so the ledger, which is append-only and written in command order,
+breaks the tie.</p>
+<p>When nothing matches, the answer is "no relevant handover", not the closest thing
+available. <strong>Absence is better than incorrect memory.</strong></p>
+<h2 id="context-is-selected-not-accumulated"><a class="zola-anchor" href="#context-is-selected-not-accumulated" aria-label="Anchor link for: context-is-selected-not-accumulated">Context is selected, not accumulated</a></h2>
+<p><code>majordomus context</code> assembles a briefing in authority order — git, then the task and its
+profile, then blockers, then authored records, then event history — and prints it. Nothing
+is persisted; it is recomputed each time from the records and git.</p>
+<p>What goes in is decided by the profile's <code>context</code> block. A <code>routine</code> task does not need
+the decision history; a <code>deep-work</code> task wants the repository's decisions rather than only
+its own. Those toggles were configuration that nothing read until the builder existed;
+now they are the thing that decides.</p>
+<p>When the assembled text exceeds <code>context.builder_budget_lines</code>, sections are dropped in a
+fixed order: history first, then touched files, then decisions, then the bodies of the
+checkpoint and the handover, which degrade to a pointer rather than disappearing. Git, the
+task, the profile and open blockers are never dropped.</p>
+<p><strong>Every exclusion is named, with its reason</strong>, under <code>EXCLUDED</code>. An under-filled context is
+debugged by reading that list, not by guessing what the tool decided to leave out. The
+reported line count is the count of the document actually printed, including its own
+header and trailer.</p>
+<h2 id="history-is-for-reconstruction-not-for-reading-back-a-conversation"><a class="zola-anchor" href="#history-is-for-reconstruction-not-for-reading-back-a-conversation" aria-label="Anchor link for: history-is-for-reconstruction-not-for-reading-back-a-conversation">History is for reconstruction, not for reading back a conversation</a></h2>
+<p><code>state/ledger.jsonl</code> is append-only and written only by Majordomus. One line per event:
+started, checkpoint, decision recorded, question opened, question resolved, handed over,
+finished, projections updated, ledger rotated. Each carries a timestamp, the task, and the
+commit it happened at.</p>
+<p><code>majordomus history</code> reads it back with filters. It answers what happened, when, for which
+task, at what git state, what verification ran and what outcome was accepted. It does not
+answer what anyone said, because that is not recorded.</p>
+<p>Retention is deliberate: the ledger has a line cap, and <code>history --rotate</code> moves the
+oldest lines into a dated archive file. It never deletes, and it refuses to overwrite an
+existing archive.</p>
+<h2 id="blockers-are-state-not-prose"><a class="zola-anchor" href="#blockers-are-state-not-prose" aria-label="Anchor link for: blockers-are-state-not-prose">Blockers are state, not prose</a></h2>
+<p>An unresolved question in a handover paragraph is a note. An entry in
+<code>state/open-questions.md</code> <strong>refuses <code>finish --outcome completed</code></strong> — any entry, not only one
+the active task opened. A question is a person owing an answer, and the work it blocks
+outlives the task that asked; a gate that forgot at the task boundary would be a gate a
+handover walks past. The store is checkout-local, under the ignored <code>.ai/local/state/</code>,
+so the questions a gate can see are the ones asked in this working copy; a question is
+carried to another checkout by the handover that names it, never by git.</p>
+<p>Only <em>completed</em> is refused. <code>blocked</code>, <code>partial</code>, <code>no_match</code> and <code>failed</code> are honest
+statements that the work did not finish, and refusing them would buy a green gate by forcing
+a mislabelled outcome.</p>
+<p>That gate is why the file has a machine-written line format, and why <code>check</code>, <code>doctor</code> and
+<code>watch</code> fail on an entry that does not parse: a gate that cannot read an entry is a gate
+that can be bypassed by mistyping one.</p>
+<h2 id="nothing-here-calls-a-model"><a class="zola-anchor" href="#nothing-here-calls-a-model" aria-label="Anchor link for: nothing-here-calls-a-model">Nothing here calls a model</a></h2>
+<p>Majordomus stores, validates, resolves, projects and verifies. It does not summarise, it
+does not decide what a checkpoint should say, and it makes no network call. If you want a
+model to write your checkpoint, have the worker write it and pipe it in. The tool is
+deterministic infrastructure and stays that way.</p>
+<h2 id="where-the-lifecycle-puts-each-piece"><a class="zola-anchor" href="#where-the-lifecycle-puts-each-piece" aria-label="Anchor link for: where-the-lifecycle-puts-each-piece">Where the lifecycle puts each piece</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>majordomus start &quot;&lt;task&gt;&quot; --scope &lt;paths&gt; [--profile &lt;name&gt;]</span></span>
+<span class="giallo-l"><span>        |                                  names any prior record for this branch</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>majordomus context                         the briefing, within budget</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>   work happens (Majordomus is not involved)</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        +---&gt; majordomus checkpoint        progress, often, short</span></span>
+<span class="giallo-l"><span>        +---&gt; majordomus decision add      what was decided and why</span></span>
+<span class="giallo-l"><span>        +---&gt; majordomus question add      what is unresolved, and it now blocks</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>majordomus check                           scope, state, blockers, store integrity</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        +-- not finished --&gt; majordomus handover   ---&gt; the next session runs context</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>majordomus finish --outcome &lt;...&gt; --verify-command &quot;&lt;cmd&gt;&quot;</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>majordomus history                         the lifecycle, reconstructable</span></span></code></pre><h2 id="what-this-does-not-do"><a class="zola-anchor" href="#what-this-does-not-do" aria-label="Anchor link for: what-this-does-not-do">What this does not do</a></h2>
+<p>It does not know who wrote which commit. A task records the commit it started at, and
+<code>check</code> treats every file changed since as the task's work. When another session commits
+to the same branch in the same checkout, that session's files are reported outside your
+scope. The report is correct about the files and wrong about the author, and Majordomus
+has no way to tell the difference. Close the task with a handover and start a new one at
+the current commit.</p>
+<p><strong>A question blocks its whole branch, not the task that asked.</strong> That is deliberate, and it
+is wrong in one case: a question about work that was abandoned, left unanswered, refuses
+completion of every later task on that branch until somebody writes an answer. The direction
+was chosen because it fails loudly — <code>question list</code> names it and <code>question resolve</code> clears
+it in one command — where the alternatives fail silently. See <code>M001</code> in
+<code>.ai/repo/project/</code> for the alternatives that were rejected and the case each gets wrong.</p>
+<p>It does not measure tokens, context savings, or cost. The budget is lines, because lines
+are what it can count. See <a href="https://korczis.github.io/prismatic-majordomus/docs/economics/"><code>ECONOMICS.md</code></a>.</p>
+<p>It does not rank search results, embed anything, or maintain an index. <code>search</code> is a
+literal grep across the record kinds in authority order. The corpus is a handful of files;
+an index would be a second source of truth that has to be kept in step with the first.</p>
+<p>It does not resolve across worktrees or branches, and it never will silently.</p>
+<h2 id="related"><a class="zola-anchor" href="#related" aria-label="Anchor link for: related">Related</a></h2>
+<p><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/"><code>CONCEPTS.md</code></a> for the vocabulary · <a href="https://korczis.github.io/prismatic-majordomus/docs/cli/"><code>CLI.md</code></a> for every command ·
+<a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/"><code>SCHEMAS.md</code></a> for the file formats · <a href="https://korczis.github.io/prismatic-majordomus/docs/design/"><code>DESIGN.md</code></a> for why the
+models are shaped this way.</p>
+</article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
+    <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-assembly/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The context a worker is given is assembled from durable state in authority order, and what a profile excludes is excluded</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/record-resolution/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The right prior record is resolved by worktree and branch, and an unrelated one is never offered</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/task-commit-attribution/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">planned</span></span><span class="text-sm text-heading">A task will know which commits it produced, rather than inferring them from a range</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/semantic-retrieval/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">rejected</span></span><span class="text-sm text-heading">Ranked or semantic retrieval over durable records is deliberately not implemented</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/blocker-survives-handover/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A blocking question keeps blocking after the work is handed to a new task</span></a></li></ul></div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/31acaf90d47f0be33db413ce3539a118520106f2" class="font-mono hover:underline">31acaf9</a> · inputs <span class="font-mono">59a7aa60d3b2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>
