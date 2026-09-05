@@ -48,6 +48,73 @@
       "summary": "Why CLAUDE.md and AGENTS.md drift apart, and how one policy generates every instruction file with its own stamp."
     },
     {
+      "id": "moment:re-arguing-a-settled-decision",
+      "kind": "moment",
+      "label": "watched a session undo last week's decision, for the reason it was made",
+      "route": "/why/re-arguing-a-settled-decision/",
+      "external": false,
+      "summary": "Why a decision that lives only in a transcript is reopened by the next session, and how a recorded reason and an explicit open question replace the argument."
+    },
+    {
+      "id": "moment:task-in-progress-for-three-weeks",
+      "kind": "moment",
+      "label": "found a task \"in progress\" that nobody had touched for three weeks",
+      "route": "/why/task-in-progress-for-three-weeks/",
+      "external": false,
+      "summary": "Why an abandoned task looks active, and how computed identity, checkpoint intervals and drift reports tell a live task from a dead one."
+    },
+    {
+      "id": "moment:what-the-workers-did-last-night",
+      "kind": "moment",
+      "label": "asked what the workers did last night and had only transcripts to grep",
+      "route": "/why/what-the-workers-did-last-night/",
+      "external": false,
+      "summary": "Why a conversation log cannot answer an operational question, and how an append-only ledger with a closed vocabulary can."
+    },
+    {
+      "id": "moment:rule-in-a-readme-nobody-loaded",
+      "kind": "moment",
+      "label": "found the rule for that directory in a README no session ever loaded",
+      "route": "/why/rule-in-a-readme-nobody-loaded/",
+      "external": false,
+      "summary": "Why one always-loaded file cannot carry every local rule, and how a tree of scoped documents is composed for the path a worker is about to touch."
+    },
+    {
+      "id": "moment:three-roadmaps-none-of-them-true",
+      "kind": "moment",
+      "label": "read three roadmaps for one project and believed none of them",
+      "route": "/why/three-roadmaps-none-of-them-true/",
+      "external": false,
+      "summary": "Why a plan kept in prose disagrees with itself the first time anything changes, and how a dependency graph with derived status replaces it."
+    },
+    {
+      "id": "claim:ai-layer-manifest",
+      "kind": "claim",
+      "label": "ai-layer-manifest",
+      "status": "guaranteed",
+      "route": "/guarantees/ai-layer-manifest/",
+      "external": false,
+      "summary": "The repository's AI layer is one directory whose manifest names every section, readable without the tool"
+    },
+    {
+      "id": "claim:blocker-store",
+      "kind": "claim",
+      "label": "blocker-store",
+      "status": "guaranteed",
+      "route": "/guarantees/blocker-store/",
+      "external": false,
+      "summary": "An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does"
+    },
+    {
+      "id": "claim:blocker-survives-handover",
+      "kind": "claim",
+      "label": "blocker-survives-handover",
+      "status": "guaranteed",
+      "route": "/guarantees/blocker-survives-handover/",
+      "external": false,
+      "summary": "A blocking question keeps blocking after the work is handed to a new task"
+    },
+    {
       "id": "claim:capability-class",
       "kind": "claim",
       "label": "capability-class",
@@ -55,6 +122,33 @@
       "route": "/guarantees/capability-class/",
       "external": false,
       "summary": "A profile names a capability class rather than a vendor model"
+    },
+    {
+      "id": "claim:checkpoint-interval",
+      "kind": "claim",
+      "label": "checkpoint-interval",
+      "status": "advisory",
+      "route": "/guarantees/checkpoint-interval/",
+      "external": false,
+      "summary": "A profile sets how often a worker should checkpoint, and a stale task is reported"
+    },
+    {
+      "id": "claim:checkpoint-record",
+      "kind": "claim",
+      "label": "checkpoint-record",
+      "status": "guaranteed",
+      "route": "/guarantees/checkpoint-record/",
+      "external": false,
+      "summary": "A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated"
+    },
+    {
+      "id": "claim:consistency-check",
+      "kind": "claim",
+      "label": "consistency-check",
+      "status": "guaranteed",
+      "route": "/guarantees/consistency-check/",
+      "external": false,
+      "summary": "check reports whether state, scope, blockers and checkpoint age are consistent right now"
     },
     {
       "id": "claim:context-budget",
@@ -66,6 +160,60 @@
       "summary": "The always-loaded instruction file has a line budget with a failing check"
     },
     {
+      "id": "claim:context-documents",
+      "kind": "claim",
+      "label": "context-documents",
+      "status": "guaranteed",
+      "route": "/guarantees/context-documents/",
+      "external": false,
+      "summary": "The context that applies to a path is composed from the layer's scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing"
+    },
+    {
+      "id": "claim:context-impact",
+      "kind": "claim",
+      "label": "context-impact",
+      "status": "guaranteed",
+      "route": "/guarantees/context-impact/",
+      "external": false,
+      "summary": "The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing"
+    },
+    {
+      "id": "claim:context-selection-budget",
+      "kind": "claim",
+      "label": "context-selection-budget",
+      "status": "guaranteed",
+      "route": "/guarantees/context-selection-budget/",
+      "external": false,
+      "summary": "The assembled context obeys a line budget, and every section it drops is named with its reason"
+    },
+    {
+      "id": "claim:dag-validation",
+      "kind": "claim",
+      "label": "dag-validation",
+      "status": "guaranteed",
+      "route": "/guarantees/dag-validation/",
+      "external": false,
+      "summary": "A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name"
+    },
+    {
+      "id": "claim:decision-attribution",
+      "kind": "claim",
+      "label": "decision-attribution",
+      "status": "advisory",
+      "route": "/guarantees/decision-attribution/",
+      "external": false,
+      "summary": "A decision record without a task, a head and a reason is reported, and does not block"
+    },
+    {
+      "id": "claim:decision-record",
+      "kind": "claim",
+      "label": "decision-record",
+      "status": "guaranteed",
+      "route": "/guarantees/decision-record/",
+      "external": false,
+      "summary": "A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited"
+    },
+    {
       "id": "claim:divergence-label",
       "kind": "claim",
       "label": "divergence-label",
@@ -75,6 +223,15 @@
       "summary": "State read back is labelled exact, advanced, diverged or different_context against git"
     },
     {
+      "id": "claim:drift-watch",
+      "kind": "claim",
+      "label": "drift-watch",
+      "status": "guaranteed",
+      "route": "/guarantees/drift-watch/",
+      "external": false,
+      "summary": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift"
+    },
+    {
       "id": "claim:effort-escalation",
       "kind": "claim",
       "label": "effort-escalation",
@@ -82,6 +239,33 @@
       "route": "/guarantees/effort-escalation/",
       "external": false,
       "summary": "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed"
+    },
+    {
+      "id": "claim:event-vocabulary",
+      "kind": "claim",
+      "label": "event-vocabulary",
+      "status": "guaranteed",
+      "route": "/guarantees/event-vocabulary/",
+      "external": false,
+      "summary": "The ledger's event vocabulary is closed, on the way in and on the way out"
+    },
+    {
+      "id": "claim:evidence-gates-done",
+      "kind": "claim",
+      "label": "evidence-gates-done",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-gates-done/",
+      "external": false,
+      "summary": "An issue cannot be completed while a required piece of evidence is missing"
+    },
+    {
+      "id": "claim:execution-waves",
+      "kind": "claim",
+      "label": "execution-waves",
+      "status": "guaranteed",
+      "route": "/guarantees/execution-waves/",
+      "external": false,
+      "summary": "Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised"
     },
     {
       "id": "claim:finish-contract",
@@ -102,6 +286,15 @@
       "summary": "Identity fields on every state record are computed from git and never authored"
     },
     {
+      "id": "claim:github-projection",
+      "kind": "claim",
+      "label": "github-projection",
+      "status": "guaranteed",
+      "route": "/guarantees/github-projection/",
+      "external": false,
+      "summary": "GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten"
+    },
+    {
       "id": "claim:handover-record",
       "kind": "claim",
       "label": "handover-record",
@@ -109,6 +302,24 @@
       "route": "/guarantees/handover-record/",
       "external": false,
       "summary": "handover writes an append-only record with computed front matter and required sections"
+    },
+    {
+      "id": "claim:history-ledger-read",
+      "kind": "claim",
+      "label": "history-ledger-read",
+      "status": "guaranteed",
+      "route": "/guarantees/history-ledger-read/",
+      "external": false,
+      "summary": "The ledger is readable back as operational history, filtered by task, event and time"
+    },
+    {
+      "id": "claim:ledger-integrity",
+      "kind": "claim",
+      "label": "ledger-integrity",
+      "status": "guaranteed",
+      "route": "/guarantees/ledger-integrity/",
+      "external": false,
+      "summary": "Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record"
     },
     {
       "id": "claim:minimum-context",
@@ -138,6 +349,15 @@
       "summary": "Handovers carry durable facts, never conversation transcripts"
     },
     {
+      "id": "claim:open-question-gate",
+      "kind": "claim",
+      "label": "open-question-gate",
+      "status": "guaranteed",
+      "route": "/guarantees/open-question-gate/",
+      "external": false,
+      "summary": "An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass"
+    },
+    {
       "id": "claim:overlap-report",
       "kind": "claim",
       "label": "overlap-report",
@@ -154,6 +374,24 @@
       "route": "/guarantees/profile-axes/",
       "external": false,
       "summary": "Capability class, reasoning effort, output verbosity, context and verification are five independent axes"
+    },
+    {
+      "id": "claim:project-schema",
+      "kind": "claim",
+      "label": "project-schema",
+      "status": "guaranteed",
+      "route": "/guarantees/project-schema/",
+      "external": false,
+      "summary": "Milestones and issues are canonical repository files, and a key nobody reads is an error"
+    },
+    {
+      "id": "claim:project-status-derived",
+      "kind": "claim",
+      "label": "project-status-derived",
+      "status": "guaranteed",
+      "route": "/guarantees/project-status-derived/",
+      "external": false,
+      "summary": "Issue and milestone status is derived from recorded facts and is stored nowhere"
     },
     {
       "id": "claim:projection-fingerprint",
@@ -174,6 +412,24 @@
       "summary": "Provider instruction files are generated from the one policy, deterministically"
     },
     {
+      "id": "claim:record-retention",
+      "kind": "claim",
+      "label": "record-retention",
+      "status": "guaranteed",
+      "route": "/guarantees/record-retention/",
+      "external": false,
+      "summary": "Rotating the ledger archives the oldest lines and never deletes them"
+    },
+    {
+      "id": "claim:record-search",
+      "kind": "claim",
+      "label": "record-search",
+      "status": "guaranteed",
+      "route": "/guarantees/record-search/",
+      "external": false,
+      "summary": "Durable records are searchable literally, across kinds, without an index"
+    },
+    {
       "id": "claim:reproduce-command",
       "kind": "claim",
       "label": "reproduce-command",
@@ -181,6 +437,33 @@
       "route": "/guarantees/reproduce-command/",
       "external": false,
       "summary": "Every finding carries the command that reproduces it"
+    },
+    {
+      "id": "claim:retention-caps",
+      "kind": "claim",
+      "label": "retention-caps",
+      "status": "guaranteed",
+      "route": "/guarantees/retention-caps/",
+      "external": false,
+      "summary": "The append-only ledger and handover store have retention caps that are checked"
+    },
+    {
+      "id": "claim:roadmap-derived",
+      "kind": "claim",
+      "label": "roadmap-derived",
+      "status": "guaranteed",
+      "route": "/guarantees/roadmap-derived/",
+      "external": false,
+      "summary": "The roadmap is derived from milestone state, and no document may be a second authority for it"
+    },
+    {
+      "id": "claim:rule-resolution",
+      "kind": "claim",
+      "label": "rule-resolution",
+      "status": "guaranteed",
+      "route": "/guarantees/rule-resolution/",
+      "external": false,
+      "summary": "The effective rule set is resolved as a dependency graph in a deterministic order, and a set that does not resolve is applied by nothing"
     },
     {
       "id": "claim:scope-enforcement",
@@ -201,6 +484,15 @@
       "summary": "A task is started with a declared file scope and a profile, and only one task is active per checkout"
     },
     {
+      "id": "claim:semantic-retrieval",
+      "kind": "claim",
+      "label": "semantic-retrieval",
+      "status": "rejected",
+      "route": "/guarantees/semantic-retrieval/",
+      "external": false,
+      "summary": "Ranked or semantic retrieval over durable records is deliberately not implemented"
+    },
+    {
       "id": "claim:typed-outcome",
       "kind": "claim",
       "label": "typed-outcome",
@@ -208,6 +500,15 @@
       "route": "/guarantees/typed-outcome/",
       "external": false,
       "summary": "An outcome is a value from a closed vocabulary, not free text"
+    },
+    {
+      "id": "claim:vendored-rule-package",
+      "kind": "claim",
+      "label": "vendored-rule-package",
+      "status": "guaranteed",
+      "route": "/guarantees/vendored-rule-package/",
+      "external": false,
+      "summary": "The rule baseline is vendored into the repository with a manifest naming every file and its hash, and a hand edit is detected and refused"
     },
     {
       "id": "claim:wiring-reconciliation",
@@ -219,12 +520,45 @@
       "summary": "Every enforcement the policy declares is reconciled against what actually runs"
     },
     {
+      "id": "claim:worktree-ownership",
+      "kind": "claim",
+      "label": "worktree-ownership",
+      "status": "guaranteed",
+      "route": "/guarantees/worktree-ownership/",
+      "external": false,
+      "summary": "A task record names the checkout it belongs to, and another checkout is never held to its scope"
+    },
+    {
       "id": "command:check",
       "kind": "command",
       "label": "majordomus check",
       "route": "/commands/check/",
       "external": false,
       "summary": "is the current task consistent with policy, scope, state?"
+    },
+    {
+      "id": "command:checkpoint",
+      "kind": "command",
+      "label": "majordomus checkpoint",
+      "route": "/commands/checkpoint/",
+      "external": false,
+      "summary": "record compact progress inside the active task"
+    },
+    {
+      "id": "command:context",
+      "kind": "command",
+      "label": "majordomus context",
+      "route": "/commands/context/",
+      "external": false,
+      "summary": "what the next worker needs to know now, within budget"
+    },
+    {
+      "id": "command:decision",
+      "kind": "command",
+      "label": "majordomus decision",
+      "route": "/commands/decision/",
+      "external": false,
+      "summary": "record or read durable decisions"
     },
     {
       "id": "command:doctor",
@@ -251,6 +585,46 @@
       "summary": "write an append-only continuation record (body on stdin)"
     },
     {
+      "id": "command:history",
+      "kind": "command",
+      "label": "majordomus history",
+      "route": "/commands/history/",
+      "external": false,
+      "summary": "read the append-only ledger back"
+    },
+    {
+      "id": "command:plan",
+      "kind": "command",
+      "label": "majordomus plan",
+      "route": "/commands/plan/",
+      "external": false,
+      "summary": "the milestone and issue model: validate, read, and move an issue"
+    },
+    {
+      "id": "command:question",
+      "kind": "command",
+      "label": "majordomus question",
+      "route": "/commands/question/",
+      "external": false,
+      "summary": "open, resolve and list questions that block acceptance"
+    },
+    {
+      "id": "command:rules",
+      "kind": "command",
+      "label": "majordomus rules",
+      "route": "/commands/rules/",
+      "external": false,
+      "summary": "the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)"
+    },
+    {
+      "id": "command:search",
+      "kind": "command",
+      "label": "majordomus search",
+      "route": "/commands/search/",
+      "external": false,
+      "summary": "find durable records without reading all of them"
+    },
+    {
       "id": "command:start",
       "kind": "command",
       "label": "majordomus start",
@@ -265,6 +639,14 @@
       "route": "/commands/update/",
       "external": false,
       "summary": "regenerate provider projections from policy"
+    },
+    {
+      "id": "command:watch",
+      "kind": "command",
+      "label": "majordomus watch",
+      "route": "/commands/watch/",
+      "external": false,
+      "summary": "what has drifted: state, policy, projections, retention"
     },
     {
       "id": "responsibility:doctor",
@@ -285,6 +667,20 @@
       "kind": "responsibility",
       "label": "Handover",
       "route": "/supervises/handover/",
+      "external": false
+    },
+    {
+      "id": "responsibility:layer",
+      "kind": "responsibility",
+      "label": "Layer",
+      "route": "/supervises/layer/",
+      "external": false
+    },
+    {
+      "id": "responsibility:plan",
+      "kind": "responsibility",
+      "label": "Plan",
+      "route": "/supervises/plan/",
       "external": false
     },
     {
@@ -321,12 +717,29 @@
       "label": "State",
       "route": "/supervises/state/",
       "external": false
+    },
+    {
+      "id": "responsibility:watch",
+      "kind": "responsibility",
+      "label": "Watch",
+      "route": "/supervises/watch/",
+      "external": false
     }
   ],
   "edges": [
     {
       "source": "moment:done-because-the-model-said-so",
       "target": "command:finish",
+      "kind": "addressed_by"
+    },
+    {
+      "source": "moment:re-arguing-a-settled-decision",
+      "target": "command:decision",
+      "kind": "addressed_by"
+    },
+    {
+      "source": "moment:re-arguing-a-settled-decision",
+      "target": "command:question",
       "kind": "addressed_by"
     },
     {
@@ -340,8 +753,38 @@
       "kind": "addressed_by"
     },
     {
+      "source": "moment:rule-in-a-readme-nobody-loaded",
+      "target": "command:context",
+      "kind": "addressed_by"
+    },
+    {
+      "source": "moment:rule-in-a-readme-nobody-loaded",
+      "target": "command:rules",
+      "kind": "addressed_by"
+    },
+    {
       "source": "moment:strongest-model-renames-a-variable",
       "target": "command:start",
+      "kind": "addressed_by"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "command:check",
+      "kind": "addressed_by"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "command:checkpoint",
+      "kind": "addressed_by"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "command:watch",
+      "kind": "addressed_by"
+    },
+    {
+      "source": "moment:three-roadmaps-none-of-them-true",
+      "target": "command:plan",
       "kind": "addressed_by"
     },
     {
@@ -365,6 +808,16 @@
       "kind": "addressed_by"
     },
     {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "command:history",
+      "kind": "addressed_by"
+    },
+    {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "command:search",
+      "kind": "addressed_by"
+    },
+    {
       "source": "moment:done-because-the-model-said-so",
       "target": "claim:finish-contract",
       "kind": "backed_by"
@@ -377,6 +830,31 @@
     {
       "source": "moment:done-because-the-model-said-so",
       "target": "claim:typed-outcome",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:re-arguing-a-settled-decision",
+      "target": "claim:blocker-store",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:re-arguing-a-settled-decision",
+      "target": "claim:blocker-survives-handover",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:re-arguing-a-settled-decision",
+      "target": "claim:decision-attribution",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:re-arguing-a-settled-decision",
+      "target": "claim:decision-record",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:re-arguing-a-settled-decision",
+      "target": "claim:open-question-gate",
       "kind": "backed_by"
     },
     {
@@ -400,6 +878,36 @@
       "kind": "backed_by"
     },
     {
+      "source": "moment:rule-in-a-readme-nobody-loaded",
+      "target": "claim:ai-layer-manifest",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:rule-in-a-readme-nobody-loaded",
+      "target": "claim:context-documents",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:rule-in-a-readme-nobody-loaded",
+      "target": "claim:context-impact",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:rule-in-a-readme-nobody-loaded",
+      "target": "claim:context-selection-budget",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:rule-in-a-readme-nobody-loaded",
+      "target": "claim:rule-resolution",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:rule-in-a-readme-nobody-loaded",
+      "target": "claim:vendored-rule-package",
+      "kind": "backed_by"
+    },
+    {
       "source": "moment:strongest-model-renames-a-variable",
       "target": "claim:capability-class",
       "kind": "backed_by"
@@ -417,6 +925,71 @@
     {
       "source": "moment:strongest-model-renames-a-variable",
       "target": "claim:profile-axes",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "claim:checkpoint-interval",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "claim:checkpoint-record",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "claim:consistency-check",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "claim:drift-watch",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "claim:git-identity",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "claim:worktree-ownership",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:three-roadmaps-none-of-them-true",
+      "target": "claim:dag-validation",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:three-roadmaps-none-of-them-true",
+      "target": "claim:evidence-gates-done",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:three-roadmaps-none-of-them-true",
+      "target": "claim:execution-waves",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:three-roadmaps-none-of-them-true",
+      "target": "claim:github-projection",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:three-roadmaps-none-of-them-true",
+      "target": "claim:project-schema",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:three-roadmaps-none-of-them-true",
+      "target": "claim:project-status-derived",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:three-roadmaps-none-of-them-true",
+      "target": "claim:roadmap-derived",
       "kind": "backed_by"
     },
     {
@@ -460,8 +1033,53 @@
       "kind": "backed_by"
     },
     {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "claim:event-vocabulary",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "claim:history-ledger-read",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "claim:ledger-integrity",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "claim:record-retention",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "claim:record-search",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "claim:retention-caps",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "claim:semantic-retrieval",
+      "kind": "backed_by"
+    },
+    {
       "source": "moment:done-because-the-model-said-so",
       "target": "responsibility:finish",
+      "kind": "supervises"
+    },
+    {
+      "source": "moment:re-arguing-a-settled-decision",
+      "target": "responsibility:finish",
+      "kind": "supervises"
+    },
+    {
+      "source": "moment:re-arguing-a-settled-decision",
+      "target": "responsibility:state",
       "kind": "supervises"
     },
     {
@@ -475,8 +1093,33 @@
       "kind": "supervises"
     },
     {
+      "source": "moment:rule-in-a-readme-nobody-loaded",
+      "target": "responsibility:layer",
+      "kind": "supervises"
+    },
+    {
+      "source": "moment:rule-in-a-readme-nobody-loaded",
+      "target": "responsibility:policy",
+      "kind": "supervises"
+    },
+    {
       "source": "moment:strongest-model-renames-a-variable",
       "target": "responsibility:profiles",
+      "kind": "supervises"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "responsibility:state",
+      "kind": "supervises"
+    },
+    {
+      "source": "moment:task-in-progress-for-three-weeks",
+      "target": "responsibility:watch",
+      "kind": "supervises"
+    },
+    {
+      "source": "moment:three-roadmaps-none-of-them-true",
+      "target": "responsibility:plan",
       "kind": "supervises"
     },
     {
@@ -502,6 +1145,16 @@
     {
       "source": "moment:two-rulebooks-one-repository",
       "target": "responsibility:projection",
+      "kind": "supervises"
+    },
+    {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "responsibility:state",
+      "kind": "supervises"
+    },
+    {
+      "source": "moment:what-the-workers-did-last-night",
+      "target": "responsibility:watch",
       "kind": "supervises"
     }
   ]
