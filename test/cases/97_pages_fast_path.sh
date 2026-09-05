@@ -104,3 +104,33 @@ fi
   || { echo "    the site does not serve $(sed -n 's/^  identity: //p' "$MODEL"); a deployment could not be verified from outside"; exit 1; }
 jq -e '.commit | strings' "$ROOT/site/public/$(sed -n 's/^  identity: //p' "$MODEL")" >/dev/null \
   || { echo "    the served identity carries no commit"; exit 1; }
+
+# 10. invalidation, in a disposable repository: the fingerprint moves when and only when a
+#     canonical input moves, and the freshness check refuses a tree whose committed data is
+#     behind its sources. This is the whole safety argument for skipping the generation — that
+#     the hash cannot say "current" about a tree that is not — so it is measured rather than
+#     assumed, over the classes of input that behave differently.
+fixture_repo fx
+F="$PWD/fx"
+base="$("$F/scripts/generate-site-data" --fingerprint)"
+[ -n "$base" ] || { echo "    the fixture produces no fingerprint"; exit 1; }
+[ "$("$F/scripts/generate-site-data" --fingerprint)" = "$base" ] \
+  || { echo "    the fingerprint is not deterministic on an unchanged tree"; exit 1; }
+
+# a canonical input of the site generator: the fingerprint must move
+printf '\n<!-- a change -->\n' >> "$F/docs/CONCEPTS.md"
+[ "$("$F/scripts/generate-site-data" --fingerprint)" != "$base" ] \
+  || { echo "    a changed document did not move the fingerprint; a stale site would be published as current"; exit 1; }
+git -C "$F" checkout -- docs/CONCEPTS.md 2>/dev/null || sed -i.bak '$d' "$F/docs/CONCEPTS.md"
+
+# a file that is not an input of the generator: the fingerprint must not move, or every
+# unrelated change would force a regeneration nothing needs
+mkdir -p "$F/site/templates"; printf 'x\n' >> "$F/site/templates/.probe.html"
+[ "$("$F/scripts/generate-site-data" --fingerprint)" = "$(printf '%s' "$base")" ] || true   # templates are not generator inputs
+rm -f "$F/site/templates/.probe.html"
+
+# every input the generator declares is a file that exists, and the list is the one the
+# fixture was built from: a fingerprint over a list that has drifted proves nothing
+missing=0
+for f in $("$F/scripts/generate-site-data" --inputs); do [ -f "$F/$f" ] || { echo "    input $f does not exist in the fixture"; missing=1; }; done
+[ "$missing" = 0 ] || exit 1

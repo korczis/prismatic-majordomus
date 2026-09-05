@@ -6,6 +6,8 @@ what stops the next change from quietly taking the speed back.
 [`GITHUB_PAGES_ARCHITECTURE.md`](GITHUB_PAGES_ARCHITECTURE.md) says what the site *is* — the
 canonical sources, the generators, the checks. This document is about the *path*: latency,
 budgets and the evidence behind both. [`CI.md`](CI.md) is the validation pipeline beside it.
+[`PAGES_STATUS.md`](PAGES_STATUS.md) carries the current numbers, generated; nothing here is
+a measured value, on purpose.
 
 ## The objective
 
