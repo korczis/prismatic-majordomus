@@ -5,22 +5,22 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "5c9e1610d798143afaf139c0844605eb1924cb934fad399d512c82ad010fb4de",
+    "fingerprint": "3f38af5cde48feeb98dd60137825b7c22d0b721b3e679c7f04740fbd429ea7b8",
     "summary": {
-      "total": 511,
+      "total": 513,
       "builtin": 11,
-      "declarative": 500,
+      "declarative": 502,
       "by_kind": {
         "command": 1,
         "query": 10,
-        "resource": 500
+        "resource": 502
       },
       "by_stability": {
         "behaviorally_verified": 11,
-        "implemented": 500
+        "implemented": 502
       },
       "mcp_tools": 11,
-      "mcp_resources": 502,
+      "mcp_resources": 504,
       "http_routes": 11,
       "cli_commands": 4,
       "modules": 19,
@@ -3566,7 +3566,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 72,
+        "capabilities": 73,
         "capability_ids": []
       },
       {
@@ -3590,7 +3590,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 84,
+        "capabilities": 85,
         "capability_ids": []
       },
       {
@@ -3604,7 +3604,7 @@
     ]
   },
   "index": {
-    "fingerprint": "a3a76cdaafb909f57a892a037da2330d11ae043b5771d6b4fa6b8c4a08c84942",
+    "fingerprint": "1bba87ef691504fc2f4885d15e90032ce7e4b0ead08d92069059f122b2924417",
     "state": "degraded",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -3631,10 +3631,10 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "rule": 72,
+      "rule": 73,
       "scope": 1,
       "taxonomy": 10,
-      "test": 84,
+      "test": 85,
       "use-case": 31
     },
     "diagnostics": {
@@ -7357,6 +7357,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.native-cli-documented@1",
+        "kind": "rule",
+        "identity": "project.native-cli-documented@1",
+        "title": "A native command line command exists only with its documentation and its executable examples",
+        "description": "Every command of the Rust executable is declared once in clap with the examples beside it, every command a person can run carries at least one example that the crate's tests execute against the built binary, and the generated reference, the site dataset and the routes under /docs/cli/ are projections that CI refuses to let go stale.",
+        "path": ".ai/repo/rules/project/native-cli-documented.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4768,
+        "tags": [
+          "rust",
+          "cli",
+          "documentation",
+          "projections"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.never-author-identity@1",
         "kind": "rule",
         "identity": "project.never-author-identity@1",
@@ -8418,6 +8435,14 @@
         "bytes": 3852
       },
       {
+        "uri": "majordomus://test/test/cases/98_cli_reference.sh",
+        "kind": "test",
+        "identity": "test/cases/98_cli_reference.sh",
+        "path": "test/cases/98_cli_reference.sh",
+        "source_class": "case",
+        "bytes": 6538
+      },
+      {
         "uri": "majordomus://use-case/accept-or-refuse-finished-work",
         "kind": "use-case",
         "identity": "accept-or-refuse-finished-work",
@@ -8862,7 +8887,7 @@
         "id",
         "version"
       ],
-      "objects": 72
+      "objects": 73
     },
     {
       "name": "scope",
@@ -8887,7 +8912,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 84
+      "objects": 85
     },
     {
       "name": "use-case",
