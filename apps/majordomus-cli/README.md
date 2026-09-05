@@ -62,10 +62,15 @@ cargo llvm-cov --all-targets --summary-only                 # coverage; CI enfor
 ```
 
 `scripts/rust-check` at the repository root (`just rust-check`) runs all of it in the order
-CI does. The tests build a disposable repository each and never read this checkout;
-`test/cases/72_rust_mcp.sh`, `76_capabilities_projections.sh` and `90_mcp_shared_server.sh`
-at the repository root run the built binary against a repository the shell tool's own
-`init` wrote, which is the cross-check that the two executables read the same layer.
+CI does; the coverage floor is the one integer in `scripts/rust-coverage-threshold`, read
+by CI, by the script and by `just coverage`. The tests build a disposable repository each
+and never read this checkout; `test/cases/72_rust_mcp.sh`, `76_capabilities_projections.sh`
+and `90_mcp_shared_server.sh` at the repository root run the built binary against a
+repository the shell tool's own `init` wrote, which is the cross-check that the two
+executables read the same layer, and `77_rust_evidence.sh` proves the gates above are
+wired the same way in the script, the workflow and the justfile (rule
+`project.rust-cli-evidence`, claims `rust-evidence-gates`, `rust-coverage-floor`,
+`rust-hot-path-benchmarks`).
 
 The binary shares its name with the shell tool on purpose. Put one or the other on `PATH`,
 or call this one by path. An MCP client is configured once, at the repository root, and

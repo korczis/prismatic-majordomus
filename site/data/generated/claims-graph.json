@@ -825,18 +825,43 @@
       "note": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build."
     },
     {
-      "id": "claim:mcp-uri-resolution",
+      "id": "claim:rust-evidence-gates",
       "kind": "claim",
-      "label": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
+      "label": "Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs the same gates in the same order on every push",
       "status": "guaranteed",
-      "route": "/guarantees/mcp-uri-resolution/",
+      "route": "/guarantees/rust-evidence-gates/",
       "external": false,
-      "note": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects_get.rs covers every branch at the library level."
+      "note": "Format, lints with warnings as errors (a public item without documentation is one), the suites with the doc examples, rustdoc with warnings denied, the benchmarks building, the registry's own validation, the committed projections in sync, and line coverage above the committed floor. The case reads the script, the workflow and the justfile and fails when they disagree on a gate or its order; with a toolchain present it also runs the doc examples and builds the benchmarks."
     },
     {
-      "id": "impl:apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "id": "claim:rust-coverage-floor",
+      "kind": "claim",
+      "label": "Line coverage of the Rust crate is measured on every push and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+      "status": "guaranteed",
+      "route": "/guarantees/rust-coverage-floor/",
+      "external": false,
+      "note": "cargo-llvm-cov over all targets, --fail-under-lines. The floor is 90; the case refuses a floor under 90, so lowering it is an edit to a test that a reviewer sees, not a quiet change to a number. Raising it when the figure rises is one edit to the file."
+    },
+    {
+      "id": "claim:rust-hot-path-benchmarks",
+      "kind": "claim",
+      "label": "The paths of the Rust executable that scale with the repository carry criterion benchmarks that build on every push, and every executable capability declares its benchmark policy, required or waived for a typed reason",
+      "status": "guaranteed",
+      "route": "/guarantees/rust-hot-path-benchmarks/",
+      "external": false,
+      "note": "The YAML subset and front matter, glob matching, the index, the registry, the OpenAPI document, one MCP listing and one capability call (benches/projections.rs); the router, the bridge and the shared server (benches/shared.rs). Numbers are reported, not asserted; no latency budget is promised until one is measured on CI. The capability! macro does not compile an executable without benchmark cases, the registry counts the required and the waived, and the case reads the policy of every executable back through capabilities list."
+    },
+    {
+      "id": "impl:.github/workflows/validate.yml",
       "kind": "implementation",
-      "label": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "label": ".github/workflows/validate.yml",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/benches/projections.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/benches/projections.rs",
       "route": null,
       "external": false
     },
@@ -1079,6 +1104,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/rust-check",
+      "kind": "implementation",
+      "label": "scripts/rust-check",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:share/commands.yaml",
       "kind": "implementation",
       "label": "share/commands.yaml",
@@ -1089,6 +1121,13 @@
       "id": "impl:test/cases/31_command_coverage.sh",
       "kind": "implementation",
       "label": "test/cases/31_command_coverage.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "source:.ai/repo/rules/project/rust-cli-evidence.v1.md",
+      "kind": "source",
+      "label": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
       "route": null,
       "external": false
     },
@@ -1469,6 +1508,13 @@
       "label": "test/cases/76_capabilities_projections.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/76_capabilities_projections.sh"
+    },
+    {
+      "id": "test:test/cases/77_rust_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/77_rust_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/77_rust_evidence.sh"
     },
     {
       "id": "test:test/cases/90_mcp_shared_server.sh",
@@ -1930,8 +1976,18 @@
       "kind": "specified_by"
     },
     {
-      "source": "claim:mcp-uri-resolution",
-      "target": "source:docs/MCP.md",
+      "source": "claim:rust-evidence-gates",
+      "target": "source:.ai/repo/rules/project/rust-cli-evidence.v1.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rust-coverage-floor",
+      "target": "source:.ai/repo/rules/project/rust-cli-evidence.v1.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rust-hot-path-benchmarks",
+      "target": "source:.ai/repo/rules/project/rust-cli-evidence.v1.md",
       "kind": "specified_by"
     },
     {
@@ -2345,8 +2401,18 @@
       "kind": "implemented_by"
     },
     {
-      "source": "claim:mcp-uri-resolution",
-      "target": "impl:apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "source": "claim:rust-evidence-gates",
+      "target": "impl:scripts/rust-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rust-coverage-floor",
+      "target": "impl:.github/workflows/validate.yml",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rust-hot-path-benchmarks",
+      "target": "impl:apps/majordomus-cli/benches/projections.rs",
       "kind": "implemented_by"
     },
     {
@@ -2760,8 +2826,18 @@
       "kind": "proved_by"
     },
     {
-      "source": "claim:mcp-uri-resolution",
-      "target": "test:test/cases/72_rust_mcp.sh",
+      "source": "claim:rust-evidence-gates",
+      "target": "test:test/cases/77_rust_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rust-coverage-floor",
+      "target": "test:test/cases/77_rust_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rust-hot-path-benchmarks",
+      "target": "test:test/cases/77_rust_evidence.sh",
       "kind": "proved_by"
     }
   ]
