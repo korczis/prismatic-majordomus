@@ -35,6 +35,7 @@ pub mod providers;
 pub mod repository;
 pub mod share;
 pub mod shared;
+pub mod site;
 pub mod synthetic;
 
 pub use error::Error;

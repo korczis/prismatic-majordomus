@@ -329,6 +329,8 @@ pub enum GenerateTarget {
     Allow,
     /// The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...)
     Providers,
+    /// site/data/registry/registry.json, the registry dataset the site renders
+    Site,
 }
 
 #[derive(Debug, Args)]
