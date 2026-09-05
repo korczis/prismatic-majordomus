@@ -83,7 +83,16 @@ impl App {
                 excluded: vec![".git".into(), repository.local_path()],
             }),
         };
-        let index = Index::build(&repository, &sources, &schema, source.as_ref(), git_state)?;
+        let scope = crate::scope::Scope::load(&share, &repository)?;
+        tracing::info!(origin = ?scope.origin(), path = scope.path(), "scope");
+        let index = Index::build(
+            &repository,
+            &sources,
+            &schema,
+            source.as_ref(),
+            git_state,
+            scope,
+        )?;
         for d in &index.diagnostics {
             let path = d.path.as_deref().unwrap_or("-");
             match d.severity {

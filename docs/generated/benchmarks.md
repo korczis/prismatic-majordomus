@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 9 | 9 | 0 | 0 |
-| http | 9 | 9 | 0 | 0 |
-| mcp | 9 | 9 | 0 | 0 |
+| direct | 11 | 11 | 0 | 0 |
+| http | 11 | 11 | 0 | 0 |
+| mcp | 11 | 11 | 0 | 0 |
 | system | 9 | 9 | 0 | 0 |
-| total | 36 | 36 | 0 | 0 |
+| total | 42 | 42 | 0 | 0 |
 
 ## Capabilities
 
@@ -28,6 +28,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
+| `repository.scope` | repository | query | — | covered | covered | covered | `default` |
+| `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
 
 ## System targets
 

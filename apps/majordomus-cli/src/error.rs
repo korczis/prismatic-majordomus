@@ -56,6 +56,15 @@ pub enum Error {
         reason: String,
     },
 
+    /// `scope.yaml` does not parse or contradicts its own rules.
+    #[error("{path}: {reason}")]
+    InvalidScope {
+        /// The scope file.
+        path: PathBuf,
+        /// What is wrong.
+        reason: String,
+    },
+
     /// A file carries keys nothing reads.
     #[error("{path}: unknown key(s): {}", keys.join(", "))]
     UnknownKeys {
@@ -160,6 +169,7 @@ impl Error {
             Error::InvalidManifest { .. }
             | Error::UnsupportedSchema { .. }
             | Error::InvalidSources { .. }
+            | Error::InvalidScope { .. }
             | Error::UnknownKeys { .. }
             | Error::StrictDiagnostics { .. }
             | Error::KindSchema { .. }
