@@ -45,11 +45,16 @@ arbitrary. Most of them were paid for.
    For a change under `apps/majordomus-cli/`, run `scripts/rust-check`: format, clippy
    with warnings as errors (a public item without documentation is one), `cargo test`
    including doctests, `cargo doc`, `majordomus generate --check`, `capabilities validate`
-   and the coverage threshold; CI runs the same. A capability is defined once and every
-   interface is derived from it (`project.interfaces-are-projections`): change the
-   descriptor, the declarative file or the schema, never a projection, and run
-   `majordomus generate` so the committed snapshots under `docs/generated/` and the
-   allow-lists under `share/allow/` follow.
+   and the coverage threshold; CI runs the same, plus `bench coverage --check` and a
+   conservative `bench --profile ci --check`. A capability is declared once, in its
+   module's file, and every interface, benchmark target, cache behaviour and generated
+   document is derived from it (`project.interfaces-are-projections`,
+   `project.rust-canonical-declaration`): change the `capability!` block, the declarative
+   file or the schema, never a projection, and run `majordomus generate` so the committed
+   files under `docs/generated/` and the allow-lists under `share/allow/` follow. A new
+   capability's input type implements `BenchmarkCases`, or it does not compile; a request
+   that rebuilds canonical state fails `tests/hot_path.rs`; a latency figure in prose
+   without a recorded run is refused.
 5. If you changed a file the website reads — `README.md`, `docs/*.md`,
    `docs/CLAIMS.yaml`, `share/skeleton/**`, `bin/majordomus`, `lib/**` — run
    `scripts/generate-site-data` and commit the regenerated `site/data/generated/` and

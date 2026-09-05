@@ -44,9 +44,14 @@ just                              # the recipes a person runs, routed to $B wher
 $B capabilities list              # every capability with its projections
 $B capabilities describe objects.get
 $B capabilities schema objects.search --side input
-$B capabilities validate          # the registry's invariants and every projection; exit 10 with the list
-$B generate                       # docs/generated/*.{json,md} and share/allow/*.txt from the registry and the schemas
+$B capabilities validate          # the registry's invariants, every projection and the benchmark coverage; exit 10 with the list
+$B generate                       # docs/generated/ (openapi.json, capabilities.md, modules/*.md, benchmarks.md, registry.json) and share/allow/*.txt
 $B generate --check               # exit 10 naming every stale file; writes nothing
+$B bench coverage                 # every required benchmark target and whether it is covered; the denominator is the registry's
+$B bench --profile quick          # time every operation: directly, over MCP (a real child), over HTTP (a real socket); slowest first
+$B bench objects.search --transport mcp --profile full --format json
+$B bench --check                  # against this platform's baseline under .ai/repo/benchmarks/rust/, under policy.yaml
+$B bench baseline update          # record this platform's baseline (a tracked, reviewable file); refuses a dirty tree
 ```
 
 Rust 1.85 or newer, `git` on `PATH` for the default discovery, and a share directory
@@ -57,7 +62,7 @@ cargo fmt --check
 cargo clippy --all-targets --all-features -- -D warnings   # missing_docs is an error here
 cargo test                                                  # unit, integration, doctests
 cargo doc --no-deps                                         # RUSTDOCFLAGS="-D warnings" in CI
-cargo bench                                                 # criterion, benches/projections.rs and benches/shared.rs
+cargo bench                                                 # criterion, benches/{projections,shared,scaling}.rs
 cargo llvm-cov --all-targets --summary-only                 # coverage; CI enforces the threshold in scripts/rust-check
 ```
 
@@ -146,19 +151,37 @@ Swagger UI's own assets are loaded by the browser from the pinned `swagger-ui-di
 unpkg; the document it renders is local. That is the one part of the HTTP projection that
 needs the network.
 
+### `majordomus bench [id] [--transport …] [--profile …] [--format …] [--check] [--no-write]`
+
+| | |
+|---|---|
+| targets | derived from the registry: every required executable directly and on every transport its exposure declares, once per case of its input type; plus the system targets (MCP process-cold, `initialize`, `ping`, `tools/list`, `resources/list`, `resources/read`; `GET /`, `/openapi.json`, `/docs`) |
+| `id` | only that capability (or keys starting with the text) |
+| `--transport direct\|mcp\|http\|system\|all` | direct runs the executor in process (cold and warm for a cached capability, handler invocations counted); `mcp` spawns `majordomus mcp --standalone` and speaks real frames; `http` binds a loopback socket in this process and sends real requests |
+| `--profile quick\|full\|ci` | warmup and samples per target, and processes spawned for the cold target |
+| output | slowest p95 first; `--format json` is the result document (`majordomus/benchmark-result/v1`: commit, dirty state, build profile, platform, registry fingerprint, per target and cache mode the statistics) |
+| written | `.ai/local/benchmarks/<utc>-<profile>.json`, unless `--no-write` |
+| `--check` | compares with `.ai/repo/benchmarks/rust/baseline.<os>-<arch>-<build>.json` under `.ai/repo/benchmarks/rust/policy.yaml`; every line printed; exit 10 on a regression; no baseline for the platform compares nothing and says so |
+| `bench coverage [--format json] [--check]` | covered / required per transport and in total; `--check` exits 10 when anything is missing or waived |
+| `bench baseline update [--profile full] [--allow-dirty]` | runs and records the baseline; a dirty tree is refused without the flag |
+| exit | `0`; `10` on a regression or incomplete coverage under `--check`; `12` when the filter matches nothing; `2` for a bad flag |
+
 ### `majordomus capabilities list|describe|schema|validate`
 
-`list [--kind query|resource] [--exposure mcp|http|cli] [--format text|json]` and
+`list [--kind query|command|resource] [--exposure mcp|http|cli] [--format text|json]` and
 `describe <id> [--format …]` dispatch through the registry's own introspection
 capabilities, bound by their CLI exposure; `schema <id> [--side input|output]` prints a
 canonical schema; `validate` builds the registry and every projection and prints one `OK`
 line per check, or exits 10 with every violation named. An unknown id exits 12.
 
-### `majordomus generate [all|openapi|docs|allow] [--check] [--out <DIR>]`
+### `majordomus generate [all|openapi|docs|benchmarks|registry|allow] [--check] [--out <DIR>]`
 
-Writes `docs/generated/openapi.json`, `docs/generated/capabilities.md` and, from the
-schemas, `share/allow/*.txt`; `--check` compares without writing and exits 10 naming every
-stale file; `--out` redirects the repository-relative artifacts under another root.
+Writes `docs/generated/openapi.json`, `docs/generated/capabilities.md` with one
+`docs/generated/modules/<id>.md` per executable module, `docs/generated/benchmarks.md`
+(every target and the coverage), `docs/generated/registry.json` (the builtin registry as
+data) and, from the schemas, `share/allow/*.txt`; `--check` compares without writing and
+exits 10 naming every stale file; `--out` redirects the repository-relative artifacts
+under another root.
 
 ### Exit codes
 
@@ -176,7 +199,8 @@ The same contract as `docs/CLI.md`:
 
 | command | filesystem mutation | git mutation | network | stdout |
 |---|---|---|---|---|
-| `--help`, `--version`, `capabilities …`, `mcp --inspect`, `generate --check` | no | no | no | text or JSON |
+| `--help`, `--version`, `capabilities …`, `mcp --inspect`, `generate --check`, `bench coverage` | no | no | no | text or JSON |
+| `bench` | `.ai/local/benchmarks/<run>.json` (the local half, not tracked) unless `--no-write`; `baseline update` writes `.ai/repo/benchmarks/rust/baseline.<platform>.json` | no | a loopback socket and a `majordomus mcp` child of its own | text or JSON |
 | `mcp` | the lease under `.ai/local/state/mcp/` (not tracked), removed on exit; none with `--standalone` | no | listens on loopback (the server) or connects to it (a bridge); the browser fetches Swagger UI assets | MCP protocol |
 | `serve` | the lease, as above | no | listens on loopback; the browser fetches Swagger UI assets | HTTP on the socket, nothing on stdout |
 | `generate` (without `--check`) | writes `docs/generated/` and `share/allow/` | no | no | the paths written |
@@ -192,8 +216,12 @@ and after a session; `tests/mcp_shared.rs` checks that the lease is gone after t
 main.rs               parse, init stderr logging, run, map the error to an exit code
 cli.rs                clap declarations; RepoArgs shared by every command
 app.rs                the one composition point: repository -> share -> kinds and schemas -> index -> registry
-commands/             mcp, serve, capabilities, generate: each a function from its arguments to an exit code;
+commands/             mcp, serve, capabilities, generate, bench: each a function from its arguments to an exit code;
                       mcp holds the session that is answered locally (this process is the server) or bridged
+perf.rs               the process-wide counters and phase timings behind perf.counters and the structural tests
+bench/                projection.rs (targets from the registry), coverage.rs, runner.rs (direct, HTTP, MCP),
+                      stats.rs, results.rs (the versioned document), baseline.rs (per-platform baseline, the policy), system.rs
+synthetic.rs          a generated repository of any size, for the property tests and the scaling benchmarks
 lease.rs              one shared server per repository: the lease file, the election, the stale-lease takeover
 shared.rs             the shared server: bind, publish the URL, serve until the last peer leaves, release
 peers.rs              the peer board: sessions named by their clients, announcements, in memory only
@@ -203,9 +231,12 @@ discovery/            sources.yaml, the DiscoverySource trait, its two implement
 metadata/             kinds.yaml, the schema set (jsonschema), the YAML subset, front matter
 index.rs              read every discovered file into an Object or a Diagnostic; dedupe; sort
 model.rs              Object, Provenance, Diagnostic, Severity: the domain of the layer, no I/O
-capability/           the canonical model: model.rs (descriptor), schema.rs (canonical schemas and their
-                      MCP and OpenAPI projections), handler.rs (typed handlers, Context, the capability! macro),
-                      registry.rs (the registry and its invariants), builtin.rs (the executables), declarative.rs
+capability/           the canonical model: model.rs (descriptor, kinds, cache and benchmark policy), schema.rs
+                      (canonical schemas and their MCP and OpenAPI projections), handler.rs (typed handlers, Context,
+                      the capability! macro), module.rs (module! and compose_modules!), benchmark.rs (BenchmarkCases),
+                      executor.rs (the one execution path and the cache), registry.rs (the registry, its modules and
+                      invariants, the fingerprint), builtin/<module>.rs (the executables, one file per module;
+                      mod.rs composes the application), declarative.rs
 mcp/                  surface.rs (the registry as resources and tools), protocol.rs (JSON-RPC and MCP), stdio.rs,
                       bridge.rs (a stdio session forwarded to another process's shared server; its own HTTP client)
 http/                 router.rs (routes and binding from the registry), openapi.rs, swagger.rs, server.rs (tiny_http,
@@ -295,6 +326,11 @@ session.
 | the registry's invariants; every projection present and none orphan; a change reaches every projection | behaviourally verified (`tests/registry.rs`, `tests/projections.rs`) |
 | HTTP over a socket, OpenAPI, Swagger shell, typed errors, HEAD, `/dev/null` stdin, MCP/HTTP parity | behaviourally verified (`tests/http_serve.rs`) |
 | one shared server per repository: lease, bridge, `/mcp` sessions, peers, fallback port, `serve` deferring, `--standalone`, takeover, re-attachment, refusal | behaviourally verified (`tests/mcp_shared.rs`, `tests/shared_units.rs`, `test/cases/90_mcp_shared_server.sh`) |
+| modules compose capabilities, the root composes modules; the module, cache and benchmark invariants | behaviourally verified (`tests/registry.rs`, `test/cases/91_canonical_architecture.sh`) |
+| one executor; cache equivalence off/cold/warm, no handler on a hit, errors and commands never cached, the bound, the fingerprint; key order irrelevant | behaviourally verified (`tests/executor.rs`, `tests/properties.rs` with proptest) |
+| no request rebuilds canonical state; OpenAPI built once; listings prepared once | behaviourally verified (`tests/hot_path.rs`, `test/cases/91_canonical_architecture.sh`) |
+| every operation a benchmark target with a generated denominator; exposure and policy propagation; direct, HTTP and MCP runners over real transports; the baseline check | behaviourally verified (`tests/bench.rs`, `tests/bench_units.rs`, `test/cases/91_canonical_architecture.sh`) |
+| generated reference per module, benchmark matrix, registry manifest: deterministic, reconciled | behaviourally verified (`tests/projections.rs`) |
 | `generate`, byte-identical regeneration, `--check` | behaviourally verified (`tests/generate_check.rs`) |
 | the layer `init` writes, served with state `ok`; one capability through every interface | behaviourally verified (`test/cases/72_rust_mcp.sh`, `76_capabilities_projections.sh`) |
 | CLI names, URIs, tool names, routes, diagnostic codes, `kinds.yaml`, the schema files | implemented; pre-1.0, changes are documented, never silent |

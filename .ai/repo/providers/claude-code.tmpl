@@ -21,6 +21,12 @@ to reading `.ai/` by hand, and call `majordomus_announce` with your intent and t
 you expect to touch, so that the other clients (Claude, Codex, Gemini, ...) can avoid
 colliding with you. The surface is `docs/MCP.md`; `just` lists the recipes a person runs.
 
+Never add or change an operation of the Rust executable by editing a transport
+registry, an OpenAPI or Swagger definition, a benchmark inventory or a documentation
+table: change the canonical `capability!` or module declaration under
+`apps/majordomus-cli/src/capability/builtin/` and run `majordomus generate`; a repeated
+semantic definition across projections is a design defect (`docs/CAPABILITIES.md`, ADR 0004).
+
 This repository is supervised by Majordomus. Run `majordomus context` before working;
 the task lifecycle is `.ai/repo/workflows/task-lifecycle.md`; the default profile is
 `{{DEFAULT_PROFILE}}`. `AGENTS.md` carries the same bootstrap for every

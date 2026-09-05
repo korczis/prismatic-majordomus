@@ -158,6 +158,7 @@ manifest section it falls under, and its size.
 | `majordomus_capability` | `capabilities.describe` | `id` | one capability: schemas, provenance, every projection |
 | `majordomus_peers` | `peers.list` | none | the clients attached to this shared server (above) |
 | `majordomus_announce` | `peers.announce` | `intent`, `scope?` | records what the calling peer is working on (above) |
+| `majordomus_perf` | `perf.counters` | none | this process's work counters and phase timings: what happened once at startup, what happens per call |
 
 Every query is read-only and says so in its annotations; `majordomus_announce`, the one
 command, says it is not, and it changes this process's memory and nothing else. Each tool
@@ -225,5 +226,8 @@ after a kill, the re-attachment, the refusal when the taker cannot serve, a corr
 empty or abandoned lease being taken over, two clients starting in the same instant, an
 unwritable lease directory degrading to a standalone session, `SIGTERM` removing the lease,
 malformed traffic on `/mcp`, and the bridge's transparency: a bridged session and a
-restarted server answer byte for byte what the first server did. The claims are in
-[`CLAIMS.yaml`](CLAIMS.yaml) under `mcp-`.
+restarted server answer byte for byte what the first server did. `tests/hot_path.rs` sends
+hundreds of frames and requires the startup counters (`majordomus_perf`) unchanged;
+`majordomus bench` times every tool through a real child process
+([`CAPABILITIES.md`](CAPABILITIES.md)). The claims are in [`CLAIMS.yaml`](CLAIMS.yaml)
+under `mcp-`, `hot-path-no-rebuild` and `benchmark-coverage-derived`.

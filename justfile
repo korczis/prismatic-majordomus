@@ -96,6 +96,28 @@ generate: build
 generate-check: build
     "{{rust_bin}}" generate --check
 
+# ---------------------------------------------------------------- benchmarks (Rust executable)
+
+# Time every externally callable operation (each capability directly, over MCP and over HTTP, and the transports' own operations). `just bench-run objects.search --transport mcp --profile full` narrows it.
+[group('bench')]
+bench-run *args: build
+    "{{rust_bin}}" bench {{args}}
+
+# Benchmark coverage: covered / required, the denominator generated from the registry; exit 10 when anything is missing or waived.
+[group('bench')]
+bench-coverage *args: build
+    "{{rust_bin}}" bench coverage --check {{args}}
+
+# Compare a run with this platform's accepted baseline under .ai/repo/benchmarks/rust/ (policy.yaml); exit 10 on a regression.
+[group('bench')]
+bench-check *args: build
+    "{{rust_bin}}" bench --profile ci --check --no-write {{args}}
+
+# Record this platform's baseline from a full run (a reviewable, tracked file); refuses a dirty tree.
+[group('bench')]
+bench-baseline *args: build
+    "{{rust_bin}}" bench baseline update {{args}}
+
 # ---------------------------------------------------------------- lifecycle (shell tool)
 
 # What the next worker needs to know now, within budget.
@@ -149,7 +171,7 @@ rust-check:
 coverage:
     cd "{{crate}}" && RUSTFLAGS='' cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat "{{root}}/scripts/rust-coverage-threshold")"
 
-# The criterion benchmarks (benches/projections.rs, benches/shared.rs). `just bench shared` runs one.
+# The criterion microbenchmarks (benches/projections.rs, benches/shared.rs, benches/scaling.rs). `just bench scaling` runs one; `just bench-run` is the end-to-end measurement.
 [group('test')]
 bench *name:
     RUSTFLAGS='' cargo bench --manifest-path "{{manifest}}" {{ if name == "" { "" } else { "--bench " + name } }}

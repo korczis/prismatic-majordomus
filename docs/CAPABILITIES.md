@@ -1,26 +1,51 @@
 # Capabilities — one definition, every interface derived
 
 How the Rust executable under [`apps/majordomus-cli/`](../apps/majordomus-cli/) exposes
-what it exposes: the canonical capability model, the registry built from it, and the
-projections (MCP, HTTP, OpenAPI, Swagger UI, the command line, the generated reference)
+what it exposes: one canonical declaration per capability, modules that compose
+capabilities, a root that composes modules, the registry built from them, one executor
+every transport calls, and the projections (MCP, HTTP, OpenAPI, Swagger UI, the command
+line, the benchmark targets, the cache behaviour, the generated reference and manifests)
 that are derived from the registry and define nothing of their own. Behaviour as
 implemented and tested; where this document and the executable disagree, the document is
-wrong and changes in the same commit. The decision is
-[`.ai/repo/adrs/0002-canonical-capability-registry.md`](../.ai/repo/adrs/0002-canonical-capability-registry.md);
-the rule is `project.interfaces-are-projections`.
+wrong and changes in the same commit. The decisions are
+[ADR 2](../.ai/repo/adrs/0002-canonical-capability-registry.md) (the registry and the
+projections) and [ADR 4](../.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md)
+(modules, the executor, benchmarks as evidence); the rules are
+`project.interfaces-are-projections`, `project.rust-canonical-declaration`,
+`project.rust-benchmark-coverage` and `project.rust-hot-path`.
+
+```text
+ONE CANONICAL DECLARATION   capability! { id, kind?, title, description, input, output,
+                                          stability, exposure, tags, cache?, benchmark?, handler }
+        ↓
+MODULE COMPOSITION          module! { id, title, description, stability, capabilities: [...] }
+        ↓
+ROOT COMPOSITION            compose_modules![repository, objects, capabilities, peers, perf]
+        ↓
+CAPABILITY REGISTRY         + every declarative object of the layer, validated, frozen, fingerprinted
+        ↓
+DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · benchmark targets and coverage
+                            · cache policy · perf counters · docs/generated/*
+```
+
+A contributor adding one capability edits one `capability!` block (with its typed input
+and output and the input's benchmark cases) and runs `majordomus generate`. Nothing else.
 
 ## What is canonical, what is derived, what is not authoritative
 
 ```text
 CANONICAL                                   DERIVED (projections)          NOT AUTHORITATIVE
-typed executable descriptors                MCP tools and resources        examples in prose
+capability! blocks, one per module file     MCP tools and resources        examples in prose
   apps/majordomus-cli/src/capability/       HTTP routes                    screenshots
-  builtin.rs                                OpenAPI document               the committed snapshots
-declarative objects of the layer            Swagger UI configuration         under docs/generated/
-  .ai/** as sources.yaml maps them          capabilities list/describe       (caches of the registry)
-how each kind is read and validated         docs/generated/*
-  share/kinds.yaml, share/schemas/*.json    share/allow/*.txt (shell tool)
-  .ai/repo/knowledge/kinds.yaml, schemas/
+  builtin/<module>.rs, composed by          OpenAPI document               the committed snapshots
+  module! and compose_modules!              Swagger UI configuration         under docs/generated/
+declarative objects of the layer            capabilities list/describe       (caches of the registry)
+  .ai/** as sources.yaml maps them          benchmark targets, coverage    a latency number in prose
+how each kind is read and validated         cache behaviour (executor)       (evidence lives under
+  share/kinds.yaml, share/schemas/*.json    perf counters                    .ai/local/benchmarks/ and
+  .ai/repo/knowledge/kinds.yaml, schemas/   docs/generated/*                 .ai/repo/benchmarks/rust/)
+the regression policy                       share/allow/*.txt (shell tool)
+  .ai/repo/benchmarks/rust/policy.yaml
 ```
 
 ```mermaid
@@ -72,6 +97,107 @@ requires anything (a read supplies none), and an executable exposure on a planne
 unsupported capability. Errors are collected, not stopped at the first. `majordomus
 capabilities validate` runs exactly this and exits 10 with the list.
 
+## Modules and composition
+
+A capability lives in the Rust module of its namespace under
+`apps/majordomus-cli/src/capability/builtin/`: `repository.rs`, `objects.rs`,
+`capabilities.rs`, `peers.rs`, `perf.rs`. Each file declares its typed inputs and
+outputs, implements `BenchmarkCases` for every input type, writes one handler per
+capability, and ends with `module()`:
+
+```rust
+pub fn module() -> ModuleDescriptor {
+    module! {
+        id: "objects", title: "Objects", description: "...", stability: Stability::BehaviorallyVerified,
+        capabilities: [
+            capability! { id: "objects.list", ... handler: objects_list },
+            capability! { id: "objects.search", ..., cache: CachePolicy::Process { max_entries: 64, ttl_seconds: None }, handler: objects_search },
+        ],
+    }
+}
+```
+
+`builtin/mod.rs` composes the application, and that line is the only root composition:
+
+```rust
+pub fn modules() -> Vec<ModuleDescriptor> {
+    compose_modules![repository, objects, capabilities, peers, perf]
+}
+```
+
+The macros are `macro_rules!` that build plain values; `app.rs` hands them to the
+registry builder explicitly. There is no procedural macro, no global registry filled
+behind the caller's back, no link-time inventory and no build script reading `src/`. The
+registry stamps nothing it did not receive: `module!` stamps its id on each capability,
+and a capability whose id namespace is not its module (`ModuleMismatch`), a module
+composed twice, an invalid module id, a cache policy that keeps nothing, a cached
+command or a benchmark policy that contradicts the kind refuses the build, naming the id
+and the provenance. Executables composed without a descriptor (tests, benchmarks) get a
+module derived from their namespace; declarative objects get their kind. The registry's
+summary counts modules, required and waived benchmark targets and cached executables,
+and `capabilities validate` prints them.
+
+## The executor and the cache
+
+Every call goes through one path, whatever asked for it: `Context::execute` →
+`CapabilityExecutor::execute` → the handler. The stdio session, `/mcp`, the HTTP routes,
+the `capabilities` commands and the benchmark runners own protocol conversion and nothing
+else, so instrumentation and caching apply to every transport at once. The executor
+counts executions, handler invocations, cache hits, misses and evictions in the
+process-wide `perf::COUNTERS`, beside the counters of the work that happens once
+(repository scans, index builds, registry builds, schema generations, MCP projection
+builds, OpenAPI builds, HTTP router builds) and phase timings on a monotonic clock;
+`perf.counters` answers them over every transport, which is how the structural tests prove
+that hundreds of requests rebuild nothing.
+
+A cache is policy on the descriptor: `CachePolicy::Process { max_entries, ttl_seconds }`.
+The key is the canonical id, the input in canonical form (object keys sorted at every
+level, so a client's key order never matters) and the registry fingerprint, a sha-256 of
+the index fingerprint (every object's path and content) and of every descriptor, so two
+repository states never share an entry. Errors are never cached; a command is never
+cached and the registry refuses a descriptor that asks; the bound evicts the oldest entry
+first; nothing is persisted. Two capabilities declare it because a measurement said so
+(`objects.search` and `capabilities.list`); every other handler answers from the
+immutable index in microseconds and a cache there would be a second copy of nothing. The
+generic tests iterate every cached capability with every case and with generated inputs:
+uncached, cold and warm agree, a hit runs no handler.
+
+## Benchmarks: every operation, a generated denominator
+
+The benchmark projection derives its targets from the registry against a repository:
+each executable with a required policy, directly and on every transport its exposure
+declares, once per case its input type provides; plus the transports' own operations,
+declared once as system targets (a cold `majordomus mcp` process, `initialize`, `ping`,
+`tools/list`, `resources/list`, `resources/read`; `GET /`, `/openapi.json`, `/docs`).
+Coverage is `covered / required` with the denominator computed, never typed: a required
+capability whose input type produced no case for this repository is missing, and
+`capabilities validate`, `bench coverage --check` and CI fail on it; a waiver is a typed
+reason on the descriptor, reported and never counted.
+
+```bash
+majordomus bench coverage [--format json] [--check]      # covered / required, per transport and in total
+majordomus bench [id] [--transport direct|mcp|http|system] [--profile quick|full|ci] [--format json] [--no-write]
+majordomus bench --check                                 # against this platform's baseline, under the policy
+majordomus bench baseline update [--profile full] [--allow-dirty]
+```
+
+The runners time a target directly through the executor (cold, the cache cleared before
+every sample, and warm, for a cached capability; handler invocations counted), over a
+real loopback socket served by the same process with the input bound as the route binds
+it (query string for `GET`, JSON body for `POST`), and through a real `majordomus mcp
+--standalone` child on stdio (one process, many samples; a fresh process per sample for
+the process-cold target). Statistics: samples, min, p50, p90, p95, p99, max, mean,
+stddev. A run is a document, `majordomus/benchmark-result/v1`, with the commit, the dirty
+state, the build profile, the platform and the registry fingerprint, written under
+`.ai/local/benchmarks/`; the accepted baseline is one tracked file per platform under
+`.ai/repo/benchmarks/rust/baseline.<os>-<arch>-<build>.json`, promoted only by `bench
+baseline update` (a dirty tree refuses without `--allow-dirty`); the regression policy is
+`.ai/repo/benchmarks/rust/policy.yaml` (relative thresholds per metric and an absolute
+floor under which a difference is noise). `bench --check` reports every line, names new
+targets and stale baseline entries (a renamed capability is never silently matched), and
+notes when the registry fingerprint moved. A baseline is compared on its own platform
+only; a CI runner without a committed baseline compares nothing and says so.
+
 ## Kinds and schemas, read at run time
 
 Which files are declarative objects, and of which kind, is the repository's:
@@ -106,7 +232,10 @@ written by hand.
 | OpenAPI 3.1 | the same routes; `operationId` is the id; `x-majordomus-id`, `-kind`, `-stability`, `-provenance`, `-mcp`, `-cli` carry the rest; schemas hoisted into sorted components; the OAS 3.1 base dialect | `GET /openapi.json`, `docs/generated/openapi.json` |
 | Swagger UI | a shell page that loads `/openapi.json`; it embeds no specification; its assets come from the pinned `swagger-ui-dist` on unpkg, the one part that is not offline | `GET /docs` |
 | command line | `capabilities list` and `describe` dispatch through the registry's `cli` exposure; `schema` and `validate` are views of the registry, not capabilities | `majordomus capabilities …` |
-| reference | the builtin capabilities in full; declarative resources described by rule, listed live | `docs/generated/capabilities.md` |
+| reference | the index of modules and builtin capabilities, one page per executable module with every capability in full; declarative resources described by rule, listed live | `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` |
+| benchmark targets | every required executable per exposed transport per case, plus the system targets; the coverage tallies | `majordomus bench`, `docs/generated/benchmarks.md` |
+| registry manifest | the builtin registry as data: modules, descriptors with schemas, declarative kinds, system targets | `docs/generated/registry.json` (`majordomus/capability-registry/v1`) |
+| perf counters | the executor's and the startup phases' counters | `perf.counters`: `majordomus_perf`, `GET /api/v1/perf` |
 | allow-lists | the schemas | `share/allow/*.txt` |
 
 The infrastructure routes `/`, `/openapi.json`, `/docs` and `/mcp` are the HTTP
@@ -158,26 +287,48 @@ not define how a format is read.
 
 ### Adding an executable capability
 
-1. define the typed input and output (`serde` + `schemars::JsonSchema`, doc comments are
-   the descriptions),
-2. write one function `fn(&Context, Input) -> Result<Output, CapabilityError>`; the
-   context carries the index, the registry, the peer board and, through an MCP session,
-   the calling peer,
-3. describe it with `capability! { id, title, description, input, output, stability,
-   exposure, tags, handler }` (a query), or with `kind: CapabilityKind::Command` after
-   the id when it changes this process's memory,
-4. add it to the list in `builtin::all()`,
-5. add a behavioural test.
+In the file of its module under `apps/majordomus-cli/src/capability/builtin/`:
 
-MCP, HTTP, OpenAPI, Swagger UI, the `capabilities` commands and `docs/generated/` follow
-from the exposure; run `majordomus generate` to refresh the committed snapshots.
+1. define the typed input and output (`serde` + `schemars::JsonSchema`; doc comments are
+   the descriptions every client reads) and implement `BenchmarkCases` for the input
+   (one or more representative inputs; a case may look at the index to name an object
+   that exists),
+2. write one function `fn(&Context, Input) -> Result<Output, CapabilityError>`; the
+   context carries the index, the registry, the peer board, the executor and, through
+   an MCP session, the calling peer,
+3. add one `capability! { id, title, description, input, output, stability, exposure,
+   tags, handler }` block to the module's `capabilities: [...]`, with
+   `kind: CapabilityKind::Command` after the id when it changes this process's memory
+   and `cache: CachePolicy::Process { .. }` when a measurement says so,
+4. run `majordomus generate` and `majordomus capabilities validate` (or `just generate`
+   and `just validate`); commit the regenerated files under `docs/generated/`,
+5. add a behavioural test of the handler's semantics.
+
+That is the whole workflow. MCP, HTTP, OpenAPI, Swagger UI, the `capabilities` commands,
+the benchmark targets on every exposed transport (with the cases from step 1), the cache
+behaviour, `perf.counters`, the reference, the benchmark matrix and the registry manifest
+follow from the block; the generic suites (`tests/projections.rs`, `tests/bench.rs`,
+`tests/executor.rs`, `tests/properties.rs`, `tests/hot_path.rs`) discover the capability
+through the registry and test it without an edit. A capability whose input type has no
+`BenchmarkCases` does not compile; one whose cases are empty for a repository fails
+coverage.
+
+### Adding a module
+
+One Rust module under `builtin/` with its `module()` built by `module!`, and one name
+added to `compose_modules!` in `builtin/mod.rs`. Its reference page, its rows in the
+matrix and its entry in the manifest are generated.
 
 ## Generated projections and synchronization
 
-`majordomus generate [all|openapi|docs|allow]` writes `docs/generated/openapi.json`,
-`docs/generated/capabilities.md` and `share/allow/*.txt`; `majordomus generate --check`
+`majordomus generate [all|openapi|docs|benchmarks|registry|allow]` writes
+`docs/generated/openapi.json`, `docs/generated/capabilities.md` with
+`docs/generated/modules/<id>.md`, `docs/generated/benchmarks.md`,
+`docs/generated/registry.json` and `share/allow/*.txt`; `majordomus generate --check`
 derives them again, compares byte for byte, writes nothing, and exits 10 naming every
-stale file. CI runs the check. The committed files are caches: reviewable, never edited.
+stale file. CI runs the check. Every generated file says so in its first line and names
+its source; none carries a timestamp, an absolute path or a fingerprint that would move
+with a document edit. The committed files are caches: reviewable, never edited.
 
 ## When something fails
 
@@ -191,6 +342,12 @@ stale file. CI runs the check. The committed files are caches: reviewable, never
 | `schema_violation … class: "fatal" is not one of …` | a value fails a constraint | fix the value |
 | `kind 'x' is declared by both share/kinds.yaml and .ai/repo/knowledge/kinds.yaml` | a repository redefines a distributed kind | rename the repository's kind |
 | `generated artifact(s) stale: docs/generated/openapi.json (differs)` | a committed projection no longer matches the registry | run `majordomus generate` and commit |
+| `capability 'x.y' (builtin …) is composed in module 'z' but its namespace is 'x'` | a `capability!` block sits in the wrong module's list | move it to the module its id names, or rename the id |
+| `module 'x' is composed twice` | two `module!` share an id, or a builtin module's id is a declarative kind | rename one |
+| `invalid cache policy: a process cache with max_entries 0 keeps nothing`, `… a command changes state and is never cached` | the descriptor's cache policy contradicts itself or the kind | fix the policy on the descriptor |
+| `FAIL benchmarks  N of M requirement(s) missing` | an exposed executable's input type produced no case for this repository | make `BenchmarkCases` return a case (or waive with a typed reason, which is reported) |
+| `bench --check: regression(s) found` | a metric grew over `.ai/repo/benchmarks/rust/policy.yaml` against this platform's baseline | find the cause with `majordomus bench <id>` and the phase timings, or record a new baseline deliberately |
+| `STALE  <key> (in the baseline, not measured …)` | the baseline knows a target this run did not measure: renamed, removed, or filtered out | `bench baseline update` after a rename or removal |
 | `no share directory holds kinds.yaml; tried …` | the distribution was not found | pass `--share` or set `MAJORDOMUS_SHARE` |
 
 ## Stability
@@ -203,6 +360,11 @@ stale file. CI runs the check. The committed files are caches: reviewable, never
 | one shared server per repository: the lease, the bridge, `/mcp` sessions, the peers and their announcements, the fallback port, `serve` deferring, `--standalone`, the takeover after a kill, the re-attachment, the refusal when the taker cannot serve | behaviourally verified (`tests/mcp_shared.rs`, `tests/shared_units.rs`, `test/cases/90_mcp_shared_server.sh`) |
 | repository-defined kind and schema served without a code change; add, remove, break | behaviourally verified (`tests/external_extension.rs`) |
 | generate, byte-identical regeneration, `--check` on missing and tampered files | behaviourally verified (`tests/generate_check.rs`) |
+| modules compose capabilities, the root composes modules, the module invariants | behaviourally verified (`tests/registry.rs`, `test/cases/91_canonical_architecture.sh`) |
+| one executor; cache off, cold and warm agree; a hit runs no handler; errors and commands never cached; the bound; the fingerprint | behaviourally verified (`tests/executor.rs`, `tests/properties.rs`) |
+| no request rebuilds canonical state after startup (counters over hundreds of real requests) | behaviourally verified (`tests/hot_path.rs`, `test/cases/91_canonical_architecture.sh`) |
+| every operation a benchmark target, generated denominator, exposure and policy propagation, real runners, baseline check | behaviourally verified (`tests/bench.rs`, `tests/bench_units.rs`, `test/cases/91_canonical_architecture.sh`) |
+| generated reference per module, benchmark matrix, registry manifest, deterministic and reconciled | behaviourally verified (`tests/projections.rs`) |
 | the whole path through the shell tool's own `init` | behaviourally verified (`test/cases/76_capabilities_projections.sh`) |
 | the id grammar, URIs, tool names, route paths, diagnostic codes, `kinds.yaml`, the schema files | implemented; pre-1.0 compatibility surfaces, changes documented, never silent |
 | Swagger UI assets offline, `/openapi.yaml`, path parameters, hot reload, mutation of the repository over any interface, a server-initiated stream on `/mcp` | not implemented; restart-based rediscovery is the contract, and a shared server keeps the index it built at start until its last client leaves |
