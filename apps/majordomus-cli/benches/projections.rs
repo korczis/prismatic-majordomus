@@ -6,7 +6,7 @@
 use std::path::{Path, PathBuf};
 
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
-use majordomus_cli::capability::{builtin, CapabilityRegistry, Context};
+use majordomus_cli::capability::{builtin, CapabilityRegistry, CaseContext, Context};
 use majordomus_cli::discovery::{FileSystem, Sources};
 use majordomus_cli::git::GitState;
 use majordomus_cli::http::openapi;
@@ -108,7 +108,14 @@ fn benches(c: &mut Criterion) {
     });
     let ctx = context(&root);
     c.bench_function("openapi document", |b| {
-        b.iter(|| openapi::document(&ctx.registry, "bench").unwrap())
+        b.iter(|| {
+            openapi::document(
+                &ctx.registry,
+                "bench",
+                Some(&CaseContext { index: &ctx.index }),
+            )
+            .unwrap()
+        })
     });
     c.bench_function("mcp resources/list over 200 rules", |b| {
         b.iter_batched(

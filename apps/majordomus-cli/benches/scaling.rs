@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use majordomus_cli::bench::BenchmarkProjection;
-use majordomus_cli::capability::{builtin, CapabilityRegistry, Context};
+use majordomus_cli::capability::{builtin, CapabilityRegistry, CaseContext, Context};
 use majordomus_cli::http::openapi;
 use majordomus_cli::mcp::Surface;
 use majordomus_cli::synthetic::{Shape, SyntheticRepository};
@@ -48,7 +48,16 @@ fn benches(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("openapi document", size),
             &ctx,
-            |b, ctx| b.iter(|| openapi::document(&ctx.registry, "bench").unwrap()),
+            |b, ctx| {
+                b.iter(|| {
+                    openapi::document(
+                        &ctx.registry,
+                        "bench",
+                        Some(&CaseContext { index: &ctx.index }),
+                    )
+                    .unwrap()
+                })
+            },
         );
         group.bench_with_input(
             BenchmarkId::new("mcp listings (tools + resources), computed", size),

@@ -360,9 +360,11 @@ fn projections_of_one_repository_are_deterministic_across_registries() {
     let a = repo.context().unwrap();
     let b = repo.context().unwrap();
     assert_eq!(a.registry.fingerprint(), b.registry.fingerprint());
+    // without examples: the examples are the repository's own benchmark cases, and this
+    // is about the builtin projections
     assert_eq!(
-        openapi::document(&a.registry, "t").unwrap(),
-        openapi::document(&b.registry, "t").unwrap()
+        openapi::document(&a.registry, "t", None).unwrap(),
+        openapi::document(&b.registry, "t", None).unwrap()
     );
     assert_eq!(
         *Surface::new(a.clone()).tools_json(),
@@ -389,8 +391,8 @@ fn projections_of_one_repository_are_deterministic_across_registries() {
     let c = repo.context().unwrap();
     assert_ne!(c.registry.fingerprint(), a.registry.fingerprint());
     assert_eq!(
-        openapi::document(&c.registry, "t").unwrap(),
-        openapi::document(&a.registry, "t").unwrap()
+        openapi::document(&c.registry, "t", None).unwrap(),
+        openapi::document(&a.registry, "t", None).unwrap()
     );
     assert_eq!(
         *Surface::new(c.clone()).tools_json(),
