@@ -144,10 +144,12 @@
 <section class="border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="03" kicker="the core model" title="Majordomus supervises how work is executed" lead={m.leads.model} /> }}
-    <div class="mx-auto max-w-3xl">{{ <diagram key="supervision" /> }}</div>
-    <div class="mx-auto mt-8 max-w-3xl rounded-base border border-brand-subtle bg-brand-softer p-5">
-      <p class="text-base font-semibold text-fg-brand-strong">The worker does not get to define its own successful completion.</p>
-      <p class="mt-2 text-sm text-heading">{{ m.leads.boundary }}</p>
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-center">
+      <div class="min-w-0 [&_figure]:my-0">{{ <diagram key="supervision" /> }}</div>
+      <div class="min-w-0 rounded-base border border-brand-subtle bg-brand-softer p-6 sm:p-8">
+        <p class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">The worker does not get to define its own successful completion.</p>
+        <p class="mt-4 text-base leading-relaxed text-heading">{{ m.leads.boundary }}</p>
+      </div>
     </div>
   </div>
 </section>

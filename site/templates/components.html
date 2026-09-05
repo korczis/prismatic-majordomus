@@ -46,7 +46,7 @@
 {%- set g = d.diagrams[key] -%}
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">{{ g.title }}</span><span class="font-mono text-xs text-body-subtle">from {{ g.source }}</span></figcaption>
-  <div class="overflow-x-auto p-4"><pre class="mermaid m-0 min-w-[20rem] bg-transparent font-mono text-xs text-heading">{{ g.mermaid }}</pre></div>
+  <div class="overflow-x-auto p-4"><pre class="mermaid m-0 min-w-[20rem] bg-transparent font-mono text-xs text-heading [&_svg]:mx-auto [&_svg]:block">{{ g.mermaid }}</pre></div>
 </figure>
 {% endcomponent diagram %}
 
