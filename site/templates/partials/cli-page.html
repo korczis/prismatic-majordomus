@@ -18,7 +18,7 @@
     {%- if cmd.ancestors | length > 0 -%}
     <p class="text-sm text-body-subtle">{% for a in cmd.ancestors %}<a href="{{ get_url(path=a.route, trailing_slash=true) }}" class="font-mono text-fg-brand hover:underline">{{ a.name }}</a> <span aria-hidden="true">/</span> {% endfor %}<span class="font-mono text-heading">{{ cmd.name }}</span></p>
     {%- endif -%}
-    <p class="mt-3 break-words text-lg text-body">{{ cmd.about }}</p>
+    {#- the summary is the page's description, in the header above; only the long form is new here -#}
     {%- if cmd.long_about %}<p class="mt-3 whitespace-pre-line break-words text-sm text-body">{{ cmd.long_about }}</p>{% endif -%}
 
     <h2 class="mt-8 text-lg font-semibold tracking-tight text-heading">Usage</h2>
@@ -43,7 +43,7 @@
     {% include "partials/cli-examples.html" %}
 
     <h2 class="mt-10 text-lg font-semibold tracking-tight text-heading">Where this comes from</h2>
-    <p class="mt-2 break-words text-sm text-body">Declared once in <a href="{{ project.repository_url }}/blob/master/{{ cli.declaration }}" class="break-all font-mono text-fg-brand hover:underline">{{ cli.declaration }}</a>: clap for the structure, typed Rust metadata beside it for the examples. This page, <code class="font-mono">majordomus {{ cmd.name }} --help</code>, <a href="{{ project.repository_url }}/blob/master/docs/generated/cli.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/cli.md</a> and <a href="{{ project.repository_url }}/blob/master/{{ cli.source }}" class="break-all font-mono text-fg-brand hover:underline">{{ cli.source }}</a> are projections of that one declaration.</p>
+    <p class="mt-2 break-words text-sm text-body">Declared once in <a href="{{ project.repository_url }}/blob/master/{{ cli.declaration }}" class="break-all font-mono text-fg-brand hover:underline">{{ cli.declaration }}</a>: clap for the structure, typed Rust metadata beside it for the examples. This page, <code class="font-mono">{{ cmd.command }} --help</code>, <a href="{{ project.repository_url }}/blob/master/docs/generated/cli.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/cli.md</a> and <a href="{{ project.repository_url }}/blob/master/{{ cli.source }}" class="break-all font-mono text-fg-brand hover:underline">{{ cli.source }}</a> are projections of that one declaration.</p>
     <p class="mt-2 text-sm text-body">The whole command line on one page: <a href="{{ get_url(path="/registry/cli/", trailing_slash=true) }}" class="text-fg-brand hover:underline">the registry's command-line page</a>. The task lifecycle (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) belongs to the <em>shell</em> tool, a different program: <a href="{{ get_url(path="/commands/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Commands</a> and its <a href="{{ get_url(path="/docs/cli-specification/", trailing_slash=true) }}" class="text-fg-brand hover:underline">specification</a>.</p>
   </div>
 </div>
