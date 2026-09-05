@@ -253,7 +253,9 @@ case's whole log before its line. Without <code>MJ_TEST_JOBS</code> it runs seri
 it always has. The semantics are the serial runner's: a failing case turns the run red, a
 filter that matches nothing is a usage error, an empty case directory is a usage error, and
 <code>MJ_TEST_REPORT</code> writes one row per case (name, result, seconds, phase) for the summary.</p>
-<p>A case may read the checkout it lives in but must not write into it while other cases run;
+<p>The jobs that run the suite check out the whole history: a case that clones the checkout
+into a fixture and pushes cannot push a shallow clone. A case may read the checkout it
+lives in but must not write into it while other cases run;
 the parallel phase checks <code>git status</code> before and after and fails naming the paths when
 something changed. The cases that must write there (the two that build the site into
 <code>site/public</code>, the one that edits and regenerates a derived document) carry the exclusive
@@ -364,7 +366,7 @@ fixtures.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aec2cabea91a6d92b0e586a88d936d37bba43978" class="font-mono hover:underline">aec2cab</a> · inputs <span class="font-mono">f86a182bb7c9</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b3ceaf6e30b303f70d0809788351d1e605a9f517" class="font-mono hover:underline">b3ceaf6</a> · inputs <span class="font-mono">c018bbb03a8d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
