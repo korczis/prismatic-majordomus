@@ -275,6 +275,7 @@ and Open Graph metadata. The route classes and their sources:
 |---|---|---|
 | `/` | `readme.json`, `marketing.toml`, `lifecycle.json`, `capabilities.json`, `diagrams.json`, the `why` section | `index.html` |
 | `/why/`, `/why/<slug>/` | `site/content-src/why/*.md` | `why-section.html`, `why.html` |
+| `/outcomes/`, `/outcomes/<slug>/` | the hero's propositions in `marketing.toml`, one hand-written page each in `site/content-src/outcomes/*.md`; moments, commands and claims from the front matter | `outcomes-section.html`, `outcome.html` |
 | `/getting-started/` | `project.json`, `policy.json`, `lifecycle.json` | `getting-started.html` |
 | `/supervises/`, `/supervises/<slug>/` | `readme.json` (What it does rows, cross-linked to commands and claims by keyword) | `supervises-section.html`, `responsibility.html` |
 | `/commands/`, `/commands/<name>/` | `commands.json` (each command's section of `docs/CLI.md`) | `commands-section.html`, `command.html` |

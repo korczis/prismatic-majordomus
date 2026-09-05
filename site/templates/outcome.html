@@ -1,0 +1,72 @@
+{% extends "page.html" %}
+{% block body %}
+{#- One business outcome. The headline, body and outcome line are the hero's proposition for this
+    slug (site/data/marketing.toml), so the page cannot drift from the homepage; the prose is the
+    page's own. The moments, commands and claims come from the front matter and are resolved
+    against the generated data, so a name that does not exist fails the build. -#}
+{%- set prop = [x for x in m.hero.propositions if x.slug == page.slug][0] -%}
+{%- set why = load_data(path="data/generated/why.json") -%}
+{%- set cmds = load_data(path="data/generated/commands.json") -%}
+{%- set caps = load_data(path="data/generated/capabilities.json") -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <div class="rounded-base border border-brand-subtle bg-brand-softer p-6 sm:p-8">
+      <p class="text-2xl font-extrabold leading-tight tracking-tight text-heading sm:text-3xl">{{ prop.headline }}</p>
+      <p class="mt-4 max-w-2xl text-base text-body sm:text-lg">{{ prop.body }}</p>
+      <p class="mt-3 text-base font-semibold text-fg-brand-strong sm:text-lg">{{ prop.outcome }}</p>
+    </div>
+    <article class="format mt-8 break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this lives in the tool</h2>
+    <p class="mt-2 text-body">Read out of this page's own front matter and resolved against the repository. A name here that did not exist would fail the build.</p>
+
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the moments it answers</h3>
+    <ul class="grid gap-3 sm:grid-cols-2">
+      {%- for slug in page.extra.moments %}{% set mo = [x for x in why.moments if x.slug == slug][0] %}
+      <li><a href="{{ get_url(path='/why/' ~ mo.slug ~ '/', trailing_slash=true) }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">{{ mo.hook }}</span></a></li>
+      {%- endfor %}
+    </ul>
+
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the commands that do it</h3>
+    <ul class="grid gap-3 sm:grid-cols-2">
+      {%- for name in page.extra.commands %}{% set c = [x for x in cmds.commands if x.name == name][0] %}
+      <li><a href="{{ get_url(path='/commands/' ~ c.name ~ '/', trailing_slash=true) }}" class="flex h-full min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="font-mono text-sm font-medium text-fg-brand">majordomus {{ c.name }}</span>
+        <span class="min-w-0 break-words text-sm text-body">{{ c.summary }}</span></a></li>
+      {%- endfor %}
+    </ul>
+
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">what is guaranteed, and what is only advisory</h3>
+    <ul class="space-y-2">
+      {%- for id in page.extra.claims %}{% set c = [x for x in caps.claims if x.id == id][0] %}
+      <li class="flex flex-wrap items-start gap-2 rounded-base border border-default bg-neutral-primary-soft p-3">{{ <badge status={c.status} /> }}
+        <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>
+      {%- endfor %}
+    </ul>
+
+    {%- set others = [x for x in m.hero.propositions if x.slug != page.slug] %}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The other two outcomes</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+      {%- for o in others %}
+      <li><a href="{{ get_url(path='/outcomes/' ~ o.slug ~ '/', trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="text-lg font-bold tracking-tight text-heading">{{ o.label }}</span>
+        <span class="mt-1 min-w-0 break-words text-sm text-body">{{ o.headline }}</span></a></li>
+      {%- endfor %}
+    </ul>
+    <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+      <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_secondary }}</a>
+      <a href="{{ get_url(path="/why/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">All the moments this answers</a>
+    </div>
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">in one line</p>
+    <p class="mt-2 text-base font-semibold text-heading">{{ prop.outcome }}</p>
+    <p class="mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the other outcomes</p>
+    <ul class="mt-2 space-y-2 text-sm">
+      {%- for o in others %}<li><a href="{{ get_url(path='/outcomes/' ~ o.slug ~ '/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">{{ o.label }} &rarr;</a></li>{% endfor %}
+    </ul>
+  </aside>
+</div>
+{% endblock body %}

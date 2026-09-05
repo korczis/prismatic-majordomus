@@ -15,20 +15,24 @@
    class names below refer to: Tailwind compiles only classes it can read in this file. #}
 {%- set hero_show = ["group-has-[#hero-p-2:checked]/hero:invisible group-has-[#hero-p-3:checked]/hero:invisible", "invisible group-has-[#hero-p-2:checked]/hero:visible", "invisible group-has-[#hero-p-3:checked]/hero:visible"] -%}
 <section class="border-b border-default bg-neutral-primary">
-  <div class="group/hero mx-auto grid max-w-screen-xl gap-6 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-8 lg:py-24">
-    <fieldset class="flex flex-wrap gap-2 lg:order-2 lg:flex-col lg:gap-3">
-      <legend class="sr-only">Which outcome matters most to you?</legend>
+  <div class="group/hero mx-auto grid max-w-screen-xl gap-6 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:px-8 lg:py-24">
+    {#- The three outcomes: a radio each. On a phone they are a row of pills above the message; from lg
+        up they are a column of cards that stretches to the height of the message column, each card
+        carrying its title, the headline, and the link to the page that explains it. The card is
+        styled by its own checked input (has-checked), so the link can sit beside the label. -#}
+    <div role="radiogroup" aria-label="Which outcome matters most to you?" class="flex flex-wrap gap-2 lg:order-2 lg:flex-col lg:gap-4">
       {%- for p in m.hero.propositions %}
-      <div class="contents">
+      <div class="relative rounded-base border border-default bg-neutral-primary-soft has-checked:border-brand-subtle has-checked:bg-brand-softer has-focus-visible:ring-4 has-focus-visible:ring-brand-medium hover:bg-neutral-secondary-medium has-checked:hover:bg-brand-softer lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:px-6 lg:py-5">
         <input type="radio" id="hero-p-{{ loop.index }}" name="hero-proposition" class="peer sr-only"{% if loop.first %} checked{% endif %}>
-        <label for="hero-p-{{ loop.index }}" class="block cursor-pointer rounded-base border border-default bg-neutral-primary-soft px-3.5 py-2 text-sm font-semibold text-body hover:bg-neutral-secondary-medium hover:text-heading peer-checked:border-brand-subtle peer-checked:bg-brand-softer peer-checked:text-fg-brand-strong peer-focus-visible:ring-4 peer-focus-visible:ring-brand-medium lg:px-6 lg:py-5 lg:text-2xl lg:font-extrabold lg:tracking-tight">
+        <label for="hero-p-{{ loop.index }}" class="block cursor-pointer px-3.5 py-2 text-sm font-semibold text-body peer-checked:text-fg-brand-strong lg:p-0 lg:text-2xl lg:font-extrabold lg:tracking-tight xl:text-3xl">
           <span class="block">{{ p.label }}</span>
           <span class="mt-1.5 hidden text-base font-normal leading-snug tracking-normal text-body lg:block">{{ p.headline }}</span>
         </label>
+        <a href="{{ get_url(path="/outcomes/" ~ p.slug ~ "/", trailing_slash=true) }}" class="mt-3 hidden text-sm font-medium text-fg-brand hover:underline lg:inline-flex lg:items-center lg:gap-1">{{ m.hero.cta_more }} <span aria-hidden="true">&rarr;</span></a>
       </div>
       {%- endfor %}
-    </fieldset>
-    <div class="min-w-0 lg:order-1">
+    </div>
+    <div class="flex min-w-0 flex-col lg:order-1">
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-fg-brand">{{ m.hero.eyebrow }}</p>
       <div class="mt-4 grid" aria-live="polite">
         {%- for p in m.hero.propositions %}
@@ -40,6 +44,7 @@
           {%- endif %}
           <p class="mt-6 max-w-2xl text-lg leading-relaxed text-body sm:text-xl">{{ p.body }}</p>
           <p class="mt-5 max-w-2xl text-lg font-semibold leading-snug text-heading sm:text-xl">{{ p.outcome }}</p>
+          <p class="mt-3 lg:hidden"><a href="{{ get_url(path="/outcomes/" ~ p.slug ~ "/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand hover:underline">{{ m.hero.cta_more }} &rarr;</a></p>
         </div>
         {%- endfor %}
       </div>

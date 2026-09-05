@@ -34,8 +34,14 @@ hero_bad=0
 printf '%s\n' "$HL" | while read -r h; do grep -qF ">$h<" "$PUB/index.html" || echo "$h"; done | head -1 | grep -q . && { bad hero "a proposition's headline is not on the homepage"; hero_bad=1; }
 grep -qF ">$(printf '%s\n' "$HL" | head -1)</h1>" "$PUB/index.html" || { bad hero "the h1 is not the first proposition's headline"; hero_bad=1; }
 grep -qE 'id="hero-p-1"[^>]* checked' "$PUB/index.html" || { bad hero "the first proposition is not the checked default"; hero_bad=1; }
+# every proposition has its page under /outcomes/, and every outcome page is a proposition
+for slug in $(grep -oE 'slug = "[^"]*"' "$SITE/data/marketing.toml" | sed 's/^slug = "//; s/"$//'); do
+  [ -f "$PUB/outcomes/$slug/index.html" ] || { bad hero "proposition $slug has no page under /outcomes/"; hero_bad=1; }
+  grep -qF "/outcomes/$slug/" "$PUB/index.html" || { bad hero "the homepage does not link /outcomes/$slug/"; hero_bad=1; }
+done
+for f in "$SITE"/content-src/outcomes/*.md; do slug="$(basename "$f" .md)"; [ "$slug" = _index ] && continue; grep -qF "slug = \"$slug\"" "$SITE/data/marketing.toml" || { bad hero "outcomes/$slug is not a proposition in marketing.toml"; hero_bad=1; }; done
 grep -oE 'href="#[a-z-]+"' "$PUB/index.html" | sed 's/href="#//; s/"$//' | sort -u | while read -r a; do grep -q "id=\"$a\"" "$PUB/index.html" || echo "$a"; done | head -1 | grep -q . && { bad hero "an in-page link has no target section"; hero_bad=1; }
-[ "$hero_bad" = 0 ] && ok hero "$(printf '%s\n' "$HL" | wc -l | tr -d ' ') propositions on the homepage, the first is the h1 and the default; in-page links resolve"
+[ "$hero_bad" = 0 ] && ok hero "$(printf '%s\n' "$HL" | wc -l | tr -d ' ') propositions on the homepage, each with its page under /outcomes/; the first is the h1 and the default; in-page links resolve"
 # 4. routes: metadata, landmarks, no unresolved placeholders, one h1, viewport
 for f in $pages; do
   rel="${f#"$PUB"/}"
