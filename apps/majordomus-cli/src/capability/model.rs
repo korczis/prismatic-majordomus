@@ -108,6 +108,7 @@ impl Stability {
 /// Where a capability came from. Never an absolute path.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "source", rename_all = "lowercase")]
+#[schemars(rename = "CapabilityProvenance")]
 pub enum Provenance {
     /// Written in Rust, in the named module of this executable.
     Builtin { module: String },

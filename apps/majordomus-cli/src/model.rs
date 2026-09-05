@@ -60,6 +60,7 @@ impl Diagnostic {
 
 /// Where an object came from. Every field is computed from the repository, never authored.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "ObjectProvenance")]
 pub struct Provenance {
     /// Repository-relative path, forward slashes, as the version-control index names it.
     pub path: String,
