@@ -339,36 +339,56 @@ mj_epoch() {
 # Supported: `key: value`, nested maps by 2-space indent, block lists (`- item`),
 # lists of maps (`- key: value` + indented keys), inline lists `[a, b]`, quotes,
 # comments. Tabs, anchors, multi-line scalars and flow maps are rejected.
-mj_yaml_flatten() {
-  mj_count yaml_flatten
-  awk '
+# mj_yaml_flatten <file>            one file, flat lines on stdout, ERROR on stderr and exit 3
+# mj_yaml_flatten_many <outdir> [--front] <file>...
+#   many files in one awk process: <outdir>/<basename without extension> holds each
+#   file's flat lines; a file that does not parse is named in <outdir>/.errors with its
+#   message and its output is left empty. --front reads only the YAML front matter of
+#   Markdown files. One process for a hundred records is what a loader pays instead of
+#   a hundred, which is the difference between a plan that validates in a second and
+#   one that validates in five.
+MJ_FLATTEN_AWK='
   function trim(s){ sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
   function unq(v){
     if (v ~ /^".*"$/ || v ~ /^\047.*\047$/) return substr(v,2,length(v)-2)
     sub(/[ \t]+#.*$/,"",v); return trim(v)
   }
   function join(a,b){ return (a=="" ? b : a "." b) }
+  function put(l){ if (outdir == "") print l; else print l > out }
+  function fail(m){
+    if (outdir == "") { print "ERROR:" m > "/dev/stderr"; exit 3 }
+    print name "\t" m >> (outdir "/.errors"); failed = 1; skipped[name] = 1
+  }
   function emit_val(p,v,  n,i,parts){
     if (v ~ /^\[.*\]$/) {
       v=substr(v,2,length(v)-2); v=trim(v)
-      if (v=="") { print p "=[]"; return }
+      if (v=="") { put(p "=[]"); return }
       n=split(v,parts,/[ \t]*,[ \t]*/)
-      for(i=1;i<=n;i++) print p "." (i-1) "=" unq(parts[i])
+      for(i=1;i<=n;i++) put(p "." (i-1) "=" unq(parts[i]))
       return
     }
-    print p "=" unq(v)
+    put(p "=" unq(v))
   }
   function clear_from(i,  k){ for(k in ctx) if(k+0>i) delete ctx[k]; for(k in pend) if(k+0>=i) delete pend[k] }
   BEGIN{ ctx[0]="" }
+  outdir != "" && FNR == 1 {
+    if (out != "") close(out)
+    name = FILENAME; sub(/.*\//, "", name); sub(/\.[A-Za-z0-9]+$/, "", name)
+    out = outdir "/" name; printf "" > out
+    delete ctx; delete pend; delete cnt; ctx[0] = ""; failed = 0; infront = 0; front_done = 0
+    if (front) { if ($0 != "---") { fail("no front matter"); nextfile } infront = 1; next }
+  }
+  outdir != "" && failed { nextfile }
+  outdir != "" && front && infront && FNR > 1 && $0 == "---" { infront = 0; front_done = 1; nextfile }
   {
     line=$0
-    if (line ~ /\t/) { print "ERROR:tab character on line " NR > "/dev/stderr"; exit 3 }
+    if (line ~ /\t/) { fail("tab character on line " FNR); if (outdir != "") nextfile; }
     if (line ~ /^[ \t]*(#|$)/) next
     if (line ~ /^---[ \t]*$/) next
     match(line,/^ */); ind=RLENGTH; s=substr(line,ind+1)
-    if (ind % 2 != 0) { print "ERROR:odd indentation on line " NR > "/dev/stderr"; exit 3 }
+    if (ind % 2 != 0) { fail("odd indentation on line " FNR); if (outdir != "") nextfile; }
     if (s ~ /^- /) {
-      if (!(ind in pend)) { print "ERROR:list item without a parent key on line " NR > "/dev/stderr"; exit 3 }
+      if (!(ind in pend)) { fail("list item without a parent key on line " FNR); if (outdir != "") nextfile; }
       parent=pend[ind]; idx=cnt[parent]+0; cnt[parent]=idx+1
       item=trim(substr(s,3)); ip=parent "." idx
       if (item ~ /^[A-Za-z_][A-Za-z0-9_-]*:([ \t]|$)/) {
@@ -380,14 +400,25 @@ mj_yaml_flatten() {
       } else emit_val(ip,item)
       next
     }
-    if (s !~ /^[A-Za-z_][A-Za-z0-9_-]*:([ \t]|$)/) { print "ERROR:cannot parse line " NR ": " s > "/dev/stderr"; exit 3 }
-    if (!(ind in ctx)) { print "ERROR:unexpected indentation on line " NR > "/dev/stderr"; exit 3 }
+    if (s !~ /^[A-Za-z_][A-Za-z0-9_-]*:([ \t]|$)/) { fail("cannot parse line " FNR ": " s); if (outdir != "") nextfile; }
+    if (!(ind in ctx)) { fail("unexpected indentation on line " FNR); if (outdir != "") nextfile; }
     k=s; sub(/:.*$/,"",k); v=s; sub(/^[^:]*:[ \t]*/,"",v)
     clear_from(ind)
     p=join(ctx[ind],k)
     if (v=="") { pend[ind]=p; pend[ind+2]=p; ctx[ind+2]=p }
     else emit_val(p,v)
-  }' "$1"
+  }'
+mj_yaml_flatten() {
+  mj_count yaml_flatten
+  awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$1"
+}
+mj_yaml_flatten_many() {
+  local outdir="$1" front=0; shift
+  [ "${1:-}" = --front ] && { front=1; shift; }
+  [ $# -gt 0 ] || return 0
+  mj_count yaml_flatten_many
+  rm -f "$outdir/.errors"
+  awk -v outdir="$outdir" -v front="$front" "$MJ_FLATTEN_AWK" "$@"
 }
 # value of a flattened key (first match); empty if absent
 # One process each. These run thousands of times per command — the rule loader alone asks

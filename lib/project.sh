@@ -30,7 +30,7 @@ mj_project_present() { [ -f "$MJ_PROJECT_DIR/project.yaml" ]; }
 mj_project_load() {
   [ "$MJ_PJ_LOADED" = 1 ] && return 0
   mj_project_present || return 1
-  local dir raw flat f id rc=0
+  local dir raw flat f id rc=0 msg
   dir="$MJ_PROJECT_DIR"
   MJ_PJ="$(mktemp -d "${TMPDIR:-/tmp}/mj.pj.XXXXXX")"
   mkdir -p "$MJ_PJ/flat"
@@ -40,35 +40,40 @@ mj_project_load() {
   mj_yaml_flatten "$dir/project.yaml" > "$flat" 2>/dev/null || { mj_err "project.yaml does not parse"; return 2; }
   awk -F= '{ k=$1; sub(/^[^=]*=/, "", $0); printf "P\t%s\t%s\n", k, $0 }' "$flat" >> "$raw"
 
+  # Every milestone and issue is flattened by one awk process, and one more awk emits the
+  # model rows for all of them while checking that each record's id field agrees with its
+  # filename. A record that does not parse, or whose id disagrees, is refused by name; two
+  # files cannot claim one id because the flat directory is keyed by the filename.
   MJ_PJ_MILESTONES=""; MJ_PJ_ISSUES=""
-  for f in "$dir"/milestones/*.yaml; do
-    [ -f "$f" ] || continue
-    id="$(basename "$f" .yaml)"
-    flat="$MJ_PJ/flat/$id"
-    [ -f "$flat" ] && { mj_err "duplicate id $id ($f)"; rc=2; continue; }
-    mj_yaml_flatten "$f" > "$flat" 2>/dev/null || { mj_err "$f does not parse"; rc=2; continue; }
-    # the id check rides on the same pass that emits the rows: a record whose id field
-    # disagrees with its filename emits nothing and is refused by name
-    awk -F= -v i="$id" '$1 == "id" { v = $0; sub(/^[^=]*=/, "", v); seen = v }
-      { k=$1; sub(/^[^=]*=/, "", $0); rows[++n] = "M\t" i "\t" k "\t" $0 }
-      END { if (seen != i) { printf "%s\n", seen > "/dev/stderr"; exit 3 } for (r = 1; r <= n; r++) print rows[r] }' "$flat" >> "$raw" 2>"$MJ_PJ/id.err" \
-      || { mj_err "$f declares id '$(cat "$MJ_PJ/id.err")' but its filename says $id"; rc=2; continue; }
-    MJ_PJ_MILESTONES="$MJ_PJ_MILESTONES $id"
-  done
+  set -- ; for f in "$dir"/milestones/*.yaml; do [ -f "$f" ] && set -- "$@" "$f"; done
+  for f in "$@"; do MJ_PJ_MILESTONES="$MJ_PJ_MILESTONES $(basename "$f" .yaml)"; done
   for f in "$dir"/issues/*.yaml; do
     [ -f "$f" ] || continue
     id="$(basename "$f" .yaml)"
-    flat="$MJ_PJ/flat/$id"
-    [ -f "$flat" ] && { mj_err "duplicate id $id ($f)"; rc=2; continue; }
-    mj_yaml_flatten "$f" > "$flat" 2>/dev/null || { mj_err "$f does not parse"; rc=2; continue; }
-    # the id check rides on the same pass that emits the rows: a record whose id field
-    # disagrees with its filename emits nothing and is refused by name
-    awk -F= -v i="$id" '$1 == "id" { v = $0; sub(/^[^=]*=/, "", v); seen = v }
-      { k=$1; sub(/^[^=]*=/, "", $0); rows[++n] = "I\t" i "\t" k "\t" $0 }
-      END { if (seen != i) { printf "%s\n", seen > "/dev/stderr"; exit 3 } for (r = 1; r <= n; r++) print rows[r] }' "$flat" >> "$raw" 2>"$MJ_PJ/id.err" \
-      || { mj_err "$f declares id '$(cat "$MJ_PJ/id.err")' but its filename says $id"; rc=2; continue; }
-    MJ_PJ_ISSUES="$MJ_PJ_ISSUES $id"
+    # one id, one record: the flat directory is keyed by the filename, so a milestone and
+    # an issue with one name would otherwise collapse into one flat file silently
+    case " $MJ_PJ_MILESTONES " in *" $id "*) mj_err "duplicate id $id ($f)"; rc=2; continue ;; esac
+    set -- "$@" "$f"; MJ_PJ_ISSUES="$MJ_PJ_ISSUES $id"
   done
+  [ $# -gt 0 ] && mj_yaml_flatten_many "$MJ_PJ/flat" "$@"
+  if [ -f "$MJ_PJ/flat/.errors" ]; then
+    while IFS="$(printf '\t')" read -r id msg; do mj_err "$dir/$id: does not parse ($msg)"; done < "$MJ_PJ/flat/.errors"
+    rc=2
+  fi
+  set -- ; for id in $MJ_PJ_MILESTONES $MJ_PJ_ISSUES; do set -- "$@" "$MJ_PJ/flat/$id"; done
+  awk -v ms=" $MJ_PJ_MILESTONES " 'FNR == 1 {
+      if (id != "" && seen != id) { printf "%s\t%s\n", id, seen > "/dev/stderr"; bad = 1 }
+      id = FILENAME; sub(/.*\//, "", id); seen = ""; tag = index(ms, " " id " ") ? "M" : "I" }
+    $1 == "id" && seen == "" { v = $0; sub(/^[^=]*=/, "", v); seen = v }
+    { k = $1; sub(/^[^=]*=/, "", $0); printf "%s\t%s\t%s\t%s\n", tag, id, k, $0 }
+    END { if (id != "" && seen != id) { printf "%s\t%s\n", id, seen > "/dev/stderr"; bad = 1 }; exit bad }' \
+    FS='=' "$@" >> "$raw" 2>"$MJ_PJ/id.err" || rc=2
+  if [ -s "$MJ_PJ/id.err" ]; then
+    while IFS="$(printf '\t')" read -r id msg; do
+      f="$dir/milestones/$id.yaml"; [ -f "$f" ] || f="$dir/issues/$id.yaml"
+      mj_err "$f declares id '$msg' but its filename says $id"
+    done < "$MJ_PJ/id.err"
+  fi
   [ "$rc" = 0 ] || return 2
   awk -f "$MJ_LIB_DIR/project.awk" "$raw" > "$MJ_PJ/model.tsv" || return 2
   MJ_PJ_LOADED=1
