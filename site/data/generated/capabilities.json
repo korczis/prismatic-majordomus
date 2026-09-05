@@ -1410,6 +1410,19 @@
       "source_route": "/docs/scope/",
       "command": null,
       "test_case": "93_scope_policy"
+    },
+    {
+      "id": "site-deploy-one-path",
+      "claim": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the Pages workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
+      "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "implementation": "scripts/site-deploy",
+      "test": "test/cases/96_site_deploy.sh",
+      "status": "guaranteed",
+      "note": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site.md.",
+      "responsibility": "none",
+      "source_route": "/docs/github-pages-architecture/",
+      "command": null,
+      "test_case": "96_site_deploy"
     }
   ]
 }
