@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 9,
-    "schemas": 43,
+    "schemas": 45,
     "tags": 5
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -123,6 +123,94 @@
       "used_by": [],
       "used_by_schemas": [
         "Peer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an [`ObjectView`] where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI.",
+      "is_enum": false,
+      "name": "AnswerView",
+      "properties": [
+        {
+          "description": "The URI as given.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability that answered (`repository.info`).",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its kind: `query`.",
+          "name": "kind",
+          "refs": [
+            "CapabilityKind"
+          ],
+          "required": true,
+          "type": "CapabilityKind"
+        },
+        {
+          "description": "The resource name a client lists (`repository`).",
+          "name": "identity",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability's title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability's description, when it has one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The answer, as the capability's output schema describes it (`capabilities.describe`\ncarries that schema).",
+          "name": "answer",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "Where the capability comes from: the Rust module it is composed in.",
+          "name": "provenance",
+          "refs": [
+            "CapabilityProvenance"
+          ],
+          "required": true,
+          "type": "CapabilityProvenance"
+        },
+        {
+          "description": "`application/json`.",
+          "name": "media_type",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The answer as text: byte for byte what `resources/read` returns for the URI.",
+          "name": "content",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResourceView"
       ],
       "values": [],
       "variants": []
@@ -407,6 +495,7 @@
       "type": "\"query\" | \"command\" | \"resource\"",
       "used_by": [],
       "used_by_schemas": [
+        "AnswerView",
         "Capability",
         "CapabilitySummary"
       ],
@@ -473,6 +562,7 @@
       "type": "one of 2 variants",
       "used_by": [],
       "used_by_schemas": [
+        "AnswerView",
         "Capability",
         "CapabilitySummary"
       ],
@@ -1411,10 +1501,10 @@
         }
       ],
       "type": "object",
-      "used_by": [
-        "objects.get"
+      "used_by": [],
+      "used_by_schemas": [
+        "ResourceView"
       ],
-      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -1693,6 +1783,46 @@
       "used_by_schemas": [],
       "values": [],
       "variants": []
+    },
+    {
+      "description": "The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a\ncapability's provenance is.",
+      "is_enum": false,
+      "name": "ResourceView",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [
+        "objects.get"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": [
+        {
+          "description": "A file of the layer, read as it is.",
+          "properties": [
+            {
+              "description": "",
+              "name": "source",
+              "refs": [],
+              "required": true,
+              "type": "\"declarative\""
+            }
+          ],
+          "type": "ObjectView"
+        },
+        {
+          "description": "A query with a resource exposure, executed and rendered as a JSON document.",
+          "properties": [
+            {
+              "description": "",
+              "name": "source",
+              "refs": [],
+              "required": true,
+              "type": "\"builtin\""
+            }
+          ],
+          "type": "AnswerView"
+        }
+      ]
     },
     {
       "description": "One search hit: the object, summarised, and the first matching line of its content.",
@@ -2210,7 +2340,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/object?uri=majordomus%3A%2F%2Fclaim%2Fai-layer-manifest\"",
-          "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content.",
+          "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content; a URI a query projects (majordomus://repository) answers that query as a JSON document. The same resolution serves the MCP resource read.",
           "id": "objects.get",
           "kind": "query",
           "mcp_resource": "",
@@ -2218,11 +2348,15 @@
           "method": "GET",
           "parameters": [
             {
-              "description": "`majordomus://<kind>/<identity>`.",
+              "description": "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`).",
               "examples": [
                 {
                   "case": "first-object",
                   "value": "\"majordomus://claim/ai-layer-manifest\""
+                },
+                {
+                  "case": "repository",
+                  "value": "\"majordomus://repository\""
                 }
               ],
               "name": "uri",
@@ -2238,7 +2372,7 @@
           "responses": [
             {
               "description": "Get one object: the result.",
-              "schema": "ObjectView",
+              "schema": "ResourceView",
               "status": "200"
             },
             {
@@ -2262,7 +2396,7 @@
               "status": "default"
             }
           ],
-          "result_schema": "ObjectView",
+          "result_schema": "ResourceView",
           "stability": "behaviorally_verified",
           "summary": "Get one object"
         },
