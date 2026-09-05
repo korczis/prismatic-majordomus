@@ -67,14 +67,24 @@ pub fn inspect(root: &Path) -> GitState {
     })
 }
 
+/// Every tracked file under `root`, repository-relative, in the byte order the index keeps
+/// them in: one subprocess per build, matched against each class's pathspec in process.
+pub fn ls_files_all(root: &Path) -> Result<Vec<String>> {
+    ls_files_with(root, &[])
+}
+
 /// Tracked files under `root` matching one pathspec, repository-relative, in the byte order
 /// the index keeps them in. The pathspec is passed to git verbatim.
 pub fn ls_files(root: &Path, pathspec: &str) -> Result<Vec<String>> {
+    ls_files_with(root, &[pathspec])
+}
+
+fn ls_files_with(root: &Path, pathspecs: &[&str]) -> Result<Vec<String>> {
     let out = Command::new("git")
         .arg("-C")
         .arg(root)
         .args(["ls-files", "-z", "--"])
-        .arg(pathspec)
+        .args(pathspecs)
         .output()
         .map_err(|e| Error::Git {
             reason: format!("cannot run git: {e}"),
@@ -82,7 +92,8 @@ pub fn ls_files(root: &Path, pathspec: &str) -> Result<Vec<String>> {
     if !out.status.success() {
         return Err(Error::Git {
             reason: format!(
-                "git ls-files -- {pathspec}: {}",
+                "git ls-files -- {}: {}",
+                pathspecs.join(" "),
                 String::from_utf8_lossy(&out.stderr).trim()
             ),
         });

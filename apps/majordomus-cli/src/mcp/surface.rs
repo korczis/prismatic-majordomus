@@ -6,6 +6,7 @@
 use std::sync::Arc;
 
 use serde::Serialize;
+use serde_json::value::RawValue;
 use serde_json::{json, Value};
 
 use crate::capability::{builtin, CapabilityError, CapabilityKind, CapabilityRegistry, Context};
@@ -95,8 +96,10 @@ pub enum SurfaceError {
 struct Listing {
     tools: std::sync::OnceLock<Arc<Vec<Tool>>>,
     tools_json: std::sync::OnceLock<Arc<Vec<Value>>>,
+    tools_raw: std::sync::OnceLock<Arc<Box<RawValue>>>,
     resources: std::sync::OnceLock<Arc<Vec<Resource>>>,
     resources_json: std::sync::OnceLock<Arc<Vec<Value>>>,
+    resources_raw: std::sync::OnceLock<Arc<Box<RawValue>>>,
 }
 
 #[derive(Clone)]
@@ -148,6 +151,25 @@ impl Surface {
                 .resources_json
                 .get_or_init(|| Arc::new(self.resources().iter().map(resource_json).collect())),
         )
+    }
+
+    /// The whole `tools/list` result, `{"tools": [...]}`, serialised once: a frame that
+    /// carries it copies bytes and builds nothing.
+    pub fn tools_result(&self) -> Arc<Box<RawValue>> {
+        Arc::clone(self.listing.tools_raw.get_or_init(|| {
+            let text = serde_json::to_string(&json!({ "tools": *self.tools_json() }))
+                .unwrap_or_else(|_| "{\"tools\":[]}".into());
+            Arc::new(RawValue::from_string(text).expect("serialised JSON"))
+        }))
+    }
+
+    /// The whole `resources/list` result, `{"resources": [...]}`, serialised once.
+    pub fn resources_result(&self) -> Arc<Box<RawValue>> {
+        Arc::clone(self.listing.resources_raw.get_or_init(|| {
+            let text = serde_json::to_string(&json!({ "resources": *self.resources_json() }))
+                .unwrap_or_else(|_| "{\"resources\":[]}".into());
+            Arc::new(RawValue::from_string(text).expect("serialised JSON"))
+        }))
     }
 
     /// The context behind the surface.

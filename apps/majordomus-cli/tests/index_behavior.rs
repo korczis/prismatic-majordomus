@@ -20,7 +20,7 @@ fn build(f: &Fixture, filesystem: bool) -> Index {
         };
         Index::build(&repo, &sources, &schema, &fs, git).unwrap()
     } else {
-        Index::build(&repo, &sources, &schema, &VcsIndex, git).unwrap()
+        Index::build(&repo, &sources, &schema, &VcsIndex::default(), git).unwrap()
     }
 }
 

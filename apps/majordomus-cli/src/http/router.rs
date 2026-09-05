@@ -288,7 +288,9 @@ impl Router {
                 }
             }
         };
-        tracing::info!(capability_id = %c.id, route = %format!("{} {}", req.method, req.path), "http");
+        // one line per request is debug: a client that does not drain stderr must not be
+        // able to wedge the workers on a full pipe at the default level
+        tracing::debug!(capability_id = %c.id, route = %format!("{} {}", req.method, req.path), "http");
         match self.ctx.execute(c.id.as_str(), input) {
             Ok(v) => json_response(200, &v),
             Err(CapabilityError::InvalidInput(m)) => error_response(400, "invalid_input", &m),

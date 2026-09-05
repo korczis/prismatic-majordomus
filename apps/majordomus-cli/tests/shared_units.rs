@@ -312,7 +312,7 @@ fn a_session_can_be_resumed_by_another_server() {
     let mut first = Server::new(surface.for_peer(peer.clone()), "test")
         .with_endpoint(Some("http://127.0.0.1:1".into()));
     assert!(!first.is_initialized());
-    let answer = first.handle(init()).unwrap();
+    let answer = first.handle(init()).unwrap().into_value();
     let text = answer["result"]["instructions"].as_str().unwrap();
     assert!(
         text.contains("http://127.0.0.1:1/docs") && text.contains("You are peer p1"),

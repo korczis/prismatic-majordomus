@@ -143,7 +143,7 @@ fn duplicate_ids_rust_and_declarative() {
         &repo,
         &sources,
         &common::dist_schema(&repo),
-        &VcsIndex,
+        &VcsIndex::default(),
         GitState::Unavailable {
             reason: "test".into(),
         },

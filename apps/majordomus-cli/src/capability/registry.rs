@@ -630,8 +630,8 @@ impl Builder {
 }
 
 /// The registry's fingerprint: a hash of the index's fingerprint (every declarative
-/// object's path and content) and of every descriptor, in id order. Stable across
-/// processes for the same code and the same repository state.
+/// object's path and content), of every id, and of every builtin descriptor in full, in
+/// id order. Stable across processes for the same code and the same repository state.
 fn fingerprint(index: &str, registry: &CapabilityRegistry) -> String {
     use sha2::{Digest, Sha256};
     let mut h = Sha256::new();
@@ -639,7 +639,11 @@ fn fingerprint(index: &str, registry: &CapabilityRegistry) -> String {
     for c in registry.iter() {
         h.update(c.id.as_str().as_bytes());
         h.update(b"\0");
-        h.update(serde_json::to_string(c).unwrap_or_default().as_bytes());
+        // a declarative descriptor is a function of the object the index fingerprint
+        // already covers; hashing its (large, shared) schema per object would only cost
+        if matches!(c.provenance, Provenance::Builtin { .. }) {
+            h.update(serde_json::to_string(c).unwrap_or_default().as_bytes());
+        }
         h.update(b"\n");
     }
     format!("{:x}", h.finalize())

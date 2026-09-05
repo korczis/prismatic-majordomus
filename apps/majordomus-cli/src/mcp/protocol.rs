@@ -3,9 +3,64 @@
 //! server side of the protocol: `initialize`, `ping`, `resources/list`, `resources/read`,
 //! `resources/templates/list`, `tools/list`, `tools/call`. Prompts are not advertised.
 
+use std::sync::Arc;
+
+use serde::ser::SerializeMap;
+use serde::Serialize;
+use serde_json::value::RawValue;
 use serde_json::{json, Value};
 
 use crate::peers::ClientInfo;
+
+/// One outgoing message. Most are built values; the two listings are prepared once and
+/// carried as raw JSON, so answering `tools/list` or `resources/list` copies bytes and
+/// builds nothing. A transport serialises a reply with `serde_json::to_string`; a caller
+/// that needs the data as a value takes [`Reply::into_value`].
+#[derive(Debug)]
+pub enum Reply {
+    /// A built message.
+    Value(Value),
+    /// A response whose result is prepared JSON.
+    Prepared {
+        /// The request id.
+        id: Value,
+        /// The serialised result object.
+        result: Arc<Box<RawValue>>,
+    },
+    /// The responses of a batch.
+    Batch(Vec<Reply>),
+}
+
+impl Reply {
+    /// The reply as a value (a prepared result is parsed).
+    pub fn into_value(self) -> Value {
+        match self {
+            Reply::Value(v) => v,
+            Reply::Prepared { id, result } => json!({
+                "jsonrpc": "2.0",
+                "id": id,
+                "result": serde_json::from_str::<Value>(result.get()).unwrap_or(Value::Null),
+            }),
+            Reply::Batch(items) => Value::Array(items.into_iter().map(Reply::into_value).collect()),
+        }
+    }
+}
+
+impl Serialize for Reply {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Reply::Value(v) => v.serialize(serializer),
+            Reply::Prepared { id, result } => {
+                let mut m = serializer.serialize_map(Some(3))?;
+                m.serialize_entry("jsonrpc", "2.0")?;
+                m.serialize_entry("id", id)?;
+                m.serialize_entry("result", &**result)?;
+                m.end()
+            }
+            Reply::Batch(items) => items.serialize(serializer),
+        }
+    }
+}
 
 use super::surface::{Surface, SurfaceError, ToolOutcome};
 
@@ -87,39 +142,43 @@ impl Server {
 
     /// Handle one decoded message. A notification yields `None`; a batch yields a batch of
     /// the responses its requests produced, or `None` when it held only notifications.
-    pub fn handle(&mut self, message: Value) -> Option<Value> {
+    pub fn handle(&mut self, message: Value) -> Option<Reply> {
         if let Some(peer) = self.surface.peer() {
             self.surface.context().peers.touch(peer);
         }
         match message {
             Value::Array(batch) => {
                 if batch.is_empty() {
-                    return Some(error(Value::Null, INVALID_REQUEST, "empty batch"));
+                    return Some(Reply::Value(error(
+                        Value::Null,
+                        INVALID_REQUEST,
+                        "empty batch",
+                    )));
                 }
-                let responses: Vec<Value> = batch
+                let responses: Vec<Reply> = batch
                     .into_iter()
                     .filter_map(|m| self.handle_one(m))
                     .collect();
-                (!responses.is_empty()).then_some(Value::Array(responses))
+                (!responses.is_empty()).then_some(Reply::Batch(responses))
             }
             other => self.handle_one(other),
         }
     }
 
-    fn handle_one(&mut self, message: Value) -> Option<Value> {
+    fn handle_one(&mut self, message: Value) -> Option<Reply> {
         let Value::Object(msg) = message else {
-            return Some(error(
+            return Some(Reply::Value(error(
                 Value::Null,
                 INVALID_REQUEST,
                 "a message is a JSON object",
-            ));
+            )));
         };
         let id = msg.get("id").cloned();
         let Some(method) = msg.get("method").and_then(Value::as_str) else {
             // A response or a malformed message; a server never answers a response.
             return id
                 .filter(|i| !i.is_null())
-                .map(|i| error(i, INVALID_REQUEST, "missing method"));
+                .map(|i| Reply::Value(error(i, INVALID_REQUEST, "missing method")));
         };
         let params = msg.get("params").cloned().unwrap_or(Value::Null);
         let Some(id) = id.filter(|i| !i.is_null()) else {
@@ -127,10 +186,26 @@ impl Server {
             return None;
         };
         tracing::debug!(operation = method, "request");
-        Some(match self.request(method, &params) {
+        // the two listings are prepared once and copied, never rebuilt
+        match method {
+            "tools/list" => {
+                return Some(Reply::Prepared {
+                    id,
+                    result: self.surface.tools_result(),
+                })
+            }
+            "resources/list" => {
+                return Some(Reply::Prepared {
+                    id,
+                    result: self.surface.resources_result(),
+                })
+            }
+            _ => {}
+        }
+        Some(Reply::Value(match self.request(method, &params) {
             Ok(result) => json!({ "jsonrpc": "2.0", "id": id, "result": result }),
             Err((code, message)) => error(id, code, &message),
-        })
+        }))
     }
 
     fn notification(&mut self, method: &str, _params: &Value) {
@@ -184,8 +259,8 @@ impl Server {
                 }
                 match self.surface.call(name, &args) {
                     Ok(ToolOutcome::Ok(value)) => {
-                        let text = serde_json::to_string_pretty(&value)
-                            .unwrap_or_else(|_| value.to_string());
+                        // compact: a client that wants the data reads structuredContent
+                        let text = value.to_string();
                         Ok(
                             json!({ "content": [{ "type": "text", "text": text }], "structuredContent": value, "isError": false }),
                         )
