@@ -58,6 +58,7 @@ fn document(fingerprint: &str) -> ResultDocument {
             arch: "testarch".into(),
             version: "0".into(),
             registry_fingerprint: fingerprint.into(),
+            host: "testhost/1".into(),
         },
         results: vec![BenchmarkResult {
             key: "system.mcp.ping".into(),

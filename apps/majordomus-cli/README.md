@@ -161,7 +161,7 @@ needs the network.
 | `--profile quick\|full\|ci` | warmup and samples per target, and processes spawned for the cold target |
 | output | slowest p95 first; `--format json` is the result document (`majordomus/benchmark-result/v1`: commit, dirty state, build profile, platform, registry fingerprint, per target and cache mode the statistics) |
 | written | `.ai/local/benchmarks/<utc>-<profile>.json`, unless `--no-write` |
-| `--check` | compares with `.ai/repo/benchmarks/rust/baseline.<os>-<arch>-<build>.json` under `.ai/repo/benchmarks/rust/policy.yaml`; every line printed; exit 10 on a regression; no baseline for the platform compares nothing and says so |
+| `--check` | compares with `.ai/repo/benchmarks/rust/baseline.<os>-<arch>-<build>.json` under `.ai/repo/benchmarks/rust/policy.yaml`; every line printed; exit 10 on a regression; a baseline recorded on another host (the document carries CPU brand and core count) is reported against only, exit 0; no baseline for the platform compares nothing and says so |
 | `bench coverage [--format json] [--check]` | covered / required per transport and in total; `--check` exits 10 when anything is missing or waived |
 | `bench baseline update [--profile full] [--allow-dirty]` | runs and records the baseline; a dirty tree is refused without the flag |
 | exit | `0`; `10` on a regression or incomplete coverage under `--check`; `12` when the filter matches nothing; `2` for a bad flag |

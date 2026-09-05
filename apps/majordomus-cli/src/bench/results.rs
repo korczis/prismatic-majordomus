@@ -69,6 +69,12 @@ pub struct Provenance {
     pub version: String,
     /// The registry fingerprint of the repository measured.
     pub registry_fingerprint: String,
+    /// The host that measured: the CPU's brand string and its logical core count
+    /// (`Apple M5 Pro/18`). Wall-clock numbers are comparable only between runs on the
+    /// same host; a baseline recorded elsewhere is reported against, never failed
+    /// against. Empty when the host could not be identified (older baselines).
+    #[serde(default)]
+    pub host: String,
 }
 
 impl Provenance {
@@ -89,6 +95,7 @@ impl Provenance {
             },
             os: std::env::consts::OS.into(),
             arch: std::env::consts::ARCH.into(),
+            host: host_fingerprint(),
             version: crate::VERSION.into(),
             registry_fingerprint: registry_fingerprint.into(),
         }
@@ -98,6 +105,51 @@ impl Provenance {
     pub fn platform(&self) -> String {
         format!("{}-{}-{}", self.os, self.arch, self.build_profile)
     }
+
+    /// Were these two measured on the same host? Unknown hosts never match.
+    pub fn same_host(&self, other: &Provenance) -> bool {
+        !self.host.is_empty() && self.host == other.host
+    }
+}
+
+/// The CPU brand string and the logical core count, `<brand>/<cores>`; the brand alone
+/// when the count is unknown, the os and arch when neither is (an unidentified host
+/// still gets a stable, if coarse, name, and two of them never compare as equal only
+/// when the string is empty, which this function does not return).
+pub fn host_fingerprint() -> String {
+    let cores = std::thread::available_parallelism()
+        .map(|n| n.get().to_string())
+        .unwrap_or_default();
+    let brand = cpu_brand()
+        .unwrap_or_else(|| format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH));
+    if cores.is_empty() {
+        brand
+    } else {
+        format!("{brand}/{cores}")
+    }
+}
+
+/// The CPU brand string: `sysctl machdep.cpu.brand_string` on macOS, the first
+/// `model name` of `/proc/cpuinfo` on Linux, nothing elsewhere.
+fn cpu_brand() -> Option<String> {
+    if cfg!(target_os = "macos") {
+        let out = std::process::Command::new("sysctl")
+            .args(["-n", "machdep.cpu.brand_string"])
+            .output()
+            .ok()?;
+        let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        return (!s.is_empty()).then_some(s);
+    }
+    if cfg!(target_os = "linux") {
+        let text = std::fs::read_to_string("/proc/cpuinfo").ok()?;
+        return text
+            .lines()
+            .find(|l| l.starts_with("model name"))
+            .and_then(|l| l.split_once(':'))
+            .map(|(_, v)| v.trim().to_string())
+            .filter(|v| !v.is_empty());
+    }
+    None
 }
 
 /// One run.

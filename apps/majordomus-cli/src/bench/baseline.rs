@@ -197,6 +197,13 @@ pub struct Check {
     pub stale_baseline_targets: Vec<String>,
     /// Did the registry fingerprint change since the baseline?
     pub registry_changed: bool,
+    /// The host the baseline was recorded on (empty when unknown).
+    pub baseline_host: String,
+    /// The host this run measured on.
+    pub current_host: String,
+    /// Was the baseline recorded on this host? When not, every line is reported and none
+    /// fails: wall-clock numbers of two machines are not a regression of either.
+    pub comparable: bool,
 }
 
 impl Check {
@@ -215,6 +222,9 @@ impl Check {
                 new_targets: run.results.iter().map(|r| r.key.clone()).collect(),
                 stale_baseline_targets: Vec::new(),
                 registry_changed: false,
+                baseline_host: String::new(),
+                current_host: run.provenance.host.clone(),
+                comparable: false,
             };
         };
         let mut lines = Vec::new();
@@ -271,12 +281,16 @@ impl Check {
             stale_baseline_targets: stale,
             registry_changed: base.provenance.registry_fingerprint
                 != run.provenance.registry_fingerprint,
+            baseline_host: base.provenance.host.clone(),
+            current_host: run.provenance.host.clone(),
+            comparable: run.provenance.same_host(&base.provenance),
         }
     }
 
-    /// Any `FAIL`?
+    /// Any `FAIL` on a comparable baseline? A baseline from another host never fails a
+    /// run: its lines are reported only.
     pub fn failed(&self) -> bool {
-        self.lines.iter().any(|l| l.verdict == "FAIL")
+        self.comparable && self.lines.iter().any(|l| l.verdict == "FAIL")
     }
 
     /// The human report.
@@ -316,6 +330,19 @@ impl Check {
         }
         if self.registry_changed {
             s.push_str("NOTE   the registry fingerprint differs from the baseline's: the repository or the descriptors changed\n");
+        }
+        if !self.comparable {
+            let recorded = if self.baseline_host.is_empty() {
+                "an unidentified host".to_string()
+            } else {
+                self.baseline_host.clone()
+            };
+            s.push_str(&format!(
+                "NOTE   baseline recorded on {recorded}; this host is {}; reporting only, nothing fails\n",
+                self.current_host
+            ));
+            s.push_str("bench --check: reporting only (the baseline is from another host)\n");
+            return s;
         }
         s.push_str(if self.failed() {
             "bench --check: regression(s) found\n"
