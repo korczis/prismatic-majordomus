@@ -13,7 +13,7 @@ CORE="$ROOT/scripts/ci/core-check"; LINT="$ROOT/scripts/ci/shell-lint"
 #    same workflow's verified run, so there is no second workflow repeating the suite
 grep -q 'bash test/run.sh' "$W" || { echo "    validate.yml does not run bash test/run.sh"; exit 1; }
 [ "$(ls "$ROOT"/.github/workflows/*.yml | wc -l | tr -d ' ')" = 1 ] || { echo "    a second workflow exists beside validate.yml; the site deploys from validate.yml's own verified run"; ls "$ROOT"/.github/workflows/; exit 1; }
-grep -q 'actions/deploy-pages' "$W" || { echo "    validate.yml does not deploy the site"; exit 1; }
+grep -qE 'actions/deploy-pages|scripts/site-deploy' "$W" || { echo "    validate.yml does not deploy the site"; exit 1; }
 
 # 2. the runner discovers every case rather than naming a list that can fall behind
 grep -q 'test/cases/\*\.sh' "$ROOT/test/run.sh" || { echo "    run.sh does not glob test/cases"; exit 1; }

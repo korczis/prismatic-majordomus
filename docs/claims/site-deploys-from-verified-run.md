@@ -6,7 +6,7 @@ A push to master produces one run. Its `site` job builds the site once, checks i
 
 ## How it works
 
-`.github/workflows/validate.yml` is the only workflow. On master the `site` job runs `actions/upload-pages-artifact` over `site/public` after the build, the check and the probe; the `pages` job needs `plan`, `structure`, `suite`, `rust` and `site`, holds the `pages` concurrency group without cancellation, and runs `actions/deploy-pages`. The workflow's own concurrency group cancels in progress only for `pull_request`. `test/cases/26_ci_wiring.sh` proves there is one workflow, that it deploys, that the `pages` job needs exactly those jobs, and the concurrency rule; the shell doctrine `ci` in `lib/doctor.sh` still requires `bash test/run.sh` in it without a swallowed exit code.
+`.github/workflows/validate.yml` is the only workflow. On master the `site` job keeps `site/public` as the artifact `site-public` after the build, the check and the probe; the `pages` job needs `plan`, `structure`, `suite`, `rust` and `site`, holds the `pages` concurrency group without cancellation, downloads that artifact and publishes it with `scripts/site-deploy --skip-build`, the same script a person deploys with. The workflow's own concurrency group cancels in progress only for `pull_request`. `test/cases/26_ci_wiring.sh` proves there is one workflow, that it deploys, that the `pages` job needs exactly those jobs, and the concurrency rule; the shell doctrine `ci` in `lib/doctor.sh` still requires `bash test/run.sh` in it without a swallowed exit code.
 
 ## How to see it
 
