@@ -1,0 +1,68 @@
+id: M004
+title: Performance is executable evidence, and the hot path does no canonical work twice
+slug: performance-truth
+order: 4
+priority: p0
+problem: "The shell tool is slow enough to be avoided: doctor takes ten seconds and runs on every commit through the pre-commit hook, watch takes the same, knowledge nodes six seconds, plan validate four, the site-data check and a single test case half a minute, and the suite half an hour. Nobody could say which phase paid for it, because nothing measured phases; the two validators that cost two thirds of doctor are loops of one awk process per key over files that were already flattened once. The Rust executable measured at the same time is fast, so the slowness is the shell tool's own."
+outcome: "Every public command can be benchmarked from the command registry with cold and warm distributions, the phases and work counters of any run can be printed, the caches and batch reads that remove repeated work preserve every observable result, an accepted baseline lives in the repository and a check refuses a regression by policy, and the pre-commit hook is fast enough that nobody routes around it."
+current_state: "MJ_TIMING prints per-validator phases and two work counters (feature/performance-truth 77f5d79). No benchmark command, no baseline, no regression check, no parse cache, no performance doctrine; the numbers above are the measured baseline on this repository."
+desired_state: "majordomus bench derives its targets from share/commands.yaml, records p50, p90, p95, p99, min, max, mean and stddev per command and mode, persists local runs under .ai/local/benchmarks/, compares against .ai/repo/benchmarks/baseline.json under the policy's benchmark block, and exits non-zero on a regression. Registry, catalogue, project-model and coverage validators read each flat file once. Flattened YAML is cached under .ai/local/cache/ by content hash. Project rules state the doctrine, docs/PERFORMANCE.md explains it, and CI runs the structural checks."
+scope:
+  - lib
+  - bin/majordomus
+  - share/commands.yaml
+  - share/allow
+  - share/standard/majordomus/
+  - share/skeleton
+  - .ai/repo/rules/project
+  - .ai/repo/benchmarks
+  - docs
+  - scripts
+  - test/cases
+  - test/lib.sh
+  - .github/workflows/validate.yml
+
+non_scope:
+  - Any change to apps/majordomus-cli, whose measured latency is not the problem
+  - A metrics database, a dashboard, a tracing backend or any telemetry service
+  - Hot reload or filesystem watching
+  - A persistent capability result cache across processes beyond the flatten cache
+  - Benchmarking external services
+
+acceptance_criteria:
+  - Every public command in share/commands.yaml is a benchmark target without a second list anywhere
+  - Cold and warm distributions are recorded separately with p50, p95 and p99 and never mixed
+  - A local run is persisted under .ai/local/benchmarks/ and never treated as a baseline
+  - The committed baseline is updated only by an explicit command on a clean tree
+  - bench --check exits non-zero on a regression over the policy thresholds and names the command, the metric, both values and the threshold
+  - Every canonical file is flattened at most once per command, proved by the work counters in a case
+  - A cache hit and a cache miss produce byte-identical command output for every read-only command, proved by a case
+  - doctor on this repository runs under the budget the policy declares, and the pre-commit hook inherits it
+  - The performance rules are project rules under .ai/repo/rules/project, and docs/PERFORMANCE.md is the reference the README points at
+
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - bin/majordomus watch
+  - bin/majordomus bench --check
+  - scripts/generate-site-data --check
+  - shellcheck -x -s bash bin/majordomus lib/*.sh
+
+evidence_required:
+  - phase_timing
+  - batch_reads
+  - flatten_cache
+  - bench_targets_derived
+  - bench_persisted
+  - baseline_explicit
+  - regression_refused
+  - doctor_under_budget
+  - docs_integrated
+
+risks:
+  - "A cache is a second thing that can be believed. The flatten cache is keyed by the content hash of the file it caches, so a stale entry cannot be read for a changed file; it can only cost a miss."
+  - "Wall-clock thresholds are noisy across machines. The regression policy is conservative and relative, the structural counters are exact, and only the counters gate CI strictly."
+  - "Batching reads changes how validators are written. Each rewrite is proved by the case that already exists for the validator, run before and after, plus the counter case."
+
+created_at: 2026-09-05
+updated_at: 2026-09-05

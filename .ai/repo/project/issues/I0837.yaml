@@ -1,0 +1,27 @@
+id: I0837
+milestone: M004
+title: Timing report as JSON
+slug: timing-json
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Under --json, print the timing report as one JSON object on stderr with phases and counters, so bench can carry a phase breakdown per sample."
+why: "A breakdown that only humans can read cannot be compared by a check."
+current_state: "The report is text."
+desired_state: "Same data, one line of JSON when --json is set, documented in docs/SCHEMAS.md."
+scope:
+  - lib/common.sh
+  - docs/SCHEMAS.md
+  - lib/bench.sh
+non_scope: []
+depends_on:
+  - I0817
+acceptance_criteria:
+  - The JSON parses with jq and carries every phase and counter of the text form
+validation:
+  - MJ_TIMING=1 bin/majordomus --json doctor
+evidence_required:
+  - phase_timing
+risk: "stdout stays the command's; the report stays on stderr in both forms."
+created_at: 2026-09-05
+updated_at: 2026-09-05

@@ -1,0 +1,29 @@
+id: I0835
+milestone: M004
+title: CI runs the structural performance checks
+slug: ci-performance
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add the flatten-once case, the cache-equivalence case and bench --check with the CI profile to validate.yml, with the wall-clock thresholds conservative and the counters exact."
+why: "A check that nobody runs is documentation."
+current_state: "CI runs the suite, the generator check and shellcheck."
+desired_state: "The counters gate strictly; bench --check gates on gross regressions only; results are uploaded as an artifact."
+scope:
+  - .github/workflows/validate.yml
+  - test/cases/26_ci_wiring.sh
+non_scope:
+  - Latency gates at millisecond precision
+depends_on:
+  - I0822
+  - I0826
+acceptance_criteria:
+  - Case 26 proves the new steps are wired
+  - A deliberately regressed baseline fails the workflow step locally
+validation:
+  - bash test/run.sh 26_ci_wiring
+evidence_required:
+  - regression_refused
+risk: "GitHub runners are slower and noisier than a laptop; the CI profile has more warmup and wider thresholds, declared in the policy."
+created_at: 2026-09-05
+updated_at: 2026-09-05

@@ -1,0 +1,28 @@
+id: I0836
+milestone: M004
+title: A synthetic repository generator for scaling cases
+slug: synthetic-repository
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add a test helper that builds a repository with N issues, N milestones, N rules and N context documents from the skeleton, and a case that runs doctor and plan validate at three sizes and asserts the yaml_flatten count grows linearly."
+why: "Quadratic behaviour hides in small repositories; the counters expose it before wall clock does."
+current_state: "Fixtures are hand-built per case."
+desired_state: "One generator in test/lib.sh, one scaling case, counters linear in N."
+scope:
+  - test/lib.sh
+  - test/cases/84_scaling.sh
+non_scope:
+  - Wall-clock assertions in the scaling case
+depends_on:
+  - I0819
+acceptance_criteria:
+  - Counters at N, 2N and 4N are within a linear bound
+  - The generator is reused by at least one other case
+validation:
+  - bash test/run.sh 84_scaling
+evidence_required:
+  - batch_reads
+risk: "The generated records must pass plan validate; the helper builds them from the same templates the skeleton ships."
+created_at: 2026-09-05
+updated_at: 2026-09-05

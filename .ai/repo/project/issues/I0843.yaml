@@ -1,0 +1,31 @@
+id: I0843
+milestone: M004
+title: The performance workflow is discoverable and complete
+slug: performance-workflow-complete
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Close the milestone: every acceptance criterion of M004 has evidence, the README workflow runs as written, the site is regenerated, and the final report is a plan record rather than a conversation."
+why: "A milestone is accepted by its evidence, not by finishing its issues."
+current_state: "Open."
+desired_state: "M004 accepted with evidence on every criterion."
+scope:
+  - docs/PLAN_STATUS.md
+  - .ai/repo/project
+non_scope: []
+depends_on:
+  - I0830
+  - I0831
+  - I0835
+  - I0841
+  - I0842
+acceptance_criteria:
+  - plan validate passes and M004 reports every evidence_required token satisfied
+validation:
+  - bin/majordomus plan validate
+  - bin/majordomus plan status
+evidence_required:
+  - docs_integrated
+risk: "The last issue is the one that checks the others honestly."
+created_at: 2026-09-05
+updated_at: 2026-09-05

@@ -1,0 +1,35 @@
+id: I0821
+milestone: M004
+title: Flattened YAML is cached under .ai/local/cache by content hash
+slug: flatten-cache
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<sha256>, keyed by the file's content hash and the flattener's own version, so a second command on unchanged files does no parsing."
+why: "doctor flattens 181 files and knowledge nodes 146; across the hook, watch and context the same files are parsed again and again."
+current_state: ".ai/README.md already reserves local/cache/ for rebuildable caches; nothing uses it."
+desired_state: "A miss parses and writes atomically; a hit copies; a changed file cannot hit because its hash changed; the cache is bounded by an entry cap in the policy and trimmed oldest first."
+scope:
+  - lib/common.sh
+  - share/allow/policy.txt
+  - share/skeleton/policy.yaml
+  - .ai/repo/policy.yaml
+  - docs/SCHEMAS.md
+  - test/cases/77_flatten_cache.sh
+non_scope:
+  - A cross-process cache of command results
+depends_on:
+  - I0817
+acceptance_criteria:
+  - Byte-identical output of every read-only command with a cold and a warm cache, proved by case 77
+  - A changed file is re-parsed, proved by mutation
+  - The cache never grows past the cap
+  - yaml_flatten count is unchanged; a new counter flatten_cache_hit reports hits
+validation:
+  - bash test/run.sh 77_flatten_cache
+  - MJ_TIMING=1 bin/majordomus doctor
+evidence_required:
+  - flatten_cache
+risk: "Hashing a file costs a subprocess too; the cache pays only when a flatten is materially dearer than a hash, which the counters must show before this lands."
+created_at: 2026-09-05
+updated_at: 2026-09-05

@@ -1,0 +1,32 @@
+id: I0842
+milestone: M004
+title: Before and after evidence for every optimisation
+slug: before-after-evidence
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Record, for each hot spot removed, the phase time before and after and the counter before and after, in the benchmark history and in the commit message, and summarise them in docs/PERFORMANCE.md by pointing at the baseline file."
+why: "A speed-up without numbers is a claim."
+current_state: "77f5d79 records the first ranking in its message."
+desired_state: "Every optimisation commit carries its measured delta; the baseline file carries the accepted state."
+scope:
+  - docs/PERFORMANCE.md
+  - .ai/repo/benchmarks/baseline.json
+non_scope:
+  - Numbers in prose outside the baseline and the history
+depends_on:
+  - I0818
+  - I0819
+  - I0820
+  - I0832
+  - I0833
+acceptance_criteria:
+  - Each optimisation commit names its phase and both values
+  - The baseline reflects the state after the last optimisation
+validation:
+  - git log --grep perf
+evidence_required:
+  - doctor_under_budget
+risk: "project.no-counts-in-prose keeps measured values out of the documents; the baseline file is the one place they live."
+created_at: 2026-09-05
+updated_at: 2026-09-05

@@ -1,0 +1,32 @@
+id: I0826
+milestone: M004
+title: bench --check refuses a regression by policy
+slug: bench-check
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Compare a fresh run against the baseline under the policy's benchmark.regression thresholds (relative p50, p95, p99) and exit non-zero naming the command, the metric, both values and the threshold."
+why: "Without a gate the next slow validator arrives unnoticed, exactly as the current ones did."
+current_state: "No comparison exists."
+desired_state: "Deterministic report: metric, baseline, current, absolute and relative delta, threshold, result; incompatible baselines are reported as not comparable rather than as a number."
+scope:
+  - lib/bench.sh
+  - share/allow/policy.txt
+  - share/skeleton/policy.yaml
+  - .ai/repo/policy.yaml
+  - test/cases/82_bench_check.sh
+non_scope:
+  - Significance testing
+depends_on:
+  - I0825
+acceptance_criteria:
+  - A baseline edited to make the current run a regression makes the check exit non-zero with the named metric
+  - A compatible run within thresholds passes
+  - A baseline with another schema version is not comparable
+validation:
+  - bash test/run.sh 82_bench_check
+evidence_required:
+  - regression_refused
+risk: "Thresholds live in the policy and are read like every other policy key: declared, no reader-side default."
+created_at: 2026-09-05
+updated_at: 2026-09-05

@@ -1,0 +1,33 @@
+id: I0819
+milestone: M004
+title: The project model is loaded with one flatten per file and no per-file lookups
+slug: project-model-batch-load
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make mj_project_load and mj_project_unknown_keys read each milestone and issue once, checking ids and unknown keys inside awk rather than with a subprocess per file and per key."
+why: "The project validator costs 3.5 s of doctor and plan validate costs 4.4 s on 73 records; the count grows with the plan."
+current_state: "Every record is flattened, then read back with mj_yget per check, then re-read to build raw.tsv."
+desired_state: "One flatten and one awk per record, unknown keys computed by one awk over the flat directory against the allow-lists."
+scope:
+  - lib/project.sh
+  - lib/doctor.sh
+  - lib/plan.sh
+  - test/cases/40_project_model.sh
+  - test/cases/41_project_status.sh
+  - test/cases/43_plan_command.sh
+non_scope:
+  - Any change to the model semantics in project.awk
+depends_on:
+  - I0817
+acceptance_criteria:
+  - validate:project under 400 ms and plan validate under 1 s on this repository
+  - Cases 40 to 48 pass unchanged
+validation:
+  - MJ_TIMING=1 bin/majordomus plan validate
+  - bash test/run.sh 40_project_model
+evidence_required:
+  - batch_reads
+risk: "Unknown-key detection moved into awk must keep the same allow-list semantics; case 44 mutates a record and expects the refusal."
+created_at: 2026-09-05
+updated_at: 2026-09-05
