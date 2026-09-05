@@ -12,7 +12,7 @@ fits_when:
 does_not_fit_when:
   - 'One person works one repository at a time and nothing is ever handed over'
   - 'Coordination is the point and you want a scheduler; this tool reports overlap, it does not resolve it'
-use_cases: [run-several-workers-at-once, hand-work-between-sessions, serve-the-layer-to-ai-clients, keep-decisions-out-of-the-transcript, open-and-close-a-session, resume-from-a-prompt-asset]
+use_cases: [run-several-workers-at-once, hand-work-between-sessions, serve-the-layer-to-ai-clients, keep-decisions-out-of-the-transcript, open-and-close-a-session, resume-from-a-prompt-asset, deliver-issues-in-waves, read-back-what-happened, resume-in-the-right-worktree, carry-a-blocker-across-a-handover]
 doctrines: [majordomus.scope-integrity, majordomus.state-consistency, majordomus.handover-integrity]
 responsibilities: [scope, state, handover]
 ---

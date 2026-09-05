@@ -12,7 +12,7 @@ fits_when:
 does_not_fit_when:
   - 'The work is a single sitting and nothing needs to be recalled afterwards'
   - 'You want a knowledge base; this keeps operational state, not documentation'
-use_cases: [hand-work-between-sessions, find-out-what-drifted, accept-or-refuse-finished-work, keep-decisions-out-of-the-transcript, open-and-close-a-session, plan-the-work-as-data, resume-from-a-prompt-asset]
+use_cases: [hand-work-between-sessions, find-out-what-drifted, accept-or-refuse-finished-work, keep-decisions-out-of-the-transcript, open-and-close-a-session, plan-the-work-as-data, resume-from-a-prompt-asset, block-acceptance-on-an-open-question, checkpoint-long-work, complete-an-issue-only-with-its-evidence, deliver-issues-in-waves, read-back-what-happened, read-only-the-context-that-fits, carry-a-blocker-across-a-handover]
 doctrines: [majordomus.ledger-integrity, majordomus.decision-records, majordomus.blocker-resolution, majordomus.task-continuity]
 responsibilities: [state, handover, finish]
 ---

@@ -12,7 +12,7 @@ fits_when:
 does_not_fit_when:
   - 'Checks are advisory by policy and a red pipeline is routinely merged past'
   - 'There is no CI, in which case the lifecycle commands still work but the last link of every chain is missing'
-use_cases: [accept-or-refuse-finished-work, prove-a-rule-is-enforced, prove-performance-with-benchmarks, add-a-use-case-and-prove-it, know-which-tool-is-running, plan-the-work-as-data, read-the-rules-the-tool-applies]
+use_cases: [accept-or-refuse-finished-work, prove-a-rule-is-enforced, prove-performance-with-benchmarks, add-a-use-case-and-prove-it, know-which-tool-is-running, plan-the-work-as-data, read-the-rules-the-tool-applies, block-acceptance-on-an-open-question, complete-an-issue-only-with-its-evidence, gate-ci-on-the-tool-itself, trust-the-policy-before-reading-it]
 doctrines: [majordomus.verification-integrity, majordomus.doctrine-wiring-integrity]
 responsibilities: [finish, doctor]
 ---
