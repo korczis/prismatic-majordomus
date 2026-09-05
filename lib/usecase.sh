@@ -371,7 +371,17 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   fix="$(mj_uc_fixture_dir)"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uc.XXXXXX")"
   W="$tmp/repo"; mkdir -p "$W"
-  ( cd "$W" && git init -q . && git config user.email t@example.com && git config user.name t && git commit -q --allow-empty -m init ) || { rm -rf "$tmp"; mj_err "usecase run: cannot create a repository for $id"; return 1; }
+  # The scenario's repository is created on a fixed branch. `git init` alone takes the branch
+  # from the operator's init.defaultBranch, and the branch name reaches the evidence through
+  # every record path a scenario writes (a checkpoint and a handover are named after it), so
+  # the recorded evidence — a committed derived artifact — would otherwise differ between a
+  # machine configured for `main` and one left on git's built-in default. That is a generated
+  # file whose content depends on who generated it, which is the one thing derivation may not
+  # do; `scripts/generate-site-data --check` fails on the next machine and names the line.
+  # symbolic-ref rather than `git init -b`, which needs git 2.28.
+  ( cd "$W" && git init -q . && git symbolic-ref HEAD refs/heads/main \
+      && git config user.email t@example.com && git config user.name t \
+      && git commit -q --allow-empty -m init ) || { rm -rf "$tmp"; mj_err "usecase run: cannot create a repository for $id"; return 1; }
   # the setup script prepares the repository, with the same helpers the test suite gives it
   local setup_out="$tmp/setup.out"
   # the helpers the setup scripts use (pj_* for a plan model) come from the tool's test

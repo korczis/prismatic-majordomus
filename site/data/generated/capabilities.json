@@ -1374,16 +1374,16 @@
     },
     {
       "id": "site-deploys-from-verified-run",
-      "claim": "The site deploys from the same workflow run that validated it, after the jobs that guard the site are green, and nothing is rebuilt or measured twice for one commit",
-      "source": "docs/CI.md",
-      "implementation": ".github/workflows/validate.yml",
-      "test": "test/cases/26_ci_wiring.sh",
+      "claim": "Publication is gated on everything that can make the published site wrong and waits for nothing else; the checks that decide whether a change may merge run beside it on the same commit, not in front of it",
+      "source": "docs/GITHUB_PAGES_PERFORMANCE.md",
+      "implementation": ".github/workflows/pages.yml",
+      "test": "test/cases/97_pages_fast_path.sh",
       "status": "guaranteed",
-      "note": "The site job uploads the site/public it built, checked and probed as the Pages artifact on master; the pages job needs plan, structure, suite, rust and site and deploys it; deployments queue in order and never cancel one another; a pull request's runs are superseded by its next commit. The case proves there is one workflow, that it deploys, what the pages job needs, and the concurrency rule.",
+      "note": "The publication path proves the committed derived data current by its input hash, builds the site from it, runs every static check over the output and pushes gh-pages, in one job triggered directly by a master push on paths derived from the gate model; superseded runs are cancelled; the suite, the crate gates, coverage, the macOS suite, the benchmark check and the browser probe run in validate.yml on the same commit and gate merging. The case proves the trigger, the derived paths, the cancellation, the permissions, that no heavy gate is on the path and none left validate.yml, and that a build which skips the generation is byte for byte one that does not.",
       "responsibility": "none",
-      "source_route": "/docs/ci/",
+      "source_route": "/docs/github-pages-performance/",
       "command": null,
-      "test_case": "26_ci_wiring"
+      "test_case": "97_pages_fast_path"
     },
     {
       "id": "openapi-inferred",
@@ -1452,7 +1452,7 @@
     },
     {
       "id": "site-deploy-one-path",
-      "claim": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the Pages workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
+      "claim": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the publication workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
       "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
       "implementation": "scripts/site-deploy",
       "test": "test/cases/96_site_deploy.sh",

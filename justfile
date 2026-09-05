@@ -268,6 +268,16 @@ site-probe *args:
 site-serve:
     scripts/site-serve
 
+# The publication fast path, exactly as .github/workflows/pages.yml runs it: prove the committed derived data current by its input hash, render it, check the output. `just pages build`, `pages check`, `pages paths`, `pages budget`, `pages current`, `pages verify`.
+[group('site')]
+pages *args:
+    scripts/pages {{args}}
+
+# The controlled publication path, measured N times; `just pages-benchmark -n 10 --write-baseline` records this platform's baseline under .ai/repo/benchmarks/pages/.
+[group('site')]
+pages-benchmark *args:
+    scripts/pages benchmark {{args}}
+
 # Every committed derived artifact, regenerated in dependency order (scripts/derive: generate, site data, generate again over the index the site data changed).
 [group('site')]
 derive:

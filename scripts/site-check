@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 # site-check — validates the derived site after scripts/site-build. Exit 0 clean, 10 findings, 12 missing.
 # Every check names what it proves. Nothing here needs Node or a browser.
+#
+#   scripts/site-check              every check, including a full regeneration to prove the
+#                                   committed data matches its canonical sources
+#   scripts/site-check --no-sync    every check but that one. For a caller that has already
+#                                   established the data is current and would otherwise pay a
+#                                   second generation for the same answer (scripts/pages does,
+#                                   by fingerprint; the site job of validate.yml does, by the
+#                                   `generate-site-data --check` step that precedes the build).
 set -eu
+SYNC=1
+if [ "${1:-}" = --no-sync ]; then SYNC=0; shift; fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"
 MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../lib/common.sh
@@ -15,9 +25,18 @@ fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12
 [ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
 PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
 pages="$(find "$PUB" -name '*.html')"
+# Every per-page assertion, measured once. The checks below read the rows rather than
+# re-reading the pages: one awk process for the site instead of eighteen per route.
+PAGEROWS="$(mktemp "${TMPDIR:-/tmp}/mj-site-pages.XXXXXX")"; trap 'rm -f "$PAGEROWS"' EXIT
+# shellcheck disable=SC2086
+awk -v pub="$PUB" -f "$ROOT/scripts/lib/site-pages.awk" $pages > "$PAGEROWS"
+# rows <check>: the findings of one check, in page order, as "<page>\t<detail>" lines
+rows() { awk -F'\t' -v c="$1" '$2 == c { print $1 "\t" $3 }' "$PAGEROWS"; }
 
 # 1. data in sync with canonical sources
-if "$ROOT/scripts/generate-site-data" --check >/dev/null 2>&1; then ok sync "site/data/generated matches canonical inputs"; else bad sync "site/data/generated is stale; run scripts/generate-site-data"; fi
+if [ "$SYNC" = 0 ]; then ok sync "site/data/generated: the caller established it is current (--no-sync)"
+elif "$ROOT/scripts/generate-site-data" --check >/dev/null 2>&1; then ok sync "site/data/generated matches canonical inputs"
+else bad sync "site/data/generated is stale; run scripts/generate-site-data"; fi
 # 2. generated data schema: every file parses and carries schema 1
 # derived from the directory, not listed here: a new generated file is checked the day it appears
 gen_files="$(find "$SITE/data/generated" -name '*.json' | sed 's#.*/##; s#\.json$##' | sort)"
@@ -43,19 +62,18 @@ for f in "$SITE"/content-src/outcomes/*.md; do slug="$(basename "$f" .md)"; [ "$
 grep -oE 'href="#[a-z-]+"' "$PUB/index.html" | sed 's/href="#//; s/"$//' | sort -u | while read -r a; do grep -q "id=\"$a\"" "$PUB/index.html" || echo "$a"; done | head -1 | grep -q . && { bad hero "an in-page link has no target section"; hero_bad=1; }
 [ "$hero_bad" = 0 ] && ok hero "$(printf '%s\n' "$HL" | wc -l | tr -d ' ') propositions on the homepage, each with its page under /outcomes/; the first is the h1 and the default; in-page links resolve"
 # 4. routes: metadata, landmarks, no unresolved placeholders, one h1, viewport
-for f in $pages; do
-  rel="${f#"$PUB"/}"
-  grep -q '<meta name="viewport"' "$f" || bad route "$rel: no viewport meta"
-  grep -q '<meta name="description"' "$f" || bad route "$rel: no description"
-  grep -q '<main' "$f" || bad route "$rel: no <main> landmark"
-  [ "$(grep -o '<h1' "$f" | wc -l | tr -d ' ')" = 1 ] || bad route "$rel: expected exactly one <h1>"
-  # a {{...}} inside a code span or a code block is rendered output (docs/SCHEMAS.md and
-  # docs/CLI.md document the prompt renderer's own {{TOKEN}} syntax), not an unrendered
-  # template: Zola produced it, so it cannot be a template Zola failed to expand
-  awk '/<pre/{p=1} !p{print} /<\/pre>/{p=0}' "$f" | sed -e 's|<code[^>]*>[^<]*</code>||g' \
-    | grep -qE '\{\{|\{%|\[\[[A-Z_]+\]\]' && bad route "$rel: unresolved template placeholder"
-  grep -qE ' style="' "$f" && bad route "$rel: inline style attribute (forbidden by the custom CSS policy)"
-done; ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, description, main, one h1, no placeholders, no inline styles"
+# a {{...}} inside a code span or a code block is rendered output (docs/SCHEMAS.md and
+# docs/CLI.md document the prompt renderer's own {{TOKEN}} syntax), not an unrendered
+# template: Zola produced it, so it cannot be a template Zola failed to expand
+{ rows viewport    | cut -f1 | sed 's/$/: no viewport meta/'
+  rows description | cut -f1 | sed 's/$/: no description/'
+  rows main        | cut -f1 | sed 's/$/: no <main> landmark/'
+  rows h1          | cut -f1 | sed 's/$/: expected exactly one <h1>/'
+  rows placeholder | cut -f1 | sed 's/$/: unresolved template placeholder/'
+  rows inlinestyle | cut -f1 | sed 's/$/: inline style attribute (forbidden by the custom CSS policy)/'
+} > "$PAGEROWS.4"
+while IFS= read -r m; do bad route "$m"; done < "$PAGEROWS.4"; rm -f "$PAGEROWS.4"
+ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, description, main, one h1, no placeholders, no inline styles"
 # 5. prefix: every root-absolute href/src carries the deployment path
 if [ -n "$PREFIX" ]; then
   if grep -rhoE '(href|src|content)="/[^"]*"' $pages | grep -vE "=\"$PREFIX(/|\")" | grep -vE '="/\)' | head -1 | grep -q .; then
@@ -77,23 +95,21 @@ BASE_URL="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$
 remote="$(grep -rhoE '<(script|link)[^>]+(src|href)="https?://[^"]+"' $pages | grep -v 'rel="canonical"' | grep -vF "\"$BASE_URL/" | head -1 || true)"
 if [ -n "$remote" ]; then bad offline "remote script or stylesheet: $remote"; else ok offline "every script and stylesheet is same-origin; the site works offline after build"; fi
 # 9. flowbite + alpine hooks are used, and initFlowbite is called once per page
-for f in $pages; do
-  [ "$(grep -o 'initFlowbite()' "$f" | wc -l | tr -d ' ')" = 1 ] || bad js "${f#"$PUB"/}: initFlowbite() must appear exactly once"
-done; grep -q 'data-collapse-toggle="navbar-main"' "$PUB/index.html" && grep -q 'x-data=' "$PUB/index.html" && ok js "flowbite collapse and alpine x-data present; initFlowbite called once per page" || bad js "flowbite/alpine hooks missing on the homepage"
+rows initflowbite | cut -f1 > "$PAGEROWS.9"
+while IFS= read -r p; do bad js "$p: initFlowbite() must appear exactly once"; done < "$PAGEROWS.9"; rm -f "$PAGEROWS.9"
+grep -q 'data-collapse-toggle="navbar-main"' "$PUB/index.html" && grep -q 'x-data=' "$PUB/index.html" && ok js "flowbite collapse and alpine x-data present; initFlowbite called once per page" || bad js "flowbite/alpine hooks missing on the homepage"
 # 10. mermaid: every diagram page has the runtime and at least one source block
-for f in $pages; do
-  if grep -q 'class="mermaid' "$f"; then grep -q 'js/mermaid.min.js' "$f" || bad mermaid "${f#"$PUB"/}: has diagrams but no mermaid runtime"; fi
-done; ok mermaid "every page with <pre class=\"mermaid\"> loads the runtime"
+rows mermaid | cut -f1 > "$PAGEROWS.10"
+while IFS= read -r p; do bad mermaid "$p: has diagrams but no mermaid runtime"; done < "$PAGEROWS.10"; rm -f "$PAGEROWS.10"
+ok mermaid "every page with <pre class=\"mermaid\"> loads the runtime"
 # 11. responsive lint (structural causes of horizontal overflow)
-for f in $pages; do
-  rel="${f#"$PUB"/}"; flat="$(tr -d '\n' < "$f")"
-  npre="$(printf '%s' "$flat" | grep -o '<pre' | wc -l | tr -d ' ')"
-  nwrap="$(printf '%s' "$flat" | grep -oE '(overflow-x-auto[^>]*>[[:space:]]*<pre|class="format[^"]*"[^>]*>.*<pre)' | wc -l | tr -d ' ')"
-  # pres inside a Typography container scroll by the plugin's own rule; others need the wrapper
-  if [ "$npre" -gt 0 ] && [ "$nwrap" = 0 ]; then bad mobile "$rel: <pre> without overflow container"; fi
-  grep -oE 'class="[^"]*"' "$f" | grep -qE '(class="|[[:space:]])grid-cols-([3-9]|1[0-2])([[:space:]]|")' && bad mobile "$rel: grid-cols-3+ without a breakpoint prefix"
-  grep -oE '\b(min-)?w-\[[0-9]{3,}px\]' "$f" | awk -F'[][]' '{gsub(/px/,"",$2); if ($2+0 > 360) found=1} END{exit !found}' && bad mobile "$rel: fixed width over 360px"
-done; ok mobile "no unwrapped <pre>, no unprefixed grid-cols-3+, no fixed width over 360px"
+# pres inside a Typography container scroll by the plugin's own rule; others need the wrapper
+{ rows pre        | cut -f1 | sed 's/$/: <pre> without overflow container/'
+  rows gridcols   | cut -f1 | sed 's/$/: grid-cols-3+ without a breakpoint prefix/'
+  rows fixedwidth | cut -f1 | sed 's/$/: fixed width over 360px/'
+} > "$PAGEROWS.11"
+while IFS= read -r m; do bad mobile "$m"; done < "$PAGEROWS.11"; rm -f "$PAGEROWS.11"
+ok mobile "no unwrapped <pre>, no unprefixed grid-cols-3+, no fixed width over 360px"
 # 12. secrets and private paths in output
 grep -rhoaE '/Users/[a-z]+/|/home/[a-z]+/dev/|\.internal\b|\.corp\b' "$PUB" | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
 grep -rhoaE '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}' "$PUB" | grep -viE 'id-token|GITHUB_TOKEN' | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
@@ -381,12 +397,10 @@ fi
 # rule passes a tab set, which legitimately shows one panel at a time once Alpine runs, and
 # fails the disclosure that hid the canonical policy file behind a runtime.
 bad_ne=0
-for f in $pages; do
-  rel="${f#"$PUB"/}"
-  # one element per line first, so the two attributes are only seen together when they are
-  hits="$(tr '<' '\n' < "$f" | grep 'x-show' | grep -cE 'x-cloak|class="[^"]*(^| )hidden( |")' || true)"
-  [ "$hits" = 0 ] || { bad nojs "$rel: $hits element(s) carry x-show and are also hidden statically — unreachable without JavaScript"; bad_ne=1; }
-done
+rows nojs > "$PAGEROWS.nojs"
+while IFS="$(printf '\t')" read -r p hits; do
+  bad nojs "$p: $hits element(s) carry x-show and are also hidden statically — unreachable without JavaScript"; bad_ne=1
+done < "$PAGEROWS.nojs"; rm -f "$PAGEROWS.nojs"
 [ "$bad_ne" = 1 ] || ok nojs "no element is hidden by both a runtime and a static rule; every x-show renders without JavaScript"
 
 # 13c. the why section links both ways: every moment reaches its commands, responsibilities and

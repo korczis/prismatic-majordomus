@@ -1,0 +1,65 @@
+# The publication model of this repository: what makes the public site different, what the
+# fast path is allowed to spend on making it different, and how the result is measured.
+# `scripts/pages` reads this file and nothing else; .github/workflows/pages.yml is an adapter
+# over that script, and docs/GITHUB_PAGES_PERFORMANCE.md explains the design it encodes.
+#
+# A budget here is repository-controlled latency only. The Actions queue, runner allocation
+# and GitHub's own "pages build and deployment" are measured and reported but never budgeted:
+# they are not this repository's seconds to spend, and a gate that fails on them would fail
+# on GitHub's weather rather than on a regression anybody can fix.
+version: 1
+
+# ---------------------------------------------------------------- what triggers a publication
+# The site can only differ when an input of the site generator, of the site itself, or of the
+# publication path differs. That set is not written here twice: `gate` names the gate of
+# .ai/repo/ci/gates.yaml that builds the site, and the paths are the union of the classes that
+# select it. `scripts/pages paths` computes them; test/cases/97_pages_fast_path.sh holds the
+# workflow's own trigger to that computation, so the two cannot drift.
+trigger:
+  branch: master
+  gate: site-build
+  # paths that no class of the gate model covers but that do change what is published
+  extra:
+    - .github/workflows/pages.yml
+    - scripts/pages
+    - scripts/site-deploy
+
+# ---------------------------------------------------------------- how a publication happens
+deploy:
+  branch: gh-pages
+  output: site/public
+  # the served file that names the commit the public site was built from; the probe reads it
+  identity: build.json
+  publish: scripts/site-deploy --skip-build
+
+# ---------------------------------------------------------------- what the fast path may spend
+# Seconds, wall clock, on a GitHub-hosted Linux runner with the caches warm. Derived from
+# measurement, not from taste: `scripts/pages benchmark` locally and the timing rows every
+# deployment writes are what these were set from, and what a change to them must cite.
+budget:
+  warm:
+    checkout: 10
+    setup: 30
+    build: 20
+    check: 25
+    publish: 20
+    controlled: 75
+  # a cold runner pays for the caches it cannot restore; it is still bounded
+  cold:
+    controlled: 180
+  # push -> publicly observable. Reported against every deployment, and not enforced: the
+  # queue and GitHub's own Pages build are the larger half of it and neither is ours.
+  end_to_end: 60
+
+# ---------------------------------------------------------------- what is cached, and by what
+# Each domain is invalidated by its own inputs and nothing else, so a documentation change
+# does not evict a toolchain and a lockfile change does not evict the site.
+caches:
+  - id: node-modules
+    path: node_modules
+    inputs: [package-lock.json]
+    saves: npm ci
+  - id: zola
+    path: .mj-cache/zola
+    inputs: [.ai/repo/ci/pages.yaml]
+    saves: the Zola release download

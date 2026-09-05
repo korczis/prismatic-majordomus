@@ -1,11 +1,13 @@
 # Continuous integration
 
-How a change is validated and how the site is published: one workflow that is an adapter
-over repository-owned tooling, a planner that reads one model of what can affect what, gates
-that run in parallel and only when a change can reach them, one status a branch rule can
-require, and the verified site of a run deployed from that same run. Every number about
-it lives in the measurements, never here: `scripts/ci-baseline` records what GitHub
-observed into `.ai/repo/ci/baseline.json`, and every run writes its own summary.
+How a change is validated: one workflow that is an adapter over repository-owned tooling, a
+planner that reads one model of what can affect what, gates that run in parallel and only
+when a change can reach them, and one status a branch rule can require. Publication is not
+here — [`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md) is the latency-sensitive
+path that puts a master commit on GitHub Pages, and it runs beside this workflow rather than
+after it. Every number about either lives in the measurements, never here:
+`scripts/ci-baseline` records what GitHub observed into `.ai/repo/ci/baseline.json`, and
+every run writes its own summary.
 
 ## The shape
 
@@ -13,22 +15,26 @@ observed into `.ai/repo/ci/baseline.json`, and every run writes its own summary.
 plan ──► structure (always) ──┐
     ├──► suite                ├──► ci (the verdict; the one required status)
     ├──► rust                 │
-    ├──► coverage             │        on master, from the same run:
-    ├──► bench (macOS)        │        structure + suite + rust + site ──► pages
+    ├──► coverage             │
+    ├──► bench (macOS)        │
     ├──► site                 │
     └──► macos ───────────────┘
+
+and beside it, on the same commit, never after it:
+
+pages.yml ──► one job: build ──► check ──► push gh-pages ──► measure publication
 ```
 
 `plan` reads the model and decides. `structure` runs the cheap, deterministic gates every
 plan has (`scripts/ci/shell-lint`, `scripts/ci/core-check`). The other jobs run when the
 plan selected a gate they carry, in parallel, each through the script a person runs. `ci`
-always runs and turns the plan and the jobs' results into one verdict. `pages` publishes the
-site the `site` job built, checked and probed in this run, after the jobs that guard the
-site are green.
+always runs and turns the plan and the jobs' results into one verdict.
 
-The whole workflow is `.github/workflows/validate.yml`; there is no second one. What used
-to be `pages.yml`, a separate workflow that ran the suite and the browser probe again over
-the same commit before deploying, is the `pages` job of this one, which reruns nothing.
+Two workflows, and the split between them is what each decides. `.github/workflows/validate.yml`
+decides whether a change may merge. `.github/workflows/pages.yml` decides what the public site
+shows: it triggers directly on a master push whose paths can change the site and publishes as
+soon as the bytes are proved, without waiting for gates that cannot change a published byte.
+Neither repeats the other's work.
 
 ## The model: what can affect what
 
@@ -140,7 +146,6 @@ runner image. What a cache holds is never a source of truth: every gate reads th
 | `ci-plan` | `plan` | the verdict, a person asking why | short |
 | `majordomus-cli-<target>` | `rust` | any later job or phase that needs the executable without building it: the debug binary and `majordomus-cli.json` (commit, target triple, rustc, `Cargo.lock` digest, profile) | short |
 | `ci-metrics-<job>`, `ci-performance-metrics` | every job, `ci` | the timing rows of a run, gathered | longer |
-| `site-public` | `site` on master | the `pages` job, which publishes it with `scripts/site-deploy --skip-build` | short |
 
 ## The Rust executable as a build output
 
@@ -157,15 +162,19 @@ cases and the crate's own suites drive.
 
 ## Pages
 
-On a push to master the `site` job keeps `site/public`, the bytes it built, checked and
-probed, as the artifact `site-public`, and the `pages` job publishes it with
-`scripts/site-deploy --skip-build` once `structure`, `suite`, `rust` and `site` are green: the derived data current, the suite green, the registry
-projections current, the site checked and probed. That is what the old `pages.yml`
-required, obtained from one run instead of a second one. Coverage, macOS and the benchmark
-check gate merging (they are in `ci`), not publishing, exactly as before. Deployments queue
-in the `pages` job's own group; pull-request runs are superseded by the next commit of the
-same pull request; every other run is its own group and neither waits for nor cancels
-another, so a run held up by a scarce runner does not hold up the next commit's evidence.
+Publication has its own workflow and its own document,
+[`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md). What matters here is the
+boundary: this workflow's `site` job builds, checks and probes the site as a gate on merging,
+and publishes nothing; `pages.yml` builds and checks the same commit again — cheaply, without
+the probe and without a generation — and publishes. The duplication is deliberate and small:
+the publication path cannot depend on a job it does not wait for, and what it repeats costs
+seconds.
+
+Concurrency: a pull request's runs here are superseded by its next commit; every other run of
+this workflow is its own group and neither waits for nor cancels another, so a run held up by
+a scarce runner does not hold up the next commit's evidence. Deployments are the opposite —
+`pages.yml` cancels a superseded deployment, because the site is a projection of the newest
+commit and finishing an older one would publish an older tree.
 
 ## Platforms
 

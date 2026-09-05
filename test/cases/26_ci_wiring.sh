@@ -9,11 +9,14 @@ CORE="$ROOT/scripts/ci/core-check"; LINT="$ROOT/scripts/ci/shell-lint"
 [ -f "$W" ] || { echo "    no validate workflow"; exit 1; }
 [ -x "$CORE" ] && [ -x "$LINT" ] || { echo "    scripts/ci/core-check or scripts/ci/shell-lint is missing or not executable"; exit 1; }
 
-# 1. one canonical validation command, and CI calls exactly that; the site deploys from the
-#    same workflow's verified run, so there is no second workflow repeating the suite
+# 1. one canonical validation command, and CI calls exactly that. Two workflows and no more:
+#    this one decides whether a change may merge, .github/workflows/pages.yml decides what the
+#    public site shows, and neither repeats the other's work. The publication path is held to
+#    its own shape by test/cases/97_pages_fast_path.sh.
 grep -q 'bash test/run.sh' "$W" || { echo "    validate.yml does not run bash test/run.sh"; exit 1; }
-[ "$(ls "$ROOT"/.github/workflows/*.yml | wc -l | tr -d ' ')" = 1 ] || { echo "    a second workflow exists beside validate.yml; the site deploys from validate.yml's own verified run"; ls "$ROOT"/.github/workflows/; exit 1; }
-grep -qE 'actions/deploy-pages|scripts/site-deploy' "$W" || { echo "    validate.yml does not deploy the site"; exit 1; }
+[ "$(ls "$ROOT"/.github/workflows/*.yml | wc -l | tr -d ' ')" = 2 ] || { echo "    there are not exactly two workflows (validate.yml and pages.yml)"; ls "$ROOT"/.github/workflows/; exit 1; }
+[ -f "$ROOT/.github/workflows/pages.yml" ] || { echo "    no pages.yml; nothing publishes the site"; exit 1; }
+grep -qE 'actions/deploy-pages|scripts/site-deploy' "$ROOT/.github/workflows/pages.yml" || { echo "    pages.yml does not deploy the site"; exit 1; }
 
 # 2. the runner discovers every case rather than naming a list that can fall behind
 grep -q 'test/cases/\*\.sh' "$ROOT/test/run.sh" || { echo "    run.sh does not glob test/cases"; exit 1; }
@@ -115,8 +118,8 @@ grep -q 'majordomus finish --check' "$ROOT/.githooks/pre-push" || { echo "    pr
 # 9. the workflow is an adapter over the CI model, not a second copy of it: every gate the
 #    model declares is carried by a job the workflow has, every job that a plan can skip is
 #    gated on the plan's output for its gate, the verdict job needs every job and always runs,
-#    and the deploy job needs exactly the jobs that guard the site. The model is read here,
-#    so a gate added to it without its job fails this case rather than pending forever.
+#    and no job of this workflow publishes. The model is read here, so a gate added to it
+#    without its job fails this case rather than pending forever.
 PLAN="$ROOT/scripts/ci-plan"; MODEL="$ROOT/.ai/repo/ci/gates.yaml"
 [ -x "$PLAN" ] && [ -f "$MODEL" ] || { echo "    scripts/ci-plan or .ai/repo/ci/gates.yaml is missing"; exit 1; }
 expect_exit 0 "$PLAN" --check
@@ -137,8 +140,6 @@ for j in plan $(jq -r '.gates[].job' full.json | sort -u); do
   printf '%s\n' "$ci_needs" | grep -qx "$j" || { echo "    the ci job does not need job $j; a red $j could not turn the required status red"; exit 1; }
 done
 awk '$0 == "  ci:" {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | grep -q '^    if: always()$' || { echo "    the ci job does not always run; a skipped job would leave the required status pending"; exit 1; }
-pages_needs="$(awk '$0 == "  pages:" {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | sed -n 's/^    needs: \[\(.*\)\]$/\1/p' | tr -d ' ')"
-[ "$pages_needs" = "plan,structure,suite,rust,site" ] || { echo "    the pages job needs '$pages_needs', not the jobs that guard the site (plan,structure,suite,rust,site)"; exit 1; }
 # a pull request's runs are superseded by the next commit; master's never are
 grep -q "cancel-in-progress: \${{ github.event_name == 'pull_request' }}" "$W" || { echo "    validate.yml does not cancel superseded pull-request runs only"; exit 1; }
 # no bare push trigger: a branch with a pull request is validated once, as that pull request
