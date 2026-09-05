@@ -23,6 +23,9 @@ if [ "$NOCSS" = 0 ]; then
   # loaded on demand by graph.js, never by the base layout: it is the largest asset on the site
   cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$SITE/static/js/cytoscape.min.js"
 fi
+# the OpenAPI document the executable generated, served raw at /openapi.json: byte for byte the
+# committed file, so what the site offers is what `majordomus generate --check` verified
+cp "$ROOT/docs/generated/openapi.json" "$SITE/static/openapi.json"
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"
 cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
 cp "$SITE/graph.js" "$SITE/static/js/graph.js"
