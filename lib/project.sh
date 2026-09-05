@@ -103,9 +103,11 @@ mj_pj_row() {
   esac
 }
 # one column of a row, split on a byte that is not whitespace so that an empty field
-# between two tabs keeps its place (IFS whitespace would collapse it)
+# between two tabs keeps its place (IFS whitespace would collapse it). The byte is the
+# ASCII unit separator: bash 3.2 uses \001 internally and `read -a` under IFS=\001 does not
+# split at all there, which left every plan status empty on a stock macOS shell.
 mj_pj_col() {
-  local row sep n="$3" fields; row="$(mj_pj_row "$1" "$2")"; sep="$(printf '\001')"
+  local row sep n="$3" fields; row="$(mj_pj_row "$1" "$2")"; sep="$(printf '\037')"
   row="${row//$MJ_TAB/$sep}"
   IFS="$sep" read -r -a fields <<< "$row"
   printf '%s' "${fields[$((n - 1))]:-}"
