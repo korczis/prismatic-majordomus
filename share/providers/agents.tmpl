@@ -21,6 +21,11 @@ Before working under a path, run `majordomus context resolve <path>` (or read th
 ancestors and the nearest one does not replace them. A provider's own nested-file
 loading is an optimisation; the Majordomus resolution is what applies.
 
+A capability you add or change has use cases: run `majordomus usecase impact` and the
+scenarios it names, and close a coverage gap (`majordomus usecase coverage`) with a use
+case that executes, per `.ai/repo/workflows/use-cases.md`; `finish` refuses a required
+gap.
+
 A `.majordomus/` directory, if one exists, is an optional installation of the tool and not
 repository context. Do not duplicate shared rules into this file: it is generated, and a
 rule that exists here and nowhere else is a bug.

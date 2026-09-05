@@ -120,6 +120,15 @@ when it starts and discovers, indexes and serves nothing outside it; a repositor
 declares none is read under the tool's default and told so. `majordomus scope <path>`
 answers in or out and names the rule.
 
+## Use cases
+
+`repo/use-cases/` holds the tasks people perform with the tool, one file each, and
+`repo/applications/` the contexts it suits. A use case names what it relies on and
+carries a scenario the tool executes against itself; the page it becomes shows that
+execution, its maturity is observed from the evidence, and a public command no active use
+case runs is a gap `doctor` reports and, when the policy says so, `finish` refuses. The
+discipline is `repo/workflows/use-cases.md`.
+
 ## Versioning
 
 `manifest.yaml` carries the format version, currently `ai-repository/v1`. A tool that

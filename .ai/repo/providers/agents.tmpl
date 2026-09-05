@@ -36,6 +36,10 @@ table: change the canonical `capability!` or module declaration under
 `apps/majordomus-cli/src/capability/builtin/` and run `majordomus generate`; a repeated
 semantic definition across projections is a design defect (`docs/CAPABILITIES.md`, ADR 0004).
 
+A capability you add or change has use cases: run `majordomus usecase impact` and the
+scenarios it names, and close a coverage gap (`majordomus usecase coverage`) with a use
+case that executes (`.ai/repo/workflows/use-cases.md`); `finish` refuses a required gap.
+
 A `.majordomus/` directory, if one exists, is an optional installation of the tool and not
 repository context. Do not duplicate shared rules into this file: it is generated, and a
 rule that exists here and nowhere else is a bug.

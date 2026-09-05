@@ -1,99 +1,86 @@
-# Use cases and applications
+# The catalogue
 
-Two registries describe what Majordomus is for, as data rather than as prose.
+Three lists say what the tool is for, from three angles, and every one of them is data
+the tool checks:
 
-| | question it answers | file |
+| list | the question it answers | where |
 |---|---|---|
-| **use case** | what do I *do* with this? | [`share/use-cases.yaml`](../share/use-cases.yaml) |
-| **application** | does this fit *my* repository? | [`share/applications.yaml`](../share/applications.yaml) |
+| use cases | what task does a person perform, and does the tool do it | `.ai/repo/use-cases/<id>.md` |
+| applications | in what context does the tool fit, and where does it not | `.ai/repo/applications/<id>.md` |
+| commands | what does one command do, flag by flag | `share/commands.yaml`, `docs/CLI.md` |
 
-They sit alongside two catalogues that already existed and answer different questions. A
-**why page** is a moment you recognise — *I have had this problem*. A **use case** is a
-task you perform. An **application** is a context it suits. A **command page** is one
-command's surface. Keeping them separate is deliberate: a reader deciding whether they
-have the problem should not be handed an implementation detail, and a reader running a
-task should not have to infer the sequence from a reference page.
+A `why` page is a moment you recognise; a use case is a task you perform; an
+application is a context it suits; a command page is one command's surface.
 
-## Why these are data
+## Why they are data
 
-Everything a use case says is a reference to something else in the repository. Its steps
-name commands, the rules it relies on name doctrines, the promises it makes name claims,
-and the contexts it applies to name applications. Written as prose, none of that is
-checkable and all of it rots quietly, because nothing executes documentation.
+Written as prose, none of this is checkable: a use case could name a command that was
+renamed, a rule that was never enforced, a promise nobody tests, and the page would say
+so with confidence. As objects of the layer, every reference resolves or the build
+refuses: a command against the dispatch table, a rule against the doctrine registry, a
+claim against `docs/CLAIMS.yaml`, a responsibility against `docs/RESPONSIBILITIES.yaml`,
+an application against the use cases it names and back, a category against the taxonomy.
+`majordomus doctor` applies the same check under `majordomus.catalogue-integrity`, so a
+dangling reference cannot reach the published site.
 
-Written as data, all of it is checked. `mj_validate_catalogue` in `lib/doctor.sh`
-resolves every reference against the thing that defines it — commands against the
-dispatch table in `bin/majordomus`, doctrines against the resolved rule set, claims
-against `docs/CLAIMS.yaml` — and `scripts/generate-site-data` repeats the resolution when
-it builds the pages, so a dangling reference cannot reach the published site.
+And a use case is more than a description: it carries a scenario the tool executes
+against itself, and the page shows that execution. `docs/USE_CASES.md` is the contract;
+this document is the map.
 
-## The schema
+## The objects
 
-```yaml
-version: 1
-use_cases:
-  - id: adopt-an-existing-repository   # stable; the URL slug and the cross-reference key
-    title: ...
-    weight: 1                          # display order
-    summary: one line
-    situation: what is true before you reach for this
-    steps:
-      - command: init                  # must be a command the binary dispatches
-        note: what this step does here
-    outcome: what you are left holding
-    commands: [init, update, doctor]   # every one must exist
-    doctrines: [majordomus.projection-integrity]  # every one must be in the registry
-    claims: [region-projection]        # every one must be in docs/CLAIMS.yaml
-    responsibilities: [projection]     # every one must be a README row
-    applications: [repository-with-authored-governance]   # must name this back
-```
+A use case (`share/schemas/use-case.schema.json`):
 
 ```yaml
-applications:
-  - id: repository-with-authored-governance
-    title: ...
-    summary: one line
-    context: what this situation is like
-    fits_when: [...]                   # required
-    does_not_fit_when: [...]           # required — see below
-    use_cases: [adopt-an-existing-repository]   # must name this back
-    doctrines: [...]
-    responsibilities: [...]
+---
+id: prove-a-rule-is-enforced          # the file name, the URL slug
+kind: use-case
+title: '...'
+summary: '...'
+category: policy                       # an id of taxonomy.yaml
+status: active                         # active | draft | deprecated
+target: guaranteed                     # what the author aims at; the maturity is observed
+actors: [maintainer, reviewer]
+difficulty: intermediate
+commands: [doctrine, doctor]           # bin/majordomus dispatches each
+doctrines: [majordomus.enforcement-wiring]
+claims: [dispatcher-wiring]
+responsibilities: [doctor]
+applications: [ci-gated-project]       # each names this use case back
+scenario:                              # setup, given, steps (run, expect), then
+  ...
+---
+# Situation
+# Outcome
 ```
 
-Note the constraint the tool's own YAML reader imposes: it is a minimal parser with no
-block scalars, so multi-line prose is a single quoted string. The registry has to be
-readable by the tool that enforces it.
+An application (`share/schemas/application.schema.json`): `id`, `kind: application`,
+`title`, `summary`, `fits_when`, `does_not_fit_when` (both required: a catalogue that
+only lists fits is marketing), `use_cases` (mutual), `doctrines`, `responsibilities`,
+and a body with `# Context`.
 
-## Both directions, and both lists
+The taxonomy (`.ai/repo/use-cases/taxonomy.yaml`): the categories, with a title, a
+summary and an order. Membership is each use case's own `category`; a category with no
+use case renders an empty page and counts for nothing.
 
-Two rules are worth stating because they are the ones that would otherwise be skipped.
+## Two rules
 
-**Cross-references are mutual.** A use case naming an application that does not name it
-back is a failure, not an asymmetry somebody will notice later. Checked by `mj_cat_back`
-in both directions, so the two files cannot drift into disagreeing about which applies to
-which.
+Cross-references are mutual: a use case names its applications and each application
+names it back, and a link that resolves one way only is refused.
 
-**An application must declare `does_not_fit_when`.** A catalogue that only lists fits is
-marketing. Refused by the generator and by `doctor`.
+`does_not_fit_when` is required. An application that only says where it fits is not a
+description.
 
 ## Extending it
 
-Add an entry, run `scripts/generate-site-data`, and the route, the cross-links, the
-filters and the checks appear. There is no template to edit and no list to update — the
-section pages iterate the data, the filter options are built from it, and `site-check`
-requires a page per entry. That is the whole extension mechanism.
+Add a file. `majordomus usecase validate` resolves it, `majordomus usecase run <id>`
+executes it, `scripts/generate-site-data` regenerates the data, the route, the category,
+the cross-links, the related links of every other page and the coverage table. There is
+no template to edit and no list to update; commit the regenerated data with the file.
+`majordomus usecase scaffold` writes a draft for a capability no use case covers.
 
-If a reference does not resolve, the build refuses and names it:
+## What is checked, and what is not
 
-```
-generate-site-data: use case adopt-an-existing-repository names doctrine 'no_such_rule', which does not exist
-```
-
-## What is not checked
-
-Resolution is not accuracy. A use case whose steps are in the wrong order, or whose
-situation describes a problem nobody has, passes every check here — each reference exists.
-What is enforced is that the catalogue cannot describe a tool other than this one.
-Whether what it describes is worth doing is a judgement no validator makes, and this
-document does not pretend otherwise.
+Resolution is checked; execution is checked; accuracy of the narrative is a person's
+judgement. A use case whose scenario asserts little proves little, and a reviewer reads
+the prose against the evidence beside it.
