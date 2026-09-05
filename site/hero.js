@@ -65,7 +65,9 @@
   }
 
   function resize() {
-    var rect = host.getBoundingClientRect();
+    // the canvas box, not the figure: the figure also holds the caption and the list, and a
+    // canvas sized to the figure was drawn over the list on narrow screens
+    var rect = canvas.parentNode.getBoundingClientRect();
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = Math.max(240, rect.width);
     H = Math.max(200, rect.height);

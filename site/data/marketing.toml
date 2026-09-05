@@ -3,12 +3,19 @@
 # Budget: scripts/site-check fails when this file exceeds 60 lines.
 
 [hero]
-kicker = "portable shell · no runtime · no model calls"
-headline = "Your AI workers are brilliant. Nobody is managing them."
-lead = "Every fresh session re-reads the repository, reasons at maximum, works on whatever it likes, and says \"done\" when it feels like it. Majordomus is the layer that decides what a worker is told, declares which paths its work may touch, and refuses to accept \"done\" until a contract says so."
-cta_primary = "Get started"
-cta_secondary = "View on GitHub"
-transcript_caption = "This is what \"done\" looks like when it has to be earned. Real output from the repository's own README."
+# three business outcomes, one complete message each; the first is the page's h1 and the default
+eyebrow = "AI-assisted development without the repeated setup."
+cta_primary = "See how it works"
+cta_secondary = "Get started"
+cta_more = "How? Tell me more"
+propositions = [
+  { slug = "faster-onboarding", label = "Faster onboarding", headline = "Make every developer and AI agent productive faster.", body = "Majordomus carries project context, decisions and working practices forward, so less time and money is spent explaining the same things again.", outcome = "Faster onboarding. Less rework. Lower AI spend." },
+  { slug = "lower-cost", label = "Lower cost", headline = "Make AI development cost less and move faster.", body = "With Majordomus, developers and AI agents keep the project context, decisions and ways of working across sessions and tools.", outcome = "Less work gets repeated, onboarding is faster, and less AI spend is wasted rebuilding what your team already knows." },
+  { slug = "less-wasted-time", label = "Less wasted time", headline = "Spend less time and money getting AI up to speed.", body = "Majordomus keeps what your project already knows, so developers and AI agents can continue where the last one stopped.", outcome = "Less repetition. Faster onboarding. Lower AI cost." },
+]
+
+[contract]
+caption = "Real output from the repository's own README, not a mockup. One line per check, each naming what it proved. A failing line carries the command that reproduces it, so the next thing to do is never a guess. Nothing is warned about and continued past: the run is refused, and the task stays open."
 
 [recognise]
 # the items are the pages under site/content-src/why/; each carries its own hook

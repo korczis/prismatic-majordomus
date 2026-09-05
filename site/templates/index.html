@@ -4,46 +4,54 @@
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 
-{# 1. hero — project.json, marketing.toml; the transcript is README fenced block 1: real output, not a mockup #}
+{# 1. hero — marketing.toml: three business outcomes, one complete message each. The first
+   proposition is the page's h1 and the checked default. The selector is a radio group, so it
+   needs no runtime: arrow keys move between the outcomes, every message is in the HTML, and
+   the checked input drives the visible message through Tailwind's peer and group-has variants.
+   The three messages share one grid cell and the inactive ones are invisible, not removed, so
+   the block keeps the height of the longest message and choosing another never moves the
+   buttons below. The first message is shown unless another input is checked, so a browser
+   without :has() still shows the h1. The positional ids (hero-p-1..3) are what the literal
+   class names below refer to: Tailwind compiles only classes it can read in this file. #}
+{%- set hero_show = ["group-has-[#hero-p-2:checked]/hero:invisible group-has-[#hero-p-3:checked]/hero:invisible", "invisible group-has-[#hero-p-2:checked]/hero:visible", "invisible group-has-[#hero-p-3:checked]/hero:visible"] -%}
 <section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto grid max-w-screen-xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8 lg:py-20">
-    <div class="min-w-0">
-      <span class="mb-5 inline-block rounded bg-brand-softer px-2.5 py-1 font-mono text-xs text-fg-brand-strong">v{{ project.version }} · {{ m.hero.kicker }}</span>
-      <h1 class="text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ m.hero.headline }}</h1>
-      <p class="mt-6 max-w-xl text-lg leading-relaxed text-body sm:text-xl">{{ m.hero.lead }}</p>
-      <p class="mt-3 max-w-xl text-sm text-body-subtle">{{ project.tagline }}</p>
-      <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-        <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5M6 12h12"/></svg></a>
-        <a href="{{ project.repository_url }}" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_secondary }}</a>
+  <div class="group/hero mx-auto grid max-w-screen-xl gap-6 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:px-8 lg:py-24">
+    {#- The three outcomes: a radio each. On a phone they are a row of pills above the message; from lg
+        up they are a column of cards that stretches to the height of the message column, each card
+        carrying its title, the headline, and the link to the page that explains it. The card is
+        styled by its own checked input (has-checked), so the link can sit beside the label. -#}
+    <div role="radiogroup" aria-label="Which outcome matters most to you?" class="flex flex-wrap gap-2 lg:order-2 lg:flex-col lg:gap-4">
+      {%- for p in m.hero.propositions %}
+      <div class="relative rounded-base border border-default bg-neutral-primary-soft has-checked:border-brand-subtle has-checked:bg-brand-softer has-focus-visible:ring-4 has-focus-visible:ring-brand-medium hover:bg-neutral-secondary-medium has-checked:hover:bg-brand-softer lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:px-6 lg:py-5">
+        <input type="radio" id="hero-p-{{ loop.index }}" name="hero-proposition" class="peer sr-only"{% if loop.first %} checked{% endif %}>
+        <label for="hero-p-{{ loop.index }}" class="block cursor-pointer px-3.5 py-2 text-sm font-semibold text-body peer-checked:text-fg-brand-strong lg:p-0 lg:text-2xl lg:font-extrabold lg:tracking-tight xl:text-3xl">
+          <span class="block">{{ p.label }}</span>
+          <span class="mt-1.5 hidden text-base font-normal leading-snug tracking-normal text-body lg:block">{{ p.headline }}</span>
+        </label>
+        <a href="{{ get_url(path="/outcomes/" ~ p.slug ~ "/", trailing_slash=true) }}" class="mt-3 hidden text-sm font-medium text-fg-brand hover:underline lg:inline-flex lg:items-center lg:gap-1">{{ m.hero.cta_more }} <span aria-hidden="true">&rarr;</span></a>
       </div>
-      <dl class="mt-10 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-default pt-8 sm:grid-cols-4">
-        <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">runtime</dt><dd class="mt-1 text-sm text-heading">{{ project.requirements | join(sep=", ") | replace(from=" or newer", to="") }}</dd></div>
-        <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">server</dt><dd class="mt-1 text-sm text-heading">none</dd></div>
-        <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">network calls</dt><dd class="mt-1 text-sm text-heading">none</dd></div>
-        <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">licence</dt><dd class="mt-1 text-sm text-heading">{{ project.license }}</dd></div>
-      </dl>
+      {%- endfor %}
     </div>
-    <div class="min-w-0">
-      {#- The contract, drawn. The five checks and the outcome names come from the generated data,
-          so the picture cannot describe a program this repository does not have. The list below
-          the canvas is the same five checks and is what remains without JavaScript. -#}
-      <figure class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"
-              data-hero
-              data-hero-checks="{{ readme.finish_checks | json_encode() }}"
-              data-hero-outcomes="{{ lifecycle.outcomes | json_encode() }}">
-        <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
-          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">the finish contract</span>
-          <span class="font-mono text-xs text-body-subtle">{{ readme.finish_checks | length }} checks · {{ lifecycle.outcomes | length }} outcomes</span>
-        </figcaption>
-        <div class="relative h-64 w-full sm:h-72 lg:h-80"><canvas class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas></div>
-        <ol class="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-default px-4 py-3 sm:grid-cols-3">
-          {%- for c in readme.finish_checks %}
-          <li class="font-mono text-xs text-body-subtle"><span class="text-heading">{{ loop.index }}.</span> {{ c }}</li>
-          {%- endfor %}
-        </ol>
-      </figure>
-      <p class="mt-3 text-sm text-body-subtle">Work arrives from every session. It leaves as <span class="font-medium text-heading">completed</span> only when all {{ readme.finish_checks | length }} lines pass. Anything else gets a name, not a shrug.</p>
-      <p class="mt-2 text-sm"><a href="{{ get_url(path="/map/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">See the program these checks run in &rarr;</a></p>
+    <div class="flex min-w-0 flex-col lg:order-1">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-fg-brand">{{ m.hero.eyebrow }}</p>
+      <div class="mt-4 grid" aria-live="polite">
+        {%- for p in m.hero.propositions %}
+        <div class="col-start-1 row-start-1 min-w-0 {{ hero_show[loop.index0] }}">
+          {%- if loop.first %}
+          <h1 class="text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ p.headline }}</h1>
+          {%- else %}
+          <p class="text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ p.headline }}</p>
+          {%- endif %}
+          <p class="mt-6 max-w-2xl text-lg leading-relaxed text-body sm:text-xl">{{ p.body }}</p>
+          <p class="mt-5 max-w-2xl text-lg font-semibold leading-snug text-heading sm:text-xl">{{ p.outcome }}</p>
+          <p class="mt-3 lg:hidden"><a href="{{ get_url(path="/outcomes/" ~ p.slug ~ "/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand hover:underline">{{ m.hero.cta_more }} &rarr;</a></p>
+        </div>
+        {%- endfor %}
+      </div>
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+        <a href="#how-it-works" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
+        <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_secondary }}</a>
+      </div>
     </div>
   </div>
 </section>
@@ -57,27 +65,65 @@
   </div>
 </section>
 
-{# 1c. the contract as it actually prints — moved below the fold on purpose: the hero shows what
-   it means, this shows what it looks like. Real output from the repository's own README. #}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto grid max-w-screen-xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-center lg:px-8">
-    <div class="min-w-0">
-      <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">What &ldquo;done&rdquo; looks like when it has to be earned</h2>
-      <p class="mt-4 text-body">{{ m.hero.transcript_caption }}</p>
-      <p class="mt-4 text-body">One line per check, each naming what it proved. A failing line carries the command that reproduces it, so the next thing to do is never a guess. Nothing is warned about and continued past: the run is refused, and the task stays open.</p>
-      <p class="mt-4 text-sm"><a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">The full contract, argument by argument &rarr;</a></p>
+{# 2. how it works — marketing.toml; the hero's primary action lands here. Structural, no numbers #}
+<section id="how-it-works" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="01" kicker="how it works" title={m.compare.title} /> }}
+    <div class="grid gap-6 lg:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-6">
+        <h3 class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.compare.before_title }}</h3>
+        <ul class="mt-4 space-y-3">{%- for it in m.compare.before -%}<li class="flex gap-3 text-base text-body"><span aria-hidden="true" class="font-mono text-body-subtle">✕</span><span>{{ it }}</span></li>{%- endfor -%}</ul>
+      </div>
+      <div class="min-w-0 rounded-base border border-brand-subtle bg-brand-softer p-6">
+        <h3 class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ m.compare.after_title }}</h3>
+        <ul class="mt-4 space-y-3">{%- for it in m.compare.after -%}<li class="flex gap-3 text-base text-heading"><span aria-hidden="true" class="font-mono text-fg-brand-strong">✓</span><span>{{ it }}</span></li>{%- endfor -%}</ul>
+      </div>
     </div>
-    <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
-      <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
-      <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
-    </figure>
   </div>
 </section>
 
-{# 2. problem — the failure mode, then the README's evidence bullets only (its prose duplicates the hero) #}
+{# 3. the contract — what "done" looks like: the picture (the finish contract, drawn from the
+   generated data; the list under the canvas is what remains without JavaScript) and the real
+   output from the repository's own README. Below the hero on purpose: the hero says why, this
+   shows what. #}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+    <div class="max-w-3xl">
+      <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">What &ldquo;done&rdquo; looks like when it has to be earned</h2>
+      <p class="mt-4 text-body">{{ m.contract.caption }}</p>
+      <p class="mt-4 text-sm"><a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">The full contract, argument by argument &rarr;</a></p>
+    </div>
+    <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-start">
+      <div class="min-w-0">
+        <figure class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"
+                data-hero
+                data-hero-checks="{{ readme.finish_checks | json_encode() }}"
+                data-hero-outcomes="{{ lifecycle.outcomes | json_encode() }}">
+          <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
+            <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">the finish contract</span>
+            <span class="font-mono text-xs text-body-subtle">{{ readme.finish_checks | length }} checks · {{ lifecycle.outcomes | length }} outcomes</span>
+          </figcaption>
+          <div class="relative h-64 w-full sm:h-72"><canvas class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas></div>
+          <ol class="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-default px-4 py-3 sm:grid-cols-3">
+            {%- for c in readme.finish_checks %}
+            <li class="font-mono text-xs text-body-subtle"><span class="text-heading">{{ loop.index }}.</span> {{ c }}</li>
+            {%- endfor %}
+          </ol>
+        </figure>
+        <p class="mt-3 text-sm text-body-subtle">Work arrives from every session. It leaves as <span class="font-medium text-heading">completed</span> only when all {{ readme.finish_checks | length }} lines pass. Anything else gets a name, not a shrug. <a href="{{ get_url(path="/map/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">See the program these checks run in &rarr;</a></p>
+      </div>
+      <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
+        <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
+        <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
+      </figure>
+    </div>
+  </div>
+</section>
+
+{# 4. problem — the failure mode, then the README's evidence bullets only (its prose duplicates the hero) #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="01" kicker="the problem" title="A session grades its own homework" lead={m.leads.problem} /> }}
+    {{ <section_head number="02" kicker="the problem" title="A session grades its own homework" lead={m.leads.problem} /> }}
     <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <ol class="min-w-0 space-y-2 font-mono text-sm" aria-label="What an unsupervised session does">
         {%- for step in ["loads whatever context it likes", "interprets whichever rulebook it found", "chooses its own scope", "changes files", "declares itself done"] -%}
@@ -94,36 +140,21 @@
   </div>
 </section>
 
-{# 3. core model — diagrams.json (from README mental model) #}
+{# 5. core model — diagrams.json (from README mental model) #}
 <section class="border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="02" kicker="the core model" title="Majordomus supervises how work is executed" lead={m.leads.model} /> }}
-    <div class="mx-auto max-w-3xl">{{ <diagram key="supervision" /> }}</div>
-    <div class="mx-auto mt-8 max-w-3xl rounded-base border border-brand-subtle bg-brand-softer p-5">
-      <p class="text-base font-semibold text-fg-brand-strong">The worker does not get to define its own successful completion.</p>
-      <p class="mt-2 text-sm text-heading">{{ m.leads.boundary }}</p>
-    </div>
-  </div>
-</section>
-
-{# 3b. before / with — marketing.toml; structural, no numbers #}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="03" kicker="before / after" title={m.compare.title} /> }}
-    <div class="grid gap-6 lg:grid-cols-2">
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-6">
-        <h3 class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.compare.before_title }}</h3>
-        <ul class="mt-4 space-y-3">{%- for it in m.compare.before -%}<li class="flex gap-3 text-base text-body"><span aria-hidden="true" class="font-mono text-body-subtle">✕</span><span>{{ it }}</span></li>{%- endfor -%}</ul>
-      </div>
-      <div class="min-w-0 rounded-base border border-brand-subtle bg-brand-softer p-6">
-        <h3 class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ m.compare.after_title }}</h3>
-        <ul class="mt-4 space-y-3">{%- for it in m.compare.after -%}<li class="flex gap-3 text-base text-heading"><span aria-hidden="true" class="font-mono text-fg-brand-strong">✓</span><span>{{ it }}</span></li>{%- endfor -%}</ul>
+    {{ <section_head number="03" kicker="the core model" title="Majordomus supervises how work is executed" lead={m.leads.model} /> }}
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-center">
+      <div class="min-w-0 [&_figure]:my-0">{{ <diagram key="supervision" /> }}</div>
+      <div class="min-w-0 rounded-base border border-brand-subtle bg-brand-softer p-6 sm:p-8">
+        <p class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">The worker does not get to define its own successful completion.</p>
+        <p class="mt-4 text-base leading-relaxed text-heading">{{ m.leads.boundary }}</p>
       </div>
     </div>
   </div>
 </section>
 
-{# 4. drop-in installation — the real commands #}
+{# 6. drop-in installation — the real commands #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="04" kicker="drop-in" title="One directory, one pointer" lead={m.leads.install} /> }}
@@ -148,10 +179,10 @@ majordomus finish --outcome completed --verify-command "make test"
   </div>
 </section>
 
-{# 6. how it works — lifecycle.json #}
+{# 7. the lifecycle — lifecycle.json #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="05" kicker="how it works" title="A task is bounded by start and by finish or handover" /> }}
+    {{ <section_head number="05" kicker="the lifecycle" title="A task is bounded by start and by finish or handover" /> }}
     <ol class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {%- for step in lifecycle.steps -%}
       <li><a href="{{ get_url(path="/commands/" ~ step.command ~ "/", trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium">
@@ -186,7 +217,7 @@ majordomus finish --outcome completed --verify-command "make test"
   </div>
 </section>
 
-{# 10. what it is not — README #}
+{# 9. what it is not — README #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="07" kicker="what it is not" title="Not another runtime" /> }}
@@ -194,7 +225,7 @@ majordomus finish --outcome completed --verify-command "make test"
   </div>
 </section>
 
-{# 11b. who it is for — marketing.toml audiences; no claims, no numbers #}
+{# 10. who it is for — marketing.toml audiences; no claims, no numbers #}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="08" kicker="who it is for" title="The same discipline, three vantage points" /> }}
@@ -206,7 +237,7 @@ majordomus finish --outcome completed --verify-command "make test"
   </div>
 </section>
 
-{# 12. final cta — one primary action, the rest are secondary #}
+{# 11. final cta — one primary action, the rest are secondary #}
 <section class="bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     <div class="mx-auto max-w-3xl text-center">

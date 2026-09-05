@@ -1,6 +1,7 @@
 {%- set project = load_data(path="data/generated/project.json") -%}
 {%- set source = load_data(path="data/generated/source.json") -%}
-{%- set build = load_data(path="data/build.json") -%}
+{#- build.json is written by scripts/site-build and ignored by git; a plain `zola serve` has none, so it is optional and the two places that show the commit fall back. -#}
+{%- set build = load_data(path="data/build.json", required=false) -%}
 {%- set m = load_data(path="data/marketing.toml") -%}
 {%- set page_url = current_url or config.base_url -%}
 <!doctype html>
