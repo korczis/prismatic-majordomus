@@ -49,6 +49,14 @@ benchmark:
     doctor_ms: 3000
     watch_ms: 3000
 
+# Use-case coverage: every public command must be named and run by an active use case
+# (required); a guaranteed claim or an MCP tool without one is reported (advisory).
+use_cases:
+  coverage:
+    commands: required
+    claims: advisory
+    mcp_tools: advisory
+
 # Every entry here is reconciled by `majordomus doctor`: the path must resolve (on PATH,
 # repo-relative, or absolute in the hook line), be executable, and be invoked by the
 # artifact named in wired_by without its exit code being swallowed.

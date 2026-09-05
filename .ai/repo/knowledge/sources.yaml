@@ -64,6 +64,24 @@ sources:
     pathspec: ':(glob).ai/repo/project/issues/*.yaml'
     required: false
 
+  - id: use_case
+    kind: use-case
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/use-cases/*.md'
+    required: false
+
+  - id: taxonomy
+    kind: taxonomy
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/use-cases/taxonomy.yaml'
+    required: false
+
+  - id: application
+    kind: application
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/applications/*.md'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs

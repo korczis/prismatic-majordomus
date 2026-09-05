@@ -926,6 +926,7 @@ Events and their extra fields:
 | `session.closed` | `outcome`, `session_path` |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
+| `use_cases.ran` | `ran`, `failed` (counts; the evidence under `.ai/local/evidence/use-cases/` carries the steps) |
 | `plan_start` | `issue` |
 | `plan_verify` | `issue` |
 | `plan_evidence` | `issue`, `covers` (the requirement it satisfies), `type` |

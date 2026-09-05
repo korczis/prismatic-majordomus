@@ -407,6 +407,24 @@ commands:
     demo: knowledge-index
     note: Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it.
 
+  - id: usecase
+    title: usecase
+    summary: The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.
+    category: rules
+    stage: verify
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: true
+    syntax: majordomus usecase <list|show <id>|validate|run [<id>...]|coverage|impact|scaffold> [--json]
+    reads: [.ai/repo/use-cases/, .ai/repo/applications/, share/commands.yaml, docs/CLAIMS.yaml, docs/RESPONSIBILITIES.yaml, test/fixtures/commands/]
+    writes: [.ai/local/evidence/use-cases/, .ai/local/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12, 13]
+    demo: use-case-evidence
+    note: A use case is a Markdown object with a scenario; run executes it in a disposable repository against bin/majordomus and records normalised evidence under the local half. scaffold writes drafts only, never a guarantee; coverage and impact read, they never write.
+
   - id: rules
     title: rules
     summary: The effective rule set, vendored baseline plus project rules.

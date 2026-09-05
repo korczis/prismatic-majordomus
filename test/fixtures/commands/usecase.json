@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "command": "usecase",
+  "title": "The executable use cases: listed, tallied, refused",
+  "intro": "usecase reads the use cases under the manifest's use-cases section, one Markdown file each with a scenario; it lists them, tallies every public command against them, and refuses a subcommand it does not know.",
+  "scenarios": [
+    {
+      "id": "lists-none",
+      "title": "A fresh repository has the section and no use case",
+      "given": {
+        "installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "usecase",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^use cases: 0 in \\.ai/repo/use-cases$"
+        ]
+      },
+      "explain": "init seeds the section with its context document and the taxonomy; the first use case is one file added beside them, discovered without a registry."
+    },
+    {
+      "id": "coverage-is-advisory",
+      "title": "Every public command is a target; a fresh policy reports the gaps",
+      "given": {
+        "installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "usecase",
+        "coverage"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^command +doctor +0 +0 +0 +gap +advisory$",
+          "required gap\\(s\\)"
+        ]
+      },
+      "explain": "The denominator is the command registry, never a list written by hand. The skeleton policy makes a gap advisory; a repository that wants a gap to fail doctor, check and finish says `required` under use_cases.coverage."
+    },
+    {
+      "id": "refuses-unknown",
+      "title": "An unknown subcommand is a usage error",
+      "given": {
+        "installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "usecase",
+        "explain"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout_contains": [
+          "unknown subcommand 'explain'"
+        ]
+      },
+      "explain": "The subcommands are list, show, validate, run, coverage, impact and scaffold; anything else is refused with the usage, never guessed."
+    }
+  ]
+}
