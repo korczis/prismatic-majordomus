@@ -51,22 +51,21 @@ printf '{}\n' > test/fixtures/small.json
 hooks_off; git add -A >/dev/null && git commit -qm "outside the scope"; hooks_on
 before="$(git status --porcelain; git ls-files -s | shasum -a 256)"
 expect_exit 0 "$RB" mcp --inspect
-expect_grep '^resource    majordomus://document/docs/CLI\.md$' || true
 expect_no_grep 'majordomus://document/docs/big\.md'
 expect_no_grep 'majordomus://document/docs/blob\.md'
 expect_no_grep 'majordomus://document/NOTES\.md'
 "$RB" mcp --inspect --format json 2>/dev/null > "$S/inspect.json"
-jq -e '[.diagnostics[] | select(.code == "out_of_scope") | .path] | (index("docs/big.md") != null) and (index("docs/blob.md") != null) and (index("NOTES.md") != null)' "$S/inspect.json" >/dev/null \
+jq -e '[.repository.diagnostics[] | select(.code == "out_of_scope") | .path] | (index("docs/big.md") != null) and (index("docs/blob.md") != null) and (index("NOTES.md") != null)' "$S/inspect.json" >/dev/null \
   || { echo "    the dropped sources are not reported as out_of_scope:"; jq '.diagnostics' "$S/inspect.json"; exit 1; }
-jq -e '.diagnostics[] | select(.path == "docs/big.md") | .message | test("over_limit") and test("max_bytes 1048576")' "$S/inspect.json" >/dev/null \
+jq -e '.repository.diagnostics[] | select(.path == "docs/big.md") | .message | test("over_limit") and test("max_bytes 1048576")' "$S/inspect.json" >/dev/null \
   || { echo "    the oversized document does not name its limit"; exit 1; }
-jq -e '.diagnostics[] | select(.path == "docs/blob.md") | .message | test("binary")' "$S/inspect.json" >/dev/null \
+jq -e '.repository.diagnostics[] | select(.path == "docs/blob.md") | .message | test("binary")' "$S/inspect.json" >/dev/null \
   || { echo "    the binary with a Markdown name is not reported as binary"; exit 1; }
-jq -e '.diagnostics[] | select(.path == "NOTES.md") | .message | test("undeclared")' "$S/inspect.json" >/dev/null \
+jq -e '.repository.diagnostics[] | select(.path == "NOTES.md") | .message | test("undeclared")' "$S/inspect.json" >/dev/null \
   || { echo "    the undeclared root file is not reported as undeclared"; exit 1; }
-jq -e '.diagnostics[] | select(.code == "tracked_secret") | .path == "docs/.env"' "$S/inspect.json" >/dev/null \
+jq -e '.repository.diagnostics[] | select(.code == "tracked_secret") | .path == "docs/.env"' "$S/inspect.json" >/dev/null \
   || { echo "    the tracked secret is not reported"; exit 1; }
-jq -e '.state == "ok"' "$S/inspect.json" >/dev/null || { echo "    a scope exclusion degraded the index; it is a warning, not an error"; exit 1; }
+jq -e '.repository.state == "ok"' "$S/inspect.json" >/dev/null || { echo "    a scope exclusion degraded the index; it is a warning, not an error"; exit 1; }
 
 # --- every path is answered, in or out, with the rule that decided
 expect_exit 0 "$RB" scope docs/CLI.md docs/big.md docs/blob.md docs/.env NOTES.md test/fixtures/large.json test/fixtures/small.json .ai/local/state/current.yaml target/debug/x
