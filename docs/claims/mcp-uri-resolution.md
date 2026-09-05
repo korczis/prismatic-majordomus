@@ -54,5 +54,5 @@ The resource read served `majordomus://repository` while `majordomus_get` and th
 route answered "unknown resource" for it, because the tool looked in the index alone. Two
 answers for one URI is the kind of drift the capability model exists to prevent, so the
 fix is one resolution both projections call, proved by `test/cases/72_rust_mcp.sh` over
-real pipes and by the crate's `tests/objects_get.rs`, `tests/mcp_stdio.rs` and
+real pipes and by the crate's `tests/objects.rs`, `tests/mcp_stdio.rs` and
 `tests/http_serve.rs`.
