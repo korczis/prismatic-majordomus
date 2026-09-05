@@ -25,5 +25,15 @@ validation:
 evidence_required:
   - bench_persisted
 risk: "history.jsonl is append-only; a corrupt line is reported by validation, never silently skipped."
+started_at: 2026-09-05T03:47:33Z
+verified_at: 2026-09-05T03:47:33Z
+completed_at: 2026-09-05T03:47:33Z
+evidence:
+  - covers: bench_persisted
+    type: test
+    command: "bash test/run.sh 80_bench_persistence"
+    result: "case 80 runs bench twice and asserts one document per run under .ai/local/benchmarks/runs, latest.json byte-identical to the newest run, history.jsonl with one parsable line per run in order, every document carrying schema majordomus/benchmark-result/v1 with commit, dirty flag, environment and profile, no temporary file surviving a save; a run killed mid-way leaves no run document, no latest.json and no history line because the save is one tmp+mv at the end; a run changes nothing tracked and --no-save writes nothing"
+    commit: next
+    recorded_at: 2026-09-05T03:47:33Z
 created_at: 2026-09-05
 updated_at: 2026-09-05

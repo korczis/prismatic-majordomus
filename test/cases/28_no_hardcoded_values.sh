@@ -25,8 +25,8 @@ done
 # handover.retention_max_files are different keys with different values.
 "$MJ" init >/dev/null
 ( . "$ROOT/lib/common.sh"; mj_yaml_flatten "$ROOT/share/skeleton/policy.yaml" ) > skeleton.flat
-for k in $(grep -rhE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' "$ROOT/lib" | grep -v '^[[:space:]]*#' \
-           | grep -oE 'mj_pol(_req)? +[a-z_]+(\.[a-z_]+)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
+for k in $(grep -rhE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' "$ROOT/lib" | grep -v '^[[:space:]]*#' \
+           | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
   grep -qx "$k=.*" skeleton.flat || grep -q "^$k\." skeleton.flat \
     || { echo "    lib/ reads policy key '$k' which share/skeleton/policy.yaml does not declare"; exit 1; }
 done

@@ -128,10 +128,10 @@ mj_bench_run_target() { # target, samples, warmup, mode
   local t="$1" samples="$2" warmup="$3" mode="$4" cls scen w i ms cold="" warm="" status=ok
   cls="$(mj_bench_class "$t")"; scen="$(mj_bench_scenario "$t")"
   mj_bench_scenario_args "$t"
-  local base; base="$(mktemp -d "${TMPDIR:-/tmp}/mj.bench.XXXXXX")"
+  local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.bench.XXXXXX")"
   if [ "$cls" = read-only ]; then
-    w="$base/repo"; mkdir -p "$w"
-    mj_bench_prepare "$t" "$w" || { rm -rf "$base"; MJ_BENCH_ROWS="$MJ_BENCH_ROWS$t${MJ_TAB}cold${MJ_TAB}$cls${MJ_TAB}$scen${MJ_TAB}setup-failed${MJ_TAB}$(printf '' | mj_bench_stats)
+    w="$tmp/repo"; mkdir -p "$w"
+    mj_bench_prepare "$t" "$w" || { rm -rf "$tmp"; MJ_BENCH_ROWS="$MJ_BENCH_ROWS$t${MJ_TAB}cold${MJ_TAB}$cls${MJ_TAB}$scen${MJ_TAB}setup-failed${MJ_TAB}$(printf '' | mj_bench_stats)
 "; return 1; }
     ms="$(mj_bench_once "$w")"; cold="$ms"
     [ "$MJ_BENCH_LAST_RC" = 0 ] || [ "$MJ_BENCH_LAST_RC" = 10 ] || [ "$MJ_BENCH_LAST_RC" = 11 ] || status="exit-$MJ_BENCH_LAST_RC"
@@ -142,15 +142,15 @@ mj_bench_run_target() { # target, samples, warmup, mode
     # a mutation changes what the next run would measure: every sample is its own repository,
     # every sample is cold, and warm is not a thing this command has
     i=0; while [ "$i" -lt "$samples" ]; do
-      w="$base/repo$i"; mkdir -p "$w"
+      w="$tmp/repo$i"; mkdir -p "$w"
       mj_bench_prepare "$t" "$w" || { status='setup-failed'; break; }
       ms="$(mj_bench_once "$w")"; cold="$cold$ms
 "
       [ "$MJ_BENCH_LAST_RC" = 0 ] || [ "$MJ_BENCH_LAST_RC" = 10 ] || [ "$MJ_BENCH_LAST_RC" = 11 ] || [ "$MJ_BENCH_LAST_RC" = 15 ] || status="exit-$MJ_BENCH_LAST_RC"
-      rm -rf "$w"; i=$((i + 1))
+      rm -rf "$tmp/repo$i"; i=$((i + 1))
     done
   fi
-  rm -rf "$base"
+  rm -rf "$tmp"
   case "$mode" in cold|both) MJ_BENCH_ROWS="$MJ_BENCH_ROWS$t${MJ_TAB}cold${MJ_TAB}$cls${MJ_TAB}$scen${MJ_TAB}$status${MJ_TAB}$(printf '%s' "$cold" | mj_bench_stats)
 " ;; esac
   case "$mode" in warm|both) [ -n "$warm" ] && MJ_BENCH_ROWS="$MJ_BENCH_ROWS$t${MJ_TAB}warm${MJ_TAB}$cls${MJ_TAB}$scen${MJ_TAB}$status${MJ_TAB}$(printf '%s' "$warm" | mj_bench_stats)
@@ -159,8 +159,7 @@ mj_bench_run_target() { # target, samples, warmup, mode
 }
 
 mj_bench_json() { # samples, warmup, mode -> the run as JSON on stdout
-  local samples="$1" warmup="$2" mode="$3" dirty=false
-  [ -z "$(mj_git status --porcelain 2>/dev/null)" ] || dirty=true
+  local samples="$1" warmup="$2" mode="$3" dirty="$MJ_BENCH_DIRTY"
   {
     printf '{"schema":"%s","run_id":"%s","recorded_at":"%s","repository":{"commit":"%s","branch":"%s","dirty":%s},"environment":{"os":"%s","arch":"%s","bash":"%s","clock":"%s"},"profile":{"samples":%s,"warmup":%s,"mode":"%s"},"results":[' \
       "$MJ_BENCH_SCHEMA" "$MJ_BENCH_RUN_ID" "$(mj_now)" "$(mj_git_head)" "$(mj_json_esc "$(mj_git_branch)")" "$dirty" \
@@ -192,7 +191,7 @@ mj_bench_save() { # json on stdin
 # ---------------------------------------------------------------- baseline and check
 mj_bench_write_baseline() { # samples warmup mode force
   local force="$4" b tmp
-  if [ "$force" != 1 ] && [ -n "$(mj_git status --porcelain 2>/dev/null)" ]; then
+  if [ "$force" != 1 ] && [ "$MJ_BENCH_DIRTY" = true ]; then
     mj_die "$MJ_EX_REFUSED" "bench: the working tree is dirty; a baseline records a commit (use --force to write one anyway)"
   fi
   b="$(mj_bench_baseline)"; mkdir -p "$(dirname "$b")"
@@ -207,11 +206,13 @@ mj_bench_write_baseline() { # samples warmup mode force
 }
 # rows: command <TAB> mode <TAB> "p50/p95/p99" of the baseline <TAB> the same of this run
 mj_bench_compare_rows() { # baseline file
-  local base_rows
-  base_rows="$(mj_bench_rows_of "$1")"
-  printf '%s' "$MJ_BENCH_ROWS" | awk -F'\t' -v base="$base_rows" '
-    BEGIN { n = split(base, l, "\n"); for (i = 1; i <= n; i++) { m = split(l[i], f, "\t"); if (m >= 5) b[f[1] SUBSEP f[2]] = f[3] "/" f[4] "/" f[5] } }
-    NF { k = $1 SUBSEP $2; printf "%s\t%s\t%s\t%s/%s/%s\n", $1, $2, (k in b ? b[k] : "-"), $8, $10, $11 }'
+  # the baseline rows go through a file: BSD awk refuses a newline inside a -v value
+  local bf; bf="$(mktemp "${TMPDIR:-/tmp}/mj.bbase.XXXXXX")"
+  mj_bench_rows_of "$1" > "$bf"
+  printf '%s' "$MJ_BENCH_ROWS" | awk -F'\t' -v bf="$bf" '
+    FILENAME == bf { if (NF >= 5) b[$1 SUBSEP $2] = $3 "/" $4 "/" $5; next }
+    NF { k = $1 SUBSEP $2; printf "%s\t%s\t%s\t%s/%s/%s\n", $1, $2, (k in b ? b[k] : "-"), $8, $10, $11 }' "$bf" -
+  rm -f "$bf"
 }
 # the baseline as rows: command mode p50 p95 p99, read with awk so that no jq is needed
 mj_bench_rows_of() {
@@ -300,6 +301,9 @@ mj_cmd_bench() {
   fi
 
   MJ_BENCH_ROWS=""; MJ_BENCH_RUN_ID="b-$(mj_now_compact)-$(mj_rand16 | cut -c1-4)"
+  # the tree's state is read once, before the run writes anything: a baseline's own
+  # temporary file must not make the run it records look dirty
+  MJ_BENCH_DIRTY=false; [ -z "$(mj_git status --porcelain 2>/dev/null)" ] || MJ_BENCH_DIRTY=true
   MJ_BENCH_ARGV="$(mktemp "${TMPDIR:-/tmp}/mj.bargv.XXXXXX")"; MJ_BENCH_STDIN=""; MJ_BENCH_LAST_RC=0
   for t in $targets; do
     mj_bench_run_target "$t" "$samples" "$warmup" "$mode" || failed=$((failed + 1))

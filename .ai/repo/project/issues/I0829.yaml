@@ -24,5 +24,15 @@ validation:
 evidence_required:
   - docs_integrated
 risk: "project.no-new-nouns: the rules use the existing vocabulary (phase, counter, cache, baseline) and add no concept."
+started_at: 2026-09-05T03:47:33Z
+verified_at: 2026-09-05T03:47:33Z
+completed_at: 2026-09-05T03:47:33Z
+evidence:
+  - covers: docs_integrated
+    type: test
+    command: "bin/majordomus rules list"
+    result: "five advisory project rules resolve with the vendored baseline: project.derived-once (case 78 when it exists, else review with MJ_TIMING counters), project.hot-path-reads-once (case 78), project.benchmarkable-commands (case 79), project.cache-is-invisible (the equivalence case once a cache exists; none exists), project.performance-evidence (review of the commit message against MJ_TIMING and of the baseline diff against bench --check); their depends_on resolve to project.derived-files-regenerated@1, project.no-claim-without-test@1 and project.no-counts-in-prose@1; doctor reports the rule set resolving in one deterministic order and cases 67 and 68 pass"
+    commit: next
+    recorded_at: 2026-09-05T03:47:33Z
 created_at: 2026-09-05
 updated_at: 2026-09-05

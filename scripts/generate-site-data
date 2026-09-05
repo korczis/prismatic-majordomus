@@ -95,9 +95,9 @@ flat() { local t; t="$(mktemp "${TMPDIR:-/tmp}/mj.f.XXXXXX")"; mj_yaml_flatten "
 # yload turns a flat file into variables once (mj_yload); yv and ylist read a loaded file
 # by expansion and fall back to one awk per key for a file nobody loaded. A loaded
 # section pays one process for its whole file instead of one per field read.
-yload() { mj_yload "$1" "Y_${1//[!A-Za-z0-9]/_}"; eval "Y_${1//[!A-Za-z0-9]/_}__LOADED=1"; }
-yv() { local p="Y_${1//[!A-Za-z0-9]/_}" l; eval "l=\"\${${p}__LOADED:-}\""; if [ -n "$l" ]; then mj_yv "$p" "$2"; else mj_yget "$1" "$2"; fi; }
-ylist() { local p="Y_${1//[!A-Za-z0-9]/_}" l; eval "l=\"\${${p}__LOADED:-}\""; if [ -n "$l" ]; then mj_yvlist "$p" "$2"; else mj_ylist "$1" "$2"; fi; }
+yload() { mj_yload "$1" "Y_${1//[!A-Za-z0-9]/_}"; printf -v "Y_${1//[!A-Za-z0-9]/_}__LOADED" 1; }
+yv() { local p="Y_${1//[!A-Za-z0-9]/_}" n; n="${p}__LOADED"; if [ -n "${!n:-}" ]; then mj_yv "$p" "$2"; else mj_yget "$1" "$2"; fi; }
+ylist() { local p="Y_${1//[!A-Za-z0-9]/_}" n; n="${p}__LOADED"; if [ -n "${!n:-}" ]; then mj_yvlist "$p" "$2"; else mj_ylist "$1" "$2"; fi; }
 # jstr <string>: the string as a JSON string literal, without a process. What jq -Rn --arg
 # prints: backslash and quote escaped, the named control characters as \n \r \t \b \f,
 # every other control byte as \u00XX; anything else, UTF-8 included, verbatim.

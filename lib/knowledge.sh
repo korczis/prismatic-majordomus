@@ -242,32 +242,32 @@ mj_knowledge_rows() {
   # read by one process: the YAML kinds and the front-matter kinds flattened by one awk
   # each, the documents' headings and links by one awk, the line stores by one awk. The
   # extractor keys every content row by its path, so the grouping changes nothing it sees.
-  local work; work="$(mktemp -d "${TMPDIR:-/tmp}/mj.kn.XXXXXX")"
-  mkdir -p "$work/yaml" "$work/front"
-  : > "$work/yaml.map"; : > "$work/front.map"; : > "$work/docs"; : > "$work/lines"
+  local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.kn.XXXXXX")"
+  mkdir -p "$tmp/yaml" "$tmp/front"
+  : > "$tmp/yaml.map"; : > "$tmp/front.map"; : > "$tmp/docs"; : > "$tmp/lines"
   local ny=0 nf=0
   while IFS="$tab" read -r cls scope kind hash path; do
     [ -n "$path" ] || continue
     abs="$MJ_ROOT/$path"
     printf 'S\t%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$hash" "$path"
     case "$kind" in
-      decision|question) printf '%s\n' "$abs" >> "$work/lines" ;;
-      document) printf '%s\n' "$abs" >> "$work/docs" ;;
+      decision|question) printf '%s\n' "$abs" >> "$tmp/lines" ;;
+      document) printf '%s\n' "$abs" >> "$tmp/docs" ;;
       implementation|test) ;;
-      session|handover|checkpoint|prompt|rule) nf=$((nf + 1)); printf '%s\t%s\n' "$nf" "$path" >> "$work/front.map"; printf '%s\n' "$abs" >> "$work/front.list" ;;
-      policy|profile|milestone|issue|claim|doctrine) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$work/yaml.map"; printf '%s\n' "$abs" >> "$work/yaml.list" ;;
+      session|handover|checkpoint|prompt|rule) nf=$((nf + 1)); printf '%s\t%s\n' "$nf" "$path" >> "$tmp/front.map"; printf '%s\n' "$abs" >> "$tmp/front.list" ;;
+      policy|profile|milestone|issue|claim|doctrine) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$tmp/yaml.map"; printf '%s\n' "$abs" >> "$tmp/yaml.list" ;;
       *) ;;   # a kind this reader has no rule for gets no content rows; the extractor says so once
     esac
   done < "$src"
   local group
   for group in yaml front; do
-    [ -s "$work/$group.list" ] || continue
-    set -- ; while IFS= read -r abs; do set -- "$@" "$abs"; done < "$work/$group.list"
-    if [ "$group" = front ]; then mj_yaml_flatten_many "$work/front" --numbered --front "$@"
-    else mj_yaml_flatten_many "$work/yaml" --numbered "$@"; fi
+    [ -s "$tmp/$group.list" ] || continue
+    set -- ; while IFS= read -r abs; do set -- "$@" "$abs"; done < "$tmp/$group.list"
+    if [ "$group" = front ]; then mj_yaml_flatten_many "$tmp/front" --numbered --front "$@"
+    else mj_yaml_flatten_many "$tmp/yaml" --numbered "$@"; fi
     # a file that does not parse has no rows and one warning; a record without front
     # matter is not an error here, its flat is simply empty, as mj_record_front left it
-    awk -F'\t' -v map="$work/$group.map" -v errs="$work/$group/.errors" -v front="$([ "$group" = front ] && echo 1 || echo 0)" '
+    awk -F'\t' -v map="$tmp/$group.map" -v errs="$tmp/$group/.errors" -v front="$([ "$group" = front ] && echo 1 || echo 0)" '
       BEGIN { while ((getline l < map) > 0) { split(l, a, "\t"); path[a[1]] = a[2] }; close(map)
               while ((getline l < errs) > 0) { split(l, a, "\t"); bad[a[1]] = a[2] }; close(errs)
               for (n in path) if (n in bad && !(front && bad[n] == "no front matter"))
@@ -275,10 +275,10 @@ mj_knowledge_rows() {
       FNR == 1 { n = FILENAME; sub(/.*\//, "", n); p = path[n] }
       n in bad { next }
       { eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1); gsub(/\t/, " ", v); printf "F\t%s\t%s\t%s\n", p, k, v }' \
-      "$work/$group"/[0-9]*
+      "$tmp/$group"/[0-9]*
   done
-  if [ -s "$work/docs" ]; then
-    set -- ; while IFS= read -r abs; do set -- "$@" "$abs"; done < "$work/docs"
+  if [ -s "$tmp/docs" ]; then
+    set -- ; while IFS= read -r abs; do set -- "$@" "$abs"; done < "$tmp/docs"
     awk -v root="$MJ_ROOT/" '
       FNR == 1 { p = FILENAME; sub("^" root, "", p); fence = 0; seen = 0 }
       /^[ \t]*(```|~~~)/ { fence = !fence; next }
@@ -302,11 +302,11 @@ mj_knowledge_rows() {
         }
       }' "$@"
   fi
-  if [ -s "$work/lines" ]; then
-    set -- ; while IFS= read -r abs; do set -- "$@" "$abs"; done < "$work/lines"
+  if [ -s "$tmp/lines" ]; then
+    set -- ; while IFS= read -r abs; do set -- "$@" "$abs"; done < "$tmp/lines"
     awk -v root="$MJ_ROOT/" 'FNR == 1 { p = FILENAME; sub("^" root, "", p) } { gsub(/\t/, " "); printf "L\t%s\t%s\t%s\n", p, FNR, $0 }' "$@"
   fi
-  rm -rf "$work"
+  rm -rf "$tmp"
 }
 
 # Inline links, and only inline links: `[text](target)` as the author wrote it.

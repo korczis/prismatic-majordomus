@@ -442,35 +442,40 @@ mj_sha256_many() {
 # ---------------------------------------------------------------- flat file -> variables
 # mj_yload <flat> <prefix>: every key=value of a flattened file becomes one shell variable
 # <prefix>__<key>, with each "." of the key written "__" and each "-" written "___", so a
-# reader that needs many keys of one file pays one awk and one eval instead of one awk per
-# key. Keys outside [A-Za-z0-9_.-] are skipped: they fail every allow-list anyway and could
-# not be variable names. Values are single-quoted for eval, with the quote itself escaped.
+# reader that needs many keys of one file pays one awk and one loop of builtins instead of
+# one awk per key. Keys outside [A-Za-z0-9_.-] are skipped: they fail every allow-list
+# anyway and could not be variable names. Nothing read from a file is ever evaluated: awk
+# emits name<TAB>value, the name is checked once more here, and printf -v assigns it.
+mj_yassign() { # name<TAB>value lines on stdin -> variables, in this shell
+  local line n
+  while IFS= read -r line; do
+    n="${line%%"$MJ_TAB"*}"
+    case "$n" in ''|*[!A-Za-z0-9_]*) continue ;; esac
+    printf -v "$n" '%s' "${line#*"$MJ_TAB"}"
+  done
+}
 mj_yload() {
-  local code
-  code="$(awk -F= -v p="$2" '{
+  mj_yassign < <(awk -F= -v p="$2" '{
       k = $1; if (k !~ /^[A-Za-z0-9_.-]+$/) next
       gsub(/-/, "___", k); gsub(/\./, "__", k)
-      v = $0; sub(/^[^=]*=/, "", v); gsub(/\047/, "\047\\\047\047", v)
-      printf "%s__%s=\047%s\047\n", p, k, v }' "$1")"
-  eval "$code"
+      v = $0; sub(/^[^=]*=/, "", v)
+      printf "%s__%s\t%s\n", p, k, v }' "$1")
 }
 # mj_yload_dir <dir> <prefix>: every file of a flat directory at once, one awk and one
-# eval; the variables are <prefix>_<file name>__<key>, the file name sanitised like a key
+# loop; the variables are <prefix>_<file name>__<key>, the file name sanitised like a key
 mj_yload_dir() {
-  local code
-  code="$(awk -F= -v p="$2" 'FNR == 1 { pre = FILENAME; sub(/.*\//, "", pre); gsub(/-/, "___", pre); gsub(/\./, "__", pre); pre = p "_" pre }
+  mj_yassign < <(awk -F= -v p="$2" 'FNR == 1 { pre = FILENAME; sub(/.*\//, "", pre); gsub(/-/, "___", pre); gsub(/\./, "__", pre); pre = p "_" pre }
       { k = $1; if (k !~ /^[A-Za-z0-9_.-]+$/) next
         gsub(/-/, "___", k); gsub(/\./, "__", k)
-        v = $0; sub(/^[^=]*=/, "", v); gsub(/\047/, "\047\\\047\047", v)
-        printf "%s__%s=\047%s\047\n", pre, k, v }' "$1"/*)"
-  eval "$code"
+        v = $0; sub(/^[^=]*=/, "", v)
+        printf "%s__%s\t%s\n", pre, k, v }' "$1"/*)
 }
 # mj_yv <prefix> <key>: the value loaded for a key, empty when absent
 # printed as a line, like the flat file's own line, so a caller that collects several
 # values in a command substitution gets one per line; an absent key prints nothing
-mj_yv() { local k="${2//-/___}" v; k="${k//./__}"; eval "v=\"\${$1__$k:-}\""; [ -n "$v" ] && printf '%s\n' "$v"; return 0; }
-# mj_yvlist <prefix> <key>: the items of a loaded list, one per line
-mj_yvlist() { local i=0 v; while v="$(mj_yv "$1" "$2.$i")"; [ -n "$v" ]; do printf '%s\n' "$v"; i=$((i+1)); done; }
+mj_yv() { local k="${2//-/___}" n; k="${k//./__}"; n="$1__$k"; [ -n "${!n:-}" ] && printf '%s\n' "${!n}"; return 0; }
+# mj_yvlist <prefix> <key>: the values under key.0, key.1 ... with no process per item
+mj_yvlist() { local i=0 k n; k="${2//-/___}"; k="${k//./__}"; while n="$1__${k}__$i"; [ -n "${!n:-}" ]; do printf '%s\n' "${!n}"; i=$((i+1)); done; }
 
 mj_yget()  { awk -v k="$2" 'index($0, k "=") == 1 { print substr($0, length(k) + 2); exit }' "$1"; }
 # list values under a key prefix: key.0, key.1 ...

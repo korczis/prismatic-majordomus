@@ -85,8 +85,8 @@ mj_project_load() {
   # every record's fields and every model row become variables once, so the readers
   # below expand them instead of running one awk per field or per row
   mj_yload_dir "$MJ_PJ/flat" pj
-  eval "$(awk -F'\t' '$1 == "M" || $1 == "I" { r = $0; gsub(/\047/, "\047\\\047\047", r); id = $2; gsub(/-/, "___", id); gsub(/\./, "__", id)
-      printf "pjrow_%s_%s=\047%s\047\n", $1, id, r }' "$MJ_PJ/model.tsv")"
+  mj_yassign < <(awk -F'\t' '$1 == "M" || $1 == "I" { id = $2; gsub(/-/, "___", id); gsub(/\./, "__", id)
+      printf "pjrow_%s_%s\t%s\n", $1, id, $0 }' "$MJ_PJ/model.tsv")
   MJ_PJ_LOADED=1
   return 0
 }
@@ -98,7 +98,7 @@ mj_pj_rows()   { awk -F'\t' -v t="$1" '$1==t' "$MJ_PJ/model.tsv"; }
 # a milestone or issue row is a variable after the load; other row types stay in awk
 mj_pj_row() {
   case "$1" in
-    M|I) local id="${2//-/___}"; id="${id//./__}"; local r; eval "r=\"\${pjrow_$1_$id:-}\""; [ -n "$r" ] && printf '%s\n' "$r" ;;
+    M|I) local id="${2//-/___}"; id="${id//./__}"; local n="pjrow_$1_$id"; [ -n "${!n:-}" ] && printf '%s\n' "${!n}" ;;
     *) awk -F'\t' -v t="$1" -v i="$2" '$1==t && $2==i' "$MJ_PJ/model.tsv" ;;
   esac
 }
