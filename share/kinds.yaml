@@ -1,0 +1,125 @@
+# The object kinds the Rust executable (apps/majordomus-cli) knows how to read, one entry
+# each. Read at run time from the tool distribution, beside share/schemas/; a repository
+# adds kinds of its own in .ai/repo/knowledge/kinds.yaml and schemas of its own under
+# .ai/repo/knowledge/schemas/, and may not redefine a kind or a schema declared here.
+#
+# Rust carries the mechanism (read a file in a format, validate its keys against a list,
+# take an identity and a title from named fields). This file carries the knowledge of which
+# fields mean what for each kind. Which files are of which kind is not decided here either:
+# the repository's own .ai/repo/knowledge/sources.yaml maps pathspecs to kinds, and a kind
+# it names that no kinds file knows is reported, never guessed.
+#
+# fields:
+#   format          markdown | yaml | text — how the file is read; text carries no metadata
+#   front_matter    required | optional | none — for markdown, whether a YAML front matter
+#                   block must be present, may be present, or is not looked for
+#   without_front_matter
+#                   for markdown, the kind a file with no front matter is read as instead
+#                   of being refused: a README inside the rules tree is a document, not a
+#                   broken rule. The named kind must itself accept such a file.
+#   schema          the JSON Schema (draft 2020-12) under share/schemas/<name>.schema.json,
+#                   or under the repository's .ai/repo/knowledge/schemas/, that the metadata
+#                   must satisfy; absent means the kind declares no contract and its
+#                   metadata is carried through unvalidated. The shell tool's allow-lists
+#                   under share/allow/ are generated from these schemas
+#                   (`majordomus generate allow`), never written by hand.
+#   identity        the metadata fields joined with '@' that make the object's identity;
+#                   empty means the repository-relative path is the identity
+#   title           the metadata field holding the title, or '@heading' for the first
+#                   level-one Markdown heading; absent means no title
+#   description     the metadata field holding the one-line description; absent means none
+#   schema_version  a field that must carry one of the supported values (integers or
+#                   strings), when the kind has a format version distinct from its identity
+#   members         for a yaml kind: the list in the file that holds the objects, one per
+#                   item; identity, title and description are read from each item, and
+#                   schema_version still applies to the file
+#
+# declared: markdown kinds a file may declare for itself through its front matter `kind:`
+# whatever class discovered it. A README inside the rules tree that says `kind: context`
+# is a context document, not a broken rule; a kind not listed here is a mismatch.
+schema: majordomus-kinds/v1
+
+declared: [context]
+
+kinds:
+  rule:
+    format: markdown
+    front_matter: required
+    without_front_matter: document
+    schema: rule
+    identity: [id, version]
+    title: title
+    description: description
+
+  prompt:
+    format: markdown
+    front_matter: required
+    schema: prompt
+    identity: [name]
+    title: name
+    description: description
+
+  profile:
+    format: yaml
+    schema: profile
+    identity: [name]
+    title: name
+    description: description
+
+  policy:
+    format: yaml
+    schema: policy
+    identity: []
+    schema_version:
+      field: version
+      supported: [1]
+
+  milestone:
+    format: yaml
+    schema: milestone
+    identity: [id]
+    title: title
+    description: outcome
+
+  issue:
+    format: yaml
+    schema: issue
+    identity: [id]
+    title: title
+    description: objective
+
+  document:
+    format: markdown
+    front_matter: optional
+    identity: []
+    title: '@heading'
+
+  context:
+    format: markdown
+    front_matter: required
+    schema: context
+    identity: [id]
+    title: title
+    description: description
+    schema_version:
+      field: schema
+      supported: [context/v1]
+
+  claim:
+    format: yaml
+    members: claims
+    schema: claim
+    identity: [id]
+    title: claim
+    description: note
+    schema_version:
+      field: version
+      supported: [1]
+
+  implementation:
+    format: text
+    identity: []
+
+  test:
+    format: text
+    identity: []

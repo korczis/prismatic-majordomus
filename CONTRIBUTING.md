@@ -20,7 +20,8 @@ arbitrary. Most of them were paid for.
 ## What is not
 
 - new agents, personas, roles, tiers, or registries
-- a daemon, server, database, queue, MCP surface, or background process
+- a daemon, database, queue, or background process; the Rust executable's `mcp` (stdio)
+  and `serve` (loopback HTTP) are read-only and end with the process that started them
 - a check that reports but is described as enforcing
 - a number written into prose that a command could compute
 - an edit to a generated file instead of to the source it is generated from
@@ -36,7 +37,16 @@ arbitrary. Most of them were paid for.
 3. Add or change the test in `test/cases/` first. Tests run in a disposable temporary
    repository, never against this checkout.
 4. Run `test/run.sh` and `shellcheck` if available. The site cases skip themselves when
-   `zola`, `jq` or `node_modules/` are absent, so a CLI-only change needs none of them.
+   `zola`, `jq` or `node_modules/` are absent, so a CLI-only change needs none of them;
+   `72_rust_mcp.sh` skips itself when `cargo` is absent.
+   For a change under `apps/majordomus-cli/`, run `scripts/rust-check`: format, clippy
+   with warnings as errors (a public item without documentation is one), `cargo test`
+   including doctests, `cargo doc`, `majordomus generate --check`, `capabilities validate`
+   and the coverage threshold; CI runs the same. A capability is defined once and every
+   interface is derived from it (`project.interfaces-are-projections`): change the
+   descriptor, the declarative file or the schema, never a projection, and run
+   `majordomus generate` so the committed snapshots under `docs/generated/` and the
+   allow-lists under `share/allow/` follow.
 5. If you changed a file the website reads — `README.md`, `docs/*.md`,
    `docs/CLAIMS.yaml`, `share/skeleton/**`, `bin/majordomus`, `lib/**` — run
    `scripts/generate-site-data` and commit the regenerated `site/data/generated/` and

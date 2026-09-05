@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/prompt.schema.json",
+  "title": "Prompt",
+  "description": "The front matter of a prompt asset under .ai/repo/prompts/: a name equal to the file name, a description, and optionally the profile it frames.",
+  "x-majordomus-allow": "prompt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description"],
+  "properties": {
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "profile": { "type": "string" }
+  }
+}

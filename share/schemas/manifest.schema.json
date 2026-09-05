@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/manifest.schema.json",
+  "title": "Manifest",
+  "description": "The section registry of the repository's AI layer, .ai/manifest.yaml. Discovery reads it and never walks the directory.",
+  "x-majordomus-allow": "manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "repo", "local", "sections"],
+  "properties": {
+    "schema": { "const": "ai-repository/v1" },
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": { "path": { "type": "string" } }
+    },
+    "local": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "tracked", "implicit_context"],
+      "properties": {
+        "path": { "type": "string" },
+        "tracked": { "type": "boolean" },
+        "implicit_context": { "type": "boolean" }
+      }
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy": { "type": "string" },
+        "profiles": { "type": "string" },
+        "rules": { "type": "string" },
+        "prompts": { "type": "string" },
+        "skills": { "type": "string" },
+        "workflows": { "type": "string" },
+        "knowledge": { "type": "string" },
+        "adrs": { "type": "string" },
+        "project": { "type": "string" }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "documents": { "type": "array", "items": { "type": "string" } } }
+    }
+  }
+}

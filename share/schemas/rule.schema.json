@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/rule.schema.json",
+  "title": "Rule",
+  "description": "The front matter of a rule object under .ai/repo/rules/**: identity, class, dependencies, and for an enforced rule the x-majordomus block naming its validator.",
+  "x-majordomus-allow": "rule",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "version", "kind", "title", "description", "statement", "status", "class"],
+  "properties": {
+    "id": { "type": "string", "description": "Identity, namespaced by origin (project.example, majordomus.scope-integrity)." },
+    "version": { "type": "integer", "minimum": 1, "description": "An exact integer; id@version is the identity." },
+    "kind": { "const": "rule" },
+    "title": { "type": "string" },
+    "description": { "type": "string", "description": "What the rule requires, in one sentence." },
+    "statement": { "type": "string", "description": "The normative sentence a worker follows." },
+    "status": { "enum": ["active", "deprecated"] },
+    "class": { "enum": ["blocking", "advisory"], "description": "Blocking stops the command that enforces the rule; advisory reports." },
+    "depends_on": { "type": "array", "items": { "type": "string", "description": "An exact reference, id@version." } },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "x-majordomus": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Present only on a rule the tool enforces.",
+      "properties": {
+        "validator": { "type": "string", "description": "The function mj_validate_<validator>." },
+        "category": { "type": "string", "description": "The finding category the validator reports under." },
+        "policy_key": { "type": "string" },
+        "exit_code": { "type": "integer" },
+        "enforced_by": { "type": "array", "items": { "type": "string" }, "description": "The commands that dispatch it." },
+        "claims": { "type": "array", "items": { "type": "string" }, "description": "Ids in docs/CLAIMS.yaml." },
+        "tests": { "type": "array", "items": { "type": "string" }, "description": "The behavioural cases that prove it." }
+      }
+    }
+  }
+}

@@ -1,0 +1,1381 @@
+{
+  "openapi": "3.1.0",
+  "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
+  "info": {
+    "title": "Majordomus",
+    "version": "0.1.0",
+    "description": "The read-only HTTP projection of the Majordomus capability registry. Every operation is a capability; operationId is its canonical id; the same capability is reachable through MCP and the command line where its exposure says so.",
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/api/v1/capabilities": {
+      "get": {
+        "operationId": "capabilities.list",
+        "summary": "List capabilities",
+        "description": "Every capability of this executable and this repository, with its kind, stability, provenance and the projections it declares.",
+        "tags": [
+          "capabilities"
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "description": "Only capabilities of this kind: `query` or `resource`."
+          },
+          {
+            "name": "exposure",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "description": "Only capabilities exposed through this projection: `mcp`, `http` or `cli`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List capabilities: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilityList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "capabilities.list",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_capabilities"
+        },
+        "x-majordomus-cli": "capabilities list"
+      }
+    },
+    "/api/v1/capability": {
+      "get": {
+        "operationId": "capabilities.describe",
+        "summary": "Describe one capability",
+        "description": "One capability by canonical id: its schemas, provenance, stability and every projection it appears in.",
+        "tags": [
+          "capabilities"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The canonical id, e.g. `repository.info` or `rule.majordomus.scope-integrity@1`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Describe one capability: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capability"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "capabilities.describe",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_capability"
+        },
+        "x-majordomus-cli": "capabilities describe"
+      }
+    },
+    "/api/v1/object": {
+      "get": {
+        "operationId": "objects.get",
+        "summary": "Get one object",
+        "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content.",
+        "tags": [
+          "objects"
+        ],
+        "parameters": [
+          {
+            "name": "uri",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "`majordomus://<kind>/<identity>`."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get one object: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectView"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "objects.get",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_get"
+        }
+      }
+    },
+    "/api/v1/objects": {
+      "get": {
+        "operationId": "objects.list",
+        "summary": "List objects",
+        "description": "List the declarative objects of the repository's AI layer, optionally by kind or tag.",
+        "tags": [
+          "objects"
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "description": "Only objects of this kind; the kinds present are listed by `repository.info`. A kind\nthe repository does not have is an invalid input, not an empty answer."
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "description": "Only objects whose metadata tags include this tag."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List objects: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "objects.list",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_list"
+        }
+      }
+    },
+    "/api/v1/repository": {
+      "get": {
+        "operationId": "repository.info",
+        "summary": "Repository and index state",
+        "description": "The repository root, layer sections, git state, discovery mode, kinds present, every diagnostic, and the capability registry counted.",
+        "tags": [
+          "repository"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Repository and index state: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepositoryReport"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "repository.info",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_repository",
+          "resource": {
+            "uri": "majordomus://repository",
+            "name": "repository"
+          }
+        }
+      }
+    },
+    "/api/v1/search": {
+      "get": {
+        "operationId": "objects.search",
+        "summary": "Search objects",
+        "description": "Case-insensitive substring search over identities, titles, descriptions and content.",
+        "tags": [
+          "objects"
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Case-insensitive substring, matched against identity, title, description and content."
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "description": "Only objects of this kind; a kind the repository does not have is an invalid input."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 1,
+              "default": null,
+              "maximum": 200
+            },
+            "description": "At most this many hits (default 20, at most 200)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search objects: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "objects.search",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_search"
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CanonicalSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The component name projections use (`RepositoryInfo`); `None` for an anonymous\nschema such as the empty input."
+          },
+          "schema": {
+            "description": "The schema itself, without `$schema`; nested types live under `$defs`."
+          }
+        },
+        "required": [
+          "schema"
+        ],
+        "description": "A JSON Schema with, when the type has one, a stable component name (the type's title)."
+      },
+      "Capability": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/CapabilityId",
+            "description": "The canonical identity."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CapabilityKind",
+            "description": "Query or resource."
+          },
+          "title": {
+            "type": "string",
+            "description": "The short name every projection shows."
+          },
+          "description": {
+            "type": "string",
+            "description": "The one-paragraph description every projection shows."
+          },
+          "input": {
+            "$ref": "#/components/schemas/CanonicalSchema",
+            "description": "The canonical schema of the input; an empty object for a resource."
+          },
+          "output": {
+            "$ref": "#/components/schemas/CanonicalSchema",
+            "description": "The canonical schema of the output; the object view for a resource."
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/CapabilityProvenance",
+            "description": "Where it came from."
+          },
+          "exposure": {
+            "$ref": "#/components/schemas/Exposure",
+            "description": "Where it is projected; absence is explicit."
+          },
+          "stability": {
+            "$ref": "#/components/schemas/Stability",
+            "description": "Where it stands."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Free tags, from the declarative object's `tags` or the descriptor."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "description",
+          "input",
+          "output",
+          "provenance",
+          "exposure",
+          "stability"
+        ],
+        "description": "The canonical descriptor. Everything a projection may say about a capability is here."
+      },
+      "CapabilityId": {
+        "type": "string",
+        "description": "A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `<kind>.<identity>` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind's identity rule produced it."
+      },
+      "CapabilityKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "query",
+            "description": "Executable and read-only: a typed handler, an input schema, an output schema."
+          },
+          {
+            "type": "string",
+            "const": "resource",
+            "description": "Declarative content the repository holds: read as it is, never executed."
+          }
+        ],
+        "description": "What a capability is. Two kinds exist because two semantics exist: something that is\nexecuted with an input and answers with an output, and something that is read."
+      },
+      "CapabilityList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many capabilities matched the filters."
+          },
+          "summary": {
+            "$ref": "#/components/schemas/Summary",
+            "description": "The whole registry, counted by kind, stability and projection."
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Capability"
+            },
+            "description": "The matching capabilities, by id."
+          }
+        },
+        "required": [
+          "count",
+          "summary",
+          "capabilities"
+        ],
+        "description": "The answer of `capabilities.list`: the matching capabilities and the registry counted."
+      },
+      "CapabilityProvenance": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "module": {
+                "type": "string",
+                "description": "The Rust module the descriptor was composed in."
+              },
+              "source": {
+                "type": "string",
+                "const": "builtin"
+              }
+            },
+            "required": [
+              "source",
+              "module"
+            ],
+            "description": "Written in Rust, in the named module of this executable.\nWritten in Rust, composed in `builtin.rs`."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Repository-relative path."
+              },
+              "directory": {
+                "type": "string",
+                "description": "The directory the path sits in, repository-relative; `.` for the root."
+              },
+              "source_class": {
+                "type": "string",
+                "description": "The `sources.yaml` class that discovered the file."
+              },
+              "section": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The manifest section the path falls under, when it falls under one."
+              },
+              "media_type": {
+                "type": "string",
+                "description": "IANA media type of the object's content."
+              },
+              "member": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "For one member of a collection file, its key path in the file (`claims.3`)."
+              },
+              "source": {
+                "type": "string",
+                "const": "declarative"
+              }
+            },
+            "required": [
+              "source",
+              "path",
+              "directory",
+              "source_class",
+              "media_type"
+            ],
+            "description": "Read from the repository's layer."
+          }
+        ],
+        "description": "Where a capability came from. Never an absolute path."
+      },
+      "CliExposure": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The words after `majordomus`, e.g. `[\"capabilities\", \"list\"]`."
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "description": "How a capability appears on the command line: the words after `majordomus`."
+      },
+      "Diagnostic": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "$ref": "#/components/schemas/Severity",
+            "description": "How bad."
+          },
+          "code": {
+            "type": "string",
+            "description": "A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`."
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Repository-relative path of the file concerned, when there is one."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong, for a person; the code is for a program."
+          }
+        },
+        "required": [
+          "severity",
+          "code",
+          "message"
+        ],
+        "description": "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
+      },
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "The one error."
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "description": "The body of every error response."
+      },
+      "ErrorDetail": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "`invalid_input`, `not_found`, `refused`, `internal`, `method_not_allowed`."
+          },
+          "message": {
+            "type": "string",
+            "description": "The reason, for a person."
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "description": "What went wrong, as the HTTP projection names it."
+      },
+      "Exposure": {
+        "type": "object",
+        "properties": {
+          "mcp": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/McpExposure"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The MCP projection, when declared."
+          },
+          "http": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HttpExposure"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The HTTP projection, when declared."
+          },
+          "cli": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CliExposure"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The command-line projection, when declared."
+          }
+        },
+        "description": "The projections a capability declares. Absence is explicit: `None` means not exposed\nthere, and nothing infers an exposure a descriptor did not declare."
+      },
+      "GitInfo": {
+        "type": "object",
+        "properties": {
+          "toplevel": {
+            "type": "string",
+            "description": "Absolute path of the work tree top level."
+          },
+          "head": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Full commit id of HEAD, or `None` in an unborn repository."
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Branch name, or `None` when detached or unborn."
+          },
+          "working_tree": {
+            "type": "string",
+            "description": "`clean` or `dirty`, from `git status --porcelain`."
+          }
+        },
+        "required": [
+          "toplevel",
+          "working_tree"
+        ],
+        "description": "What `git` said about the repository."
+      },
+      "GitState": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/GitInfo",
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "available"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "description": "`git` answered; the facts follow."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string",
+                "description": "What `git` said, or why it could not be run."
+              },
+              "state": {
+                "type": "string",
+                "const": "unavailable"
+              }
+            },
+            "required": [
+              "state",
+              "reason"
+            ],
+            "description": "`git` could not be asked, or the root is not a work tree; the reason says which."
+          }
+        ],
+        "description": "What git says about the repository, or why it could not be asked."
+      },
+      "HttpExposure": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "$ref": "#/components/schemas/HttpMethod",
+            "description": "The method."
+          },
+          "path": {
+            "type": "string",
+            "description": "The absolute path, under [`HttpExposure::PREFIX`]."
+          }
+        },
+        "required": [
+          "method",
+          "path"
+        ],
+        "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under [`HttpExposure::PREFIX`]."
+      },
+      "HttpMethod": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "GET",
+            "description": "Read-only; the input is bound from the query string."
+          },
+          {
+            "type": "string",
+            "const": "POST",
+            "description": "The input is bound from the JSON body. No builtin uses it yet."
+          }
+        ],
+        "description": "The HTTP methods a capability may be bound to."
+      },
+      "McpExposure": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "As a tool with this name (`[a-z0-9_]+`)."
+          },
+          "resource": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/McpResource"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "As a readable resource."
+          }
+        },
+        "description": "How, if at all, a capability appears to an MCP client."
+      },
+      "McpResource": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "description": "`majordomus://<kind>/<identity>`, or `majordomus://repository`."
+          },
+          "name": {
+            "type": "string",
+            "description": "The short name a client lists; the identity for a declarative object."
+          }
+        },
+        "required": [
+          "uri",
+          "name"
+        ],
+        "description": "An MCP resource: its URI and the short name a client lists."
+      },
+      "ObjectList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many objects matched."
+          },
+          "objects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObjectSummary"
+            },
+            "description": "The objects, one summary each."
+          }
+        },
+        "required": [
+          "count",
+          "objects"
+        ],
+        "description": "The answer of `objects.list`: the matching objects, summarised, in URI order."
+      },
+      "ObjectProvenance": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repository-relative path, forward slashes, as the version-control index names it."
+          },
+          "directory": {
+            "type": "string",
+            "description": "The directory the path sits in, repository-relative; `.` for the root. This is the\nhierarchy position a client orders by; no merge semantics are implied."
+          },
+          "source_class": {
+            "type": "string",
+            "description": "The `sources.yaml` class that discovered the file (`rule`, `readme`, ...)."
+          },
+          "section": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The manifest section the path falls under (`rules`, `prompts`, ...), when it falls\nunder one; a root `README.md` falls under none."
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Size of the file in bytes."
+          },
+          "member": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "For an object that is one member of a collection file: the member's key path in\nthe file (`claims.3`)."
+          }
+        },
+        "required": [
+          "path",
+          "directory",
+          "source_class",
+          "bytes"
+        ],
+        "description": "Where an object came from. Every field is computed from the repository, never authored."
+      },
+      "ObjectSummary": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "description": "`majordomus://<kind>/<identity>`."
+          },
+          "id": {
+            "type": "string",
+            "description": "The capability id, `<kind>.<identity>`."
+          },
+          "kind": {
+            "type": "string",
+            "description": "The kind the object was read as."
+          },
+          "identity": {
+            "type": "string",
+            "description": "The identity within the kind."
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The title, when the kind's title rule found one."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The one-line description, when the kind holds one."
+          },
+          "path": {
+            "type": "string",
+            "description": "Repository-relative source path."
+          }
+        },
+        "required": [
+          "uri",
+          "id",
+          "kind",
+          "identity",
+          "path"
+        ],
+        "description": "One object, summarised for a listing."
+      },
+      "ObjectView": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "description": "`majordomus://<kind>/<identity>`."
+          },
+          "id": {
+            "type": "string",
+            "description": "The capability id, `<kind>.<identity>`."
+          },
+          "kind": {
+            "type": "string",
+            "description": "The kind the object was read as (`rule`, `prompt`, `document`, ...)."
+          },
+          "identity": {
+            "type": "string",
+            "description": "The identity within the kind (`majordomus.scope-integrity@1`, `continue`, a path)."
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The title the kind's title rule found, when it found one."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The one-line description the kind's description field held, when it held one."
+          },
+          "metadata": {
+            "description": "The parsed front matter or YAML, keys in the file's order."
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/ObjectProvenance",
+            "description": "Where the object came from: path, directory, source class, section, size, member."
+          },
+          "media_type": {
+            "type": "string",
+            "description": "IANA media type of `content` (`text/markdown`, `application/yaml`, `application/json`, `text/plain`)."
+          },
+          "content": {
+            "type": "string",
+            "description": "The file as read."
+          }
+        },
+        "required": [
+          "uri",
+          "id",
+          "kind",
+          "identity",
+          "metadata",
+          "provenance",
+          "media_type",
+          "content"
+        ],
+        "description": "One declarative object of the repository's layer, as a client reads it."
+      },
+      "RepositoryInfo": {
+        "type": "object",
+        "properties": {
+          "root": {
+            "type": "string",
+            "description": "The repository root, absolute."
+          },
+          "layer_schema": {
+            "type": "string",
+            "description": "The manifest's `schema`, `ai-repository/v1`."
+          },
+          "sections": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Manifest section name to repository-relative path."
+          },
+          "git": {
+            "$ref": "#/components/schemas/GitState",
+            "description": "What `git` said, or why it could not be asked."
+          },
+          "discovery": {
+            "type": "string",
+            "description": "`vcs` or `filesystem`."
+          },
+          "source_classes": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "description": "Source class id to kind, in declared order."
+          },
+          "kind_sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The kinds files the reader was configured from: the distribution's, then the\nrepository's own when it has one."
+          }
+        },
+        "required": [
+          "root",
+          "layer_schema",
+          "sections",
+          "git",
+          "discovery",
+          "source_classes",
+          "kind_sources"
+        ],
+        "description": "What the index knows about the repository it was built from."
+      },
+      "RepositoryReport": {
+        "type": "object",
+        "properties": {
+          "repository": {
+            "$ref": "#/components/schemas/RepositoryInfo",
+            "description": "The repository: root, layer schema, sections, git state, discovery mode, source classes, kind sources."
+          },
+          "state": {
+            "$ref": "#/components/schemas/State",
+            "description": "`ok` when every discovered file became an object, `degraded` otherwise."
+          },
+          "objects": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many objects the index holds."
+          },
+          "kinds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "Objects per kind."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            },
+            "description": "Every diagnostic the index produced."
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/Summary",
+            "description": "The capability registry, counted."
+          }
+        },
+        "required": [
+          "repository",
+          "state",
+          "objects",
+          "kinds",
+          "diagnostics",
+          "capabilities"
+        ],
+        "description": "The repository, its layer, its git state, and the state of this process's index."
+      },
+      "SearchHit": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "description": "`majordomus://<kind>/<identity>`."
+          },
+          "id": {
+            "type": "string",
+            "description": "The capability id, `<kind>.<identity>`."
+          },
+          "kind": {
+            "type": "string",
+            "description": "The kind the object was read as."
+          },
+          "identity": {
+            "type": "string",
+            "description": "The identity within the kind."
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The title, when the kind's title rule found one."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The one-line description, when the kind holds one."
+          },
+          "path": {
+            "type": "string",
+            "description": "Repository-relative source path."
+          },
+          "snippet": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The first line of content that matched, when one did."
+          }
+        },
+        "required": [
+          "uri",
+          "id",
+          "kind",
+          "identity",
+          "path"
+        ],
+        "description": "One search hit: the object, summarised, and the first matching line of its content."
+      },
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The query as given."
+          },
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many hits were returned."
+          },
+          "limit": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The limit that applied."
+          },
+          "hits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchHit"
+            },
+            "description": "The hits, in URI order, at most `limit` of them."
+          }
+        },
+        "required": [
+          "query",
+          "count",
+          "limit",
+          "hits"
+        ],
+        "description": "The answer of `objects.search`."
+      },
+      "Severity": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "info",
+            "description": "Worth knowing; changes nothing."
+          },
+          {
+            "type": "string",
+            "const": "warning",
+            "description": "Something to look at; the object is still served."
+          },
+          {
+            "type": "string",
+            "const": "error",
+            "description": "The file is excluded and the index is degraded."
+          }
+        ],
+        "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+      },
+      "Stability": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "implemented",
+            "description": "Implemented, and no behavioural test names it yet."
+          },
+          {
+            "type": "string",
+            "const": "behaviorally_verified",
+            "description": "Implemented and proved by a behavioural test."
+          },
+          {
+            "type": "string",
+            "const": "experimental",
+            "description": "Implemented, executable, and expected to change."
+          },
+          {
+            "type": "string",
+            "const": "planned",
+            "description": "Specified and not implemented: listed, never executable."
+          },
+          {
+            "type": "string",
+            "const": "unsupported",
+            "description": "Considered and refused: listed with the reason, never executable."
+          }
+        ],
+        "description": "Where a capability stands, in the repository's own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise."
+      },
+      "State": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "ok",
+            "description": "Every discovered file became an object."
+          },
+          {
+            "type": "string",
+            "const": "degraded",
+            "description": "At least one file could not be read; the diagnostics say which."
+          }
+        ],
+        "description": "Whether every discovered file became an object."
+      },
+      "Summary": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Every capability."
+          },
+          "builtin": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Composed in Rust."
+          },
+          "declarative": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Read from the layer."
+          },
+          "by_kind": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "By kind (`query`, `resource`)."
+          },
+          "by_stability": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "By stability."
+          },
+          "mcp_tools": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "With an MCP tool exposure."
+          },
+          "mcp_resources": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "With an MCP resource exposure."
+          },
+          "http_routes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "With an HTTP exposure."
+          },
+          "cli_commands": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "With a CLI exposure."
+          }
+        },
+        "required": [
+          "total",
+          "builtin",
+          "declarative",
+          "by_kind",
+          "by_stability",
+          "mcp_tools",
+          "mcp_resources",
+          "http_routes",
+          "cli_commands"
+        ],
+        "description": "The registry counted: by source, kind, stability and projection."
+      }
+    }
+  },
+  "x-majordomus": {
+    "generator": "majordomus-cli 0.1.0",
+    "infrastructure": [
+      "/",
+      "/openapi.json",
+      "/docs"
+    ],
+    "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body"
+  }
+}

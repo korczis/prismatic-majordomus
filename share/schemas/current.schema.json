@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/current.schema.json",
+  "title": "Active task",
+  "description": "The one active task of a checkout, .ai/local/state/current.yaml. The identity fields are computed from git at write time and never authored.",
+  "x-majordomus-allow": "current",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "task", "profile", "scope", "started_at", "outcome"],
+  "properties": {
+    "id": { "type": "string" },
+    "task": { "type": "string" },
+    "profile": { "type": "string" },
+    "owner": { "type": "string" },
+    "scope": { "type": "array", "items": { "type": "string" } },
+    "started_at": { "type": "string" },
+    "checkpoint_at": { "type": "string" },
+    "outcome": { "enum": ["active", "completed", "partial", "blocked", "no_match", "failed", "handed_over"] },
+    "repository_id": { "type": "string" },
+    "branch": { "type": "string" },
+    "head": { "type": "string" },
+    "working_tree": { "enum": ["clean", "dirty"] }
+  }
+}

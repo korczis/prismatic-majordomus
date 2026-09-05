@@ -107,4 +107,13 @@ fixture_repo() {
     mkdir -p "$dst/$(dirname "$p")"
     cp -R "$ROOT/$p" "$dst/$p"
   done
+  # every path a claim names must resolve where the generator runs, so the fixture carries
+  # them too, read from the matrix rather than listed here: a claim implemented outside the
+  # trees copied above (the Rust executable under apps/) is otherwise "missing". After the
+  # caller's trees, so that a tree copied whole is never pre-created and copied into itself.
+  for p in $(awk '/^    (source|implementation|test): /{print $2}' "$ROOT/docs/CLAIMS.yaml" | tr -d "'" | grep -v '^-$' | sort -u); do
+    [ -f "$ROOT/$p" ] && [ ! -e "$dst/$p" ] || continue
+    mkdir -p "$dst/$(dirname "$p")"
+    cp "$ROOT/$p" "$dst/$p"
+  done
 }

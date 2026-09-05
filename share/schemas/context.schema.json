@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/context.schema.json",
+  "title": "Context document",
+  "description": "The front matter of a scoped context document (schema: context/v1): a README under the layer that adds to its ancestors for the directory it sits in.",
+  "x-majordomus-allow": "context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "kind", "title"],
+  "properties": {
+    "schema": { "const": "context/v1" },
+    "id": { "type": "string" },
+    "kind": { "const": "context" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "status": { "enum": ["active", "deprecated"] },
+    "scope": { "enum": ["directory", "subtree", "explicit"] },
+    "composition": { "enum": ["extend", "replace", "final"] },
+    "order": { "type": "integer" },
+    "paths": { "type": "array", "items": { "type": "string" } },
+    "providers": { "type": "array", "items": { "type": "string" } },
+    "audience": { "type": "array", "items": { "type": "string" } },
+    "supersedes": { "type": "array", "items": { "type": "string" } },
+    "tracks": { "type": "array", "items": { "type": "string" } }
+  }
+}

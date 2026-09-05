@@ -735,6 +735,111 @@
       "note": "The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit."
     },
     {
+      "id": "claim:mcp-stdio-surface",
+      "kind": "claim",
+      "label": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-stdio-surface/",
+      "external": false,
+      "note": "One process per client, alive as long as its pipe; diagnostics go to stderr; a session leaves the repository byte-identical. The crate's own suite, tests/mcp_stdio.rs, holds the same frames to the same rules."
+    },
+    {
+      "id": "claim:mcp-data-driven",
+      "kind": "claim",
+      "label": "What the MCP server serves is decided by the manifest, the declared source classes and each file's front matter, so an object added to the layer is served with no change to the executable",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-data-driven/",
+      "external": false,
+      "note": "The add, remove and break sequence through the built binary is tests/external_extension.rs in the crate; the shell case proves the layer init writes is served, and that a rule added to it appears."
+    },
+    {
+      "id": "claim:mcp-degraded-not-silent",
+      "kind": "claim",
+      "label": "A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-degraded-not-silent/",
+      "external": false,
+      "note": "Two files of one kind claiming one identity are both excluded and both named. --strict refuses to serve a degraded layer; --inspect exits 10 on one."
+    },
+    {
+      "id": "claim:capability-registry",
+      "kind": "claim",
+      "label": "Every capability of the Rust executable is defined once, and the registry refuses a duplicate id or a colliding projection name, naming both parties",
+      "status": "guaranteed",
+      "route": "/guarantees/capability-registry/",
+      "external": false,
+      "note": "Two sources, builtin executables and the layer's objects, meet in one registry built at one place; ids, MCP names and URIs, HTTP routes and CLI paths are each unique or the registry does not build. The crate's tests/registry.rs covers every collision."
+    },
+    {
+      "id": "claim:interfaces-are-projections",
+      "kind": "claim",
+      "label": "MCP, HTTP, OpenAPI, Swagger UI, the capabilities commands and the generated reference are derived from the registry, and a change to one definition reaches every one of them",
+      "status": "guaranteed",
+      "route": "/guarantees/interfaces-are-projections/",
+      "external": false,
+      "note": "No projection declares a name, a description, a schema or a route of its own; tests/projections.rs proves every declared projection present and none orphan, and that a changed input type and description reach the MCP schema, the OpenAPI operation and the reference. MCP and HTTP answer the same handler identically."
+    },
+    {
+      "id": "claim:schema-driven-kinds",
+      "kind": "claim",
+      "label": "How each declarative kind is read and which keys it may carry is data read at run time, and a repository adds a kind with its JSON Schema without a code change",
+      "status": "guaranteed",
+      "route": "/guarantees/schema-driven-kinds/",
+      "external": false,
+      "note": "share/kinds.yaml and share/schemas/*.schema.json are the distribution's; .ai/repo/knowledge/kinds.yaml and schemas/ are the repository's; a name declared by both is an error naming both files. The shell tool's allow-lists are generated from the same schemas."
+    },
+    {
+      "id": "claim:generated-projections-checked",
+      "kind": "claim",
+      "label": "The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one",
+      "status": "guaranteed",
+      "route": "/guarantees/generated-projections-checked/",
+      "external": false,
+      "note": "Byte-identical on regeneration, no timestamps, no absolute paths; --check writes nothing and exits 10 naming every file that differs or is missing. CI runs it."
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/registry.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/registry.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/generate.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/generate.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/http/openapi.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/http/openapi.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/index.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/index.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mcp/protocol.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mcp/protocol.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/metadata/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/metadata/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:bin/majordomus",
       "kind": "implementation",
       "label": "bin/majordomus",
@@ -924,6 +1029,13 @@
       "external": false
     },
     {
+      "id": "source:docs/CAPABILITIES.md",
+      "kind": "source",
+      "label": "docs/CAPABILITIES.md",
+      "route": "/docs/capabilities/",
+      "external": false
+    },
+    {
       "id": "source:docs/CLI.md",
       "kind": "source",
       "label": "docs/CLI.md",
@@ -963,6 +1075,13 @@
       "kind": "source",
       "label": "docs/DYNAMICITY.md",
       "route": "/docs/dynamicity/",
+      "external": false
+    },
+    {
+      "id": "source:docs/MCP.md",
+      "kind": "source",
+      "label": "docs/MCP.md",
+      "route": "/docs/mcp/",
       "external": false
     },
     {
@@ -1272,6 +1391,20 @@
       "label": "test/cases/70_context_impact.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/70_context_impact.sh"
+    },
+    {
+      "id": "test:test/cases/72_rust_mcp.sh",
+      "kind": "test",
+      "label": "test/cases/72_rust_mcp.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/72_rust_mcp.sh"
+    },
+    {
+      "id": "test:test/cases/76_capabilities_projections.sh",
+      "kind": "test",
+      "label": "test/cases/76_capabilities_projections.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/76_capabilities_projections.sh"
     }
   ],
   "edges": [
@@ -1676,6 +1809,41 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mcp-stdio-surface",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mcp-data-driven",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mcp-degraded-not-silent",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:capability-registry",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:interfaces-are-projections",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:schema-driven-kinds",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:generated-projections-checked",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -2036,6 +2204,41 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mcp-stdio-surface",
+      "target": "impl:apps/majordomus-cli/src/mcp/protocol.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mcp-data-driven",
+      "target": "impl:apps/majordomus-cli/src/index.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mcp-degraded-not-silent",
+      "target": "impl:apps/majordomus-cli/src/index.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:capability-registry",
+      "target": "impl:apps/majordomus-cli/src/capability/registry.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:interfaces-are-projections",
+      "target": "impl:apps/majordomus-cli/src/http/openapi.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:schema-driven-kinds",
+      "target": "impl:apps/majordomus-cli/src/metadata/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:generated-projections-checked",
+      "target": "impl:apps/majordomus-cli/src/generate.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "test:test/cases/00_yaml_flatten.sh",
       "kind": "proved_by"
@@ -2393,6 +2596,41 @@
     {
       "source": "claim:github-projection",
       "target": "test:test/cases/45_github_projection.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-stdio-surface",
+      "target": "test:test/cases/72_rust_mcp.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-data-driven",
+      "target": "test:test/cases/72_rust_mcp.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-degraded-not-silent",
+      "target": "test:test/cases/72_rust_mcp.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:capability-registry",
+      "target": "test:test/cases/76_capabilities_projections.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:interfaces-are-projections",
+      "target": "test:test/cases/76_capabilities_projections.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:schema-driven-kinds",
+      "target": "test:test/cases/76_capabilities_projections.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:generated-projections-checked",
+      "target": "test:test/cases/76_capabilities_projections.sh",
       "kind": "proved_by"
     }
   ]

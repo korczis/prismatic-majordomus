@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# The gates the Rust executable must pass, in the order CI runs them: format, lints with
+# warnings as errors (a public item without documentation is one), the suites including
+# doctests, rustdoc with warnings denied, the benchmarks compiling, the registry's own
+# validation, the committed projections in sync, and line coverage above the threshold in
+# scripts/rust-coverage-threshold when cargo-llvm-cov is installed.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CRATE="$ROOT/apps/majordomus-cli"
+cd "$CRATE"
+# a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
+RUSTFLAGS=''; export RUSTFLAGS
+step() { printf '==> %s\n' "$*"; }
+step "cargo fmt --check";            cargo fmt --check
+step "cargo clippy -D warnings";     cargo clippy --all-targets --all-features -- -D warnings
+step "cargo test";                   cargo test --no-fail-fast
+step "cargo doc -D warnings";        RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --quiet
+step "cargo bench --no-run";         cargo bench --no-run --quiet
+step "capabilities validate";        cargo run --quiet -- capabilities validate
+step "generate --check";             cargo run --quiet -- generate --check
+threshold="$(cat "$ROOT/scripts/rust-coverage-threshold")"
+if cargo llvm-cov --version >/dev/null 2>&1; then
+  step "cargo llvm-cov --fail-under-lines $threshold"
+  cargo llvm-cov --all-targets --summary-only --fail-under-lines "$threshold"
+else
+  printf '==> coverage: cargo-llvm-cov not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview); CI enforces %s%%\n' "$threshold"
+fi
+step "rust-check: every gate passed"

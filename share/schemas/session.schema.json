@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/session.schema.json",
+  "title": "Open session",
+  "description": "The open execution episode of one worker, .ai/local/state/session-current.yaml; identity fields computed from git.",
+  "x-majordomus-allow": "session",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["session_id", "started_at"],
+  "properties": {
+    "session_id": { "type": "string" },
+    "started_at": { "type": "string" },
+    "owner": { "type": "string" },
+    "worker": { "type": "string" },
+    "repository_id": { "type": "string" },
+    "worktree": { "type": "string" },
+    "branch": { "type": "string" },
+    "start_head": { "type": "string" },
+    "start_working_tree": { "enum": ["clean", "dirty"] }
+  }
+}

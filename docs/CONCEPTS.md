@@ -38,6 +38,7 @@ every file it writes, uses these words and no others.
 | **effort** | `low`, `medium`, `high`, `xhigh`, `max`; reasoning depth, independent of everything else | `effort:` in a profile |
 | **verbosity** | `terse`, `concise`, `detailed`; how much the worker says, independent of how hard it thinks | `verbosity:` in a profile |
 | **presentation** | `machine`, `engineering`, `summary`; the final layer, chosen by the profile | `presentation:` in a profile |
+| **capability** | one thing the Rust executable exposes: a typed query with one handler, or a declarative object of the layer read as a resource; defined once, with a canonical id, and projected to MCP, HTTP, OpenAPI, the command line and the generated reference | `apps/majordomus-cli/src/capability/`, `majordomus capabilities list` |
 
 ## The two outcomes people confuse
 
@@ -50,9 +51,11 @@ escalate, or accept. The typed field decides; prose never does.
 
 ## What is deliberately not a concept
 
-No agent, persona, role, tier, registry, or catalogue. A supervisory
+No agent, persona, role, tier, or registry or catalogue of workers. A supervisory
 tool that adds nouns becomes the thing it supervises. The only actor Majordomus knows is
-`owner`, a free-form string on the task record.
+`owner`, a free-form string on the task record. The capability registry of the Rust
+executable indexes the tool's own surface, never a worker, and is derived from the layer
+and the code on every start.
 
 ## Task, session, handover: three objects, three questions
 
