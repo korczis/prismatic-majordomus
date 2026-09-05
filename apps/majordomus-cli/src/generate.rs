@@ -32,7 +32,8 @@ pub const HEADER: &str = "GENERATED FILE — DO NOT EDIT DIRECTLY";
 pub enum Target {
     /// `docs/generated/openapi.json`.
     OpenApi,
-    /// `docs/generated/capabilities.md` (the index) and `docs/generated/modules/<id>.md`.
+    /// `docs/generated/capabilities.md` (the index), `docs/generated/modules/<id>.md`, and
+    /// `docs/generated/cli.md` (the command line as clap declares it).
     Docs,
     /// `docs/generated/benchmarks.md`: every benchmark target and the coverage, from the projection.
     Benchmarks,
@@ -101,6 +102,10 @@ pub fn artifacts(
                     path: format!("{OUT_DIR}/capabilities.md"),
                     content: reference(registry, version),
                 });
+                out.push(Artifact {
+                    path: format!("{OUT_DIR}/cli.md"),
+                    content: cli_reference(&crate::cli::tree(), version),
+                });
                 for m in registry
                     .modules()
                     .filter(|m| m.source != ModuleSource::Declarative)
@@ -146,7 +151,8 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             )?);
         }
         if targets.contains(&Target::Site) {
-            let dataset = crate::site::dataset(app.registry(), app.index(), &app.schema, &policy);
+            let dataset =
+                crate::site::dataset(&app.context, &app.schema, &policy, &app.repository)?;
             out.push(Artifact {
                 path: format!("{SITE_DATA_DIR}/registry.json"),
                 content: crate::site::render(&dataset),
@@ -182,9 +188,21 @@ pub fn registry_manifest(registry: &CapabilityRegistry, version: &str) -> String
         .modules()
         .filter(|m| m.source != ModuleSource::Declarative)
         .collect();
-    let capabilities: Vec<&crate::capability::Capability> = registry
+    // every descriptor as it is, plus the file it was composed in: the one place a reader
+    // of the manifest (the site generator among them) learns where a capability's source is
+    let capabilities: Vec<Value> = registry
         .iter()
         .filter(|c| matches!(c.provenance, Provenance::Builtin { .. }))
+        .map(|c| {
+            let mut v = serde_json::to_value(c).unwrap_or(Value::Null);
+            if let Some(o) = v.as_object_mut() {
+                o.insert(
+                    "source_path".into(),
+                    Value::String(c.provenance.source_path()),
+                );
+            }
+            v
+        })
         .collect();
     let declarative_kinds: Vec<&str> = registry
         .modules()
@@ -589,6 +607,116 @@ fn module_reference(registry: &CapabilityRegistry, module: &str, version: &str) 
             "Output: `{}`.\n\n",
             c.output.name.as_deref().unwrap_or("object")
         ));
+    }
+    s
+}
+
+/// The native command line as Markdown: every command with its arguments, from the clap
+/// declaration ([`crate::cli::tree`]). The site renders the same tree from the registry
+/// dataset; neither is typed by hand.
+pub fn cli_reference(tree: &crate::cli::CommandDoc, version: &str) -> String {
+    let mut s = String::new();
+    s.push_str(&format!("<!-- {HEADER}\n     Source: the clap declaration of the command line (src/cli.rs); regenerate with `majordomus generate`\n     Generator: majordomus-cli {version} -->\n"));
+    s.push_str("# Command line of the Rust executable\n\n");
+    s.push_str(&format!("{}\n\n", tree.about));
+    if let Some(long) = &tree.long_about {
+        s.push_str(&format!("{long}\n\n"));
+    }
+    s.push_str("Every command below is declared once, in `src/cli.rs`; this file is a projection of that declaration, as `--help` is. The task lifecycle (`init`, `start`, `check`, `finish`, `doctor`, ...) is the shell tool `bin/majordomus`, documented in `docs/CLI.md`.\n\n");
+    s.push_str("## Commands\n\n| command | does |\n|---|---|\n");
+    for c in tree.flatten().into_iter().skip(1) {
+        s.push_str(&format!(
+            "| [`{}`](#{}) | {} |\n",
+            c.path.join(" "),
+            c.path.join("-"),
+            c.about
+        ));
+    }
+    s.push('\n');
+    for c in tree.flatten() {
+        let name = c.path.join(" ");
+        let anchor = c.path.join("-");
+        s.push_str(&format!("<a id=\"{anchor}\"></a>\n## `{name}`\n\n"));
+        if !c.subcommands.is_empty() || c.path.len() > 1 {
+            s.push_str(&format!("{}\n\n", c.about));
+        }
+        if let (Some(long), true) = (&c.long_about, c.path.len() > 1) {
+            s.push_str(&format!("{long}\n\n"));
+        }
+        if !c.subcommands.is_empty() {
+            s.push_str("Subcommands: ");
+            s.push_str(
+                &c.subcommands
+                    .iter()
+                    .map(|sc| format!("[`{}`](#{})", sc.path.join(" "), sc.path.join("-")))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+            );
+            s.push_str(".\n\n");
+        }
+        if c.args.is_empty() {
+            s.push_str("Arguments: none.\n\n");
+            continue;
+        }
+        s.push_str("| argument | value | default | description |\n|---|---|---|---|\n");
+        for a in &c.args {
+            let flag = match (&a.long, a.short, a.positional) {
+                (_, _, true) => format!(
+                    "`<{}>`",
+                    a.value_name.clone().unwrap_or(a.name.to_uppercase())
+                ),
+                (Some(l), Some(sh), _) => format!("`-{sh}`, `--{l}`"),
+                (Some(l), None, _) => format!("`--{l}`"),
+                (None, Some(sh), _) => format!("`-{sh}`"),
+                (None, None, _) => format!("`{}`", a.name),
+            };
+            let value = if !a.takes_value {
+                "flag".to_string()
+            } else if !a.possible_values.is_empty() {
+                a.possible_values
+                    .iter()
+                    .map(|v| format!("`{}`", v.name))
+                    .collect::<Vec<_>>()
+                    .join(" \\| ")
+            } else {
+                format!(
+                    "`<{}>`",
+                    a.value_name.clone().unwrap_or(a.name.to_uppercase())
+                )
+            };
+            let default = if a.defaults.is_empty() || !a.takes_value {
+                if a.required {
+                    "required".to_string()
+                } else {
+                    "—".to_string()
+                }
+            } else {
+                a.defaults
+                    .iter()
+                    .map(|d| format!("`{d}`"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            };
+            let mut help = a.help.replace('|', "\\|");
+            if a.global {
+                help.push_str(" (accepted by every subcommand)");
+            }
+            let values: Vec<String> = a
+                .possible_values
+                .iter()
+                .filter_map(|v| {
+                    v.help
+                        .as_ref()
+                        .map(|h| format!("`{}`: {}", v.name, h.replace('|', "\\|")))
+                })
+                .collect();
+            if !values.is_empty() {
+                help.push_str(" — ");
+                help.push_str(&values.join("; "));
+            }
+            s.push_str(&format!("| {flag} | {value} | {default} | {help} |\n"));
+        }
+        s.push('\n');
     }
     s
 }

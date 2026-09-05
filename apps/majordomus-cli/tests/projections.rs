@@ -485,7 +485,7 @@ fn the_plan_is_deterministic_and_follows_a_canonical_mutation_to_the_projection_
             .clone()
     };
     let site_a = site(&a);
-    assert_eq!(site_a["schema"], "majordomus-site-registry/v1");
+    assert_eq!(site_a["schema"], majordomus_cli::site::SCHEMA);
     let fp_a = site_a["registry"]["fingerprint"]
         .as_str()
         .unwrap()
@@ -552,4 +552,208 @@ fn the_plan_is_deterministic_and_follows_a_canonical_mutation_to_the_projection_
     check(&root, &after2).unwrap();
     let again = plan(&common::load_app(&f), &targets).unwrap();
     assert_eq!(again, after2);
+}
+
+/// The site's dataset is every surface of the executable seen from the registry — the
+/// command line, the MCP tools and resources, the HTTP routes, the benchmark targets and
+/// coverage, the accepted baselines — and a change to one descriptor moves exactly the
+/// sections that project it. The site renders the dataset; nothing of it is typed there.
+#[test]
+fn the_site_dataset_carries_every_surface_and_follows_a_descriptor_mutation() {
+    use majordomus_cli::bench::CoverageState;
+    use majordomus_cli::policy::LoadedPolicy;
+    use majordomus_cli::site;
+    use std::sync::Arc;
+
+    let f = common::Fixture::new();
+    let app = common::load_app(&f);
+    let policy = LoadedPolicy::load(&app.repository).unwrap();
+    let ds = site::dataset(&app.context, &app.schema, &policy, &app.repository).unwrap();
+    assert_eq!(ds.schema, site::SCHEMA);
+    assert!(site::render(&ds).ends_with('\n'));
+
+    // MCP: the dataset's tools are the surface's tools, by name; the resources are the
+    // builtin ones with a resource exposure
+    let surface = Surface::new(Arc::clone(&app.context));
+    let tools: BTreeSet<String> = surface.tools().iter().map(|t| t.name.clone()).collect();
+    let ds_tools: BTreeSet<String> = ds.mcp.tools.iter().map(|t| t.name.clone()).collect();
+    assert_eq!(tools, ds_tools);
+    assert!(ds
+        .mcp
+        .resources
+        .iter()
+        .any(|r| r.uri == "majordomus://repository"));
+    assert_eq!(ds.mcp.server_name, "majordomus");
+
+    // HTTP: the dataset's routes are the OpenAPI document's paths
+    let doc = openapi::document(app.registry(), "test", None).unwrap();
+    let paths: BTreeSet<String> = doc["paths"].as_object().unwrap().keys().cloned().collect();
+    let ds_paths: BTreeSet<String> = ds.http.routes.iter().map(|r| r.path.clone()).collect();
+    assert_eq!(paths, ds_paths);
+    assert!(ds.http.infrastructure.contains(&"/openapi.json"));
+
+    // the registry: every builtin descriptor in full, with the file it was composed in;
+    // every module's ids are descriptors of the dataset
+    let ids: BTreeSet<&str> = ds
+        .registry
+        .builtin
+        .iter()
+        .map(|c| c.capability.id.as_str())
+        .collect();
+    assert_eq!(ids.len(), ds.registry.summary.builtin);
+    for c in &ds.registry.builtin {
+        assert!(
+            c.source_path.starts_with("apps/majordomus-cli/src/") && c.source_path.ends_with(".rs"),
+            "{}: {}",
+            c.capability.id,
+            c.source_path
+        );
+        assert!(c.capability.input.schema.is_object(), "{}", c.capability.id);
+    }
+    for m in &ds.registry.modules {
+        for id in &m.capability_ids {
+            assert!(ids.contains(id.as_str()), "module {} names {id}", m.id);
+        }
+        assert_eq!(m.source_path.is_some(), m.source == "builtin", "{}", m.id);
+    }
+
+    // the command line: the root and the commands clap declares, help subcommands left out
+    assert_eq!(ds.cli.path, ["majordomus"]);
+    let commands: Vec<String> = ds.cli.flatten().iter().map(|c| c.path.join(" ")).collect();
+    assert!(
+        commands.contains(&"majordomus generate".to_string()),
+        "{commands:?}"
+    );
+    assert!(
+        commands.contains(&"majordomus bench coverage".to_string()),
+        "{commands:?}"
+    );
+    assert!(
+        commands.iter().all(|c| !c.split(' ').any(|w| w == "help")),
+        "{commands:?}"
+    );
+    let generate = ds
+        .cli
+        .subcommands
+        .iter()
+        .find(|c| c.path.last().map(String::as_str) == Some("generate"))
+        .unwrap();
+    let check = generate.args.iter().find(|a| a.name == "check").unwrap();
+    assert!(check.long.as_deref() == Some("check") && !check.takes_value);
+    let target = generate.args.iter().find(|a| a.name == "target").unwrap();
+    assert!(target.possible_values.iter().any(|v| v.name == "site"));
+
+    // benchmarks: every covered requirement has a target; the tallies and the policy are there
+    assert!(ds.benchmarks.coverage.tallies.contains_key("total"));
+    for line in ds
+        .benchmarks
+        .coverage
+        .lines
+        .iter()
+        .filter(|l| l.state == CoverageState::Covered)
+    {
+        assert!(
+            ds.benchmarks.targets.iter().any(|t| {
+                (t.id.as_deref() == Some(line.subject.as_str()) || t.key == line.subject)
+                    && t.transport == line.transport.name()
+            }),
+            "no target for {} on {}",
+            line.subject,
+            line.transport.name()
+        );
+    }
+    assert!(ds.benchmarks.policy.regression.contains_key("p50"));
+    assert!(ds
+        .benchmarks
+        .policy_path
+        .ends_with("benchmarks/rust/policy.yaml"));
+    assert!(
+        ds.benchmarks.baselines.is_empty(),
+        "the fixture commits no baseline"
+    );
+
+    // a mutation: the same registry with the echo capability, once with its HTTP
+    // exposure and once without. The routes, the OpenAPI operation and the benchmark
+    // targets on the HTTP transport move; the MCP tool and the descriptor's description
+    // do not. A second mutation of the description moves the descriptor everywhere.
+    let dataset_of = |exec: Executable| {
+        let registry = CapabilityRegistry::builder()
+            .with_builtin(vec![exec])
+            .build()
+            .unwrap();
+        let ctx = majordomus_cli::capability::Context::new(
+            Arc::clone(&app.context.index),
+            Arc::new(registry),
+        );
+        site::dataset(&ctx, &app.schema, &policy, &app.repository).unwrap()
+    };
+    let with_http = dataset_of(echo::<EchoV2>(
+        "Echo, version two.",
+        CanonicalSchema::of::<EchoV2>(),
+        true,
+    ));
+    let without = dataset_of(echo::<EchoV2>(
+        "Echo, version two.",
+        CanonicalSchema::of::<EchoV2>(),
+        false,
+    ));
+    assert!(with_http.http.routes.iter().any(|r| r.id == "fixture.echo"));
+    assert!(!without.http.routes.iter().any(|r| r.id == "fixture.echo"));
+    // the fixture declares no case, so the requirement is there and reported missing;
+    // it exists on the HTTP transport only while the exposure does
+    let http_line = |ds: &site::SiteRegistry| {
+        ds.benchmarks
+            .coverage
+            .lines
+            .iter()
+            .any(|l| l.subject == "fixture.echo" && l.transport.name() == "http")
+    };
+    assert!(http_line(&with_http));
+    assert!(!http_line(&without));
+    assert!(with_http
+        .benchmarks
+        .coverage
+        .lines
+        .iter()
+        .any(|l| l.subject == "fixture.echo" && l.state == CoverageState::Missing));
+    assert_eq!(
+        serde_json::to_value(&with_http.mcp).unwrap(),
+        serde_json::to_value(&without.mcp).unwrap()
+    );
+    assert_eq!(
+        serde_json::to_value(&with_http.cli).unwrap(),
+        serde_json::to_value(&without.cli).unwrap()
+    );
+    let renamed = dataset_of(echo::<EchoV2>(
+        "Echo, renamed.",
+        CanonicalSchema::of::<EchoV2>(),
+        true,
+    ));
+    assert_eq!(
+        renamed.registry.builtin[0].capability.description,
+        "Echo, renamed."
+    );
+    assert_eq!(renamed.mcp.tools[0].description, "Echo, renamed.");
+    assert_eq!(
+        serde_json::to_value(&renamed.http).unwrap(),
+        serde_json::to_value(&with_http.http).unwrap(),
+        "a description is not a route"
+    );
+    // the registry manifest carries the same descriptor with its source path
+    let manifest: Value = serde_json::from_str(&majordomus_cli::generate::registry_manifest(
+        &CapabilityRegistry::builder()
+            .with_builtin(vec![echo::<EchoV2>(
+                "Echo, renamed.",
+                CanonicalSchema::of::<EchoV2>(),
+                true,
+            )])
+            .build()
+            .unwrap(),
+        "test",
+    ))
+    .unwrap();
+    let cap = &manifest["capabilities"][0];
+    assert_eq!(cap["id"], "fixture.echo");
+    assert_eq!(cap["description"], "Echo, renamed.");
+    assert_eq!(cap["source_path"], "apps/majordomus-cli/src/fixture.rs");
 }
