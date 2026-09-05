@@ -454,8 +454,21 @@ mj_yload() {
       printf "%s__%s=\047%s\047\n", p, k, v }' "$1")"
   eval "$code"
 }
+# mj_yload_dir <dir> <prefix>: every file of a flat directory at once, one awk and one
+# eval; the variables are <prefix>_<file name>__<key>, the file name sanitised like a key
+mj_yload_dir() {
+  local code
+  code="$(awk -F= -v p="$2" 'FNR == 1 { pre = FILENAME; sub(/.*\//, "", pre); gsub(/-/, "___", pre); gsub(/\./, "__", pre); pre = p "_" pre }
+      { k = $1; if (k !~ /^[A-Za-z0-9_.-]+$/) next
+        gsub(/-/, "___", k); gsub(/\./, "__", k)
+        v = $0; sub(/^[^=]*=/, "", v); gsub(/\047/, "\047\\\047\047", v)
+        printf "%s__%s=\047%s\047\n", pre, k, v }' "$1"/*)"
+  eval "$code"
+}
 # mj_yv <prefix> <key>: the value loaded for a key, empty when absent
-mj_yv() { local k="${2//-/___}"; k="${k//./__}"; eval "printf '%s' \"\${$1__$k:-}\""; }
+# printed as a line, like the flat file's own line, so a caller that collects several
+# values in a command substitution gets one per line; an absent key prints nothing
+mj_yv() { local k="${2//-/___}" v; k="${k//./__}"; eval "v=\"\${$1__$k:-}\""; [ -n "$v" ] && printf '%s\n' "$v"; return 0; }
 # mj_yvlist <prefix> <key>: the items of a loaded list, one per line
 mj_yvlist() { local i=0 v; while v="$(mj_yv "$1" "$2.$i")"; [ -n "$v" ]; do printf '%s\n' "$v"; i=$((i+1)); done; }
 

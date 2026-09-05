@@ -76,6 +76,11 @@ mj_project_load() {
   fi
   [ "$rc" = 0 ] || return 2
   awk -f "$MJ_LIB_DIR/project.awk" "$raw" > "$MJ_PJ/model.tsv" || return 2
+  # every record's fields and every model row become variables once, so the readers
+  # below expand them instead of running one awk per field or per row
+  mj_yload_dir "$MJ_PJ/flat" pj
+  eval "$(awk -F'\t' '$1 == "M" || $1 == "I" { r = $0; gsub(/\047/, "\047\\\047\047", r); id = $2; gsub(/-/, "___", id); gsub(/\./, "__", id)
+      printf "pjrow_%s_%s=\047%s\047\n", $1, id, r }' "$MJ_PJ/model.tsv")"
   MJ_PJ_LOADED=1
   return 0
 }
@@ -84,8 +89,21 @@ mj_project_unload() { [ -n "$MJ_PJ" ] && rm -rf "$MJ_PJ"; MJ_PJ=""; MJ_PJ_LOADED
 # ---------------------------------------------------------------- model accessors
 # Every one of these reads model.tsv. None recomputes anything.
 mj_pj_rows()   { awk -F'\t' -v t="$1" '$1==t' "$MJ_PJ/model.tsv"; }
-mj_pj_row()    { awk -F'\t' -v t="$1" -v i="$2" '$1==t && $2==i' "$MJ_PJ/model.tsv"; }
-mj_pj_col()    { mj_pj_row "$1" "$2" | cut -f"$3"; }
+# a milestone or issue row is a variable after the load; other row types stay in awk
+mj_pj_row() {
+  case "$1" in
+    M|I) local id="${2//-/___}"; id="${id//./__}"; local r; eval "r=\"\${pjrow_$1_$id:-}\""; [ -n "$r" ] && printf '%s\n' "$r" ;;
+    *) awk -F'\t' -v t="$1" -v i="$2" '$1==t && $2==i' "$MJ_PJ/model.tsv" ;;
+  esac
+}
+# one column of a row, split on a byte that is not whitespace so that an empty field
+# between two tabs keeps its place (IFS whitespace would collapse it)
+mj_pj_col() {
+  local row sep n="$3" fields; row="$(mj_pj_row "$1" "$2")"; sep="$(printf '\001')"
+  row="${row//$MJ_TAB/$sep}"
+  IFS="$sep" read -r -a fields <<< "$row"
+  printf '%s' "${fields[$((n - 1))]:-}"
+}
 
 mj_pj_project_name()   { mj_pj_rows P | cut -f2; }
 mj_pj_repository()     { mj_pj_rows P | cut -f3; }
@@ -149,8 +167,8 @@ mj_pj_warn_count()    { mj_pj_rows V | awk -F'\t' '$2=="WARN"' | wc -l | tr -d '
 
 # flattened canonical record of one milestone or issue, for the fields the model does not carry
 mj_pj_flat()  { printf '%s' "$MJ_PJ/flat/$1"; }
-mj_pj_get()   { mj_yget "$MJ_PJ/flat/$1" "$2"; }
-mj_pj_list()  { mj_ylist "$MJ_PJ/flat/$1" "$2"; }
+mj_pj_get()   { local p="${1//-/___}"; mj_yv "pj_${p//./__}" "$2"; }
+mj_pj_list()  { local p="${1//-/___}"; mj_yvlist "pj_${p//./__}" "$2"; }
 
 # the next issue a worker should take: the lowest-wave READY issue of the active milestone,
 # highest priority first, then id. Derived on every call; never stored.

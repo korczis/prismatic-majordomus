@@ -48,6 +48,7 @@ command -v jq >/dev/null || { echo "generate-site-data: jq is required" >&2; exi
 GEN_VERSION=1
 
 # ---------------------------------------------------------------- inputs
+GEN_T0="$(mj_phase_begin "gen:inputs")"
 INPUTS="bin/majordomus
 share/commands.yaml
 share/use-cases.yaml
@@ -91,7 +92,12 @@ for f in $INPUTS; do [ -f "$ROOT/$f" ] || { echo "generate-site-data: canonical 
 LINKSED='s#\](\.\./AGENTS\.md)#](@/docs/contract.md)#g; s#\](AGENTS\.md)#](@/docs/contract.md)#g; s#\](\.\./CONTRIBUTING\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md)#g; s#\](\.\./SECURITY\.md)#](https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md)#g; s#\](CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](docs/CLAIMS\.yaml)#](@/guarantees.md)#g; s#\](README\.md)#](@/docs/_index.md)#g; s#\]((\.\./)?test/cases/)#](https://github.com/korczis/prismatic-majordomus/tree/master/test/cases/)#g'
 
 flat() { local t; t="$(mktemp "${TMPDIR:-/tmp}/mj.f.XXXXXX")"; mj_yaml_flatten "$1" > "$t" || { echo "generate-site-data: $1 does not parse" >&2; exit 10; }; printf '%s' "$t"; }
-yv() { mj_yget "$1" "$2"; }
+# yload turns a flat file into variables once (mj_yload); yv and ylist read a loaded file
+# by expansion and fall back to one awk per key for a file nobody loaded. A loaded
+# section pays one process for its whole file instead of one per field read.
+yload() { mj_yload "$1" "Y_${1//[!A-Za-z0-9]/_}"; eval "Y_${1//[!A-Za-z0-9]/_}__LOADED=1"; }
+yv() { local p="Y_${1//[!A-Za-z0-9]/_}" l; eval "l=\"\${${p}__LOADED:-}\""; if [ -n "$l" ]; then mj_yv "$p" "$2"; else mj_yget "$1" "$2"; fi; }
+ylist() { local p="Y_${1//[!A-Za-z0-9]/_}" l; eval "l=\"\${${p}__LOADED:-}\""; if [ -n "$l" ]; then mj_yvlist "$p" "$2"; else mj_ylist "$1" "$2"; fi; }
 jstr() { jq -Rn --arg v "$1" '$v'; }           # JSON string
 jbool() { case "$1" in true) echo true ;; false) echo false ;; *) jstr "$1" ;; esac; }
 jnum_or_str() { case "$1" in ''|*[!0-9]*) jstr "$1" ;; *) printf '%s' "$1" ;; esac; }
@@ -107,7 +113,9 @@ jq_inplace() {
   mv "$t" "$target"
 }
 
+mj_phase_end "gen:inputs" "$GEN_T0"
 # ---------------------------------------------------------------- project.json
+GEN_T0="$(mj_phase_begin "gen:project.json")"
 VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus" | head -1)"
 TAGLINE="$(grep -m1 -E '^\*\*A lightweight' "$ROOT/README.md" | sed 's/\*\*//g')"
 LICENSE_NAME="$(head -1 "$ROOT/LICENSE" | sed 's/ License$//')"
@@ -123,11 +131,13 @@ jq -n --arg name "Prismatic Majordomus" --arg short "Majordomus" --arg version "
     repository_url: $repo, requirements: ["bash 3.2 or newer", "git", "sha256sum or shasum"],
     commands: $commands, exit_codes: $exit_codes}' > "$OUT/project.json"
 
+mj_phase_end "gen:project.json" "$GEN_T0"
 # ---------------------------------------------------------------- profiles.json
+GEN_T0="$(mj_phase_begin "gen:profiles.json")"
 {
   first=1; printf '{"schema":1,"profiles":['
   for pf in "$ROOT"/share/skeleton/profiles/*.yaml; do
-    F="$(flat "$pf")"; slug="$(basename "$pf" .yaml)"
+    F="$(flat "$pf")"; yload "$F"; slug="$(basename "$pf" .yaml)"
     [ "$first" = 1 ] || printf ','; first=0
     ctx="$(grep -E '^context\.' "$F" | sed 's/^context\.//' | jq -Rn '[inputs | split("=") | {key: .[0], value: (.[1] | if . == "true" then true elif . == "false" then false elif test("^[0-9]+$") then tonumber else . end)}] | from_entries')"
     ver="$(grep -E '^verification\.' "$F" | sed 's/^verification\.//' | jq -Rn '[inputs | split("=") | {key: .[0], value: (.[1] | if . == "true" then true elif . == "false" then false else . end)}] | from_entries')"
@@ -146,8 +156,10 @@ jq -n --arg name "Prismatic Majordomus" --arg short "Majordomus" --arg version "
   printf ']}'
 } | jq . > "$OUT/profiles.json"
 
+mj_phase_end "gen:profiles.json" "$GEN_T0"
 # ---------------------------------------------------------------- policy.json
-P="$(flat "$ROOT/share/skeleton/policy.yaml")"
+GEN_T0="$(mj_phase_begin "gen:policy.json")"
+P="$(flat "$ROOT/share/skeleton/policy.yaml")"; yload "$P"
 enf="$(i=0; printf '['; while [ -n "$(yv "$P" "enforcement.$i.name")" ]; do [ $i = 0 ] || printf ','; jq -cn --arg n "$(yv "$P" "enforcement.$i.name")" --arg p "$(yv "$P" "enforcement.$i.path")" --arg w "$(yv "$P" "enforcement.$i.wired_by")" --argjson a "$(ylist_json "$P" "enforcement.$i.args")" '{name:$n,path:$p,args:$a,wired_by:$w}'; i=$((i+1)); done; printf ']')"
 prj="$(i=0; printf '['; while [ -n "$(yv "$P" "projections.$i.target")" ]; do [ $i = 0 ] || printf ','; jq -cn --arg p "$(yv "$P" "projections.$i.provider")" --arg t "$(yv "$P" "projections.$i.target")" --arg a "$(yv "$P" "projections.$i.always_loaded")" '{provider:$p,target:$t,always_loaded:($a=="true")}'; i=$((i+1)); done; printf ']')"
 jq -n --argjson version "$(yv "$P" version)" \
@@ -167,8 +179,10 @@ jq -n --argjson version "$(yv "$P" version)" \
     raw: $raw}' > "$OUT/policy.json"
 rm -f "$P"
 
+mj_phase_end "gen:policy.json" "$GEN_T0"
 # ---------------------------------------------------------------- capabilities.json (from docs/CLAIMS.yaml)
-Cf="$(flat "$ROOT/docs/CLAIMS.yaml")"
+GEN_T0="$(mj_phase_begin "gen:capabilities.json_from_docs")"
+Cf="$(flat "$ROOT/docs/CLAIMS.yaml")"; yload "$Cf"
 # A claim's owning command is its implementation file, matched against the commands the
 # binary actually dispatches. The literal list this replaced predated every continuity
 # command, so their claims published with nothing to link to. An empty join would silently
@@ -213,7 +227,9 @@ jq -r '.claims[] | [.id, .status, .source, (.implementation // "-"), (.test // "
   if [ "$status" = guaranteed ] && [ "$test" = "-" ]; then echo "generate-site-data: guaranteed claim $id has no test" >&2; exit 10; fi
 done
 
+mj_phase_end "gen:capabilities.json_from_docs" "$GEN_T0"
 # ---------------------------------------------------------------- lifecycle.json
+GEN_T0="$(mj_phase_begin "gen:lifecycle.json")"
 OUTCOMES="$(grep -oE 'completed\|partial\|blocked\|no_match\|failed' "$ROOT/lib/finish.sh" | head -1 | tr '|' '\n' | jq -R . | jq -sc .)"
 # The labels are the ones mj_git_label can actually print, read out of the function that
 # prints them. A label listed here that the function cannot produce would be a vocabulary
@@ -236,11 +252,11 @@ STEPS="$(awk '/^```$/ { n++; next } n == 1 && /^majordomus [a-z]+/ { print $2 }'
 # The principles are the rules of the standard package tagged principle, in the order the
 # package manifest lists them; the title of each is the sentence a worker reads.
 PRINCIPLES="$(
-  Mf="$(flat "$ROOT/share/standard/majordomus/manifest.yaml")"; k=0
+  Mf="$(flat "$ROOT/share/standard/majordomus/manifest.yaml")"; yload "$Mf"; k=0
   while [ -n "$(yv "$Mf" "rules.$k.file")" ]; do
     rf="$ROOT/share/standard/majordomus/$(yv "$Mf" "rules.$k.file")"
-    fm="$(mktemp "${TMPDIR:-/tmp}/mj.pf.XXXXXX")"; mj_record_front "$rf" > "$fm"; Ff="$(flat "$fm")"
-    if mj_ylist "$Ff" tags | grep -qx principle; then yv "$Ff" title; fi
+    fm="$(mktemp "${TMPDIR:-/tmp}/mj.pf.XXXXXX")"; mj_record_front "$rf" > "$fm"; Ff="$(flat "$fm")"; yload "$Ff"
+    if ylist "$Ff" tags | grep -qx principle; then yv "$Ff" title; fi
     rm -f "$fm" "$Ff"; k=$((k+1))
   done; rm -f "$Mf"
 )"
@@ -259,7 +275,9 @@ for srcp in $(cd "$ROOT/site/content-src" && find . -name '*.md' | sed 's#^\./##
   printf '{%% endraw %%}\n' >> "$dst"
 done
 
+mj_phase_end "gen:lifecycle.json" "$GEN_T0"
 # ---------------------------------------------------------------- readme.json (fragments the homepage renders)
+GEN_T0="$(mj_phase_begin "gen:readme.json_fragments_the_ho")"
 section_of() { # file, heading, next-heading -> body between them; fails if the heading is missing
   grep -qx "## $2" "$1" || { echo "generate-site-data: README.md has no heading '## $2' (the site renders it)" >&2; exit 10; }
   awk -v h="## $2" -v n="## $3" '$0==h{f=1;next} f&&$0==n{exit} f' "$1"
@@ -278,11 +296,13 @@ jq -n --arg finish "$FINISH_BLOCK" --arg problem "$PROBLEM_MD" --argjson checks 
   --arg limits "$(section_of "$ROOT/README.md" "Limitations" "Roadmap")" \
   '{schema:1, finish_transcript:$finish, finish_checks:$checks, problem_md:$problem, problem_bullets_md:$problem_bullets, not_md:$notwhat, limitations_md:$limits, does:$does}' > "$OUT/readme.json"
 
+mj_phase_end "gen:readme.json_fragments_the_ho" "$GEN_T0"
 # ---------------------------------------------------------------- commands.json (from share/commands.yaml)
+GEN_T0="$(mj_phase_begin "gen:commands.json_from_share_com")"
 # The registry owns what a command is; docs/CLI.md supplies the narrative; the coverage
 # metadata each test case declares about itself supplies the evidence. Nothing here restates
 # a fact that one of those three already holds.
-Kf="$(flat "$ROOT/share/commands.yaml")"
+Kf="$(flat "$ROOT/share/commands.yaml")"; yload "$Kf"
 COVER="$(mktemp "${TMPDIR:-/tmp}/mj.cov.XXXXXX")"
 for f in "$ROOT"/test/cases/*.sh; do
   n="$(basename "$f" .sh)"
@@ -368,7 +388,7 @@ done
       --arg note "$(yv "$Kf" "commands.$i.note")" --arg body "$body" \
       --argjson reads "$(ylist_json "$Kf" "commands.$i.reads")" \
       --argjson writes "$(ylist_json "$Kf" "commands.$i.writes")" \
-      --argjson exit_codes "$(mj_ylist "$Kf" "commands.$i.exit_codes" | jq -sc 'map(tonumber)')" \
+      --argjson exit_codes "$(ylist "$Kf" "commands.$i.exit_codes" | jq -sc 'map(tonumber)')" \
       --argjson behaviour "$(cover_json "$cid" behaviour)" \
       --argjson negative "$(cover_json "$cid" negative)" \
       --argjson demo_data "$(demo_json "$cid")" \
@@ -383,10 +403,12 @@ done
 } | jq . > "$OUT/commands.json"
 rm -f "$Kf" "$COVER"
 
+mj_phase_end "gen:commands.json_from_share_com" "$GEN_T0"
 # ---------------------------------------------------------------- responsibilities (README "What it does" rows, cross-linked)
+GEN_T0="$(mj_phase_begin "gen:responsibilities_README_What")"
 # The cross-links are data: which command owns a responsibility and which claims mention it,
 # derived from canonical docs/RESPONSIBILITIES.yaml and docs/CLAIMS.yaml.
-Rf="$(flat "$ROOT/docs/RESPONSIBILITIES.yaml")"
+Rf="$(flat "$ROOT/docs/RESPONSIBILITIES.yaml")"; yload "$Rf"
 [ "$(yv "$Rf" version)" = 1 ] || { echo "generate-site-data: docs/RESPONSIBILITIES.yaml must be version 1" >&2; exit 10; }
 # The join below is by README row title, and a join is silent when it misses: an entry whose
 # readme_key no longer matches a row is never visited, and a row with no entry falls through
@@ -412,7 +434,7 @@ while [ -n "$(yv "$Rf" "responsibilities.$i.id")" ]; do
   # the generator refuse to run there. They are checked whenever the directory exists at all,
   # which is every initialised repository including this one, so a moved or renamed runtime
   # path is still caught rather than excused.
-  for p in $(mj_ylist "$Rf" "responsibilities.$i.files") "$(yv "$Rf" "responsibilities.$i.implementation")"; do
+  for p in $(ylist "$Rf" "responsibilities.$i.files") "$(yv "$Rf" "responsibilities.$i.implementation")"; do
     [ -n "$p" ] || { echo "generate-site-data: responsibility $rid declares an empty path" >&2; exit 10; }
     # policy.yaml is what `init` writes, so it marks an initialised repository. Testing for
     # the directory instead would be wrong: the project directory is a canonical generator
@@ -491,7 +513,9 @@ jq_inplace "$OUT/readme.json" --argjson r "$RESP_JSON" --slurpfile caps "$OUT/ca
     | $row + $e + {slug: $e.id, claim_ids: $cids} ]
     | sort_by(.order))'
 
+mj_phase_end "gen:responsibilities_README_What" "$GEN_T0"
 # ---------------------------------------------------------------- doctrines.json
+GEN_T0="$(mj_phase_begin "gen:doctrines.json")"
 # Every field the site shows about a doctrine is either in the rule object or resolved from
 # the source here — which file defines the validator, which commands dispatch it, which
 # claims it backs. The site never states that something is enforced; it shows the chain.
@@ -510,11 +534,11 @@ MJ_RULES_DIR="$RULES_TMP"; MJ_RULES_LOADED=0; MJ_DOC_FLAT=""; export MJ_RULES_DI
 mj_rules_load || { echo "generate-site-data: the standard rule package does not resolve: $MJ_RULES_ERROR" >&2; exit 10; }
 mj_doctrine_load
 MJ_RULES_DIR="$SAVED_RULES_DIR"
-Df="$MJ_DOC_FLAT"
+Df="$MJ_DOC_FLAT"; yload "$Df"
 # the principle a doctrine rests on: the rule tagged principle among its dependencies
 principle_of() { # doctrine index -> title of the principle rule it depends on
   local d k
-  for d in $(mj_ylist "$Df" "doctrines.$1.depends_on"); do
+  for d in $(ylist "$Df" "doctrines.$1.depends_on"); do
     k="$(mj_rule_index "${d%@*}")" || continue
     if mj_rule_list "$k" tags | grep -qx principle; then mj_rule "$k" title; return 0; fi
   done
@@ -536,7 +560,7 @@ while [ -n "$(yv "$Df" "doctrines.$i.id")" ]; do
   cls="$(yv "$Df" "doctrines.$i.class")"
   has "$val" "$DEFINED_VALIDATORS" \
     || { echo "generate-site-data: doctrine $id names validator '$val' but no lib/ file defines mj_validate_$val" >&2; exit 10; }
-  for tst in $(mj_ylist "$Df" "doctrines.$i.tests"); do
+  for tst in $(ylist "$Df" "doctrines.$i.tests"); do
     [ -f "$ROOT/$tst" ] || { echo "generate-site-data: doctrine $id names test $tst, which does not exist" >&2; exit 10; }
   done
   case "$cls" in blocking|advisory) ;; *) echo "generate-site-data: doctrine $id has class '$cls' (blocking | advisory)" >&2; exit 10 ;; esac
@@ -595,7 +619,9 @@ jq_inplace "$OUT/readme.json" --slurpfile docs "$OUT/doctrines.json" '
     | . + {doctrine_ids: [ $docs[0].doctrines[]
         | select((.claims // []) | any(IN($row.claim_ids[]))) | .id ]})'
 
+mj_phase_end "gen:doctrines.json" "$GEN_T0"
 # ---------------------------------------------------------------- why.json (the five moments, as data)
+GEN_T0="$(mj_phase_begin "gen:why.json_the_five_moments_as")"
 # The moments are hand-written prose in site/content-src/why/, but the links out of them are
 # not prose: each page names the commands, responsibilities and claims it rests on. Those are
 # read here, checked against the things they name, and published as data so the index, the
@@ -667,12 +693,14 @@ jq '{schema: 1,
              | unique)}' "$OUT/why.json" > "$OUT/why-graph.json"
 
 
+mj_phase_end "gen:why.json_the_five_moments_as" "$GEN_T0"
 # ---------------------------------------------------------------- catalogue.json
+GEN_T0="$(mj_phase_begin "gen:catalogue.json")"
 # Use cases and applications, with every reference resolved here rather than in a
 # template. A dangling reference refuses the build, so a page cannot describe a command,
 # rule or promise the tool does not have — the same rule doctor applies, applied again
 # where the pages are made.
-UCf="$(flat "$ROOT/share/use-cases.yaml")"; APf="$(flat "$ROOT/share/applications.yaml")"
+UCf="$(flat "$ROOT/share/use-cases.yaml")"; APf="$(flat "$ROOT/share/applications.yaml")"; yload "$UCf"; yload "$APf"
 [ "$(yv "$UCf" version)" = 1 ] || { echo "generate-site-data: share/use-cases.yaml must be version 1" >&2; exit 10; }
 [ "$(yv "$APf" version)" = 1 ] || { echo "generate-site-data: share/applications.yaml must be version 1" >&2; exit 10; }
 cat_list() { # flat, prefix -> JSON array of strings
@@ -692,19 +720,19 @@ RESP_IDS="$(jq -r '.does[].slug' "$OUT/readme.json")"
 i=0
 while [ -n "$(yv "$UCf" "use_cases.$i.id")" ]; do
   id="$(yv "$UCf" "use_cases.$i.id")"
-  for r in $(mj_ylist "$UCf" "use_cases.$i.commands"); do cat_resolve "$r" "$CMD_IDS" || { echo "generate-site-data: use case $id names command '$r', which does not exist" >&2; exit 10; }; done
-  for r in $(mj_ylist "$UCf" "use_cases.$i.doctrines"); do cat_resolve "$r" "$DOC_IDS" || { echo "generate-site-data: use case $id names doctrine '$r', which does not exist" >&2; exit 10; }; done
-  for r in $(mj_ylist "$UCf" "use_cases.$i.claims"); do cat_resolve "$r" "$CLAIM_IDS" || { echo "generate-site-data: use case $id names claim '$r', which does not exist" >&2; exit 10; }; done
-  for r in $(mj_ylist "$UCf" "use_cases.$i.responsibilities"); do cat_resolve "$r" "$RESP_IDS" || { echo "generate-site-data: use case $id names responsibility '$r', which does not exist" >&2; exit 10; }; done
-  for r in $(mj_ylist "$UCf" "use_cases.$i.applications"); do cat_resolve "$r" "$AP_IDS" || { echo "generate-site-data: use case $id names application '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(ylist "$UCf" "use_cases.$i.commands"); do cat_resolve "$r" "$CMD_IDS" || { echo "generate-site-data: use case $id names command '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(ylist "$UCf" "use_cases.$i.doctrines"); do cat_resolve "$r" "$DOC_IDS" || { echo "generate-site-data: use case $id names doctrine '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(ylist "$UCf" "use_cases.$i.claims"); do cat_resolve "$r" "$CLAIM_IDS" || { echo "generate-site-data: use case $id names claim '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(ylist "$UCf" "use_cases.$i.responsibilities"); do cat_resolve "$r" "$RESP_IDS" || { echo "generate-site-data: use case $id names responsibility '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(ylist "$UCf" "use_cases.$i.applications"); do cat_resolve "$r" "$AP_IDS" || { echo "generate-site-data: use case $id names application '$r', which does not exist" >&2; exit 10; }; done
   [ -n "$(yv "$UCf" "use_cases.$i.steps.0.command")" ] || { echo "generate-site-data: use case $id has no steps" >&2; exit 10; }
   i=$((i+1))
 done
 j=0
 while [ -n "$(yv "$APf" "applications.$j.id")" ]; do
   id="$(yv "$APf" "applications.$j.id")"
-  for r in $(mj_ylist "$APf" "applications.$j.use_cases"); do cat_resolve "$r" "$UC_IDS" || { echo "generate-site-data: application $id names use case '$r', which does not exist" >&2; exit 10; }; done
-  for r in $(mj_ylist "$APf" "applications.$j.doctrines"); do cat_resolve "$r" "$DOC_IDS" || { echo "generate-site-data: application $id names doctrine '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(ylist "$APf" "applications.$j.use_cases"); do cat_resolve "$r" "$UC_IDS" || { echo "generate-site-data: application $id names use case '$r', which does not exist" >&2; exit 10; }; done
+  for r in $(ylist "$APf" "applications.$j.doctrines"); do cat_resolve "$r" "$DOC_IDS" || { echo "generate-site-data: application $id names doctrine '$r', which does not exist" >&2; exit 10; }; done
   [ -n "$(yv "$APf" "applications.$j.does_not_fit_when.0")" ] || { echo "generate-site-data: application $id declares no does_not_fit_when" >&2; exit 10; }
   j=$((j+1))
 done
@@ -742,7 +770,9 @@ done
              uc_index:(reduce (.use_cases|to_entries[]) as $e ({}; . + {($e.value.id): $e.key})),
              ap_index:(reduce (.applications|to_entries[]) as $e ({}; . + {($e.value.id): $e.key}))}' > "$OUT/catalogue.json"
 
+mj_phase_end "gen:catalogue.json" "$GEN_T0"
 # ---------------------------------------------------------------- diagrams.json (Mermaid source from data, never hand-drawn)
+GEN_T0="$(mj_phase_begin "gen:diagrams.json_Mermaid_source")"
 LIFECYCLE_MMD="$(printf 'stateDiagram-v2\n    [*] --> active: start\n    active --> active: check --checkpoint\n    active --> handed_over: handover --close\n    handed_over --> [*]: next start archives the record\n'; for o in $(printf '%s' "$OUTCOMES" | jq -r '.[]'); do printf '    active --> %s: finish --outcome %s\n    %s --> [*]\n' "$o" "$o" "$o"; done)"
 PIPELINE_MMD="$(printf 'flowchart LR\n    subgraph canonical\n        A[share/skeleton]\n        B[docs + README]\n        C[docs/CLAIMS.yaml]\n    end\n    G[scripts/generate-site-data]\n    D[(site/data/generated)]\n    Z[Zola]\n    F[Tailwind + Flowbite + Alpine]\n    P[GitHub Pages]\n    A --> G\n    B --> G\n    C --> G\n    G --> D --> Z --> F --> P\n')"
 PROJECTION_MMD="$(printf 'flowchart TD\n    P[.ai/repo/policy.yaml]\n    U[majordomus update]\n    P --> U\n'; i=0; while :; do t="$(jq -r ".projections[$i].target // empty" "$OUT/policy.json")"; [ -n "$t" ] || break; pr="$(jq -r ".projections[$i].provider" "$OUT/policy.json")"; printf '    U --> T%s["%s<br/><small>%s</small>"]\n' "$i" "$t" "$pr"; i=$((i+1)); done; printf '    T0 -.->|stamp| D[majordomus doctor]\n')"
@@ -753,7 +783,9 @@ jq -n --arg l "$LIFECYCLE_MMD" --arg p "$PIPELINE_MMD" --arg j "$PROJECTION_MMD"
                           projection: {title: "Policy to instruction files", source: "share/skeleton/policy.yaml projections", mermaid: $j},
                           supervision: {title: "The core model", source: "README.md mental model", mermaid: $s}}}' > "$OUT/diagrams.json"
 
+mj_phase_end "gen:diagrams.json_Mermaid_source" "$GEN_T0"
 # ---------------------------------------------------------------- architecture.json (static scan, never hand-drawn)
+GEN_T0="$(mj_phase_begin "gen:architecture.json_static_sca")"
 # The interactive architecture graph is what scripts/lib/architecture-scan.awk can prove by
 # reading the shell sources: module A sources module B, module A names artifact C. Nothing is
 # asserted here that the scanner did not find, and a module that stops touching a file loses
@@ -809,7 +841,9 @@ jq -e --argjson mods "$MODULE_CMDS" --slurpfile proj "$OUT/project.json" '
   - ([.nodes[] | select(.kind=="module") | .command] | map(select(. != null))) | length == 0' \
   "$OUT/architecture.json" >/dev/null || { echo "generate-site-data: a command with a lib/ module is missing from the architecture scan" >&2; exit 10; }
 
+mj_phase_end "gen:architecture.json_static_sca" "$GEN_T0"
 # ---------------------------------------------------------------- claims-graph.json (evidence, as a graph)
+GEN_T0="$(mj_phase_begin "gen:claims-graph.json_evidence_a")"
 # The same claims as capabilities.json, projected into the bipartite shape the evidence graph
 # draws: a claim on one side, the documents, implementations and tests that back it on the
 # other. A claim with no evidence node is visible as an isolated dot, which is the point.
@@ -838,7 +872,9 @@ jq -e '[.nodes[] | select(.kind=="claim" and .status=="guaranteed") | .id] as $g
        | ($g - $p) | length == 0' "$OUT/claims-graph.json" >/dev/null \
   || { echo "generate-site-data: a guaranteed claim lost its test edge in claims-graph.json" >&2; exit 10; }
 
+mj_phase_end "gen:claims-graph.json_evidence_a" "$GEN_T0"
 # ---------------------------------------------------------------- docs index (from docs/README.md table)
+GEN_T0="$(mj_phase_begin "gen:docs_index_from_docs_README.")"
 # Only the first table becomes site routes. The "## Reference files" table below it lists
 # repository-only files whose content the site presents through other routes, so it is cut
 # here; site-check requires a route for every entry in docs.json.
@@ -856,7 +892,9 @@ for f in "$ROOT"/docs/*.md "$ROOT"/docs/*.yaml; do
     echo "generate-site-data: docs/$b is in no table in docs/README.md (add a row; the site and the index both read it)" >&2; exit 10; }
 done
 
+mj_phase_end "gen:docs_index_from_docs_README." "$GEN_T0"
 # ---------------------------------------------------------------- derived Zola content (site/content/docs/*.md)
+GEN_T0="$(mj_phase_begin "gen:derived_Zola_content_site_co")"
 # Long-form pages are the canonical Markdown with a generated front matter; they are written
 # here, gitignored, and rebuilt on every run. Nobody edits them. Repository-relative links are
 # rewritten to site routes so the same Markdown serves both GitHub and the site.
@@ -901,7 +939,9 @@ page_template = "docs-page.html"
 +++
 ' > "$CONTENT/_index.md"
 
+mj_phase_end "gen:derived_Zola_content_site_co" "$GEN_T0"
 # ---------------------------------------------------------------- plan.json (the execution model)
+GEN_T0="$(mj_phase_begin "gen:plan.json_the_execution_mode")"
 # The canonical project model, projected for the website. Every value here comes from
 # lib/project.awk through lib/project.sh — the same engine `majordomus plan` reads, so the
 # roadmap cannot say one thing while the command says another. Nothing is recomputed here.
@@ -1074,13 +1114,17 @@ else
   echo "generate-site-data: no canonical project model in $ROOT/$PJ" >&2; exit 12
 fi
 
+mj_phase_end "gen:plan.json_the_execution_mode" "$GEN_T0"
 # ---------------------------------------------------------------- source.json
+GEN_T0="$(mj_phase_begin "gen:source.json")"
 HASH="$( (cd "$ROOT" && for f in $INPUTS; do printf '%s ' "$f"; mj_sha256 "$f"; done) | mj_sha256 /dev/stdin 2>/dev/null || (cd "$ROOT" && for f in $INPUTS; do printf '%s ' "$f"; mj_sha256 "$f"; done) | shasum -a 256 | cut -d' ' -f1)"
 COMMIT="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 jq -n --arg v "$VERSION" --arg c "$COMMIT" --arg h "$HASH" --argjson g "$GEN_VERSION" --arg inputs "$INPUTS" \
   '{schema:1, source_version:$v, source_commit:$c, source_hash:$h, generator_version:$g, input_files: ($inputs | split("\n"))}' > "$OUT/source.json"
 
+mj_phase_end "gen:source.json" "$GEN_T0"
 # ---------------------------------------------------------------- derived section pages (every tile is a page)
+GEN_T0="$(mj_phase_begin "gen:derived_section_pages_every")"
 mk_section() { # dir, title, description, section template, page template, weight
   local d="$CONTENT_ROOT/$1"; mkdir -p "$d"
   printf -- '+++\ntitle = %s\ndescription = %s\nsort_by = "weight"\ntemplate = "%s"\npage_template = "%s"\nweight = %s\n+++\n' "$(jstr "$2")" "$(jstr "$3")" "$4" "$5" "$6" > "$d/_index.md"
@@ -1130,7 +1174,9 @@ mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jq -Rn 'input')" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
 
+mj_phase_end "gen:derived_section_pages_every" "$GEN_T0"
 # ---------------------------------------------------------------- docs/SITE_CLAIMS.md (derived release artifact)
+GEN_T0="$(mj_phase_begin "gen:docs_SITE_CLAIMS.md_derived")"
 SC="$STAGE/SITE_CLAIMS.md"
 {
   printf '# Site claims\n\nGenerated by `scripts/generate-site-data` from `docs/CLAIMS.yaml`. Do not edit; edit the YAML.\nEvery substantive public claim the website makes, with its status, the file that defines it,\nthe file that implements it, and the test that proves it. The website renders the same data.\n\n'
@@ -1141,7 +1187,9 @@ SC="$STAGE/SITE_CLAIMS.md"
   done
 } > "$SC"
 
+mj_phase_end "gen:docs_SITE_CLAIMS.md_derived" "$GEN_T0"
 # ---------------------------------------------------------------- docs/PLAN_STATUS.md (derived)
+GEN_T0="$(mj_phase_begin "gen:docs_PLAN_STATUS.md_derived")"
 # The same current state the website's /plan/ route shows, as a Markdown table for a reader
 # on GitHub. Generated from plan.json, which is generated from .ai/repo/project. This is
 # a second rendering, never a second source: docs/PLANNING.md explains the semantics and
@@ -1180,7 +1228,9 @@ PS="$STAGE/PLAN_STATUS.md"
        jq -r '.findings[] | "| \(.level) | `\(.code)` | `\(.subject)` | \(.message) |"' "$OUT/plan.json"; fi
 } > "$PS"
 
+mj_phase_end "gen:docs_PLAN_STATUS.md_derived" "$GEN_T0"
 # ---------------------------------------------------------------- staged output complete
+GEN_T0="$(mj_phase_begin "gen:staged_output_complete")"
 # Everything above wrote into $STAGE only. Nothing under the repository has changed yet, so a
 # failure before this point leaves the previous generation intact.
 
@@ -1202,7 +1252,9 @@ if [ "$CHECK" = 1 ]; then
   exit $rc
 fi
 
+mj_phase_end "gen:staged_output_complete" "$GEN_T0"
 # ---------------------------------------------------------------- publish (atomic per directory)
+GEN_T0="$(mj_phase_begin "gen:publish_atomic_per_directory")"
 if [ "$PUBLISH" = 1 ] || [ "$DEST_DATA" != "$ROOT/site/data/generated" ]; then
   mkdir -p "$(dirname "$DEST_DATA")"
   rm -rf "$DEST_DATA.mj-old"
@@ -1232,3 +1284,5 @@ if [ "$PUBLISH" = 1 ]; then
 fi
 
 echo "site data: $(ls "$DEST_DATA" | wc -l | tr -d ' ') files in ${DEST_DATA#"$ROOT"/} (inputs $(printf '%s' "$HASH" | cut -c1-12))"
+
+mj_phase_end "gen:publish_atomic_per_directory" "$GEN_T0"
