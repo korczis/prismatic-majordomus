@@ -502,8 +502,18 @@ fn the_command_line_answers_coverage_runs_benchmarks_records_and_checks_a_baseli
     let run: Value = serde_json::from_str(&format!("{}}}", docs.next().unwrap())).unwrap();
     assert_eq!(run["schema"], RESULT_SCHEMA);
     assert_eq!(run["profile"], "quick");
-    assert_eq!(run["results"].as_array().unwrap().len(), 1);
-    assert_eq!(run["results"][0]["key"], "objects.get|direct|first-object");
+    // one result per case the input type declares, in the cases' order; the count is the
+    // input type's to decide (objects.get gained a second case with the URI resolution)
+    let results = run["results"].as_array().unwrap();
+    assert!(!results.is_empty());
+    assert_eq!(results[0]["key"], "objects.get|direct|first-object");
+    assert!(
+        results.iter().all(|r| r["key"]
+            .as_str()
+            .unwrap()
+            .starts_with("objects.get|direct|")),
+        "{results:?}"
+    );
     assert!(
         f.path(".ai/local/benchmarks").read_dir().unwrap().count() >= 1,
         "the run was written under the local half"
