@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # MJ_DOCTRINE_SKIPPED is read by the dispatcher in doctrine.sh
 # usecase — the executable use cases of this repository: the canonical objects under the
 # manifest's `use-cases` section, listed, shown, validated, run against the real tool with
 # the evidence recorded, tallied against every public command, guaranteed claim and MCP
@@ -362,32 +363,34 @@ mj_uc_jesc() { printf '%s' "$1" | awk 'BEGIN{ORS=""} { gsub(/\\/, "\\\\"); gsub(
 # run one use case's scenario; prints the evidence JSON to the file named; returns 0 on
 # pass, 1 on a failed step, 2 when the use case has no scenario
 mj_uc_run_one() { # index, evidence-file, keep(0|1)
-  local i="$1" out="$2" keep="${3:-0}" id setup base W k sid argv_n a rc want pat ok all_ok=1 t0 t1 dur stdin_f
+  local i="$1" out="$2" keep="${3:-0}" id setup tmp W k sid argv_n a rc want pat ok all_ok=1 t0 t1 dur stdin_f
   local fix steps_json="" first=1 raw norm asserts fail_reason
   id="$(mj_uc_v "$i" id)"; setup="$(mj_uc_v "$i" scenario.setup)"
   [ -n "$setup" ] || return 2
   fix="$(mj_uc_fixture_dir)"
-  base="$(mktemp -d "${TMPDIR:-/tmp}/mj-uc.XXXXXX")"
-  W="$base/repo"; mkdir -p "$W"
-  ( cd "$W" && git init -q . && git config user.email t@example.com && git config user.name t && git commit -q --allow-empty -m init ) || { rm -rf "$base"; mj_err "usecase run: cannot create a repository for $id"; return 1; }
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uc.XXXXXX")"
+  W="$tmp/repo"; mkdir -p "$W"
+  ( cd "$W" && git init -q . && git config user.email t@example.com && git config user.name t && git commit -q --allow-empty -m init ) || { rm -rf "$tmp"; mj_err "usecase run: cannot create a repository for $id"; return 1; }
   # the setup script prepares the repository, with the same helpers the test suite gives it
-  local setup_out="$base/setup.out"
+  local setup_out="$tmp/setup.out"
   # the helpers the setup scripts use (pj_* for a plan model) come from the tool's test
   # library, which the distribution ships beside the fixtures
   local helpers="$fix/../../lib.sh"
   ( cd "$W" && MJ="$MJ_BIN_DIR/majordomus" FIXTURE_SETUP="$fix/setup" ROOT="$MJ_ROOT" && export MJ FIXTURE_SETUP ROOT \
-      && if [ -f "$helpers" ]; then . "$helpers"; fi \
-      && . "$fix/setup/$setup.sh" ) > "$setup_out" 2>&1 || {
+      && if [ -f "$helpers" ]; then # shellcheck disable=SC1090
+        . "$helpers"; fi \
+      && { # shellcheck disable=SC1090
+        . "$fix/setup/$setup.sh"; } ) > "$setup_out" 2>&1 || {
     printf '{"schema":"majordomus/use-case-evidence/v1","use_case":"%s","setup":"%s","result":"fail","reason":"setup failed","setup_output":"%s","steps":[]}\n' \
       "$id" "$setup" "$(mj_uc_jesc "$(mj_uc_normalise "$W" < "$setup_out" | head -c 4000)")" > "$out"
-    [ "$keep" = 1 ] || rm -rf "$base"; return 1; }
+    [ "$keep" = 1 ] || rm -rf "$tmp"; return 1; }
   k=0
   while sid="$(mj_uc_v "$i" "scenario.steps.$k.id")"; [ -n "$sid" ]; do
     set --; argv_n=0
     while a="$(mj_uc_v "$i" "scenario.steps.$k.run.$argv_n")"; [ -n "$a" ]; do set -- "$@" "$a"; argv_n=$((argv_n+1)); done
     stdin_f="$(mj_uc_v "$i" "scenario.steps.$k.stdin")"
     want="$(mj_uc_v "$i" "scenario.steps.$k.expect.exit")"
-    raw="$base/step-$k.out"; rc=0; t0="$(mj_ms)"
+    raw="$tmp/step-$k.out"; rc=0; t0="$(mj_ms)"
     if [ -n "$stdin_f" ]; then ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < "$fix/stdin/$stdin_f" ) > "$raw" 2>&1 || rc=$?
     else ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < /dev/null ) > "$raw" 2>&1 || rc=$?; fi
     t1="$(mj_ms)"; dur=$((t1 - t0))
@@ -427,7 +430,7 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   done
   printf '{"schema":"majordomus/use-case-evidence/v1","use_case":"%s","setup":"%s","result":"%s","steps":[%s]}\n' \
     "$id" "$setup" "$([ "$all_ok" = 1 ] && printf pass || printf fail)" "$steps_json" > "$out"
-  if [ "$keep" = 1 ]; then printf 'kept: %s\n' "$W" >&2; else rm -rf "$base"; fi
+  if [ "$keep" = 1 ]; then printf 'kept: %s\n' "$W" >&2; else rm -rf "$tmp"; fi
   [ "$all_ok" = 1 ]
 }
 
@@ -444,11 +447,11 @@ mj_uc_cmd_run() {
   for id in $ids; do mj_uc_index "$id" >/dev/null || mj_die "$MJ_EX_MISSING" "no use case '$id' (majordomus usecase list)"; done
   # the scenarios are independent (a repository each), so they run a few at a time; the
   # report is printed in list order once every one has finished, so the output is stable
-  local rcdir; rcdir="$(mktemp -d "${TMPDIR:-/tmp}/mj-ucrc.XXXXXX")"
+  local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-ucrc.XXXXXX")"
   for id in $ids; do
     i="$(mj_uc_index "$id")"
     mj_uc_has_scenario "$i" || continue
-    ( mj_uc_run_one "$i" "$MJ_UC_EVIDENCE/$id.json" "$keep"; echo $? > "$rcdir/$id" ) &
+    ( mj_uc_run_one "$i" "$MJ_UC_EVIDENCE/$id.json" "$keep"; echo $? > "$tmp/$id" ) &
     jobs=$((jobs+1))
     if [ "$jobs" -ge "$maxjobs" ]; then wait -n 2>/dev/null || wait; jobs=$((jobs-1)); fi
   done
@@ -461,7 +464,7 @@ mj_uc_cmd_run() {
       [ "$json" = 1 ] || printf '%-38s described (no scenario)\n' "$id"
       continue
     fi
-    ev="$MJ_UC_EVIDENCE/$id.json"; rc="$(cat "$rcdir/$id" 2>/dev/null || echo 13)"
+    ev="$MJ_UC_EVIDENCE/$id.json"; rc="$(cat "$tmp/$id" 2>/dev/null || echo 13)"
     ran=$((ran+1))
     [ -z "$outdir" ] || cp "$ev" "$outdir/$id.json"
     if [ "$json" = 1 ]; then [ "$first" = 1 ] || printf ','; first=0; tr -d '\n' < "$ev"
@@ -471,7 +474,7 @@ mj_uc_cmd_run() {
         grep -o '"output":"[^"]*"' "$ev" | tail -1 | cut -d'"' -f4 | sed 's/\\n/\n/g' | sed 's/^/      | /' | head -20; fi
     fi
   done
-  rm -rf "$rcdir"
+  rm -rf "$tmp"
   if [ "$json" = 1 ]; then printf '],"ran":%s,"failed":%s,"skipped":%s}\n' "$ran" "$fails" "$skipped"
   else printf 'usecase run: %s scenario(s), %s failed, %s described only; evidence under %s/\n' "$ran" "$fails" "$skipped" "$(mj_rel "$MJ_UC_EVIDENCE")"; fi
   mj_ledger_append use_cases.ran "\"ran\":$ran,\"failed\":$fails" 2>/dev/null || true
