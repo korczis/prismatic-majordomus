@@ -5,22 +5,22 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "3751903358ded0e1a576cdd2998861d7b7181e8691caee5654b9cf4e26aeea07",
+    "fingerprint": "7b8f898fbb82082c519299ed4ef0eea67169ff233d25b8bf2dd018380ed99d5e",
     "summary": {
-      "total": 468,
+      "total": 534,
       "builtin": 9,
-      "declarative": 459,
+      "declarative": 525,
       "by_kind": {
         "command": 1,
         "query": 8,
-        "resource": 459
+        "resource": 525
       },
       "by_stability": {
         "behaviorally_verified": 9,
-        "implemented": 459
+        "implemented": 525
       },
       "mcp_tools": 9,
-      "mcp_resources": 460,
+      "mcp_resources": 526,
       "http_routes": 9,
       "cli_commands": 2,
       "modules": 16,
@@ -107,7 +107,7 @@
         "module": "objects",
         "kind": "query",
         "title": "Get one object",
-        "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content.",
+        "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content; a URI a query projects (majordomus://repository) answers that query as a JSON document. The same resolution serves the MCP resource read.",
         "provenance": {
           "source": "builtin",
           "module": "majordomus_cli::capability::builtin::objects"
@@ -329,7 +329,7 @@
       },
       {
         "id": "claim",
-        "capabilities": 92
+        "capabilities": 101
       },
       {
         "id": "context",
@@ -337,19 +337,19 @@
       },
       {
         "id": "document",
-        "capabilities": 122
+        "capabilities": 132
       },
       {
         "id": "implementation",
-        "capabilities": 29
+        "capabilities": 32
       },
       {
         "id": "issue",
-        "capabilities": 63
+        "capabilities": 90
       },
       {
         "id": "milestone",
-        "capabilities": 10
+        "capabilities": 11
       },
       {
         "id": "objects",
@@ -381,16 +381,16 @@
       },
       {
         "id": "rule",
-        "capabilities": 61
+        "capabilities": 70
       },
       {
         "id": "test",
-        "capabilities": 71
+        "capabilities": 78
       }
     ]
   },
   "index": {
-    "fingerprint": "685b86854b134e3959bd3d13024a9de277a4147b2e2270999f7aadf37f560e2b",
+    "fingerprint": "b5d64106ba88572822130428e2c51357891e738510224b3b6791d70ea6059030",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -405,17 +405,17 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "claim": 92,
+      "claim": 101,
       "context": 2,
-      "document": 122,
-      "implementation": 29,
-      "issue": 63,
-      "milestone": 10,
+      "document": 132,
+      "implementation": 32,
+      "issue": 90,
+      "milestone": 11,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "rule": 61,
-      "test": 71
+      "rule": 70,
+      "test": 78
     },
     "diagnostics": {},
     "objects": [
@@ -427,7 +427,17 @@
         "description": "init seeds .ai/ from the skeleton and nothing else; no hook, no shell file, no tool installation. doctor fails on a section the manifest names that is absent, and on a manifest key nothing reads.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
+      },
+      {
+        "uri": "majordomus://claim/benchmark-coverage-derived",
+        "kind": "claim",
+        "identity": "benchmark-coverage-derived",
+        "title": "Every externally callable operation of the Rust executable is a benchmark target with a denominator generated from the registry, and a missing case fails the structural check",
+        "description": "Each required executable is a target directly and on every transport its exposure declares, with the cases its input type provides; the transports' own operations are targets declared once; waivers are typed and never counted. Runners time the executor, a real loopback socket and a real majordomus mcp child; results are majordomus/benchmark-result/v1; the baseline is per platform under .ai/repo/benchmarks/rust/ and the policy is data.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/blocker-store",
@@ -437,7 +447,7 @@
         "description": "A gate that cannot read an entry can be bypassed by mistyping one, so an unreadable question is not a lesser problem than an open one.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/blocker-survives-handover",
@@ -447,7 +457,7 @@
         "description": "The gate reads every unresolved entry in the store rather than only the active task's, so a handover cannot launder a blocker. The store is checkout-local, so the questions a gate can see are the ones asked in this working copy. Only a completed finish is refused; blocked, partial, no_match and failed are honest non-completions and are not. Any task may resolve any question. The alternatives — transferring the question with the handover, or gating on scope overlap — were rejected in M001 with the case each gets wrong.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/bootstrap-chain",
@@ -457,7 +467,7 @@
         "description": "Every projection names .ai/README.md, README.md names AGENTS.md, and doctor fails on a projection that grew a rules section of its own. A person and a worker reach the same layer by the same two hops.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/capability-class",
@@ -467,7 +477,17 @@
         "description": "Mapping a class to a concrete model is left to whoever runs the worker. Majordomus never selects or invokes a model.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
+      },
+      {
+        "uri": "majordomus://claim/capability-modules",
+        "kind": "claim",
+        "identity": "capability-modules",
+        "title": "A capability of the Rust executable is declared once and composed into its module, the root composes modules, and the registry refuses a capability outside its module's namespace",
+        "description": "capability!, module! and compose_modules! build plain values handed to the registry builder; adding a capability to an existing module touches that module's file alone, and MCP, HTTP, OpenAPI, Swagger UI, the CLI, the benchmark targets, the cache and the generated reference follow. The crate's tests/registry.rs holds the invariants, tests/projections.rs the propagation.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/capability-registry",
@@ -477,7 +497,7 @@
         "description": "Two sources, builtin executables and the layer's objects, meet in one registry built at one place; ids, MCP names and URIs, HTTP routes and CLI paths are each unique or the registry does not build. The crate's tests/registry.rs covers every collision.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/catalogue-resolves",
@@ -487,7 +507,7 @@
         "description": "Prose describing the tool is checked the same way the tool checks itself. Cross-references are verified in both directions, so a use case naming an application that does not name it back is a failure rather than a silent asymmetry. An application declaring no does_not_fit_when is refused, because a catalogue that only lists fits is marketing.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/checkpoint-interval",
@@ -497,7 +517,7 @@
         "description": "The staleness report is guaranteed. Whether the worker checkpoints is not.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/checkpoint-record",
@@ -507,7 +527,7 @@
         "description": "The cap is what keeps a checkpoint distinct from a handover. Mode 0600, created atomically, never staged.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/command-coverage",
@@ -517,7 +537,7 @@
         "description": "The requirement is derived from the registry, so a command added tomorrow is owed coverage from that moment. Coverage is declared in per-case headers rather than inferred, because the negative assertions that use stdin and the surface case's loop are invisible to any scan.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/command-surface",
@@ -527,7 +547,7 @@
         "description": "The registry is authority for what a command means; bin/majordomus stays authority for what runs. A command dispatched with no entry, and an entry nothing dispatches, both fail. A command is public exactly when the usage text lists it, checked in both directions.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/consistency-check",
@@ -536,7 +556,7 @@
         "title": "check reports whether state, scope, blockers and checkpoint age are consistent right now",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/context-assembly",
@@ -546,7 +566,7 @@
         "description": "Git first, then task and profile, then blockers, then authored records, then history. The profile's context block decides what is offered; it is the only code that reads those fields.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/context-budget",
@@ -556,7 +576,7 @@
         "description": "Over budget, nothing is written at all.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/context-documents",
@@ -566,7 +586,7 @@
         "description": "A document is a Markdown file under .ai/ whose front matter carries schema context/v1; the file name is a convention and the id is the identity. Ordering is depth, then declared order, then path. Providers and audience filter; extend, replace and final compose; a duplicate id, a dangling reference, a superseded final document or a cycle is refused by name.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/context-impact",
@@ -576,7 +596,7 @@
         "description": "context affected reads the working tree, the index, or a base ref, with renames detected; a tracked source change is a WARN to review and never an exit code, because the tool cannot decide whether prose still describes code. context check-sync is validate, then every projection against its stamp, then affected; test/cases/71_context_sync.sh proves the exit codes.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/context-selection-budget",
@@ -586,7 +606,7 @@
         "description": "The count is of the printed document, not of its sections. Git, task, profile and open blockers are never dropped; record bodies degrade to a pointer before they disappear.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/continuity-reachable",
@@ -596,7 +616,7 @@
         "description": "doctor runs the resolver, renders every prompt asset, validates both parsed stores and builds the context. A directory of records that no command reads is the failure this tool exists to catch.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/cost-per-outcome",
@@ -605,7 +625,7 @@
         "title": "Cost per accepted outcome will be reported from measured data only",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/dag-validation",
@@ -615,7 +635,7 @@
         "description": "Kahn layering; the issues that never leave the graph are the ones reported. A malformed graph fails doctor and is reported by watch as drift.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/decision-attribution",
@@ -625,7 +645,7 @@
         "description": "decisions.md is hand-editable by design, so an unattributable entry is a warning. finish still refuses when a profile requires a record it cannot find.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/decision-record",
@@ -635,7 +655,7 @@
         "description": "--why is required. --supersedes refuses text matching no recorded decision. Task and head are computed.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/derived-not-declared",
@@ -645,7 +665,7 @@
         "description": "Policy values have no reader-side defaults, claim statuses are declared in the matrix, the site fixtures derive their inputs from the generator, and every command, doctrine and claim is checked against a list read from the dispatch table or the registry rather than written into the test.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/dispatcher-wiring",
@@ -655,7 +675,7 @@
         "description": "The finding names the file that actually carries the invocation. A subhook that is not executable is reported as not wired, because the dispatcher skips it.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/divergence-label",
@@ -664,7 +684,7 @@
         "title": "State read back is labelled exact, advanced, diverged or different_context against git",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/doctrine-class-decides",
@@ -674,7 +694,7 @@
         "description": "The test changes checkpoint freshness from advisory to blocking in a copy of the vendored rule file and asserts that check's exit code moves from 0 to 10. There are two classes and no override.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/doctrine-registry",
@@ -684,7 +704,7 @@
         "description": "A doctrine whose validator does not exist, a validator no doctrine declares, a command that never dispatches, a blocking rule whose command cannot exit non-zero, a missing test, and CI that swallows the suite are six separate failures with six separate messages. Each is mutation-tested.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/drift-watch",
@@ -693,7 +713,7 @@
         "title": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/effort-escalation",
@@ -702,7 +722,7 @@
         "title": "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/event-vocabulary",
@@ -712,7 +732,7 @@
         "description": "share/events.yaml declares every name, its emitting command and its required payload keys. An unregistered name is refused on write, refused as a history filter, and reported by history --validate when already stored.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/evidence-gates-done",
@@ -722,7 +742,17 @@
         "description": "Evidence is a command and its result, or an artifact. Narrative is refused. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
+      },
+      {
+        "uri": "majordomus://claim/execution-cache-equivalence",
+        "kind": "claim",
+        "identity": "execution-cache-equivalence",
+        "title": "A cached capability of the Rust executable answers the same value uncached, cold and warm, a hit runs no handler, errors and commands are never cached, and the key carries the registry fingerprint",
+        "description": "One executor for every transport; CachePolicy on the descriptor; bounded per capability; the key is the canonical id, the input in canonical form and a sha-256 fingerprint of the repository content and the descriptors. tests/executor.rs and the proptest harness in tests/properties.rs iterate every cached capability with every case and generated inputs.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/execution-waves",
@@ -732,7 +762,7 @@
         "description": "Sharing a wave is necessary for concurrency, not sufficient. Overlapping declared scope serialises conservatively, because a false serialisation costs time and a false parallel costs a conflict.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/exit-code-contract",
@@ -741,7 +771,7 @@
         "title": "Exit codes are a contract, and no code means \"warn and continue\"",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/finish-contract",
@@ -750,7 +780,7 @@
         "title": "finish evaluates the finish contract line by line and refuses when any line is unmet",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/generated-projections-checked",
@@ -760,7 +790,7 @@
         "description": "Byte-identical on regeneration, no timestamps, no absolute paths; --check writes nothing and exits 10 naming every file that differs or is missing. CI runs it.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/git-identity",
@@ -770,7 +800,7 @@
         "description": "A handover body that tries to set one is rejected rather than merged.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/github-projection",
@@ -780,7 +810,7 @@
         "description": "The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/handover-record",
@@ -790,7 +820,7 @@
         "description": "A body with a missing or empty required section is refused and names the sections.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/history-ledger-read",
@@ -800,7 +830,17 @@
         "description": "What happened, when, for which task, at which head, and what outcome was accepted. Never what anyone said.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
+      },
+      {
+        "uri": "majordomus://claim/hot-path-no-rebuild",
+        "kind": "claim",
+        "identity": "hot-path-no-rebuild",
+        "title": "After startup, no MCP or HTTP request of the Rust executable scans the repository, builds the index or the registry, derives a schema or builds a projection, and perf.counters proves it",
+        "description": "Process-wide counters, each incremented at one named place, answered as perf.counters over every transport; tests/hot_path.rs sends hundreds of requests through the real transports and requires the startup counters unchanged; the MCP listings and the OpenAPI document are prepared once.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/init-refuses",
@@ -809,7 +849,7 @@
         "title": "Installing into a repository that already has an installation is refused",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/interfaces-are-projections",
@@ -819,7 +859,7 @@
         "description": "No projection declares a name, a description, a schema or a route of its own; tests/projections.rs proves every declared projection present and none orphan, and that a changed input type and description reach the MCP schema, the OpenAPI operation and the reference. MCP and HTTP answer the same handler identically.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/ledger-integrity",
@@ -829,7 +869,7 @@
         "description": "The reader skips a bad line rather than crashing, and check, doctor and watch all report it. The ledger is the one durable record nothing else can reconstruct.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/legacy-migration",
@@ -839,7 +879,7 @@
         "description": "Every other command refuses the legacy layout and names migrate. --dry-run prints the plan and writes nothing. A file the version does not know is reported, never deleted; a destination that already exists refuses the whole run.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/local-state-ignored",
@@ -849,7 +889,7 @@
         "description": "The task record, ledger, decisions, questions, checkpoints and handovers never travel through git. A record that arrives in another checkout by other means names the checkout it belongs to and is enforced nowhere else, which test/cases/27_foreign_task.sh proves.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/mcp-client-autostart",
@@ -859,7 +899,7 @@
         "description": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/mcp-data-driven",
@@ -869,7 +909,7 @@
         "description": "The add, remove and break sequence through the built binary is tests/external_extension.rs in the crate; the shell case proves the layer init writes is served, and that a rule added to it appears.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/mcp-degraded-not-silent",
@@ -879,7 +919,17 @@
         "description": "Two files of one kind claiming one identity are both excluded and both named. --strict refuses to serve a degraded layer; --inspect exits 10 on one.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
+      },
+      {
+        "uri": "majordomus://claim/mcp-lease-resilience",
+        "kind": "claim",
+        "identity": "mcp-lease-resilience",
+        "title": "Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies",
+        "description": "The election classifies the lease on every attempt and is bounded by time; commands/mcp.rs degrades to a standalone session when the lease or the server cannot be used; SIGTERM, SIGINT and SIGHUP unlink the lease in the handler. The crate's tests/mcp_shared.rs proves each path over real processes, and case 90 plants a corrupt lease behind the launcher. The doctrine is project.shared-server-resilience.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/mcp-peers",
@@ -889,7 +939,7 @@
         "description": "Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; the board is one process's memory and is gone with it. Announcements are informational; scope is enforced by the shell tool's task record, not here.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/mcp-shared-server",
@@ -899,7 +949,7 @@
         "description": "The election is one lease file under .ai/local/state/mcp/, created atomically and removed on exit; a stale lease is taken over; a bridged client whose server dies takes over or re-attaches without its client noticing. The crate's tests/mcp_shared.rs covers the socket side; --standalone keeps one process per client.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/mcp-stdio-surface",
@@ -909,7 +959,17 @@
         "description": "One process per client, alive as long as its pipe; diagnostics go to stderr; a session leaves the repository byte-identical. The crate's own suite, tests/mcp_stdio.rs, holds the same frames to the same rules.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
+      },
+      {
+        "uri": "majordomus://claim/mcp-uri-resolution",
+        "kind": "claim",
+        "identity": "mcp-uri-resolution",
+        "title": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
+        "description": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects_get.rs covers every branch at the library level.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/minimum-context",
@@ -919,7 +979,7 @@
         "description": "majordomus context now assembles a briefing from those toggles, and that selection is guaranteed (see context-assembly). This claim stays advisory because nothing measures what the worker actually read once it has been handed the briefing.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/no-counts-in-context",
@@ -928,7 +988,7 @@
         "title": "A hardcoded count in the always-loaded file is a failure",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/no-network",
@@ -937,7 +997,7 @@
         "title": "Nothing performs a network call, evaluates generated text, or deletes recursively",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/no-silent-overwrite",
@@ -947,7 +1007,7 @@
         "description": "update refuses, offers a diff, and overwrites only under an explicit flag.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/no-transcripts",
@@ -956,7 +1016,7 @@
         "title": "Handovers carry durable facts, never conversation transcripts",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/open-question-gate",
@@ -966,7 +1026,7 @@
         "description": "A gate that cannot read an entry can be bypassed by mistyping one, so check, doctor and watch all fail on a malformed entry.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/overlap-report",
@@ -976,7 +1036,7 @@
         "description": "Reported, never blocking. Work in progress is reported and never blocked.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/pointer-integrity",
@@ -985,7 +1045,7 @@
         "title": "Every repository-relative reference in the always-loaded file is proven to resolve",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/policy-parse",
@@ -995,7 +1055,7 @@
         "description": "A restricted YAML subset. Tabs, anchors, flow maps and multi-line scalars are refused rather than guessed at.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/profile-axes",
@@ -1005,7 +1065,7 @@
         "description": "The axes are validated and projected into the worker's instructions. Whether a worker honours them is not observable from outside the worker.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/profile-validate",
@@ -1014,7 +1074,7 @@
         "title": "Every profile is parsed, its unknown keys rejected, and the default profile proven to exist",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/project-schema",
@@ -1024,7 +1084,7 @@
         "description": "The same allowlist rule the policy and the profiles live under. The filename is the id; a record that disagrees with its own filename is refused rather than reconciled.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/project-status-derived",
@@ -1034,7 +1094,7 @@
         "description": "An issue records started_at, verified_at, completed_at, cancelled and its evidence. BLOCKED, READY, ACTIVE, VERIFY, DONE and CANCELLED follow from those and from the state of its dependencies. `status` is not a field, so writing one is an unknown key.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/projection-fingerprint",
@@ -1043,7 +1103,7 @@
         "title": "Every generated instruction file carries its own stamp, and a hand edit is detected",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/projection-generation",
@@ -1053,7 +1113,7 @@
         "description": "Running update twice leaves the byte-identical file. The test asserts the hash.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/prompt-asset",
@@ -1063,7 +1123,7 @@
         "description": "No conditionals, loops, includes or shell. A prompt that silently renders a misspelled token as literal text is worse than one that refuses.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/prompt-assets",
@@ -1073,7 +1133,7 @@
         "description": "Covers name and filename mismatch, an empty description, an unknown front-matter key, missing front matter, and a block token used inline.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/provider-projections-one-renderer",
@@ -1083,7 +1143,7 @@
         "description": "One renderer, two entry points that agree on every stamp; the policy is the only input (its hash and the profiles' is the stamp's first hash). A target outside the repository, a provider without a template, a token the policy cannot fill, and an always_loaded target over the budget are refused with the reason, and nothing is written. Region mode keeps the host document outside the markers. apps/majordomus-cli/tests/providers_projection.rs covers the fixture side; CI runs generate --check on every push.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/record-resolution",
@@ -1093,7 +1153,7 @@
         "description": "Same worktree and branch, else same branch, else nothing. Ties within one second are broken by ledger order. Absence is reported as absence.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/record-retention",
@@ -1103,7 +1163,7 @@
         "description": "Refuses to overwrite an existing archive, and does nothing when the ledger is under its cap.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/record-search",
@@ -1113,7 +1173,7 @@
         "description": "A fixed-string grep in authority order. No ranking, no embedding, no index that could fall out of step with the records it describes.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/region-projection",
@@ -1123,7 +1183,7 @@
         "description": "How a repository that already has a hand-written CLAUDE.md adopts Majordomus. An edit outside the markers is never drift; an edit inside them is caught. Malformed markers are refused, not guessed at.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/reproduce-command",
@@ -1132,7 +1192,7 @@
         "title": "Every finding carries the command that reproduces it",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/retention-caps",
@@ -1141,7 +1201,7 @@
         "title": "The append-only ledger and handover store have retention caps that are checked",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/roadmap-derived",
@@ -1151,7 +1211,7 @@
         "description": "The sequence is the topological rank of the milestone graph, so no list of versions exists anywhere. While a hand-written roadmap table survives, the doctrine holds it to the model in both directions; once it is gone the check holds trivially, which is the regression it exists to refuse.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/routing",
@@ -1161,7 +1221,7 @@
         "description": "Recommendations only. Majordomus does not invoke a model.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/rule-resolution",
@@ -1171,7 +1231,7 @@
         "description": "A missing or deprecated dependency, a cycle, one identity claimed twice, a project rule in the vendor namespace, malformed front matter, an unknown key and an x-majordomus block missing its binding are each refused by name. Every dependency is listed before the rule that depends on it, and two runs agree.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/runtime-adapters",
@@ -1181,7 +1241,37 @@
         "description": "The one implementation studied was rolled back within days because its limits were global constants rather than task-derived.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
+      },
+      {
+        "uri": "majordomus://claim/rust-coverage-floor",
+        "kind": "claim",
+        "identity": "rust-coverage-floor",
+        "title": "Line coverage of the Rust crate is measured on every push and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+        "description": "cargo-llvm-cov over all targets, --fail-under-lines. The floor is 90; the case refuses a floor under 90, so lowering it is an edit to a test that a reviewer sees, not a quiet change to a number. Raising it when the figure rises is one edit to the file.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 54627
+      },
+      {
+        "uri": "majordomus://claim/rust-evidence-gates",
+        "kind": "claim",
+        "identity": "rust-evidence-gates",
+        "title": "Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs the same gates in the same order on every push",
+        "description": "Format, lints with warnings as errors (a public item without documentation is one), the suites with the doc examples, rustdoc with warnings denied, the benchmarks building, the registry's own validation, the committed projections in sync, the benchmark coverage complete, and line coverage above the committed floor; CI adds the benchmark check against its own profile's baseline. The case reads the script, the workflow and the justfile and fails when they disagree on a gate or its order; with a toolchain present it also runs the doc examples and builds the benchmarks.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 54627
+      },
+      {
+        "uri": "majordomus://claim/rust-hot-path-benchmarks",
+        "kind": "claim",
+        "identity": "rust-hot-path-benchmarks",
+        "title": "The paths of the Rust executable that scale with the repository carry criterion benchmarks that build on every push, and every executable capability declares its benchmark policy, required or waived for a typed reason",
+        "description": "The YAML subset and front matter, glob matching, the index, the registry, the OpenAPI document, one MCP listing and one capability call (benches/projections.rs); the router, the bridge and the shared server (benches/shared.rs). Numbers are reported, not asserted; no latency budget is promised until one is measured on CI. The capability! macro does not compile an executable without benchmark cases, the registry counts the required and the waived, and the case reads the policy of every executable back through capabilities list.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/schema-driven-kinds",
@@ -1191,7 +1281,7 @@
         "description": "share/kinds.yaml and share/schemas/*.schema.json are the distribution's; .ai/repo/knowledge/kinds.yaml and schemas/ are the repository's; a name declared by both is an error naming both files. The shell tool's allow-lists are generated from the same schemas.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/scope-enforcement",
@@ -1200,7 +1290,7 @@
         "title": "A touched file outside the claimed scope is a failure, not a warning",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/scoped-task",
@@ -1210,7 +1300,7 @@
         "description": "A scope path that escapes the repository root is refused. Starting a second task while one is active is refused.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/semantic-retrieval",
@@ -1220,7 +1310,7 @@
         "description": "The corpus is a handful of Markdown files and one JSONL. An index or an embedding store would be a second source of truth that has to be kept in step with the first, and a scan is faster than that problem. Revisited only if a repository appears where the scan is measurably too slow.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/shared-policy",
@@ -1229,7 +1319,7 @@
         "title": "One policy will be shared across repositories and workers",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/site-registry-dataset",
@@ -1239,7 +1329,7 @@
         "description": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/task-commit-attribution",
@@ -1249,7 +1339,7 @@
         "description": "Today scope is checked with git diff base..HEAD, and a commit range has no author, so another session committing to the same branch in the same checkout has its files counted as this task's work. Recording each commit as it happens turns the question from a heuristic about ranges into an enumeration. The list would be a lookup that git overrules, never authority, and a rewritten commit would be reported as unrecognised rather than resolved to a guess.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/task-dependencies",
@@ -1259,7 +1349,7 @@
         "description": "Refused for task records, and only for them. Issues and milestones do carry dependencies, validated as two graphs — see docs/ROADMAP.md and docs/PLANNING.md. What stays refused is a task, the record of one session's work, waiting on another; one task is active per checkout and coordination between checkouts is the scope overlap report. The original wording said no dependency graph existed anywhere, which stopped being true when the plan model landed.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/telemetry",
@@ -1269,7 +1359,7 @@
         "description": "Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/tool-location-independent",
@@ -1279,7 +1369,7 @@
         "description": "A checkout copy, an unrelated absolute path and a PATH install read the same repository files and write nothing into the distribution, whose hash is the same after every command. The distribution root is derived from the entry point, never from the environment.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/typed-outcome",
@@ -1289,7 +1379,7 @@
         "description": "no_match means the work was done and the thing sought does not exist. failed means the work could not be done. They are different facts.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/vendored-rule-package",
@@ -1299,7 +1389,7 @@
         "description": "rules vendor status reports an edited, missing or stray file; rules vendor update refuses over it until --force, and never touches rules/project/. A newer executable reports a newer package and does not apply it.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/wiring-reconciliation",
@@ -1309,7 +1399,7 @@
         "description": "The path must exist, be executable, and be invoked by the named dispatcher. A hook that invokes it and discards the exit code counts as not wired.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://claim/worktree-ownership",
@@ -1319,7 +1409,7 @@
         "description": "The record is checkout-local and never tracked, so it does not travel through git; one that arrives by other means is recognised by the worktree it names. check, finish --check and watch report a foreign record and enforce nothing from it; finish refuses to write to it. A record from before the field existed is treated as local, so upgrading does not turn an installation red.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
-        "bytes": 46405
+        "bytes": 54627
       },
       {
         "uri": "majordomus://context/ai.repo.rules",
@@ -1380,7 +1470,7 @@
         "title": "AGENTS.md",
         "path": "AGENTS.md",
         "source_class": "readme",
-        "bytes": 2349
+        "bytes": 2766
       },
       {
         "uri": "majordomus://document/CLAUDE.md",
@@ -1389,7 +1479,7 @@
         "title": "CLAUDE.md",
         "path": "CLAUDE.md",
         "source_class": "readme",
-        "bytes": 1902
+        "bytes": 2319
       },
       {
         "uri": "majordomus://document/CONTRIBUTING.md",
@@ -1398,7 +1488,7 @@
         "title": "Contributing",
         "path": "CONTRIBUTING.md",
         "source_class": "readme",
-        "bytes": 6916
+        "bytes": 7819
       },
       {
         "uri": "majordomus://document/README.md",
@@ -1407,7 +1497,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 22596
+        "bytes": 24851
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -1434,7 +1524,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 15498
+        "bytes": 28079
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -1452,7 +1542,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 61121
+        "bytes": 64758
       },
       {
         "uri": "majordomus://document/docs/CONCEPTS.md",
@@ -1551,7 +1641,16 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 16988
+        "bytes": 18383
+      },
+      {
+        "uri": "majordomus://document/docs/PERFORMANCE.md",
+        "kind": "document",
+        "identity": "docs/PERFORMANCE.md",
+        "title": "Performance truth",
+        "path": "docs/PERFORMANCE.md",
+        "source_class": "document",
+        "bytes": 7442
       },
       {
         "uri": "majordomus://document/docs/PLANNING.md",
@@ -1569,7 +1668,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 15292
+        "bytes": 20810
       },
       {
         "uri": "majordomus://document/docs/README.md",
@@ -1578,7 +1677,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 6461
+        "bytes": 6782
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -1596,7 +1695,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 41377
+        "bytes": 43415
       },
       {
         "uri": "majordomus://document/docs/SITE_CLAIMS.md",
@@ -1605,7 +1704,7 @@
         "title": "Site claims",
         "path": "docs/SITE_CLAIMS.md",
         "source_class": "document",
-        "bytes": 25253
+        "bytes": 28827
       },
       {
         "uri": "majordomus://document/docs/SITE_REVIEW.md",
@@ -1624,6 +1723,15 @@
         "path": "docs/claims/ai-layer-manifest.md",
         "source_class": "claim_page",
         "bytes": 2210
+      },
+      {
+        "uri": "majordomus://document/docs/claims/benchmark-coverage-derived.md",
+        "kind": "document",
+        "identity": "docs/claims/benchmark-coverage-derived.md",
+        "title": "Every externally callable operation of the Rust executable is a benchmark target with a denominator generated from the registry, and a missing case fails the structural check",
+        "path": "docs/claims/benchmark-coverage-derived.md",
+        "source_class": "claim_page",
+        "bytes": 3254
       },
       {
         "uri": "majordomus://document/docs/claims/blocker-store.md",
@@ -1660,6 +1768,15 @@
         "path": "docs/claims/capability-class.md",
         "source_class": "claim_page",
         "bytes": 1189
+      },
+      {
+        "uri": "majordomus://document/docs/claims/capability-modules.md",
+        "kind": "document",
+        "identity": "docs/claims/capability-modules.md",
+        "title": "A capability of the Rust executable is declared once and composed into its module, the root composes modules, and the registry refuses a capability outside its module's namespace",
+        "path": "docs/claims/capability-modules.md",
+        "source_class": "claim_page",
+        "bytes": 2977
       },
       {
         "uri": "majordomus://document/docs/claims/capability-registry.md",
@@ -1896,6 +2013,15 @@
         "bytes": 1647
       },
       {
+        "uri": "majordomus://document/docs/claims/execution-cache-equivalence.md",
+        "kind": "document",
+        "identity": "docs/claims/execution-cache-equivalence.md",
+        "title": "A cached capability of the Rust executable answers the same value uncached, cold and warm, a hit runs no handler, errors and commands are never cached, and the key carries the registry fingerprint",
+        "path": "docs/claims/execution-cache-equivalence.md",
+        "source_class": "claim_page",
+        "bytes": 2538
+      },
+      {
         "uri": "majordomus://document/docs/claims/execution-waves.md",
         "kind": "document",
         "identity": "docs/claims/execution-waves.md",
@@ -1966,6 +2092,15 @@
         "path": "docs/claims/history-ledger-read.md",
         "source_class": "claim_page",
         "bytes": 2570
+      },
+      {
+        "uri": "majordomus://document/docs/claims/hot-path-no-rebuild.md",
+        "kind": "document",
+        "identity": "docs/claims/hot-path-no-rebuild.md",
+        "title": "After startup, no MCP or HTTP request of the Rust executable scans the repository, builds the index or the registry, derives a schema or builds a projection, and perf.counters proves it",
+        "path": "docs/claims/hot-path-no-rebuild.md",
+        "source_class": "claim_page",
+        "bytes": 2510
       },
       {
         "uri": "majordomus://document/docs/claims/init-refuses.md",
@@ -2040,6 +2175,15 @@
         "bytes": 2415
       },
       {
+        "uri": "majordomus://document/docs/claims/mcp-lease-resilience.md",
+        "kind": "document",
+        "identity": "docs/claims/mcp-lease-resilience.md",
+        "title": "Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies",
+        "path": "docs/claims/mcp-lease-resilience.md",
+        "source_class": "claim_page",
+        "bytes": 3529
+      },
+      {
         "uri": "majordomus://document/docs/claims/mcp-peers.md",
         "kind": "document",
         "identity": "docs/claims/mcp-peers.md",
@@ -2065,6 +2209,15 @@
         "path": "docs/claims/mcp-stdio-surface.md",
         "source_class": "claim_page",
         "bytes": 2560
+      },
+      {
+        "uri": "majordomus://document/docs/claims/mcp-uri-resolution.md",
+        "kind": "document",
+        "identity": "docs/claims/mcp-uri-resolution.md",
+        "title": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
+        "path": "docs/claims/mcp-uri-resolution.md",
+        "source_class": "claim_page",
+        "bytes": 3596
       },
       {
         "uri": "majordomus://document/docs/claims/minimum-context.md",
@@ -2319,6 +2472,33 @@
         "bytes": 1380
       },
       {
+        "uri": "majordomus://document/docs/claims/rust-coverage-floor.md",
+        "kind": "document",
+        "identity": "docs/claims/rust-coverage-floor.md",
+        "title": "Line coverage of the Rust crate is measured on every push and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+        "path": "docs/claims/rust-coverage-floor.md",
+        "source_class": "claim_page",
+        "bytes": 2359
+      },
+      {
+        "uri": "majordomus://document/docs/claims/rust-evidence-gates.md",
+        "kind": "document",
+        "identity": "docs/claims/rust-evidence-gates.md",
+        "title": "Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs the same gates in the same order on every push",
+        "path": "docs/claims/rust-evidence-gates.md",
+        "source_class": "claim_page",
+        "bytes": 3343
+      },
+      {
+        "uri": "majordomus://document/docs/claims/rust-hot-path-benchmarks.md",
+        "kind": "document",
+        "identity": "docs/claims/rust-hot-path-benchmarks.md",
+        "title": "The paths of the Rust executable that scale with the repository carry criterion benchmarks that build on every push, and every executable capability declares its benchmark policy, required or waived for a typed reason",
+        "path": "docs/claims/rust-hot-path-benchmarks.md",
+        "source_class": "claim_page",
+        "bytes": 3051
+      },
+      {
         "uri": "majordomus://document/docs/claims/schema-driven-kinds.md",
         "kind": "document",
         "identity": "docs/claims/schema-driven-kinds.md",
@@ -2450,7 +2630,7 @@
         "identity": "bin/majordomus",
         "path": "bin/majordomus",
         "source_class": "entrypoint",
-        "bytes": 3955
+        "bytes": 4047
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-mcp",
@@ -2459,6 +2639,14 @@
         "path": "bin/majordomus-mcp",
         "source_class": "entrypoint",
         "bytes": 2880
+      },
+      {
+        "uri": "majordomus://implementation/lib/bench.sh",
+        "kind": "implementation",
+        "identity": "lib/bench.sh",
+        "path": "lib/bench.sh",
+        "source_class": "library",
+        "bytes": 18906
       },
       {
         "uri": "majordomus://implementation/lib/check.sh",
@@ -2482,7 +2670,7 @@
         "identity": "lib/commands.sh",
         "path": "lib/commands.sh",
         "source_class": "library",
-        "bytes": 5623
+        "bytes": 6327
       },
       {
         "uri": "majordomus://implementation/lib/common.sh",
@@ -2490,7 +2678,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 36379
+        "bytes": 44070
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -2506,7 +2694,7 @@
         "identity": "lib/context_docs.sh",
         "path": "lib/context_docs.sh",
         "source_class": "library",
-        "bytes": 30817
+        "bytes": 31425
       },
       {
         "uri": "majordomus://implementation/lib/decision.sh",
@@ -2522,7 +2710,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 46602
+        "bytes": 47649
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -2530,7 +2718,7 @@
         "identity": "lib/doctrine.sh",
         "path": "lib/doctrine.sh",
         "source_class": "library",
-        "bytes": 14785
+        "bytes": 14942
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -2578,7 +2766,15 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 20624
+        "bytes": 23541
+      },
+      {
+        "uri": "majordomus://implementation/lib/mermaid.awk",
+        "kind": "implementation",
+        "identity": "lib/mermaid.awk",
+        "path": "lib/mermaid.awk",
+        "source_class": "engine",
+        "bytes": 1166
       },
       {
         "uri": "majordomus://implementation/lib/migrate.sh",
@@ -2586,7 +2782,7 @@
         "identity": "lib/migrate.sh",
         "path": "lib/migrate.sh",
         "source_class": "library",
-        "bytes": 16374
+        "bytes": 16360
       },
       {
         "uri": "majordomus://implementation/lib/plan.sh",
@@ -2594,7 +2790,15 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 24881
+        "bytes": 24860
+      },
+      {
+        "uri": "majordomus://implementation/lib/plan_json.awk",
+        "kind": "implementation",
+        "identity": "lib/plan_json.awk",
+        "path": "lib/plan_json.awk",
+        "source_class": "engine",
+        "bytes": 6069
       },
       {
         "uri": "majordomus://implementation/lib/project.awk",
@@ -2610,7 +2814,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 12753
+        "bytes": 14801
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -2674,7 +2878,7 @@
         "identity": "lib/watch.sh",
         "path": "lib/watch.sh",
         "source_class": "library",
-        "bytes": 5613
+        "bytes": 5685
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -3370,6 +3574,303 @@
         "bytes": 2215
       },
       {
+        "uri": "majordomus://issue/I0817",
+        "kind": "issue",
+        "identity": "I0817",
+        "title": "Phase timing and work counters behind MJ_TIMING",
+        "description": "Time every validator and count every YAML flatten and git call when MJ_TIMING is set, and report them ranked at exit.",
+        "path": ".ai/repo/project/issues/I0817.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1921
+      },
+      {
+        "uri": "majordomus://issue/I0818",
+        "kind": "issue",
+        "identity": "I0818",
+        "title": "The command registry is read in one pass",
+        "description": "Replace the per-index, per-field awk lookups in mj_cmdreg_public, mj_cmdreg_ids and the event registry with one awk pass each, and read them once per process.",
+        "path": ".ai/repo/project/issues/I0818.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2245
+      },
+      {
+        "uri": "majordomus://issue/I0819",
+        "kind": "issue",
+        "identity": "I0819",
+        "title": "The project model is loaded with one flatten per file and no per-file lookups",
+        "description": "Make mj_project_load and mj_project_unknown_keys read each milestone and issue once, checking ids and unknown keys inside awk rather than with a subprocess per file and per key.",
+        "path": ".ai/repo/project/issues/I0819.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2184
+      },
+      {
+        "uri": "majordomus://issue/I0820",
+        "kind": "issue",
+        "identity": "I0820",
+        "title": "Catalogue, DAG, context and command-surface validators read their inputs once",
+        "description": "Rewrite the remaining validators that loop mj_yget or mj_git per item so that each reads its inputs with one pass.",
+        "path": ".ai/repo/project/issues/I0820.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1247
+      },
+      {
+        "uri": "majordomus://issue/I0821",
+        "kind": "issue",
+        "identity": "I0821",
+        "title": "Flattened YAML is cached under .ai/local/cache by content hash",
+        "description": "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<sha256>, keyed by the file's content hash and the flattener's own version, so a second command on unchanged files does no parsing.",
+        "path": ".ai/repo/project/issues/I0821.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1688
+      },
+      {
+        "uri": "majordomus://issue/I0822",
+        "kind": "issue",
+        "identity": "I0822",
+        "title": "Every canonical file is flattened at most once per command",
+        "description": "Add a case that runs doctor, watch, context and plan validate under MJ_TIMING and asserts the yaml_flatten count never exceeds the number of distinct canonical files a command reads.",
+        "path": ".ai/repo/project/issues/I0822.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1283
+      },
+      {
+        "uri": "majordomus://issue/I0823",
+        "kind": "issue",
+        "identity": "I0823",
+        "title": "majordomus bench: targets derived from the command registry",
+        "description": "Add the bench command: every public command in share/commands.yaml is a target, run against a disposable installed repository, with warmup and samples from the policy, reporting min, p50, p90, p95, p99, max, mean and stddev per target and mode.",
+        "path": ".ai/repo/project/issues/I0823.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2964
+      },
+      {
+        "uri": "majordomus://issue/I0824",
+        "kind": "issue",
+        "identity": "I0824",
+        "title": "Bench persists local runs and keeps a latest projection",
+        "description": "Write every run to .ai/local/benchmarks/runs/<run-id>.json and .ai/local/benchmarks/latest.json atomically, and append one line per run to history.jsonl.",
+        "path": ".ai/repo/project/issues/I0824.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1903
+      },
+      {
+        "uri": "majordomus://issue/I0825",
+        "kind": "issue",
+        "identity": "I0825",
+        "title": "An explicit committed baseline",
+        "description": "Add bench --write-baseline, which refuses a dirty tree unless forced, prints old, new and delta per target, and writes .ai/repo/benchmarks/baseline.json with schema majordomus/benchmark-baseline/v1.",
+        "path": ".ai/repo/project/issues/I0825.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2143
+      },
+      {
+        "uri": "majordomus://issue/I0826",
+        "kind": "issue",
+        "identity": "I0826",
+        "title": "bench --check refuses a regression by policy",
+        "description": "Compare a fresh run against the baseline under the policy's benchmark.regression thresholds (relative p50, p95, p99) and exit non-zero naming the command, the metric, both values and the threshold.",
+        "path": ".ai/repo/project/issues/I0826.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2195
+      },
+      {
+        "uri": "majordomus://issue/I0827",
+        "kind": "issue",
+        "identity": "I0827",
+        "title": "The benchmark policy block",
+        "description": "Declare benchmark.samples, benchmark.warmup, benchmark.timeout_seconds, benchmark.cache_max_entries, benchmark.regression.p50/p95/p99 and benchmark.budget.doctor_ms in the policy, its allow-list and the skeleton, with no reader-side default.",
+        "path": ".ai/repo/project/issues/I0827.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1951
+      },
+      {
+        "uri": "majordomus://issue/I0828",
+        "kind": "issue",
+        "identity": "I0828",
+        "title": "doctor under a declared budget, and the hook inherits it",
+        "description": "Report doctor's own wall time against benchmark.budget.doctor_ms as a finding, advisory, and record the measured value on this repository as the budget's rationale in docs/PERFORMANCE.md.",
+        "path": ".ai/repo/project/issues/I0828.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1204
+      },
+      {
+        "uri": "majordomus://issue/I0829",
+        "kind": "issue",
+        "identity": "I0829",
+        "title": "Performance doctrine as project rules",
+        "description": "Add project rules: derived state is computed once per state version, a command's hot path does not re-parse canonical files, every public command is benchmarkable from the registry, cacheability never changes observable behaviour, and performance claims need benchmark evidence.",
+        "path": ".ai/repo/project/issues/I0829.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2229
+      },
+      {
+        "uri": "majordomus://issue/I0830",
+        "kind": "issue",
+        "identity": "I0830",
+        "title": "docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference",
+        "description": "Write the reference: goals, phases and counters, batch reads, the flatten cache, cold versus warm, result and baseline schemas, the policy block, the regression workflow, the contributor workflow and the limitations; add the README section and the bench section of docs/CLI.md.",
+        "path": ".ai/repo/project/issues/I0830.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2234
+      },
+      {
+        "uri": "majordomus://issue/I0831",
+        "kind": "issue",
+        "identity": "I0831",
+        "title": "Performance claims at their proven status",
+        "description": "Add claims to docs/CLAIMS.yaml for derived benchmark targets, separated cold and warm distributions, flatten-once, cache equivalence and regression refusal, each naming its case, and regenerate the site data.",
+        "path": ".ai/repo/project/issues/I0831.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1085
+      },
+      {
+        "uri": "majordomus://issue/I0832",
+        "kind": "issue",
+        "identity": "I0832",
+        "title": "generate-site-data instrumented and its hot spots removed",
+        "description": "Declare phases per section of the site generator, rank them, and remove the repeated work in the two most expensive sections.",
+        "path": ".ai/repo/project/issues/I0832.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1113
+      },
+      {
+        "uri": "majordomus://issue/I0833",
+        "kind": "issue",
+        "identity": "I0833",
+        "title": "knowledge nodes and edges read each source once",
+        "description": "Time the knowledge stages, then remove the per-file subprocesses in discovery and extraction so that nodes and edges take one pass per source.",
+        "path": ".ai/repo/project/issues/I0833.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2265
+      },
+      {
+        "uri": "majordomus://issue/I0834",
+        "kind": "issue",
+        "identity": "I0834",
+        "title": "The test runner reports per-case time and the suite budget",
+        "description": "Print each case's wall time in test/run.sh, sort the slowest at the end, and record the suite's total in the benchmark history as a system target.",
+        "path": ".ai/repo/project/issues/I0834.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1082
+      },
+      {
+        "uri": "majordomus://issue/I0835",
+        "kind": "issue",
+        "identity": "I0835",
+        "title": "CI runs the structural performance checks",
+        "description": "Add the flatten-once case, the cache-equivalence case and bench --check with the CI profile to validate.yml, with the wall-clock thresholds conservative and the counters exact.",
+        "path": ".ai/repo/project/issues/I0835.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1160
+      },
+      {
+        "uri": "majordomus://issue/I0836",
+        "kind": "issue",
+        "identity": "I0836",
+        "title": "A synthetic repository generator for scaling cases",
+        "description": "Add a test helper that builds a repository with N issues, N milestones, N rules and N context documents from the skeleton, and a case that runs doctor and plan validate at three sizes and asserts the yaml_flatten count grows linearly.",
+        "path": ".ai/repo/project/issues/I0836.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1167
+      },
+      {
+        "uri": "majordomus://issue/I0837",
+        "kind": "issue",
+        "identity": "I0837",
+        "title": "Timing report as JSON",
+        "description": "Under --json, print the timing report as one JSON object on stderr with phases and counters, so bench can carry a phase breakdown per sample.",
+        "path": ".ai/repo/project/issues/I0837.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 912
+      },
+      {
+        "uri": "majordomus://issue/I0838",
+        "kind": "issue",
+        "identity": "I0838",
+        "title": "bench compare and the top regressions report",
+        "description": "Add bench compare <run-a> <run-b> and make the human report rank the largest regressions, the largest improvements and the slowest targets by p95.",
+        "path": ".ai/repo/project/issues/I0838.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1016
+      },
+      {
+        "uri": "majordomus://issue/I0839",
+        "kind": "issue",
+        "identity": "I0839",
+        "title": "watch inherits every doctor fix and its own budget",
+        "description": "Confirm watch dispatches the rewritten validators, time it, and declare benchmark.budget.watch_ms next to doctor's.",
+        "path": ".ai/repo/project/issues/I0839.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1005
+      },
+      {
+        "uri": "majordomus://issue/I0840",
+        "kind": "issue",
+        "identity": "I0840",
+        "title": "context and its subcommands under a second",
+        "description": "Time context resolve, validate, affected and check-sync, and remove the per-document git and awk calls so each runs under a second on this repository.",
+        "path": ".ai/repo/project/issues/I0840.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1194
+      },
+      {
+        "uri": "majordomus://issue/I0841",
+        "kind": "issue",
+        "identity": "I0841",
+        "title": "Cache equivalence proved by property-shaped cases",
+        "description": "For every read-only command in the registry, run it with the cache cold, warm, and disabled, on this repository and on a synthetic one, and assert byte-identical output and exit code; then mutate one file and assert the changed output is served.",
+        "path": ".ai/repo/project/issues/I0841.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1317
+      },
+      {
+        "uri": "majordomus://issue/I0842",
+        "kind": "issue",
+        "identity": "I0842",
+        "title": "Before and after evidence for every optimisation",
+        "description": "Record, for each hot spot removed, the phase time before and after and the counter before and after, in the benchmark history and in the commit message, and summarise them in docs/PERFORMANCE.md by pointing at the baseline file.",
+        "path": ".ai/repo/project/issues/I0842.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1236
+      },
+      {
+        "uri": "majordomus://issue/I0843",
+        "kind": "issue",
+        "identity": "I0843",
+        "title": "The performance workflow is discoverable and complete",
+        "description": "Close the milestone: every acceptance criterion of M004 has evidence, the README workflow runs as written, the site is regenerated, and the final report is a plan record rather than a conversation.",
+        "path": ".ai/repo/project/issues/I0843.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1016
+      },
+      {
         "uri": "majordomus://milestone/M000",
         "kind": "milestone",
         "identity": "M000",
@@ -3412,6 +3913,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 6523
+      },
+      {
+        "uri": "majordomus://milestone/M004",
+        "kind": "milestone",
+        "identity": "M004",
+        "title": "Performance is executable evidence, and the hot path does no canonical work twice",
+        "description": "Every public command can be benchmarked from the command registry with cold and warm distributions, the phases and work counters of any run can be printed, the caches and batch reads that remove repeated work preserve every observable result, an accepted baseline lives in the repository and a check refuses a regression by policy, and the pre-commit hook is fast enough that nobody routes around it.",
+        "path": ".ai/repo/project/milestones/M004.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4617
       },
       {
         "uri": "majordomus://milestone/cost-per-accepted-outcome",
@@ -3486,7 +3998,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 1677
+        "bytes": 2160
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -4175,6 +4687,21 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.benchmarkable-commands@1",
+        "kind": "rule",
+        "identity": "project.benchmarkable-commands@1",
+        "title": "Every public command is benchmarkable from the registry",
+        "description": "The benchmark targets are the public commands of share/commands.yaml and their scenarios are the command fixtures; no second list of what to time exists, and a command whose fixture the harness cannot run is a defect of the fixture, not an exemption.",
+        "path": ".ai/repo/rules/project/benchmarkable-commands.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2494,
+        "tags": [
+          "performance",
+          "command"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.blocking-checks-cheap@1",
         "kind": "rule",
         "identity": "project.blocking-checks-cheap@1",
@@ -4185,6 +4712,21 @@
         "source_class": "rule",
         "bytes": 1059,
         "tags": [
+          "doctrine"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.cache-is-invisible@1",
+        "kind": "rule",
+        "identity": "project.cache-is-invisible@1",
+        "title": "A cache never changes what a command observes",
+        "description": "A cache of derived state, if one exists, is keyed by the version of the canonical state it derives from, is bypassable, and produces byte-identical output to the uncached path; a cache that can be observed through a command's output, exit code or findings is a defect, and a cache that no case proves equivalent does not exist.",
+        "path": ".ai/repo/rules/project/cache-is-invisible.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2206,
+        "tags": [
+          "performance",
           "doctrine"
         ]
       },
@@ -4246,6 +4788,21 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.derived-once@1",
+        "kind": "rule",
+        "identity": "project.derived-once@1",
+        "title": "Derived state is computed once per state version",
+        "description": "Anything derivable solely from unchanged canonical repository state is computed once per version of that state and read many times; a command's hot path does not rediscover, reparse or rebuild it per item, per request or per call.",
+        "path": ".ai/repo/rules/project/derived-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2497,
+        "tags": [
+          "performance",
+          "doctrine"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.english-only@1",
         "kind": "rule",
         "identity": "project.english-only@1",
@@ -4271,6 +4828,21 @@
         "bytes": 954,
         "tags": [
           "findings"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.hot-path-reads-once@1",
+        "kind": "rule",
+        "identity": "project.hot-path-reads-once@1",
+        "title": "A command reads each canonical file at most once",
+        "description": "Within one invocation a command flattens, hashes or parses a canonical file at most once, however many validators, accessors or projections need it; the second reader gets the first reading.",
+        "path": ".ai/repo/rules/project/hot-path-reads-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2071,
+        "tags": [
+          "performance",
+          "doctrine"
         ]
       },
       {
@@ -4393,6 +4965,21 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.performance-evidence@1",
+        "kind": "rule",
+        "identity": "project.performance-evidence@1",
+        "title": "A performance claim carries its measurement",
+        "description": "A change made for speed names the phase or counter it changed and both values, measured on this repository with the tool's own timing; a budget or a threshold is set from a run, never guessed; a baseline is a tracked file written by the harness and updated on purpose.",
+        "path": ".ai/repo/rules/project/performance-evidence.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2220,
+        "tags": [
+          "performance",
+          "evidence"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.portable-shell@1",
         "kind": "rule",
         "identity": "project.portable-shell@1",
@@ -4422,6 +5009,38 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.rust-benchmark-coverage@1",
+        "kind": "rule",
+        "identity": "project.rust-benchmark-coverage@1",
+        "title": "No endpoint of the Rust executable without a benchmark, and no number without evidence",
+        "description": "Every externally callable operation of the Rust executable (each executable capability directly and on every transport its exposure declares, and the transports' own operations) is a benchmark target with a denominator generated from the registry; coverage is complete or the structural check fails; a waiver is typed, reported and never counted; and a claim about latency is made from a recorded measurement, never from prose.",
+        "path": ".ai/repo/rules/project/rust-benchmark-coverage.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2488,
+        "tags": [
+          "rust",
+          "performance",
+          "testing"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "rule",
+        "identity": "project.rust-canonical-declaration@1",
+        "title": "One canonical declaration; modules compose capabilities; the root composes modules",
+        "description": "An executable capability of the Rust executable is declared once with capability!, composed into its module with module!, and the application composes modules with compose_modules!; every interface, benchmark target, cache behaviour and generated document is derived from that declaration, and editing a projection to add or change one is a defect.",
+        "path": ".ai/repo/rules/project/rust-canonical-declaration.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2738,
+        "tags": [
+          "rust",
+          "architecture",
+          "capabilities"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.rust-cli-evidence@1",
         "kind": "rule",
         "identity": "project.rust-cli-evidence@1",
@@ -4430,11 +5049,42 @@
         "path": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 2052,
+        "bytes": 2586,
         "tags": [
           "rust",
           "testing",
           "documentation"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.rust-hot-path@1",
+        "kind": "rule",
+        "identity": "project.rust-hot-path@1",
+        "title": "A request never rebuilds canonical state, and a cache is never trusted without an equivalence test",
+        "description": "After the Rust executable has started, no MCP or HTTP request scans the repository, builds the index or the registry, derives a schema or builds a projection; every call goes through the one executor; a cache exists only where a measurement justified it, is bounded, is keyed by the registry fingerprint, and is proved to answer what the handler answers.",
+        "path": ".ai/repo/rules/project/rust-hot-path.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2171,
+        "tags": [
+          "rust",
+          "performance"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.shared-server-resilience@1",
+        "kind": "rule",
+        "identity": "project.shared-server-resilience@1",
+        "title": "Nothing a client leaves behind locks another client out",
+        "description": "The shared MCP server is a client's child; whatever state a client or a dead server leaves behind is taken over or bypassed, and a client that cannot share is served alone, never turned away.",
+        "path": ".ai/repo/rules/project/shared-server-resilience.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3630,
+        "tags": [
+          "rust",
+          "mcp",
+          "resilience"
         ]
       },
       {
@@ -4535,7 +5185,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 2451
+        "bytes": 2498
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -4719,7 +5369,7 @@
         "identity": "test/cases/28_no_hardcoded_values.sh",
         "path": "test/cases/28_no_hardcoded_values.sh",
         "source_class": "case",
-        "bytes": 18056
+        "bytes": 18092
       },
       {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
@@ -4983,7 +5633,7 @@
         "identity": "test/cases/72_rust_mcp.sh",
         "path": "test/cases/72_rust_mcp.sh",
         "source_class": "case",
-        "bytes": 8823
+        "bytes": 10490
       },
       {
         "uri": "majordomus://test/test/cases/73_knowledge_nodes.sh",
@@ -5018,12 +5668,68 @@
         "bytes": 6918
       },
       {
+        "uri": "majordomus://test/test/cases/77_rust_evidence.sh",
+        "kind": "test",
+        "identity": "test/cases/77_rust_evidence.sh",
+        "path": "test/cases/77_rust_evidence.sh",
+        "source_class": "case",
+        "bytes": 8692
+      },
+      {
+        "uri": "majordomus://test/test/cases/79_bench_command.sh",
+        "kind": "test",
+        "identity": "test/cases/79_bench_command.sh",
+        "path": "test/cases/79_bench_command.sh",
+        "source_class": "case",
+        "bytes": 5777
+      },
+      {
+        "uri": "majordomus://test/test/cases/80_bench_persistence.sh",
+        "kind": "test",
+        "identity": "test/cases/80_bench_persistence.sh",
+        "path": "test/cases/80_bench_persistence.sh",
+        "source_class": "case",
+        "bytes": 3106
+      },
+      {
+        "uri": "majordomus://test/test/cases/81_bench_baseline.sh",
+        "kind": "test",
+        "identity": "test/cases/81_bench_baseline.sh",
+        "path": "test/cases/81_bench_baseline.sh",
+        "source_class": "case",
+        "bytes": 3057
+      },
+      {
+        "uri": "majordomus://test/test/cases/82_bench_check.sh",
+        "kind": "test",
+        "identity": "test/cases/82_bench_check.sh",
+        "path": "test/cases/82_bench_check.sh",
+        "source_class": "case",
+        "bytes": 3033
+      },
+      {
+        "uri": "majordomus://test/test/cases/83_doctor_budget.sh",
+        "kind": "test",
+        "identity": "test/cases/83_doctor_budget.sh",
+        "path": "test/cases/83_doctor_budget.sh",
+        "source_class": "case",
+        "bytes": 2357
+      },
+      {
         "uri": "majordomus://test/test/cases/90_mcp_shared_server.sh",
         "kind": "test",
         "identity": "test/cases/90_mcp_shared_server.sh",
         "path": "test/cases/90_mcp_shared_server.sh",
         "source_class": "case",
         "bytes": 10030
+      },
+      {
+        "uri": "majordomus://test/test/cases/91_canonical_architecture.sh",
+        "kind": "test",
+        "identity": "test/cases/91_canonical_architecture.sh",
+        "path": "test/cases/91_canonical_architecture.sh",
+        "source_class": "case",
+        "bytes": 7745
       },
       {
         "uri": "majordomus://test/test/cases/93_rust_provider_projections.sh",
@@ -5044,7 +5750,7 @@
       "identity": [
         "id"
       ],
-      "objects": 92
+      "objects": 101
     },
     {
       "name": "context",
@@ -5061,14 +5767,14 @@
       "format": "markdown",
       "front_matter": "optional",
       "identity": [],
-      "objects": 122
+      "objects": 132
     },
     {
       "name": "implementation",
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 29
+      "objects": 32
     },
     {
       "name": "issue",
@@ -5078,7 +5784,7 @@
       "identity": [
         "id"
       ],
-      "objects": 63
+      "objects": 90
     },
     {
       "name": "milestone",
@@ -5088,7 +5794,7 @@
       "identity": [
         "id"
       ],
-      "objects": 10
+      "objects": 11
     },
     {
       "name": "policy",
@@ -5127,14 +5833,14 @@
         "id",
         "version"
       ],
-      "objects": 61
+      "objects": 70
     },
     {
       "name": "test",
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 71
+      "objects": 78
     }
   ],
   "projections": [

@@ -362,6 +362,16 @@ one capability registry: a capability is defined once, in a typed descriptor or 
 declarative file with its JSON Schema, and MCP, HTTP, OpenAPI, Swagger UI, the command line
 and the generated reference are projections of it, so nothing is maintained twice.
 
+Every generated file in the repository comes out of the same executable: `majordomus
+generate` writes `docs/generated/`, `share/allow/`, the provider bootstraps `AGENTS.md`
+and `CLAUDE.md` (from the policy and the templates), and the site's registry dataset
+`site/data/registry/registry.json`; `majordomus generate --check` says which of them is
+stale, and CI refuses a merge or a deploy from a stale one. The owners of every truth and
+the direction of generation are in
+[ADR 5](.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md);
+the site's [Registry page](https://korczis.github.io/prismatic-majordomus/registry/) is
+rendered from that dataset.
+
 ```bash
 just build                      # cargo build of apps/majordomus-cli (or: cargo build --manifest-path apps/majordomus-cli/Cargo.toml)
 just mcp                        # MCP on stdio for the client that spawned it; the first one in a repository is the shared server
