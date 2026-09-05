@@ -39,6 +39,27 @@ pub enum Command {
     Generate(GenerateArgs),
     /// Time every externally callable operation (each capability directly, over MCP and over HTTP, and the transports' own operations), report coverage, compare with the accepted baseline
     Bench(BenchArgs),
+    /// The repository scope: what a worker reads and what it never reads; with paths, whether each is in or out and why
+    Scope(ScopeArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus scope`.
+pub struct ScopeArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    /// Repository-relative paths to judge; none prints the declaration and the tally
+    pub paths: Vec<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Exit 10 when any path given is out of the scope
+    #[arg(long)]
+    pub check: bool,
 }
 
 #[derive(Debug, Args)]

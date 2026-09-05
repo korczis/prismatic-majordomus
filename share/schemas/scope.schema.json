@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/scope.schema.json",
+  "title": "Scope",
+  "description": "The repository scope, .ai/repo/scope.yaml: the pathspecs a worker reads (in) and the paths, names, sizes and content it never reads (out). Out wins over in; a path matching nothing is out as undeclared.",
+  "x-majordomus-allow": "scope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "in",
+    "out"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "in": {
+      "description": "Pathspecs anchored at the repository root, in the layer's glob subset; a trailing slash names a directory and everything beneath it.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pathspec"
+      }
+    },
+    "out": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "description": "Never read, by path: version control, the local half, dependencies, build outputs, caches, temporary files, logs.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pathspec"
+          }
+        },
+        "binary": {
+          "description": "Content that is not UTF-8 text is out, whatever the name says.",
+          "type": "boolean"
+        },
+        "max_bytes": {
+          "description": "A file over this many bytes is out, whatever it is.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "archive": {
+          "$ref": "#/$defs/category"
+        },
+        "image": {
+          "$ref": "#/$defs/category"
+        },
+        "video": {
+          "$ref": "#/$defs/category"
+        },
+        "pdf": {
+          "$ref": "#/$defs/category"
+        },
+        "database_dump": {
+          "$ref": "#/$defs/category"
+        },
+        "generated": {
+          "$ref": "#/$defs/category"
+        },
+        "secret": {
+          "$ref": "#/$defs/category"
+        },
+        "fixtures": {
+          "description": "Fixtures are read up to a size; over it they are data, not context.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "max_bytes"
+          ],
+          "properties": {
+            "paths": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/pathspec"
+              }
+            },
+            "names": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/name"
+              }
+            },
+            "max_bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "pathspec": {
+      "description": "A repository-relative glob: no leading slash, no `:(` prefix, no `..` segment (refused when read); `*` and `?` stay inside a segment, `**` spans any depth, a trailing `/` means the directory and everything beneath it.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/:].*$"
+    },
+    "name": {
+      "description": "A pattern matched against the file name alone; no slash.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/]+$"
+    },
+    "category": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pathspec"
+          }
+        },
+        "names": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          }
+        }
+      }
+    }
+  }
+}

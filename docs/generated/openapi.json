@@ -448,6 +448,108 @@
         }
       }
     },
+    "/api/v1/scope": {
+      "get": {
+        "operationId": "repository.scope",
+        "summary": "The repository scope",
+        "description": "The scope declaration as read, where it came from (the repository's own or the distribution's default), and every tracked file tallied against it: how many are in, how many are out for each reason, and which.",
+        "tags": [
+          "repository"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The repository scope: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScopeReport"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "repository.scope",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::repository"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_scope",
+          "resource": {
+            "uri": "majordomus://scope",
+            "name": "scope"
+          }
+        },
+        "x-majordomus-cli": "scope"
+      }
+    },
+    "/api/v1/scope/classify": {
+      "get": {
+        "operationId": "repository.scope_classify",
+        "summary": "Judge a path against the scope",
+        "description": "Whether a repository-relative path is in or out of the scope, the reason when it is out, and the pattern or limit that decided; an existing file is judged by name, then size, then content.",
+        "tags": [
+          "repository"
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Repository-relative, forward slashes; `./` is stripped. An absolute path or a\n`..` segment is an invalid input."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Judge a path against the scope: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Classification"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "repository.scope_classify",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::repository"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_scope_classify"
+        },
+        "x-majordomus-cli": "scope classify"
+      }
+    },
     "/api/v1/search": {
       "get": {
         "operationId": "objects.search",
@@ -1004,6 +1106,84 @@
         ],
         "description": "One capability as a listing shows it: everything the descriptor says except its two\nschemas, which `capabilities.describe` answers for one capability. A listing of a\nrepository's registry runs to hundreds of entries; their schemas would be megabytes\nof the same object view repeated."
       },
+      "Category": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Pathspecs anchored at the repository root.",
+            "default": []
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Patterns matched against the file name alone.",
+            "default": []
+          }
+        },
+        "description": "One category of `out`: pathspecs and file-name patterns."
+      },
+      "Classification": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path, repository-relative, as judged."
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/Verdict",
+            "description": "In or out."
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Reason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why it is out; absent when it is in."
+          },
+          "rule": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The pattern or limit that decided: the `in` pathspec, the `out` pattern, `binary`,\n`max_bytes` or `fixtures.max_bytes`; absent for `undeclared`."
+          },
+          "exists": {
+            "type": "boolean",
+            "description": "Whether the path exists in the work tree; a path that does not is judged by name."
+          },
+          "directory": {
+            "type": "boolean",
+            "description": "Whether the path is a directory; a directory is in when something beneath it can be."
+          },
+          "bytes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The size, when the path is an existing file."
+          }
+        },
+        "required": [
+          "path",
+          "verdict",
+          "exists",
+          "directory"
+        ],
+        "description": "One path, judged."
+      },
       "CliExposure": {
         "type": "object",
         "properties": {
@@ -1145,6 +1325,35 @@
         ],
         "description": "The counters and phase totals of this process at one moment. Every value is a count\nor a duration this process measured; none is written anywhere by hand."
       },
+      "Declaration": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The format version; only [`SCOPE_VERSION`] is read."
+          },
+          "in": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The allow-list: pathspecs anchored at the repository root."
+          },
+          "out": {
+            "$ref": "#/components/schemas/Out",
+            "description": "What is never read; wins over `in`."
+          }
+        },
+        "required": [
+          "version",
+          "in",
+          "out"
+        ],
+        "description": "`scope.yaml`, typed. Unknown keys are refused by the type and by the `scope` schema."
+      },
       "Diagnostic": {
         "type": "object",
         "properties": {
@@ -1244,6 +1453,38 @@
           }
         },
         "description": "The projections a capability declares. Absence is explicit: `None` means not exposed\nthere, and nothing infers an exposure a descriptor did not declare."
+      },
+      "Fixtures": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Pathspecs anchored at the repository root.",
+            "default": []
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Patterns matched against the file name alone.",
+            "default": []
+          },
+          "max_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "A fixture over this many bytes is out."
+          }
+        },
+        "required": [
+          "max_bytes"
+        ],
+        "description": "The `fixtures` category: where fixtures live and how large one may be."
       },
       "GitInfo": {
         "type": "object",
@@ -1568,6 +1809,163 @@
         ],
         "description": "One declarative object of the repository's layer, as a client reads it."
       },
+      "Origin": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "repository",
+            "description": "The repository's own, named by the manifest's `scope` section."
+          },
+          {
+            "type": "string",
+            "const": "distribution",
+            "description": "The distribution's default, because the repository declares none."
+          }
+        ],
+        "description": "Where the declaration was read from."
+      },
+      "Out": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Never read, by path: version control, the local half, dependencies, build outputs.",
+            "default": []
+          },
+          "binary": {
+            "type": "boolean",
+            "description": "Content that is not text (a NUL byte in the first window) is out, whatever the name says.",
+            "default": false
+          },
+          "max_bytes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "A file over this many bytes is out, whatever it is."
+          },
+          "archive": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Archives."
+          },
+          "image": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Images."
+          },
+          "video": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Video."
+          },
+          "pdf": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "PDF documents."
+          },
+          "database_dump": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Database dumps."
+          },
+          "generated": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Generated assets: changed by changing the source and regenerating."
+          },
+          "secret": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Secrets: never read, never served, never quoted; a tracked one is reported."
+          },
+          "fixtures": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Fixtures"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Fixtures are read up to a size; over it they are data, not context."
+          }
+        },
+        "description": "The `out:` mapping: every category optional, each the reason a path is out."
+      },
+      "OutFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repository-relative."
+          },
+          "reason": {
+            "$ref": "#/components/schemas/Reason",
+            "description": "Why."
+          },
+          "rule": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The rule that decided; absent for `undeclared`."
+          }
+        },
+        "required": [
+          "path",
+          "reason"
+        ],
+        "description": "One tracked file that is out."
+      },
       "Peer": {
         "type": "object",
         "properties": {
@@ -1674,6 +2072,71 @@
         ],
         "description": "A phase's totals."
       },
+      "Reason": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "path",
+            "description": "Named under `out.paths`."
+          },
+          {
+            "type": "string",
+            "const": "secret",
+            "description": "A secret."
+          },
+          {
+            "type": "string",
+            "const": "generated",
+            "description": "A generated asset."
+          },
+          {
+            "type": "string",
+            "const": "archive",
+            "description": "An archive."
+          },
+          {
+            "type": "string",
+            "const": "image",
+            "description": "An image."
+          },
+          {
+            "type": "string",
+            "const": "video",
+            "description": "Video."
+          },
+          {
+            "type": "string",
+            "const": "pdf",
+            "description": "A PDF document."
+          },
+          {
+            "type": "string",
+            "const": "database_dump",
+            "description": "A database dump."
+          },
+          {
+            "type": "string",
+            "const": "undeclared",
+            "description": "Matches no `in` pathspec."
+          },
+          {
+            "type": "string",
+            "const": "fixture_over_limit",
+            "description": "A fixture over `out.fixtures.max_bytes`."
+          },
+          {
+            "type": "string",
+            "const": "over_limit",
+            "description": "Over `out.max_bytes`."
+          },
+          {
+            "type": "string",
+            "const": "binary",
+            "description": "Content with a NUL byte in its first [`SNIFF_BYTES`]: not text."
+          }
+        ],
+        "description": "Why a path is out. The order is the order the rules decide in."
+      },
       "RepositoryInfo": {
         "type": "object",
         "properties": {
@@ -1723,6 +2186,14 @@
               "type": "string"
             },
             "description": "The kinds files the reader was configured from: the distribution's, then the\nrepository's own when it has one."
+          },
+          "scope_origin": {
+            "$ref": "#/components/schemas/Origin",
+            "description": "Where the scope was read from: `repository` or `distribution`."
+          },
+          "scope_path": {
+            "type": "string",
+            "description": "The scope file: repository-relative for the repository's own, the share path for\nthe distribution's default."
           }
         },
         "required": [
@@ -1732,7 +2203,9 @@
           "git",
           "discovery",
           "source_classes",
-          "kind_sources"
+          "kind_sources",
+          "scope_origin",
+          "scope_path"
         ],
         "description": "What the index knows about the repository it was built from."
       },
@@ -1816,6 +2289,34 @@
           }
         ],
         "description": "The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a\ncapability's provenance is."
+      },
+      "ScopeReport": {
+        "type": "object",
+        "properties": {
+          "origin": {
+            "$ref": "#/components/schemas/Origin",
+            "description": "`repository` when the manifest names a scope section, `distribution` for the default."
+          },
+          "path": {
+            "type": "string",
+            "description": "The file the declaration was read from."
+          },
+          "declaration": {
+            "$ref": "#/components/schemas/Declaration",
+            "description": "The declaration as read."
+          },
+          "tracked": {
+            "$ref": "#/components/schemas/Tally",
+            "description": "Every tracked file judged by name and size, counted; the out ones listed."
+          }
+        },
+        "required": [
+          "origin",
+          "path",
+          "declaration",
+          "tracked"
+        ],
+        "description": "The scope: the declaration as read, its origin, and every tracked file against it."
       },
       "SearchHit": {
         "type": "object",
@@ -2076,6 +2577,53 @@
         ],
         "description": "The registry counted: by source, kind, stability and projection."
       },
+      "Tally": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many tracked files were judged."
+          },
+          "in": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many are in."
+          },
+          "out": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many are out."
+          },
+          "by_reason": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many are out for each reason present."
+          },
+          "out_files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OutFile"
+            },
+            "description": "Every tracked file that is out, with its reason and the rule that decided."
+          }
+        },
+        "required": [
+          "files",
+          "in",
+          "out",
+          "by_reason",
+          "out_files"
+        ],
+        "description": "Every tracked file against the scope, counted."
+      },
       "Transport": {
         "oneOf": [
           {
@@ -2090,6 +2638,21 @@
           }
         ],
         "description": "How a peer reached the server."
+      },
+      "Verdict": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "in",
+            "description": "Read."
+          },
+          {
+            "type": "string",
+            "const": "out",
+            "description": "Never read; the reason says why."
+          }
+        ],
+        "description": "In or out."
       },
       "WaiverReason": {
         "oneOf": [

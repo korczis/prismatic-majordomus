@@ -5,6 +5,7 @@ pub mod bench;
 pub mod capabilities;
 pub mod generate;
 pub mod mcp;
+pub mod scope;
 pub mod serve;
 
 use crate::cli::{Cli, Command};
@@ -18,5 +19,6 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Capabilities(args) => capabilities::run(args),
         Command::Generate(args) => generate::run(args),
         Command::Bench(args) => bench::run(args),
+        Command::Scope(args) => scope::run(args),
     }
 }

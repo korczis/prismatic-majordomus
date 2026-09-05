@@ -30,6 +30,7 @@ pub mod model;
 pub mod peers;
 pub mod perf;
 pub mod repository;
+pub mod scope;
 pub mod share;
 pub mod shared;
 pub mod synthetic;

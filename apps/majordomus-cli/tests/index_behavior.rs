@@ -18,9 +18,25 @@ fn build(f: &Fixture, filesystem: bool) -> Index {
         let fs = FileSystem {
             excluded: vec![".git".into(), repo.local_path()],
         };
-        Index::build(&repo, &sources, &schema, &fs, git).unwrap()
+        Index::build(
+            &repo,
+            &sources,
+            &schema,
+            &fs,
+            git,
+            common::dist_scope(&repo),
+        )
+        .unwrap()
     } else {
-        Index::build(&repo, &sources, &schema, &VcsIndex::default(), git).unwrap()
+        Index::build(
+            &repo,
+            &sources,
+            &schema,
+            &VcsIndex::default(),
+            git,
+            common::dist_scope(&repo),
+        )
+        .unwrap()
     }
 }
 

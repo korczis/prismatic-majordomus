@@ -147,6 +147,7 @@ fn duplicate_ids_rust_and_declarative() {
         GitState::Unavailable {
             reason: "test".into(),
         },
+        common::dist_scope(&repo),
     )
     .unwrap();
     let errs = CapabilityRegistry::builder()
