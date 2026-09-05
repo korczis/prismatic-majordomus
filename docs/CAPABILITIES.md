@@ -239,12 +239,12 @@ written by hand.
 | OpenAPI 3.1 | the same routes; `operationId` is the id; the tags are the modules with their descriptions; every example is one of the capability's benchmark cases, by name, evaluated against the repository's index; the responses are the statuses the router answers for the kind (422 for a command only) and `default` for what the transport adds; a query parameter is never nullable; `x-majordomus-id`, `-kind`, `-stability`, `-provenance`, `-benchmark`, `-cache`, `-mcp`, `-cli` carry the rest; `info`, licence, contact and `externalDocs` from `about.rs` and the crate manifest; schemas hoisted into sorted components; the OAS 3.1 base dialect | `GET /openapi.json`, `docs/generated/openapi.json`, and the site's `/docs/api/` and `/openapi.json` |
 | Swagger UI | a shell page that loads `/openapi.json`; it embeds no specification; its assets come from the pinned `swagger-ui-dist` on unpkg, the one part that is not offline | `GET /docs` |
 | command line | `capabilities list` and `describe` dispatch through the registry's `cli` exposure; `schema` and `validate` are views of the registry, not capabilities | `majordomus capabilities …` |
-| reference | the index of modules and builtin capabilities, one page per executable module with every capability in full; declarative resources described by rule, listed live | `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` |
+| reference | the index of modules and builtin capabilities, one page per executable module with every capability in full; declarative resources described by rule, listed live; the command line as clap declares it | `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md`, `docs/generated/cli.md` |
 | benchmark targets | every required executable per exposed transport per case, plus the system targets; the coverage tallies | `majordomus bench`, `docs/generated/benchmarks.md` |
-| registry manifest | the builtin registry as data: modules, descriptors with schemas, declarative kinds, system targets | `docs/generated/registry.json` (`majordomus/capability-registry/v1`) |
+| registry manifest | the builtin registry as data: modules, descriptors with schemas and the file each was composed in, declarative kinds, system targets; the boundary the site generator reads for its routes | `docs/generated/registry.json` (`majordomus/capability-registry/v1`) |
 | perf counters | the executor's and the startup phases' counters | `perf.counters`: `majordomus_perf`, `GET /api/v1/perf` |
 | allow-lists | the schemas | `share/allow/*.txt` |
-| site dataset | the registry (fingerprint, counts, builtin capabilities, modules), the index (fingerprint, every object without its content), the kinds and the declared provider projections; no timestamps, no absolute paths, no git state | `site/data/registry/registry.json` — `majordomus generate site`; rendered at `/registry/` |
+| site dataset | the registry (fingerprint, counts, every builtin descriptor in full with its source file, every module with its ids), the index (fingerprint, every object without its content), the kinds, the declared provider projections, the command line, the MCP tools and resources, the HTTP routes, the benchmark targets, coverage, policy and accepted baselines; no timestamps of its own, no absolute paths, no git state | `site/data/registry/registry.json` (`majordomus-site-registry/v2`) — `majordomus generate site`; rendered under `/registry/` (overview, executable, modules, capabilities, cli, mcp, benchmarks) |
 | provider bootstraps | the policy's `projections[]`, the profiles and the provider templates (`.ai/repo/providers/`, else `share/providers/`); the stamp carries the policy hash and the content hash; byte-identical to the shell tool's `update` | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, … — `majordomus generate providers` |
 
 What every projection says about itself comes from `about.rs`: the OpenAPI `info`,
@@ -333,12 +333,15 @@ matrix and its entry in the manifest are generated.
 
 ## Generated projections and synchronization
 
-`majordomus generate [all|openapi|docs|benchmarks|registry|allow]` writes
+`majordomus generate [all|openapi|docs|benchmarks|registry|allow|providers|site]` writes
 `docs/generated/openapi.json`, `docs/generated/capabilities.md` with
-`docs/generated/modules/<id>.md`, `docs/generated/benchmarks.md`,
-`docs/generated/registry.json` and `share/allow/*.txt`; `majordomus generate --check`
-derives them again, compares byte for byte, writes nothing, and exits 10 naming every
-stale file. CI runs the check. Every generated file says so in its first line and names
+`docs/generated/modules/<id>.md` and `docs/generated/cli.md`, `docs/generated/benchmarks.md`,
+`docs/generated/registry.json`, `share/allow/*.txt`, the provider bootstraps and
+`site/data/registry/registry.json`; `majordomus generate --check` derives them again,
+compares byte for byte, writes nothing, and exits 10 naming every stale file. CI runs the
+check. The site generator consumes `registry.json` and `openapi.json` and nothing else of
+the crate; `scripts/derive` runs the two generators in dependency order and
+`scripts/derive-check` composes both checks (`docs/GITHUB_PAGES_ARCHITECTURE.md`). Every generated file says so in its first line and names
 its source; none carries a timestamp, an absolute path or a fingerprint that would move
 with a document edit. The committed files are caches: reviewable, never edited.
 

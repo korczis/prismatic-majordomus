@@ -22,7 +22,6 @@ Each of these is rendered on the website as well, from this same Markdown.
 | [`ECONOMICS.md`](ECONOMICS.md) | leads | the claim it refuses to make, what v0.1 controls without measuring, where the cost actually is, what the ledger alone can measure, and what honest measurement would take |
 | [`EXTRACTION_REPORT.md`](EXTRACTION_REPORT.md) | humans | how the design was derived: root cause, pattern ledger, rejected patterns, risks, plan |
 | [`DYNAMICITY.md`](DYNAMICITY.md) | maintainers | canonical ownership: what may be written down twice, what must be derived, and which entities still have no owner |
-||||||| parent of bbbafd5 (docs(capabilities): the capability model as doctrine, with its claims, ADR, CI gates and the every-interface case)
 | [`CAPABILITIES.md`](CAPABILITIES.md) | everyone, integrators | the Rust executable's capability model: one definition, and MCP, HTTP, OpenAPI, Swagger UI, the command line and the generated reference derived from it; what is canonical, how to extend it, how it fails |
 | [`MCP.md`](MCP.md) | everyone, MCP clients | the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve |
 | [`GITHUB_PAGES_ARCHITECTURE.md`](GITHUB_PAGES_ARCHITECTURE.md) | maintainers | how the website is derived from the repository and checked for drift |
@@ -48,7 +47,7 @@ these carry no site route of their own.
 | [`SITE_CLAIMS.md`](SITE_CLAIMS.md) | everyone | the same matrix as a Markdown table, generated from `CLAIMS.yaml` by `scripts/generate-site-data`. Never edited |
 | [`PLAN_STATUS.md`](PLAN_STATUS.md) | everyone | where the plan stands right now — milestones, issues, waves and what is ready — generated from `.ai/repo/project/` by `scripts/generate-site-data`. Never edited; the semantics are in `PLANNING.md` |
 | [`GITHUB_PAGES_ARCHITECTURE.md`](GITHUB_PAGES_ARCHITECTURE.md) | site contributors | how the website is projected from this repository, which files are generated, and how the sync guarantee is enforced |
-| [`generated/openapi.json`](generated/openapi.json) · [`generated/capabilities.md`](generated/capabilities.md) | integrators | the OpenAPI document and the capability reference of the Rust executable, generated from its registry by `majordomus generate` and checked by `generate --check`. Never edited |
+| [`generated/openapi.json`](generated/openapi.json) · [`generated/registry.json`](generated/registry.json) · [`generated/capabilities.md`](generated/capabilities.md) · [`generated/cli.md`](generated/cli.md) · [`generated/benchmarks.md`](generated/benchmarks.md) | integrators | the OpenAPI document, the registry manifest, the capability reference with one page per module, the command line as clap declares it, and the benchmark matrix of the Rust executable, generated from its registry by `majordomus generate` and checked by `generate --check`; the website renders the same registry under `/registry/`. Never edited. `just derive` regenerates every derived file of the repository in order and `just derive-check` names every stale one (`GITHUB_PAGES_ARCHITECTURE.md`) |
 
 Rule for these documents: a sentence describing a capability is either backed by a test
 in `test/cases/` or phrased as a target. When implementation and document disagree, the

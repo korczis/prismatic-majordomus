@@ -1,11 +1,15 @@
 # Deploys the derived documentation site to GitHub Pages.
 #
-# The site is generated from canonical repository files: scripts/generate-site-data normalises
-# them into site/data/generated/, the Rust executable derives site/data/registry/ from its
-# registry, Zola renders templates over that data, Tailwind compiles the Flowbite stylesheet.
-# There is no second, hand-maintained content tree. The job first proves the
-# tree is healthy (tests, doctor), then that the committed derived data matches the sources, then
-# builds and checks the output, and only then deploys.
+# The site is generated from canonical repository files in the order scripts/derive spells
+# out: the Rust executable projects its registry (docs/generated/, the provider bootstraps),
+# scripts/generate-site-data normalises the canonical files and those projections into
+# site/data/generated/ and the derived documents, the executable derives site/data/registry/
+# over the index those documents joined, Zola renders templates over that data, Tailwind
+# compiles the Flowbite stylesheet. There is no second, hand-maintained content tree. The job
+# first proves the tree is healthy (tests, doctor), then that every committed derived artifact
+# is what its sources produce (scripts/derive-check: the registry's projections and the site's
+# data, so a capability edited in Rust or a document edited by hand both refuse to deploy
+# stale), then builds and checks the output, and only then deploys.
 name: pages
 
 on:
@@ -40,24 +44,25 @@ jobs:
           zola --version
       - name: install site build dependencies
         run: npm ci --no-audit --no-fund
+      # The toolchain and the cache before the suite: the behavioural cases build the crate,
+      # and a build the cache restores is minutes the deploy does not wait.
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/majordomus-cli
       - name: behavioural tests
         run: bash test/run.sh
       - name: self-supervision
         run: |
           git config core.hooksPath .githooks
           bin/majordomus doctor
-      - name: derived data is in sync with canonical sources
-        run: scripts/generate-site-data --check
-      # The Registry page reads site/data/registry/registry.json, which the Rust executable
-      # derives from the registry and the index; the provider bootstraps come from the same
-      # executable. A stale one does not deploy. (The behavioural tests above already built
-      # the crate in target/debug; the cache keeps that build across runs.)
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/majordomus-cli
-      - name: generated projections are in sync with the registry
-        run: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- generate --check
+      # Every committed derived artifact, against its sources: the registry's projections
+      # (docs/generated/**, share/allow/**, the provider bootstraps, site/data/registry/) by
+      # the executable's own --check, and the site's data and derived documents by the site
+      # generator's, whose input hash covers the registry manifest and the OpenAPI document.
+      # A stale one — a capability edited in Rust, a document edited by hand — does not deploy.
+      - name: every derived artifact is what its sources produce
+        run: scripts/derive-check
       - name: build the site
         run: scripts/site-build
       - name: check the site
@@ -75,8 +80,12 @@ jobs:
         # which no static proxy can see. Mobile-first is a stated hard requirement here, so the
         # deploy waits for the measurement rather than for a heuristic that predicts it.
         run: CHROME_BIN=google-chrome scripts/site-probe
+      # What was built: the site's inputs and their hash, and the build's own provenance
+      # (commit, registry and index fingerprints), which the deployed site serves at /build.json
       - name: manifest
-        run: cat site/data/generated/source.json
+        run: |
+          cat site/data/generated/source.json
+          cat site/public/build.json
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

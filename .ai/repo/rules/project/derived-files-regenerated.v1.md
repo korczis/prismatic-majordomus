@@ -25,4 +25,4 @@ No command decides this rule; a reviewer does, and a change that violates it is 
 
 # Verification
 
-Review. scripts/generate-site-data --check runs in CI; test/cases/51_derived_artifacts_committed.sh proves the committed derived files match their sources; the majordomus.projection-integrity rule covers the generated instruction files.
+Review. `scripts/derive-check` — `majordomus generate --check` and `scripts/generate-site-data --check` together — runs in CI and in front of every Pages deploy, and `scripts/derive` regenerates every derived file in dependency order; test/cases/51_derived_artifacts_committed.sh proves the committed derived files match their sources and that none embeds the commit it lands in; test/cases/95_executable_reference.sh proves a capability that joins or leaves the registry manifest gains or loses its site route from the generator alone; the majordomus.projection-integrity rule covers the generated instruction files.

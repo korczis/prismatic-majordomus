@@ -14,6 +14,12 @@ command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 # --- the committed generation is in sync with the canonical sources
 expect_exit 0 "$ROOT/scripts/generate-site-data" --check
 expect_grep 'site data: in sync'
+# --- and so is every projection of the registry: the one gate over both generators, where the
+#     executable can be built (the Rust suite and CI hold it where it cannot be skipped)
+if command -v cargo >/dev/null 2>&1; then
+  expect_exit 0 "$ROOT/scripts/derive-check"
+  expect_grep 'every derived artifact is current'
+fi
 
 # --- and stays in sync across a commit. A derived artifact that records anything about the
 #     commit it lands in is stale the moment it lands; regenerating cannot fix that, it only

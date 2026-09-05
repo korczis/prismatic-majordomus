@@ -14,7 +14,12 @@ being maintained separately from the repository that backs it.
 
 | layer | owns | lives in | edited by hand |
 |---|---|---|---|
-| product truth | policy schema, profiles, the worker instructions, the CLI | `share/skeleton/**`, `bin/majordomus`, `lib/**` | yes |
+| product truth | policy schema, profiles, the worker instructions, the shell CLI | `share/skeleton/**`, `bin/majordomus`, `lib/**`, `share/commands.yaml` | yes |
+| the Rust executable | every capability with its schemas, exposures, stability, provenance, benchmark and cache policy; the modules; the command line | `capability!` and `module!` declarations under `apps/majordomus-cli/src/capability/builtin/`, `apps/majordomus-cli/src/cli.rs` (clap) | yes |
+| the executable's narrative | what the crate is, owns and refuses; discovery, transports, side effects, architecture | `apps/majordomus-cli/README.md`, `docs/CAPABILITIES.md`, `docs/MCP.md` | yes |
+| benchmark evidence | the regression policy and the accepted baselines | `.ai/repo/benchmarks/rust/policy.yaml`, `.ai/repo/benchmarks/rust/baseline.<platform>.json` | policy yes; a baseline by `majordomus bench baseline update` |
+| registry projections | the OpenAPI document, the registry manifest, the capability, module, command-line and benchmark references | `docs/generated/**` | never — `majordomus generate` |
+| registry dataset | everything the site renders about the executable: descriptors, modules, command line, MCP and HTTP surfaces, benchmarks, the index | `site/data/registry/registry.json` | never — `majordomus generate site` |
 | public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
 | claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
 | marketing copy | headline, section leads, button labels; no claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
@@ -24,7 +29,9 @@ being maintained separately from the repository that backs it.
 | rendering reference | representative Markdown for visual validation | `site/content-src/render-test.md` | yes |
 | derived data | stable JSON the templates read | `site/data/generated/*.json` | never |
 | derived release artifact | the claims matrix as Markdown | `docs/SITE_CLAIMS.md` | never |
-| derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command and case study | `site/content/{docs,profiles,guarantees,supervises,commands,why}/`, `render-test.md`, `architecture.md` | never |
+| derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command, doctrine, use case, application, milestone, issue, case study, module and capability | `site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry}/`, `render-test.md`, `architecture.md` | never |
+| derived routes and links for the executable | one route per module and per capability, the executable's pages, the API anchor, the source on GitHub, the claims attached to each surface | `site/data/generated/executable.json` | never |
+| build provenance | the commit and its cleanliness, the site's input hash, the registry and index fingerprints | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
 | presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
 | styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
 | behaviour | theme toggle, Mermaid init | `site/theme.js`, `site/diagrams.js` | yes |
@@ -32,29 +39,65 @@ being maintained separately from the repository that backs it.
 
 ## Projection pipeline
 
+Two generators, one graph. The Rust executable projects its own registry; the site
+generator projects the canonical files and consumes the executable's projections through
+one machine-readable boundary, `docs/generated/registry.json` (and `openapi.json`); Zola
+renders templates over what both wrote. `scripts/derive` runs the stages in order,
+`scripts/derive-check` proves the committed result, and no stage reads its own output.
+
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph canonical
-        A[share/skeleton]
-        B[README + docs]
-        C[docs/CLAIMS.yaml]
+        R[capability! and module! declarations, src/cli.rs]
+        K[share/kinds.yaml, schemas, providers, policy]
+        D[README, docs/*.md, docs/claims, CLAIMS.yaml, RESPONSIBILITIES.yaml]
+        C[share/commands.yaml, use-cases.yaml, applications.yaml]
+        P[.ai/repo/project, rules, benchmarks]
     end
-    G[scripts/generate-site-data]
-    D[(site/data/generated/*.json)]
-    K[site/content/docs/*.md]
-    Z[zola build]
-    T[Tailwind + Flowbite CSS]
-    P[site/public]
-    A --> G
-    B --> G
-    C --> G
-    G --> D
-    G --> K
-    D --> Z
-    K --> Z
-    T --> Z
-    Z --> P
+    subgraph stageA[stage A · majordomus generate, code only]
+        GA[docs/generated: openapi.json, registry.json, capabilities.md, cli.md, modules/*.md · share/allow/*.txt · AGENTS.md, CLAUDE.md]
+    end
+    subgraph stageB[stage B · scripts/generate-site-data]
+        GB[site/data/generated/*.json · site/content/** · docs/SITE_CLAIMS.md, PLAN_STATUS.md]
+    end
+    subgraph stageC[stage C · majordomus generate, over the index]
+        GC[site/data/registry/registry.json · docs/generated/benchmarks.md]
+    end
+    subgraph build[scripts/site-build]
+        Z[zola + Tailwind → site/public · build.json]
+    end
+    R --> GA
+    K --> GA
+    D --> GB
+    C --> GB
+    P --> GB
+    GA -->|registry.json, openapi.json| GB
+    R --> GC
+    P --> GC
+    GB -->|the derived documents are objects of the index| GC
+    GB --> Z
+    GC --> Z
 ```
+
+| stage | generator | reads | writes | checked by |
+|---|---|---|---|---|
+| A | `majordomus generate` | the Rust declarations, `share/`, the policy and the provider templates | `docs/generated/{openapi.json,registry.json,capabilities.md,cli.md,modules/*.md}`, `share/allow/*.txt`, the provider bootstraps | `majordomus generate --check` |
+| B | `scripts/generate-site-data` | every canonical file (`--inputs` lists them) and stage A's `registry.json` and `openapi.json` | `site/data/generated/*.json`, `site/content/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` | `scripts/generate-site-data --check` (by input hash) |
+| C | `majordomus generate` | the Rust declarations and the index of the layer, which now holds the documents stage B wrote | `site/data/registry/registry.json`, `docs/generated/benchmarks.md` | `majordomus generate --check` |
+| build | `scripts/site-build` | stages B and C, the templates, the assets | `site/public/**`, `site/data/build.json`, `site/static/build.json` | `scripts/site-check`, `scripts/site-probe` |
+
+The boundary between the executable and the site is data, in both directions of reading:
+the site generator reads the registry manifest for the ids it turns into routes and never
+parses Rust; the templates read the registry dataset for every fact about a capability and
+never restate one; the executable knows nothing of Zola. The manifest is a projection used
+as an interface between stages, not a second truth: a capability exists in one place, and
+`generate --check` refuses a manifest that no longer says what the declarations say.
+
+Why stage C exists: the dataset lists every object of the layer with its size, and the
+derived documents stage B writes are objects of the layer, so the dataset is derived after
+them. Stage C's outputs are read by nothing but the site build, so the graph has no cycle
+and a second `scripts/derive` on a clean tree changes nothing — `git status` stays empty,
+which `test/cases/51_derived_artifacts_committed.sh` and the release criterion require.
 
 `scripts/generate-site-data` reads every canonical input, normalises it once, and writes:
 
@@ -64,16 +107,60 @@ flowchart LR
 | `profiles.json` | `share/skeleton/profiles/*.yaml` | every profile, every field |
 | `policy.json` | `share/skeleton/policy.yaml` | the policy as structure, plus the raw text |
 | `capabilities.json` | `docs/CLAIMS.yaml` | every claim; the generator fails on a missing path or an untested guaranteed claim |
+| `commands.json` | `share/commands.yaml`, `docs/CLI.md`, the test cases | every shell command with its semantics, narrative and evidence |
+| `catalogue.json` | `share/use-cases.yaml`, `share/applications.yaml` | the use cases and applications, cross-referenced |
+| `doctrines.json` | the rule packages | every doctrine with its enforcement chain |
+| `plan.json` | `.ai/repo/project/` | milestones, issues, the dependency graph, derived status |
+| `openapi.json` | `docs/generated/openapi.json` | the HTTP API in the shape `api.html` renders (`scripts/lib/openapi-site.jq`) |
+| `executable.json` | `docs/generated/registry.json`, `capabilities.json` | one route per module and per capability, the executable's pages, API anchors, sources on GitHub, the claims attached to each surface by the path of their implementation (`scripts/lib/executable-site.jq`) |
 | `lifecycle.json` | `lib/finish.sh`, `share/skeleton/ai/repo/workflows/task-lifecycle.md`, `share/standard/majordomus/` | outcome vocabulary, divergence labels, lifecycle steps, the ten principles (the rules tagged `principle`) |
 | `diagrams.json` | the files above | Mermaid source projected from data |
 | `readme.json` | `README.md` | the sections the homepage renders, by heading; a renamed heading fails the build |
 | `docs.json` | `docs/README.md` | the documentation index |
-| `source.json` | git and the inputs | version, commit, input hash, generator version, input list |
+| `source.json` | the inputs | version, input hash, generator version, input list; no commit (see build provenance) |
 
 `site/content/docs/*.md` is written from `docs/*.md` with a generated front matter, links
 rewritten to site routes, and the whole body wrapped in a Tera `raw` block so that Tera never
 templates canonical Markdown. The tag itself cannot be written out here: a literal closing
 `raw` tag in a canonical document would end the wrapper the projection puts around it.
+`site/content/registry/executable.md` is `apps/majordomus-cli/README.md` through the same
+projection.
+
+## Derived files, classified
+
+| class | what | examples | rule |
+|---|---|---|---|
+| canonical | authored, the only place a fact lives | the Rust declarations, `share/*.yaml`, `docs/*.md`, `docs/CLAIMS.yaml`, `.ai/repo/**`, templates, `nav.toml`, `marketing.toml` | edited by hand |
+| derived, committed | a projection reviewers see on GitHub and CI compares with its sources | `docs/generated/**`, `share/allow/**`, `AGENTS.md`, `CLAUDE.md`, `site/data/generated/**`, `site/data/registry/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` | regenerated with `scripts/derive`, committed with the change that moved it; `scripts/derive-check` refuses drift |
+| derived, build only | rebuilt on every build, never committed | `site/content/{docs,registry,commands,...}/`, `site/static/{app.css,js/,openapi.json,build.json}`, `site/data/build.json`, `site/public/**` | gitignored; `scripts/site-check` proves the build's own guards (`13e`, `13a`) |
+| local, ephemeral | this checkout's state | `.ai/local/**`, `apps/majordomus-cli/target/` | never a source of anything the site shows |
+
+## Where do I edit this?
+
+| I want to change | edit | never edit |
+|---|---|---|
+| a Rust capability's title, description, schema, stability, tags, benchmark or cache policy | its `capability!` declaration under `apps/majordomus-cli/src/capability/builtin/` | `docs/generated/**`, `site/data/registry/registry.json`, any `/registry/` page |
+| how a capability is exposed (MCP tool, resource, HTTP route, CLI path) | the `exposure` of the same declaration | `docs/generated/openapi.json`, `/docs/api/`, `/registry/mcp/` |
+| a module's title, description or stability | its `module!` declaration | `docs/generated/modules/*.md`, `/registry/modules/` |
+| the native command line: a command, an argument, a default, a value set | `apps/majordomus-cli/src/cli.rs` | `docs/generated/cli.md`, `/registry/cli/` |
+| the benchmark regression thresholds | `.ai/repo/benchmarks/rust/policy.yaml` | the policy table on `/registry/benchmarks/` |
+| an accepted baseline | `majordomus bench baseline update` on the platform it measures | the baseline JSON by hand |
+| what the executable is, owns, refuses; discovery; transports; side effects | `apps/majordomus-cli/README.md` | `/registry/executable/` |
+| a shell command's category, stage, reads, writes, syntax, exit codes | `share/commands.yaml` (semantics) and `docs/CLI.md` (narrative) | `commands.json`, `/commands/<name>/` |
+| a use case or an application | `share/use-cases.yaml`, `share/applications.yaml` | `catalogue.json`, its route |
+| a claim | `docs/CLAIMS.yaml` and `docs/claims/<id>.md` | `capabilities.json`, `docs/SITE_CLAIMS.md`, `/guarantees/` |
+| a doctrine | the rule file under `.ai/repo/rules/` or the vendored package | `doctrines.json`, `/doctrines/` |
+| a milestone or an issue | `.ai/repo/project/**` | `plan.json`, `docs/PLAN_STATUS.md`, `/plan/` |
+| a profile, the policy's schema | `share/skeleton/**` | `profiles.json`, `policy.json` |
+| a kind or a schema | `share/kinds.yaml`, `share/schemas/`, or `.ai/repo/knowledge/` for this repository | `share/allow/*.txt`, the kinds table |
+| the provider bootstraps | `.ai/repo/policy.yaml`, the provider templates | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` |
+| how a page looks | `site/templates/**`, `site/tailwind.css` | `site/data/generated/**` to make a template's life easier |
+| which pages the executable's section has, or how claims attach to its surfaces | `scripts/generate-site-data`, `scripts/lib/executable-site.jq` | a route list in a template or in `nav.toml` |
+| the editorial navigation | `site/data/nav.toml` — intents and their fixed pages | an entry per module or capability: those routes are enumerated by the generator, and `site-check` refuses one typed here |
+| the homepage's words | `site/data/marketing.toml` | a number, a claim word |
+
+After any edit in the left column: `just derive`, review the diff of the derived files,
+`just derive-check`, commit both together.
 
 ## Markdown rendering
 
@@ -183,12 +270,33 @@ and Open Graph metadata. The route classes and their sources:
 | `/limitations/`, `/roadmap/` | `readme.json` sections by heading | `readme-section.html` |
 | `/architecture/` | `site/content-src/architecture.md`, `source.json`, `diagrams.json` | `architecture.html` |
 | `/docs/`, `/docs/<doc>/` | `docs/*.md` listed in `docs/README.md` | `docs-section.html`, `docs-page.html` |
+| `/docs/api/`, `/openapi.json` | `openapi.json` (from `docs/generated/openapi.json`) | `api.html` |
+| `/doctrines/`, `/doctrines/<slug>/` | `doctrines.json` | `doctrines-section.html`, `doctrine.html` |
+| `/use-cases/`, `/use-cases/<id>/`, `/applications/`, `/applications/<id>/` | `catalogue.json` | `use-cases-section.html`, `use-case.html`, `applications-section.html`, `application.html` |
+| `/plan/`, `/plan/dag/`, `/plan/<id>/` | `plan.json` | `plan-section.html`, `dag.html`, `milestone.html`, `issue.html` |
+| `/evidence/`, `/map/` | `claims-graph.json`, `architecture.json` | `evidence.html`, `map.html` |
+| `/registry/` | `site/data/registry/registry.json`, `executable.json` | `registry.html` |
+| `/registry/executable/` | `apps/majordomus-cli/README.md`, `executable.json` (claims) | `registry-executable.html` |
+| `/registry/modules/`, `/registry/modules/<id>/` | the dataset's modules, `executable.json` | `registry-modules.html`, `registry-module.html` |
+| `/registry/capabilities/`, `/registry/capabilities/<slug>/` | the dataset's descriptors, benchmarks and coverage, `executable.json` (module, API anchor, source, claims, tests) | `registry-capabilities.html`, `registry-capability.html` |
+| `/registry/cli/` | the dataset's `cli` (the clap declaration) | `registry-cli.html` |
+| `/registry/mcp/` | the dataset's `mcp` (tools, resources, protocol) | `registry-mcp.html` |
+| `/registry/benchmarks/` | the dataset's `benchmarks` (targets, coverage, policy, baselines) | `registry-benchmarks.html` |
+| `/build.json` | `scripts/site-build` | — (served raw) |
 | `/render-test/` | `site/content-src/render-test.md`, `noindex` | `docs-page.html` |
 
-Navigation is `site/data/nav.toml`: five intents (Why, Get started, Concepts, Trust,
-Reference), rendered as Flowbite dropdowns on desktop and as labelled flat lists inside the
-collapsed menu on phones. `scripts/site-check` verifies every navigation and homepage link
-resolves and every tile class has its page.
+A capability's slug is its id with `.` replaced by `-` (`objects.search` →
+`/registry/capabilities/objects-search/`), the same rule the API reference uses for its
+operation anchors (`#op-objects-search`), so the two link each other without a table.
+
+Navigation is `site/data/nav.toml`: a handful of intents (Why, Get started, Concepts, Plan,
+Trust, Executable, Reference), rendered as Flowbite dropdowns on desktop and as labelled flat
+lists inside the collapsed menu on phones. It holds editorial intent — which fixed pages an
+intent leads to — and never an enumeration: the modules and capabilities are listed by the
+generator, and `scripts/site-check` refuses a module or capability route typed into it.
+`scripts/site-check` verifies every navigation and homepage link resolves, every tile class
+has its page, and for the executable's section that every module and capability of the
+dataset has its page and no page exists without its entry.
 
 ## Responsive strategy
 
@@ -213,32 +321,74 @@ disclosure works without JavaScript.
 
 ## GitHub Pages deployment
 
-`.github/workflows/pages.yml`: checkout → Node 22 → pinned Zola → `npm ci` →
-`bash test/run.sh` → `bin/majordomus doctor` → `scripts/generate-site-data --check` →
-`scripts/site-build` → `scripts/site-check` → `scripts/site-probe` → upload `site/public` →
-deploy. The site never
-deploys from a tree whose tests fail or whose derived data is stale.
+`.github/workflows/pages.yml`: checkout → Node 22 → pinned Zola → `npm ci` → Rust toolchain
+and cache → `bash test/run.sh` → `bin/majordomus doctor` → `scripts/derive-check` →
+`scripts/site-build` → `scripts/site-check` → `scripts/site-probe` → manifest (`source.json`
+and `build.json`) → upload `site/public` → deploy. The site never deploys from a tree whose
+tests fail, whose registry projections are stale (a capability edited in Rust without
+`majordomus generate`), or whose site data is stale (a document edited without
+`scripts/generate-site-data`, or a manifest regenerated without the site). The validation
+workflow proves the same chain across its jobs: the Rust job runs `generate --check`, the
+site job `generate-site-data --check`; a branch is green only when both are.
 
 ## Sync guarantee
 
-`scripts/generate-site-data --check` regenerates into a temporary directory and diffs every
-generated file and `docs/SITE_CLAIMS.md` against the committed ones; the input hash in
-`source.json` covers every canonical file the generator reads and is printed in the footer of
-every page. `test/cases/11_site_derivation.sh` changes the version, a profile description and
-effort, a principle, a policy value, a claim and a document heading in a scratch copy, and
-asserts each change appears in the derived data. `test/cases/10_site_data.sh` proves a missing
-path or an untested guaranteed claim fails the generator.
+`scripts/derive-check` is the one read-only gate; it composes the generators' own checks
+and names every stale artifact before it exits:
+
+- `majordomus generate --check` derives every projection of the registry, the schemas, the
+  policy and the index again and compares byte for byte: `docs/generated/**`,
+  `share/allow/**`, the provider bootstraps, `site/data/registry/registry.json`.
+- `scripts/generate-site-data --check` regenerates into a temporary directory and diffs every
+  generated file, `docs/SITE_CLAIMS.md` and `docs/PLAN_STATUS.md` against the committed ones;
+  `source.json` is compared by its input hash, which covers every canonical file the
+  generator reads, `docs/generated/registry.json` and `docs/generated/openapi.json` among
+  them, so a change to the executable's code moves the site's hash.
+
+The chain is tested edge by edge. `apps/majordomus-cli/tests/projections.rs` proves that a
+descriptor changed in code moves the OpenAPI document, the reference, the manifest and the
+site dataset, and only the sections that project it (an exposure removed moves the routes
+and the coverage, not the tools; a description moves the descriptor everywhere), and that
+the dataset's tools are the MCP surface's and its routes the document's.
+`test/cases/95_executable_reference.sh` proves that a capability added to the manifest gains
+its route, its index entries and its links from the site generator alone, that one removed
+loses them with no orphan left, and that a manifest naming an unknown module, a missing
+source file or another schema is refused. `scripts/site-check` proves the rendered side:
+every module and capability of the dataset has its page, no page exists without its entry,
+the CLI, MCP and benchmark pages render every command, tool, target and baseline, every
+capability page links its module and its operation, and no template, generator or
+navigation file names a capability by hand. `test/cases/11_site_derivation.sh` changes the
+version, a profile, a principle, a policy value, a claim and a document heading in a
+scratch copy and asserts each change appears in the derived data; `test/cases/10_site_data.sh`
+proves a missing path or an untested guaranteed claim fails the generator;
+`test/cases/51_derived_artifacts_committed.sh` proves the committed derived files match
+their sources and that none embeds the commit it lands in.
+
+The commit a page was built from is not a derived file's business: `scripts/site-build`
+writes `site/data/build.json` (for the footer and the architecture page) and
+`site/static/build.json`, served at `/build.json`, with the commit, whether the tree was
+dirty, the site's input hash and the registry and index fingerprints; `scripts/site-check`
+proves the served file names HEAD and the data the site was built from, so a deployment can
+be verified from outside against the commit that was meant to deploy.
 
 ## Local development
 
 ```
 npm ci                      # Tailwind, Flowbite, Alpine, Mermaid — pinned
 brew install zola           # or the release binary; CI pins 0.23.4
+just derive                 # every committed derived artifact, in order (scripts/derive)
+just derive-check           # is every committed derived artifact current? writes nothing
+just test                   # the shell suite, the Rust gates, derive-check
 scripts/site-serve          # generate, build, serve at http://127.0.0.1:1111/prismatic-majordomus/
 scripts/site-build          # production build into site/public/
 scripts/site-check          # the static checks CI runs
 scripts/site-probe          # the browser-measured checks (needs Chrome; --quick for one page per section)
 ```
+
+The one workflow after a change to anything canonical — a Rust declaration, a document, a
+claim, a command's semantics — is: `just derive`, review the diff of the derived files (it
+is the change, seen from every projection), `just derive-check`, commit both. Forgetting
+the first step is caught by the third, and by CI.
 
 ## Adding new canonical data
 
@@ -254,6 +404,9 @@ If it needs a class Tailwind cannot see in the templates, it does not belong her
 
 ## What must never be edited manually
 
-`site/data/generated/**`, `site/content/docs/**`, `site/content/render-test.md`,
-`docs/SITE_CLAIMS.md`, `site/static/app.css`, `site/static/js/**`, `site/static/images/**`,
-`site/public/**`, `CLAUDE.md`, `AGENTS.md`. Change the canonical file; rebuild.
+`docs/generated/**`, `share/allow/**`, `site/data/registry/**`, `site/data/generated/**`,
+`site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry}/**`,
+`site/content/render-test.md`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md`,
+`site/static/app.css`, `site/static/js/**`, `site/static/images/**`, `site/static/openapi.json`,
+`site/static/build.json`, `site/data/build.json`, `site/public/**`, `CLAUDE.md`, `AGENTS.md`.
+Change the canonical file; `just derive`; rebuild.
