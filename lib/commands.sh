@@ -21,15 +21,20 @@ mj_cmdreg_load() {
   [ "$(mj_yget "$MJ_CMDREG_FLAT" version)" = 1 ] || return 1
 }
 mj_cmdreg() { mj_yget "$MJ_CMDREG_FLAT" "commands.$1.$2"; }
-# ids of the commands the registry marks public, one per line
+# ids of the commands the registry marks public, one per line, in registry order. One pass
+# over the flat file: the previous shape ran one awk per index per field, and was called
+# from inside loops, which is where the command-coverage validator spent three seconds.
 mj_cmdreg_public() {
-  local i=0
-  while [ -n "$(mj_cmdreg "$i" id)" ]; do
-    [ "$(mj_cmdreg "$i" visibility)" = public ] && mj_cmdreg "$i" id
-    i=$((i+1))
-  done
+  awk -F= '/^commands\.[0-9]+\.(id|visibility)=/ {
+      split($1, k, "."); v = $0; sub(/^[^=]*=/, "", v)
+      if (k[3] == "id") id[k[2]] = v; else vis[k[2]] = v
+      if (k[2] + 0 > max) max = k[2] + 0 }
+    END { for (i = 0; i <= max; i++) if ((i in id) && vis[i] == "public") print id[i] }' "$MJ_CMDREG_FLAT"
 }
-mj_cmdreg_ids() { local i=0; while [ -n "$(mj_cmdreg "$i" id)" ]; do mj_cmdreg "$i" id; i=$((i+1)); done; }
+mj_cmdreg_ids() {
+  awk -F= '/^commands\.[0-9]+\.id=/ { split($1, k, "."); v = $0; sub(/^[^=]*=/, "", v); id[k[2]] = v; if (k[2] + 0 > max) max = k[2] + 0 }
+    END { for (i = 0; i <= max; i++) if (i in id) print id[i] }' "$MJ_CMDREG_FLAT"
+}
 # the commands the binary actually dispatches, read from the dispatch table
 mj_dispatched() {
   grep -oE '^  [a-z|]+\)$' "$MJ_BIN_DIR/majordomus" | tr -d ' )' | tr '|' '\n' | sort -u
@@ -44,8 +49,8 @@ mj_validate_command_surface() {
     mj_doctrine_skip command "surface" "no share/commands.yaml in this installation" "ls share/commands.yaml"
     return 0
   fi
-  local ids public c bad=0 dupes
-  ids="$(mj_cmdreg_ids)"; public="$(mj_cmdreg_public)"
+  local ids public dispatched c bad=0 dupes
+  ids="$(mj_cmdreg_ids)"; public="$(mj_cmdreg_public)"; dispatched="$(mj_dispatched)"
 
   dupes="$(printf '%s\n' "$ids" | sort | uniq -d)"
   if [ -n "$dupes" ]; then
@@ -53,13 +58,13 @@ mj_validate_command_surface() {
     bad=1
   fi
 
-  for c in $(mj_dispatched); do
+  for c in $dispatched; do
     printf '%s\n' "$ids" | grep -Fxq "$c" || {
       mj_doctrine_fail command "$c" "dispatched by bin/majordomus but absent from share/commands.yaml" "grep -n 'id: $c' share/commands.yaml"; bad=1; }
   done
   for c in $public; do
     [ "$c" = version ] && continue      # dispatched ahead of the option parser
-    printf '%s\n' "$(mj_dispatched)" | grep -Fxq "$c" || {
+    printf '%s\n' "$dispatched" | grep -Fxq "$c" || {
       mj_doctrine_fail command "$c" "declared public but bin/majordomus does not dispatch it" "grep -n '$c)' bin/majordomus"; bad=1; }
   done
   # a command is public exactly when the usage text lists it, in both directions
@@ -84,19 +89,19 @@ mj_validate_command_coverage() {
     mj_doctrine_skip command "coverage" "this installation carries no test suite to measure" "ls test/cases"
     return 0
   fi
-  local f c bad=0 declared="" behaviour="" negative=""
-  for f in "$cases"/*.sh; do
-    [ -f "$f" ] || continue
-    declared="$declared $(sed -n 's/^# majordomus-covers: *//p' "$f" | head -1)"
-    behaviour="$behaviour $(sed -n 's/^# majordomus-covers: *//p' "$f" | head -1)"
-    negative="$negative $(sed -n 's/^# majordomus-negative: *//p' "$f" | head -1)"
-  done
+  local f c bad=0 declared="" behaviour="" negative="" public
+  # every header of every case in one pass: the first covers line and the first negative
+  # line of each file, as the per-file sed pipelines read them before
+  behaviour="$(awk 'FNR == 1 { c = 0 } c == 0 && sub(/^# majordomus-covers: */, "") { printf " %s", $0; c = 1 }' "$cases"/*.sh)"
+  negative="$(awk 'FNR == 1 { c = 0 } c == 0 && sub(/^# majordomus-negative: */, "") { printf " %s", $0; c = 1 }' "$cases"/*.sh)"
+  declared="$behaviour"
+  public="$(mj_cmdreg_public)"
   [ -n "$(printf '%s' "$declared" | tr -d ' ')" ] || {
     MJ_DOCTRINE_SKIPPED=1
     mj_doctrine_skip command "coverage" "no case declares what it covers" "grep -rn 'majordomus-covers' test/cases/"
     return 0; }
 
-  for c in $(mj_cmdreg_public); do
+  for c in $public; do
     case " $behaviour " in *" $c "*) ;;
       *) mj_doctrine_fail command "$c" "no test case declares behaviour coverage of it" "grep -rn 'majordomus-covers' test/cases/"; bad=1 ;;
     esac
@@ -107,7 +112,7 @@ mj_validate_command_coverage() {
   # a header naming a command that does not exist is a broken reference, not documentation
   for c in $(printf '%s\n' $behaviour $negative | sort -u); do
     [ "$c" = none ] && continue
-    mj_cmdreg_public | grep -Fxq "$c" || {
+    printf '%s\n' "$public" | grep -Fxq "$c" || {
       mj_doctrine_fail command "$c" "a test case declares coverage of it, but it is not a public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1; }
   done
 

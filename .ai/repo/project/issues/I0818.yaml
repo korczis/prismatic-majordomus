@@ -28,5 +28,15 @@ validation:
 evidence_required:
   - batch_reads
 risk: "A batch read must produce exactly the per-key results; the cases that mutate the registry are the proof."
+started_at: 2026-09-05T01:50:00Z
+verified_at: 2026-09-05T02:05:00Z
+completed_at: 2026-09-05T02:05:00Z
+evidence:
+  - covers: batch_reads
+    type: test
+    command: "MJ_TIMING=1 bin/majordomus doctor"
+    result: "validate:command_coverage went from 3080 ms to 74 ms and validate:command_surface from 352 ms to 141 ms on this repository; mj_cmdreg_public and mj_cmdreg_ids are one awk each, the coverage validator reads every case header in one pass and the public list once, the surface validator reads the dispatch table once, and mj_event_index is one pass; cases 15, 22, 30, 31, 33, 35 and 36 pass unchanged, including the mutations that remove a registry entry and add a dispatcher-only command"
+    commit: 8c86650
+    recorded_at: 2026-09-05T02:05:00Z
 created_at: 2026-09-05
 updated_at: 2026-09-05

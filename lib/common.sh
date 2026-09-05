@@ -526,14 +526,10 @@ mj_events_load() {
 # file on every call and leaking a temporary file each time.
 mj_event_ids() { sed -n 's/^events\.[0-9]*\.id=//p' "$MJ_EV_FLAT"; }
 mj_event_known() { mj_event_ids | grep -Fxq "$1"; }
-# the index of one event, so its other fields can be read
+# the index of one event, so its other fields can be read: one pass, not one awk per index
 mj_event_index() {
-  local i=0
-  while [ -n "$(mj_yget "$MJ_EV_FLAT" "events.$i.id")" ]; do
-    [ "$(mj_yget "$MJ_EV_FLAT" "events.$i.id")" = "$1" ] && { printf '%s' "$i"; return 0; }
-    i=$((i+1))
-  done
-  return 1
+  awk -F= -v want="$1" '/^events\.[0-9]+\.id=/ { v = $0; sub(/^[^=]*=/, "", v); if (v == want) { split($1, k, "."); print k[2]; found = 1; exit } }
+    END { exit found ? 0 : 1 }' "$MJ_EV_FLAT"
 }
 mj_event_requires() {
   local i; i="$(mj_event_index "$1")" || return 0
