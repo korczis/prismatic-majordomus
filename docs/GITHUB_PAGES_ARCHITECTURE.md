@@ -15,10 +15,10 @@ being maintained separately from the repository that backs it.
 | layer | owns | lives in | edited by hand |
 |---|---|---|---|
 | product truth | policy schema, profiles, the worker instructions, the shell CLI | `share/skeleton/**`, `bin/majordomus`, `lib/**`, `share/commands.yaml` | yes |
-| the Rust executable | every capability with its schemas, exposures, stability, provenance, benchmark and cache policy; the modules; the command line | `capability!` and `module!` declarations under `apps/majordomus-cli/src/capability/builtin/`, `apps/majordomus-cli/src/cli.rs` (clap) | yes |
+| the Rust executable | every capability with its schemas, exposures, stability, provenance, benchmark and cache policy; the modules; the command line with the examples of every command | `capability!` and `module!` declarations under `apps/majordomus-cli/src/capability/builtin/`, `apps/majordomus-cli/src/cli.rs` (clap for the structure, `cli::EXAMPLES` for the examples) | yes |
 | the executable's narrative | what the crate is, owns and refuses; discovery, transports, side effects, architecture | `apps/majordomus-cli/README.md`, `docs/CAPABILITIES.md`, `docs/MCP.md` | yes |
 | benchmark evidence | the regression policy and the accepted baselines | `.ai/repo/benchmarks/rust/policy.yaml`, `.ai/repo/benchmarks/rust/baseline.<platform>.json` | policy yes; a baseline by `majordomus bench baseline update` |
-| registry projections | the OpenAPI document, the registry manifest, the capability, module, command-line and benchmark references | `docs/generated/**` | never — `majordomus generate` |
+| registry projections | the OpenAPI document, the registry manifest, the capability, module and benchmark references, and the command line as Markdown and as data | `docs/generated/**` | never — `majordomus generate` |
 | registry dataset | everything the site renders about the executable: descriptors, modules, command line, MCP and HTTP surfaces, benchmarks, the index | `site/data/registry/registry.json` | never — `majordomus generate site` |
 | public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
 | claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
@@ -31,6 +31,7 @@ being maintained separately from the repository that backs it.
 | derived release artifact | the claims matrix as Markdown | `docs/SITE_CLAIMS.md` | never |
 | derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command, doctrine, use case, application, milestone, issue, case study, module and capability | `site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry}/`, `render-test.md`, `architecture.md` | never |
 | derived routes and links for the executable | one route per module and per capability, the executable's pages, the API anchor, the source on GitHub, the claims attached to each surface | `site/data/generated/executable.json` | never |
+| the native command line, as the site renders it | the command tree flattened, each command with its route, usage, arguments, children and executed examples | `site/data/generated/cli.json` (from `docs/generated/cli.json`, via `scripts/lib/cli-site.jq`) | never |
 | build provenance | the commit and its cleanliness, the site's input hash, the registry and index fingerprints | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
 | presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
 | styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
@@ -48,14 +49,14 @@ renders templates over what both wrote. `scripts/derive` runs the stages in orde
 ```mermaid
 flowchart TB
     subgraph canonical
-        R[capability! and module! declarations, src/cli.rs]
+        R[capability! and module! declarations, src/cli.rs with cli::EXAMPLES]
         K[share/kinds.yaml, schemas, providers, policy]
         D[README, docs/*.md, docs/claims, CLAIMS.yaml, RESPONSIBILITIES.yaml]
         C[share/commands.yaml, use-cases.yaml, applications.yaml]
         P[.ai/repo/project, rules, benchmarks]
     end
     subgraph stageA[stage A · majordomus generate, code only]
-        GA[docs/generated: openapi.json, registry.json, capabilities.md, cli.md, modules/*.md · share/allow/*.txt · AGENTS.md, CLAUDE.md]
+        GA[docs/generated: openapi.json, registry.json, capabilities.md, cli.md, cli.json, modules/*.md · share/allow/*.txt · AGENTS.md, CLAUDE.md]
     end
     subgraph stageB[stage B · scripts/generate-site-data]
         GB[site/data/generated/*.json · site/content/** · docs/SITE_CLAIMS.md, PLAN_STATUS.md]
@@ -71,7 +72,7 @@ flowchart TB
     D --> GB
     C --> GB
     P --> GB
-    GA -->|registry.json, openapi.json| GB
+    GA -->|registry.json, openapi.json, cli.json| GB
     R --> GC
     P --> GC
     GB -->|the derived documents are objects of the index| GC
@@ -142,7 +143,8 @@ projection.
 | a Rust capability's title, description, schema, stability, tags, benchmark or cache policy | its `capability!` declaration under `apps/majordomus-cli/src/capability/builtin/` | `docs/generated/**`, `site/data/registry/registry.json`, any `/registry/` page |
 | how a capability is exposed (MCP tool, resource, HTTP route, CLI path) | the `exposure` of the same declaration | `docs/generated/openapi.json`, `/docs/api/`, `/registry/mcp/` |
 | a module's title, description or stability | its `module!` declaration | `docs/generated/modules/*.md`, `/registry/modules/` |
-| the native command line: a command, an argument, a default, a value set | `apps/majordomus-cli/src/cli.rs` | `docs/generated/cli.md`, `/registry/cli/` |
+| the native command line: a command, an argument, a default, a value set | the clap declaration in `apps/majordomus-cli/src/cli.rs` | `docs/generated/cli.md`, `docs/generated/cli.json`, `site/data/generated/cli.json`, `/registry/cli/`, `/docs/cli/**` |
+| an example of a native command, or adding a command that has none | `cli::EXAMPLES` in the same file, beside the declaration | an example written into a template, a page or `cli.md`: the pages render the argument vectors the crate's tests execute |
 | the benchmark regression thresholds | `.ai/repo/benchmarks/rust/policy.yaml` | the policy table on `/registry/benchmarks/` |
 | an accepted baseline | `majordomus bench baseline update` on the platform it measures | the baseline JSON by hand |
 | what the executable is, owns, refuses; discovery; transports; side effects | `apps/majordomus-cli/README.md` | `/registry/executable/` |
@@ -271,6 +273,7 @@ and Open Graph metadata. The route classes and their sources:
 | `/architecture/` | `site/content-src/architecture.md`, `source.json`, `diagrams.json` | `architecture.html` |
 | `/docs/`, `/docs/<doc>/` | `docs/*.md` listed in `docs/README.md` | `docs-section.html`, `docs-page.html` |
 | `/docs/api/`, `/openapi.json` | `openapi.json` (from `docs/generated/openapi.json`) | `api.html` |
+| `/docs/cli/`, `/docs/cli/<command path>/` | `cli.json` (from `docs/generated/cli.json`, itself the clap declaration and `cli::EXAMPLES`) | `docs-cli.html`, `docs-cli-group.html`, `docs-cli-command.html` |
 | `/doctrines/`, `/doctrines/<slug>/` | `doctrines.json` | `doctrines-section.html`, `doctrine.html` |
 | `/use-cases/`, `/use-cases/<id>/`, `/applications/`, `/applications/<id>/` | `catalogue.json` | `use-cases-section.html`, `use-case.html`, `applications-section.html`, `application.html` |
 | `/plan/`, `/plan/dag/`, `/plan/<id>/` | `plan.json` | `plan-section.html`, `dag.html`, `milestone.html`, `issue.html` |
@@ -293,14 +296,40 @@ are HTML ids Zola never touches, so they replace only the `.` (`#op-objects-sear
 `#op-repository-scope_classify`); `executable.json` carries both spellings (`slug`,
 `api_anchor`), so the two link each other without a table.
 
+A native command's route is its path under `/docs/cli/`, one segment per word, with a
+trailing slash: `["majordomus", "bench", "baseline", "update"]` is
+`/docs/cli/bench/baseline/update/`. The rule is one function in the executable
+(`cli::route`), the route it produced is carried in `docs/generated/cli.json`, and every
+consumer downstream — the site generator, the templates, `site-check`, `site-probe` — reads
+that field rather than deriving one of its own. A command that has commands under it is a
+Zola section so that its children have routes beneath it, and a command that has none is a
+page; which it is comes from the data, so a command that grows a subcommand changes shape by
+itself. `site-check` compares the declared routes and the built ones as sets, both ways: a
+command with no page fails, and a page whose command the executable no longer has fails as an
+orphan.
+
+`/docs/cli/` belongs to the *native* command line, the Rust executable's. `docs/CLI.md`
+specifies the **shell** tool `bin/majordomus` — a different program, whose structured
+reference is `/commands/` — and renders at `/docs/cli-specification/`. The rule that turns a
+document into a route is one function in the site generator (`doc_slug`), and the route it
+produced is recorded in `docs.json`, so the link rewriting, the pages and `site-check` read
+it instead of each computing a slug. Do not describe `share/commands.yaml` or `docs/CLI.md`
+as sources for the Rust executable: they are the shell tool's, and the two command surfaces
+are documented apart on purpose.
+
 Navigation is `site/data/nav.toml`: a handful of intents (Why, Get started, Concepts, Plan,
 Trust, Executable, Reference), rendered as Flowbite dropdowns on desktop and as labelled flat
 lists inside the collapsed menu on phones. It holds editorial intent — which fixed pages an
 intent leads to — and never an enumeration: the modules and capabilities are listed by the
 generator, and `scripts/site-check` refuses a module or capability route typed into it.
 `scripts/site-check` verifies every navigation and homepage link resolves, every tile class
-has its page, and for the executable's section that every module and capability of the
-dataset has its page and no page exists without its entry.
+has its page, for the executable's section that every module and capability of the dataset
+has its page and no page exists without its entry, and for the command line that the routes
+under `/docs/cli/` are exactly the commands the executable declares, that each page renders
+its own usage, arguments and example anchors and links up and down, and that no command
+route is typed by hand into a template, the generator or the navigation. `scripts/site-probe`
+then fetches every declared command route from a running server and reads the deepest command
+page back.
 
 ## Responsive strategy
 
