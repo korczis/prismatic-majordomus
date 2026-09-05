@@ -377,135 +377,308 @@ pub struct GenerateArgs {
 // ------------------------------------------------------------------ the command line as data
 //
 // clap is the one declaration of the command line: every command, argument, default and
-// value set above. The reference of the native CLI (`docs/generated/cli.md`, the site's
-// page for it) is rendered from this walk of the built `Command`, never from `--help`
-// prose and never from a list kept beside the declaration.
+// value set above. What clap cannot carry — the examples a reader copies — is declared
+// below, in the same file, in typed Rust. Both halves are walked into `CommandDoc` by
+// `cli::tree()`, and every projection of the native command line is a rendering of that
+// tree: `--help`, `docs/generated/cli.md`, `docs/generated/cli.json`, the site dataset and
+// the routes under /docs/cli/. `cli::validate` is the contract that keeps the two halves
+// complete, and the example tests execute exactly the argv shown below.
 
-/// One command of the executable's command line, as clap declares it, with the commands
-/// under it. The root is `majordomus`.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-pub struct CommandDoc {
-    /// The full path, `["majordomus", "bench", "coverage"]`.
-    pub path: Vec<String>,
-    /// The one-line description.
-    pub about: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    /// The long description, when the command has one.
-    pub long_about: Option<String>,
-    /// The arguments in declaration order: positionals and options, `--help` and
-    /// `--version` excluded.
-    pub args: Vec<ArgDoc>,
-    /// The subcommands in declaration order.
-    pub subcommands: Vec<CommandDoc>,
+mod docs;
+mod validate;
+
+pub use docs::tree;
+pub use docs::{
+    document, render, route, ArgDoc, CliDocument, CommandDoc, ExampleView, PossibleValueDoc,
+    SetupView, DECLARATION, ROUTE_PREFIX, SCHEMA,
+};
+pub use validate::{parse, validate, Violation};
+
+/// What an example's run must show for the example to be true. Small on purpose: enough to
+/// prove that the command line printed in the documentation does what the documentation
+/// says, and no more. A new variant is a new kind of evidence, not a new test framework.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Expect {
+    /// The command exits 0.
+    Success,
+    /// The command exits with exactly this code.
+    ExitCode(u8),
+    /// The command exits 0 and its stdout contains every fragment.
+    StdoutContains(&'static [&'static str]),
+    /// The command exits 0 and its stdout is one JSON document in which every JSON Pointer
+    /// resolves (RFC 6901, `/registry/fingerprint`).
+    Json(&'static [&'static str]),
+    /// A server: it starts, logs the address it bound, answers a GET on this path with a
+    /// 2xx status, and exits 0 when it is asked to stop.
+    HttpReady(&'static str),
+    /// The stdio MCP server: it starts, answers `initialize` and `tools/list` with JSON-RPC
+    /// frames on stdout and nothing else, and exits 0 at end of input.
+    McpReady,
 }
 
-/// One argument of a command.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-pub struct ArgDoc {
-    /// The argument's id, `transport`.
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    /// `--transport`, without the dashes.
-    pub long: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    /// `-t`, without the dash.
-    pub short: Option<char>,
-    /// Given by position rather than by flag.
-    pub positional: bool,
-    /// The help text.
-    pub help: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    /// The placeholder for the value, `PATH`.
-    pub value_name: Option<String>,
-    /// Whether the argument takes a value at all (a flag does not).
-    pub takes_value: bool,
-    /// Must be given.
-    pub required: bool,
-    /// Accepted by every command under the one that declares it.
-    pub global: bool,
-    /// The values a value-enum argument accepts, with the help of each; empty for any
-    /// other argument. Always present, so a template can ask for its length.
-    pub possible_values: Vec<PossibleValueDoc>,
-    /// The default value(s), as clap renders them; empty when there is none.
-    pub defaults: Vec<String>,
-}
-
-/// One value of a value-enum argument.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
-pub struct PossibleValueDoc {
-    /// The value as typed.
-    pub name: String,
-    /// Its help, when it has one.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub help: Option<String>,
-}
-
-/// The whole command line, from the built clap declaration. Deterministic: clap keeps
-/// declaration order, and nothing here depends on the environment.
-pub fn tree() -> CommandDoc {
-    use clap::CommandFactory;
-    let mut root = Cli::command();
-    root.build();
-    walk(&root, Vec::new())
-}
-
-fn walk(cmd: &clap::Command, mut path: Vec<String>) -> CommandDoc {
-    path.push(cmd.get_name().to_string());
-    let args = cmd
-        .get_arguments()
-        .filter(|a| !matches!(a.get_id().as_str(), "help" | "version"))
-        .map(|a| ArgDoc {
-            name: a.get_id().to_string(),
-            long: a.get_long().map(str::to_string),
-            short: a.get_short(),
-            positional: a.is_positional(),
-            help: a.get_help().map(|h| h.to_string()).unwrap_or_default(),
-            value_name: a
-                .get_value_names()
-                .and_then(|names| names.first())
-                .map(|n| n.to_string()),
-            takes_value: a.get_action().takes_values(),
-            required: a.is_required_set(),
-            global: a.is_global_set(),
-            possible_values: a
-                .get_possible_values()
-                .into_iter()
-                .filter(|v| !v.is_hide_set())
-                .map(|v| PossibleValueDoc {
-                    name: v.get_name().to_string(),
-                    help: v.get_help().map(|h| h.to_string()),
-                })
-                .collect(),
-            defaults: a
-                .get_default_values()
-                .iter()
-                .map(|v| v.to_string_lossy().into_owned())
-                .collect(),
-        })
-        .collect();
-    // clap adds a `help` subcommand to every command that has subcommands; it documents
-    // nothing of its own and is left out, as `--help` is among the arguments
-    let subcommands = cmd
-        .get_subcommands()
-        .filter(|s| !s.is_hide_set() && s.get_name() != "help")
-        .map(|s| walk(s, path.clone()))
-        .collect();
-    CommandDoc {
-        path,
-        about: cmd.get_about().map(|a| a.to_string()).unwrap_or_default(),
-        long_about: cmd.get_long_about().map(|a| a.to_string()),
-        args,
-        subcommands,
-    }
-}
-
-impl CommandDoc {
-    /// Every command, this one first, then the subcommands depth first.
-    pub fn flatten(&self) -> Vec<&CommandDoc> {
-        let mut out = vec![self];
-        for s in &self.subcommands {
-            out.extend(s.flatten());
+impl Expect {
+    /// What the example test asserts, in one phrase, for the reference to print.
+    pub fn describe(self) -> String {
+        match self {
+            Expect::Success => "exits 0".to_string(),
+            Expect::ExitCode(c) => format!("exits {c}"),
+            Expect::StdoutContains(f) => format!("exits 0; prints {}", f.join(", ")),
+            Expect::Json(p) => format!(
+                "exits 0; prints one JSON document carrying {}",
+                p.join(", ")
+            ),
+            Expect::HttpReady(path) => {
+                format!("binds a port, answers GET {path}, exits 0 when stopped")
+            }
+            Expect::McpReady => {
+                "answers initialize and tools/list on stdio, and exits 0 at end of input"
+                    .to_string()
+            }
         }
-        out
     }
 }
+
+/// One documented example of one command: what it shows, the argument vector it runs, what
+/// must happen when it runs, and anything that has to be done first. The argument vector is
+/// the canonical form; the command line a reader copies is rendered from it, never written
+/// out a second time.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ExampleDoc {
+    /// Unique across the whole command line; the anchor of the example on its page.
+    pub id: &'static str,
+    /// One line: what this example shows.
+    pub title: &'static str,
+    /// What it does and what comes back.
+    pub description: &'static str,
+    /// The arguments, without the executable's own name.
+    pub argv: &'static [&'static str],
+    /// Commands run in the same repository before it, in order; usually empty.
+    pub setup: &'static [&'static [&'static str]],
+    /// What the run must show.
+    pub expect: Expect,
+}
+
+/// The examples of one command, by the command's path without `majordomus`. The root is the
+/// empty string. `cli::validate` refuses a set whose command the clap declaration does not
+/// have, a command that can be run and has no set, and an example whose argv this crate's
+/// own parser does not accept.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CommandExamples {
+    /// `bench baseline update`; the empty string is the root.
+    pub command: &'static str,
+    /// Its examples, in the order the reference prints them.
+    pub examples: &'static [ExampleDoc],
+}
+
+/// Every documented example of the native command line.
+///
+/// This is the canonical declaration: `docs/generated/cli.md`, `docs/generated/cli.json`,
+/// the site dataset and every page under `/docs/cli/` render these entries, and
+/// `apps/majordomus-cli/tests/cli_examples.rs` runs them against the built executable in a
+/// disposable repository. Adding a command without adding its example does not pass
+/// `cli::validate`, and therefore does not pass the crate's tests or CI.
+pub const EXAMPLES: &[CommandExamples] = &[
+    CommandExamples {
+        command: "mcp",
+        examples: &[
+            ExampleDoc {
+                id: "mcp-inspect",
+                title: "See what would be served, without serving it",
+                description: "Builds the registry and the index of the repository in the working directory and prints the repository, the capabilities, the objects and every diagnostic, then exits. Nothing is served and nothing is written.",
+                argv: &["mcp", "--inspect"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["repository", "capabilities"]),
+            },
+            ExampleDoc {
+                id: "mcp-inspect-json",
+                title: "The same, as one JSON document for a script",
+                description: "The shape `--inspect` prints for a person, as JSON: the repository, its discovery mode, the capabilities and the diagnostics, deterministic and safe to diff.",
+                argv: &["mcp", "--inspect", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/repository/repository/root", "/tools"]),
+            },
+            ExampleDoc {
+                id: "mcp-stdio",
+                title: "Serve one MCP client on stdio",
+                description: "The form an MCP client spawns: JSON-RPC frames in on stdin, frames out on stdout, logs on stderr, and the session ends at end of input. `--standalone` keeps this process to itself: no shared server, no HTTP, nothing written anywhere.",
+                argv: &["mcp", "--standalone"],
+                setup: &[],
+                expect: Expect::McpReady,
+            },
+        ],
+    },
+    CommandExamples {
+        command: "serve",
+        examples: &[ExampleDoc {
+            id: "serve-ephemeral-port",
+            title: "Serve the same capabilities over HTTP on a free port",
+            description: "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
+            argv: &["serve", "--port", "0"],
+            setup: &[],
+            expect: Expect::HttpReady("/openapi.json"),
+        }],
+    },
+    CommandExamples {
+        command: "capabilities list",
+        examples: &[
+            ExampleDoc {
+                id: "capabilities-list-cli",
+                title: "Which capabilities the command line itself dispatches to",
+                description: "One line per capability exposed through the `cli` projection, with the projections of each. The registry answers this; no list of capabilities is written in the command line's own declaration.",
+                argv: &["capabilities", "list", "--exposure", "cli"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["capabilities.list", "capabilities.describe"]),
+            },
+            ExampleDoc {
+                id: "capabilities-list-json",
+                title: "Every capability as one JSON document",
+                description: "The whole registry for a script: each capability with its kind, its provenance and every projection it has.",
+                argv: &["capabilities", "list", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/capabilities"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "capabilities describe",
+        examples: &[ExampleDoc {
+            id: "capabilities-describe-objects-get",
+            title: "One capability in full, by its canonical id",
+            description: "Its kind, its input and output schemas, where it was composed, and every projection of it: the MCP tool or resource, the HTTP route, the CLI path.",
+            argv: &["capabilities", "describe", "objects.get"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["objects.get", "GET /api/v1/object"]),
+        }],
+    },
+    CommandExamples {
+        command: "capabilities schema",
+        examples: &[ExampleDoc {
+            id: "capabilities-schema-output",
+            title: "The canonical output schema of a capability",
+            description: "The JSON Schema the MCP and OpenAPI projections are derived from; `--side input` prints the schema of what the capability accepts.",
+            argv: &["capabilities", "schema", "objects.get", "--side", "output"],
+            setup: &[],
+            expect: Expect::Json(&["/title"]),
+        }],
+    },
+    CommandExamples {
+        command: "capabilities validate",
+        examples: &[ExampleDoc {
+            id: "capabilities-validate",
+            title: "Prove the registry and every projection of it",
+            description: "Builds the registry, the MCP and HTTP surfaces, the OpenAPI document, the command line's documentation and the benchmark coverage, and names every failure. Exit 10 when anything is unmet.",
+            argv: &["capabilities", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["validate: 0 failure(s)", "OK   cli"]),
+        }],
+    },
+    CommandExamples {
+        command: "generate",
+        examples: &[
+            ExampleDoc {
+                id: "generate-all",
+                title: "Write every committed projection",
+                description: "The OpenAPI document, the capability reference, the command-line reference and its JSON, the registry manifest, the benchmark matrix, the shell tool's allow-lists, the provider bootstraps and the site's registry dataset — all from the one registry and the one clap declaration.",
+                argv: &["generate"],
+                setup: &[],
+                expect: Expect::Success,
+            },
+            ExampleDoc {
+                id: "generate-check",
+                title: "Refuse a tree whose projections are stale",
+                description: "Writes nothing and compares instead: exit 0 when every committed projection is what the sources produce, exit 10 with each stale file named. This is the form CI runs.",
+                argv: &["generate", "--check"],
+                setup: &[&["generate"]],
+                expect: Expect::Success,
+            },
+            ExampleDoc {
+                id: "generate-one-target",
+                title: "One target only",
+                description: "Each target can be written on its own while a change is iterated on; `majordomus generate` with no target writes all of them.",
+                argv: &["generate", "openapi"],
+                setup: &[],
+                expect: Expect::Success,
+            },
+        ],
+    },
+    CommandExamples {
+        command: "bench",
+        examples: &[ExampleDoc {
+            id: "bench-direct-quick",
+            title: "Time the capabilities in process",
+            description: "The quick profile takes few samples, and `--transport direct` measures the executor without spawning a server. Nothing is written under .ai/local/ with `--no-write`.",
+            argv: &[
+                "bench",
+                "--transport",
+                "direct",
+                "--profile",
+                "quick",
+                "--no-write",
+                "--format",
+                "json",
+            ],
+            setup: &[],
+            expect: Expect::Json(&["/results", "/profile"]),
+        }],
+    },
+    CommandExamples {
+        command: "bench coverage",
+        examples: &[
+            ExampleDoc {
+                id: "bench-coverage-json",
+                title: "Every required benchmark target and whether it is covered",
+                description: "The denominator is generated from the registry: every executable capability, on every transport it is exposed on, plus the transports' own operations.",
+                argv: &["bench", "coverage", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/lines", "/tallies"]),
+            },
+            ExampleDoc {
+                id: "bench-coverage-check",
+                title: "Fail when a target is missing",
+                description: "Exit 10 when any required target is uncovered or waived, so a capability that nothing times cannot be merged.",
+                argv: &["bench", "coverage", "--check"],
+                setup: &[],
+                expect: Expect::Success,
+            },
+        ],
+    },
+    CommandExamples {
+        command: "bench baseline update",
+        examples: &[ExampleDoc {
+            id: "bench-baseline-update-quick",
+            title: "Record this platform's accepted baseline",
+            description: "Runs the benchmarks and writes the result under .ai/repo/benchmarks/rust/ as a tracked, reviewable file. The full profile is the default; the quick profile is for trying the path out. A dirty work tree is refused unless --allow-dirty says otherwise.",
+            argv: &[
+                "bench",
+                "baseline",
+                "update",
+                "--profile",
+                "quick",
+                "--allow-dirty",
+            ],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "scope",
+        examples: &[
+            ExampleDoc {
+                id: "scope-declaration",
+                title: "What a worker reads of this repository",
+                description: "With no path, the declaration itself and the tally: how many tracked files are in the scope and how many are out.",
+                argv: &["scope"],
+                setup: &[],
+                expect: Expect::Success,
+            },
+            ExampleDoc {
+                id: "scope-paths-json",
+                title: "Judge paths, and say which rule decided",
+                description: "For each path: in or out, and the rule that decided it. `--check` exits 10 when any path given is out, which is how a hook refuses to read one.",
+                argv: &["scope", "docs/CLI.md", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/0/verdict", "/0/rule"]),
+            },
+        ],
+    },
+];

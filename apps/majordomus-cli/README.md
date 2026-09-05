@@ -108,13 +108,26 @@ distribution already declares is an error naming both files.
 
 ## Command reference
 
-The command line is declared once, in `src/cli.rs` (clap). Its reference is generated from
-that declaration and never written by hand: [`docs/generated/cli.md`](../../docs/generated/cli.md)
-for a reader on GitHub, the website's [command line page](https://korczis.github.io/prismatic-majordomus/registry/cli/)
-for everyone else, and `majordomus --help` at a terminal. `majordomus generate` writes the
-file and `majordomus generate --check` refuses a stale one in CI. Every command starts from
-the same options (`--repo`, `--discovery`, `--strict`, `--share`); the reference lists them
-on each command that accepts them.
+The command line is declared once, in `src/cli.rs`: clap for the structure, and typed
+Rust metadata beside it (`EXAMPLES`) for the examples clap cannot carry. Every reference is
+generated from that one declaration and never written by hand — `majordomus --help` at a
+terminal, [`docs/generated/cli.md`](../../docs/generated/cli.md) for a reader on GitHub,
+[`docs/generated/cli.json`](../../docs/generated/cli.json) for the website's generator, the
+site's [reference under `/docs/cli/`](https://korczis.github.io/prismatic-majordomus/docs/cli/)
+with one page per command, and the [command line page](https://korczis.github.io/prismatic-majordomus/registry/cli/)
+of the registry. `majordomus generate` writes the files and `majordomus generate --check`
+refuses a stale one in CI. Every command starts from the same options (`--repo`,
+`--discovery`, `--strict`, `--share`); the reference lists them on each command that
+accepts them.
+
+A command is not finished when it parses. `cli::validate` — run by `majordomus capabilities
+validate`, by `tests/cli_docs.rs` and therefore by CI — refuses a command with no summary,
+an argument with no help, an enumerated value that says nothing, and any command a person
+can run that carries no example. `tests/cli_examples.rs` then runs every documented example
+against the built executable in a disposable repository: the argument vectors it executes
+are read from the same declaration the pages render, so a documented example that stopped
+working is a failing test rather than a stale page. Adding a command therefore means:
+declare it in clap, declare at least one example beside it, implement it, `just derive`.
 
 ### Exit codes
 

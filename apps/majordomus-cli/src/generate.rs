@@ -32,8 +32,9 @@ pub const HEADER: &str = "GENERATED FILE — DO NOT EDIT DIRECTLY";
 pub enum Target {
     /// `docs/generated/openapi.json`.
     OpenApi,
-    /// `docs/generated/capabilities.md` (the index), `docs/generated/modules/<id>.md`, and
-    /// `docs/generated/cli.md` (the command line as clap declares it).
+    /// `docs/generated/capabilities.md` (the index), `docs/generated/modules/<id>.md`,
+    /// `docs/generated/cli.md` and `docs/generated/cli.json` (the command line as clap
+    /// declares it, with the examples declared beside it).
     Docs,
     /// `docs/generated/benchmarks.md`: every benchmark target and the coverage, from the projection.
     Benchmarks,
@@ -102,9 +103,14 @@ pub fn artifacts(
                     path: format!("{OUT_DIR}/capabilities.md"),
                     content: reference(registry, version),
                 });
+                let cli = crate::cli::tree();
                 out.push(Artifact {
                     path: format!("{OUT_DIR}/cli.md"),
-                    content: cli_reference(&crate::cli::tree(), version),
+                    content: cli_reference(&cli, version),
+                });
+                out.push(Artifact {
+                    path: format!("{OUT_DIR}/cli.json"),
+                    content: cli_document(&cli, version),
                 });
                 for m in registry
                     .modules()
@@ -616,19 +622,20 @@ fn module_reference(registry: &CapabilityRegistry, module: &str, version: &str) 
 /// dataset; neither is typed by hand.
 pub fn cli_reference(tree: &crate::cli::CommandDoc, version: &str) -> String {
     let mut s = String::new();
-    s.push_str(&format!("<!-- {HEADER}\n     Source: the clap declaration of the command line (src/cli.rs); regenerate with `majordomus generate`\n     Generator: majordomus-cli {version} -->\n"));
+    s.push_str(&format!("<!-- {HEADER}\n     Source: the clap declaration of the command line and the examples declared with it ({});\n     regenerate with `majordomus generate`\n     Generator: majordomus-cli {version} -->\n", crate::cli::DECLARATION));
     s.push_str("# Command line of the Rust executable\n\n");
     s.push_str(&format!("{}\n\n", tree.about));
     if let Some(long) = &tree.long_about {
         s.push_str(&format!("{long}\n\n"));
     }
-    s.push_str("Every command below is declared once, in `src/cli.rs`; this file is a projection of that declaration, as `--help` is. The task lifecycle (`init`, `start`, `check`, `finish`, `doctor`, ...) is the shell tool `bin/majordomus`, documented in `docs/CLI.md`.\n\n");
-    s.push_str("## Commands\n\n| command | does |\n|---|---|\n");
+    s.push_str(&format!("Every command below is declared once, in [`{}`](../../{}), together with its examples; this file is a projection of that declaration, as `--help` is, as `docs/generated/cli.json` is, and as the website's reference under `{}/` is. Every example printed here is executed against the built executable by `apps/majordomus-cli/tests/cli_examples.rs`. The task lifecycle (`init`, `start`, `check`, `finish`, `doctor`, ...) is the *shell* tool `bin/majordomus`, a different program, documented in `docs/CLI.md`.\n\n", crate::cli::DECLARATION, crate::cli::DECLARATION, crate::cli::ROUTE_PREFIX));
+    s.push_str("## Commands\n\n| command | route | does |\n|---|---|---|\n");
     for c in tree.flatten().into_iter().skip(1) {
         s.push_str(&format!(
-            "| [`{}`](#{}) | {} |\n",
+            "| [`{}`](#{}) | `{}` | {} |\n",
             c.path.join(" "),
             c.path.join("-"),
+            c.route,
             c.about
         ));
     }
@@ -654,69 +661,109 @@ pub fn cli_reference(tree: &crate::cli::CommandDoc, version: &str) -> String {
             );
             s.push_str(".\n\n");
         }
+        s.push_str(&format!("```text\n{}\n```\n\n", c.usage()));
         if c.args.is_empty() {
             s.push_str("Arguments: none.\n\n");
-            continue;
-        }
-        s.push_str("| argument | value | default | description |\n|---|---|---|---|\n");
-        for a in &c.args {
-            let flag = match (&a.long, a.short, a.positional) {
-                (_, _, true) => format!(
-                    "`<{}>`",
-                    a.value_name.clone().unwrap_or(a.name.to_uppercase())
-                ),
-                (Some(l), Some(sh), _) => format!("`-{sh}`, `--{l}`"),
-                (Some(l), None, _) => format!("`--{l}`"),
-                (None, Some(sh), _) => format!("`-{sh}`"),
-                (None, None, _) => format!("`{}`", a.name),
-            };
-            let value = if !a.takes_value {
-                "flag".to_string()
-            } else if !a.possible_values.is_empty() {
-                a.possible_values
-                    .iter()
-                    .map(|v| format!("`{}`", v.name))
-                    .collect::<Vec<_>>()
-                    .join(" \\| ")
-            } else {
-                format!(
-                    "`<{}>`",
-                    a.value_name.clone().unwrap_or(a.name.to_uppercase())
-                )
-            };
-            let default = if a.defaults.is_empty() || !a.takes_value {
-                if a.required {
-                    "required".to_string()
+        } else {
+            s.push_str("| argument | value | default | description |\n|---|---|---|---|\n");
+            for a in &c.args {
+                let flag = match (&a.long, a.short, a.positional) {
+                    (_, _, true) => format!(
+                        "`<{}>`",
+                        a.value_name.clone().unwrap_or(a.name.to_uppercase())
+                    ),
+                    (Some(l), Some(sh), _) => format!("`-{sh}`, `--{l}`"),
+                    (Some(l), None, _) => format!("`--{l}`"),
+                    (None, Some(sh), _) => format!("`-{sh}`"),
+                    (None, None, _) => format!("`{}`", a.name),
+                };
+                let value = if !a.takes_value {
+                    "flag".to_string()
+                } else if !a.possible_values.is_empty() {
+                    a.possible_values
+                        .iter()
+                        .map(|v| format!("`{}`", v.name))
+                        .collect::<Vec<_>>()
+                        .join(" \\| ")
                 } else {
-                    "—".to_string()
+                    format!(
+                        "`<{}>`",
+                        a.value_name.clone().unwrap_or(a.name.to_uppercase())
+                    )
+                };
+                let default = if a.defaults.is_empty() || !a.takes_value {
+                    if a.required {
+                        "required".to_string()
+                    } else {
+                        "—".to_string()
+                    }
+                } else {
+                    a.defaults
+                        .iter()
+                        .map(|d| format!("`{d}`"))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                };
+                let mut help = a.help.replace('|', "\\|");
+                if a.global {
+                    help.push_str(" (accepted by every subcommand)");
                 }
-            } else {
-                a.defaults
+                let values: Vec<String> = a
+                    .possible_values
                     .iter()
-                    .map(|d| format!("`{d}`"))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            };
-            let mut help = a.help.replace('|', "\\|");
-            if a.global {
-                help.push_str(" (accepted by every subcommand)");
+                    .filter_map(|v| {
+                        v.help
+                            .as_ref()
+                            .map(|h| format!("`{}`: {}", v.name, h.replace('|', "\\|")))
+                    })
+                    .collect();
+                if !values.is_empty() {
+                    help.push_str(" — ");
+                    help.push_str(&values.join("; "));
+                }
+                s.push_str(&format!("| {flag} | {value} | {default} | {help} |\n"));
             }
-            let values: Vec<String> = a
-                .possible_values
-                .iter()
-                .filter_map(|v| {
-                    v.help
-                        .as_ref()
-                        .map(|h| format!("`{}`: {}", v.name, h.replace('|', "\\|")))
-                })
-                .collect();
-            if !values.is_empty() {
-                help.push_str(" — ");
-                help.push_str(&values.join("; "));
-            }
-            s.push_str(&format!("| {flag} | {value} | {default} | {help} |\n"));
+            s.push('\n');
         }
-        s.push('\n');
+        s.push_str(&cli_examples(c));
+    }
+    s
+}
+
+/// The whole command line as the committed machine-readable projection,
+/// `docs/generated/cli.json`: pretty JSON with a trailing newline, the same tree
+/// `cli_reference` renders as Markdown. The website's generator reads this file and never
+/// the Rust source.
+pub fn cli_document(tree: &crate::cli::CommandDoc, version: &str) -> String {
+    let mut s =
+        serde_json::to_string_pretty(&crate::cli::document(tree, version)).unwrap_or_default();
+    s.push('\n');
+    s
+}
+
+/// The examples of one command, as the reference prints them: the title, what it does, the
+/// session a reader copies (the setup lines first, then the example itself), and what the
+/// example test asserts about the run. Rendered from the same declaration the tests
+/// execute, so nothing here can be true of the page and false of the executable.
+fn cli_examples(c: &crate::cli::CommandDoc) -> String {
+    let mut s = String::new();
+    if c.examples.is_empty() {
+        if c.executable {
+            // cli::validate refuses this before it can be generated; the branch exists so
+            // that the renderer never invents a heading for an empty list.
+            return s;
+        }
+        return s;
+    }
+    s.push_str("Examples:\n\n");
+    for e in &c.examples {
+        s.push_str(&format!("- **{}** — {}\n\n", e.title, e.description));
+        s.push_str("  ```console\n");
+        for step in &e.setup {
+            s.push_str(&format!("  $ {}\n", step.command));
+        }
+        s.push_str(&format!("  $ {}\n  ```\n\n", e.command));
+        s.push_str(&format!("  Verified: {}.\n\n", e.expectation));
     }
     s
 }

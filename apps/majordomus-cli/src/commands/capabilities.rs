@@ -221,10 +221,28 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
                 })
                 .unwrap_or(0);
             w(&mut out, format!("OK   openapi     {} operation(s), {} schema component(s) — generated from the registry without conflict", ops, doc["components"]["schemas"].as_object().map(|s| s.len()).unwrap_or(0)))?;
+            let mut failures = 0;
+            // The native command line's own documentation contract: every command says what
+            // it does, every argument says what it is for, and every command a person can
+            // run carries at least one example that the example tests execute. Pure: the
+            // clap declaration and the examples beside it, nothing read from disk.
+            let cli = crate::cli::tree();
+            let commands = cli.flatten();
+            let violations = crate::cli::validate(&cli);
+            if violations.is_empty() {
+                w(&mut out, format!("OK   cli         {} command(s), {} of them runnable, {} example(s) — every command documented, every example parsed by the declaration it documents", commands.len(), commands.iter().filter(|c| c.executable).count(), commands.iter().map(|c| c.examples.len()).sum::<usize>()))?;
+            } else {
+                failures += violations.len();
+                w(&mut out, format!("FAIL cli         {} violation(s) of the command-line documentation contract  [reproduce: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cli_docs]", violations.len()))?;
+                for v in &violations {
+                    for line in v.to_string().lines() {
+                        w(&mut out, format!("     {line}"))?;
+                    }
+                }
+            }
             let projection = crate::bench::BenchmarkProjection::from_context(ctx);
             let coverage = crate::bench::Coverage::compute(ctx, &projection);
             let total = coverage.tallies.get("total").cloned().unwrap_or_default();
-            let mut failures = 0;
             if coverage.is_complete() {
                 w(&mut out, format!("OK   benchmarks  {} target(s) cover {} requirement(s) — every executable timed directly and on every transport it is exposed on, plus the transports' own operations", projection.targets.len(), total.required))?;
             } else {
