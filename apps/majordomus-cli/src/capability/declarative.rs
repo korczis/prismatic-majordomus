@@ -12,6 +12,14 @@ use super::schema::CanonicalSchema;
 use crate::capability::builtin::ObjectView;
 use crate::model::Object;
 
+/// The object view's schema, derived once: every declarative resource shares it.
+fn object_view_schema() -> CanonicalSchema {
+    static SCHEMA: std::sync::OnceLock<CanonicalSchema> = std::sync::OnceLock::new();
+    SCHEMA
+        .get_or_init(CanonicalSchema::of::<ObjectView>)
+        .clone()
+}
+
 /// The resource capability of one object of the index.
 pub fn capability_of(object: &Object) -> Capability {
     Capability {
@@ -24,7 +32,7 @@ pub fn capability_of(object: &Object) -> Capability {
             .unwrap_or_else(|| object.identity.clone()),
         description: object.description.clone().unwrap_or_default(),
         input: CanonicalSchema::empty(),
-        output: CanonicalSchema::of::<ObjectView>(),
+        output: object_view_schema(),
         provenance: Provenance::Declarative {
             path: object.provenance.path.clone(),
             directory: object.provenance.directory.clone(),

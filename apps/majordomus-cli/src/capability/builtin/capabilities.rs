@@ -43,15 +43,65 @@ impl BenchmarkCases for CapabilitiesInput {
     }
 }
 
+/// One capability as a listing shows it: everything the descriptor says except its two
+/// schemas, which `capabilities.describe` answers for one capability. A listing of a
+/// repository's registry runs to hundreds of entries; their schemas would be megabytes
+/// of the same object view repeated.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct CapabilitySummary {
+    /// The canonical identity.
+    pub id: crate::capability::CapabilityId,
+    /// The module that composes it.
+    pub module: crate::capability::ModuleId,
+    /// Query, command or resource.
+    pub kind: CapabilityKind,
+    /// The short name.
+    pub title: String,
+    /// The one-paragraph description.
+    pub description: String,
+    /// Where it came from.
+    pub provenance: crate::capability::Provenance,
+    /// Where it is projected.
+    pub exposure: Exposure,
+    /// Where it stands.
+    pub stability: Stability,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// Free tags.
+    pub tags: Vec<String>,
+    /// Whether it is a benchmark target.
+    pub benchmark: crate::capability::BenchmarkPolicy,
+    /// Whether the executor keeps its results.
+    pub cache: CachePolicy,
+}
+
+impl From<&Capability> for CapabilitySummary {
+    fn from(c: &Capability) -> Self {
+        CapabilitySummary {
+            id: c.id.clone(),
+            module: c.module.clone(),
+            kind: c.kind,
+            title: c.title.clone(),
+            description: c.description.clone(),
+            provenance: c.provenance.clone(),
+            exposure: c.exposure.clone(),
+            stability: c.stability,
+            tags: c.tags.clone(),
+            benchmark: c.benchmark,
+            cache: c.cache,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
-/// The answer of `capabilities.list`: the matching capabilities and the registry counted.
+/// The answer of `capabilities.list`: the matching capabilities, summarised, and the
+/// registry counted.
 pub struct CapabilityList {
     /// How many capabilities matched the filters.
     pub count: usize,
     /// The whole registry, counted by kind, stability and projection.
     pub summary: Summary,
-    /// The matching capabilities, by id.
-    pub capabilities: Vec<Capability>,
+    /// The matching capabilities, by id, without their schemas.
+    pub capabilities: Vec<CapabilitySummary>,
 }
 
 fn capabilities_list(
@@ -77,7 +127,7 @@ fn capabilities_list(
             )))
         }
     };
-    let capabilities: Vec<Capability> = ctx
+    let capabilities: Vec<CapabilitySummary> = ctx
         .registry
         .iter()
         .filter(|c| kind.is_none_or(|k| c.kind == k))
@@ -88,7 +138,7 @@ fn capabilities_list(
             Some("cli") => c.exposure.cli.is_some(),
             Some(_) => false,
         })
-        .cloned()
+        .map(CapabilitySummary::from)
         .collect();
     Ok(CapabilityList {
         count: capabilities.len(),
@@ -139,7 +189,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "capabilities.list",
                 title: "List capabilities",
-                description: "Every capability of this executable and this repository, with its kind, stability, provenance and the projections it declares.",
+                description: "Every capability of this executable and this repository, summarised: kind, module, stability, provenance, the projections it declares, its benchmark and cache policy; the schemas are answered by capabilities.describe.",
                 input: CapabilitiesInput,
                 output: CapabilityList,
                 stability: Stability::BehaviorallyVerified,

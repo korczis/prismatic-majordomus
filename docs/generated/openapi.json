@@ -19,7 +19,7 @@
       "get": {
         "operationId": "capabilities.list",
         "summary": "List capabilities",
-        "description": "Every capability of this executable and this repository, with its kind, stability, provenance and the projections it declares.",
+        "description": "Every capability of this executable and this repository, summarised: kind, module, stability, provenance, the projections it declares, its benchmark and cache policy; the schemas are answered by capabilities.describe.",
         "tags": [
           "capabilities"
         ],
@@ -798,9 +798,9 @@
           "capabilities": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Capability"
+              "$ref": "#/components/schemas/CapabilitySummary"
             },
-            "description": "The matching capabilities, by id."
+            "description": "The matching capabilities, by id, without their schemas."
           }
         },
         "required": [
@@ -808,7 +808,7 @@
           "summary",
           "capabilities"
         ],
-        "description": "The answer of `capabilities.list`: the matching capabilities and the registry counted."
+        "description": "The answer of `capabilities.list`: the matching capabilities, summarised, and the\nregistry counted."
       },
       "CapabilityProvenance": {
         "oneOf": [
@@ -879,6 +879,71 @@
           }
         ],
         "description": "Where a capability came from. Never an absolute path."
+      },
+      "CapabilitySummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/CapabilityId",
+            "description": "The canonical identity."
+          },
+          "module": {
+            "$ref": "#/components/schemas/ModuleId",
+            "description": "The module that composes it."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CapabilityKind",
+            "description": "Query, command or resource."
+          },
+          "title": {
+            "type": "string",
+            "description": "The short name."
+          },
+          "description": {
+            "type": "string",
+            "description": "The one-paragraph description."
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/CapabilityProvenance",
+            "description": "Where it came from."
+          },
+          "exposure": {
+            "$ref": "#/components/schemas/Exposure",
+            "description": "Where it is projected."
+          },
+          "stability": {
+            "$ref": "#/components/schemas/Stability",
+            "description": "Where it stands."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Free tags."
+          },
+          "benchmark": {
+            "$ref": "#/components/schemas/BenchmarkPolicy",
+            "description": "Whether it is a benchmark target."
+          },
+          "cache": {
+            "$ref": "#/components/schemas/CachePolicy",
+            "description": "Whether the executor keeps its results."
+          }
+        },
+        "required": [
+          "id",
+          "module",
+          "kind",
+          "title",
+          "description",
+          "provenance",
+          "exposure",
+          "stability",
+          "benchmark",
+          "cache"
+        ],
+        "description": "One capability as a listing shows it: everything the descriptor says except its two\nschemas, which `capabilities.describe` answers for one capability. A listing of a\nrepository's registry runs to hundreds of entries; their schemas would be megabytes\nof the same object view repeated."
       },
       "CliExposure": {
         "type": "object",

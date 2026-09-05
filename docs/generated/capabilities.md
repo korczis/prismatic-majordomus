@@ -31,7 +31,7 @@ Output: `Capability`.
 
 ### `capabilities.list` — List capabilities
 
-Every capability of this executable and this repository, with its kind, stability, provenance and the projections it declares.
+Every capability of this executable and this repository, summarised: kind, module, stability, provenance, the projections it declares, its benchmark and cache policy; the schemas are answered by capabilities.describe.
 
 | input | type | required | description |
 |---|---|---|---|

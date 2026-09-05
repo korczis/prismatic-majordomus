@@ -18,7 +18,7 @@ use super::handler::Executable;
 use super::model::{HttpExposure, HttpMethod, McpExposure};
 use super::module::ModuleDescriptor;
 
-pub use capabilities::{CapabilitiesInput, CapabilityList, DescribeInput};
+pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
 pub use objects::{
     GetInput, ListInput, ObjectList, SearchHit, SearchInput, SearchResult, SEARCH_DEFAULT_LIMIT,
     SEARCH_MAX_LIMIT,
