@@ -192,8 +192,9 @@ state, the build profile, the platform and the registry fingerprint, written und
 `.ai/local/benchmarks/`; the accepted baseline is one tracked file per platform under
 `.ai/repo/benchmarks/rust/baseline.<os>-<arch>-<build>.json`, promoted only by `bench
 baseline update` (a dirty tree refuses without `--allow-dirty`); the regression policy is
-`.ai/repo/benchmarks/rust/policy.yaml` (relative thresholds per metric and an absolute
-floor under which a difference is noise). `bench --check` reports every line, names new
+`.ai/repo/benchmarks/rust/policy.yaml` (relative thresholds per metric, an absolute
+floor under which a difference is noise, and per metric the sample count under which it
+does not gate: a quick run fails on its median only, a full run on every percentile). `bench --check` reports every line, names new
 targets and stale baseline entries (a renamed capability is never silently matched), and
 notes when the registry fingerprint moved. A baseline is compared on its own platform
 only; a CI runner without a committed baseline compares nothing and says so.

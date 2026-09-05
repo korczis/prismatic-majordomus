@@ -1,15 +1,23 @@
 # The regression policy `majordomus bench --check` applies when it compares a run with
 # this platform's accepted baseline (baseline.<os>-<arch>-<build>.json beside this file).
 # Thresholds are relative increases of a metric; an increase under minimum_absolute_us is
-# noise whatever the ratio. Data, read at run time; there is no threshold in the code.
+# noise whatever the ratio (a sub-millisecond loopback round trip moves by hundreds of
+# microseconds between two runs on one machine, and a regression worth a person's time is
+# a millisecond or more). A metric gates only when the run took minimum_samples or more:
+# the p99 of a twenty-sample quick run is its slowest sample, which one scheduler hiccup
+# decides, so short runs report it as SHORT and fail on the median alone.
+# Data, read at run time; there is no threshold in the code.
 version: 1
 
 regression:
   p50:
     relative: 0.25
+    minimum_samples: 0
   p95:
     relative: 0.30
+    minimum_samples: 50
   p99:
     relative: 0.50
+    minimum_samples: 200
 
-minimum_absolute_us: 200
+minimum_absolute_us: 1000
