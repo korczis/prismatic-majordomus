@@ -167,6 +167,11 @@ check *args:
 update *args:
     "{{shell_bin}}" update {{args}}
 
+# The repository's skills: list, show <id>, or check every one against its contract.
+[group('lifecycle')]
+skills *args:
+    "{{shell_bin}}" skills {{args}}
+
 # ---------------------------------------------------------------- test
 
 # Every gate: the shell suite, the Rust gate, the site data check.
@@ -243,7 +248,7 @@ site-data:
 site-data-check:
     scripts/generate-site-data --check
 
-# Deploy the site by hand: gate, build, check, push gh-pages (see .ai/repo/skills/deploy-site.md). `just site-deploy --dry-run` shows what it would push.
+# Deploy the site by hand: gate, build, check, push gh-pages (see .ai/repo/skills/deploy-site/SKILL.md). `just site-deploy --dry-run` shows what it would push.
 [group('site')]
 site-deploy *args:
     scripts/site-deploy {{args}}

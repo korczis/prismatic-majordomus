@@ -782,6 +782,34 @@
       "source": "share/standard/majordomus/rules/scope-integrity.v1.md"
     },
     {
+      "id": "majordomus.skill-integrity",
+      "slug": "skill-integrity",
+      "title": "Skill integrity",
+      "class": "blocking",
+      "principle": "Load minimum sufficient context",
+      "statement": "A skill is canonical data under the skills section; it is valid against the skill schema, its id is its directory, its body carries the sections a reader relies on, and every reference it makes resolves.",
+      "summary": "Every skill the repository declares parses against the skill contract, names the directory it lives in, carries its sections, and every skill or example it refers to exists.",
+      "validator": "skills",
+      "validator_function": "mj_validate_skills",
+      "defined_in": "lib/skills.sh",
+      "category": "skill",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "skill-catalogue",
+        "skill-check"
+      ],
+      "test": "test/cases/95_skills.sh",
+      "depends_on": [
+        "majordomus.minimum-sufficient-context@1"
+      ],
+      "source": "share/standard/majordomus/rules/skill-integrity.v1.md"
+    },
+    {
       "id": "majordomus.state-consistency",
       "slug": "state-consistency",
       "title": "State consistency",
@@ -894,8 +922,8 @@
     }
   ],
   "counts": {
-    "declared": 32,
-    "blocking": 28,
+    "declared": 33,
+    "blocking": 29,
     "advisory": 4
   },
   "index": {
@@ -927,9 +955,10 @@
     "majordomus.roadmap-integrity": 25,
     "majordomus.rule-package-integrity": 26,
     "majordomus.scope-integrity": 27,
-    "majordomus.state-consistency": 28,
-    "majordomus.task-continuity": 29,
-    "majordomus.use-case-coverage": 30,
-    "majordomus.verification-integrity": 31
+    "majordomus.skill-integrity": 28,
+    "majordomus.state-consistency": 29,
+    "majordomus.task-continuity": 30,
+    "majordomus.use-case-coverage": 31,
+    "majordomus.verification-integrity": 32
   }
 }

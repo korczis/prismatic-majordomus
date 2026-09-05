@@ -425,6 +425,31 @@ for slug in $(jq -r '.moments[].slug' "$WJ"); do
 done
 ok why "$(jq '.moments | length' "$WJ") moments: every command, responsibility and claim is linked, and links back"
 
+# 13e. the skills section is the catalogue and nothing else: every skill in skills.json has a
+# page that names its URI and its canonical file, renders every example, links every related
+# skill, and is linked from the index; no page exists for a skill the catalogue does not hold.
+SKJ="$SITE/data/generated/skills.json"
+sk_n="$(jq '.skills | length' "$SKJ")"
+for id in $(jq -r '.skills[].id' "$SKJ"); do
+  page="$PUB/skills/$id/index.html"
+  [ -f "$page" ] || { bad skills "no page for skill $id"; continue; }
+  grep -qF "skills/$id/" "$PUB/skills/index.html" || bad skills "the index does not link skill $id"
+  grep -qF "majordomus://skill/$id" "$page" || bad skills "skill $id's page does not name its URI"
+  grep -qF "$(jq -r --arg i "$id" '.skills[] | select(.id==$i) | .path' "$SKJ")" "$page" || bad skills "skill $id's page does not name its canonical file"
+  for ex in $(jq -r --arg i "$id" '.skills[] | select(.id==$i) | .examples[].path' "$SKJ"); do
+    grep -qF "$ex" "$page" || bad skills "skill $id's page does not render its example $ex"
+  done
+  for r in $(jq -r --arg i "$id" '.skills[] | select(.id==$i) | .related[]' "$SKJ"); do
+    grep -qF "skills/$r/" "$page" || bad skills "skill $id names related skill $r but does not link it"
+  done
+done
+for d in "$PUB"/skills/*/; do
+  [ -d "$d" ] || continue; id="$(basename "$d")"
+  jq -e --arg i "$id" '.skills[] | select(.id==$i)' "$SKJ" >/dev/null || bad skills "a page exists for '$id', which the catalogue does not hold (stale output)"
+done
+[ "$sk_n" -gt 0 ] && ok skills "$sk_n skill(s): every page names its URI and file, renders its examples, links its related skills, and the index links each" \
+  || ok skills "0 skills in the catalogue and no skill page (an empty section, not a broken one)"
+
 # 13b. graphs: every edge endpoint resolves to a node, and no graph is empty
 for g in architecture claims-graph; do
   gf="$SITE/data/generated/$g.json"

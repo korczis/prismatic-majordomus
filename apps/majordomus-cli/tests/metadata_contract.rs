@@ -332,15 +332,15 @@ fn a_kind_the_executable_does_not_read_is_reported_not_guessed() {
     let f = Fixture::new();
     let sources = common::SOURCES.replace(
         "  - id: readme\n    kind: document",
-        "  - id: skill\n    kind: skill\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/skills/*.md'\n    required: false\n\n  - id: readme\n    kind: document",
+        "  - id: widget\n    kind: widget\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/widgets/*.md'\n    required: false\n\n  - id: readme\n    kind: document",
     );
     f.write(".ai/repo/knowledge/sources.yaml", &sources);
-    f.write(".ai/repo/skills/one.md", "# One\n");
-    f.commit("skill");
+    f.write(".ai/repo/widgets/one.md", "# One\n");
+    f.commit("widget");
     let (_, v, _) = inspect(&f.root(), &[]);
     let codes = diagnostic_codes(&v);
     assert!(
-        codes.contains(&("unknown_kind".into(), Some(".ai/repo/skills/one.md".into()))),
+        codes.contains(&("unknown_kind".into(), Some(".ai/repo/widgets/one.md".into()))),
         "{codes:?}"
     );
 }

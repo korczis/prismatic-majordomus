@@ -1,0 +1,179 @@
+{
+  "schema": 1,
+  "source": ".ai/repo/skills/",
+  "contract": "share/schemas/skill.schema.json",
+  "skills": [
+    {
+      "id": "deploy-site",
+      "uri": "majordomus://skill/deploy-site",
+      "title": "Deploy the site by hand",
+      "description": "Publish the website to GitHub Pages from a terminal, through the one script the Pages workflow runs, when waiting for the Actions queue is not acceptable.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "site",
+        "deploy",
+        "evidence"
+      ],
+      "related": [
+        "repo-review"
+      ],
+      "inputs": [
+        "the commit to publish, checked out with a clean tree and contained in origin/master",
+        "zola, node_modules (npm ci) and, for the full gate, cargo",
+        "the operator's word, in this session, that the site is to go live now"
+      ],
+      "outputs": [
+        "a gh-pages commit naming the source commit, or a refusal naming the gate that stopped it",
+        "a checkpoint recording the deploy and the commit it published"
+      ],
+      "path": ".ai/repo/skills/deploy-site/SKILL.md",
+      "sha256": "1d19158aeeb5ffb5676155dc21cfb2aea397582c85dd05334e984774ffd45200",
+      "examples": [],
+      "valid": true,
+      "route": "/skills/deploy-site/"
+    },
+    {
+      "id": "implement",
+      "uri": "majordomus://skill/implement",
+      "title": "Implement a change",
+      "description": "Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "implementation",
+        "evidence",
+        "invariants",
+        "drift"
+      ],
+      "related": [
+        "repo-review"
+      ],
+      "inputs": [
+        "the requested change, in the requester's words, with any issue or specification it names",
+        "a checkout with git history and the effective context for every path the change will touch",
+        "the repository's verification, generation and drift-check commands"
+      ],
+      "outputs": [
+        "the change, as coherent commits whose messages name what each proves",
+        "behavioural evidence that distinguishes the new behaviour from the old",
+        "regenerated projections and a clean drift check",
+        "an implementation record naming the invariant, the evidence, what was reconciled and what remains unsupported"
+      ],
+      "path": ".ai/repo/skills/implement/SKILL.md",
+      "sha256": "cd340fd4381a21f72de216f5af1f43690df1d868da4a0278066e89fadfd719fb",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/implement/examples/add-a-catalogue-item.md",
+          "title": "Add a declarative catalogue item",
+          "body": "\n```text\nApply the implement skill to add a use case to share/use-cases.yaml. Touch canonical\ndata only; then validate, regenerate, and prove that the command line, MCP and the site\nshow the new item with no code or registry edited; finish with the drift checks.\n```\n\nExpected shape: modify canonical data only → validate → regenerate → prove propagation\nthrough every surface → drift check clean.\n"
+        },
+        {
+          "path": ".ai/repo/skills/implement/examples/fix-a-defect.md",
+          "title": "Fix a defect",
+          "body": "\n```text\nApply the implement skill to the defect \"finish accepts a completed outcome while an\nopen question names the task\". Reproduce it with a case under test/cases/ that fails\ntoday, make the smallest fix, show the case passing, and review the adjacent gates for\nthe same shape of hole.\n```\n\nExpected shape: reproduce → regression evidence → smallest fix → the original failure\nno longer occurs → adjacent regression surface reviewed.\n"
+        },
+        {
+          "path": ".ai/repo/skills/implement/examples/implement-a-feature.md",
+          "title": "Implement a feature from an issue",
+          "body": "\n```text\nApply the implement skill to issue I0042 (majordomus plan show I0042).\nScope: the paths the issue declares. Before the mechanism: the invariant, the observable\nbehaviour and the test that proves it. After: generate, generate-site-data, both --check,\ndoctor; then plan evidence and plan done with the case that proves each criterion.\n```\n\nExpected shape: inspect → invariant → observable behaviour → behavioural test →\nimplementation → diagnostics and documentation → verify → commit → report.\n"
+        },
+        {
+          "path": ".ai/repo/skills/implement/examples/make-an-operation-faster.md",
+          "title": "Make an operation faster",
+          "body": "\n```text\nApply the implement skill to make `majordomus doctor` finish under its budget.\nRecord the baseline (MJ_TIMING=1 majordomus doctor, majordomus bench), find the phase\nthat dominates, change it, compare against the baseline, and add a regression guard only\nwhere the contract justifies one.\n```\n\nExpected shape: baseline → bottleneck identified → change → comparison → regression\nguard where justified.\n"
+        },
+        {
+          "path": ".ai/repo/skills/implement/examples/refactor-without-behaviour-change.md",
+          "title": "Refactor a subsystem without changing its behaviour",
+          "body": "\n```text\nApply the implement skill to refactor lib/knowledge.sh so that discovery is one function.\nFirst write down the observable behaviour that must be preserved and the cases that pin\nit; run them before and after; prove equivalence with the same outputs byte for byte.\n```\n\nExpected shape: preserved observable behaviour stated → tests before → refactor →\ntests after → equivalence shown.\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/implement/"
+    },
+    {
+      "id": "repo-review",
+      "uri": "majordomus://skill/repo-review",
+      "title": "Repository review",
+      "description": "An evidence-driven review of the actual state of the repository, or of one change to it, before meaningful engineering work is recommended or done.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "review",
+        "evidence",
+        "invariants",
+        "drift"
+      ],
+      "related": [],
+      "inputs": [
+        "a checkout of the repository with git history available",
+        "the scope under review, or the whole repository when none is given",
+        "the effective context for every path in scope (majordomus context resolve <path>)"
+      ],
+      "outputs": [
+        "findings, each with severity, evidence, location, the smallest correct fix and the evidence that would prove it",
+        "the list of what was checked, including the areas where nothing was found"
+      ],
+      "path": ".ai/repo/skills/repo-review/SKILL.md",
+      "sha256": "6300cad27089e2bb72860d7db2c692199e849ddaaf7b3b522bd80a2ad614e5db",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/repo-review/examples/review-a-subsystem.md",
+          "title": "Review a subsystem",
+          "body": "\nReview one directory and the documents that describe it, whether or not anything in it\nchanged recently. Scope is the directory; the report names the documents it was checked\nagainst.\n\n```text\nApply the repo-review skill to lib/knowledge.sh, lib/knowledge.awk and docs/CLI.md's\nknowledge section. Question: does the documented behaviour match the implementation,\nand is every documented behaviour covered by a case under test/cases/?\n```\n"
+        },
+        {
+          "path": ".ai/repo/skills/repo-review/examples/review-against-an-issue.md",
+          "title": "Review an implementation against its issue",
+          "body": "\nReview a branch against the issue it claims to complete: the acceptance criteria, the\ndeclared paths, and the evidence the issue requires.\n\n```text\nApply the repo-review skill to branch feature/x against issue I0042\n(majordomus plan show I0042). For each acceptance criterion, name the test that proves it\nor report that none does. Report any file the branch touched outside the issue's paths.\n```\n"
+        },
+        {
+          "path": ".ai/repo/skills/repo-review/examples/review-current-diff.md",
+          "title": "Review the current diff",
+          "body": "\nReview the working tree and the staged changes against the base branch before they are\ncommitted. Scope is the diff; everything else is read for context and not reviewed.\n\n```text\nApply the repo-review skill to the current diff against master.\nScope: the files changed in the worktree. Report FAIL findings first.\n```\n"
+        },
+        {
+          "path": ".ai/repo/skills/repo-review/examples/review-generated-synchronisation.md",
+          "title": "Review generated files and documents for drift",
+          "body": "\nReview whether every generated surface matches its canonical source right now, by\nrunning the repository's own drift checks and reading what they do not cover.\n\n```text\nApply the repo-review skill to the generated surfaces: run scripts/generate-site-data\n--check and majordomus generate --check, then read the documents under docs/ that\ndescribe behaviour and compare them with the commands they describe. Report every\nclaim a document makes that no check or test would catch if it became false.\n```\n"
+        },
+        {
+          "path": ".ai/repo/skills/repo-review/examples/review-repository-architecture.md",
+          "title": "Review the whole repository's architecture",
+          "body": "\nReview the repository against the boundaries it declares: canonical sources, generated\nprojections, provider neutrality, and the rules that are enforced by a reviewer only.\n\n```text\nApply the repo-review skill to the whole repository. Concentrate on sections 3 and 5 of\nthe procedure: every generated artifact and the check that fails when it is stale, and\nevery declared boundary and the code that keeps it. List the rules that are not\nmachine-enforced and say for each whether the tree honours it today.\n```\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/repo-review/"
+    }
+  ],
+  "count": 3,
+  "by_tag": {
+    "site": [
+      "deploy-site"
+    ],
+    "deploy": [
+      "deploy-site"
+    ],
+    "evidence": [
+      "deploy-site",
+      "implement",
+      "repo-review"
+    ],
+    "implementation": [
+      "implement"
+    ],
+    "invariants": [
+      "implement",
+      "repo-review"
+    ],
+    "drift": [
+      "implement",
+      "repo-review"
+    ],
+    "review": [
+      "repo-review"
+    ]
+  }
+}

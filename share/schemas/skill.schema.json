@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/skill.schema.json",
+  "title": "Skill",
+  "description": "The front matter of a skill under .ai/repo/skills/<id>/SKILL.md: identity, one-line description, lifecycle, and the optional declared inputs, outputs, tags and related skills. The body is the procedure; nothing in the front matter repeats it.",
+  "x-majordomus-allow": "skill",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "version", "title", "description", "status"],
+  "properties": {
+    "schema": { "const": "skill/v1", "description": "The contract this file follows." },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "Identity; must equal the directory name. Lower-case letters, digits and hyphens." },
+    "version": { "type": "integer", "minimum": 1, "description": "An exact integer, raised when the procedure changes in a way a reader of an older copy should notice." },
+    "title": { "type": "string" },
+    "description": { "type": "string", "description": "What the skill is for, in one sentence; shown by every listing." },
+    "status": { "enum": ["draft", "active", "deprecated"], "description": "draft is discoverable and not yet recommended; deprecated stays readable and is no longer recommended." },
+    "tags": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } },
+    "related": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }, "description": "Ids of other skills this one hands over to or builds on; every one must exist." },
+    "inputs": { "type": "array", "items": { "type": "string" }, "description": "What the worker must have before the procedure starts, one item each." },
+    "outputs": { "type": "array", "items": { "type": "string" }, "description": "What the procedure leaves behind, one item each." }
+  }
+}

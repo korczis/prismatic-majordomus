@@ -5,25 +5,25 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "4692edd5b64c759c8f958825b4b7d61ac98fefaab67a19f054bf2044bd407b39",
+    "fingerprint": "277b3855ce56328880c87a8773c106d9507ff6351b8d86c78457784b4b4b6138",
     "summary": {
-      "total": 518,
+      "total": 646,
       "builtin": 11,
-      "declarative": 507,
+      "declarative": 635,
       "by_kind": {
         "command": 1,
         "query": 10,
-        "resource": 507
+        "resource": 635
       },
       "by_stability": {
         "behaviorally_verified": 11,
-        "implemented": 507
+        "implemented": 635
       },
       "mcp_tools": 11,
-      "mcp_resources": 509,
+      "mcp_resources": 637,
       "http_routes": 11,
       "cli_commands": 4,
-      "modules": 19,
+      "modules": 21,
       "benchmark_required": 11,
       "benchmark_waived": 0,
       "cached": 2
@@ -3445,6 +3445,14 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
       },
       {
+        "id": "claim",
+        "title": "claim",
+        "description": "Declarative objects of kind 'claim' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 117,
+        "capability_ids": []
+      },
+      {
         "id": "context",
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
@@ -3457,7 +3465,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 152,
+        "capabilities": 161,
         "capability_ids": []
       },
       {
@@ -3465,7 +3473,7 @@
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 33,
+        "capabilities": 34,
         "capability_ids": []
       },
       {
@@ -3566,7 +3574,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 74,
+        "capabilities": 73,
         "capability_ids": []
       },
       {
@@ -3575,6 +3583,14 @@
         "description": "Declarative objects of kind 'scope' from the repository's AI layer.",
         "source": "declarative",
         "capabilities": 1,
+        "capability_ids": []
+      },
+      {
+        "id": "skill",
+        "title": "skill",
+        "description": "Declarative objects of kind 'skill' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 3,
         "capability_ids": []
       },
       {
@@ -3590,7 +3606,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 86,
+        "capabilities": 85,
         "capability_ids": []
       },
       {
@@ -3604,8 +3620,8 @@
     ]
   },
   "index": {
-    "fingerprint": "add491d4d7ec34239b143bef0fe4d1ebcccb9b089b668e3fd7ee2707eb5065d1",
-    "state": "degraded",
+    "fingerprint": "b522e14f4be16cb3efb287cf40644327125724a5f7d555c76a1a4d95d2642793",
+    "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
       "adrs": ".ai/repo/adrs",
@@ -3623,23 +3639,23 @@
     },
     "by_kind": {
       "application": 5,
+      "claim": 117,
       "context": 5,
-      "document": 152,
-      "implementation": 33,
+      "document": 161,
+      "implementation": 34,
       "issue": 90,
       "milestone": 11,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "rule": 74,
+      "rule": 73,
       "scope": 1,
+      "skill": 3,
       "taxonomy": 10,
-      "test": 86,
+      "test": 85,
       "use-case": 31
     },
-    "diagnostics": {
-      "error": 1
-    },
+    "diagnostics": {},
     "objects": [
       {
         "uri": "majordomus://application/ci-gated-project",
@@ -3672,7 +3688,7 @@
         "path": ".ai/repo/applications/repository-opened-in-ai-clients.md",
         "section": "applications",
         "source_class": "application",
-        "bytes": 1662
+        "bytes": 1701
       },
       {
         "uri": "majordomus://application/repository-with-authored-governance",
@@ -3683,7 +3699,7 @@
         "path": ".ai/repo/applications/repository-with-authored-governance.md",
         "section": "applications",
         "source_class": "application",
-        "bytes": 1475
+        "bytes": 1514
       },
       {
         "uri": "majordomus://application/several-agents-one-repository",
@@ -3695,6 +3711,1158 @@
         "section": "applications",
         "source_class": "application",
         "bytes": 1429
+      },
+      {
+        "uri": "majordomus://claim/ai-layer-manifest",
+        "kind": "claim",
+        "identity": "ai-layer-manifest",
+        "title": "The repository's AI layer is one directory whose manifest names every section, readable without the tool",
+        "description": "init seeds .ai/ from the skeleton and nothing else; no hook, no shell file, no tool installation. doctor fails on a section the manifest names that is absent, and on a manifest key nothing reads.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/benchmark-coverage-derived",
+        "kind": "claim",
+        "identity": "benchmark-coverage-derived",
+        "title": "Every externally callable operation of the Rust executable is a benchmark target with a denominator generated from the registry, and a missing case fails the structural check",
+        "description": "Each required executable is a target directly and on every transport its exposure declares, with the cases its input type provides; the transports' own operations are targets declared once; waivers are typed and never counted. Runners time the executor, a real loopback socket and a real majordomus mcp child; results are majordomus/benchmark-result/v1; the baseline is per platform under .ai/repo/benchmarks/rust/ and the policy is data.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/blocker-store",
+        "kind": "claim",
+        "identity": "blocker-store",
+        "title": "An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does",
+        "description": "A gate that cannot read an entry can be bypassed by mistyping one, so an unreadable question is not a lesser problem than an open one.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/blocker-survives-handover",
+        "kind": "claim",
+        "identity": "blocker-survives-handover",
+        "title": "A blocking question keeps blocking after the work is handed to a new task",
+        "description": "The gate reads every unresolved entry in the store rather than only the active task's, so a handover cannot launder a blocker. The store is checkout-local, so the questions a gate can see are the ones asked in this working copy. Only a completed finish is refused; blocked, partial, no_match and failed are honest non-completions and are not. Any task may resolve any question. The alternatives — transferring the question with the handover, or gating on scope overlap — were rejected in M001 with the case each gets wrong.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/bootstrap-chain",
+        "kind": "claim",
+        "identity": "bootstrap-chain",
+        "title": "Provider instruction files are thin bootstraps that point at the AI layer and carry no rule of their own",
+        "description": "Every projection names .ai/README.md, README.md names AGENTS.md, and doctor fails on a projection that grew a rules section of its own. A person and a worker reach the same layer by the same two hops.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/capability-class",
+        "kind": "claim",
+        "identity": "capability-class",
+        "title": "A profile names a capability class rather than a vendor model",
+        "description": "Mapping a class to a concrete model is left to whoever runs the worker. Majordomus never selects or invokes a model.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/capability-modules",
+        "kind": "claim",
+        "identity": "capability-modules",
+        "title": "A capability of the Rust executable is declared once and composed into its module, the root composes modules, and the registry refuses a capability outside its module's namespace",
+        "description": "capability!, module! and compose_modules! build plain values handed to the registry builder; adding a capability to an existing module touches that module's file alone, and MCP, HTTP, OpenAPI, Swagger UI, the CLI, the benchmark targets, the cache and the generated reference follow. The crate's tests/registry.rs holds the invariants, tests/projections.rs the propagation.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/capability-registry",
+        "kind": "claim",
+        "identity": "capability-registry",
+        "title": "Every capability of the Rust executable is defined once, and the registry refuses a duplicate id or a colliding projection name, naming both parties",
+        "description": "Two sources, builtin executables and the layer's objects, meet in one registry built at one place; ids, MCP names and URIs, HTTP routes and CLI paths are each unique or the registry does not build. The crate's tests/registry.rs covers every collision.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/catalogue-resolves",
+        "kind": "claim",
+        "identity": "catalogue-resolves",
+        "title": "A use case or application cannot name a command, doctrine or claim that does not exist, and the two catalogues cannot disagree about which applies to which",
+        "description": "Prose describing the tool is checked the same way the tool checks itself. Cross-references are verified in both directions, so a use case naming an application that does not name it back is a failure rather than a silent asymmetry. An application declaring no does_not_fit_when is refused, because a catalogue that only lists fits is marketing.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/checkpoint-interval",
+        "kind": "claim",
+        "identity": "checkpoint-interval",
+        "title": "A profile sets how often a worker should checkpoint, and a stale task is reported",
+        "description": "The staleness report is guaranteed. Whether the worker checkpoints is not.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/checkpoint-record",
+        "kind": "claim",
+        "identity": "checkpoint-record",
+        "title": "A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated",
+        "description": "The cap is what keeps a checkpoint distinct from a handover. Mode 0600, created atomically, never staged.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/ci-planned-gates",
+        "kind": "claim",
+        "identity": "ci-planned-gates",
+        "title": "A change runs the gates its paths can affect, decided by one model of what affects what, and a change to the pipeline itself or a path the model does not know runs every gate",
+        "description": "The gates that always run are in every plan; a changed path selects the gates of every class it matches, as a union; a class may escalate; a gate brings what it implies and what it requires; the plan is deterministic and says for every gate why it ran or did not. The workflow reads the plan's outputs and carries no path list of its own; test/cases/26_ci_wiring.sh proves every gate's job exists, is gated on the plan and is needed by the verdict.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/ci-verdict",
+        "kind": "claim",
+        "identity": "ci-verdict",
+        "title": "The one status a branch rule requires is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
+        "description": "The verdict job always runs, so a required check is never left pending by a job the plan skipped, and it writes a table of every gate with its job's result and the reason it was or was not planned. The case drives it with fixture plans and needs contexts through every red condition.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/command-coverage",
+        "kind": "claim",
+        "identity": "command-coverage",
+        "title": "Every public command has a behavioural test and a negative test, computed rather than remembered",
+        "description": "The requirement is derived from the registry, so a command added tomorrow is owed coverage from that moment. Coverage is declared in per-case headers rather than inferred, because the negative assertions that use stdin and the surface case's loop are invisible to any scan.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/command-surface",
+        "kind": "claim",
+        "identity": "command-surface",
+        "title": "The public command surface is declared, and reconciled against the dispatcher",
+        "description": "The registry is authority for what a command means; bin/majordomus stays authority for what runs. A command dispatched with no entry, and an entry nothing dispatches, both fail. A command is public exactly when the usage text lists it, checked in both directions.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/consistency-check",
+        "kind": "claim",
+        "identity": "consistency-check",
+        "title": "check reports whether state, scope, blockers and checkpoint age are consistent right now",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/context-assembly",
+        "kind": "claim",
+        "identity": "context-assembly",
+        "title": "The context a worker is given is assembled from durable state in authority order, and what a profile excludes is excluded",
+        "description": "Git first, then task and profile, then blockers, then authored records, then history. The profile's context block decides what is offered; it is the only code that reads those fields.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/context-budget",
+        "kind": "claim",
+        "identity": "context-budget",
+        "title": "The always-loaded instruction file has a line budget with a failing check",
+        "description": "Over budget, nothing is written at all.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/context-documents",
+        "kind": "claim",
+        "identity": "context-documents",
+        "title": "The context that applies to a path is composed from the layer's scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing",
+        "description": "A document is a Markdown file under .ai/ whose front matter carries schema context/v1; the file name is a convention and the id is the identity. Ordering is depth, then declared order, then path. Providers and audience filter; extend, replace and final compose; a duplicate id, a dangling reference, a superseded final document or a cycle is refused by name.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/context-impact",
+        "kind": "claim",
+        "identity": "context-impact",
+        "title": "The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing",
+        "description": "context affected reads the working tree, the index, or a base ref, with renames detected; a tracked source change is a WARN to review and never an exit code, because the tool cannot decide whether prose still describes code. context check-sync is validate, then every projection against its stamp, then affected; test/cases/71_context_sync.sh proves the exit codes.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/context-selection-budget",
+        "kind": "claim",
+        "identity": "context-selection-budget",
+        "title": "The assembled context obeys a line budget, and every section it drops is named with its reason",
+        "description": "The count is of the printed document, not of its sections. Git, task, profile and open blockers are never dropped; record bodies degrade to a pointer before they disappear.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/continuity-reachable",
+        "kind": "claim",
+        "identity": "continuity-reachable",
+        "title": "Every continuity store is proven reachable through its own command, not merely present on disk",
+        "description": "doctor runs the resolver, renders every prompt asset, validates both parsed stores and builds the context. A directory of records that no command reads is the failure this tool exists to catch.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/cost-per-outcome",
+        "kind": "claim",
+        "identity": "cost-per-outcome",
+        "title": "Cost per accepted outcome will be reported from measured data only",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/dag-validation",
+        "kind": "claim",
+        "identity": "dag-validation",
+        "title": "A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name",
+        "description": "Kahn layering; the issues that never leave the graph are the ones reported. A malformed graph fails doctor and is reported by watch as drift.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/decision-attribution",
+        "kind": "claim",
+        "identity": "decision-attribution",
+        "title": "A decision record without a task, a head and a reason is reported, and does not block",
+        "description": "decisions.md is hand-editable by design, so an unattributable entry is a warning. finish still refuses when a profile requires a record it cannot find.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/decision-record",
+        "kind": "claim",
+        "identity": "decision-record",
+        "title": "A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited",
+        "description": "--why is required. --supersedes refuses text matching no recorded decision. Task and head are computed.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/derivation-one-graph",
+        "kind": "claim",
+        "identity": "derivation-one-graph",
+        "title": "Every committed derived artifact of the repository is regenerated by one command in dependency order and checked by one read-only command that names every stale artifact, a second regeneration on a clean tree changes nothing, and no derived file records the commit it lands in",
+        "description": "scripts/derive runs majordomus generate (the code-only projections), scripts/generate-site-data (the site's data and content and the derived documents, reading the registry manifest and the OpenAPI document), and majordomus generate again (the site dataset and the benchmark matrix over the index the documents joined); no stage reads its own output. scripts/derive-check composes generate --check and generate-site-data --check and exits 10 with both reports. The commit a page was built from is a fact of the build (site/data/build.json, served at /build.json, never committed), so source.json no longer carries it and the generator is idempotent on a clean tree. just derive, just derive-check and the Pages workflow call the scripts; just test runs the check.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/derived-not-declared",
+        "kind": "claim",
+        "identity": "derived-not-declared",
+        "title": "What the tool knows about itself is written once and derived everywhere else, and a second copy is a test failure",
+        "description": "Policy values have no reader-side defaults, claim statuses are declared in the matrix, the site fixtures derive their inputs from the generator, and every command, doctrine and claim is checked against a list read from the dispatch table or the registry rather than written into the test.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/dispatcher-wiring",
+        "kind": "claim",
+        "identity": "dispatcher-wiring",
+        "title": "Wiring is found in a hook or in any subhook of the directory that hook dispatches to",
+        "description": "The finding names the file that actually carries the invocation. A subhook that is not executable is reported as not wired, because the dispatcher skips it.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/divergence-label",
+        "kind": "claim",
+        "identity": "divergence-label",
+        "title": "State read back is labelled exact, advanced, diverged or different_context against git",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/doctrine-class-decides",
+        "kind": "claim",
+        "identity": "doctrine-class-decides",
+        "title": "A doctrine's class is what decides whether a violation stops the command, not a label beside it",
+        "description": "The test changes checkpoint freshness from advisory to blocking in a copy of the vendored rule file and asserts that check's exit code moves from 0 to 10. There are two classes and no override.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/doctrine-registry",
+        "kind": "claim",
+        "identity": "doctrine-registry",
+        "title": "Every rule the tool enforces is declared once, as a rule object in the repository's effective set, and doctor proves each one is reached by the command that claims to run it",
+        "description": "A doctrine whose validator does not exist, a validator no doctrine declares, a command that never dispatches, a blocking rule whose command cannot exit non-zero, a missing test, and CI that swallows the suite are six separate failures with six separate messages. Each is mutation-tested.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/drift-watch",
+        "kind": "claim",
+        "identity": "drift-watch",
+        "title": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/effort-escalation",
+        "kind": "claim",
+        "identity": "effort-escalation",
+        "title": "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/event-vocabulary",
+        "kind": "claim",
+        "identity": "event-vocabulary",
+        "title": "The ledger's event vocabulary is closed, on the way in and on the way out",
+        "description": "share/events.yaml declares every name, its emitting command and its required payload keys. An unregistered name is refused on write, refused as a history filter, and reported by history --validate when already stored.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/evidence-gates-done",
+        "kind": "claim",
+        "identity": "evidence-gates-done",
+        "title": "An issue cannot be completed while a required piece of evidence is missing",
+        "description": "Evidence is a command and its result, or an artifact. Narrative is refused. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/executable-reference-derived",
+        "kind": "claim",
+        "identity": "executable-reference-derived",
+        "title": "The site's pages about the Rust executable (one per module, one per capability, the command line, the MCP surface, the benchmarks, the executable's own narrative) are derived from the registry manifest and the registry dataset the executable generates, nothing names a capability by hand, and a capability that joins or leaves the registry gains or loses its page, its index entries and its links from the generators alone",
+        "description": "scripts/generate-site-data reads docs/generated/registry.json — a code-only projection, so no cycle runs through the index — for the ids it turns into routes, and writes site/data/generated/executable.json (routes, module and API links, source on GitHub, the claims attached to each surface by the path of their implementation) and the content stubs under site/content/registry/; the templates read every other fact from site/data/registry/registry.json. A manifest naming a module the registry does not hold, a source file the tree does not have, or another schema is refused and nothing is published. scripts/site-check proves the rendered side, every module and capability a page and no page without its entry, the CLI, MCP and benchmark pages rendering every command, tool, target and baseline, every capability page linking its module and its operation, and no template, generator or navigation file naming a capability. The manifest is among the site's inputs, so its hash moves with the executable's code.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/execution-cache-equivalence",
+        "kind": "claim",
+        "identity": "execution-cache-equivalence",
+        "title": "A cached capability of the Rust executable answers the same value uncached, cold and warm, a hit runs no handler, errors and commands are never cached, and the key carries the registry fingerprint",
+        "description": "One executor for every transport; CachePolicy on the descriptor; bounded per capability; the key is the canonical id, the input in canonical form and a sha-256 fingerprint of the repository content and the descriptors. tests/executor.rs and the proptest harness in tests/properties.rs iterate every cached capability with every case and generated inputs.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/execution-waves",
+        "kind": "claim",
+        "identity": "execution-waves",
+        "title": "Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised",
+        "description": "Sharing a wave is necessary for concurrency, not sufficient. Overlapping declared scope serialises conservatively, because a false serialisation costs time and a false parallel costs a conflict.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/exit-code-contract",
+        "kind": "claim",
+        "identity": "exit-code-contract",
+        "title": "Exit codes are a contract, and no code means \"warn and continue\"",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/finish-contract",
+        "kind": "claim",
+        "identity": "finish-contract",
+        "title": "finish evaluates the finish contract line by line and refuses when any line is unmet",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/generated-projections-checked",
+        "kind": "claim",
+        "identity": "generated-projections-checked",
+        "title": "The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one",
+        "description": "Byte-identical on regeneration, no timestamps, no absolute paths; --check writes nothing and exits 10 naming every file that differs or is missing. CI runs it.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/git-identity",
+        "kind": "claim",
+        "identity": "git-identity",
+        "title": "Identity fields on every state record are computed from git and never authored",
+        "description": "A handover body that tries to set one is rejected rather than merged.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/github-projection",
+        "kind": "claim",
+        "identity": "github-projection",
+        "title": "GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten",
+        "description": "The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/handover-record",
+        "kind": "claim",
+        "identity": "handover-record",
+        "title": "handover writes an append-only record with computed front matter and required sections",
+        "description": "A body with a missing or empty required section is refused and names the sections.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/history-ledger-read",
+        "kind": "claim",
+        "identity": "history-ledger-read",
+        "title": "The ledger is readable back as operational history, filtered by task, event and time",
+        "description": "What happened, when, for which task, at which head, and what outcome was accepted. Never what anyone said.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/hot-path-no-rebuild",
+        "kind": "claim",
+        "identity": "hot-path-no-rebuild",
+        "title": "After startup, no MCP or HTTP request of the Rust executable scans the repository, builds the index or the registry, derives a schema or builds a projection, and perf.counters proves it",
+        "description": "Process-wide counters, each incremented at one named place, answered as perf.counters over every transport; tests/hot_path.rs sends hundreds of requests through the real transports and requires the startup counters unchanged; the MCP listings and the OpenAPI document are prepared once.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/init-refuses",
+        "kind": "claim",
+        "identity": "init-refuses",
+        "title": "Installing into a repository that already has an installation is refused",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/interfaces-are-projections",
+        "kind": "claim",
+        "identity": "interfaces-are-projections",
+        "title": "MCP, HTTP, OpenAPI, Swagger UI, the capabilities commands and the generated reference are derived from the registry, and a change to one definition reaches every one of them",
+        "description": "No projection declares a name, a description, a schema or a route of its own; tests/projections.rs proves every declared projection present and none orphan, and that a changed input type and description reach the MCP schema, the OpenAPI operation and the reference. MCP and HTTP answer the same handler identically.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/ledger-integrity",
+        "kind": "claim",
+        "identity": "ledger-integrity",
+        "title": "Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record",
+        "description": "The reader skips a bad line rather than crashing, and check, doctor and watch all report it. The ledger is the one durable record nothing else can reconstruct.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/legacy-migration",
+        "kind": "claim",
+        "identity": "legacy-migration",
+        "title": "A repository on the pre-.ai layout is migrated once, explicitly, with a previewed plan and a verified backup of its local state, and the command is idempotent afterwards",
+        "description": "Every other command refuses the legacy layout and names migrate. --dry-run prints the plan and writes nothing. A file the version does not know is reported, never deleted; a destination that already exists refuses the whole run.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/local-state-ignored",
+        "kind": "claim",
+        "identity": "local-state-ignored",
+        "title": "Checkout-local state lives under .ai/local/, is ignored by git, and is absent on a fresh clone or worktree",
+        "description": "The task record, ledger, decisions, questions, checkpoints and handovers never travel through git. A record that arrives in another checkout by other means names the checkout it belongs to and is enforced nowhere else, which test/cases/27_foreign_task.sh proves.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/mcp-client-autostart",
+        "kind": "claim",
+        "identity": "mcp-client-autostart",
+        "title": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+        "description": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/mcp-data-driven",
+        "kind": "claim",
+        "identity": "mcp-data-driven",
+        "title": "What the MCP server serves is decided by the manifest, the declared source classes and each file's front matter, so an object added to the layer is served with no change to the executable",
+        "description": "The add, remove and break sequence through the built binary is tests/external_extension.rs in the crate; the shell case proves the layer init writes is served, and that a rule added to it appears.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/mcp-degraded-not-silent",
+        "kind": "claim",
+        "identity": "mcp-degraded-not-silent",
+        "title": "A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller",
+        "description": "Two files of one kind claiming one identity are both excluded and both named. --strict refuses to serve a degraded layer; --inspect exits 10 on one.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/mcp-lease-resilience",
+        "kind": "claim",
+        "identity": "mcp-lease-resilience",
+        "title": "Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies",
+        "description": "The election classifies the lease on every attempt and is bounded by time; commands/mcp.rs degrades to a standalone session when the lease or the server cannot be used; SIGTERM, SIGINT and SIGHUP unlink the lease in the handler. The crate's tests/mcp_shared.rs proves each path over real processes, and case 90 plants a corrupt lease behind the launcher. The doctrine is project.shared-server-resilience.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/mcp-peers",
+        "kind": "claim",
+        "identity": "mcp-peers",
+        "title": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+        "description": "Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; the board is one process's memory and is gone with it. Announcements are informational; scope is enforced by the shell tool's task record, not here.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/mcp-shared-server",
+        "kind": "claim",
+        "identity": "mcp-shared-server",
+        "title": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
+        "description": "The election is one lease file under .ai/local/state/mcp/, created atomically and removed on exit; a stale lease is taken over; a bridged client whose server dies takes over or re-attaches without its client noticing. The crate's tests/mcp_shared.rs covers the socket side; --standalone keeps one process per client.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/mcp-stdio-surface",
+        "kind": "claim",
+        "identity": "mcp-stdio-surface",
+        "title": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+        "description": "One process per client, alive as long as its pipe; diagnostics go to stderr; a session leaves the repository byte-identical. The crate's own suite, tests/mcp_stdio.rs, holds the same frames to the same rules.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/mcp-uri-resolution",
+        "kind": "claim",
+        "identity": "mcp-uri-resolution",
+        "title": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
+        "description": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects.rs covers every branch at the library level.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/minimum-context",
+        "kind": "claim",
+        "identity": "minimum-context",
+        "title": "A profile declares which context a worker should load and no more",
+        "description": "majordomus context now assembles a briefing from those toggles, and that selection is guaranteed (see context-assembly). This claim stays advisory because nothing measures what the worker actually read once it has been handed the briefing.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/no-counts-in-context",
+        "kind": "claim",
+        "identity": "no-counts-in-context",
+        "title": "A hardcoded count in the always-loaded file is a failure",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/no-network",
+        "kind": "claim",
+        "identity": "no-network",
+        "title": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/no-silent-overwrite",
+        "kind": "claim",
+        "identity": "no-silent-overwrite",
+        "title": "A hand-edited instruction file is never silently overwritten",
+        "description": "update refuses, offers a diff, and overwrites only under an explicit flag.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/no-transcripts",
+        "kind": "claim",
+        "identity": "no-transcripts",
+        "title": "Handovers carry durable facts, never conversation transcripts",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/open-question-gate",
+        "kind": "claim",
+        "identity": "open-question-gate",
+        "title": "An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass",
+        "description": "A gate that cannot read an entry can be bypassed by mistyping one, so check, doctor and watch all fail on a malformed entry.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/openapi-inferred",
+        "kind": "claim",
+        "identity": "openapi-inferred",
+        "title": "The OpenAPI document is inferred, the tags are the modules, the examples are the benchmark cases, the responses are the router's statuses by kind, the prose is the one text every projection shares, and the site's API reference is rendered from the committed document",
+        "description": "Tags from registry.modules(), examples from the capabilities' BenchmarkCases against the repository's index, responses from one status table keyed by kind, info from about.rs and the crate manifest; benches/routes.rs times every route with the same cases; the site projects the committed document, renders /docs/api/ and serves /openapi.json raw, and site-check refuses a build without them.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/overlap-report",
+        "kind": "claim",
+        "identity": "overlap-report",
+        "title": "Overlap between parallel workers is computed on claimed paths in both containment directions",
+        "description": "Reported, never blocking. Work in progress is reported and never blocked.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/pointer-integrity",
+        "kind": "claim",
+        "identity": "pointer-integrity",
+        "title": "Every repository-relative reference in the always-loaded file is proven to resolve",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/policy-parse",
+        "kind": "claim",
+        "identity": "policy-parse",
+        "title": "The canonical policy is parsed and rejected if it contains an unknown key",
+        "description": "A restricted YAML subset. Tabs, anchors, flow maps and multi-line scalars are refused rather than guessed at.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/profile-axes",
+        "kind": "claim",
+        "identity": "profile-axes",
+        "title": "Capability class, reasoning effort, output verbosity, context and verification are five independent axes",
+        "description": "The axes are validated and projected into the worker's instructions. Whether a worker honours them is not observable from outside the worker.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/profile-validate",
+        "kind": "claim",
+        "identity": "profile-validate",
+        "title": "Every profile is parsed, its unknown keys rejected, and the default profile proven to exist",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/project-schema",
+        "kind": "claim",
+        "identity": "project-schema",
+        "title": "Milestones and issues are canonical repository files, and a key nobody reads is an error",
+        "description": "The same allowlist rule the policy and the profiles live under. The filename is the id; a record that disagrees with its own filename is refused rather than reconciled.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/project-status-derived",
+        "kind": "claim",
+        "identity": "project-status-derived",
+        "title": "Issue and milestone status is derived from recorded facts and is stored nowhere",
+        "description": "An issue records started_at, verified_at, completed_at, cancelled and its evidence. BLOCKED, READY, ACTIVE, VERIFY, DONE and CANCELLED follow from those and from the state of its dependencies. `status` is not a field, so writing one is an unknown key.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/projection-fingerprint",
+        "kind": "claim",
+        "identity": "projection-fingerprint",
+        "title": "Every generated instruction file carries its own stamp, and a hand edit is detected",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/projection-generation",
+        "kind": "claim",
+        "identity": "projection-generation",
+        "title": "Provider instruction files are generated from the one policy, deterministically",
+        "description": "Running update twice leaves the byte-identical file. The test asserts the hash.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/prompt-asset",
+        "kind": "claim",
+        "identity": "prompt-asset",
+        "title": "A repository-local prompt renders against a closed set of state tokens, and an unknown token is an error",
+        "description": "No conditionals, loops, includes or shell. A prompt that silently renders a misspelled token as literal text is worse than one that refuses.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/prompt-assets",
+        "kind": "claim",
+        "identity": "prompt-assets",
+        "title": "Every repository-local prompt asset renders, and an unknown token is a failure",
+        "description": "Covers name and filename mismatch, an empty description, an unknown front-matter key, missing front matter, and a block token used inline.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/provider-projections-one-renderer",
+        "kind": "claim",
+        "identity": "provider-projections-one-renderer",
+        "title": "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, GEMINI.md, ...) are a target of majordomus generate, rendered from the policy and the provider templates byte for byte as the shell tool renders them, and generate --check refuses a hand-edited or stale one in CI",
+        "description": "One renderer, two entry points that agree on every stamp; the policy is the only input (its hash and the profiles' is the stamp's first hash). A target outside the repository, a provider without a template, a token the policy cannot fill, and an always_loaded target over the budget are refused with the reason, and nothing is written. Region mode keeps the host document outside the markers. apps/majordomus-cli/tests/providers_projection.rs covers the fixture side; CI runs generate --check on every push.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/record-resolution",
+        "kind": "claim",
+        "identity": "record-resolution",
+        "title": "The right prior record is resolved by worktree and branch, and an unrelated one is never offered",
+        "description": "Same worktree and branch, else same branch, else nothing. Ties within one second are broken by ledger order. Absence is reported as absence.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/record-retention",
+        "kind": "claim",
+        "identity": "record-retention",
+        "title": "Rotating the ledger archives the oldest lines and never deletes them",
+        "description": "Refuses to overwrite an existing archive, and does nothing when the ledger is under its cap.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/record-search",
+        "kind": "claim",
+        "identity": "record-search",
+        "title": "Durable records are searchable literally, across kinds, without an index",
+        "description": "A fixed-string grep in authority order. No ranking, no embedding, no index that could fall out of step with the records it describes.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/region-projection",
+        "kind": "claim",
+        "identity": "region-projection",
+        "title": "A projection can own only the region between its markers, leaving the rest of the file untouched",
+        "description": "How a repository that already has a hand-written CLAUDE.md adopts Majordomus. An edit outside the markers is never drift; an edit inside them is caught. Malformed markers are refused, not guessed at.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/reproduce-command",
+        "kind": "claim",
+        "identity": "reproduce-command",
+        "title": "Every finding carries the command that reproduces it",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/retention-caps",
+        "kind": "claim",
+        "identity": "retention-caps",
+        "title": "The append-only ledger and handover store have retention caps that are checked",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/roadmap-derived",
+        "kind": "claim",
+        "identity": "roadmap-derived",
+        "title": "The roadmap is derived from milestone state, and no document may be a second authority for it",
+        "description": "The sequence is the topological rank of the milestone graph, so no list of versions exists anywhere. While a hand-written roadmap table survives, the doctrine holds it to the model in both directions; once it is gone the check holds trivially, which is the regression it exists to refuse.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/routing",
+        "kind": "claim",
+        "identity": "routing",
+        "title": "Routing recommendations will be derived from measured cost and outcome data",
+        "description": "Recommendations only. Majordomus does not invoke a model.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/rule-resolution",
+        "kind": "claim",
+        "identity": "rule-resolution",
+        "title": "The effective rule set is resolved as a dependency graph in a deterministic order, and a set that does not resolve is applied by nothing",
+        "description": "A missing or deprecated dependency, a cycle, one identity claimed twice, a project rule in the vendor namespace, malformed front matter, an unknown key and an x-majordomus block missing its binding are each refused by name. Every dependency is listed before the rule that depends on it, and two runs agree.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/runtime-adapters",
+        "kind": "claim",
+        "identity": "runtime-adapters",
+        "title": "Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits",
+        "description": "The one implementation studied was rolled back within days because its limits were global constants rather than task-derived.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/rust-binary-artifact",
+        "kind": "claim",
+        "identity": "rust-binary-artifact",
+        "title": "The Rust executable the rust gate built is published as an artifact with its provenance, and every Rust case drives the executable MAJORDOMUS_BIN names instead of building one",
+        "description": "scripts/rust-check --artifact DIR copies the debug executable beside a majordomus-cli.json naming the commit, the target triple, the toolchain and the Cargo.lock digest; the workflow uploads it as majordomus-cli-<target>. rust_bin in test/lib.sh hands a case MAJORDOMUS_BIN when set, refuses one that is not executable, builds once with cargo when unset, and asks the case to skip when there is neither; the launcher bin/majordomus-mcp honours the same variable.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/rust-coverage-floor",
+        "kind": "claim",
+        "identity": "rust-coverage-floor",
+        "title": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+        "description": "cargo-llvm-cov over all targets, --fail-under-lines. The floor is 90; the case refuses a floor under 90, so lowering it is an edit to a test that a reviewer sees, not a quiet change to a number. Raising it when the figure rises is one edit to the file. The coverage job runs when the plan selects the rust-coverage gate, which the rust and share classes of .ai/repo/ci/gates.yaml select and every full plan does; a change that cannot reach the crate does not recompile it with instrumentation.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/rust-evidence-gates",
+        "kind": "claim",
+        "identity": "rust-evidence-gates",
+        "title": "Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs that script on every change that can reach the crate",
+        "description": "Format, lints with warnings as errors (a public item without documentation is one), the suites with the doc examples, rustdoc with warnings denied, the benchmarks building, the registry's own validation, the committed projections in sync, the benchmark coverage complete, and line coverage above the committed floor; --ci adds the benchmark check against the platform's baseline and leaves coverage to its own job, --integration runs the registry checks alone for a change outside the crate. The rust job of the workflow runs the script itself with the mode the plan chose, so there is no second list to fall out of order; the case reads the script, the workflow and the justfile and fails when they disagree; with a toolchain present it also runs the doc examples and builds the benchmarks.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/rust-hot-path-benchmarks",
+        "kind": "claim",
+        "identity": "rust-hot-path-benchmarks",
+        "title": "The paths of the Rust executable that scale with the repository carry criterion benchmarks that build on every push, and every executable capability declares its benchmark policy, required or waived for a typed reason",
+        "description": "The YAML subset and front matter, glob matching, the index, the registry, the OpenAPI document, one MCP listing and one capability call (benches/projections.rs); the router, the bridge and the shared server (benches/shared.rs). Numbers are reported, not asserted; no latency budget is promised until one is measured on CI. The capability! macro does not compile an executable without benchmark cases, the registry counts the required and the waived, and the case reads the policy of every executable back through capabilities list.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/schema-driven-kinds",
+        "kind": "claim",
+        "identity": "schema-driven-kinds",
+        "title": "How each declarative kind is read and which keys it may carry is data read at run time, and a repository adds a kind with its JSON Schema without a code change",
+        "description": "share/kinds.yaml and share/schemas/*.schema.json are the distribution's; .ai/repo/knowledge/kinds.yaml and schemas/ are the repository's; a name declared by both is an error naming both files. The shell tool's allow-lists are generated from the same schemas.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/scope-declared",
+        "kind": "claim",
+        "identity": "scope-declared",
+        "title": "What a worker reads of the repository is declared once in .ai/repo/scope.yaml, out wins over in, and the Rust executable discovers, indexes and serves nothing outside it",
+        "description": "The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/scope-enforcement",
+        "kind": "claim",
+        "identity": "scope-enforcement",
+        "title": "A touched file outside the claimed scope is a failure, not a warning",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/scoped-task",
+        "kind": "claim",
+        "identity": "scoped-task",
+        "title": "A task is started with a declared file scope and a profile, and only one task is active per checkout",
+        "description": "A scope path that escapes the repository root is refused. Starting a second task while one is active is refused.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/semantic-retrieval",
+        "kind": "claim",
+        "identity": "semantic-retrieval",
+        "title": "Ranked or semantic retrieval over durable records is deliberately not implemented",
+        "description": "The corpus is a handful of Markdown files and one JSONL. An index or an embedding store would be a second source of truth that has to be kept in step with the first, and a scan is faster than that problem. Revisited only if a repository appears where the scan is measurably too slow.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/shared-policy",
+        "kind": "claim",
+        "identity": "shared-policy",
+        "title": "One policy will be shared across repositories and workers",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/site-deploy-one-path",
+        "kind": "claim",
+        "identity": "site-deploy-one-path",
+        "title": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the Pages workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
+        "description": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site/SKILL.md.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/site-deploys-from-verified-run",
+        "kind": "claim",
+        "identity": "site-deploys-from-verified-run",
+        "title": "The site deploys from the same workflow run that validated it, after the jobs that guard the site are green, and nothing is rebuilt or measured twice for one commit",
+        "description": "The site job uploads the site/public it built, checked and probed as the Pages artifact on master; the pages job needs plan, structure, suite, rust and site and deploys it; deployments queue in order and never cancel one another; a pull request's runs are superseded by its next commit. The case proves there is one workflow, that it deploys, what the pages job needs, and the concurrency rule.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/site-registry-dataset",
+        "kind": "claim",
+        "identity": "site-registry-dataset",
+        "title": "The site's Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI",
+        "description": "Every builtin descriptor in full with the file it was composed in, every module with its ids, every object of the layer without its content, every kind with its schema, the declared provider projections, the command line as clap declares it, the MCP tools and resources, the HTTP routes, the benchmark targets, coverage, policy and accepted baselines, and the registry and index fingerprints (majordomus-site-registry/v2); no timestamps of its own, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; an exposure removed from a descriptor moves the routes and the coverage and nothing else; the test follows each mutation to exactly the projection it concerns.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/skill-catalogue",
+        "kind": "claim",
+        "identity": "skill-catalogue",
+        "title": "A skill is one directory under the layer's skills section holding SKILL.md, discovered by the source class `skill` the shell tool and the Rust executable both read, so that adding the file is the whole registration and the catalogue, the command, doctor, MCP and the site all derive from it",
+        "description": "share/kinds.yaml declares the kind, share/schemas/skill.schema.json its contract, and the source classes skill and skill_example in .ai/repo/knowledge/sources.yaml which files carry it. Nothing else names a skill. lib/skills.sh derives one catalogue from that discovery for `skills list|show|check`, the doctrine validator and scripts/generate-site-data; the Rust index serves the same files as majordomus://skill/<id> resources, through majordomus_list and majordomus_get, with no code that knows the kind. The case adds, breaks, renames and removes a skill and watches every surface follow.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/skill-check",
+        "kind": "claim",
+        "identity": "skill-check",
+        "title": "Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, a violation names the file and every reason, and a repository with no skills is reported rather than passed",
+        "description": "`skills check` and the doctrine majordomus.skill-integrity (dispatched by doctor and watch) run one examination — unknown keys, schema version, integer version, closed status set, id equal to the directory, non-empty Purpose, Procedure and Output sections, duplicate ids, related ids that resolve, examples with a heading — and print the counts of what they examined. The site generator refuses to build from a skill that does not validate.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/skill-site-projection",
+        "kind": "claim",
+        "identity": "skill-site-projection",
+        "title": "The website's skills section is rendered from the skills catalogue, one page per skill carrying the skill's own body and examples, and a removed or renamed skill leaves no page, entry or link behind",
+        "description": "site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/suite-parallel",
+        "kind": "claim",
+        "identity": "suite-parallel",
+        "title": "The behavioural suite runs a bounded number of cases at a time with the serial runner's semantics, a case that writes into the checkout declares itself exclusive and runs alone, and the parallel phase fails naming the paths when the checkout changed under it",
+        "description": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/task-commit-attribution",
+        "kind": "claim",
+        "identity": "task-commit-attribution",
+        "title": "A task will know which commits it produced, rather than inferring them from a range",
+        "description": "Today scope is checked with git diff base..HEAD, and a commit range has no author, so another session committing to the same branch in the same checkout has its files counted as this task's work. Recording each commit as it happens turns the question from a heuristic about ranges into an enumeration. The list would be a lookup that git overrules, never authority, and a rewritten commit would be reported as unrecognised rather than resolved to a guess.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/task-dependencies",
+        "kind": "claim",
+        "identity": "task-dependencies",
+        "title": "A task record has no dependencies; sequencing between sessions is not represented",
+        "description": "Refused for task records, and only for them. Issues and milestones do carry dependencies, validated as two graphs — see docs/ROADMAP.md and docs/PLANNING.md. What stays refused is a task, the record of one session's work, waiting on another; one task is active per checkout and coordination between checkouts is the scope overlap report. The original wording said no dependency graph existed anywhere, which stopped being true when the plan model landed.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/telemetry",
+        "kind": "claim",
+        "identity": "telemetry",
+        "title": "Execution telemetry will be recorded once a provider exposes it honestly",
+        "description": "Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/tool-location-independent",
+        "kind": "claim",
+        "identity": "tool-location-independent",
+        "title": "The tool runs read-only from any location, and two locations of one version agree about one repository",
+        "description": "A checkout copy, an unrelated absolute path and a PATH install read the same repository files and write nothing into the distribution, whose hash is the same after every command. The distribution root is derived from the entry point, never from the environment.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/typed-outcome",
+        "kind": "claim",
+        "identity": "typed-outcome",
+        "title": "An outcome is a value from a closed vocabulary, not free text",
+        "description": "no_match means the work was done and the thing sought does not exist. failed means the work could not be done. They are different facts.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/use-case-coverage",
+        "kind": "claim",
+        "identity": "use-case-coverage",
+        "title": "Every public command is named and run by an active use case, a guaranteed claim or an MCP tool without one is a named gap, and the policy says which gaps fail doctor, check and finish",
+        "description": "The tally is computed from the command registry, docs/CLAIMS.yaml, the executable's registry and the use cases under .ai/repo/use-cases/; a draft never counts. The doctrine is majordomus.use-case-coverage, gated by policy use_cases.coverage and the finish key use_cases_covered.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/use-case-evidence",
+        "kind": "claim",
+        "identity": "use-case-evidence",
+        "title": "A use case's scenario executes against the real tool in a disposable repository, every step's exit code and output are asserted, and the normalised evidence is what the site shows",
+        "description": "majordomus usecase run writes .ai/local/evidence/use-cases/<id>.json; scripts/generate-site-data runs the same scenarios and embeds the evidence into site/data/generated/catalogue.json, so --check proves the pages show what the tool did. Paths, timestamps, ids, hashes and durations are normalised; nothing behavioural is.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/use-case-impact",
+        "kind": "claim",
+        "identity": "use-case-impact",
+        "title": "From the files a change touched, the tool names the commands, rules, use cases, scenarios and behavioural cases affected, and scaffolds a draft for a capability no use case covers",
+        "description": "usecase impact maps paths through docs/RESPONSIBILITIES.yaml, the dispatch table, the rules' identities and the scenarios' fixtures; usecase scaffold writes drafts from the registry, the command fixture and the claims, and never a guarantee.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/vendored-rule-package",
+        "kind": "claim",
+        "identity": "vendored-rule-package",
+        "title": "The rule baseline is vendored into the repository with a manifest naming every file and its hash, and a hand edit is detected and refused",
+        "description": "rules vendor status reports an edited, missing or stray file; rules vendor update refuses over it until --force, and never touches rules/project/. A newer executable reports a newer package and does not apply it.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/wiring-reconciliation",
+        "kind": "claim",
+        "identity": "wiring-reconciliation",
+        "title": "Every enforcement the policy declares is reconciled against what actually runs",
+        "description": "The path must exist, be executable, and be invoked by the named dispatcher. A hook that invokes it and discards the exit code counts as not wired.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
+      },
+      {
+        "uri": "majordomus://claim/worktree-ownership",
+        "kind": "claim",
+        "identity": "worktree-ownership",
+        "title": "A task record names the checkout it belongs to, and another checkout is never held to its scope",
+        "description": "The record is checkout-local and never tracked, so it does not travel through git; one that arrives by other means is recognised by the worktree it names. check, finish --check and watch report a foreign record and enforce nothing from it; finish refuses to write to it. A record from before the field existed is treated as local, so upgrading does not turn an installation red.",
+        "path": "docs/CLAIMS.yaml",
+        "source_class": "claims",
+        "bytes": 70555
       },
       {
         "uri": "majordomus://context/ai.repo.applications",
@@ -3726,8 +4894,8 @@
         "description": "Reusable provider-neutral operational procedures, loaded only when the task is about them.",
         "path": ".ai/repo/skills/README.md",
         "section": "skills",
-        "source_class": "skill",
-        "bytes": 642
+        "source_class": "skill_section",
+        "bytes": 4183
       },
       {
         "uri": "majordomus://context/ai.repo.use-cases",
@@ -3752,14 +4920,104 @@
         "bytes": 943
       },
       {
-        "uri": "majordomus://document/.ai/repo/skills/deploy-site.md",
+        "uri": "majordomus://document/.ai/repo/skills/implement/examples/add-a-catalogue-item.md",
         "kind": "document",
-        "identity": ".ai/repo/skills/deploy-site.md",
-        "title": "Deploy the site by hand",
-        "path": ".ai/repo/skills/deploy-site.md",
+        "identity": ".ai/repo/skills/implement/examples/add-a-catalogue-item.md",
+        "title": "Add a declarative catalogue item",
+        "path": ".ai/repo/skills/implement/examples/add-a-catalogue-item.md",
         "section": "skills",
-        "source_class": "skill",
-        "bytes": 2442
+        "source_class": "skill_example",
+        "bytes": 441
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/implement/examples/fix-a-defect.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/implement/examples/fix-a-defect.md",
+        "title": "Fix a defect",
+        "path": ".ai/repo/skills/implement/examples/fix-a-defect.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 461
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/implement/examples/implement-a-feature.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/implement/examples/implement-a-feature.md",
+        "title": "Implement a feature from an issue",
+        "path": ".ai/repo/skills/implement/examples/implement-a-feature.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 554
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/implement/examples/make-an-operation-faster.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/implement/examples/make-an-operation-faster.md",
+        "title": "Make an operation faster",
+        "path": ".ai/repo/skills/implement/examples/make-an-operation-faster.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 444
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/implement/examples/refactor-without-behaviour-change.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/implement/examples/refactor-without-behaviour-change.md",
+        "title": "Refactor a subsystem without changing its behaviour",
+        "path": ".ai/repo/skills/implement/examples/refactor-without-behaviour-change.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 455
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/repo-review/examples/review-a-subsystem.md",
+        "title": "Review a subsystem",
+        "path": ".ai/repo/skills/repo-review/examples/review-a-subsystem.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 460
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/repo-review/examples/review-against-an-issue.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/repo-review/examples/review-against-an-issue.md",
+        "title": "Review an implementation against its issue",
+        "path": ".ai/repo/skills/repo-review/examples/review-against-an-issue.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 444
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/repo-review/examples/review-current-diff.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/repo-review/examples/review-current-diff.md",
+        "title": "Review the current diff",
+        "path": ".ai/repo/skills/repo-review/examples/review-current-diff.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 345
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/repo-review/examples/review-generated-synchronisation.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/repo-review/examples/review-generated-synchronisation.md",
+        "title": "Review generated files and documents for drift",
+        "path": ".ai/repo/skills/repo-review/examples/review-generated-synchronisation.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 550
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/repo-review/examples/review-repository-architecture.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/repo-review/examples/review-repository-architecture.md",
+        "title": "Review the whole repository's architecture",
+        "path": ".ai/repo/skills/repo-review/examples/review-repository-architecture.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 556
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/continuity.md",
@@ -3792,23 +5050,13 @@
         "bytes": 1608
       },
       {
-        "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
-        "kind": "document",
-        "identity": ".ai/repo/workflows/use-cases.md",
-        "title": "Use cases",
-        "path": ".ai/repo/workflows/use-cases.md",
-        "section": "workflows",
-        "source_class": "workflow",
-        "bytes": 1943
-      },
-      {
         "uri": "majordomus://document/AGENTS.md",
         "kind": "document",
         "identity": "AGENTS.md",
         "title": "AGENTS.md",
         "path": "AGENTS.md",
         "source_class": "readme",
-        "bytes": 3030
+        "bytes": 2766
       },
       {
         "uri": "majordomus://document/CLAUDE.md",
@@ -3835,7 +5083,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 26731
+        "bytes": 26337
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -3868,10 +5116,10 @@
         "uri": "majordomus://document/docs/CATALOGUE.md",
         "kind": "document",
         "identity": "docs/CATALOGUE.md",
-        "title": "The catalogue",
+        "title": "Use cases and applications",
         "path": "docs/CATALOGUE.md",
         "source_class": "document",
-        "bytes": 3831
+        "bytes": 4563
       },
       {
         "uri": "majordomus://document/docs/CI.md",
@@ -3880,7 +5128,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 13177
+        "bytes": 12961
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -3889,7 +5137,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 67853
+        "bytes": 70560
       },
       {
         "uri": "majordomus://document/docs/CONCEPTS.md",
@@ -3898,7 +5146,7 @@
         "title": "Concepts",
         "path": "docs/CONCEPTS.md",
         "source_class": "document",
-        "bytes": 11370
+        "bytes": 11195
       },
       {
         "uri": "majordomus://document/docs/CONTEXT.md",
@@ -3979,16 +5227,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 37732
-      },
-      {
-        "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
-        "kind": "document",
-        "identity": "docs/GITHUB_PAGES_PERFORMANCE.md",
-        "title": "GitHub Pages performance",
-        "path": "docs/GITHUB_PAGES_PERFORMANCE.md",
-        "source_class": "document",
-        "bytes": 15895
+        "bytes": 33203
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -3998,15 +5237,6 @@
         "path": "docs/MCP.md",
         "source_class": "document",
         "bytes": 19124
-      },
-      {
-        "uri": "majordomus://document/docs/PAGES_STATUS.md",
-        "kind": "document",
-        "identity": "docs/PAGES_STATUS.md",
-        "title": "GitHub Pages performance status",
-        "path": "docs/PAGES_STATUS.md",
-        "source_class": "document",
-        "bytes": 2210
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -4042,7 +5272,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 8895
+        "bytes": 8038
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -4060,7 +5290,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 44831
+        "bytes": 46659
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -4078,7 +5308,7 @@
         "title": "Site claims",
         "path": "docs/SITE_CLAIMS.md",
         "source_class": "document",
-        "bytes": 34149
+        "bytes": 35271
       },
       {
         "uri": "majordomus://document/docs/SITE_REVIEW.md",
@@ -4177,7 +5407,7 @@
         "title": "A use case cannot name something the tool does not have",
         "path": "docs/claims/catalogue-resolves.md",
         "source_class": "claim_page",
-        "bytes": 2689
+        "bytes": 2579
       },
       {
         "uri": "majordomus://document/docs/claims/checkpoint-interval.md",
@@ -4996,16 +6226,16 @@
         "title": "The site is deployed by one script, from a terminal or from the Pages workflow, and the deploy names its source",
         "path": "docs/claims/site-deploy-one-path.md",
         "source_class": "claim_page",
-        "bytes": 2527
+        "bytes": 2533
       },
       {
         "uri": "majordomus://document/docs/claims/site-deploys-from-verified-run.md",
         "kind": "document",
         "identity": "docs/claims/site-deploys-from-verified-run.md",
-        "title": "Publication is gated on everything that can make the published site wrong and waits for nothing else; the checks that decide whether a change may merge run beside it on the same commit, not in front of it",
+        "title": "The site deploys from the same workflow run that validated it, after the jobs that guard the site are green, and nothing is rebuilt or measured twice for one commit",
         "path": "docs/claims/site-deploys-from-verified-run.md",
         "source_class": "claim_page",
-        "bytes": 5253
+        "bytes": 2621
       },
       {
         "uri": "majordomus://document/docs/claims/site-registry-dataset.md",
@@ -5015,6 +6245,33 @@
         "path": "docs/claims/site-registry-dataset.md",
         "source_class": "claim_page",
         "bytes": 3246
+      },
+      {
+        "uri": "majordomus://document/docs/claims/skill-catalogue.md",
+        "kind": "document",
+        "identity": "docs/claims/skill-catalogue.md",
+        "title": "A skill is one directory under the skills section, discovered by the source class both readers share, so that adding the file is the whole registration",
+        "path": "docs/claims/skill-catalogue.md",
+        "source_class": "claim_page",
+        "bytes": 2893
+      },
+      {
+        "uri": "majordomus://document/docs/claims/skill-check.md",
+        "kind": "document",
+        "identity": "docs/claims/skill-check.md",
+        "title": "Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, and a repository with no skills is reported rather than passed",
+        "path": "docs/claims/skill-check.md",
+        "source_class": "claim_page",
+        "bytes": 2723
+      },
+      {
+        "uri": "majordomus://document/docs/claims/skill-site-projection.md",
+        "kind": "document",
+        "identity": "docs/claims/skill-site-projection.md",
+        "title": "The website's skills section is rendered from the skills catalogue, one page per skill carrying its own body and examples, and a removed or renamed skill leaves nothing behind",
+        "path": "docs/claims/skill-site-projection.md",
+        "source_class": "claim_page",
+        "bytes": 2499
       },
       {
         "uri": "majordomus://document/docs/claims/suite-parallel.md",
@@ -5130,7 +6387,7 @@
         "identity": "bin/majordomus",
         "path": "bin/majordomus",
         "source_class": "entrypoint",
-        "bytes": 4158
+        "bytes": 4258
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-mcp",
@@ -5210,7 +6467,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 43676
+        "bytes": 43800
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -5357,6 +6614,14 @@
         "bytes": 25245
       },
       {
+        "uri": "majordomus://implementation/lib/skills.sh",
+        "kind": "implementation",
+        "identity": "lib/skills.sh",
+        "path": "lib/skills.sh",
+        "source_class": "library",
+        "bytes": 16950
+      },
+      {
         "uri": "majordomus://implementation/lib/start.sh",
         "kind": "implementation",
         "identity": "lib/start.sh",
@@ -5378,7 +6643,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 45013
+        "bytes": 44235
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -7136,6 +8401,20 @@
         ]
       },
       {
+        "uri": "majordomus://rule/majordomus.skill-integrity@1",
+        "kind": "rule",
+        "identity": "majordomus.skill-integrity@1",
+        "title": "Skill integrity",
+        "description": "Every skill the repository declares parses against the skill contract, names the directory it lives in, carries its sections, and every skill or example it refers to exists.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/skill-integrity.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2285,
+        "tags": [
+          "skills"
+        ]
+      },
+      {
         "uri": "majordomus://rule/majordomus.state-consistency@1",
         "kind": "rule",
         "identity": "majordomus.state-consistency@1",
@@ -7382,23 +8661,6 @@
           "architecture",
           "capabilities",
           "rust"
-        ]
-      },
-      {
-        "uri": "majordomus://rule/project.native-cli-documented@1",
-        "kind": "rule",
-        "identity": "project.native-cli-documented@1",
-        "title": "A native command line command exists only with its documentation and its executable examples",
-        "description": "Every command of the Rust executable is declared once in clap with the examples beside it, every command a person can run carries at least one example that the crate's tests execute against the built binary, and the generated reference, the site dataset and the routes under /docs/cli/ are projections that CI refuses to let go stale.",
-        "path": ".ai/repo/rules/project/native-cli-documented.v1.md",
-        "section": "rules",
-        "source_class": "rule",
-        "bytes": 4768,
-        "tags": [
-          "rust",
-          "cli",
-          "documentation",
-          "projections"
         ]
       },
       {
@@ -7672,22 +8934,6 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.use-case-evidence@1",
-        "kind": "rule",
-        "identity": "project.use-case-evidence@1",
-        "title": "A use case is proved by execution, and a capability is covered by a use case",
-        "description": "Every externally meaningful capability of this repository is demonstrated by an active use case whose scenario executes against the real tool; every example a page shows comes from that execution; a use case's maturity is observed, never authored; and a change to a command, rule, claim, provider, MCP tool, schema, application or workflow runs use-case impact analysis before the work is called complete.",
-        "path": ".ai/repo/rules/project/use-case-evidence.v1.md",
-        "section": "rules",
-        "source_class": "rule",
-        "bytes": 2626,
-        "tags": [
-          "use-cases",
-          "evidence",
-          "documentation"
-        ]
-      },
-      {
         "uri": "majordomus://scope/.ai/repo/scope.yaml",
         "kind": "scope",
         "identity": ".ai/repo/scope.yaml",
@@ -7695,6 +8941,56 @@
         "section": "scope",
         "source_class": "scope",
         "bytes": 4208
+      },
+      {
+        "uri": "majordomus://skill/deploy-site",
+        "kind": "skill",
+        "identity": "deploy-site",
+        "title": "Deploy the site by hand",
+        "description": "Publish the website to GitHub Pages from a terminal, through the one script the Pages workflow runs, when waiting for the Actions queue is not acceptable.",
+        "path": ".ai/repo/skills/deploy-site/SKILL.md",
+        "section": "skills",
+        "source_class": "skill",
+        "bytes": 3460,
+        "tags": [
+          "site",
+          "deploy",
+          "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://skill/implement",
+        "kind": "skill",
+        "identity": "implement",
+        "title": "Implement a change",
+        "description": "Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope.",
+        "path": ".ai/repo/skills/implement/SKILL.md",
+        "section": "skills",
+        "source_class": "skill",
+        "bytes": 12173,
+        "tags": [
+          "implementation",
+          "evidence",
+          "invariants",
+          "drift"
+        ]
+      },
+      {
+        "uri": "majordomus://skill/repo-review",
+        "kind": "skill",
+        "identity": "repo-review",
+        "title": "Repository review",
+        "description": "An evidence-driven review of the actual state of the repository, or of one change to it, before meaningful engineering work is recommended or done.",
+        "path": ".ai/repo/skills/repo-review/SKILL.md",
+        "section": "skills",
+        "source_class": "skill",
+        "bytes": 6783,
+        "tags": [
+          "review",
+          "evidence",
+          "invariants",
+          "drift"
+        ]
       },
       {
         "uri": "majordomus://taxonomy/adoption",
@@ -7908,7 +9204,7 @@
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 5653
+        "bytes": 4600
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -8036,7 +9332,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 10871
+        "bytes": 10947
       },
       {
         "uri": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -8471,28 +9767,20 @@
         "bytes": 6310
       },
       {
+        "uri": "majordomus://test/test/cases/95_skills.sh",
+        "kind": "test",
+        "identity": "test/cases/95_skills.sh",
+        "path": "test/cases/95_skills.sh",
+        "source_class": "case",
+        "bytes": 16009
+      },
+      {
         "uri": "majordomus://test/test/cases/96_site_deploy.sh",
         "kind": "test",
         "identity": "test/cases/96_site_deploy.sh",
         "path": "test/cases/96_site_deploy.sh",
         "source_class": "case",
         "bytes": 3852
-      },
-      {
-        "uri": "majordomus://test/test/cases/97_pages_fast_path.sh",
-        "kind": "test",
-        "identity": "test/cases/97_pages_fast_path.sh",
-        "path": "test/cases/97_pages_fast_path.sh",
-        "source_class": "case",
-        "bytes": 9805
-      },
-      {
-        "uri": "majordomus://test/test/cases/98_cli_reference.sh",
-        "kind": "test",
-        "identity": "test/cases/98_cli_reference.sh",
-        "path": "test/cases/98_cli_reference.sh",
-        "source_class": "case",
-        "bytes": 6538
       },
       {
         "uri": "majordomus://use-case/accept-or-refuse-finished-work",
@@ -8856,7 +10144,7 @@
       "identity": [
         "id"
       ],
-      "objects": 0
+      "objects": 117
     },
     {
       "name": "context",
@@ -8873,14 +10161,14 @@
       "format": "markdown",
       "front_matter": "optional",
       "identity": [],
-      "objects": 152
+      "objects": 161
     },
     {
       "name": "implementation",
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 33
+      "objects": 34
     },
     {
       "name": "issue",
@@ -8939,7 +10227,7 @@
         "id",
         "version"
       ],
-      "objects": 74
+      "objects": 73
     },
     {
       "name": "scope",
@@ -8948,6 +10236,16 @@
       "schema": "scope",
       "identity": [],
       "objects": 1
+    },
+    {
+      "name": "skill",
+      "format": "markdown",
+      "front_matter": "required",
+      "schema": "skill",
+      "identity": [
+        "id"
+      ],
+      "objects": 3
     },
     {
       "name": "taxonomy",
@@ -8964,7 +10262,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 86
+      "objects": 85
     },
     {
       "name": "use-case",
@@ -8995,22 +10293,15 @@
     "path": [
       "majordomus"
     ],
-    "route": "/docs/cli/",
-    "executable": false,
-    "usage": "majordomus <COMMAND>",
     "about": "Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer",
     "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\nThe task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.",
     "args": [],
-    "examples": [],
     "subcommands": [
       {
         "path": [
           "majordomus",
           "mcp"
         ],
-        "route": "/docs/cli/mcp/",
-        "executable": true,
-        "usage": "majordomus mcp [OPTIONS]",
         "about": "Serve the repository's AI layer to an MCP client over stdio (read-only)",
         "args": [
           {
@@ -9173,46 +10464,6 @@
             ]
           }
         ],
-        "examples": [
-          {
-            "id": "mcp-inspect",
-            "title": "See what would be served, without serving it",
-            "description": "Builds the registry and the index of the repository in the working directory and prints the repository, the capabilities, the objects and every diagnostic, then exits. Nothing is served and nothing is written.",
-            "argv": [
-              "mcp",
-              "--inspect"
-            ],
-            "command": "majordomus mcp --inspect",
-            "setup": [],
-            "expectation": "exits 0; prints repository, capabilities"
-          },
-          {
-            "id": "mcp-inspect-json",
-            "title": "The same, as one JSON document for a script",
-            "description": "The shape `--inspect` prints for a person, as JSON: the repository, its discovery mode, the capabilities and the diagnostics, deterministic and safe to diff.",
-            "argv": [
-              "mcp",
-              "--inspect",
-              "--format",
-              "json"
-            ],
-            "command": "majordomus mcp --inspect --format json",
-            "setup": [],
-            "expectation": "exits 0; prints one JSON document carrying /repository/repository/root, /tools"
-          },
-          {
-            "id": "mcp-stdio",
-            "title": "Serve one MCP client on stdio",
-            "description": "The form an MCP client spawns: JSON-RPC frames in on stdin, frames out on stdout, logs on stderr, and the session ends at end of input. `--standalone` keeps this process to itself: no shared server, no HTTP, nothing written anywhere.",
-            "argv": [
-              "mcp",
-              "--standalone"
-            ],
-            "command": "majordomus mcp --standalone",
-            "setup": [],
-            "expectation": "answers initialize and tools/list on stdio, and exits 0 at end of input"
-          }
-        ],
         "subcommands": []
       },
       {
@@ -9220,9 +10471,6 @@
           "majordomus",
           "serve"
         ],
-        "route": "/docs/cli/serve/",
-        "executable": true,
-        "usage": "majordomus serve [OPTIONS]",
         "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
         "args": [
           {
@@ -9315,21 +10563,6 @@
             ]
           }
         ],
-        "examples": [
-          {
-            "id": "serve-ephemeral-port",
-            "title": "Serve the same capabilities over HTTP on a free port",
-            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
-            "argv": [
-              "serve",
-              "--port",
-              "0"
-            ],
-            "command": "majordomus serve --port 0",
-            "setup": [],
-            "expectation": "binds a port, answers GET /openapi.json, exits 0 when stopped"
-          }
-        ],
         "subcommands": []
       },
       {
@@ -9337,9 +10570,6 @@
           "majordomus",
           "capabilities"
         ],
-        "route": "/docs/cli/capabilities/",
-        "executable": false,
-        "usage": "majordomus capabilities [OPTIONS] <COMMAND>",
         "about": "Introspect the capability registry: what exists, where it came from, how it is exposed",
         "args": [
           {
@@ -9404,7 +10634,6 @@
             "defaults": []
           }
         ],
-        "examples": [],
         "subcommands": [
           {
             "path": [
@@ -9412,9 +10641,6 @@
               "capabilities",
               "list"
             ],
-            "route": "/docs/cli/capabilities/list/",
-            "executable": true,
-            "usage": "majordomus capabilities list [OPTIONS]",
             "about": "Every capability, one line each, with its projections",
             "args": [
               {
@@ -9526,36 +10752,6 @@
                 "defaults": []
               }
             ],
-            "examples": [
-              {
-                "id": "capabilities-list-cli",
-                "title": "Which capabilities the command line itself dispatches to",
-                "description": "One line per capability exposed through the `cli` projection, with the projections of each. The registry answers this; no list of capabilities is written in the command line's own declaration.",
-                "argv": [
-                  "capabilities",
-                  "list",
-                  "--exposure",
-                  "cli"
-                ],
-                "command": "majordomus capabilities list --exposure cli",
-                "setup": [],
-                "expectation": "exits 0; prints capabilities.list, capabilities.describe"
-              },
-              {
-                "id": "capabilities-list-json",
-                "title": "Every capability as one JSON document",
-                "description": "The whole registry for a script: each capability with its kind, its provenance and every projection it has.",
-                "argv": [
-                  "capabilities",
-                  "list",
-                  "--format",
-                  "json"
-                ],
-                "command": "majordomus capabilities list --format json",
-                "setup": [],
-                "expectation": "exits 0; prints one JSON document carrying /capabilities"
-              }
-            ],
             "subcommands": []
           },
           {
@@ -9564,9 +10760,6 @@
               "capabilities",
               "describe"
             ],
-            "route": "/docs/cli/capabilities/describe/",
-            "executable": true,
-            "usage": "majordomus capabilities describe [OPTIONS] <ID>",
             "about": "One capability by canonical id: schemas, provenance, every projection",
             "args": [
               {
@@ -9665,21 +10858,6 @@
                 "defaults": []
               }
             ],
-            "examples": [
-              {
-                "id": "capabilities-describe-objects-get",
-                "title": "One capability in full, by its canonical id",
-                "description": "Its kind, its input and output schemas, where it was composed, and every projection of it: the MCP tool or resource, the HTTP route, the CLI path.",
-                "argv": [
-                  "capabilities",
-                  "describe",
-                  "objects.get"
-                ],
-                "command": "majordomus capabilities describe objects.get",
-                "setup": [],
-                "expectation": "exits 0; prints objects.get, GET /api/v1/object"
-              }
-            ],
             "subcommands": []
           },
           {
@@ -9688,9 +10866,6 @@
               "capabilities",
               "schema"
             ],
-            "route": "/docs/cli/capabilities/schema/",
-            "executable": true,
-            "usage": "majordomus capabilities schema [OPTIONS] <ID>",
             "about": "The canonical input or output JSON Schema of one capability",
             "args": [
               {
@@ -9789,23 +10964,6 @@
                 "defaults": []
               }
             ],
-            "examples": [
-              {
-                "id": "capabilities-schema-output",
-                "title": "The canonical output schema of a capability",
-                "description": "The JSON Schema the MCP and OpenAPI projections are derived from; `--side input` prints the schema of what the capability accepts.",
-                "argv": [
-                  "capabilities",
-                  "schema",
-                  "objects.get",
-                  "--side",
-                  "output"
-                ],
-                "command": "majordomus capabilities schema objects.get --side output",
-                "setup": [],
-                "expectation": "exits 0; prints one JSON document carrying /title"
-              }
-            ],
             "subcommands": []
           },
           {
@@ -9814,9 +10972,6 @@
               "capabilities",
               "validate"
             ],
-            "route": "/docs/cli/capabilities/validate/",
-            "executable": true,
-            "usage": "majordomus capabilities validate [OPTIONS]",
             "about": "Build the registry and every projection; exit 10 with every violation named",
             "args": [
               {
@@ -9881,20 +11036,6 @@
                 "defaults": []
               }
             ],
-            "examples": [
-              {
-                "id": "capabilities-validate",
-                "title": "Prove the registry and every projection of it",
-                "description": "Builds the registry, the MCP and HTTP surfaces, the OpenAPI document, the command line's documentation and the benchmark coverage, and names every failure. Exit 10 when anything is unmet.",
-                "argv": [
-                  "capabilities",
-                  "validate"
-                ],
-                "command": "majordomus capabilities validate",
-                "setup": [],
-                "expectation": "exits 0; prints validate: 0 failure(s), OK   cli"
-              }
-            ],
             "subcommands": []
           }
         ]
@@ -9904,9 +11045,6 @@
           "majordomus",
           "generate"
         ],
-        "route": "/docs/cli/generate/",
-        "executable": true,
-        "usage": "majordomus generate [OPTIONS] [TARGET]",
         "about": "Write the committed projections of the registry (docs/generated), or check that they are current",
         "args": [
           {
@@ -10043,50 +11181,6 @@
             "defaults": []
           }
         ],
-        "examples": [
-          {
-            "id": "generate-all",
-            "title": "Write every committed projection",
-            "description": "The OpenAPI document, the capability reference, the command-line reference and its JSON, the registry manifest, the benchmark matrix, the shell tool's allow-lists, the provider bootstraps and the site's registry dataset — all from the one registry and the one clap declaration.",
-            "argv": [
-              "generate"
-            ],
-            "command": "majordomus generate",
-            "setup": [],
-            "expectation": "exits 0"
-          },
-          {
-            "id": "generate-check",
-            "title": "Refuse a tree whose projections are stale",
-            "description": "Writes nothing and compares instead: exit 0 when every committed projection is what the sources produce, exit 10 with each stale file named. This is the form CI runs.",
-            "argv": [
-              "generate",
-              "--check"
-            ],
-            "command": "majordomus generate --check",
-            "setup": [
-              {
-                "argv": [
-                  "generate"
-                ],
-                "command": "majordomus generate"
-              }
-            ],
-            "expectation": "exits 0"
-          },
-          {
-            "id": "generate-one-target",
-            "title": "One target only",
-            "description": "Each target can be written on its own while a change is iterated on; `majordomus generate` with no target writes all of them.",
-            "argv": [
-              "generate",
-              "openapi"
-            ],
-            "command": "majordomus generate openapi",
-            "setup": [],
-            "expectation": "exits 0"
-          }
-        ],
         "subcommands": []
       },
       {
@@ -10094,9 +11188,6 @@
           "majordomus",
           "bench"
         ],
-        "route": "/docs/cli/bench/",
-        "executable": true,
-        "usage": "majordomus bench [OPTIONS] [COMMAND] [ID]",
         "about": "Time every externally callable operation (each capability directly, over MCP and over HTTP, and the transports' own operations), report coverage, compare with the accepted baseline",
         "args": [
           {
@@ -10285,26 +11376,6 @@
             ]
           }
         ],
-        "examples": [
-          {
-            "id": "bench-direct-quick",
-            "title": "Time the capabilities in process",
-            "description": "The quick profile takes few samples, and `--transport direct` measures the executor without spawning a server. Nothing is written under .ai/local/ with `--no-write`.",
-            "argv": [
-              "bench",
-              "--transport",
-              "direct",
-              "--profile",
-              "quick",
-              "--no-write",
-              "--format",
-              "json"
-            ],
-            "command": "majordomus bench --transport direct --profile quick --no-write --format json",
-            "setup": [],
-            "expectation": "exits 0; prints one JSON document carrying /results, /profile"
-          }
-        ],
         "subcommands": [
           {
             "path": [
@@ -10312,9 +11383,6 @@
               "bench",
               "coverage"
             ],
-            "route": "/docs/cli/bench/coverage/",
-            "executable": true,
-            "usage": "majordomus bench coverage [OPTIONS]",
             "about": "Every required target and whether it is covered; the denominator is generated from the registry",
             "args": [
               {
@@ -10416,35 +11484,6 @@
                 "defaults": []
               }
             ],
-            "examples": [
-              {
-                "id": "bench-coverage-json",
-                "title": "Every required benchmark target and whether it is covered",
-                "description": "The denominator is generated from the registry: every executable capability, on every transport it is exposed on, plus the transports' own operations.",
-                "argv": [
-                  "bench",
-                  "coverage",
-                  "--format",
-                  "json"
-                ],
-                "command": "majordomus bench coverage --format json",
-                "setup": [],
-                "expectation": "exits 0; prints one JSON document carrying /lines, /tallies"
-              },
-              {
-                "id": "bench-coverage-check",
-                "title": "Fail when a target is missing",
-                "description": "Exit 10 when any required target is uncovered or waived, so a capability that nothing times cannot be merged.",
-                "argv": [
-                  "bench",
-                  "coverage",
-                  "--check"
-                ],
-                "command": "majordomus bench coverage --check",
-                "setup": [],
-                "expectation": "exits 0"
-              }
-            ],
             "subcommands": []
           },
           {
@@ -10453,9 +11492,6 @@
               "bench",
               "baseline"
             ],
-            "route": "/docs/cli/bench/baseline/",
-            "executable": false,
-            "usage": "majordomus bench baseline [OPTIONS] <COMMAND>",
             "about": "The accepted baseline of this platform under .ai/repo/benchmarks/rust/",
             "args": [
               {
@@ -10520,7 +11556,6 @@
                 "defaults": []
               }
             ],
-            "examples": [],
             "subcommands": [
               {
                 "path": [
@@ -10529,9 +11564,6 @@
                   "baseline",
                   "update"
                 ],
-                "route": "/docs/cli/bench/baseline/update/",
-                "executable": true,
-                "usage": "majordomus bench baseline update [OPTIONS]",
                 "about": "Run the benchmarks and record them as this platform's baseline (a reviewable, tracked file)",
                 "args": [
                   {
@@ -10637,24 +11669,6 @@
                     "defaults": []
                   }
                 ],
-                "examples": [
-                  {
-                    "id": "bench-baseline-update-quick",
-                    "title": "Record this platform's accepted baseline",
-                    "description": "Runs the benchmarks and writes the result under .ai/repo/benchmarks/rust/ as a tracked, reviewable file. The full profile is the default; the quick profile is for trying the path out. A dirty work tree is refused unless --allow-dirty says otherwise.",
-                    "argv": [
-                      "bench",
-                      "baseline",
-                      "update",
-                      "--profile",
-                      "quick",
-                      "--allow-dirty"
-                    ],
-                    "command": "majordomus bench baseline update --profile quick --allow-dirty",
-                    "setup": [],
-                    "expectation": "exits 0"
-                  }
-                ],
                 "subcommands": []
               }
             ]
@@ -10666,9 +11680,6 @@
           "majordomus",
           "scope"
         ],
-        "route": "/docs/cli/scope/",
-        "executable": true,
-        "usage": "majordomus scope [OPTIONS] [PATHS]",
         "about": "The repository scope: what a worker reads and what it never reads; with paths, whether each is in or out and why",
         "args": [
           {
@@ -10779,33 +11790,6 @@
             "defaults": [
               "false"
             ]
-          }
-        ],
-        "examples": [
-          {
-            "id": "scope-declaration",
-            "title": "What a worker reads of this repository",
-            "description": "With no path, the declaration itself and the tally: how many tracked files are in the scope and how many are out.",
-            "argv": [
-              "scope"
-            ],
-            "command": "majordomus scope",
-            "setup": [],
-            "expectation": "exits 0"
-          },
-          {
-            "id": "scope-paths-json",
-            "title": "Judge paths, and say which rule decided",
-            "description": "For each path: in or out, and the rule that decided it. `--check` exits 10 when any path given is out, which is how a hook refuses to read one.",
-            "argv": [
-              "scope",
-              "docs/CLI.md",
-              "--format",
-              "json"
-            ],
-            "command": "majordomus scope docs/CLI.md --format json",
-            "setup": [],
-            "expectation": "exits 0; prints one JSON document carrying /0/verdict, /0/rule"
           }
         ],
         "subcommands": []

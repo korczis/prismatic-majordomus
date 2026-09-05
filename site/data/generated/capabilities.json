@@ -1405,7 +1405,7 @@
       "implementation": "apps/majordomus-cli/src/scope.rs",
       "test": "test/cases/93_scope_policy.sh",
       "status": "guaranteed",
-      "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns.",
+      "note": "The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared.",
       "responsibility": "none",
       "source_route": "/docs/scope/",
       "command": null,
@@ -1444,7 +1444,7 @@
       "implementation": "lib/usecase.sh",
       "test": "test/cases/94_use_cases.sh",
       "status": "guaranteed",
-      "note": "The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared.",
+      "note": "usecase impact maps paths through docs/RESPONSIBILITIES.yaml, the dispatch table, the rules' identities and the scenarios' fixtures; usecase scaffold writes drafts from the registry, the command fixture and the claims, and never a guarantee.",
       "responsibility": "doctor",
       "source_route": "/docs/use-cases/",
       "command": "usecase",
@@ -1457,7 +1457,7 @@
       "implementation": "scripts/site-deploy",
       "test": "test/cases/96_site_deploy.sh",
       "status": "guaranteed",
-      "note": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site.md.",
+      "note": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site/SKILL.md.",
       "responsibility": "none",
       "source_route": "/docs/github-pages-architecture/",
       "command": null,
@@ -1488,6 +1488,45 @@
       "source_route": "/docs/github-pages-architecture/",
       "command": null,
       "test_case": "51_derived_artifacts_committed"
+    },
+    {
+      "id": "skill-catalogue",
+      "claim": "A skill is one directory under the layer's skills section holding SKILL.md, discovered by the source class `skill` the shell tool and the Rust executable both read, so that adding the file is the whole registration and the catalogue, the command, doctor, MCP and the site all derive from it",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/skills.sh",
+      "test": "test/cases/95_skills.sh",
+      "status": "guaranteed",
+      "note": "share/kinds.yaml declares the kind, share/schemas/skill.schema.json its contract, and the source classes skill and skill_example in .ai/repo/knowledge/sources.yaml which files carry it. Nothing else names a skill. lib/skills.sh derives one catalogue from that discovery for `skills list|show|check`, the doctrine validator and scripts/generate-site-data; the Rust index serves the same files as majordomus://skill/<id> resources, through majordomus_list and majordomus_get, with no code that knows the kind. The case adds, breaks, renames and removes a skill and watches every surface follow.",
+      "responsibility": "layer",
+      "source_route": "/docs/schemas/",
+      "command": "skills",
+      "test_case": "95_skills"
+    },
+    {
+      "id": "skill-check",
+      "claim": "Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, a violation names the file and every reason, and a repository with no skills is reported rather than passed",
+      "source": "docs/CLI.md",
+      "implementation": "lib/skills.sh",
+      "test": "test/cases/95_skills.sh",
+      "status": "guaranteed",
+      "note": "`skills check` and the doctrine majordomus.skill-integrity (dispatched by doctor and watch) run one examination — unknown keys, schema version, integer version, closed status set, id equal to the directory, non-empty Purpose, Procedure and Output sections, duplicate ids, related ids that resolve, examples with a heading — and print the counts of what they examined. The site generator refuses to build from a skill that does not validate.",
+      "responsibility": "doctor",
+      "source_route": "/docs/cli/",
+      "command": "skills",
+      "test_case": "95_skills"
+    },
+    {
+      "id": "skill-site-projection",
+      "claim": "The website's skills section is rendered from the skills catalogue, one page per skill carrying the skill's own body and examples, and a removed or renamed skill leaves no page, entry or link behind",
+      "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "implementation": "scripts/generate-site-data",
+      "test": "test/cases/95_skills.sh",
+      "status": "guaranteed",
+      "note": "site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds.",
+      "responsibility": "none",
+      "source_route": "/docs/github-pages-architecture/",
+      "command": null,
+      "test_case": "95_skills"
     }
   ]
 }

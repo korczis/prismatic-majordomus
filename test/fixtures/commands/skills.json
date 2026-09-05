@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "command": "skills",
+  "title": "Skills are data",
+  "intro": "A skill is a directory under the repository's skills section holding SKILL.md: front matter that satisfies the skill schema over a body that is the procedure. Nothing registers it. The source class `skill` in the knowledge sources discovers it, the same declaration the Rust executable serves it from, so list, check, the site and MCP all read one catalogue.",
+  "scenarios": [
+    {
+      "id": "lists",
+      "title": "A skill exists because its file does",
+      "given": {
+        "skill tracked": true
+      },
+      "setup": "installed-skill",
+      "run": [
+        "skills",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "release-notes",
+          "active",
+          "v1"
+        ]
+      },
+      "explain": "The listing is derived from discovery, not from a registry: adding the directory and tracking it is the whole registration."
+    },
+    {
+      "id": "checks",
+      "title": "What check examined",
+      "given": {
+        "skill tracked": true
+      },
+      "setup": "installed-skill",
+      "run": [
+        "skills",
+        "check"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "OK   skill",
+          "skills: 1 discovered, 1 valid",
+          "references: 1 checked"
+        ]
+      },
+      "explain": "A clean result states what it examined — skills, examples, references — so that a pass over nothing cannot look like a pass."
+    },
+    {
+      "id": "missing",
+      "title": "Asking for one that does not exist",
+      "given": {
+        "skill tracked": false
+      },
+      "setup": "installed",
+      "run": [
+        "skills",
+        "show",
+        "nosuch"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no skill",
+          "skills list"
+        ]
+      },
+      "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the command that lists what does exist."
+    }
+  ]
+}

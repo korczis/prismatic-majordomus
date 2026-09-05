@@ -287,7 +287,8 @@
           "24_prompt_search",
           "25_continuity_lifecycle",
           "36_command_doctrines",
-          "83_doctor_budget"
+          "83_doctor_budget",
+          "95_skills"
         ]
       },
       "demo_data": {
@@ -381,7 +382,8 @@
           "21_decision_question",
           "22_history",
           "24_prompt_search",
-          "83_doctor_budget"
+          "83_doctor_budget",
+          "95_skills"
         ]
       },
       "demo_data": {
@@ -1527,6 +1529,120 @@
         ]
       },
       "doc_md": "\nList, show and render repository-local prompt assets. Read-only.\n\nAn asset is `.ai/repo/prompts/<name>.md`: YAML front matter with `name` (matching the\nfilename) and a non-empty `description`, then a body. They are small, versioned with the\nrepository, and provider-neutral — a prompt library is not the goal, and nothing here\ninvokes a model.\n\n**Rendering substitutes a closed set of tokens and no others.** Inline: `{{TASK}}`,\n`{{TASK_ID}}`, `{{PROFILE}}`, `{{SCOPE}}`, `{{OWNER}}`, `{{BRANCH}}`, `{{HEAD}}`,\n`{{WORKING_TREE}}`, `{{REPOSITORY}}`, `{{NOW}}`. Alone on a line: `{{OPEN_QUESTIONS}}`,\n`{{DECISIONS}}`, `{{CHECKPOINT}}`, `{{HANDOVER}}`, `{{CONTEXT}}`.\n\nThere is no templating language: no conditionals, no loops, no includes, no shell. An\nunknown token is an error, exactly as an unknown configuration key is, because a prompt\nthat silently renders `{{TSAK}}` as literal text is worse than one that refuses. `doctor`\nand `watch` validate every asset for the same reason.\n\n```\n$ majordomus prompt list\ncontinue               resume a task from durable state instead of from someone's memory\ndebug                  frame a defect so that the fix is proven, not asserted\nhandover               produce a continuation record body for the current task\nreview                 review the working diff against the claimed scope and the finish contract\n$ majordomus prompt render debug | head -3\nTask t-20260903193012-a4f1 on branch main at 3f2a9c1e...: fix the OAuth callback\n\nScope: lib/auth\n```"
+    },
+    {
+      "name": "skills",
+      "summary": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
+      "category": "memory",
+      "stage": "work",
+      "class": "read-only",
+      "read_only": true,
+      "requires_task": "none",
+      "requires_repository": true,
+      "requires_installed": true,
+      "json_output": true,
+      "syntax": "majordomus skills <list|show <id>|check> [--json]",
+      "demo": "skills-check",
+      "note": "Discovery is the source class `skill` in the repository's knowledge sources, the same declaration the Rust executable indexes, so a skill exists for every interface or for none. check validates every skill against the schema-derived allow-list, its directory, its sections and its references, and prints what it examined.",
+      "reads": [
+        ".ai/repo/skills/",
+        ".ai/repo/knowledge/sources.yaml",
+        "share/allow/skill.txt"
+      ],
+      "writes": [],
+      "exit_codes": [
+        0,
+        2,
+        10,
+        12,
+        13
+      ],
+      "tests": {
+        "behaviour": [
+          "95_skills"
+        ],
+        "negative": [
+          "95_skills"
+        ]
+      },
+      "demo_data": {
+        "schema": 1,
+        "command": "skills",
+        "title": "Skills are data",
+        "intro": "A skill is a directory under the repository's skills section holding SKILL.md: front matter that satisfies the skill schema over a body that is the procedure. Nothing registers it. The source class `skill` in the knowledge sources discovers it, the same declaration the Rust executable serves it from, so list, check, the site and MCP all read one catalogue.",
+        "scenarios": [
+          {
+            "id": "lists",
+            "title": "A skill exists because its file does",
+            "given": {
+              "skill tracked": true
+            },
+            "setup": "installed-skill",
+            "run": [
+              "skills",
+              "list"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "release-notes",
+                "active",
+                "v1"
+              ]
+            },
+            "explain": "The listing is derived from discovery, not from a registry: adding the directory and tracking it is the whole registration.",
+            "setup_sh": "# Installed, with one skill written the way a repository writes its own: a directory under\n# the skills section holding SKILL.md and one example, both tracked. Nothing registers it;\n# the source class `skill` in the knowledge sources is what makes it exist.\n. \"$FIXTURE_SETUP/installed.sh\"\nmkdir -p .ai/repo/skills/release-notes/examples\ncat > .ai/repo/skills/release-notes/SKILL.md <<'S'\n---\nschema: skill/v1\nid: release-notes\nversion: 1\ntitle: Release notes\ndescription: Write the release notes for a tagged version from the ledger and the closed issues, never from memory.\nstatus: active\ntags: [release, documentation]\ninputs:\n  - the tag being released and the previous tag\noutputs:\n  - a release-notes section per closed issue, each naming its evidence\n---\n# Purpose\n\nTurn what the ledger and the plan record into the notes a reader of the tag needs.\n\n# Procedure\n\n1. List the issues closed between the two tags with `majordomus plan list`.\n2. For each, quote its outcome and the evidence attached to it.\n3. Refuse to describe a change that no closed issue records.\n\n# Output\n\nOne section per issue: title, what changed, the evidence, in plan order.\nS\ncat > .ai/repo/skills/release-notes/examples/notes-for-a-tag.md <<'S'\n# Notes for one tag\n\n```text\nApply the release-notes skill to the range v0.1.0..v0.2.0.\n```\nS\ngit add .ai/repo/skills && git commit -qm \"a skill\" >/dev/null",
+            "stdin_body": null
+          },
+          {
+            "id": "checks",
+            "title": "What check examined",
+            "given": {
+              "skill tracked": true
+            },
+            "setup": "installed-skill",
+            "run": [
+              "skills",
+              "check"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "OK   skill",
+                "skills: 1 discovered, 1 valid",
+                "references: 1 checked"
+              ]
+            },
+            "explain": "A clean result states what it examined — skills, examples, references — so that a pass over nothing cannot look like a pass.",
+            "setup_sh": "# Installed, with one skill written the way a repository writes its own: a directory under\n# the skills section holding SKILL.md and one example, both tracked. Nothing registers it;\n# the source class `skill` in the knowledge sources is what makes it exist.\n. \"$FIXTURE_SETUP/installed.sh\"\nmkdir -p .ai/repo/skills/release-notes/examples\ncat > .ai/repo/skills/release-notes/SKILL.md <<'S'\n---\nschema: skill/v1\nid: release-notes\nversion: 1\ntitle: Release notes\ndescription: Write the release notes for a tagged version from the ledger and the closed issues, never from memory.\nstatus: active\ntags: [release, documentation]\ninputs:\n  - the tag being released and the previous tag\noutputs:\n  - a release-notes section per closed issue, each naming its evidence\n---\n# Purpose\n\nTurn what the ledger and the plan record into the notes a reader of the tag needs.\n\n# Procedure\n\n1. List the issues closed between the two tags with `majordomus plan list`.\n2. For each, quote its outcome and the evidence attached to it.\n3. Refuse to describe a change that no closed issue records.\n\n# Output\n\nOne section per issue: title, what changed, the evidence, in plan order.\nS\ncat > .ai/repo/skills/release-notes/examples/notes-for-a-tag.md <<'S'\n# Notes for one tag\n\n```text\nApply the release-notes skill to the range v0.1.0..v0.2.0.\n```\nS\ngit add .ai/repo/skills && git commit -qm \"a skill\" >/dev/null",
+            "stdin_body": null
+          },
+          {
+            "id": "missing",
+            "title": "Asking for one that does not exist",
+            "given": {
+              "skill tracked": false
+            },
+            "setup": "installed",
+            "run": [
+              "skills",
+              "show",
+              "nosuch"
+            ],
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no skill",
+                "skills list"
+              ]
+            },
+            "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the command that lists what does exist.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          }
+        ]
+      },
+      "doc_md": "\nThe repository's skills: provider-neutral procedures for one bounded kind of work each,\nunder the layer's skills section. Read-only.\n\nA skill is a directory `.ai/repo/skills/<id>/` holding `SKILL.md` — YAML front matter\nsatisfying `share/schemas/skill.schema.json` over a Markdown body that is the procedure —\nand optionally `examples/*.md`. Nothing registers it. The source class `skill` in\n`.ai/repo/knowledge/sources.yaml` discovers it, and that is the same declaration the\nRust executable indexes, so a skill exists for `skills list`, for `doctor`, for the\nwebsite and for MCP (`majordomus://skill/<id>`), or for none of them. See\n[`SCHEMAS.md`](SCHEMAS.md) for the file contract.\n\n```\nmajordomus skills list [--json]        every skill: id, status, version, description\nmajordomus skills show <id> [--json]   the repository-relative path, then the file as written\nmajordomus skills check [--json]       validate every skill and every reference it makes\n```\n\n- `list` prints one line per discovered skill in discovery order, invalid ones included\n  (a listing that silently shrank would hide the file that needs fixing). `--json` adds\n  the URI, tags, related ids, inputs, outputs, the path, the content hash and the tracked\n  examples.\n- `show` prints the path on the first line and the file below it; `--json` adds the\n  body as a field. An id that is not a skill exits `12` and names `skills list`.\n- `check` validates every skill against the allow-list generated from the schema (no\n  unknown key), `schema: skill/v1`, an integer `version`, a `status` from the closed\n  set, an `id` equal to the directory name, non-empty `# Purpose`, `# Procedure` and\n  `# Output` sections; refuses two skills claiming one id, a `related` id that names no\n  skill, and an example without a level-one heading. Every finding names the file and\n  every reason. It ends with the counts of what it examined — skills, examples,\n  references — and exits `10` on any failure. A repository with no skills is a `WARN`,\n  never a pass over nothing. An absent allow-list (`share/allow/skill.txt`, a distribution\n  that was not generated) is `13`, naming `majordomus generate allow`.\n\n`doctor` and `watch` run the same examination through the doctrine\n`majordomus.skill-integrity`; `scripts/generate-site-data` reads the same catalogue and\nrefuses to build the site from a skill that does not validate.\n\n```\n$ majordomus skills check\nOK   skill       1 skill(s) — every one parses, matches its directory and carries its sections\nOK   skill       5 reference(s) — every related id and every example resolves\nskills: 1 discovered, 1 valid; examples: 5; references: 5 checked; failures: 0\n```"
     },
     {
       "name": "search",

@@ -299,6 +299,24 @@ commands:
     demo: prompt-render
     note: An unknown token, or a block token used inline, is an error rather than a literal left in the output.
 
+  - id: skills
+    title: skills
+    summary: The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.
+    category: memory
+    stage: work
+    visibility: public
+    class: read-only
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: true
+    syntax: majordomus skills <list|show <id>|check> [--json]
+    reads: [.ai/repo/skills/, .ai/repo/knowledge/sources.yaml, share/allow/skill.txt]
+    writes: []
+    exit_codes: [0, 2, 10, 12, 13]
+    demo: skills-check
+    note: Discovery is the source class `skill` in the repository's knowledge sources, the same declaration the Rust executable indexes, so a skill exists for every interface or for none. check validates every skill against the schema-derived allow-list, its directory, its sections and its references, and prints what it examined.
+
   - id: search
     title: search
     summary: Find a durable record without reading all of them, in authority order.

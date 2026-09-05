@@ -59,6 +59,17 @@ kinds:
     title: name
     description: description
 
+  skill:
+    format: markdown
+    front_matter: required
+    schema: skill
+    identity: [id]
+    title: title
+    description: description
+    schema_version:
+      field: schema
+      supported: [skill/v1]
+
   profile:
     format: yaml
     schema: profile

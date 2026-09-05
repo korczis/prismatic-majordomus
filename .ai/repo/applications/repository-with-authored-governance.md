@@ -12,7 +12,7 @@ fits_when:
 does_not_fit_when:
   - 'The repository wants a single generated instruction file and is happy to hand ownership over'
   - 'There is no governance to supervise yet, in which case start with the shipped skeleton instead'
-use_cases: [adopt-an-existing-repository, prove-a-rule-is-enforced, find-out-what-drifted, extend-what-the-executable-serves, add-a-use-case-and-prove-it, migrate-from-the-old-layout, read-the-rules-the-tool-applies, classify-what-belongs-in-the-context, keep-the-bootstrap-thin-and-within-budget, trace-a-change-to-the-context-it-affects, trust-the-policy-before-reading-it]
+use_cases: [adopt-an-existing-repository, prove-a-rule-is-enforced, find-out-what-drifted, extend-what-the-executable-serves, add-a-use-case-and-prove-it, migrate-from-the-old-layout, read-the-rules-the-tool-applies, classify-what-belongs-in-the-context, keep-the-bootstrap-thin-and-within-budget, trace-a-change-to-the-context-it-affects, trust-the-policy-before-reading-it, follow-a-skill-the-repository-defines]
 doctrines: [majordomus.projection-integrity, majordomus.enforcement-wiring]
 responsibilities: [projection, policy, doctor]
 ---
