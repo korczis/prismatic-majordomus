@@ -845,20 +845,20 @@
     {
       "id": "claim:rust-evidence-gates",
       "kind": "claim",
-      "label": "Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs the same gates in the same order on every push",
+      "label": "Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs that script on every change that can reach the crate",
       "status": "guaranteed",
       "route": "/guarantees/rust-evidence-gates/",
       "external": false,
-      "note": "Format, lints with warnings as errors (a public item without documentation is one), the suites with the doc examples, rustdoc with warnings denied, the benchmarks building, the registry's own validation, the committed projections in sync, the benchmark coverage complete, and line coverage above the committed floor; CI adds the benchmark check against its own profile's baseline. The case reads the script, the workflow and the justfile and fails when they disagree on a gate or its order; with a toolchain present it also runs the doc examples and builds the benchmarks."
+      "note": "Format, lints with warnings as errors (a public item without documentation is one), the suites with the doc examples, rustdoc with warnings denied, the benchmarks building, the registry's own validation, the committed projections in sync, the benchmark coverage complete, and line coverage above the committed floor; --ci adds the benchmark check against the platform's baseline and leaves coverage to its own job, --integration runs the registry checks alone for a change outside the crate. The rust job of the workflow runs the script itself with the mode the plan chose, so there is no second list to fall out of order; the case reads the script, the workflow and the justfile and fails when they disagree; with a toolchain present it also runs the doc examples and builds the benchmarks."
     },
     {
       "id": "claim:rust-coverage-floor",
       "kind": "claim",
-      "label": "Line coverage of the Rust crate is measured on every push and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+      "label": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
       "status": "guaranteed",
       "route": "/guarantees/rust-coverage-floor/",
       "external": false,
-      "note": "cargo-llvm-cov over all targets, --fail-under-lines. The floor is 90; the case refuses a floor under 90, so lowering it is an edit to a test that a reviewer sees, not a quiet change to a number. Raising it when the figure rises is one edit to the file."
+      "note": "cargo-llvm-cov over all targets, --fail-under-lines. The floor is 90; the case refuses a floor under 90, so lowering it is an edit to a test that a reviewer sees, not a quiet change to a number. Raising it when the figure rises is one edit to the file. The coverage job runs when the plan selects the rust-coverage gate, which the rust and share classes of .ai/repo/ci/gates.yaml select and every full plan does; a change that cannot reach the crate does not recompile it with instrumentation."
     },
     {
       "id": "claim:rust-hot-path-benchmarks",
@@ -904,6 +904,69 @@
       "route": "/guarantees/execution-cache-equivalence/",
       "external": false,
       "note": "One executor for every transport; CachePolicy on the descriptor; bounded per capability; the key is the canonical id, the input in canonical form and a sha-256 fingerprint of the repository content and the descriptors. tests/executor.rs and the proptest harness in tests/properties.rs iterate every cached capability with every case and generated inputs."
+    },
+    {
+      "id": "claim:provider-projections-one-renderer",
+      "kind": "claim",
+      "label": "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, GEMINI.md, ...) are a target of majordomus generate, rendered from the policy and the provider templates byte for byte as the shell tool renders them, and generate --check refuses a hand-edited or stale one in CI",
+      "status": "guaranteed",
+      "route": "/guarantees/provider-projections-one-renderer/",
+      "external": false,
+      "note": "One renderer, two entry points that agree on every stamp; the policy is the only input (its hash and the profiles' is the stamp's first hash). A target outside the repository, a provider without a template, a token the policy cannot fill, and an always_loaded target over the budget are refused with the reason, and nothing is written. Region mode keeps the host document outside the markers. apps/majordomus-cli/tests/providers_projection.rs covers the fixture side; CI runs generate --check on every push."
+    },
+    {
+      "id": "claim:site-registry-dataset",
+      "kind": "claim",
+      "label": "The site's Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI",
+      "status": "guaranteed",
+      "route": "/guarantees/site-registry-dataset/",
+      "external": false,
+      "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns."
+    },
+    {
+      "id": "claim:ci-planned-gates",
+      "kind": "claim",
+      "label": "A change runs the gates its paths can affect, decided by one model of what affects what, and a change to the pipeline itself or a path the model does not know runs every gate",
+      "status": "guaranteed",
+      "route": "/guarantees/ci-planned-gates/",
+      "external": false,
+      "note": "The gates that always run are in every plan; a changed path selects the gates of every class it matches, as a union; a class may escalate; a gate brings what it implies and what it requires; the plan is deterministic and says for every gate why it ran or did not. The workflow reads the plan's outputs and carries no path list of its own; test/cases/26_ci_wiring.sh proves every gate's job exists, is gated on the plan and is needed by the verdict."
+    },
+    {
+      "id": "claim:ci-verdict",
+      "kind": "claim",
+      "label": "The one status a branch rule requires is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
+      "status": "guaranteed",
+      "route": "/guarantees/ci-verdict/",
+      "external": false,
+      "note": "The verdict job always runs, so a required check is never left pending by a job the plan skipped, and it writes a table of every gate with its job's result and the reason it was or was not planned. The case drives it with fixture plans and needs contexts through every red condition."
+    },
+    {
+      "id": "claim:suite-parallel",
+      "kind": "claim",
+      "label": "The behavioural suite runs a bounded number of cases at a time with the serial runner's semantics, a case that writes into the checkout declares itself exclusive and runs alone, and the parallel phase fails naming the paths when the checkout changed under it",
+      "status": "guaranteed",
+      "route": "/guarantees/suite-parallel/",
+      "external": false,
+      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness."
+    },
+    {
+      "id": "claim:rust-binary-artifact",
+      "kind": "claim",
+      "label": "The Rust executable the rust gate built is published as an artifact with its provenance, and every Rust case drives the executable MAJORDOMUS_BIN names instead of building one",
+      "status": "guaranteed",
+      "route": "/guarantees/rust-binary-artifact/",
+      "external": false,
+      "note": "scripts/rust-check --artifact DIR copies the debug executable beside a majordomus-cli.json naming the commit, the target triple, the toolchain and the Cargo.lock digest; the workflow uploads it as majordomus-cli-<target>. rust_bin in test/lib.sh hands a case MAJORDOMUS_BIN when set, refuses one that is not executable, builds once with cargo when unset, and asks the case to skip when there is neither; the launcher bin/majordomus-mcp honours the same variable."
+    },
+    {
+      "id": "claim:site-deploys-from-verified-run",
+      "kind": "claim",
+      "label": "The site deploys from the same workflow run that validated it, after the jobs that guard the site are green, and nothing is rebuilt or measured twice for one commit",
+      "status": "guaranteed",
+      "route": "/guarantees/site-deploys-from-verified-run/",
+      "external": false,
+      "note": "The site job uploads the site/public it built, checked and probed as the Pages artifact on master; the pages job needs plan, structure, suite, rust and site and deploys it; deployments queue in order and never cancel one another; a pull request's runs are superseded by its next commit. The case proves there is one workflow, that it deploys, what the pages job needs, and the concurrency rule."
     },
     {
       "id": "claim:openapi-inferred",
@@ -1227,6 +1290,20 @@
       "external": false
     },
     {
+      "id": "impl:scripts/ci-plan",
+      "kind": "implementation",
+      "label": "scripts/ci-plan",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:scripts/ci/verdict",
+      "kind": "implementation",
+      "label": "scripts/ci/verdict",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/github-sync",
       "kind": "implementation",
       "label": "scripts/github-sync",
@@ -1255,6 +1332,20 @@
       "external": false
     },
     {
+      "id": "impl:test/run.sh",
+      "kind": "implementation",
+      "label": "test/run.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "source:.ai/repo/ci/gates.yaml",
+      "kind": "source",
+      "label": ".ai/repo/ci/gates.yaml",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:.ai/repo/rules/project/rust-cli-evidence.v1.md",
       "kind": "source",
       "label": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
@@ -1266,6 +1357,13 @@
       "kind": "source",
       "label": "docs/CAPABILITIES.md",
       "route": "/docs/capabilities/",
+      "external": false
+    },
+    {
+      "id": "source:docs/CI.md",
+      "kind": "source",
+      "label": "docs/CI.md",
+      "route": "/docs/ci/",
       "external": false
     },
     {
@@ -1514,6 +1612,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/25_continuity_lifecycle.sh"
     },
     {
+      "id": "test:test/cases/26_ci_wiring.sh",
+      "kind": "test",
+      "label": "test/cases/26_ci_wiring.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/26_ci_wiring.sh"
+    },
+    {
       "id": "test:test/cases/27_foreign_task.sh",
       "kind": "test",
       "label": "test/cases/27_foreign_task.sh",
@@ -1680,6 +1785,13 @@
       "label": "test/cases/93_rust_provider_projections.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/93_rust_provider_projections.sh"
+    },
+    {
+      "id": "test:test/cases/94_ci_plan.sh",
+      "kind": "test",
+      "label": "test/cases/94_ci_plan.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/94_ci_plan.sh"
     }
   ],
   "edges": [
@@ -2179,6 +2291,41 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:provider-projections-one-renderer",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:site-registry-dataset",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:ci-planned-gates",
+      "target": "source:.ai/repo/ci/gates.yaml",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:ci-verdict",
+      "target": "source:docs/CI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:suite-parallel",
+      "target": "source:docs/CI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rust-binary-artifact",
+      "target": "source:docs/CI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:site-deploys-from-verified-run",
+      "target": "source:docs/CI.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:openapi-inferred",
       "target": "source:docs/CAPABILITIES.md",
       "kind": "specified_by"
@@ -2649,6 +2796,41 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:provider-projections-one-renderer",
+      "target": "impl:apps/majordomus-cli/src/providers.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:site-registry-dataset",
+      "target": "impl:apps/majordomus-cli/src/site.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:ci-planned-gates",
+      "target": "impl:scripts/ci-plan",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:ci-verdict",
+      "target": "impl:scripts/ci/verdict",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:suite-parallel",
+      "target": "impl:test/run.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rust-binary-artifact",
+      "target": "impl:scripts/rust-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:site-deploys-from-verified-run",
+      "target": "impl:.github/workflows/validate.yml",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:openapi-inferred",
       "target": "impl:apps/majordomus-cli/src/http/openapi.rs",
       "kind": "implemented_by"
@@ -3116,6 +3298,41 @@
     {
       "source": "claim:execution-cache-equivalence",
       "target": "test:test/cases/91_canonical_architecture.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:provider-projections-one-renderer",
+      "target": "test:test/cases/93_rust_provider_projections.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:site-registry-dataset",
+      "target": "test:apps/majordomus-cli/tests/projections.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:ci-planned-gates",
+      "target": "test:test/cases/94_ci_plan.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:ci-verdict",
+      "target": "test:test/cases/94_ci_plan.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:suite-parallel",
+      "target": "test:test/cases/94_ci_plan.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rust-binary-artifact",
+      "target": "test:test/cases/94_ci_plan.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:site-deploys-from-verified-run",
+      "target": "test:test/cases/26_ci_wiring.sh",
       "kind": "proved_by"
     },
     {
