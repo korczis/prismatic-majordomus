@@ -44,6 +44,13 @@ pub struct Policy {
     pub regression: BTreeMap<String, Threshold>,
     /// Increases under this many microseconds are noise, whatever the ratio.
     pub minimum_absolute_us: f64,
+    /// Per-target allowances, keyed by the target key as `bench coverage` prints it, then
+    /// by metric (in the file, a `targets:` list of `target: <key>` items); a metric not
+    /// named here keeps the general threshold. The process-cold
+    /// target spawns a process and builds the index, so the machine's load decides most of
+    /// its wall clock, and it gets more room than a request does.
+    #[serde(default)]
+    pub targets: BTreeMap<String, BTreeMap<String, Threshold>>,
 }
 
 impl Default for Policy {
@@ -75,6 +82,7 @@ impl Default for Policy {
             .into_iter()
             .collect(),
             minimum_absolute_us: 1000.0,
+            targets: BTreeMap::new(),
         }
     }
 }
@@ -97,37 +105,36 @@ impl Policy {
         if let Some(reg) = v.get("regression").and_then(|r| r.as_object()) {
             policy.regression.clear();
             for (metric, t) in reg {
-                let relative = t
-                    .get("relative")
-                    .and_then(|x| {
-                        x.as_str()
-                            .and_then(|s| s.parse::<f64>().ok())
-                            .or_else(|| x.as_f64())
-                    })
-                    .ok_or_else(|| Error::InvalidManifest {
+                let threshold = parse_threshold(t, &path, &format!("regression.{metric}"), 0)?;
+                policy.regression.insert(metric.clone(), threshold);
+            }
+        }
+        if let Some(targets) = v.get("targets").and_then(|r| r.as_array()) {
+            for (i, item) in targets.iter().enumerate() {
+                let Some(fields) = item.as_object() else {
+                    return Err(Error::InvalidManifest {
                         path: path.clone(),
-                        reason: format!("regression.{metric}.relative is not a number"),
-                    })?;
-                let minimum_samples = match t.get("minimum_samples") {
-                    None => 0,
-                    Some(x) => x
-                        .as_str()
-                        .and_then(|s| s.parse::<usize>().ok())
-                        .or_else(|| x.as_u64().map(|n| n as usize))
-                        .ok_or_else(|| Error::InvalidManifest {
-                            path: path.clone(),
-                            reason: format!(
-                                "regression.{metric}.minimum_samples is not a whole number"
-                            ),
-                        })?,
+                        reason: format!("targets[{i}] is not a mapping"),
+                    });
                 };
-                policy.regression.insert(
-                    metric.clone(),
-                    Threshold {
-                        relative,
-                        minimum_samples,
-                    },
-                );
+                let Some(key) = fields.get("target").and_then(|k| k.as_str()) else {
+                    return Err(Error::InvalidManifest {
+                        path: path.clone(),
+                        reason: format!("targets[{i}] has no `target` key"),
+                    });
+                };
+                let mut per_metric = BTreeMap::new();
+                for (metric, t) in fields.iter().filter(|(k, _)| k.as_str() != "target") {
+                    let inherited = policy
+                        .regression
+                        .get(metric)
+                        .map(|b| b.minimum_samples)
+                        .unwrap_or(0);
+                    let threshold =
+                        parse_threshold(t, &path, &format!("targets.{key}.{metric}"), inherited)?;
+                    per_metric.insert(metric.clone(), threshold);
+                }
+                policy.targets.insert(key.to_string(), per_metric);
             }
         }
         if let Some(m) = v.get("minimum_absolute_us") {
@@ -142,6 +149,50 @@ impl Policy {
         }
         Ok(policy)
     }
+
+    /// The threshold that applies to one metric of one target: the target's own when the
+    /// policy names it, the general one otherwise.
+    pub fn threshold_for(&self, key: &str, metric: &str) -> Option<&Threshold> {
+        self.targets
+            .get(key)
+            .and_then(|m| m.get(metric))
+            .or_else(|| self.regression.get(metric))
+    }
+}
+
+/// One `{relative, minimum_samples}` mapping; `minimum_samples` falls back to `inherited`.
+fn parse_threshold(
+    t: &serde_json::Value,
+    path: &std::path::Path,
+    at: &str,
+    inherited: usize,
+) -> Result<Threshold> {
+    let relative = t
+        .get("relative")
+        .and_then(|x| {
+            x.as_str()
+                .and_then(|s| s.parse::<f64>().ok())
+                .or_else(|| x.as_f64())
+        })
+        .ok_or_else(|| Error::InvalidManifest {
+            path: path.to_path_buf(),
+            reason: format!("{at}.relative is not a number"),
+        })?;
+    let minimum_samples = match t.get("minimum_samples") {
+        None => inherited,
+        Some(x) => x
+            .as_str()
+            .and_then(|s| s.parse::<usize>().ok())
+            .or_else(|| x.as_u64().map(|n| n as usize))
+            .ok_or_else(|| Error::InvalidManifest {
+                path: path.to_path_buf(),
+                reason: format!("{at}.minimum_samples is not a whole number"),
+            })?,
+    };
+    Ok(Threshold {
+        relative,
+        minimum_samples,
+    })
 }
 
 /// `.ai/repo/benchmarks/rust/policy.yaml`.
@@ -197,6 +248,13 @@ pub struct Check {
     pub stale_baseline_targets: Vec<String>,
     /// Did the registry fingerprint change since the baseline?
     pub registry_changed: bool,
+    /// The host the baseline was recorded on (empty when unknown).
+    pub baseline_host: String,
+    /// The host this run measured on.
+    pub current_host: String,
+    /// Was the baseline recorded on this host? When not, every line is reported and none
+    /// fails: wall-clock numbers of two machines are not a regression of either.
+    pub comparable: bool,
 }
 
 impl Check {
@@ -215,6 +273,9 @@ impl Check {
                 new_targets: run.results.iter().map(|r| r.key.clone()).collect(),
                 stale_baseline_targets: Vec::new(),
                 registry_changed: false,
+                baseline_host: String::new(),
+                current_host: run.provenance.host.clone(),
+                comparable: false,
             };
         };
         let mut lines = Vec::new();
@@ -226,7 +287,10 @@ impl Check {
                 }
                 continue;
             };
-            for (metric, threshold) in &policy.regression {
+            for metric in policy.regression.keys() {
+                let Some(threshold) = policy.threshold_for(&r.key, metric) else {
+                    continue;
+                };
                 let (Some(cur), Some(bas)) = (r.stats.metric(metric), b.stats.metric(metric))
                 else {
                     continue;
@@ -271,12 +335,16 @@ impl Check {
             stale_baseline_targets: stale,
             registry_changed: base.provenance.registry_fingerprint
                 != run.provenance.registry_fingerprint,
+            baseline_host: base.provenance.host.clone(),
+            current_host: run.provenance.host.clone(),
+            comparable: run.provenance.same_host(&base.provenance),
         }
     }
 
-    /// Any `FAIL`?
+    /// Any `FAIL` on a comparable baseline? A baseline from another host never fails a
+    /// run: its lines are reported only.
     pub fn failed(&self) -> bool {
-        self.lines.iter().any(|l| l.verdict == "FAIL")
+        self.comparable && self.lines.iter().any(|l| l.verdict == "FAIL")
     }
 
     /// The human report.
@@ -316,6 +384,19 @@ impl Check {
         }
         if self.registry_changed {
             s.push_str("NOTE   the registry fingerprint differs from the baseline's: the repository or the descriptors changed\n");
+        }
+        if !self.comparable {
+            let recorded = if self.baseline_host.is_empty() {
+                "an unidentified host".to_string()
+            } else {
+                self.baseline_host.clone()
+            };
+            s.push_str(&format!(
+                "NOTE   baseline recorded on {recorded}; this host is {}; reporting only, nothing fails\n",
+                self.current_host
+            ));
+            s.push_str("bench --check: reporting only (the baseline is from another host)\n");
+            return s;
         }
         s.push_str(if self.failed() {
             "bench --check: regression(s) found\n"

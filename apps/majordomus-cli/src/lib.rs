@@ -11,6 +11,7 @@
 //! the model knows nothing about either.
 #![warn(missing_docs)]
 
+pub mod about;
 pub mod app;
 pub mod bench;
 pub mod capability;

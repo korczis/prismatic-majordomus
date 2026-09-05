@@ -59,6 +59,8 @@ share/skeleton/ai/repo/workflows/plan.md
 share/standard/majordomus/manifest.yaml
 docs/CLAIMS.yaml
 docs/RESPONSIBILITIES.yaml
+docs/generated/openapi.json
+site/config.toml
 README.md
 LICENSE"
 # LC_ALL=C so the globs below expand in byte order rather than in the collation order of
@@ -956,6 +958,48 @@ source = "AGENTS.md"
 +++
 
 '; printf '{%% raw %%}\n'; sed '1{/^<!--/d;}' "$ROOT/AGENTS.md" | sed '1{/^# /d;}' | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"; printf '{%% endraw %%}\n'; } > "$CONTENT/contract.md"
+# ---------------------------------------------------------------- openapi.json (the HTTP API, as data)
+# The OpenAPI document the Rust executable generates from its capability registry is committed
+# as docs/generated/openapi.json and checked by `majordomus generate --check`. The site does
+# not read it directly: scripts/lib/openapi-site.jq projects it into the shape api.html renders
+# (operations by tag, schemas as property tables, one curl per operation from its first
+# example), and this is the only place that projection runs. Nothing here is authored.
+OA="$ROOT/docs/generated/openapi.json"
+SITE_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml" | sed 's#/$##')"
+[ -f "$OA" ] || { echo "generate-site-data: docs/generated/openapi.json is missing (run: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
+jq -e '.openapi | startswith("3.1")' "$OA" >/dev/null 2>&1 || { echo "generate-site-data: docs/generated/openapi.json is not an OpenAPI 3.1 document" >&2; exit 10; }
+# the document names the page this generator writes; the two must agree or the executable's
+# externalDocs would send a reader to a route that does not exist. site/config.toml is an
+# input for that reason: the base URL decides whether the document is right.
+[ "$(jq -r '.externalDocs.url // ""' "$OA")" = "$SITE_BASE/docs/api/" ] \
+  || { echo "generate-site-data: openapi externalDocs.url is '$(jq -r '.externalDocs.url // ""' "$OA")', the site renders the reference at $SITE_BASE/docs/api/ (about::REFERENCE_URL and site/config.toml disagree)" >&2; exit 10; }
+# every operation is documented in full: a tag with a description, every response described,
+# and an example for what takes input. An operation without an example is a capability
+# without a benchmark case, which the crate does not compile; this catches a stale document.
+jq -r '(.tags // [] | map(.name)) as $tags
+       | .paths | to_entries[] | .key as $p | .value | to_entries[] | .key as $m | .value
+       | (if ((.tags // []) | length) == 0 then "\($m) \($p): no tag"
+          elif ((.tags // []) - $tags | length) > 0 then "\($m) \($p): tag \((.tags - $tags)[0]) is not declared with a description"
+          elif ((.responses // {}) | length) == 0 then "\($m) \($p): no responses"
+          elif ([.responses[] | select((.description // "") == "")] | length) > 0 then "\($m) \($p): a response without a description"
+          elif $m == "post" and ((.requestBody.content["application/json"].examples // {}) | length) == 0 then "\($m) \($p): a POST without a request body example"
+          elif $m == "get" and ((.parameters // []) | length) > 0 and ([.parameters[] | select((.examples // {}) | length > 0)] | length) == 0 then "\($m) \($p): parameters without a single example"
+          else empty end)' "$OA" | while read -r problem; do
+  echo "generate-site-data: docs/generated/openapi.json: $problem (regenerate: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; done
+jq -S --arg base_url "$SITE_BASE" -f "$ROOT/scripts/lib/openapi-site.jq" "$OA" > "$OUT/openapi.json" \
+  || { echo "generate-site-data: projecting docs/generated/openapi.json failed" >&2; exit 13; }
+[ "$(jq '.counts.operations' "$OUT/openapi.json")" -gt 0 ] || { echo "generate-site-data: the OpenAPI document has no operation" >&2; exit 10; }
+# the page: rendered by api.html from openapi.json, listed among the documents next to the
+# capability model it projects (its weight is the row CAPABILITIES.md has in the docs index)
+printf -- '+++
+title = "HTTP API"
+description = %s
+weight = %s
+template = "api.html"
+[extra]
+source = "docs/generated/openapi.json"
++++
+' "$(jq -r '.info.summary' "$OA" | jq -Rn 'input')" "$(grep -n '^| \[`CAPABILITIES.md`' "$ROOT/docs/README.md" | cut -d: -f1 | head -1)" > "$CONTENT/api.md"
 printf -- '+++
 title = "Documentation"
 description = "Every document in the repository, rendered from the same Markdown GitHub shows."

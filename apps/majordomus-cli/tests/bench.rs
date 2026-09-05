@@ -11,7 +11,7 @@ mod common;
 use std::sync::Arc;
 
 use common::{run_in, Fixture};
-use majordomus_cli::bench::baseline::{Check, Policy};
+use majordomus_cli::bench::baseline::{Check, Policy, Threshold};
 use majordomus_cli::bench::results::{BenchmarkResult, CacheMode, Provenance, ResultDocument};
 use majordomus_cli::bench::{
     BenchmarkProjection, Coverage, CoverageState, Profile, Runner, Statistics, SystemTarget,
@@ -380,6 +380,7 @@ fn doc(results: Vec<(&str, CacheMode, f64)>, fingerprint: &str) -> ResultDocumen
             arch: "testarch".into(),
             version: "0".into(),
             registry_fingerprint: fingerprint.into(),
+            host: "testhost/1".into(),
         },
         results: results
             .into_iter()
@@ -459,6 +460,56 @@ fn a_check_reports_every_line_and_never_attaches_a_stale_baseline_to_a_renamed_t
     let check = Check::compare(&run, Some(&base), &policy);
     assert!(!check.failed() && !check.registry_changed);
     assert!(check.render().contains("within policy"));
+    // a per-target allowance: the same +40% passes where the policy gives that key 50%
+    let mut lenient = policy.clone();
+    lenient.targets.insert(
+        "a|direct|x".into(),
+        [(
+            "p50".to_string(),
+            Threshold {
+                relative: 0.5,
+                minimum_samples: 0,
+            },
+        )]
+        .into_iter()
+        .collect(),
+    );
+    let run40 = doc(vec![("a|direct|x", CacheMode::Uncached, 14000.0)], "fp1");
+    let check = Check::compare(&run40, Some(&base), &lenient);
+    let line = check
+        .lines
+        .iter()
+        .find(|l| l.key == "a|direct|x" && l.metric == "p50")
+        .unwrap();
+    assert_eq!(line.verdict, "PASS", "{line:?}");
+    assert!((line.allowed - 0.5).abs() < 1e-9);
+    assert!(!check.failed());
+    // a baseline from another host: every line reported, nothing fails, exit stays 0
+    let mut elsewhere = base.clone();
+    elsewhere.provenance.host = "otherhost/64".into();
+    let slow = doc(vec![("a|direct|x", CacheMode::Uncached, 90000.0)], "fp1");
+    let check = Check::compare(&slow, Some(&elsewhere), &policy);
+    assert!(check.baseline_found && !check.comparable);
+    assert!(
+        check.lines.iter().any(|l| l.verdict == "FAIL"),
+        "the line is still reported: {check:?}"
+    );
+    assert!(!check.failed(), "another host's numbers never fail a run");
+    let text = check.render();
+    assert!(
+        text.contains("baseline recorded on otherhost/64; this host is testhost/1")
+            && text.contains("reporting only"),
+        "{text}"
+    );
+    // an unidentified host (an older baseline without the field) is not comparable either
+    elsewhere.provenance.host = String::new();
+    let check = Check::compare(&slow, Some(&elsewhere), &policy);
+    assert!(!check.comparable && !check.failed());
+    assert!(
+        check.render().contains("an unidentified host"),
+        "{}",
+        check.render()
+    );
     // no baseline: nothing compared, nothing failed
     let check = Check::compare(&run, None, &policy);
     assert!(!check.baseline_found && !check.failed());

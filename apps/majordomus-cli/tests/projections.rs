@@ -10,8 +10,8 @@ use std::collections::BTreeSet;
 use majordomus_cli::capability::handler::handler;
 use majordomus_cli::capability::{
     BenchmarkPolicy, CachePolicy, CanonicalSchema, Capability, CapabilityId, CapabilityKind,
-    CapabilityRegistry, Executable, Exposure, HttpExposure, HttpMethod, McpExposure, ModuleId,
-    Provenance, Stability,
+    CapabilityRegistry, CaseContext, Executable, Exposure, HttpExposure, HttpMethod, McpExposure,
+    ModuleId, Provenance, Stability,
 };
 use majordomus_cli::generate::{artifacts, Target};
 use majordomus_cli::http::openapi;
@@ -26,8 +26,11 @@ fn every_declared_projection_exists_and_no_projection_is_an_orphan() {
     let app = common::load_app(&f);
     let registry = app.registry();
     let surface = Surface::new(app.context.clone());
-    let doc = openapi::document(registry, "test").unwrap();
-    let reference: String = artifacts(registry, "test", &[Target::Docs])
+    let cases = CaseContext {
+        index: &app.context.index,
+    };
+    let doc = openapi::document(registry, "test", Some(&cases)).unwrap();
+    let reference: String = artifacts(registry, "test", Some(&cases), &[Target::Docs])
         .unwrap()
         .into_iter()
         .map(|a| a.content)
@@ -189,9 +192,9 @@ fn project(exec: Executable) -> (Value, Value, String) {
         .with_builtin(vec![exec])
         .build()
         .unwrap();
-    let doc = openapi::document(&registry, "test").unwrap();
+    let doc = openapi::document(&registry, "test", None).unwrap();
     let op = doc["paths"]["/api/v1/echo"]["get"].clone();
-    let reference: String = artifacts(&registry, "test", &[Target::Docs])
+    let reference: String = artifacts(&registry, "test", None, &[Target::Docs])
         .unwrap()
         .into_iter()
         .map(|a| a.content)
@@ -270,7 +273,7 @@ fn a_change_to_the_canonical_type_or_description_reaches_every_projection() {
         )])
         .build()
         .unwrap();
-    let doc = openapi::document(&registry, "test").unwrap();
+    let doc = openapi::document(&registry, "test", None).unwrap();
     assert!(doc["paths"].as_object().unwrap().is_empty());
     assert!(registry.by_mcp_tool("fixture_echo").is_some());
     assert!(registry
@@ -284,8 +287,16 @@ fn a_change_to_the_canonical_type_or_description_reaches_every_projection() {
 #[test]
 fn generated_artifacts_are_byte_identical_twice_and_carry_no_absolute_path() {
     let f = common::Fixture::new();
-    let a = artifacts(common::load_app(&f).registry(), "test", Target::ALL).unwrap();
-    let b = artifacts(common::load_app(&f).registry(), "test", Target::ALL).unwrap();
+    let app_a = common::load_app(&f);
+    let app_b = common::load_app(&f);
+    let cases_a = CaseContext {
+        index: &app_a.context.index,
+    };
+    let cases_b = CaseContext {
+        index: &app_b.context.index,
+    };
+    let a = artifacts(app_a.registry(), "test", Some(&cases_a), Target::ALL).unwrap();
+    let b = artifacts(app_b.registry(), "test", Some(&cases_b), Target::ALL).unwrap();
     assert_eq!(a, b);
     for art in &a {
         assert!(

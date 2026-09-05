@@ -74,7 +74,10 @@ executable and never builds; `MAJORDOMUS_NO_BUILD=1` refuses to build and exits 
 command to run), sets `MAJORDOMUS_SHARE` to the distribution's `share/` beside it, writes
 nothing to stdout, and passes every argument to `majordomus mcp`. `just mcp`, `just serve`
 and `just inspect` at the root do the same for a person; `just docs-ui` opens the running
-server's Swagger UI.
+server's Swagger UI. The same document, with its tags, examples and statuses, is the API
+reference on the site at `/docs/api/` and is served raw at the site's `/openapi.json`; the
+`initialize` instructions, the OpenAPI `info` and `GET /` open with the one summary from
+`about.rs` ([`CAPABILITIES.md`](CAPABILITIES.md)).
 
 ## Peers
 

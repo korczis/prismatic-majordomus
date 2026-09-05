@@ -102,15 +102,19 @@ mj_pj_row() {
     *) awk -F'\t' -v t="$1" -v i="$2" '$1==t && $2==i' "$MJ_PJ/model.tsv" ;;
   esac
 }
-# one column of a row, split on a byte that is not whitespace so that an empty field
-# between two tabs keeps its place (IFS whitespace would collapse it). The byte is the
-# ASCII unit separator: bash 3.2 uses \001 internally and `read -a` under IFS=\001 does not
-# split at all there, which left every plan status empty on a stock macOS shell.
+# one column of a row. Split by parameter expansion, not by `read -a`: with IFS set to a
+# tab, `read` collapses the run of tabs around an empty field and every later column shifts
+# left; with IFS set to a non-whitespace byte, bash 3.2's `read -a` does not split at all
+# and every column after the first is empty (the macOS runner's bash). Stripping one
+# field at a time keeps an empty field in its place on every bash this tool supports.
 mj_pj_col() {
-  local row sep n="$3" fields; row="$(mj_pj_row "$1" "$2")"; sep="$(printf '\037')"
-  row="${row//$MJ_TAB/$sep}"
-  IFS="$sep" read -r -a fields <<< "$row"
-  printf '%s' "${fields[$((n - 1))]:-}"
+  local row n="$3" i=1; row="$(mj_pj_row "$1" "$2")"
+  [ -n "$row" ] || return 0
+  while [ "$i" -lt "$n" ]; do
+    case "$row" in *"$MJ_TAB"*) row="${row#*"$MJ_TAB"}" ;; *) return 0 ;; esac
+    i=$((i + 1))
+  done
+  printf '%s' "${row%%"$MJ_TAB"*}"
 }
 
 mj_pj_project_name()   { mj_pj_rows P | cut -f2; }

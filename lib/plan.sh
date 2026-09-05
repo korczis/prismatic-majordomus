@@ -193,7 +193,7 @@ mj_plan_validate() {
 
 # ---------------------------------------------------------------- status
 mj_plan_status() {
-  local only="${1:-}" id row active nxt
+  local only="${1:-}" id row active nxt cj
   active="$(mj_pj_active)"
   if [ "$MJ_JSON" = 1 ]; then
     # the vocabulary travels with the counts: a reader of this output never has to know
@@ -201,15 +201,16 @@ mj_plan_status() {
     printf '{"active_milestone":"%s","next_ready":"%s","statuses":[%s],"milestones":[' \
       "$active" "$(mj_pj_next_ready "$active")" \
       "$(mj_pj_statuses issue | tr ' ' '\n' | awk '{ printf "%s\"%s\"", (NR > 1 ? "," : ""), $0 }')"
-    local first=1 counts
+    local first=1
     mj_pj_milestone_ids | while read -r id; do
       [ -n "$only" ] && [ "$id" != "$only" ] && continue
       [ "$first" = 1 ] || printf ','; first=0
       # counts are emitted as the engine keyed them: total, required, then one entry per
       # declared status. Nothing here names a status, so a new one appears by existing.
-      # Captured into a variable first: bash 3.2 brace-expands a command substitution
-      # whose quoted program carries "{...,...}" when it stands directly as an argument.
-      counts="$(mj_pj_m_counts "$id" | awk -F, '
+      # The substitution is assigned before it is printed: bash 3.2 brace-expands a
+      # `$(...)` used as a word when the program inside carries `{a,b}`, and this awk
+      # template does; an assignment is never brace-expanded.
+      cj="$(mj_pj_m_counts "$id" | awk -F, '
            function emit(x,   kv) { split(x, kv, "="); return "\"" kv[1] "\":" (kv[2] + 0) }
            { t = ""; r = ""; o = ""
              for (i = 1; i <= NF; i++) {
@@ -218,7 +219,7 @@ mj_plan_status() {
                else o = o (o == "" ? "" : ",") emit($i) }
              printf "{\"total\":%d,\"required\":%d,\"by_status\":{%s}}", t, r, o }')"
       printf '{"id":"%s","status":"%s","title":"%s","counts":%s}' \
-        "$id" "$(mj_pj_m_status "$id")" "$(mj_json_esc "$(mj_pj_m_title "$id")")" "$counts"
+        "$id" "$(mj_pj_m_status "$id")" "$(mj_json_esc "$(mj_pj_m_title "$id")")" "$cj"
     done
     printf ']}\n'
     return 0
