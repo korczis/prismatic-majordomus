@@ -8,17 +8,22 @@
 //! cannot tell, and need not care, which source an entry came from except through its
 //! provenance.
 
+pub mod benchmark;
 pub mod builtin;
 pub mod declarative;
 pub mod handler;
 pub mod model;
+pub mod module;
 pub mod registry;
 pub mod schema;
 
+pub use benchmark::{BenchmarkCases, CaseContext, CaseProvider, NamedCase};
 pub use handler::{CapabilityError, Context, Executable, Handler};
 pub use model::{
-    Capability, CapabilityId, CapabilityKind, CliExposure, Exposure, HttpExposure, HttpMethod,
-    McpExposure, McpResource, Provenance, Stability,
+    BenchmarkPolicy, CachePolicy, Capability, CapabilityId, CapabilityKind, CliExposure, Exposure,
+    HttpExposure, HttpMethod, McpExposure, McpResource, ModuleId, Provenance, Stability,
+    WaiverReason,
 };
+pub use module::ModuleDescriptor;
 pub use registry::{CapabilityRegistry, Entry, RegistryError};
 pub use schema::CanonicalSchema;

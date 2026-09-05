@@ -78,7 +78,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::capabilities"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_capabilities"
@@ -90,7 +90,7 @@
       "get": {
         "operationId": "capabilities.describe",
         "summary": "Describe one capability",
-        "description": "One capability by canonical id: its schemas, provenance, stability and every projection it appears in.",
+        "description": "One capability by canonical id: its kind, schemas, provenance, stability, exposures, benchmark and cache policy.",
         "tags": [
           "capabilities"
         ],
@@ -132,7 +132,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::capabilities"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_capability"
@@ -186,7 +186,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::objects"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_get"
@@ -256,7 +256,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::objects"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_list"
@@ -299,7 +299,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::peers"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_peers"
@@ -351,7 +351,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::peers"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_announce"
@@ -394,7 +394,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::repository"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_repository",
@@ -480,7 +480,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::objects"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_search"
@@ -538,6 +538,89 @@
         ],
         "description": "What a peer said it is working on."
       },
+      "BenchmarkPolicy": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "policy": {
+                "type": "string",
+                "const": "required"
+              }
+            },
+            "required": [
+              "policy"
+            ],
+            "description": "Timed directly and through every exposure; coverage fails without a case."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "$ref": "#/components/schemas/WaiverReason",
+                "description": "Why."
+              },
+              "policy": {
+                "type": "string",
+                "const": "waived"
+              }
+            },
+            "required": [
+              "policy",
+              "reason"
+            ],
+            "description": "Not timed, for the typed reason; coverage reports it as waived, never as covered."
+          }
+        ],
+        "description": "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides."
+      },
+      "CachePolicy": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "policy": {
+                "type": "string",
+                "const": "disabled"
+              }
+            },
+            "required": [
+              "policy"
+            ],
+            "description": "Every call runs the handler."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "max_entries": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "The most entries kept for this capability; the oldest is evicted first."
+              },
+              "ttl_seconds": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Seconds an entry stays valid; `None` for the life of the process."
+              },
+              "policy": {
+                "type": "string",
+                "const": "process"
+              }
+            },
+            "required": [
+              "policy",
+              "max_entries"
+            ],
+            "description": "Results are kept in this process's memory, bounded, for equal inputs."
+          }
+        ],
+        "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry."
+      },
       "CanonicalSchema": {
         "type": "object",
         "properties": {
@@ -564,9 +647,13 @@
             "$ref": "#/components/schemas/CapabilityId",
             "description": "The canonical identity."
           },
+          "module": {
+            "$ref": "#/components/schemas/ModuleId",
+            "description": "The module that composes it: the id's namespace for a builtin, the kind for a\ndeclarative object."
+          },
           "kind": {
             "$ref": "#/components/schemas/CapabilityKind",
-            "description": "Query or resource."
+            "description": "Query, command or resource."
           },
           "title": {
             "type": "string",
@@ -602,10 +689,19 @@
               "type": "string"
             },
             "description": "Free tags, from the declarative object's `tags` or the descriptor."
+          },
+          "benchmark": {
+            "$ref": "#/components/schemas/BenchmarkPolicy",
+            "description": "Whether it is a benchmark target; the cases come from the input type."
+          },
+          "cache": {
+            "$ref": "#/components/schemas/CachePolicy",
+            "description": "Whether the executor keeps its results."
           }
         },
         "required": [
           "id",
+          "module",
           "kind",
           "title",
           "description",
@@ -613,7 +709,9 @@
           "output",
           "provenance",
           "exposure",
-          "stability"
+          "stability",
+          "benchmark",
+          "cache"
         ],
         "description": "The canonical descriptor. Everything a projection may say about a capability is here."
       },
@@ -1023,6 +1121,10 @@
           "name"
         ],
         "description": "An MCP resource: its URI and the short name a client lists."
+      },
+      "ModuleId": {
+        "type": "string",
+        "description": "A module identity: the namespace of every capability the module composes, matching\n`[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative\nobject's module is its kind."
       },
       "ObjectList": {
         "type": "object",
@@ -1609,6 +1711,30 @@
             "format": "uint",
             "minimum": 0,
             "description": "With a CLI exposure."
+          },
+          "modules": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Modules: composed, derived, and one per declarative kind."
+          },
+          "benchmark_required": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Executables whose benchmark policy is required."
+          },
+          "benchmark_waived": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Executables waived from benchmarking for a typed reason."
+          },
+          "cached": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Executables the executor caches."
           }
         },
         "required": [
@@ -1620,7 +1746,11 @@
           "mcp_tools",
           "mcp_resources",
           "http_routes",
-          "cli_commands"
+          "cli_commands",
+          "modules",
+          "benchmark_required",
+          "benchmark_waived",
+          "cached"
         ],
         "description": "The registry counted: by source, kind, stability and projection."
       },
@@ -1638,6 +1768,26 @@
           }
         ],
         "description": "How a peer reached the server."
+      },
+      "WaiverReason": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "not_executable",
+            "description": "A resource: read, never executed; nothing to time but `objects.get`, which is."
+          },
+          {
+            "type": "string",
+            "const": "destructive",
+            "description": "The capability changes something outside this process and cannot be run in a loop."
+          },
+          {
+            "type": "string",
+            "const": "external_dependency",
+            "description": "The capability talks to something the benchmark host cannot provide."
+          }
+        ],
+        "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
       }
     }
   },

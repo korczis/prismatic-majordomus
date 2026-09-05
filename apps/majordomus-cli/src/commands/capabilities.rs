@@ -202,6 +202,7 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
                 ),
             )?;
             w(&mut out, format!("OK   registry    {} capabilities — every id, MCP name, MCP uri, HTTP route and CLI path unique; {} executable(s) carry a handler", s.total, queries))?;
+            w(&mut out, format!("OK   modules     {} module(s) — every executable composed in the module its namespace names; {} required benchmark target(s), {} waived, {} cached", s.modules, s.benchmark_required, s.benchmark_waived, s.cached))?;
             w(&mut out, format!("OK   mcp         {} tool(s), {} resource(s) — every exposure names an executable capability", s.mcp_tools, s.mcp_resources))?;
             w(
                 &mut out,

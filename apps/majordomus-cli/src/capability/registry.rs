@@ -10,14 +10,52 @@ use serde_json::Value;
 
 use crate::index::Index;
 
+use super::benchmark::CaseProvider;
 use super::handler::{CapabilityError, Context, Executable, Handler};
-use super::model::{Capability, CapabilityId, CapabilityKind, HttpMethod, Provenance};
+use super::model::{
+    BenchmarkPolicy, Capability, CapabilityId, CapabilityKind, HttpMethod, ModuleId, Provenance,
+    Stability, WaiverReason,
+};
+use super::module::ModuleDescriptor;
 
-/// A capability with, for a query, its handler.
+/// A capability with, for an executable, its handler and its benchmark cases.
 pub struct Entry {
     /// The descriptor.
     pub capability: Capability,
     handler: Option<Arc<dyn Handler>>,
+    cases: Option<CaseProvider>,
+}
+
+/// Where a module's entry in the registry came from.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum ModuleSource {
+    /// Declared with `module!` and composed with `compose_modules!`.
+    Builtin,
+    /// Derived from the namespace of executables composed without a module descriptor.
+    Derived,
+    /// One kind of declarative objects of the repository's layer.
+    Declarative,
+}
+
+/// One module as the registry knows it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, serde::Deserialize, schemars::JsonSchema)]
+pub struct ModuleInfo {
+    /// The identity.
+    pub id: ModuleId,
+    /// The short name.
+    pub title: String,
+    /// One paragraph.
+    pub description: String,
+    /// Where the module stands, when it declared it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stability: Option<Stability>,
+    /// Where the entry came from.
+    pub source: ModuleSource,
+    /// How many capabilities it composes.
+    pub capabilities: usize,
 }
 
 impl std::fmt::Debug for Entry {
@@ -119,6 +157,46 @@ pub enum RegistryError {
         /// The projection the exposure is for.
         projection: String,
     },
+    #[error("module '{id}': invalid id: {reason}")]
+    /// A module id does not satisfy the grammar.
+    InvalidModuleId {
+        /// The id as written.
+        id: String,
+        /// What the grammar objects to.
+        reason: String,
+    },
+    #[error("module '{id}' is composed twice ({first} and {second})")]
+    /// Two modules claim one id, or a builtin module's id is a declarative kind.
+    DuplicateModule {
+        /// The id.
+        id: String,
+        /// The source seen first.
+        first: String,
+        /// The other.
+        second: String,
+    },
+    #[error("capability '{id}' ({provenance}) is composed in module '{module}' but its namespace is '{namespace}'")]
+    /// A capability's id does not belong to the module that composes it.
+    ModuleMismatch {
+        /// The capability id.
+        id: String,
+        /// Where the descriptor came from.
+        provenance: String,
+        /// The module that composed it.
+        module: String,
+        /// The id's namespace.
+        namespace: String,
+    },
+    #[error("capability '{id}' ({provenance}): invalid cache policy: {reason}")]
+    /// The cache policy keeps nothing or contradicts itself.
+    InvalidCachePolicy {
+        /// The id.
+        id: String,
+        /// Where the descriptor came from.
+        provenance: String,
+        /// What is wrong.
+        reason: String,
+    },
     #[error("capability '{id}' ({provenance}): {reason}")]
     /// The descriptor's shape contradicts its kind: a query without a handler, a resource with one or with a callable exposure.
     Shape {
@@ -135,6 +213,7 @@ pub enum RegistryError {
 /// Every capability, once, validated, in id order, with the lookups projections need.
 pub struct CapabilityRegistry {
     entries: BTreeMap<CapabilityId, Entry>,
+    modules: BTreeMap<ModuleId, ModuleInfo>,
     by_mcp_tool: BTreeMap<String, CapabilityId>,
     by_mcp_uri: BTreeMap<String, CapabilityId>,
     by_http: BTreeMap<(HttpMethod, String), CapabilityId>,
@@ -145,15 +224,35 @@ pub struct CapabilityRegistry {
 #[derive(Default)]
 pub struct Builder {
     pending: Vec<Entry>,
+    modules: Vec<ModuleInfo>,
 }
 
 impl Builder {
-    /// Add the executables the code composes.
+    /// Add the application's modules, as `compose_modules!` produced them: their metadata
+    /// and every executable they compose.
+    pub fn with_modules(mut self, modules: Vec<ModuleDescriptor>) -> Self {
+        for m in modules {
+            self.modules.push(ModuleInfo {
+                id: m.id.clone(),
+                title: m.title,
+                description: m.description,
+                stability: Some(m.stability),
+                source: ModuleSource::Builtin,
+                capabilities: m.capabilities.len(),
+            });
+            self = self.with_builtin(m.capabilities);
+        }
+        self
+    }
+
+    /// Add executables without a module descriptor; each one's module is the namespace of
+    /// its id.
     pub fn with_builtin(mut self, executables: Vec<Executable>) -> Self {
         for e in executables {
             self.pending.push(Entry {
                 capability: e.capability,
                 handler: Some(e.handler),
+                cases: Some(e.cases),
             });
         }
         self
@@ -165,6 +264,7 @@ impl Builder {
             self.pending.push(Entry {
                 capability: super::declarative::capability_of(object),
                 handler: None,
+                cases: None,
             });
         }
         self
@@ -175,6 +275,22 @@ impl Builder {
     pub fn build(self) -> Result<CapabilityRegistry, Vec<RegistryError>> {
         let mut errors = Vec::new();
         let mut registry = CapabilityRegistry::default();
+        for m in self.modules {
+            let id = m.id.as_str().to_string();
+            if let Err(reason) = ModuleId::parse(&id) {
+                errors.push(RegistryError::InvalidModuleId { id, reason });
+                continue;
+            }
+            if let Some(first) = registry.modules.get(&m.id) {
+                errors.push(RegistryError::DuplicateModule {
+                    id,
+                    first: format!("{:?}", first.source).to_lowercase(),
+                    second: "builtin".into(),
+                });
+                continue;
+            }
+            registry.modules.insert(m.id.clone(), m);
+        }
         let mut pending = self.pending;
         pending.sort_by(|a, b| {
             a.capability.id.cmp(&b.capability.id).then_with(|| {
@@ -184,7 +300,7 @@ impl Builder {
                     .cmp(&b.capability.provenance.to_string())
             })
         });
-        for entry in pending {
+        for mut entry in pending {
             let c = &entry.capability;
             let id = c.id.as_str().to_string();
             let prov = c.provenance.to_string();
@@ -201,6 +317,118 @@ impl Builder {
                     id: id.clone(),
                     first: first.capability.provenance.to_string(),
                     second: prov.clone(),
+                });
+                continue;
+            }
+            // the module: stamped by `module!`, derived from the namespace otherwise
+            let namespace = c.id.namespace().to_string();
+            if entry.capability.module.as_str().is_empty() {
+                entry.capability.module = ModuleId::unchecked(&namespace);
+            }
+            let c = &entry.capability;
+            let is_builtin = matches!(c.provenance, Provenance::Builtin { .. });
+            if is_builtin && c.module.as_str() != namespace {
+                errors.push(RegistryError::ModuleMismatch {
+                    id: id.clone(),
+                    provenance: prov.clone(),
+                    module: c.module.as_str().to_string(),
+                    namespace,
+                });
+                continue;
+            }
+            match registry.modules.get_mut(&c.module) {
+                Some(m) if m.source == ModuleSource::Builtin && is_builtin => {}
+                Some(m) if m.source == ModuleSource::Builtin => {
+                    errors.push(RegistryError::DuplicateModule {
+                        id: c.module.as_str().to_string(),
+                        first: "builtin".into(),
+                        second: format!("declarative kind of {prov}"),
+                    });
+                    continue;
+                }
+                Some(m) => m.capabilities += 1,
+                None => {
+                    if let Err(reason) = ModuleId::parse(c.module.as_str()) {
+                        errors.push(RegistryError::InvalidModuleId {
+                            id: c.module.as_str().to_string(),
+                            reason,
+                        });
+                        continue;
+                    }
+                    let (source, title, description) = if is_builtin {
+                        (
+                            ModuleSource::Derived,
+                            c.module.as_str().to_string(),
+                            format!("Executables in the '{}' namespace, composed without a module descriptor.", c.module),
+                        )
+                    } else {
+                        (
+                            ModuleSource::Declarative,
+                            c.module.as_str().to_string(),
+                            format!(
+                                "Declarative objects of kind '{}' from the repository's AI layer.",
+                                c.module
+                            ),
+                        )
+                    };
+                    registry.modules.insert(
+                        c.module.clone(),
+                        ModuleInfo {
+                            id: c.module.clone(),
+                            title,
+                            description,
+                            stability: None,
+                            source,
+                            capabilities: 1,
+                        },
+                    );
+                }
+            }
+            if let Err(reason) = c.cache.validate() {
+                errors.push(RegistryError::InvalidCachePolicy {
+                    id: id.clone(),
+                    provenance: prov.clone(),
+                    reason,
+                });
+                continue;
+            }
+            match (c.kind, c.benchmark) {
+                (
+                    CapabilityKind::Resource,
+                    BenchmarkPolicy::Waived {
+                        reason: WaiverReason::NotExecutable,
+                    },
+                ) => {}
+                (CapabilityKind::Resource, _) => {
+                    errors.push(RegistryError::Shape {
+                        id: id.clone(),
+                        provenance: prov.clone(),
+                        reason: "a resource is not a benchmark target: its policy is waived as not executable".into(),
+                    });
+                    continue;
+                }
+                (
+                    _,
+                    BenchmarkPolicy::Waived {
+                        reason: WaiverReason::NotExecutable,
+                    },
+                ) => {
+                    errors.push(RegistryError::Shape {
+                        id: id.clone(),
+                        provenance: prov.clone(),
+                        reason:
+                            "an executable cannot be waived as not executable; name a real reason"
+                                .into(),
+                    });
+                    continue;
+                }
+                _ => {}
+            }
+            if c.cache.is_enabled() && c.kind == CapabilityKind::Command {
+                errors.push(RegistryError::InvalidCachePolicy {
+                    id: id.clone(),
+                    provenance: prov.clone(),
+                    reason: "a command changes state and is never cached".into(),
                 });
                 continue;
             }
@@ -425,6 +653,23 @@ impl CapabilityRegistry {
         self.entries.is_empty()
     }
 
+    /// Every module, by id: the composed ones, the derived ones, and one per declarative kind.
+    pub fn modules(&self) -> impl Iterator<Item = &ModuleInfo> {
+        self.modules.values()
+    }
+
+    /// One module by id.
+    pub fn module(&self, id: &str) -> Option<&ModuleInfo> {
+        self.modules.get(&ModuleId::unchecked(id))
+    }
+
+    /// The benchmark case provider of an executable; `None` for a resource or an unknown id.
+    pub fn cases(&self, id: &str) -> Option<CaseProvider> {
+        self.entries
+            .get(&CapabilityId::unchecked(id))
+            .and_then(|e| e.cases)
+    }
+
     /// A capability by canonical id.
     pub fn get(&self, id: &str) -> Option<&Capability> {
         self.entries
@@ -473,7 +718,10 @@ impl CapabilityRegistry {
 
     /// Counts by kind, by stability and by projection, for introspection.
     pub fn summary(&self) -> Summary {
-        let mut s = Summary::default();
+        let mut s = Summary {
+            modules: self.modules.len(),
+            ..Default::default()
+        };
         for c in self.iter() {
             *s.by_kind
                 .entry(format!("{:?}", c.kind).to_lowercase())
@@ -498,6 +746,16 @@ impl CapabilityRegistry {
             }
             if c.exposure.cli.is_some() {
                 s.cli_commands += 1;
+            }
+            match c.benchmark {
+                BenchmarkPolicy::Required => s.benchmark_required += 1,
+                BenchmarkPolicy::Waived {
+                    reason: WaiverReason::NotExecutable,
+                } => {}
+                BenchmarkPolicy::Waived { .. } => s.benchmark_waived += 1,
+            }
+            if c.cache.is_enabled() {
+                s.cached += 1;
             }
             match c.provenance {
                 Provenance::Builtin { .. } => s.builtin += 1,
@@ -532,4 +790,12 @@ pub struct Summary {
     pub http_routes: usize,
     /// With a CLI exposure.
     pub cli_commands: usize,
+    /// Modules: composed, derived, and one per declarative kind.
+    pub modules: usize,
+    /// Executables whose benchmark policy is required.
+    pub benchmark_required: usize,
+    /// Executables waived from benchmarking for a typed reason.
+    pub benchmark_waived: usize,
+    /// Executables the executor caches.
+    pub cached: usize,
 }

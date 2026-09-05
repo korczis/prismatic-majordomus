@@ -9,18 +9,18 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 | id | kind | stability | MCP tool | MCP resource | HTTP | CLI | provenance |
 |---|---|---|---|---|---|---|---|
-| `capabilities.describe` | query | behaviorally_verified | `majordomus_capability` | — | `GET /api/v1/capability` | `majordomus capabilities describe` | builtin majordomus_cli::capability::builtin |
-| `capabilities.list` | query | behaviorally_verified | `majordomus_capabilities` | — | `GET /api/v1/capabilities` | `majordomus capabilities list` | builtin majordomus_cli::capability::builtin |
-| `objects.get` | query | behaviorally_verified | `majordomus_get` | — | `GET /api/v1/object` | — | builtin majordomus_cli::capability::builtin |
-| `objects.list` | query | behaviorally_verified | `majordomus_list` | — | `GET /api/v1/objects` | — | builtin majordomus_cli::capability::builtin |
-| `objects.search` | query | behaviorally_verified | `majordomus_search` | — | `GET /api/v1/search` | — | builtin majordomus_cli::capability::builtin |
-| `peers.announce` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | builtin majordomus_cli::capability::builtin |
-| `peers.list` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | builtin majordomus_cli::capability::builtin |
-| `repository.info` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | builtin majordomus_cli::capability::builtin |
+| `capabilities.describe` | query | behaviorally_verified | `majordomus_capability` | — | `GET /api/v1/capability` | `majordomus capabilities describe` | builtin majordomus_cli::capability::builtin::capabilities |
+| `capabilities.list` | query | behaviorally_verified | `majordomus_capabilities` | — | `GET /api/v1/capabilities` | `majordomus capabilities list` | builtin majordomus_cli::capability::builtin::capabilities |
+| `objects.get` | query | behaviorally_verified | `majordomus_get` | — | `GET /api/v1/object` | — | builtin majordomus_cli::capability::builtin::objects |
+| `objects.list` | query | behaviorally_verified | `majordomus_list` | — | `GET /api/v1/objects` | — | builtin majordomus_cli::capability::builtin::objects |
+| `objects.search` | query | behaviorally_verified | `majordomus_search` | — | `GET /api/v1/search` | — | builtin majordomus_cli::capability::builtin::objects |
+| `peers.announce` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | builtin majordomus_cli::capability::builtin::peers |
+| `peers.list` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | builtin majordomus_cli::capability::builtin::peers |
+| `repository.info` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | builtin majordomus_cli::capability::builtin::repository |
 
 ### `capabilities.describe` — Describe one capability
 
-One capability by canonical id: its schemas, provenance, stability and every projection it appears in.
+One capability by canonical id: its kind, schemas, provenance, stability, exposures, benchmark and cache policy.
 
 | input | type | required | description |
 |---|---|---|---|

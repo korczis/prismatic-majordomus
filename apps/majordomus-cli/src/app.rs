@@ -110,7 +110,7 @@ impl App {
         index: Index,
     ) -> Result<Self> {
         let registry = CapabilityRegistry::builder()
-            .with_builtin(builtin::all())
+            .with_modules(builtin::modules())
             .with_index(&index)
             .build()
             .map_err(|errors| Error::Registry { errors })?;

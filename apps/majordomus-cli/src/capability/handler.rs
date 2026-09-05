@@ -110,39 +110,58 @@ where
     })
 }
 
-/// A descriptor with its behaviour: what the builtin source contributes.
+/// A descriptor with its behaviour and its benchmark cases: what the builtin source
+/// contributes.
 pub struct Executable {
     /// The descriptor.
     pub capability: Capability,
     /// The behaviour, behind the JSON boundary.
     pub handler: Arc<dyn Handler>,
+    /// The representative inputs, from the input type's `BenchmarkCases`.
+    pub cases: super::benchmark::CaseProvider,
 }
 
-/// Build an executable capability from its parts: a query by default, or the kind given
-/// (`kind: CapabilityKind::Command` for one that changes this process's memory). `$I` and `$O` must derive
-/// `schemars::JsonSchema` (and serde); their schemas become the canonical schemas, and
-/// their doc comments the descriptions a client reads. The provenance is the module the
-/// macro is expanded in. Nothing here registers anything: the result is composed
-/// explicitly into [`super::builtin::all`].
+/// The one canonical declaration of an executable capability. From it every projection is
+/// derived: the MCP tool and its schemas, the HTTP route and its OpenAPI operation, the
+/// Swagger UI entry, the command line's introspection, the benchmark targets for every
+/// transport it is exposed on, the cache policy the executor applies, and the generated
+/// reference. Nothing is declared a second time anywhere.
+///
+/// Fields, in this order: `id`, an optional `kind` (a query by default;
+/// `CapabilityKind::Command` for one that changes this process's memory), `title`,
+/// `description`, `input`, `output`, `stability`, `exposure`, `tags`, an optional `cache`
+/// (`CachePolicy::Disabled` by default), an optional `benchmark`
+/// (`BenchmarkPolicy::Required` by default), and `handler`. `$input` and `$output` derive
+/// `schemars::JsonSchema` (and serde), and `$input` implements
+/// [`super::benchmark::BenchmarkCases`]: their schemas become the canonical schemas,
+/// their doc comments the descriptions a client reads, and the input's cases the
+/// benchmark inputs of every transport. The provenance is the Rust module the macro is
+/// expanded in; the capability's module is stamped by [`crate::module!`]. Nothing here
+/// registers anything: the result is composed explicitly into a module.
+///
+/// ```
+/// use majordomus_cli::capability;
+/// use majordomus_cli::capability::{BenchmarkCases, CachePolicy, CaseContext, Context, CapabilityError, Exposure, NamedCase, Stability};
+/// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+/// struct In {}
+/// impl BenchmarkCases for In {
+///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![NamedCase::new("default", In {})] }
+/// }
+/// #[derive(serde::Serialize, schemars::JsonSchema)]
+/// struct Out { ok: bool }
+/// fn ping(_: &Context, _: In) -> Result<Out, CapabilityError> { Ok(Out { ok: true }) }
+/// let e = capability! {
+///     id: "demo.ping", title: "Ping", description: "Answers.", input: In, output: Out,
+///     stability: Stability::Experimental, exposure: Exposure::default(), tags: ["demo"],
+///     cache: CachePolicy::Process { max_entries: 8, ttl_seconds: None },
+///     handler: ping,
+/// };
+/// assert_eq!(e.capability.id.as_str(), "demo.ping");
+/// assert!(e.capability.cache.is_enabled());
+/// ```
 #[macro_export]
 macro_rules! capability {
-    (
-        id: $id:expr,
-        title: $title:expr,
-        description: $description:expr,
-        input: $input:ty,
-        output: $output:ty,
-        stability: $stability:expr,
-        exposure: $exposure:expr,
-        tags: [$($tag:expr),* $(,)?],
-        handler: $handler:expr $(,)?
-    ) => {
-        $crate::capability! {
-            id: $id, kind: $crate::capability::CapabilityKind::Query, title: $title,
-            description: $description, input: $input, output: $output, stability: $stability,
-            exposure: $exposure, tags: [$($tag),*], handler: $handler,
-        }
-    };
+    // ---- the full form: every field present
     (
         id: $id:expr,
         kind: $kind:expr,
@@ -153,11 +172,14 @@ macro_rules! capability {
         stability: $stability:expr,
         exposure: $exposure:expr,
         tags: [$($tag:expr),* $(,)?],
+        cache: $cache:expr,
+        benchmark: $benchmark:expr,
         handler: $handler:expr $(,)?
     ) => {
         $crate::capability::Executable {
             capability: $crate::capability::Capability {
                 id: $crate::capability::CapabilityId::unchecked($id),
+                module: $crate::capability::ModuleId::unchecked(""),
                 kind: $kind,
                 title: String::from($title),
                 description: String::from($description),
@@ -167,8 +189,33 @@ macro_rules! capability {
                 exposure: $exposure,
                 stability: $stability,
                 tags: vec![$(String::from($tag)),*],
+                benchmark: $benchmark,
+                cache: $cache,
             },
             handler: $crate::capability::handler::handler::<$input, $output, _>($handler),
+            cases: <$input as $crate::capability::BenchmarkCases>::benchmark_cases_json,
         }
+    };
+    // ---- defaults: kind Query, cache Disabled, benchmark Required, in every combination
+    ( id: $id:expr, title: $title:expr, description: $d:expr, input: $i:ty, output: $o:ty, stability: $s:expr, exposure: $e:expr, tags: [$($t:expr),* $(,)?], handler: $h:expr $(,)? ) => {
+        $crate::capability! { id: $id, kind: $crate::capability::CapabilityKind::Query, title: $title, description: $d, input: $i, output: $o, stability: $s, exposure: $e, tags: [$($t),*], cache: $crate::capability::CachePolicy::Disabled, benchmark: $crate::capability::BenchmarkPolicy::Required, handler: $h }
+    };
+    ( id: $id:expr, kind: $k:expr, title: $title:expr, description: $d:expr, input: $i:ty, output: $o:ty, stability: $s:expr, exposure: $e:expr, tags: [$($t:expr),* $(,)?], handler: $h:expr $(,)? ) => {
+        $crate::capability! { id: $id, kind: $k, title: $title, description: $d, input: $i, output: $o, stability: $s, exposure: $e, tags: [$($t),*], cache: $crate::capability::CachePolicy::Disabled, benchmark: $crate::capability::BenchmarkPolicy::Required, handler: $h }
+    };
+    ( id: $id:expr, title: $title:expr, description: $d:expr, input: $i:ty, output: $o:ty, stability: $s:expr, exposure: $e:expr, tags: [$($t:expr),* $(,)?], cache: $c:expr, handler: $h:expr $(,)? ) => {
+        $crate::capability! { id: $id, kind: $crate::capability::CapabilityKind::Query, title: $title, description: $d, input: $i, output: $o, stability: $s, exposure: $e, tags: [$($t),*], cache: $c, benchmark: $crate::capability::BenchmarkPolicy::Required, handler: $h }
+    };
+    ( id: $id:expr, kind: $k:expr, title: $title:expr, description: $d:expr, input: $i:ty, output: $o:ty, stability: $s:expr, exposure: $e:expr, tags: [$($t:expr),* $(,)?], cache: $c:expr, handler: $h:expr $(,)? ) => {
+        $crate::capability! { id: $id, kind: $k, title: $title, description: $d, input: $i, output: $o, stability: $s, exposure: $e, tags: [$($t),*], cache: $c, benchmark: $crate::capability::BenchmarkPolicy::Required, handler: $h }
+    };
+    ( id: $id:expr, title: $title:expr, description: $d:expr, input: $i:ty, output: $o:ty, stability: $s:expr, exposure: $e:expr, tags: [$($t:expr),* $(,)?], benchmark: $b:expr, handler: $h:expr $(,)? ) => {
+        $crate::capability! { id: $id, kind: $crate::capability::CapabilityKind::Query, title: $title, description: $d, input: $i, output: $o, stability: $s, exposure: $e, tags: [$($t),*], cache: $crate::capability::CachePolicy::Disabled, benchmark: $b, handler: $h }
+    };
+    ( id: $id:expr, kind: $k:expr, title: $title:expr, description: $d:expr, input: $i:ty, output: $o:ty, stability: $s:expr, exposure: $e:expr, tags: [$($t:expr),* $(,)?], benchmark: $b:expr, handler: $h:expr $(,)? ) => {
+        $crate::capability! { id: $id, kind: $k, title: $title, description: $d, input: $i, output: $o, stability: $s, exposure: $e, tags: [$($t),*], cache: $crate::capability::CachePolicy::Disabled, benchmark: $b, handler: $h }
+    };
+    ( id: $id:expr, title: $title:expr, description: $d:expr, input: $i:ty, output: $o:ty, stability: $s:expr, exposure: $e:expr, tags: [$($t:expr),* $(,)?], cache: $c:expr, benchmark: $b:expr, handler: $h:expr $(,)? ) => {
+        $crate::capability! { id: $id, kind: $crate::capability::CapabilityKind::Query, title: $title, description: $d, input: $i, output: $o, stability: $s, exposure: $e, tags: [$($t),*], cache: $c, benchmark: $b, handler: $h }
     };
 }

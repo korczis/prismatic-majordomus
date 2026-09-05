@@ -5,8 +5,8 @@
 //! could not read.
 
 use super::model::{
-    Capability, CapabilityId, CapabilityKind, Exposure, McpExposure, McpResource, Provenance,
-    Stability,
+    BenchmarkPolicy, CachePolicy, Capability, CapabilityId, CapabilityKind, Exposure, McpExposure,
+    McpResource, ModuleId, Provenance, Stability, WaiverReason,
 };
 use super::schema::CanonicalSchema;
 use crate::capability::builtin::ObjectView;
@@ -16,6 +16,7 @@ use crate::model::Object;
 pub fn capability_of(object: &Object) -> Capability {
     Capability {
         id: CapabilityId::unchecked(&format!("{}.{}", object.kind, object.identity)),
+        module: ModuleId::unchecked(&object.kind),
         kind: CapabilityKind::Resource,
         title: object
             .title
@@ -45,5 +46,9 @@ pub fn capability_of(object: &Object) -> Capability {
         },
         stability: Stability::Implemented,
         tags: object.tags().iter().map(|t| t.to_string()).collect(),
+        benchmark: BenchmarkPolicy::Waived {
+            reason: WaiverReason::NotExecutable,
+        },
+        cache: CachePolicy::Disabled,
     }
 }
