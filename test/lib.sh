@@ -145,6 +145,7 @@ fixture_repo() {
   [ -e "$dst/test/lib.sh" ] || { mkdir -p "$dst/test"; cp "$ROOT/test/lib.sh" "$dst/test/lib.sh"; }
   [ -e "$dst/test/fixtures" ] || { mkdir -p "$dst/test"; cp -R "$ROOT/test/fixtures" "$dst/test/fixtures"; }
   [ -e "$dst/docs/generated/registry.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/registry.json" "$dst/docs/generated/"; }
+  [ -e "$dst/docs/generated/cli.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/cli.json" "$dst/docs/generated/"; }
   # every path a claim names must resolve where the generator runs, so the fixture carries
   # them too, read from the matrix rather than listed here: a claim implemented outside the
   # trees copied above (the Rust executable under apps/) is otherwise "missing". After the
@@ -162,5 +163,12 @@ fixture_repo() {
       mkdir -p "$dst/$(dirname "$p")"
       cp "$ROOT/$p" "$dst/$p"
     done
+  fi
+  # and the file the command line is declared in, for the same reason: the command-line
+  # document names it as the source every generated page links, and the generator refuses a
+  # document that names a file the tree does not have. Read from the document, never listed.
+  if [ -f "$dst/docs/generated/cli.json" ] && command -v jq >/dev/null 2>&1; then
+    p="$(jq -r '.source' "$dst/docs/generated/cli.json")"
+    if [ -f "$ROOT/$p" ] && [ ! -e "$dst/$p" ]; then mkdir -p "$dst/$(dirname "$p")"; cp "$ROOT/$p" "$dst/$p"; fi
   fi
 }

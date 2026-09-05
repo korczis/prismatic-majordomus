@@ -747,12 +747,9 @@ pub fn cli_document(tree: &crate::cli::CommandDoc, version: &str) -> String {
 /// execute, so nothing here can be true of the page and false of the executable.
 fn cli_examples(c: &crate::cli::CommandDoc) -> String {
     let mut s = String::new();
+    // A command that only groups others has none; a command a person can run cannot have
+    // none, because `cli::validate` refuses to let one exist.
     if c.examples.is_empty() {
-        if c.executable {
-            // cli::validate refuses this before it can be generated; the branch exists so
-            // that the renderer never invents a heading for an empty list.
-            return s;
-        }
         return s;
     }
     s.push_str("Examples:\n\n");
