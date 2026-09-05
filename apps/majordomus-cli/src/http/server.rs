@@ -38,6 +38,15 @@ pub fn bind(host: &str, port: u16) -> Result<Bound> {
         .to_ip()
         .map(|a| a.to_string())
         .unwrap_or_else(|| format!("{host}:{port}"));
+    if address
+        .parse::<std::net::SocketAddr>()
+        .is_ok_and(|a| !a.ip().is_loopback())
+    {
+        tracing::warn!(
+            address = %address,
+            "bound to {address}, which is not a loopback address: every host that can reach this interface can read this repository's AI layer, its diagnostics and its peers; bind 127.0.0.1 unless that is intended"
+        );
+    }
     Ok(Bound { server, address })
 }
 

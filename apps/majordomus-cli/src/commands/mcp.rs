@@ -19,7 +19,7 @@ use crate::lease::{self, Lease, Role};
 use crate::mcp::bridge::{Bridge, BridgeError, HEARTBEAT};
 use crate::mcp::{stdio, Server, Surface};
 use crate::model::Severity;
-use crate::peers::{PeerId, Transport as PeerTransport};
+use crate::peers::{ClientInfo, PeerId, Transport as PeerTransport};
 use crate::repository::Repository;
 use crate::shared::SharedServer;
 
@@ -35,10 +35,7 @@ pub fn run(args: McpArgs) -> Result<u8> {
     let stdin = std::io::stdin();
     let stdout = std::io::stdout();
     if args.standalone {
-        let app = App::load(&args.repo)?;
-        let ctx = app.context.clone();
-        let peer = ctx.peers.attach(PeerTransport::Stdio);
-        let mut server = Server::new(Surface::new(ctx).for_peer(peer), crate::VERSION);
+        let mut server = standalone(&args.repo)?;
         tracing::info!("standalone: no shared server, no HTTP, no peers");
         stdio::serve(stdin.lock(), stdout.lock(), |m| server.handle(m))?;
         return Ok(0);
@@ -48,6 +45,17 @@ pub fn run(args: McpArgs) -> Result<u8> {
     stdio::serve(stdin.lock(), stdout.lock(), |m| session.handle(m))?;
     session.finish();
     Ok(0)
+}
+
+/// A server answering one stdio session alone: no shared server, no HTTP, no peers.
+fn standalone(repo: &RepoArgs) -> Result<Server> {
+    let app = App::load(repo)?;
+    let ctx = app.context.clone();
+    let peer = ctx.peers.attach(PeerTransport::Stdio);
+    Ok(Server::new(
+        Surface::new(ctx).for_peer(peer),
+        crate::VERSION,
+    ))
 }
 
 fn start_dir(args: &RepoArgs) -> Result<std::path::PathBuf> {
@@ -71,6 +79,10 @@ enum Backend {
         bridge: Arc<Mutex<Bridge>>,
         heartbeat: Heartbeat,
     },
+    /// The shared server cannot be used (the lease cannot be written or replaced, the
+    /// server cannot start): this client is served alone, as `--standalone` would, and
+    /// the log said why.
+    Alone(Box<Server>),
 }
 
 /// This process is the shared server; its own stdio is answered here.
@@ -119,15 +131,32 @@ impl Heartbeat {
 
 impl Session {
     fn open(args: McpArgs, repo: Repository) -> Result<Self> {
-        let backend = match lease::elect(&repo)? {
-            Role::Server(lease) => Self::serve(&args, lease, None)?,
-            Role::Peer { url } => Self::attach(url),
+        let backend = match lease::elect(&repo) {
+            Ok(Role::Server(lease)) => match Self::serve(&args, lease, None) {
+                Ok(backend) => backend,
+                Err(e) => Self::alone(&args, None, &format!("starting it failed: {e}"))?,
+            },
+            Ok(Role::Peer { url }) => Self::attach(url),
+            Err(e) => Self::alone(&args, None, &e.to_string())?,
         };
         Ok(Session {
             args,
             repo,
             backend,
         })
+    }
+
+    /// The shared server cannot be used: serve this client alone and say why. The layer
+    /// itself still has to load; when it does not, that error is the answer, not this.
+    fn alone(args: &McpArgs, resume: Option<ClientInfo>, why: &str) -> Result<Backend> {
+        let mut server = standalone(&args.repo)?;
+        tracing::warn!(
+            "cannot use the shared server: {why}; serving this client alone (no HTTP, no Swagger UI, no peers), as --standalone would"
+        );
+        if let Some(client) = resume {
+            server.resume(client);
+        }
+        Ok(Backend::Alone(Box::new(server)))
     }
 
     /// Become the shared server: load the layer, bind, and answer this stdio locally.
@@ -173,6 +202,7 @@ impl Session {
     fn handle(&mut self, message: Value) -> Option<Value> {
         match &mut self.backend {
             Backend::Local(local) => local.server.handle(message),
+            Backend::Alone(server) => server.handle(message),
             Backend::Remote { bridge, .. } => {
                 let answer = lock(bridge).handle(&message);
                 match answer {
@@ -189,15 +219,12 @@ impl Session {
         tracing::warn!("{cause}; electing again");
         let client = match &self.backend {
             Backend::Remote { bridge, .. } => lock(bridge).client().cloned(),
-            Backend::Local(_) => None,
+            Backend::Local(_) | Backend::Alone(_) => None,
         };
         match lease::elect(&self.repo) {
-            Ok(Role::Server(lease)) => match Self::serve(&self.args, lease, client) {
+            Ok(Role::Server(lease)) => match Self::serve(&self.args, lease, client.clone()) {
                 Ok(backend) => {
-                    let old = std::mem::replace(&mut self.backend, backend);
-                    if let Backend::Remote { heartbeat, .. } = old {
-                        heartbeat.stop();
-                    }
+                    self.replace(backend);
                     tracing::info!(
                         "took over as the shared server; this session continues locally"
                     );
@@ -205,7 +232,11 @@ impl Session {
                 }
                 Err(e) => {
                     tracing::error!("cannot take over as the shared server: {e}");
-                    unavailable(&message, &format!("{cause}; and taking over failed: {e}"))
+                    self.settle_alone(
+                        message,
+                        client,
+                        &format!("{cause}; and taking over failed: {e}"),
+                    )
                 }
             },
             Ok(Role::Peer { url }) => {
@@ -223,7 +254,39 @@ impl Session {
                     Err(e) => unavailable(&message, &e.to_string()),
                 }
             }
-            Err(e) => unavailable(&message, &format!("{cause}; electing again failed: {e}")),
+            Err(e) => self.settle_alone(
+                message,
+                client,
+                &format!("{cause}; electing again failed: {e}"),
+            ),
+        }
+    }
+
+    /// Replace the backend, stopping the heartbeat of a bridge that is left behind.
+    fn replace(&mut self, backend: Backend) {
+        let old = std::mem::replace(&mut self.backend, backend);
+        if let Backend::Remote { heartbeat, .. } = old {
+            heartbeat.stop();
+        }
+    }
+
+    /// Neither serving nor attaching worked: serve this client alone when the layer
+    /// loads, and answer the request with an error naming every failure when it does not.
+    fn settle_alone(
+        &mut self,
+        message: Value,
+        client: Option<ClientInfo>,
+        reason: &str,
+    ) -> Option<Value> {
+        match Self::alone(&self.args, client, reason) {
+            Ok(backend) => {
+                self.replace(backend);
+                self.handle(message)
+            }
+            Err(e) => {
+                tracing::error!("cannot serve this client alone either: {e}");
+                unavailable(&message, reason)
+            }
         }
     }
 
@@ -247,6 +310,7 @@ impl Session {
                 lock(&bridge).close();
                 tracing::info!("bridge closed");
             }
+            Backend::Alone(_) => {}
         }
     }
 }

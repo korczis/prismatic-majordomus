@@ -46,11 +46,13 @@ registry entry, none declared in the MCP code. The decision is
 | election | the first process to create `.ai/local/state/mcp/server.json` (atomically) is the server; it binds, writes its URL into the file, and logs it |
 | port | `--http-port` (default `8741`) on `--http-host` (default `127.0.0.1`); a taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
 | attaching | a later `majordomus mcp` reads the lease, checks that the server answers for this root, and bridges its stdio to `/mcp`: one HTTP request per message, a ping every twenty seconds, no index and no registry of its own, so it starts in milliseconds |
-| stale lease | a lease whose server does not answer for this root (the process was killed) is taken over by the next process; an abandoned lease with no URL is taken over after a grace period |
+| stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within fifteen seconds is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
 | lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
+| signals | `SIGTERM`, `SIGINT` or `SIGHUP` (a client killing its server, Ctrl-C in a terminal) removes the lease inside the handler before the process dies of the signal; `kill -9` cannot be caught, and the next process takes the stale lease over |
 | takeover | a bridged peer whose server died elects again on its next message: it becomes the server itself, carrying its client's `initialize` across so that the client never notices, or attaches to whichever process won first (`re-attached to the shared server`); when it can serve neither way (its own `--strict` refuses a degraded layer) the client gets a JSON-RPC error naming why, never silence |
 | options | the server's `--discovery` and `--strict` apply to every session it serves; a bridge inherits them and the log says which server it attached to |
 | `--standalone` | the first version's behaviour: this client alone, no port, no lease, no peers, nothing written anywhere |
+| degraded | when the lease cannot be written or replaced, or the shared server cannot start, the client is served alone exactly as `--standalone` would, and the log says `cannot use the shared server` with the path and the reason |
 | `serve` | the same shared server without a stdio session of its own; when one already runs it logs the URL and exits 0 |
 
 ## Starting it from a client
@@ -171,7 +173,11 @@ carries the canonical id in `_meta.majordomus.id` and its `inputSchema` and
 | the lease names a server that does not answer for this root | it is taken over; `stale lease` is logged with the URL |
 | the shared server a bridge is attached to dies | the bridge takes over on its next message, or re-attaches to the process that did; the client never re-initialises |
 | a bridge cannot take over (its `--strict`, a broken layer) | the client's request is answered with a JSON-RPC error (`-32603`) naming why; the stdio session stays open |
-| the lease cannot be created or joined (a filesystem refusing writes under `.ai/local/`) | exit `13`, the path named; `--standalone` serves without it |
+| the lease file is corrupt, empty, or has had no URL for longer than the bind grace | it is taken over; `corrupt lease`, `empty lease` or `abandoned lease` is logged with the path |
+| the lease cannot be created, joined or replaced (a filesystem refusing writes under `.ai/local/`), or the shared server cannot start | the client is served alone, as `--standalone` would: `cannot use the shared server` is logged with the path and the reason, then `serving this client alone`; no port, no lease, no peers; the layer's own errors still exit as above |
+| the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | the lease is removed inside the handler and the process dies of the signal; its bridges elect again on their next message |
+| `--http-host` is not a loopback address | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers |
+| an HTTP client leaves without `DELETE /mcp` | its session expires after ninety seconds of silence; a server whose owner has already left ends then, never later |
 
 Two files of one kind claiming one identity are both excluded and both named, as the
 rules contract requires. Nothing is repaired, defaulted or rewritten.
@@ -206,5 +212,9 @@ root selection, the metadata contract, determinism, the protocol round trip, pro
 stdout, non-mutation, the add–remove–break sequence of external extension, and, in
 `tests/mcp_shared.rs`, the shared server over real pipes and sockets: the election, the
 bridge, `/mcp` sessions, the fallback port, `serve` deferring, `--standalone`, the takeover
-after a kill, the re-attachment, and the refusal when the taker cannot serve. The claims
-are in [`CLAIMS.yaml`](CLAIMS.yaml) under `mcp-`.
+after a kill, the re-attachment, the refusal when the taker cannot serve, a corrupt, foreign,
+empty or abandoned lease being taken over, two clients starting in the same instant, an
+unwritable lease directory degrading to a standalone session, `SIGTERM` removing the lease,
+malformed traffic on `/mcp`, and the bridge's transparency: a bridged session and a
+restarted server answer byte for byte what the first server did. The claims are in
+[`CLAIMS.yaml`](CLAIMS.yaml) under `mcp-`.

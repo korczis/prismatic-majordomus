@@ -38,6 +38,9 @@ tiny_http = "0.12"
 # sha2: the registry and index fingerprints (cache keys, generated-file headers, benchmark
 # evidence) need a stable hash across processes; the standard library's is not.
 sha2 = "0.10"
+# libc: the lease file is removed inside the SIGTERM/SIGINT/SIGHUP handler (unlink, then
+# the default disposition), so a killed server leaves no stale lease. Nothing else.
+libc = "0.2"
 
 [dev-dependencies]
 tempfile = "3"

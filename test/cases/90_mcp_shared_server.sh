@@ -96,6 +96,15 @@ grep -q 'listening on' "$S/err3.txt" && { echo "    standalone bound a port"; ex
 [ ! -f .ai/local/state/mcp/server.json ] || { echo "    standalone wrote a lease"; exit 1; }
 sed -n 1p "$S/out3.txt" | jq -e '.result.instructions | contains("http://") | not' >/dev/null || { echo "    standalone named a URL"; exit 1; }
 
+# --- a corrupt lease locks nobody out: it is named, taken over, and gone again afterwards
+mkdir -p .ai/local/state/mcp && printf '{not a lease' > .ai/local/state/mcp/server.json
+rc=0; "$LAUNCHER" --http-port 0 < "$S/session.in" > "$S/out4.txt" 2> "$S/err4.txt" || rc=$?
+[ "$rc" = 0 ] || { echo "    the launcher exited $rc behind a corrupt lease"; cat "$S/err4.txt"; exit 1; }
+grep -q 'corrupt lease' "$S/err4.txt" || { echo "    the corrupt lease was not named"; cat "$S/err4.txt"; exit 1; }
+grep -q 'listening on http://127\.0\.0\.1:' "$S/err4.txt" || { echo "    no server behind the corrupt lease"; cat "$S/err4.txt"; exit 1; }
+[ "$(wc -l < "$S/out4.txt" | tr -d ' ')" = 2 ] || { echo "    expected 2 frames behind the corrupt lease:"; cat "$S/out4.txt"; exit 1; }
+[ ! -f .ai/local/state/mcp/server.json ] || { echo "    the lease outlived the session"; exit 1; }
+
 # --- the launcher refuses, by name, when told not to build and the executable is absent
 ( MAJORDOMUS_BIN="$S/no-such-binary"; export MAJORDOMUS_BIN; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'is not an executable' ) || exit 1
 ( MAJORDOMUS_NO_BUILD=1 MAJORDOMUS_BUILD_PROFILE=nonexistent; export MAJORDOMUS_NO_BUILD MAJORDOMUS_BUILD_PROFILE; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'MAJORDOMUS_NO_BUILD is set' ) || exit 1

@@ -741,3 +741,374 @@ fn a_peer_that_cannot_serve_the_layer_says_so_instead_of_taking_over() {
         "the failed takeover left no lease behind"
     );
 }
+
+// ---------------------------------------------------------------- nothing left behind locks anyone out
+
+/// Write the lease file by hand, whatever the fixture already has there.
+fn plant_lease(f: &Fixture, text: &str) {
+    let path = lease_path(f);
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(&path, text).unwrap();
+}
+
+/// Make a file look an hour old, so that no grace period applies to it.
+fn age_file(path: &Path) {
+    let file = std::fs::OpenOptions::new().write(true).open(path).unwrap();
+    file.set_modified(std::time::SystemTime::now() - Duration::from_secs(3600))
+        .unwrap();
+}
+
+#[test]
+fn a_corrupt_lease_is_taken_over() {
+    let f = Fixture::new();
+    plant_lease(&f, "{not a lease");
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    let line = a.wait_log("corrupt lease");
+    assert!(line.contains("taking it over"), "{line}");
+    assert!(line.contains("server.json"), "the path is named: {line}");
+    let url = Mcp::url_in(&a.wait_log("listening on http://"));
+    let lease: Value =
+        serde_json::from_str(&std::fs::read_to_string(lease_path(&f)).unwrap()).unwrap();
+    assert_eq!(lease["url"], url, "the lease is now the live server's");
+    let init = a.initialize("claude-code");
+    assert!(init["result"]["instructions"]
+        .as_str()
+        .unwrap()
+        .contains(&url));
+    assert_eq!(a.close(), 0);
+    assert!(!lease_path(&f).exists());
+}
+
+#[test]
+fn a_lease_of_another_schema_and_an_old_empty_file_are_taken_over() {
+    let f = Fixture::new();
+    plant_lease(
+        &f,
+        r#"{"schema":"something/v9","url":"http://127.0.0.1:1"}"#,
+    );
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    let line = a.wait_log("corrupt lease");
+    assert!(
+        line.contains("not a majordomus-mcp-lease/v1 document"),
+        "{line}"
+    );
+    a.wait_log("listening on http://");
+    assert_eq!(a.close(), 0);
+
+    // an empty file older than the bind grace: its owner died between creating and writing it
+    plant_lease(&f, "");
+    age_file(&lease_path(&f));
+    let started = Instant::now();
+    let mut b = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    let line = b.wait_log("empty lease");
+    assert!(line.contains("taking it over"), "{line}");
+    b.wait_log("listening on http://");
+    assert!(
+        started.elapsed() < Duration::from_secs(10),
+        "no grace is waited for a file that is already old: {:?}",
+        started.elapsed()
+    );
+    assert_eq!(b.close(), 0);
+}
+
+#[test]
+fn an_abandoned_lease_is_taken_over_without_waiting_when_it_is_old() {
+    let f = Fixture::new();
+    let doc = json!({ "schema": "majordomus-mcp-lease/v1", "pid": 1, "token": "old", "root": f.root(), "url": null, "started_at": "2026-01-01T00:00:00Z" });
+    plant_lease(&f, &doc.to_string());
+    age_file(&lease_path(&f));
+    let started = Instant::now();
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    let line = a.wait_log("abandoned lease");
+    assert!(line.contains("never published a URL"), "{line}");
+    a.wait_log("listening on http://");
+    assert!(
+        started.elapsed() < Duration::from_secs(10),
+        "{:?}",
+        started.elapsed()
+    );
+    assert_eq!(a.close(), 0);
+}
+
+#[test]
+fn an_unwritable_lease_directory_degrades_to_a_standalone_session() {
+    use std::os::unix::fs::PermissionsExt;
+    let f = Fixture::new();
+    let dir = f.path(".ai/local/state/mcp");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o555)).unwrap();
+    if std::fs::write(dir.join("probe"), "").is_ok() {
+        // permissions do not bind this user (root): there is nothing to observe here
+        let _ = std::fs::remove_file(dir.join("probe"));
+        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755)).unwrap();
+        return;
+    }
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    let line = a.wait_log("serving this client alone");
+    assert!(line.contains("cannot use the shared server"), "{line}");
+    assert!(
+        line.contains("server.json"),
+        "the lease path is named: {line}"
+    );
+    let init = a.initialize("claude-code");
+    assert_eq!(init["result"]["serverInfo"]["name"], "majordomus");
+    let instructions = init["result"]["instructions"].as_str().unwrap();
+    assert!(
+        !instructions.contains("http://"),
+        "no server URL is promised: {instructions}"
+    );
+    let repo = a.call("majordomus_repository", json!({}));
+    assert_eq!(repo["isError"], false, "{repo}");
+    let peers = a.call("majordomus_peers", json!({}));
+    assert_eq!(peers["structuredContent"]["count"], 1, "{peers}");
+    std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let log = a.drain_log();
+    assert!(!log.contains("listening on"), "no port was bound:\n{log}");
+    assert_eq!(a.close(), 0);
+    assert!(!lease_path(&f).exists());
+}
+
+#[test]
+fn a_non_loopback_bind_is_warned_about() {
+    let f = Fixture::new();
+    let mut a = Mcp::spawn(&f.root(), &["--http-host", "0.0.0.0", "--http-port", "0"]);
+    let warn = a.wait_log("not a loopback address");
+    assert!(warn.contains("0.0.0.0:"), "{warn}");
+    assert!(warn.contains("bind 127.0.0.1"), "{warn}");
+    a.wait_log("listening on http://0.0.0.0:");
+    assert_eq!(a.close(), 0);
+}
+
+#[test]
+fn sigterm_removes_the_lease_before_the_process_dies() {
+    use std::os::unix::process::ExitStatusExt;
+    let f = Fixture::new();
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    a.wait_log("listening on http://");
+    assert!(lease_path(&f).exists());
+    let sent = Command::new("kill")
+        .args(["-TERM", &a.child.id().to_string()])
+        .status()
+        .unwrap();
+    assert!(sent.success(), "kill -TERM");
+    let status = a.child.wait().unwrap();
+    assert_eq!(status.signal(), Some(15), "died of SIGTERM: {status:?}");
+    assert!(
+        !lease_path(&f).exists(),
+        "the handler removed the lease before the process died"
+    );
+    // the next client finds no stale lease and starts cleanly
+    let mut b = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    b.wait_log("listening on http://");
+    let log = b.drain_log();
+    assert!(
+        !log.contains("stale lease") && !log.contains("taking it over"),
+        "{log}"
+    );
+    assert_eq!(b.close(), 0);
+}
+
+#[test]
+fn two_clients_starting_together_share_one_server() {
+    let f = Fixture::new();
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    let mut b = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    let ia = a.initialize("first");
+    let ib = b.initialize("second");
+    for m in [&mut a, &mut b] {
+        let peers = m.call("majordomus_peers", json!({}));
+        assert_eq!(peers["structuredContent"]["count"], 2, "{peers}");
+    }
+    // exactly one serves and the other bridges; the log lines may still be arriving
+    let deadline = Instant::now() + WAIT;
+    let (la, lb) = loop {
+        let (la, lb) = (a.drain_log(), b.drain_log());
+        let serving = [&la, &lb]
+            .iter()
+            .filter(|l| l.contains("listening on http://"))
+            .count();
+        let bridging = [&la, &lb]
+            .iter()
+            .filter(|l| l.contains("bridging this stdio session"))
+            .count();
+        if (serving, bridging) == (1, 1) {
+            break (la, lb);
+        }
+        assert!(
+            Instant::now() < deadline,
+            "one server and one bridge expected; a:\n{la}\nb:\n{lb}"
+        );
+        std::thread::sleep(Duration::from_millis(50));
+    };
+    let a_serves = la.contains("listening on http://");
+    let serving_log = if a_serves { &la } else { &lb };
+    let url = Mcp::url_in(
+        serving_log
+            .lines()
+            .find(|l| l.contains("listening on http://"))
+            .unwrap(),
+    );
+    for init in [&ia, &ib] {
+        let instructions = init["result"]["instructions"].as_str().unwrap();
+        assert!(instructions.contains(&url), "{instructions}");
+    }
+    assert!(
+        !la.contains("WARN") && !lb.contains("WARN"),
+        "a clean start on both sides; a:\n{la}\nb:\n{lb}"
+    );
+    let (server, bridge) = if a_serves {
+        (&mut a, &mut b)
+    } else {
+        (&mut b, &mut a)
+    };
+    assert_eq!(bridge.close(), 0);
+    assert_eq!(server.close(), 0);
+    assert!(!lease_path(&f).exists());
+}
+
+#[test]
+fn mcp_over_http_refuses_malformed_traffic_and_keeps_serving() {
+    let f = Fixture::new();
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    let url = Mcp::url_in(&a.wait_log("listening on http://"));
+    a.initialize("owner");
+    let (status, _, body) = http(&url, "GET", "/mcp", &[], None);
+    assert_eq!(status, 405, "{body}");
+    assert!(body.contains("method_not_allowed"), "{body}");
+    let (status, _, body) = http(&url, "PUT", "/mcp", &[], Some("{}"));
+    assert_eq!(status, 405, "{body}");
+    let (status, _, body) = http(&url, "POST", "/mcp", &[], Some("not json"));
+    assert_eq!(status, 400, "{body}");
+    assert!(body.contains("invalid_json"), "{body}");
+    let ping = r#"{"jsonrpc":"2.0","id":1,"method":"ping"}"#;
+    let (status, _, body) = http(
+        &url,
+        "POST",
+        "/mcp",
+        &[("Mcp-Session-Id", "bogus")],
+        Some(ping),
+    );
+    assert_eq!(status, 404, "{body}");
+    assert!(body.contains("session_not_found"), "{body}");
+
+    // an oversized body is refused with 413; the write may be cut short by the server
+    let big = format!(
+        r#"{{"jsonrpc":"2.0","id":9,"method":"ping","params":{{"pad":"{}"}}}}"#,
+        "x".repeat(2 * 1024 * 1024)
+    );
+    let host = url.strip_prefix("http://").unwrap();
+    let mut stream = TcpStream::connect(host).unwrap();
+    stream
+        .set_read_timeout(Some(Duration::from_secs(10)))
+        .unwrap();
+    let head = format!(
+        "POST /mcp HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n",
+        big.len()
+    );
+    let _ = stream.write_all(head.as_bytes());
+    let _ = stream.write_all(big.as_bytes());
+    let mut raw = Vec::new();
+    let _ = stream.read_to_end(&mut raw);
+    let first = String::from_utf8_lossy(&raw);
+    let first = first.lines().next().unwrap_or("").to_string();
+    assert!(first.starts_with("HTTP/1.1 413"), "{first}");
+
+    // a session opened over HTTP: a batch is answered as a batch, an unknown method as an
+    // error frame, a notification with 202, and none of it disturbs the stdio session
+    let init = json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": { "protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": { "name": "raw", "version": "0" } } }).to_string();
+    let (status, headers, _) = http(&url, "POST", "/mcp", &[], Some(&init));
+    assert_eq!(status, 200);
+    let sid = headers
+        .iter()
+        .find(|(k, _)| k == "mcp-session-id")
+        .map(|(_, v)| v.clone())
+        .expect("a session id");
+    let batch = json!([
+        { "jsonrpc": "2.0", "id": 2, "method": "ping" },
+        { "jsonrpc": "2.0", "id": 3, "method": "no/such" }
+    ])
+    .to_string();
+    let (status, _, body) = http(
+        &url,
+        "POST",
+        "/mcp",
+        &[("Mcp-Session-Id", &sid)],
+        Some(&batch),
+    );
+    assert_eq!(status, 200, "{body}");
+    let answers: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(answers.as_array().map(Vec::len), Some(2), "{body}");
+    assert_eq!(answers[0]["result"], json!({}));
+    assert_eq!(answers[1]["error"]["code"], -32601, "{body}");
+    let note = r#"{"jsonrpc":"2.0","method":"notifications/cancelled","params":{}}"#;
+    let (status, _, body) = http(
+        &url,
+        "POST",
+        "/mcp",
+        &[("Mcp-Session-Id", &sid)],
+        Some(note),
+    );
+    assert_eq!(status, 202, "{body}");
+    let peers = a.call("majordomus_peers", json!({}));
+    assert_eq!(peers["structuredContent"]["count"], 2, "{peers}");
+    let (status, _, _) = http(&url, "DELETE", "/mcp", &[("Mcp-Session-Id", &sid)], None);
+    assert_eq!(status, 204);
+    let (_, peers) = get_json(&url, "/api/v1/peers");
+    assert_eq!(peers["count"], 1);
+    assert_eq!(a.close(), 0);
+}
+
+#[test]
+fn a_bridge_is_transparent_and_a_restarted_server_answers_the_same_bytes() {
+    let f = Fixture::new();
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    a.wait_log("listening on http://");
+    a.initialize("first");
+    let mut b = Mcp::spawn(&f.root(), &[]);
+    b.wait_log("bridging this stdio session");
+    b.initialize("second");
+    let probes: Vec<(&str, Value)> = vec![
+        ("tools/list", json!({})),
+        ("resources/list", json!({})),
+        (
+            "tools/call",
+            json!({ "name": "majordomus_capabilities", "arguments": {} }),
+        ),
+        (
+            "tools/call",
+            json!({ "name": "majordomus_list", "arguments": {} }),
+        ),
+        (
+            "tools/call",
+            json!({ "name": "majordomus_repository", "arguments": {} }),
+        ),
+        (
+            "resources/read",
+            json!({ "uri": "majordomus://repository" }),
+        ),
+    ];
+    let answers = |m: &mut Mcp| -> Vec<String> {
+        probes
+            .iter()
+            .map(|(method, params)| m.request(method, params.clone())["result"].to_string())
+            .collect()
+    };
+    let direct = answers(&mut a);
+    let bridged = answers(&mut b);
+    assert_eq!(
+        direct, bridged,
+        "a bridged session sees exactly what a local one sees"
+    );
+    assert_eq!(b.close(), 0);
+    assert_eq!(a.close(), 0);
+    // a fresh server in the same repository answers byte for byte the same
+    let mut c = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    c.wait_log("listening on http://");
+    c.initialize("third");
+    let again = answers(&mut c);
+    assert_eq!(
+        direct, again,
+        "the same repository yields the same projection after a restart"
+    );
+    assert_eq!(c.close(), 0);
+}
