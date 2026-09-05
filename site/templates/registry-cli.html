@@ -21,7 +21,7 @@
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="text-lg text-body">{{ root.about }}</p>
+    <p class="break-words text-lg text-body">{{ root.about }}</p>
     {%- if root.long_about %}<p class="mt-3 whitespace-pre-line text-sm text-body">{{ root.long_about }}</p>{% endif -%}
     <p class="mt-4 text-sm text-body-subtle">Declared once in <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="break-all font-mono text-fg-brand hover:underline">{{ page.extra.source }}</a>; this page, <code class="font-mono">--help</code> and <a href="{{ project.repository_url }}/blob/master/docs/generated/cli.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/cli.md</a> are projections of it. The task lifecycle (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) is the shell tool, documented under <a href="{{ get_url(path="/commands/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Commands</a>.</p>
     {%- set n = root -%}{% include "partials/cli-command.html" %}
