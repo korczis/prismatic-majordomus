@@ -421,3 +421,112 @@ fn every_generated_artifact_is_derived_deterministic_and_traces_to_the_registry(
     assert_eq!(code, 0);
     assert_eq!(out.trim(), "docs/generated/benchmarks.md");
 }
+
+/// The whole plan, every target: deterministic, free of the checkout path, and a mirror
+/// of the canonical inputs. A rule added to the layer appears in the site dataset with a
+/// new fingerprint and leaves the provider bootstraps alone; a policy change moves the
+/// bootstraps; and `generate --check` sees each of those as stale until regenerated.
+#[test]
+fn the_plan_is_deterministic_and_follows_a_canonical_mutation_to_the_projection_it_concerns() {
+    use majordomus_cli::generate::{check, plan, write};
+    let f = common::Fixture::new();
+    let root = f.root();
+    let a = plan(&common::load_app(&f), Target::ALL).unwrap();
+    let b = plan(&common::load_app(&f), Target::ALL).unwrap();
+    assert_eq!(a, b, "two plans over the same tree differ");
+    let paths: Vec<&str> = a.iter().map(|x| x.path.as_str()).collect();
+    assert!(paths.contains(&"AGENTS.md"), "{paths:?}");
+    assert!(
+        paths.contains(&"site/data/registry/registry.json"),
+        "{paths:?}"
+    );
+    for art in &a {
+        assert!(
+            !art.content.contains(root.to_str().unwrap()),
+            "{} carries the checkout path",
+            art.path
+        );
+    }
+    let site = |arts: &[majordomus_cli::generate::Artifact]| -> Value {
+        let s = arts
+            .iter()
+            .find(|x| x.path == "site/data/registry/registry.json")
+            .unwrap();
+        serde_json::from_str(&s.content).unwrap()
+    };
+    let agents = |arts: &[majordomus_cli::generate::Artifact]| -> String {
+        arts.iter()
+            .find(|x| x.path == "AGENTS.md")
+            .unwrap()
+            .content
+            .clone()
+    };
+    let site_a = site(&a);
+    assert_eq!(site_a["schema"], "majordomus-site-registry/v1");
+    let fp_a = site_a["registry"]["fingerprint"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let rules_a = site_a["index"]["by_kind"]["rule"].as_u64().unwrap();
+    assert!(site_a["index"]["objects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|o| o.get("content").is_none()));
+
+    // write, check agrees
+    write(&root, &a).unwrap();
+    check(&root, &a).unwrap();
+
+    // 1. a canonical object added to the layer
+    f.write(
+        ".ai/repo/rules/project/added.v1.md",
+        &common::rule("project.added", 1, "An added rule"),
+    );
+    f.git(&["add", ".ai/repo/rules/project/added.v1.md"]);
+    let after = plan(&common::load_app(&f), Target::ALL).unwrap();
+    let site_b = site(&after);
+    assert_ne!(site_b["registry"]["fingerprint"].as_str().unwrap(), fp_a);
+    assert_eq!(
+        site_b["index"]["by_kind"]["rule"].as_u64().unwrap(),
+        rules_a + 1
+    );
+    assert!(site_b["index"]["objects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|o| o["uri"] == "majordomus://rule/project.added@1"));
+    assert_eq!(
+        agents(&after),
+        agents(&a),
+        "a rule is not a bootstrap input"
+    );
+    let err = check(&root, &after).unwrap_err().to_string();
+    assert!(
+        err.contains("site/data/registry/registry.json (differs)") && !err.contains("AGENTS.md"),
+        "{err}"
+    );
+
+    // 2. a policy change
+    let policy = std::fs::read_to_string(f.path(".ai/repo/policy.yaml")).unwrap();
+    f.write(
+        ".ai/repo/policy.yaml",
+        &policy.replace("default: implementation", "default: debugging"),
+    );
+    f.write(
+        ".ai/repo/profiles/debugging.yaml",
+        &common::PROFILE.replace("implementation", "debugging"),
+    );
+    f.git(&["add", ".ai/repo/profiles/debugging.yaml"]);
+    let after2 = plan(&common::load_app(&f), Target::ALL).unwrap();
+    assert_ne!(agents(&after2), agents(&a));
+    assert!(agents(&after2).contains("`debugging`"));
+    let err = check(&root, &after2).unwrap_err().to_string();
+    assert!(err.contains("AGENTS.md (differs)"), "{err}");
+
+    // 3. regenerate: in sync, and a second write is a no-op byte for byte
+    write(&root, &after2).unwrap();
+    check(&root, &after2).unwrap();
+    let again = plan(&common::load_app(&f), Target::ALL).unwrap();
+    assert_eq!(again, after2);
+}

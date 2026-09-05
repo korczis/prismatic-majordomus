@@ -1,0 +1,76 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set reg = load_data(path="data/registry/registry.json") -%}
+{%- set r = reg.registry -%}{%- set ix = reg.index -%}
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert">{{ page.content | safe }}</article>
+
+<div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
+  <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+  <dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+    <dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">{{ r.fingerprint }}</dd>
+    <dt class="text-body-subtle">index fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">{{ ix.fingerprint }}</dd>
+    <dt class="text-body-subtle">generator</dt><dd class="font-mono text-heading">{{ reg.generator.id }} {{ reg.generator.version }} · dataset {{ reg.schema }}</dd>
+    <dt class="text-body-subtle">layer</dt><dd class="font-mono text-heading">{{ ix.layer_schema }} · index {{ ix.state }}</dd>
+  </dl>
+  <p class="mt-3 text-sm text-body">The registry fingerprint hashes the index fingerprint (every object's path and content) and every capability descriptor in id order. Same tree and same executable, same fingerprint; it is the cache key every executor answer is scoped by.</p>
+</div>
+
+<div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  {{ <card kicker="capabilities" title={r.summary.total ~ " in the registry"} text={r.summary.builtin ~ " builtin (composed in Rust), " ~ r.summary.declarative ~ " declarative (one resource per object of the layer), in " ~ r.summary.modules ~ " modules."} /> }}
+  {{ <card kicker="mcp" title={r.summary.mcp_tools ~ " tools · " ~ r.summary.mcp_resources ~ " resources"} text={"Every tool is a capability with an <code>mcp.tool</code> exposure; every object of the layer is a resource at <code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>."} /> }}
+  {{ <card kicker="http" title={r.summary.http_routes ~ " routes"} text={"The same capabilities as HTTP, and the OpenAPI 3.1 document under <code>/openapi.json</code>; " ~ r.summary.cli_commands ~ " are also command-line subcommands."} /> }}
+  {{ <card kicker="benchmarks" title={r.summary.benchmark_required ~ " required · " ~ r.summary.benchmark_waived ~ " waived"} text={"Every executable capability is a benchmark target through every transport; a case is a compile-time obligation of its input type. " ~ r.summary.cached ~ " are cached by the executor."} /> }}
+</div>
+
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Executable capabilities</h2>
+<p class="mt-2 max-w-3xl text-sm text-body">Composed in Rust, each exposed as the table says. The id is the <code>operationId</code> of the OpenAPI document and the <code>_meta.majordomus.id</code> of the MCP tool.</p>
+<div class="mt-4 overflow-x-auto rounded-base border border-default">
+<table class="w-full text-left text-sm">
+  <thead class="bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">id</th><th class="px-3 py-2">kind</th><th class="px-3 py-2">MCP tool</th><th class="px-3 py-2">HTTP</th><th class="px-3 py-2">CLI</th><th class="px-3 py-2">stability</th><th class="px-3 py-2">benchmark</th><th class="px-3 py-2">cache</th></tr></thead>
+  <tbody class="divide-y divide-default">
+  {%- for c in r.builtin %}
+  <tr class="align-top">
+    <td class="px-3 py-2"><code class="font-mono text-heading">{{ c.id }}</code><p class="mt-1 max-w-md text-xs text-body">{{ c.description }}</p></td>
+    <td class="px-3 py-2 font-mono text-xs">{{ c.kind }}</td>
+    <td class="px-3 py-2 font-mono text-xs">{% if c.exposure.mcp and c.exposure.mcp.tool %}{{ c.exposure.mcp.tool }}{% elif c.exposure.mcp and c.exposure.mcp.resource %}{{ c.exposure.mcp.resource.uri }}{% else %}—{% endif %}</td>
+    <td class="px-3 py-2 font-mono text-xs">{% if c.exposure.http %}{{ c.exposure.http.method }} {{ c.exposure.http.path }}{% else %}—{% endif %}</td>
+    <td class="px-3 py-2 font-mono text-xs">{% if c.exposure.cli %}majordomus {{ c.exposure.cli.path | join(sep=" ") }}{% else %}—{% endif %}</td>
+    <td class="px-3 py-2 font-mono text-xs">{{ c.stability }}</td>
+    <td class="px-3 py-2 font-mono text-xs">{{ c.benchmark.policy }}{% if c.benchmark.reason %} ({{ c.benchmark.reason }}){% endif %}</td>
+    <td class="px-3 py-2 font-mono text-xs">{{ c.cache.policy }}</td>
+  </tr>
+  {%- endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Kinds</h2>
+<p class="mt-2 max-w-3xl text-sm text-body">What the executable reads, from <code>share/kinds.yaml</code> and the repository's own additions: how a file of the kind is read, the JSON Schema its metadata must satisfy, and how many objects of it the index holds.</p>
+<div class="mt-4 overflow-x-auto rounded-base border border-default">
+<table class="w-full text-left text-sm">
+  <thead class="bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">kind</th><th class="px-3 py-2">format</th><th class="px-3 py-2">front matter</th><th class="px-3 py-2">schema</th><th class="px-3 py-2">identity</th><th class="px-3 py-2 text-right">objects</th></tr></thead>
+  <tbody class="divide-y divide-default">
+  {%- for k in reg.kinds %}
+  <tr><td class="px-3 py-2 font-mono text-heading">{{ k.name }}</td><td class="px-3 py-2 font-mono text-xs">{{ k.format }}</td><td class="px-3 py-2 font-mono text-xs">{{ k.front_matter }}</td><td class="px-3 py-2 font-mono text-xs">{% if k.schema %}{{ k.schema }}.schema.json{% else %}—{% endif %}</td><td class="px-3 py-2 font-mono text-xs">{% if k.identity | length > 0 %}{{ k.identity | join(sep="@") }}{% else %}path{% endif %}</td><td class="px-3 py-2 text-right font-mono text-xs">{{ k.objects }}</td></tr>
+  {%- endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provider projections</h2>
+<p class="mt-2 max-w-3xl text-sm text-body">The bootstraps the policy declares, rendered by <code>majordomus generate providers</code> and checked in CI. None of them is a source.</p>
+<ul class="mt-4 grid gap-2 text-sm sm:grid-cols-3">{% for pr in reg.projections %}<li class="rounded border border-default px-3 py-2"><code class="font-mono text-heading">{{ pr.target }}</code> <span class="text-body">← {{ pr.provider }} · {{ pr.mode }}</span>{% if pr.always_loaded %} <span class="ms-1 rounded bg-brand-softer px-1 font-mono text-xs text-fg-brand-strong">always loaded</span>{% endif %}</li>{% endfor %}</ul>
+
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objects of the layer</h2>
+<p class="mt-2 max-w-3xl text-sm text-body">{{ ix.objects | length }} objects, each an MCP resource. Grouped by kind; the path is where the object lives in the repository.</p>
+{%- for kind, n in ix.by_kind %}
+<details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+  <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-heading"><code class="font-mono">{{ kind }}</code> <span class="ms-2 font-mono text-xs text-body-subtle">{{ n }}</span></summary>
+  <ul class="divide-y divide-default border-t border-default text-sm">
+  {%- for o in ix.objects %}{% if o.kind == kind %}
+  <li class="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:items-baseline sm:gap-3"><code class="min-w-0 break-all font-mono text-xs text-heading">{{ o.identity }}</code>{% if o.title %}<span class="min-w-0 text-body">{{ o.title }}</span>{% endif %}<span class="min-w-0 break-all font-mono text-xs text-body-subtle sm:ms-auto">{{ o.path }}</span></li>
+  {%- endif %}{% endfor %}
+  </ul>
+</details>
+{%- endfor %}
+{% endblock body %}
