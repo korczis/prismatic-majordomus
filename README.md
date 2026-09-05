@@ -412,6 +412,14 @@ any of them and the server is there; open it in two and they share one.
 a client is working on and which paths it expects to touch, so Claude, Codex and Gemini in
 one checkout can avoid colliding, out of the box.
 
+**It reads what the repository declares it may.** What a worker reads of the repository is
+declared once in `.ai/repo/scope.yaml` (in: the sources, the tests, the layer; out, which
+wins: version control, the local half, dependencies, build outputs, secrets, generated
+assets, archives, images, video, PDF, database dumps, fixtures over a limit, binary
+content), and the executable discovers, indexes and serves nothing outside it. Any path can
+be asked about: `majordomus scope <path>` answers in or out and names the rule. The
+declaration, the judgement and its gates: [`docs/SCOPE.md`](docs/SCOPE.md).
+
 What is canonical, how a repository adds a kind with its schema without a code change, and
 how the pieces fail: [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md); the MCP surface, the
 shared server's lifecycle and the client configurations:

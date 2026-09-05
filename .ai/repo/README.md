@@ -20,6 +20,7 @@ shared by every checkout. The sections, and what each one is for:
 | section | holds |
 |---|---|
 | `policy.yaml` | the one provider-neutral policy: budgets, verification, retention, enforcement, projections |
+| `scope.yaml` | the repository scope: what a worker reads of the repository (`in`) and what it never reads (`out`, which wins); read by the tool at start-up, applied to discovery and to every projection |
 | `profiles/` | execution profiles, one file each: capability, effort, verbosity, context toggles, verification |
 | `rules/` | portable rule objects: the vendored Majordomus baseline and this repository's own rules |
 | `prompts/` | reusable prompt assets rendered from durable state |

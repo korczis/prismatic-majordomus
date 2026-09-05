@@ -93,7 +93,12 @@ fn openapi_docs_and_one_operation_over_a_real_socket() {
     let (status, repo) = s.get("/api/v1/repository");
     assert_eq!(status, 200);
     assert_eq!(repo["state"], "ok");
-    assert_eq!(repo["capabilities"]["http_routes"], 9);
+    // the route count is the registry's, never a number written here
+    let (_, caps) = s.get("/api/v1/capabilities?exposure=http");
+    assert_eq!(
+        repo["capabilities"]["http_routes"],
+        caps["capabilities"].as_array().unwrap().len()
+    );
 
     // the object route resolves the repository URI to repository.info, as MCP does
     let (status, doc) = s.get("/api/v1/object?uri=majordomus://repository");

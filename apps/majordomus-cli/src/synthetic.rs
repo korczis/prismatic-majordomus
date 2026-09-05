@@ -129,6 +129,7 @@ impl SyntheticRepository {
         let fs = FileSystem {
             excluded: vec![".git".into(), repo.local_path()],
         };
+        let scope = crate::scope::Scope::load(&share, &repo)?;
         Index::build(
             &repo,
             &sources,
@@ -137,6 +138,7 @@ impl SyntheticRepository {
             GitState::Unavailable {
                 reason: "synthetic repository".into(),
             },
+            scope,
         )
     }
 
