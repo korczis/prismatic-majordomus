@@ -88,9 +88,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get install -y shellcheck >/dev/null
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: actionlint
+      - name: pinned actionlint
+        env:
+          ACTIONLINT_VERSION: "1.7.7"
+        run: |
+          curl -sSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin actionlint
+          actionlint -version
       - name: shell-lint
         run: scripts/ci/shell-lint
       - name: core-check
