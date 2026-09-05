@@ -574,3 +574,10 @@ pub fn dist_schema(repo: &majordomus_cli::Repository) -> majordomus_cli::metadat
         majordomus_cli::share::Share::locate(Some(&dist_share()), repo.root()).expect("share");
     majordomus_cli::metadata::KindSchema::load(&share, repo).expect("kind schema")
 }
+
+/// The scope the repository declares, or the distribution's default beside this crate.
+pub fn dist_scope(repo: &majordomus_cli::Repository) -> majordomus_cli::scope::Scope {
+    let share =
+        majordomus_cli::share::Share::locate(Some(&dist_share()), repo.root()).expect("share");
+    majordomus_cli::scope::Scope::load(&share, repo).expect("scope")
+}

@@ -4,14 +4,16 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{CliExposure, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::registry::Summary;
 use crate::index::{RepositoryInfo, State};
 use crate::model::Diagnostic;
+use crate::scope::Classification;
 use crate::{capability, module};
 
-use super::{get, Empty};
+use super::scope::{scope_classify, scope_info, ClassifyInput, ScopeReport, SCOPE_URI};
+use super::{get, mcp, Empty};
 
 /// The URI under which `repository.info` is read as an MCP resource, and the one URI
 /// `objects.get` answers by executing a query rather than by reading the index.
@@ -55,7 +57,7 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "repository",
         title: "Repository",
-        description: "The repository this process serves: its layer, its git state, and the state of the index built from it.",
+        description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
@@ -75,6 +77,39 @@ pub fn module() -> ModuleDescriptor {
                 },
                 tags: ["repository", "introspection"],
                 handler: repository_info,
+            },
+            capability! {
+                id: "repository.scope",
+                title: "The repository scope",
+                description: "The scope declaration as read, where it came from (the repository's own or the distribution's default), and every tracked file tallied against it: how many are in, how many are out for each reason, and which.",
+                input: Empty,
+                output: ScopeReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_scope".into()),
+                        resource: Some(McpResource { uri: SCOPE_URI.into(), name: "scope".into() }),
+                    }),
+                    http: get("/api/v1/scope"),
+                    cli: Some(CliExposure { path: vec!["scope".into()] }),
+                },
+                tags: ["repository", "scope", "introspection"],
+                handler: scope_info,
+            },
+            capability! {
+                id: "repository.scope_classify",
+                title: "Judge a path against the scope",
+                description: "Whether a repository-relative path is in or out of the scope, the reason when it is out, and the pattern or limit that decided; an existing file is judged by name, then size, then content.",
+                input: ClassifyInput,
+                output: Classification,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_scope_classify"),
+                    http: get("/api/v1/scope/classify"),
+                    cli: Some(CliExposure { path: vec!["scope".into(), "classify".into()] }),
+                },
+                tags: ["repository", "scope"],
+                handler: scope_classify,
             },
         ],
     }

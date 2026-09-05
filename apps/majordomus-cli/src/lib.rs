@@ -33,6 +33,7 @@ pub mod perf;
 pub mod policy;
 pub mod providers;
 pub mod repository;
+pub mod scope;
 pub mod share;
 pub mod shared;
 pub mod site;
