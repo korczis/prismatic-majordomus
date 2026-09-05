@@ -1,3 +1,4 @@
+# majordomus-exclusive: holds doctor's wall time against its budget; a busy pool would add the noise it measures
 # majordomus-covers: doctor watch
 # majordomus-negative: doctor watch
 #

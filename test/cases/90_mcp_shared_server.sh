@@ -107,7 +107,7 @@ grep -q 'listening on http://127\.0\.0\.1:' "$S/err4.txt" || { echo "    no serv
 
 # --- the launcher refuses, by name, when told not to build and the executable is absent
 ( MAJORDOMUS_BIN="$S/no-such-binary"; export MAJORDOMUS_BIN; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'is not an executable' ) || exit 1
-( MAJORDOMUS_NO_BUILD=1 MAJORDOMUS_BUILD_PROFILE=nonexistent; export MAJORDOMUS_NO_BUILD MAJORDOMUS_BUILD_PROFILE; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'MAJORDOMUS_NO_BUILD is set' ) || exit 1
+( unset MAJORDOMUS_BIN; MAJORDOMUS_NO_BUILD=1 MAJORDOMUS_BUILD_PROFILE=nonexistent; export MAJORDOMUS_NO_BUILD MAJORDOMUS_BUILD_PROFILE; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'MAJORDOMUS_NO_BUILD is set' ) || exit 1
 # and everything after the launcher's name reaches `majordomus mcp`
 expect_exit 0 "$LAUNCHER" --help
 expect_grep '^Usage: majordomus mcp'
