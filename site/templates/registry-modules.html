@@ -17,7 +17,7 @@
   {%- set full = [x for x in reg.registry.modules if x.id == m.id][0] -%}
   <li><a href="{{ get_url(path=m.route, trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
     <span class="flex flex-wrap items-baseline gap-x-2"><code class="font-mono text-lg font-semibold text-heading">{{ m.id }}</code><span class="text-sm text-body">{{ full.title }}</span></span>
-    <span class="mt-2 text-sm text-body">{{ full.description }}</span>
+    <span class="mt-2 break-words text-sm text-body">{{ full.description }}</span>
     <span class="mt-3 flex flex-wrap gap-1">{% for c in m.capabilities %}<code class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">{{ c.id }}</code>{% endfor %}</span>
     <span class="mt-3 break-all font-mono text-xs text-body-subtle">{{ m.source_path }}{% if full.stability %} · {{ full.stability }}{% endif %}</span>
   </a></li>
