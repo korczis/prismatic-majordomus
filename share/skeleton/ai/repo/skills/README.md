@@ -10,6 +10,8 @@ providers: ["*"]
 audience: [human, agent]
 composition: extend
 order: 100
+children:
+  require_contract: false
 ---
 
 # Skills
@@ -18,6 +20,10 @@ Reusable, provider-neutral operational procedures: how to do one bounded kind of
 this repository well, written so that any capable worker can follow it. A skill is loaded
 when the task is about what the skill covers, never by default. Keep each one short and
 executable; a skill that merely describes is documentation and belongs in `docs/`.
+
+A skill's directory is an instance of the kind, not a section of the layer, so the
+directories below this one owe no contract of their own (`children.require_contract:
+false`): the format they follow is the one stated here, once.
 
 ## The contract
 

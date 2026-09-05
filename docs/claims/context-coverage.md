@@ -35,22 +35,34 @@ Exempt a subtree when the directories below it are instances of a kind rather th
 of the layer: a skill is `SKILL.md` and its examples, and a contract in every instance
 directory would repeat, once per instance, the format the section states once.
 
-## How it is proved
+## How to see it
 
-`test/cases/69_context_documents.sh` builds a subtree of its own and mutates it: a directory
-with no document fails, adding one passes, a directory below it fails in turn, the governing
-contract's exemption reaches the whole subtree, a descendant narrows it back to `true`, a
-descendant that tries to lower an inherited `true` is refused by name, and the key on a
-`directory`-scoped document, or with a value that is not a boolean, is refused as
-`invalid-front-matter`.
+```bash
+majordomus context validate                 # the whole tree; missing-contract names the directory
+majordomus context explain .ai/repo/rules   # the chain that applies, and why each document is in
+majordomus doctor                           # the same check through majordomus.context-integrity
+```
 
-`majordomus context validate` reports it for the whole tree; `doctor` dispatches the same
-check through the rule `majordomus.context-integrity`, which the pre-commit hook runs.
+`test/cases/69_context_documents.sh` proves it by mutation: a directory with no document
+fails, adding one passes, a directory below it fails in turn, the governing contract's
+exemption reaches the whole subtree, a descendant narrows it back to `true`, a descendant
+that tries to lower an inherited `true` is refused by name, and the key on a
+`directory`-scoped document, or with a value that is not a boolean, is
+`invalid-front-matter`. The use case
+`document-every-directory-of-the-layer` runs the refusal end to end.
 
-## What it does not claim
+## What it does not cover
 
 Nothing here judges whether a contract is any good. The tool checks that a document exists,
 parses, and is not weakened by a descendant; whether its prose actually tells a worker what
-belongs in the directory is a reviewer's call, and the decision that introduced coverage
-(`.ai/repo/adrs/0011-every-directory-in-the-layer-carries-a-contract.md`) says so in as many
-words.
+belongs in the directory is a reviewer's call. Coverage also stops at the layer: `docs/` and
+the source tree are described by the documents that `tracks` them, not by a contract in
+every directory.
+
+## Why it exists
+
+Eighteen directories under `.ai/` had drifted into silence while the tree that held them
+validated cleanly, because the tool only ever checked the documents that existed. An
+obligation nobody enforces is a habit, and a habit is what a repository loses first.
+`.ai/repo/adrs/0011-every-directory-in-the-layer-carries-a-contract.md` records the
+decision and what it rejected.
