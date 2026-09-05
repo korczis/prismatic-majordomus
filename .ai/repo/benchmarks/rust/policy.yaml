@@ -21,3 +21,17 @@ regression:
     minimum_samples: 200
 
 minimum_absolute_us: 1000
+
+# Per-target allowances, one list item per target key as `bench coverage` prints it; a
+# metric not named keeps the general threshold and its minimum_samples. The process-cold target
+# spawns a majordomus process and builds the index before it answers, so the machine's
+# load, not the code, decides most of its wall clock: a 120 ms spawn reads 150 ms while
+# three other test suites run. It gets twice the room a request gets.
+targets:
+  - target: system.mcp.process_cold
+    p50:
+      relative: 0.50
+    p95:
+      relative: 0.75
+    p99:
+      relative: 1.00

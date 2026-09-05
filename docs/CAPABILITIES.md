@@ -193,8 +193,10 @@ state, the build profile, the platform and the registry fingerprint, written und
 `.ai/repo/benchmarks/rust/baseline.<os>-<arch>-<build>.json`, promoted only by `bench
 baseline update` (a dirty tree refuses without `--allow-dirty`); the regression policy is
 `.ai/repo/benchmarks/rust/policy.yaml` (relative thresholds per metric, an absolute
-floor under which a difference is noise, and per metric the sample count under which it
-does not gate: a quick run fails on its median only, a full run on every percentile). `bench --check` reports every line, names new
+floor under which a difference is noise, per metric the sample count under which it
+does not gate, so that a quick run fails on its median only and a full run on every
+percentile, and per-target allowances for the targets the machine's load dominates, such
+as the process-cold spawn). `bench --check` reports every line, names new
 targets and stale baseline entries (a renamed capability is never silently matched), and
 notes when the registry fingerprint moved. A baseline is compared on its own platform
 only, and it fails a run only on the host that recorded it: the result document carries
