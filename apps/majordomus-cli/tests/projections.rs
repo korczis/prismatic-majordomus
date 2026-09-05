@@ -442,9 +442,21 @@ fn the_plan_is_deterministic_and_follows_a_canonical_mutation_to_the_projection_
     use majordomus_cli::generate::{check, plan, write};
     let f = common::Fixture::new();
     let root = f.root();
-    let a = plan(&common::load_app(&f), Target::ALL).unwrap();
-    let b = plan(&common::load_app(&f), Target::ALL).unwrap();
+    // Every target but the allow-lists: the fixture's share is the distribution's, beside
+    // this crate, so its allow-lists resolve outside the fixture root and a write here would
+    // race the other test of this binary that runs `generate` over the same directory.
+    let targets: Vec<Target> = Target::ALL
+        .iter()
+        .copied()
+        .filter(|t| *t != Target::Allow)
+        .collect();
+    let a = plan(&common::load_app(&f), &targets).unwrap();
+    let b = plan(&common::load_app(&f), &targets).unwrap();
     assert_eq!(a, b, "two plans over the same tree differ");
+    assert!(
+        a.iter().all(|x| !x.path.starts_with('/')),
+        "nothing leaves the root"
+    );
     let paths: Vec<&str> = a.iter().map(|x| x.path.as_str()).collect();
     assert!(paths.contains(&"AGENTS.md"), "{paths:?}");
     assert!(
@@ -495,7 +507,7 @@ fn the_plan_is_deterministic_and_follows_a_canonical_mutation_to_the_projection_
         &common::rule("project.added", 1, "An added rule"),
     );
     f.git(&["add", ".ai/repo/rules/project/added.v1.md"]);
-    let after = plan(&common::load_app(&f), Target::ALL).unwrap();
+    let after = plan(&common::load_app(&f), &targets).unwrap();
     let site_b = site(&after);
     assert_ne!(site_b["registry"]["fingerprint"].as_str().unwrap(), fp_a);
     assert_eq!(
@@ -529,7 +541,7 @@ fn the_plan_is_deterministic_and_follows_a_canonical_mutation_to_the_projection_
         &common::PROFILE.replace("implementation", "debugging"),
     );
     f.git(&["add", ".ai/repo/profiles/debugging.yaml"]);
-    let after2 = plan(&common::load_app(&f), Target::ALL).unwrap();
+    let after2 = plan(&common::load_app(&f), &targets).unwrap();
     assert_ne!(agents(&after2), agents(&a));
     assert!(agents(&after2).contains("`debugging`"));
     let err = check(&root, &after2).unwrap_err().to_string();
@@ -538,6 +550,6 @@ fn the_plan_is_deterministic_and_follows_a_canonical_mutation_to_the_projection_
     // 3. regenerate: in sync, and a second write is a no-op byte for byte
     write(&root, &after2).unwrap();
     check(&root, &after2).unwrap();
-    let again = plan(&common::load_app(&f), Target::ALL).unwrap();
+    let again = plan(&common::load_app(&f), &targets).unwrap();
     assert_eq!(again, after2);
 }
