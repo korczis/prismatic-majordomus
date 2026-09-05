@@ -216,12 +216,32 @@ disclosure works without JavaScript.
 The site deploys from the validation workflow's own run, `.github/workflows/validate.yml`
 (there is no separate Pages workflow; [`CI.md`](CI.md) has the whole shape). On a push to
 master the `site` job runs `scripts/generate-site-data --check` → `scripts/site-build` →
-`scripts/site-check` → `scripts/site-probe` and uploads the `site/public` it built as the
-Pages artifact; the `pages` job deploys those bytes once the jobs that guard the site are
+`scripts/site-check` → `scripts/site-probe` and uploads the `site/public` it built as an
+artifact; the `pages` job pushes those bytes to `gh-pages` once the jobs that guard the site are
 green: `structure` (doctor, the derived data current), `suite` (`bash test/run.sh`), `rust`
 (the registry projections the Registry page reads are current) and `site`. The site never
 deploys from a tree whose tests fail, whose derived data is stale, or whose registry
 dataset is stale, and nothing is built or measured twice for one commit.
+
+GitHub Pages serves the `gh-pages` branch (source: branch, path `/`), and whoever pushes
+that branch deploys. One script does it, `scripts/site-deploy`: it refuses a dirty tree and a
+commit `origin/master` does not contain, runs the gate (`generate-site-data --check`,
+`majordomus generate --check`, `site-build`, `site-check`, `--probe` on request), copies
+`site/public` into a worktree of `gh-pages` with `.nojekyll`, commits it with the source
+commit in the message, and pushes. GitHub's own "pages build and deployment" then serves it
+in under a minute; the footer of every page names the commit it was built from, so the
+deploy is verifiable with `curl`. Unchanged output is not pushed twice, and a `--dry-run`
+shows the commit it would push. `test/cases/96_site_deploy.sh` runs the whole path against a
+local bare remote: every refusal, the first deploy, the no-op redeploy, and the check that
+`site/public` was built from HEAD.
+
+The `pages` job of `.github/workflows/validate.yml` is the gated form of the same command:
+it downloads the `site/public` the `site` job built, checked and probed in the same run and
+runs `scripts/site-deploy --skip-build`, once `structure`, `suite`, `rust` and `site` are
+green. A person runs `scripts/site-deploy` (or `just site-deploy`) when the operator wants
+the site live without waiting for the Actions queue; the procedure is
+`.ai/repo/skills/deploy-site.md`. Pointing Pages at the branch is a one-time
+`scripts/site-deploy --configure-pages`.
 
 ## Sync guarantee
 

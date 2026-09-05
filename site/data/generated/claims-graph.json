@@ -996,13 +996,13 @@
       "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns."
     },
     {
-      "id": "claim:scope-declared",
+      "id": "claim:site-deploy-one-path",
       "kind": "claim",
-      "label": "What a worker reads of the repository is declared once in .ai/repo/scope.yaml, out wins over in, and the Rust executable discovers, indexes and serves nothing outside it",
+      "label": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the Pages workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
       "status": "guaranteed",
-      "route": "/guarantees/scope-declared/",
+      "route": "/guarantees/site-deploy-one-path/",
       "external": false,
-      "note": "The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared."
+      "note": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site.md."
     },
     {
       "id": "impl:.github/workflows/validate.yml",
@@ -1113,13 +1113,6 @@
       "id": "impl:apps/majordomus-cli/src/providers.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/providers.rs",
-      "route": null,
-      "external": false
-    },
-    {
-      "id": "impl:apps/majordomus-cli/src/scope.rs",
-      "kind": "implementation",
-      "label": "apps/majordomus-cli/src/scope.rs",
       "route": null,
       "external": false
     },
@@ -1334,6 +1327,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/site-deploy",
+      "kind": "implementation",
+      "label": "scripts/site-deploy",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:share/commands.yaml",
       "kind": "implementation",
       "label": "share/commands.yaml",
@@ -1425,6 +1425,13 @@
       "external": false
     },
     {
+      "id": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "kind": "source",
+      "label": "docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "route": "/docs/github-pages-architecture/",
+      "external": false
+    },
+    {
       "id": "source:docs/MCP.md",
       "kind": "source",
       "label": "docs/MCP.md",
@@ -1450,13 +1457,6 @@
       "kind": "source",
       "label": "docs/SCHEMAS.md",
       "route": "/docs/schemas/",
-      "external": false
-    },
-    {
-      "id": "source:docs/SCOPE.md",
-      "kind": "source",
-      "label": "docs/SCOPE.md",
-      "route": "/docs/scope/",
       "external": false
     },
     {
@@ -1810,18 +1810,18 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/93_rust_provider_projections.sh"
     },
     {
-      "id": "test:test/cases/93_scope_policy.sh",
-      "kind": "test",
-      "label": "test/cases/93_scope_policy.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/93_scope_policy.sh"
-    },
-    {
       "id": "test:test/cases/94_ci_plan.sh",
       "kind": "test",
       "label": "test/cases/94_ci_plan.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/94_ci_plan.sh"
+    },
+    {
+      "id": "test:test/cases/96_site_deploy.sh",
+      "kind": "test",
+      "label": "test/cases/96_site_deploy.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/96_site_deploy.sh"
     }
   ],
   "edges": [
@@ -2371,8 +2371,8 @@
       "kind": "specified_by"
     },
     {
-      "source": "claim:scope-declared",
-      "target": "source:docs/SCOPE.md",
+      "source": "claim:site-deploy-one-path",
+      "target": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
       "kind": "specified_by"
     },
     {
@@ -2881,8 +2881,8 @@
       "kind": "implemented_by"
     },
     {
-      "source": "claim:scope-declared",
-      "target": "impl:apps/majordomus-cli/src/scope.rs",
+      "source": "claim:site-deploy-one-path",
+      "target": "impl:scripts/site-deploy",
       "kind": "implemented_by"
     },
     {
@@ -3391,8 +3391,8 @@
       "kind": "proved_by"
     },
     {
-      "source": "claim:scope-declared",
-      "target": "test:test/cases/93_scope_policy.sh",
+      "source": "claim:site-deploy-one-path",
+      "target": "test:test/cases/96_site_deploy.sh",
       "kind": "proved_by"
     }
   ]
