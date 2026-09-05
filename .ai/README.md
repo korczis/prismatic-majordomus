@@ -111,6 +111,15 @@ that enforces it; advisory means the violation is reported and work continues. T
 third class. A rule with an `x-majordomus` block is enforced by the tool; a rule without
 one is normative for whoever reads it and enforced by nobody, which the rule says.
 
+## Scope
+
+`repo/scope.yaml` declares what a worker reads of this repository and what it never
+reads: `in`, the pathspecs it reads; `out`, which wins, the paths, names, sizes and
+content it does not. A path matching nothing is out. The tool reads the declaration once
+when it starts and discovers, indexes and serves nothing outside it; a repository that
+declares none is read under the tool's default and told so. `majordomus scope <path>`
+answers in or out and names the rule.
+
 ## Versioning
 
 `manifest.yaml` carries the format version, currently `ai-repository/v1`. A tool that

@@ -79,6 +79,11 @@ impl Share {
         &self.dir
     }
 
+    /// The distribution's default scope declaration, the file `majordomus init` seeds.
+    pub fn skeleton_scope(&self) -> PathBuf {
+        self.dir.join(crate::scope::SKELETON_SCOPE)
+    }
+
     /// `<share>/kinds.yaml`.
     pub fn kinds_path(&self) -> PathBuf {
         self.dir.join(KINDS_FILE)

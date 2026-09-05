@@ -100,7 +100,7 @@ MJ_PROVIDERS_DEFAULT_DIR="$MJ_SHARE_DIR/providers"
 export MJ_SHARE_DIR MJ_SKELETON_DIR MJ_ALLOW_DIR MJ_STD_RULES_DIR MJ_PROVIDERS_DEFAULT_DIR
 
 MJ_LAYOUT=""; MJ_AI_DIR=""; MJ_AI_MANIFEST=""; MJ_AI_REPO_DIR=""; MJ_AI_LOCAL_DIR=""
-MJ_STATE_DIR=""; MJ_POLICY_FILE=""; MJ_PROFILES_DIR=""; MJ_PROMPTS_DIR=""; MJ_PROJECT_DIR=""
+MJ_STATE_DIR=""; MJ_POLICY_FILE=""; MJ_SCOPE_FILE=""; MJ_PROFILES_DIR=""; MJ_PROMPTS_DIR=""; MJ_PROJECT_DIR=""
 MJ_RULES_DIR=""; MJ_KNOWLEDGE_DIR=""; MJ_ADRS_DIR=""; MJ_SKILLS_DIR=""; MJ_WORKFLOWS_DIR=""
 MJ_PROVIDERS_DIR=""; MJ_TEMPLATES_DIR=""; MJ_CACHE_DIR=""
 
@@ -122,6 +122,9 @@ mj_resolve_layout() {
     MJ_AI_REPO_DIR="$MJ_AI_DIR/$(mj_man repo.path)"
     MJ_AI_LOCAL_DIR="$MJ_AI_DIR/$(mj_man local.path)"
     MJ_POLICY_FILE="$MJ_AI_DIR/$(mj_man sections.policy)"
+    # the scope section is optional: a layer written before it existed names none, and the
+    # Rust executable then reads the distribution's default; the variable stays empty
+    MJ_SCOPE_FILE=""; [ -n "$(mj_man sections.scope)" ] && MJ_SCOPE_FILE="$MJ_AI_DIR/$(mj_man sections.scope)"
     MJ_PROFILES_DIR="$MJ_AI_DIR/$(mj_man sections.profiles)"
     MJ_RULES_DIR="$MJ_AI_DIR/$(mj_man sections.rules)"
     MJ_PROMPTS_DIR="$MJ_AI_DIR/$(mj_man sections.prompts)"
@@ -143,7 +146,7 @@ mj_resolve_layout() {
     MJ_LAYOUT=""
     [ -d "$MJ_ROOT/.majordomus" ] && [ ! -f "$MJ_ROOT/.majordomus/bin/majordomus" ] && MJ_LAYOUT=legacy
     MJ_AI_REPO_DIR="$MJ_AI_DIR/repo"; MJ_AI_LOCAL_DIR="$MJ_AI_DIR/local"
-    MJ_POLICY_FILE="$MJ_AI_REPO_DIR/policy.yaml"; MJ_PROFILES_DIR="$MJ_AI_REPO_DIR/profiles"
+    MJ_POLICY_FILE="$MJ_AI_REPO_DIR/policy.yaml"; MJ_SCOPE_FILE="$MJ_AI_REPO_DIR/scope.yaml"; MJ_PROFILES_DIR="$MJ_AI_REPO_DIR/profiles"
     MJ_RULES_DIR="$MJ_AI_REPO_DIR/rules"; MJ_PROMPTS_DIR="$MJ_AI_REPO_DIR/prompts"
     MJ_SKILLS_DIR="$MJ_AI_REPO_DIR/skills"; MJ_WORKFLOWS_DIR="$MJ_AI_REPO_DIR/workflows"
     MJ_KNOWLEDGE_DIR="$MJ_AI_REPO_DIR/knowledge"; MJ_ADRS_DIR="$MJ_AI_REPO_DIR/adrs"
@@ -152,7 +155,7 @@ mj_resolve_layout() {
     MJ_CACHE_DIR="$MJ_AI_LOCAL_DIR/cache"
   fi
   export MJ_LAYOUT MJ_AI_DIR MJ_AI_MANIFEST MJ_AI_REPO_DIR MJ_AI_LOCAL_DIR MJ_STATE_DIR
-  export MJ_POLICY_FILE MJ_PROFILES_DIR MJ_PROMPTS_DIR MJ_PROJECT_DIR MJ_RULES_DIR MJ_KNOWLEDGE_DIR
+  export MJ_POLICY_FILE MJ_SCOPE_FILE MJ_PROFILES_DIR MJ_PROMPTS_DIR MJ_PROJECT_DIR MJ_RULES_DIR MJ_KNOWLEDGE_DIR
   export MJ_ADRS_DIR MJ_SKILLS_DIR MJ_WORKFLOWS_DIR MJ_PROVIDERS_DIR MJ_TEMPLATES_DIR MJ_CACHE_DIR
   return 0
 }
@@ -196,7 +199,7 @@ mj_provider_template() {
 # whatever needs to name the files the commands touch without repeating this file.
 mj_layout_table() {
   local v
-  for v in MJ_AI_DIR MJ_AI_REPO_DIR MJ_AI_LOCAL_DIR MJ_STATE_DIR MJ_POLICY_FILE MJ_PROFILES_DIR \
+  for v in MJ_AI_DIR MJ_AI_REPO_DIR MJ_AI_LOCAL_DIR MJ_STATE_DIR MJ_POLICY_FILE MJ_SCOPE_FILE MJ_PROFILES_DIR \
            MJ_PROMPTS_DIR MJ_PROJECT_DIR MJ_RULES_DIR MJ_KNOWLEDGE_DIR MJ_ADRS_DIR MJ_SKILLS_DIR \
            MJ_WORKFLOWS_DIR MJ_PROVIDERS_DIR MJ_TEMPLATES_DIR MJ_CACHE_DIR; do
     p="${!v}"

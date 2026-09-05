@@ -45,7 +45,7 @@ BEGIN {
     # Every kind this extractor can assert. A source class declaring a kind that is not
     # here is not guessed at: its nodes carry `unknown` and a finding names the class, so
     # a new source class cannot quietly acquire a made-up type.
-    known = " policy profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test "
+    known = " policy scope profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test "
     # The edge types are a closed set. An undeclared type is a defect rather than a new
     # vocabulary word, because a reader who cannot enumerate the relations cannot tell a
     # missing one from one that was never modelled.

@@ -103,6 +103,7 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [The Rust executable the rust gate built is published as an artifact with its provenance, and every Rust case drives the executable MAJORDOMUS_BIN names instead of building one](https://korczis.github.io/prismatic-majordomus/guarantees/rust-binary-artifact/) | `docs/CI.md` | `scripts/rust-check` | `test/cases/94_ci_plan.sh` |
 | [The site deploys from the same workflow run that validated it, after the jobs that guard the site are green, and nothing is rebuilt or measured twice for one commit](https://korczis.github.io/prismatic-majordomus/guarantees/site-deploys-from-verified-run/) | `docs/CI.md` | `.github/workflows/validate.yml` | `test/cases/26_ci_wiring.sh` |
 | [The OpenAPI document is inferred, the tags are the modules, the examples are the benchmark cases, the responses are the router's statuses by kind, the prose is the one text every projection shares, and the site's API reference is rendered from the committed document](https://korczis.github.io/prismatic-majordomus/guarantees/openapi-inferred/) | `docs/CAPABILITIES.md` | `apps/majordomus-cli/src/http/openapi.rs` | `test/cases/92_openapi_reference.sh` |
+| [What a worker reads of the repository is declared once in .ai/repo/scope.yaml, out wins over in, and the Rust executable discovers, indexes and serves nothing outside it](https://korczis.github.io/prismatic-majordomus/guarantees/scope-declared/) | `docs/SCOPE.md` | `apps/majordomus-cli/src/scope.rs` | `test/cases/93_scope_policy.sh` |
 
 ## advisory
 
