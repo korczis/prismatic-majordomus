@@ -6,7 +6,7 @@
 set -eu
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
-scripts="bin/majordomus bin/majordomus-mcp lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/github-sync scripts/site-build scripts/site-check scripts/site-probe scripts/site-serve scripts/rules-package scripts/rust-check scripts/ci-plan scripts/ci-baseline scripts/ci/*"
+scripts="bin/majordomus bin/majordomus-mcp lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/github-sync scripts/site-build scripts/site-check scripts/site-probe scripts/site-serve scripts/site-deploy scripts/rules-package scripts/rust-check scripts/ci-plan scripts/ci-baseline scripts/ci/*"
 echo "==> bash -n"
 # shellcheck disable=SC2086
 for f in $scripts test/cases/*.sh; do bash -n "$f" || { echo "shell-lint: syntax: $f"; exit 1; }; done

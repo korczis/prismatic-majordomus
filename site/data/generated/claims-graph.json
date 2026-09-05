@@ -996,6 +996,15 @@
       "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns."
     },
     {
+      "id": "claim:site-deploy-one-path",
+      "kind": "claim",
+      "label": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the Pages workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
+      "status": "guaranteed",
+      "route": "/guarantees/site-deploy-one-path/",
+      "external": false,
+      "note": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site.md."
+    },
+    {
       "id": "impl:.github/workflows/validate.yml",
       "kind": "implementation",
       "label": ".github/workflows/validate.yml",
@@ -1318,6 +1327,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/site-deploy",
+      "kind": "implementation",
+      "label": "scripts/site-deploy",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:share/commands.yaml",
       "kind": "implementation",
       "label": "share/commands.yaml",
@@ -1406,6 +1422,13 @@
       "kind": "source",
       "label": "docs/DYNAMICITY.md",
       "route": "/docs/dynamicity/",
+      "external": false
+    },
+    {
+      "id": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "kind": "source",
+      "label": "docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "route": "/docs/github-pages-architecture/",
       "external": false
     },
     {
@@ -1792,6 +1815,13 @@
       "label": "test/cases/94_ci_plan.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/94_ci_plan.sh"
+    },
+    {
+      "id": "test:test/cases/96_site_deploy.sh",
+      "kind": "test",
+      "label": "test/cases/96_site_deploy.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/96_site_deploy.sh"
     }
   ],
   "edges": [
@@ -2341,6 +2371,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:site-deploy-one-path",
+      "target": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -2846,6 +2881,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:site-deploy-one-path",
+      "target": "impl:scripts/site-deploy",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "test:test/cases/00_yaml_flatten.sh",
       "kind": "proved_by"
@@ -3348,6 +3388,11 @@
     {
       "source": "claim:site-registry-dataset",
       "target": "test:apps/majordomus-cli/tests/projections.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:site-deploy-one-path",
+      "target": "test:test/cases/96_site_deploy.sh",
       "kind": "proved_by"
     }
   ]
