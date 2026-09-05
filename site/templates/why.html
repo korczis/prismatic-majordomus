@@ -57,8 +57,8 @@
         <span class="min-w-0 break-words text-sm text-heading">{{ o.hook }}</span></a></li>
       {%- endfor %}
     </ul>
-    <p class="mt-4 text-sm"><a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">All five, and how they connect to the tool &rarr;</a></p>
+    <p class="mt-4 text-sm"><a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">All {{ why.moments | length }}, and how they connect to the tool &rarr;</a></p>
   </div>
-  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the five moments</h2><ol class="space-y-2 text-sm">{% for p in sec.pages %}<li><a href="{{ p.permalink }}" class="block rounded px-2 py-1 {% if p.permalink == page.permalink %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if p.permalink == page.permalink %} aria-current="page"{% endif %}>{{ p.extra.hook }}</a></li>{% endfor %}</ol></div></aside>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the {{ sec.pages | length }} moments</h2><ol class="space-y-2 text-sm">{% for p in sec.pages %}<li><a href="{{ p.permalink }}" class="block rounded px-2 py-1 {% if p.permalink == page.permalink %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if p.permalink == page.permalink %} aria-current="page"{% endif %}>{{ p.extra.hook }}</a></li>{% endfor %}</ol></div></aside>
 </div>
 {% endblock body %}

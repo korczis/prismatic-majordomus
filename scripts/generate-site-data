@@ -648,8 +648,8 @@ jq_inplace "$OUT/readme.json" --slurpfile docs "$OUT/doctrines.json" '
         | select((.claims // []) | any(IN($row.claim_ids[]))) | .id ]})'
 
 mj_phase_end "gen:doctrines.json" "$GEN_T0"
-# ---------------------------------------------------------------- why.json (the five moments, as data)
-GEN_T0="$(mj_phase_begin "gen:why.json_the_five_moments_as")"
+# ---------------------------------------------------------------- why.json (the moments, as data)
+GEN_T0="$(mj_phase_begin "gen:why.json_the_moments_as")"
 # The moments are hand-written prose in site/content-src/why/, but the links out of them are
 # not prose: each page names the commands, responsibilities and claims it rests on. Those are
 # read here, checked against the things they name, and published as data so the index, the
@@ -721,7 +721,7 @@ jq '{schema: 1,
              | unique)}' "$OUT/why.json" > "$OUT/why-graph.json"
 
 
-mj_phase_end "gen:why.json_the_five_moments_as" "$GEN_T0"
+mj_phase_end "gen:why.json_the_moments_as" "$GEN_T0"
 # ---------------------------------------------------------------- catalogue.json
 GEN_T0="$(mj_phase_begin "gen:catalogue.json")"
 # Use cases and applications, with every reference resolved here rather than in a
