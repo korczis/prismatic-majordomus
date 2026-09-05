@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/prompt/prompt.v1.schema.json",
+  "x-majordomus-schema": "majordomus.prompt/v1",
+  "x-majordomus-derived-from": "majordomus/prompt/prompt.v1.proto",
+  "x-majordomus-allow": "prompt",
+  "description": "The whole asset: the front matter that names it, then the prompt itself.",
+  "title": "prompt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "body"
+  ],
+  "properties": {
+    "header": {
+      "$ref": "#/$defs/Header"
+    },
+    "body": {
+      "$ref": "#/$defs/Body"
+    }
+  },
+  "$defs": {
+    "Header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "description"
+      ],
+      "properties": {
+        "name": {
+          "description": "The identity, equal to the file name without its extension.",
+          "type": "string"
+        },
+        "description": {
+          "description": "What the prompt is for, in one sentence.",
+          "type": "string"
+        },
+        "profile": {
+          "description": "The execution profile this prompt frames, when it frames one.",
+          "type": "string"
+        }
+      }
+    },
+    "Section": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "heading": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "empty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Body": {
+      "description": "The body is the prompt as it is rendered. It carries no required section: naming one would put the tool's structure inside the author's text, and a prompt is the author's.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sections"
+      ],
+      "properties": {
+        "sections": {
+          "description": "Every heading of the body, in document order, as the reader flattens it.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Section"
+          }
+        }
+      },
+      "x-majordomus-sections": []
+    }
+  }
+}

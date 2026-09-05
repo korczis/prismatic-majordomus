@@ -167,10 +167,11 @@ fn a_repository_defines_a_new_kind_with_its_schema_and_it_is_served_without_a_ru
     // the repository adds a kind, a schema for it, a source class naming it, and one object
     f.write(
         ".ai/repo/knowledge/kinds.yaml",
-        "schema: majordomus-kinds/v1\nkinds:\n  note:\n    format: markdown\n    front_matter: required\n    schema: note\n    identity: [id]\n    title: title\n    description: summary\n",
+        "schema: majordomus-kinds/v1\nkinds:\n  note:\n    format: markdown\n    front_matter: required\n    schema: acme.note/v1\n    identity: [id]\n    title: title\n    description: summary\n",
     );
     f.write(
-        ".ai/repo/knowledge/schemas/note.schema.json",
+        // the identity `acme.note/v1` fixes the path, under the repository's own vendor
+        ".ai/repo/knowledge/schemas/acme/note/note.v1.schema.json",
         r#"{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Note", "type": "object", "additionalProperties": false, "required": ["id", "title"], "properties": { "id": { "type": "string" }, "title": { "type": "string" }, "summary": { "type": "string" }, "weight": { "type": "integer", "minimum": 1 } } }"#,
     );
     f.write(

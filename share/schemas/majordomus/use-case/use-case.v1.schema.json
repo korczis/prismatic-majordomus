@@ -1,0 +1,356 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/use-case/use-case.v1.schema.json",
+  "x-majordomus-schema": "majordomus.use-case/v1",
+  "x-majordomus-derived-from": "majordomus/use-case/use-case.v1.proto",
+  "x-majordomus-allow": "use-case",
+  "description": "The whole use case: the front matter, the executable scenario inside it, then the narrative.",
+  "title": "use-case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "body"
+  ],
+  "properties": {
+    "header": {
+      "$ref": "#/$defs/Header"
+    },
+    "body": {
+      "$ref": "#/$defs/Body"
+    }
+  },
+  "$defs": {
+    "Header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "title",
+        "summary",
+        "category",
+        "status",
+        "commands"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "kind": {
+          "const": "use-case"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "draft",
+            "deprecated"
+          ]
+        },
+        "target": {
+          "description": "The maturity the author aims at; what is observed is computed and never written here.",
+          "enum": [
+            "guaranteed",
+            "advisory"
+          ]
+        },
+        "weight": {
+          "description": "Orders the listing. Lower comes first.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "actors": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "maintainer",
+              "contributor",
+              "reviewer",
+              "agent",
+              "operator"
+            ]
+          }
+        },
+        "difficulty": {
+          "enum": [
+            "basic",
+            "intermediate",
+            "advanced"
+          ]
+        },
+        "commands": {
+          "description": "The commands the task runs; every one must exist. A use case that names none is a story rather than a use case.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "mcp_tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "doctrines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "responsibilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "applications": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "related": {
+          "$ref": "#/$defs/Related"
+        },
+        "scenario": {
+          "$ref": "#/$defs/Scenario"
+        },
+        "performance": {
+          "$ref": "#/$defs/Performance"
+        }
+      }
+    },
+    "Related": {
+      "description": "Neighbouring use cases a listing should raise or hold back beside this one.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "boost": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "suppress": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Scenario": {
+      "description": "The executable proof: a fresh repository prepared by a setup script, then the steps in order, each a real invocation of the tool with its expected exit code and output.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "setup",
+        "steps"
+      ],
+      "properties": {
+        "setup": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "given": {
+          "description": "What the reader should take as already true before the first step.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Step"
+          }
+        },
+        "then": {
+          "description": "What the reader should take from the run, once the steps have passed.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "run",
+        "expect"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "run": {
+          "description": "The invocation, one argument per item.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "stdin": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "expect": {
+          "$ref": "#/$defs/Expect"
+        }
+      }
+    },
+    "Expect": {
+      "description": "What the step must produce. An expectation that names only an exit code still proves something; one that names none proves nothing, so `exit` is required.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exit"
+      ],
+      "properties": {
+        "exit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "stdout_contains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stdout_not_contains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "files_exist": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tree_unchanged": {
+          "description": "The step left the working tree byte-identical: how a read-only command proves it is read-only.",
+          "type": "boolean"
+        },
+        "files_contain": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FileContains"
+          }
+        }
+      }
+    },
+    "FileContains": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "pattern"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        }
+      }
+    },
+    "Performance": {
+      "description": "What the scenario is allowed to cost.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "budget_ms"
+      ],
+      "properties": {
+        "budget_ms": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "Section": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "heading": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "empty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Body": {
+      "description": "The body carries the narrative: the situation the reader is in, and what they are left with. The scenario in the front matter proves it; these two sections say why it matters.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sections"
+      ],
+      "properties": {
+        "sections": {
+          "description": "Every heading of the body, in document order, as the reader flattens it.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Section"
+          }
+        }
+      },
+      "x-majordomus-sections": [
+        {
+          "heading": "Situation",
+          "level": 1,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Outcome",
+          "level": 1,
+          "required": true,
+          "non_empty": true
+        }
+      ]
+    }
+  }
+}

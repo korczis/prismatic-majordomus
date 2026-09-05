@@ -128,7 +128,7 @@ fn unknown_keys_are_named_per_file() {
     assert!(
         msg.contains("owner")
             && msg.contains("x-majordomus.colour")
-            && msg.contains("schema 'rule'"),
+            && msg.contains("schema 'majordomus.rule/v1'"),
         "{msg}"
     );
 }
@@ -340,7 +340,10 @@ fn a_kind_the_executable_does_not_read_is_reported_not_guessed() {
     let (_, v, _) = inspect(&f.root(), &[]);
     let codes = diagnostic_codes(&v);
     assert!(
-        codes.contains(&("unknown_kind".into(), Some(".ai/repo/widgets/one.md".into()))),
+        codes.contains(&(
+            "unknown_kind".into(),
+            Some(".ai/repo/widgets/one.md".into())
+        )),
         "{codes:?}"
     );
 }
@@ -531,7 +534,7 @@ fn a_schema_violation_names_the_field_and_the_constraint() {
         .expect("schema_violation");
     let msg = hit["message"].as_str().unwrap();
     assert!(
-        msg.contains("schema 'rule'") && msg.contains("class") && msg.contains("version"),
+        msg.contains("schema 'majordomus.rule/v1'") && msg.contains("class") && msg.contains("version"),
         "{msg}"
     );
     assert!(!resource_uris(&v)

@@ -5,22 +5,22 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "ef1f71559dbcd04fa2685b4629b25ce09cd23a24bf6f385424320d6ac10f702d",
+    "fingerprint": "ac12c73d7b94a6db4c653cc3e99723b2de700e596573fed443a6702cb0c5960b",
     "summary": {
-      "total": 664,
+      "total": 670,
       "builtin": 11,
-      "declarative": 653,
+      "declarative": 659,
       "by_kind": {
         "command": 1,
         "query": 10,
-        "resource": 653
+        "resource": 659
       },
       "by_stability": {
         "behaviorally_verified": 11,
-        "implemented": 653
+        "implemented": 659
       },
       "mcp_tools": 11,
-      "mcp_resources": 655,
+      "mcp_resources": 661,
       "http_routes": 11,
       "cli_commands": 4,
       "modules": 21,
@@ -3465,7 +3465,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 166,
+        "capabilities": 168,
         "capability_ids": []
       },
       {
@@ -3574,7 +3574,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 76,
+        "capabilities": 77,
         "capability_ids": []
       },
       {
@@ -3606,7 +3606,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 88,
+        "capabilities": 89,
         "capability_ids": []
       },
       {
@@ -3614,13 +3614,13 @@
         "title": "use-case",
         "description": "Declarative objects of kind 'use-case' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 32,
+        "capabilities": 34,
         "capability_ids": []
       }
     ]
   },
   "index": {
-    "fingerprint": "8df6b691ccba30f39f0f2c10192cea5cd40be9fefd5a77d639986b3d3187e884",
+    "fingerprint": "0a45a84733e15834518589f3a7261a52b7d0127b6f3530befac5bb0349aba6b8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -3641,19 +3641,19 @@
       "application": 5,
       "claim": 120,
       "context": 5,
-      "document": 166,
+      "document": 168,
       "implementation": 37,
       "issue": 90,
       "milestone": 11,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "rule": 76,
+      "rule": 77,
       "scope": 1,
       "skill": 3,
       "taxonomy": 10,
-      "test": 88,
-      "use-case": 32
+      "test": 89,
+      "use-case": 34
     },
     "diagnostics": {},
     "objects": [
@@ -3677,7 +3677,7 @@
         "path": ".ai/repo/applications/long-running-work.md",
         "section": "applications",
         "source_class": "application",
-        "bytes": 1509
+        "bytes": 1579
       },
       {
         "uri": "majordomus://application/repository-opened-in-ai-clients",
@@ -5395,6 +5395,24 @@
         "path": "docs/USE_CASES.md",
         "source_class": "document",
         "bytes": 11895
+      },
+      {
+        "uri": "majordomus://document/docs/claims/adr-catalogue.md",
+        "kind": "document",
+        "identity": "docs/claims/adr-catalogue.md",
+        "title": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
+        "path": "docs/claims/adr-catalogue.md",
+        "source_class": "claim_page",
+        "bytes": 2843
+      },
+      {
+        "uri": "majordomus://document/docs/claims/adr-propose.md",
+        "kind": "document",
+        "identity": "docs/claims/adr-propose.md",
+        "title": "`majordomus adr propose` writes a decision with status proposed and refuses to write any other status, allocates its identity under a lock so concurrent workers never collide, and records what the decision was derived from",
+        "path": "docs/claims/adr-propose.md",
+        "source_class": "claim_page",
+        "bytes": 2564
       },
       {
         "uri": "majordomus://document/docs/claims/ai-layer-manifest.md",
@@ -7963,6 +7981,21 @@
         "bytes": 817
       },
       {
+        "uri": "majordomus://rule/majordomus.adr-integrity@1",
+        "kind": "rule",
+        "identity": "majordomus.adr-integrity@1",
+        "title": "Architecture decision integrity",
+        "description": "Every architecture decision the repository holds parses against the decision contract, claims an identity nothing else claims, and every relation and reference it makes resolves.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/adr-integrity.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3281,
+        "tags": [
+          "adrs",
+          "records"
+        ]
+      },
+      {
         "uri": "majordomus://rule/majordomus.ai-layout-integrity@1",
         "kind": "rule",
         "identity": "majordomus.ai-layout-integrity@1",
@@ -9957,6 +9990,14 @@
         "bytes": 6538
       },
       {
+        "uri": "majordomus://test/test/cases/99_adr.sh",
+        "kind": "test",
+        "identity": "test/cases/99_adr.sh",
+        "path": "test/cases/99_adr.sh",
+        "source_class": "case",
+        "bytes": 8689
+      },
+      {
         "uri": "majordomus://use-case/accept-or-refuse-finished-work",
         "kind": "use-case",
         "identity": "accept-or-refuse-finished-work",
@@ -9999,6 +10040,17 @@
         "section": "use-cases",
         "source_class": "use_case",
         "bytes": 2933
+      },
+      {
+        "uri": "majordomus://use-case/capture-the-prompts-that-started-the-work",
+        "kind": "use-case",
+        "identity": "capture-the-prompts-that-started-the-work",
+        "title": "Keep the prompts that started the work, below the model rather than around it",
+        "description": "Wire the provider hook, prove it by running a payload through it, and see that a prompt the tool could not parse is reported rather than silently dropped.",
+        "path": ".ai/repo/use-cases/capture-the-prompts-that-started-the-work.md",
+        "section": "use-cases",
+        "source_class": "use_case",
+        "bytes": 2630
       },
       {
         "uri": "majordomus://use-case/carry-a-blocker-across-a-handover",
@@ -10243,6 +10295,17 @@
         "bytes": 2291
       },
       {
+        "uri": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
+        "kind": "use-case",
+        "identity": "record-a-decision-before-it-is-forgotten",
+        "title": "Record a decision as data, and prove the tool cannot accept it for you",
+        "description": "Read the decisions a repository holds, validate the whole set in one command, and watch the tool refuse to write the one status only a person may write.",
+        "path": ".ai/repo/use-cases/record-a-decision-before-it-is-forgotten.md",
+        "section": "use-cases",
+        "source_class": "use_case",
+        "bytes": 2793
+      },
+      {
         "uri": "majordomus://use-case/resume-from-a-prompt-asset",
         "kind": "use-case",
         "identity": "resume-from-a-prompt-asset",
@@ -10315,7 +10378,7 @@
       "name": "adr",
       "format": "markdown",
       "front_matter": "required",
-      "schema": "adr",
+      "schema": "majordomus.adr/v1",
       "identity": [
         "id"
       ],
@@ -10325,7 +10388,7 @@
       "name": "application",
       "format": "markdown",
       "front_matter": "required",
-      "schema": "application",
+      "schema": "majordomus.application/v1",
       "identity": [
         "id"
       ],
@@ -10335,7 +10398,7 @@
       "name": "claim",
       "format": "yaml",
       "front_matter": "none",
-      "schema": "claim",
+      "schema": "majordomus.claim/v1",
       "identity": [
         "id"
       ],
@@ -10345,7 +10408,7 @@
       "name": "context",
       "format": "markdown",
       "front_matter": "required",
-      "schema": "context",
+      "schema": "majordomus.context/v1",
       "identity": [
         "id"
       ],
@@ -10356,7 +10419,7 @@
       "format": "markdown",
       "front_matter": "optional",
       "identity": [],
-      "objects": 166
+      "objects": 168
     },
     {
       "name": "implementation",
@@ -10369,7 +10432,7 @@
       "name": "issue",
       "format": "yaml",
       "front_matter": "none",
-      "schema": "issue",
+      "schema": "majordomus.issue/v1",
       "identity": [
         "id"
       ],
@@ -10379,7 +10442,7 @@
       "name": "knowledge",
       "format": "markdown",
       "front_matter": "required",
-      "schema": "knowledge",
+      "schema": "majordomus.knowledge/v1",
       "identity": [
         "id"
       ],
@@ -10389,7 +10452,7 @@
       "name": "milestone",
       "format": "yaml",
       "front_matter": "none",
-      "schema": "milestone",
+      "schema": "majordomus.milestone/v1",
       "identity": [
         "id"
       ],
@@ -10399,7 +10462,7 @@
       "name": "policy",
       "format": "yaml",
       "front_matter": "none",
-      "schema": "policy",
+      "schema": "majordomus.policy/v1",
       "identity": [],
       "objects": 1
     },
@@ -10407,7 +10470,7 @@
       "name": "profile",
       "format": "yaml",
       "front_matter": "none",
-      "schema": "profile",
+      "schema": "majordomus.profile/v1",
       "identity": [
         "name"
       ],
@@ -10417,7 +10480,7 @@
       "name": "prompt",
       "format": "markdown",
       "front_matter": "required",
-      "schema": "prompt",
+      "schema": "majordomus.prompt/v1",
       "identity": [
         "name"
       ],
@@ -10427,18 +10490,18 @@
       "name": "rule",
       "format": "markdown",
       "front_matter": "required",
-      "schema": "rule",
+      "schema": "majordomus.rule/v1",
       "identity": [
         "id",
         "version"
       ],
-      "objects": 76
+      "objects": 77
     },
     {
       "name": "scope",
       "format": "yaml",
       "front_matter": "none",
-      "schema": "scope",
+      "schema": "majordomus.scope/v1",
       "identity": [],
       "objects": 1
     },
@@ -10446,7 +10509,7 @@
       "name": "skill",
       "format": "markdown",
       "front_matter": "required",
-      "schema": "skill",
+      "schema": "majordomus.skill/v1",
       "identity": [
         "id"
       ],
@@ -10456,7 +10519,7 @@
       "name": "taxonomy",
       "format": "yaml",
       "front_matter": "none",
-      "schema": "taxonomy",
+      "schema": "majordomus.taxonomy/v1",
       "identity": [
         "id"
       ],
@@ -10467,17 +10530,17 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 88
+      "objects": 89
     },
     {
       "name": "use-case",
       "format": "markdown",
       "front_matter": "required",
-      "schema": "use-case",
+      "schema": "majordomus.use-case/v1",
       "identity": [
         "id"
       ],
-      "objects": 32
+      "objects": 34
     }
   ],
   "projections": [

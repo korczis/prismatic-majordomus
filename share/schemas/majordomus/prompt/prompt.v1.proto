@@ -1,0 +1,45 @@
+// A prompt asset under .ai/repo/prompts/.
+//
+// Canonical. `majordomus generate` projects this file into share/allow/prompt.txt,
+// share/sections/prompt.txt and prompt.v1.schema.json beside it.
+
+syntax = "proto3";
+
+package majordomus.prompt.v1;
+
+import "majordomus/options.proto";
+
+option (majordomus.schema_id) = "majordomus.prompt/v1";
+option (majordomus.allow_list) = "prompt";
+option (majordomus.document_format) = "markdown";
+
+// The whole asset: the front matter that names it, then the prompt itself.
+message Document {
+  Header header = 1 [(majordomus.required) = true];
+  Body body = 2 [(majordomus.required) = true];
+}
+
+message Header {
+  option (majordomus.closed) = true;
+
+  // The identity, equal to the file name without its extension.
+  string name = 1 [(majordomus.required) = true];
+
+  // What the prompt is for, in one sentence.
+  string description = 2 [(majordomus.required) = true];
+
+  // The execution profile this prompt frames, when it frames one.
+  string profile = 3;
+}
+
+// The body is the prompt as it is rendered. It carries no required section: naming one
+// would put the tool's structure inside the author's text, and a prompt is the author's.
+message Body {
+  option (majordomus.body) = true;
+}
+
+message Section {
+  string heading = 1;
+  uint32 level = 2;
+  bool empty = 3;
+}
