@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# site-deploy — publish the built site to the gh-pages branch, from this machine or from CI.
+#
+# GitHub Pages serves the gh-pages branch (source: branch, path /). Whoever pushes that
+# branch deploys; GitHub's own "pages build and deployment" then takes under a minute. The
+# Pages workflow and a person at a terminal run this same script, so there is one deploy
+# path, and the person's is the fast one: no Actions queue in front of it.
+#
+#   scripts/site-deploy                 gate, build, check, publish
+#   scripts/site-deploy --dry-run       everything but the push; prints what would be pushed
+#   scripts/site-deploy --probe         also run the browser probe before publishing
+#   scripts/site-deploy --skip-build    publish site/public as it is (CI: already built and checked)
+#   scripts/site-deploy --any-ref       publish a commit that is not on origin/master (a preview of
+#                                       unmerged work; the footer names the commit, so it is visible)
+#   scripts/site-deploy --allow-dirty   publish from a working tree with uncommitted changes
+#   scripts/site-deploy --configure-pages
+#                                       one-time: point GitHub Pages at the gh-pages branch (needs gh)
+#
+# Refuses (exit 10): a dirty tree, a HEAD that origin/master does not contain, a failed gate. A
+# deploy that says nothing is a deploy nobody can audit, so the gh-pages commit message names
+# the source commit, and the site's footer shows the same commit.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DRY=0; PROBE=0; SKIP_BUILD=0; ANY_REF=0; ALLOW_DIRTY=0; CONFIGURE=0
+for a in "$@"; do
+  case "$a" in
+    --dry-run) DRY=1 ;; --probe) PROBE=1 ;; --skip-build) SKIP_BUILD=1 ;;
+    --any-ref) ANY_REF=1 ;; --allow-dirty) ALLOW_DIRTY=1 ;; --configure-pages) CONFIGURE=1 ;;
+    -h|--help) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "site-deploy: unknown option $a" >&2; exit 2 ;;
+  esac
+done
+BRANCH="${SITE_DEPLOY_BRANCH:-gh-pages}"
+REMOTE="${SITE_DEPLOY_REMOTE:-origin}"
+step() { printf '==> %s\n' "$*"; }
+refuse() { printf 'REFUSE %s\n' "$*" >&2; exit 10; }
+
+cd "$ROOT"
+
+if [ "$CONFIGURE" = 1 ]; then
+  command -v gh >/dev/null || refuse "configure-pages needs the gh CLI"
+  repo="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
+  step "pointing GitHub Pages of $repo at branch $BRANCH, path /"
+  if gh api "repos/$repo/pages" >/dev/null 2>&1; then
+    gh api -X PUT "repos/$repo/pages" -f build_type=legacy -f "source[branch]=$BRANCH" -f "source[path]=/" >/dev/null
+  else
+    gh api -X POST "repos/$repo/pages" -f build_type=legacy -f "source[branch]=$BRANCH" -f "source[path]=/" >/dev/null
+  fi
+  gh api "repos/$repo/pages" -q '"pages: source \(.source.branch) \(.source.path), \(.html_url)"'
+  exit 0
+fi
+
+# ---------------------------------------------------------------- gate: what is being deployed
+HEAD_SHA="$(git rev-parse HEAD)"
+if [ "$ALLOW_DIRTY" != 1 ] && [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+  refuse "the working tree has uncommitted changes; commit them, or pass --allow-dirty"
+fi
+git fetch -q "$REMOTE" master 2>/dev/null || true
+if [ "$ANY_REF" != 1 ]; then
+  if ! git merge-base --is-ancestor "$HEAD_SHA" "$REMOTE/master" 2>/dev/null; then
+    refuse "HEAD ${HEAD_SHA:0:7} is not on $REMOTE/master; deploy master, or pass --any-ref for a preview"
+  fi
+fi
+
+# ---------------------------------------------------------------- build and check
+CLEAN_BEFORE=0; [ -z "$(git status --porcelain --untracked-files=no)" ] && CLEAN_BEFORE=1
+if [ "$SKIP_BUILD" != 1 ]; then
+  step "derived data is in sync"; scripts/generate-site-data --check
+  if command -v cargo >/dev/null 2>&1; then
+    step "generated projections are in sync"
+    RUSTFLAGS='' cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- generate --check 2>/dev/null
+  else
+    echo "     (cargo absent: the Rust generate --check is CI's; the site check below still runs)"
+  fi
+  step "build"; scripts/site-build
+  step "check"; scripts/site-check
+  if [ "$PROBE" = 1 ]; then step "probe"; scripts/site-probe; fi
+  # the build rewrote site/data/generated/source.json with its generation time; a tree that
+  # was clean before the deploy is clean after it
+  [ "$CLEAN_BEFORE" = 1 ] && git checkout -q -- site/data/generated/source.json 2>/dev/null || true
+fi
+[ -f site/public/index.html ] || refuse "site/public/index.html is missing; run scripts/site-build"
+grep -q "/commit/$HEAD_SHA" site/public/index.html \
+  || refuse "site/public was not built from HEAD ${HEAD_SHA:0:7} (its footer names another commit); rebuild"
+routes="$(find site/public -name index.html | wc -l | tr -d ' ')"
+fp="$(jq -r '.registry.fingerprint // empty' site/data/registry/registry.json 2>/dev/null | cut -c1-12)"
+
+# ---------------------------------------------------------------- publish
+W="$(mktemp -d "${TMPDIR:-/tmp}/mj-deploy.XXXXXX")"
+cleanup() { git worktree remove --force "$W" 2>/dev/null || rm -rf "$W"; }
+trap cleanup EXIT
+if git ls-remote --exit-code --heads "$REMOTE" "$BRANCH" >/dev/null 2>&1; then
+  git fetch -q "$REMOTE" "$BRANCH"
+  git worktree add -q --detach "$W" "$REMOTE/$BRANCH"
+  ( cd "$W" && git checkout -q -B "$BRANCH" )
+else
+  git worktree add -q --detach "$W"
+  ( cd "$W" && git checkout -q --orphan "$BRANCH" && git rm -rfq . >/dev/null 2>&1 || true )
+fi
+find "$W" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+cp -R site/public/. "$W"/
+: > "$W/.nojekyll"
+msg="deploy: site from ${HEAD_SHA:0:7}${fp:+ (registry $fp)}, $routes routes"
+(
+  cd "$W"
+  git add -A
+  if git diff --cached --quiet; then
+    echo "site-deploy: $BRANCH already serves ${HEAD_SHA:0:7}; nothing to push"
+    exit 0
+  fi
+  git -c user.name="${GIT_AUTHOR_NAME:-$(git config user.name || echo majordomus)}" \
+      -c user.email="${GIT_AUTHOR_EMAIL:-$(git config user.email || echo majordomus@localhost)}" \
+      commit -q -m "$msg" -m "source: $HEAD_SHA"
+  if [ "$DRY" = 1 ]; then
+    echo "site-deploy: dry run: would push $(git rev-parse --short HEAD) to $REMOTE/$BRANCH: $msg"
+    exit 0
+  fi
+  step "push $REMOTE $BRANCH"
+  git push -q "$REMOTE" "HEAD:refs/heads/$BRANCH"
+  echo "site-deploy: pushed $(git rev-parse --short HEAD) to $REMOTE/$BRANCH: $msg"
+)
+if [ "$DRY" != 1 ]; then
+  url="$(sed -n 's/^base_url = "\(.*\)"/\1/p' site/config.toml)"
+  echo "site-deploy: GitHub serves it in about a minute; verify with: curl -s ${url%/}/ | grep -c /commit/${HEAD_SHA:0:7}"
+fi

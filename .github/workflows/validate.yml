@@ -247,12 +247,14 @@ jobs:
         run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed site-probe site-probe timings.tsv scripts/site-probe
       - name: manifest
         run: cat site/data/generated/source.json
+      # the verified bytes, kept for the pages job of this run; nothing rebuilds them
       - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
-        uses: actions/configure-pages@v5
-      - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: site-public
           path: site/public
+          include-hidden-files: true
+          retention-days: 7
       - if: always()
         run: scripts/ci/summary --job site --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "routes=$(find site/public -name index.html | wc -l | tr -d ' ')"
       - if: always()
@@ -334,25 +336,30 @@ jobs:
           retention-days: 90
 
   # ------------------------------------------------------------------ pages
-  # The verified site of this run, published. The prerequisites are the gates that guard
-  # the site (the structure, the suite, the registry projections current, the site built,
-  # checked and probed); coverage, macOS and the benchmark check gate merging, not
-  # publishing, exactly as before this workflow replaced pages.yml. Deployments queue in
-  # order and never cancel one another.
+  # The verified site of this run, published: scripts/site-deploy --skip-build pushes the
+  # site/public the site job built, checked and probed to the gh-pages branch, which GitHub
+  # Pages serves. The same script deploys from a terminal (.ai/repo/skills/deploy-site.md);
+  # this job is its gated form. The prerequisites are the gates that guard the site (the
+  # structure, the suite, the registry projections current, the site built, checked and
+  # probed); coverage, macOS and the benchmark check gate merging, not publishing.
+  # Deployments queue in order and never cancel one another.
   pages:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
     needs: [plan, structure, suite, rust, site]
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pages: write
-      id-token: write
+      contents: write
     concurrency:
       group: pages
       cancel-in-progress: false
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-public
+          path: site/public
+      - name: deploy to gh-pages
+        run: scripts/site-deploy --skip-build
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
