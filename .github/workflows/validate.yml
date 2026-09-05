@@ -88,6 +88,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get install -y shellcheck >/dev/null
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: actionlint
       - name: shell-lint
         run: scripts/ci/shell-lint
       - name: core-check
@@ -159,7 +162,8 @@ jobs:
           MODE: ${{ needs.plan.outputs.rust_check == 'true' && '--ci' || '--integration' }}
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
       - id: target
-        run: echo "triple=$(rustc -vV | sed -n 's/^host: //p')" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "triple=$(rustc -vV | sed -n 's/^host: //p')" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
           name: majordomus-cli-${{ steps.target.outputs.triple }}

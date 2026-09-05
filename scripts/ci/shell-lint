@@ -15,4 +15,16 @@ echo "==> shellcheck"
 # shellcheck disable=SC2086
 shellcheck -x -s bash -S warning $scripts
 shellcheck -x -s bash -S warning test/cases/*.sh
+# The workflow is YAML GitHub parses on its own terms; a file that does not parse fails
+# every job of every run before any of them starts, so it is linted here, where a person
+# runs it. actionlint is required in CI (the structure job installs it) and reported when
+# absent locally, never silently skipped.
+if command -v actionlint >/dev/null 2>&1; then
+  echo "==> actionlint"
+  actionlint .github/workflows/*.yml
+elif [ -n "${CI:-}" ]; then
+  echo "shell-lint: actionlint is required in CI and is not installed" >&2; exit 12
+else
+  echo "==> actionlint: not installed (brew install actionlint); CI runs it"
+fi
 echo "shell-lint: ok"
