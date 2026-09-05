@@ -38,13 +38,45 @@
 # person can find the prompt they are looking for by listing the directory. Retention and
 # reading are both a directory listing.
 #
+# Beside each record is the same prompt as Markdown, under the same stem. The two are not
+# alternatives, and which one a reader gets is not the writer's choice to make: the JSON is
+# the record — the provider's own spans, still escaped, byte for byte what it sent — and the
+# Markdown is that record rendered for a person, the prompt decoded into the body and the
+# rest into front matter. A rendering can be rebuilt from a record and never the other way
+# round, so the record is the thing capture must not lose and the rendering is the thing
+# that makes the archive worth opening. Both are written, always: an archive that is half
+# one format and half the other is a directory nobody can read end to end, so the pair is
+# an invariant the doctrine decides rather than a habit the writer is trusted to keep.
+#
 # The archive is evidence, not knowledge: nothing loads it into a context, no command
 # retrieves from it, and it lives under the ignored half of the AI layer.
 
 MJ_CAPTURE_SCHEMA="majordomus.prompt/v1"
-# the closed set of fields a record carries, in order; a reader may rely on it, and a field
-# outside it is a defect the prompt_capture doctrine reports
-MJ_CAPTURE_FIELDS="schema ts provider event id session source cwd repository branch head text"
+# The schema identifier is also the path to what describes it: `<namespace>.<name>/<version>`
+# lives at `share/schemas/<namespace>/<name>/<version>`, and there are two files there because
+# there are two projections and they are not the same kind of thing. The record is JSON and is
+# described by JSON Schema, in `.schema.json`. The document is Markdown — a shape, an order,
+# sections present or absent — and is described by protobuf, in `.proto`, where a message and
+# its field numbers say "these parts, in this order" without pretending a document is a bag of
+# keys. A record therefore carries the way to read both halves, and nothing has to publish a
+# lookup table for the archive to be self-describing.
+MJ_CAPTURE_SCHEMA_DIR="share/schemas"
+MJ_CAPTURE_SCHEMA_EXT="schema.json proto"
+
+# The fields the hook writes, in order. Everything observable before the model runs is here,
+# and this is what a record always carries.
+MJ_CAPTURE_FIELDS="schema started_at provider event id session source cwd repository branch head text"
+
+# The fields the schema declares that the hook cannot fill, because at UserPromptSubmit the
+# turn has not happened. They are absent from a record rather than null in it: an absent
+# field says "not observed", and a null one would claim it was observed to be nothing. A
+# renderer shows them when they are there, a reformat carries them through, and nothing here
+# invents one. The order is the order they render in.
+MJ_CAPTURE_OPTIONAL="finished_at duration_ms model effort tokens meta"
+
+# `ts` was this field's name before it had a sibling called finished_at; mj_capture_raw takes
+# candidates, so a record written under the old name still reformats and still renders.
+MJ_CAPTURE_STARTED="started_at,ts"
 
 # ---------------------------------------------------------------- provider adapters
 # One line per provider Majordomus can capture from:
@@ -95,19 +127,24 @@ mj_cmd_capture() {
   local sub="${1:-}"; [ $# -gt 0 ] && shift
   case "$sub" in
     prompt)  mj_capture_prompt "$@" ;;
+    render)  mj_capture_render "$@" ;;
     install) mj_capture_install "$@" ;;
     status)  mj_capture_status "$@" ;;
     --help|-h|"") cat <<H
 usage: majordomus capture prompt --provider <name>   < the provider's hook payload
+       majordomus capture render [--force]
        majordomus capture install [--provider <name>]
        majordomus capture status [--json]
   providers with an adapter: $(mj_capture_providers | tr '\n' ' ' | sed 's/ $//')
-  one file per prompt: .ai/local/prompts/YYYYMMDDHHMMSS-<slug>.json, ignored and never loaded
+  two files per prompt, same stem, both ignored and never loaded:
+    .ai/local/prompts/YYYYMMDDHHMMSS-<slug>.json  the record, the provider's spans unchanged
+    .ai/local/prompts/YYYYMMDDHHMMSS-<slug>.md    that record rendered for a person to read
+  'capture render' rebuilds a missing rendering from its record; it never writes a record
   'capture prompt' reads one JSON object on stdin and never exits 2, because in a
   provider hook that exit code can reject the person's prompt
 H
       [ "$sub" = "" ] && return "$MJ_EX_USAGE"; return 0 ;;
-    *) mj_die "$MJ_EX_USAGE" "capture: unknown subcommand '$sub' (prompt|install|status)" ;;
+    *) mj_die "$MJ_EX_USAGE" "capture: unknown subcommand '$sub' (prompt|render|install|status)" ;;
   esac
 }
 
@@ -182,7 +219,7 @@ mj_capture_write() {
   local day id_plain
   day="$(date -u +%Y%m%d)"
   id_plain="$(mj_capture_ident "$v_id")"
-  if [ -n "$id_plain" ] && [ -n "$(grep -lF "\"id\":$v_id," "$dir/$day"*.json 2>/dev/null | head -n 1)" ]; then return 0; fi
+  if [ -n "$id_plain" ] && [ -n "$(grep -lF "\"id\": $v_id," "$dir/$day"*.json 2>/dev/null | head -n 1)" ]; then return 0; fi
 
   # The name is the second it was captured in, then the opening of the prompt, so the
   # directory reads as a list of what was asked and when.
@@ -195,10 +232,300 @@ mj_capture_write() {
   # two prompts in one second whose openings agree are still two prompts
   while [ -e "$file" ]; do file="$dir/$stamp-$slug-$n.json"; n=$((n + 1)); [ "$n" -gt 99 ] && return 0; done
 
-  printf '{"schema":"%s","ts":"%s","provider":"%s","event":"%s","id":%s,"session":%s,"source":%s,"cwd":%s,"repository":"%s","branch":"%s","head":"%s","text":%s}\n' \
-    "$MJ_CAPTURE_SCHEMA" "$(mj_now)" "$provider" "$event" "$v_id" "$v_session" "$v_source" "$v_cwd" \
-    "$(mj_json_esc "$MJ_ROOT")" "$(mj_json_esc "$(mj_git_branch)")" "$(mj_git_head)" "$v_text" > "$file" \
+  mj_capture_record \
+    "\"$MJ_CAPTURE_SCHEMA\"" "\"$(mj_now)\"" "\"$provider\"" "\"$event\"" "$v_id" "$v_session" "$v_source" "$v_cwd" \
+    "\"$(mj_json_esc "$MJ_ROOT")\"" "\"$(mj_json_esc "$(mj_git_branch)")\"" "\"$(mj_git_head)\"" "$v_text" > "$file" \
     || { mj_err "capture prompt: cannot write $file"; return "$MJ_EX_INTERNAL"; }
+
+  # The record exists now, so the prompt is safe whatever happens next. A rendering that
+  # cannot be written is therefore not a lost prompt and does not go in .capture.log, whose
+  # every line means one prompt is gone; it is a missing half of a pair, which the doctrine
+  # reports on its own terms and `capture render` repairs from the record still sitting here.
+  mj_capture_render_one "$file" || true
+  return 0
+}
+
+# The record itself: one member per line, in the order MJ_CAPTURE_FIELDS declares. Pretty
+# printed because a record is read by people too, and a single 40 KB line is not something
+# any editor or diff shows usefully; the shape stays strict enough to check by reading the
+# first two lines and the last.
+#
+# Every value arrives here as a raw JSON span and is printed as it came. The indentation is
+# outside the spans, so nothing inside a string is touched — the text of the prompt is the
+# provider's own bytes on either side of this change.
+mj_capture_record() {
+  local i=1 k v
+  for k in $MJ_CAPTURE_FIELDS; do
+    eval "v=\${$i}"; i=$((i + 1))
+    printf '%s\t%s\n' "$k" "$v"
+  done | mj_capture_emit
+}
+
+# key<TAB>raw-json-value lines to a pretty object. One place decides the indentation and
+# where the commas go, so the writer and the reformatter cannot disagree about the shape the
+# doctrine then checks.
+mj_capture_emit() {
+  awk -F'\t' '{ k[NR] = $1; v[NR] = $2 }
+    END { printf "{\n"
+          for (i = 1; i <= NR; i++) printf "  \"%s\": %s%s\n", k[i], v[i], (i < NR ? "," : "")
+          printf "}\n" }'
+}
+
+# Is this file already the shape above? Cheap enough to ask of every record on every render.
+mj_capture_is_pretty() {
+  [ "$(sed -n '1p' "$1" 2>/dev/null)" = '{' ] || return 1
+  sed -n '2p' "$1" 2>/dev/null | grep -qF "\"schema\": \"$MJ_CAPTURE_SCHEMA\"," || return 1
+  [ "$(tail -n 1 "$1" 2>/dev/null)" = '}' ]
+}
+
+# ---------------------------------------------------------------- the rendering
+# The Markdown beside a record, in one shape every rendering has: the closed field set as
+# YAML front matter, the same fields again as a table a person reads, and the prompt last,
+# under `## PROMPT`, fenced.
+#
+# Front matter and table are the same fields twice on purpose. One is what a tool reads and
+# the other is what a person reads, they are written by one function out of one record in
+# one pass, and neither is edited by hand — so they cannot drift, which is the only thing
+# wrong with saying something twice.
+#
+# The prompt goes last because it is the only field with no bound on its size, and it is
+# fenced with a run of backticks longer than any run inside it. A fixed ``` fence would be
+# a claim about the prompt's content that capture is in no position to make: prompts quote
+# code, and a prompt that opens a fence of its own would otherwise end the block early and
+# spill into the document. Sizing the fence to the content is the one way to keep the
+# rendering faithful without touching a byte of the prompt.
+#
+# Written to a temporary name in the same directory and moved into place, so a reader never
+# opens a half-written rendering and a second run cannot interleave with a first.
+mj_capture_md() { printf '%s' "${1%.json}.md"; }
+
+mj_capture_render_one() {
+  local rec="$1" md scan body tmp k v rc=0 fence
+  md="$(mj_capture_md "$rec")"
+  scan="$(mktemp "${TMPDIR:-/tmp}/mj.render.XXXXXX")" || return 1
+  body="$scan.body"
+  if ! awk -f "$MJ_LIB_DIR/json_scan.awk" < "$rec" > "$scan" 2>/dev/null; then
+    rm -f "$scan"; return 1
+  fi
+  # A record an older version wrote on one line is reformatted here rather than left as a
+  # second valid shape in the archive. It is not a rewrite: every value is the raw span the
+  # scan just read out of the file, printed back in the same order, so the bytes inside the
+  # strings — the prompt above all — cross this untouched. Only the whitespace between them
+  # is this tool's.
+  if ! mj_capture_is_pretty "$rec"; then
+    if mj_capture_reformat "$rec" "$scan" > "$rec.part" 2>/dev/null && [ -s "$rec.part" ]; then
+      mv "$rec.part" "$rec" 2>/dev/null || rm -f "$rec.part"
+    else rm -f "$rec.part"; fi
+  fi
+
+  v="$(mj_capture_raw "$scan" text)"
+  if [ -n "$v" ] && [ "$v" != null ]; then mj_capture_decode "$v" > "$body" 2>/dev/null || rc=1
+  else : > "$body"; fi
+  [ "$rc" = 0 ] || { rm -f "$scan" "$body"; return 1; }
+  fence="$(mj_capture_fence "$body")"
+
+  tmp="$md.part"
+  {
+    printf -- '---\n'
+    for k in $MJ_CAPTURE_FIELDS; do
+      [ "$k" = text ] && continue
+      if [ "$k" = started_at ]; then v="$(mj_capture_raw "$scan" "$MJ_CAPTURE_STARTED")"
+      else v="$(mj_capture_raw "$scan" "$k")"; fi
+      [ -n "$v" ] || v=null
+      printf '%s: %s\n' "$k" "$(mj_capture_yaml "$v")"
+    done
+    # a field the schema declares and this record happens to carry; absent stays absent
+    for k in $MJ_CAPTURE_OPTIONAL; do
+      v="$(mj_capture_raw "$scan" "$k")"
+      [ -n "$v" ] && [ "$v" != null ] && printf '%s: %s\n' "$k" "$(mj_capture_yaml "$v")"
+    done
+    printf 'record: %s\n' "$(mj_capture_yaml "\"$(mj_json_esc "$(basename "$rec")")\"")"
+    printf -- '---\n\n'
+
+    printf '# Prompt — %s\n\n' "$(mj_capture_when "$(mj_capture_plain "$scan" "$MJ_CAPTURE_STARTED")")"
+    printf '| | |\n|---|---|\n'
+    mj_capture_row Started    "$(mj_capture_plain "$scan" "$MJ_CAPTURE_STARTED")"
+    # every row below is omitted when the record does not carry it, which for a record the
+    # UserPromptSubmit hook wrote is all of them: the turn had not run when it was written
+    mj_capture_row Finished   "$(mj_capture_plain "$scan" finished_at)"
+    mj_capture_row Duration   "$(mj_capture_duration "$(mj_capture_plain "$scan" duration_ms)")"
+    mj_capture_row Provider   "$(mj_capture_plain "$scan" provider)" "$(mj_capture_plain "$scan" event)"
+    mj_capture_row Model      "$(mj_capture_plain "$scan" model)" "$(mj_capture_plain "$scan" effort)"
+    mj_capture_row Session    "$(mj_capture_plain "$scan" session)"
+    mj_capture_row Prompt     "$(mj_capture_plain "$scan" id)"
+    mj_capture_row Source     "$(mj_capture_plain "$scan" source)"
+    mj_capture_row Repository "$(mj_capture_plain "$scan" repository)"
+    mj_capture_row Branch     "$(mj_capture_plain "$scan" branch)" "$(mj_capture_plain "$scan" head | cut -c1-7)"
+    mj_capture_row Directory  "$(mj_capture_plain "$scan" cwd)"
+    mj_capture_row Schema     "$(mj_capture_plain "$scan" schema)" "$(mj_capture_schema_stem "$(mj_capture_plain "$scan" schema)").{schema.json,proto}"
+    mj_capture_row Record     "$(basename "$rec")"
+    printf '\n## PROMPT\n\n%s\n' "$fence"
+    cat "$body"
+    # a prompt that does not end in a newline must not put the closing fence on its line
+    [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ] && printf '\n'
+    printf '%s\n' "$fence"
+  } > "$tmp" 2>/dev/null || rc=1
+  rm -f "$scan" "$body"
+  [ "$rc" = 0 ] || { rm -f "$tmp"; return 1; }
+  mv "$tmp" "$md" 2>/dev/null || { rm -f "$tmp"; return 1; }
+  return 0
+}
+
+# The record's own fields, re-emitted in the declared order. A field the file does not carry
+# is written as null rather than dropped: the set is closed, and a reader may rely on it.
+mj_capture_reformat() {
+  local scan="$2" k v
+  # json_scan returns scalars and skips nested values, so a record carrying an object — the
+  # tokens, context, meta or output the schema declares — cannot be rebuilt from a scan of
+  # it. Reformatting one would silently drop the very fields that were expensive to observe,
+  # so a record this cannot account for in full is left exactly as it is. The shape finding
+  # still names it; a person decides.
+  mj_capture_accounted "$scan" "$1" || return 1
+  { for k in $MJ_CAPTURE_FIELDS; do
+      if [ "$k" = started_at ]; then v="$(mj_capture_raw "$scan" "$MJ_CAPTURE_STARTED")"
+      else v="$(mj_capture_raw "$scan" "$k")"; fi
+      [ -n "$v" ] || v=null
+      printf '%s\t%s\n' "$k" "$v"
+    done
+    for k in $MJ_CAPTURE_OPTIONAL; do
+      v="$(mj_capture_raw "$scan" "$k")"
+      [ -n "$v" ] && [ "$v" != null ] && printf '%s\t%s\n' "$k" "$v"
+    done; } | mj_capture_emit
+}
+
+# Is every member the scan found one this knows how to write back? A key it does not know,
+# or a member it could not read because the value was nested, means the answer is no.
+mj_capture_accounted() {
+  local scan="$1" rec="$2" known k
+  known=" $MJ_CAPTURE_FIELDS ts $MJ_CAPTURE_OPTIONAL "
+  for k in $(cut -f1 "$scan" 2>/dev/null); do
+    case "$known" in *" $k "*) ;; *) return 1 ;; esac
+  done
+  # a nested member is skipped by the scanner rather than reported, so its absence from the
+  # scan is the only trace of it: if the file names a key the scan does not carry, stop
+  for k in $(grep -oE '"[a-z_]+" *:' "$rec" 2>/dev/null | tr -d '" :'); do
+    grep -q "^$k	" "$scan" || return 1
+  done
+  return 0
+}
+
+# The stem the files describing a schema share, derived from the identifier and never looked
+# up. An extension picks the projection: .schema.json for the record, .proto for the document.
+mj_capture_schema_stem() {
+  local id="${1:-$MJ_CAPTURE_SCHEMA}" ns ver
+  ns="${id%%/*}"; ver="${id#*/}"
+  [ "$ns" != "$id" ] || return 1
+  printf '%s/%s/%s' "$MJ_CAPTURE_SCHEMA_DIR" "$(printf '%s' "$ns" | tr '.' '/')" "$ver"
+}
+
+mj_capture_schema_path() {
+  local stem
+  stem="$(mj_capture_schema_stem "${1:-$MJ_CAPTURE_SCHEMA}")" || return 1
+  printf '%s.%s' "$stem" "${2:-schema.json}"
+}
+
+# Milliseconds as something a person reads. Empty in, empty out, so the row disappears.
+mj_capture_duration() {
+  local ms="$1"
+  [ -n "$ms" ] || return 0
+  case "$ms" in *[!0-9]*) printf '%s' "$ms"; return 0 ;; esac
+  if [ "$ms" -lt 1000 ]; then printf '%s ms' "$ms"
+  elif [ "$ms" -lt 60000 ]; then printf '%s.%s s' "$((ms / 1000))" "$(((ms % 1000) / 100))"
+  else printf '%sm %ss' "$((ms / 60000))" "$(((ms % 60000) / 1000))"; fi
+}
+
+# A fence longer than the longest run of backticks the text contains, and never shorter
+# than three. This is what lets the prompt be quoted verbatim: CommonMark closes a fenced
+# block only on a run at least as long as the one that opened it, so nothing inside can
+# end it early.
+mj_capture_fence() {
+  local n
+  n="$(awk '{ line = $0
+               while (match(line, /`+/)) {
+                 if (RLENGTH > m) m = RLENGTH
+                 line = substr(line, RSTART + RLENGTH)
+               } }
+             END { print m + 0 }' "$1" 2>/dev/null)"
+  [ -n "$n" ] || n=0
+  [ "$n" -lt 3 ] && n=3 || n=$((n + 1))
+  printf '%*s' "$n" '' | tr ' ' '`'
+}
+
+# One row of the table, or nothing when the record does not carry the field: a row reading
+# "null" tells a person less than an absent row does. A second value is shown beside the
+# first, which is how provider/event and branch/head read as one fact rather than two.
+mj_capture_row() {
+  local label="$1" a="$2" b="${3:-}"
+  [ -n "$a" ] || return 0
+  if [ -n "$b" ]; then printf '| **%s** | `%s` · `%s` |\n' "$label" "$a" "$b"
+  else printf '| **%s** | `%s` |\n' "$label" "$a"; fi
+}
+
+# A field of the record as plain text: empty when it is absent or null, so a caller can
+# test it rather than compare against the word "null".
+mj_capture_plain() {
+  local v
+  v="$(mj_capture_raw "$1" "$2")"
+  [ -n "$v" ] && [ "$v" != null ] || return 0
+  # a number or a boolean is already what it says; only a string has escapes to undo
+  case "$v" in \"*) mj_capture_decode "$v" | tr -d '\n\r' ;; *) printf '%s' "$v" ;; esac
+}
+
+# The timestamp as something a person reads at a glance, and the timestamp itself when it
+# is not the shape this expects — a rendering never invents a time it cannot derive.
+mj_capture_when() {
+  case "$1" in
+    ????-??-??T??:??:??Z) printf '%s %s UTC' "${1%%T*}" "$(printf '%s' "${1#*T}" | tr -d 'Z')" ;;
+    '') printf 'an unrecorded time' ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+# A raw JSON string span as the bytes it stands for. LC_ALL=C so that what \u becomes is
+# decided by the decoder and not by the locale the hook happened to run in.
+mj_capture_decode() { printf '%s' "$1" | LC_ALL=C awk -f "$MJ_LIB_DIR/json_unesc.awk" 2>/dev/null; }
+
+# A raw JSON span as a YAML scalar. null and numbers stand as they are; a string is decoded
+# and single-quoted, which needs no escape but the quote itself. Only the front matter goes
+# through this, and every field in it is one line by construction, so a newline that somehow
+# reached one is dropped rather than allowed to end the document early — the prompt, which
+# is the thing that may contain anything, never comes this way.
+mj_capture_yaml() {
+  local v="$1" d
+  [ "$v" = null ] && { printf 'null'; return 0; }
+  case "$v" in
+    \"*) d="$(mj_capture_decode "$v" | tr -d '\n\r')"
+         printf "'%s'" "$(printf '%s' "$d" | sed "s/'/''/g")" ;;
+    *)   printf '%s' "$v" ;;
+  esac
+}
+
+# ---------------------------------------------------------------- capture render
+# Rebuild the renderings the archive is missing. This exists because the pair is enforced:
+# a rule that can fail needs a command that repairs it, and the repair is always possible
+# because the record is the source and it is still there. It writes no record and reads no
+# payload — an archive with nothing missing is left untouched, and --force is for a change
+# to the rendering itself, not for anything a hook does.
+mj_capture_render() {
+  local force=0 dir rel f md n=0 bad=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --force) force=1; shift ;;
+      *) mj_die "$MJ_EX_USAGE" "capture render: unknown option $1" ;;
+    esac
+  done
+  mj_require_repo
+  dir="$(mj_capture_dir)"; rel="$(mj_rel "$dir")"
+  [ -d "$dir" ] || { printf 'no archive in %s; nothing to render\n' "$rel"; return 0; }
+  for f in "$dir"/*.json; do
+    [ -e "$f" ] || break
+    md="$(mj_capture_md "$f")"
+    [ "$force" = 0 ] && [ -e "$md" ] && continue
+    if mj_capture_render_one "$f"; then n=$((n + 1))
+    else bad=$((bad + 1)); mj_err "capture render: cannot render $(basename "$f")"; fi
+  done
+  printf '%d rendering(s) written into %s\n' "$n" "$rel"
+  [ "$bad" = 0 ] || return "$MJ_EX_INTERNAL"
   return 0
 }
 
@@ -279,8 +606,8 @@ mj_capture_state() {
   grep -qF "$rel" "$cfg"       || { printf 'named\t%s declares %s but does not name %s\n' "$(mj_capture_field "$p" 2)" "$event" "$rel"; return 0; }
   [ -f "$shim" ]               || { printf 'named\t%s names %s, which does not exist\n' "$(mj_capture_field "$p" 2)" "$rel"; return 0; }
   [ -x "$shim" ]               || { printf 'named\t%s is not executable, so the provider cannot run it\n' "$rel"; return 0; }
-  if mj_capture_selftest "$p"; then printf 'verified\t%s is wired, and a synthetic payload through it produced one record\n' "$rel"
-  else printf 'wired\t%s is in place but a synthetic payload through it produced no record\n' "$rel"; fi
+  if mj_capture_selftest "$p"; then printf 'verified\t%s is wired, and a synthetic payload through it produced one record and its rendering\n' "$rel"
+  else printf 'wired\t%s is in place but a synthetic payload through it produced no record and rendering\n' "$rel"; fi
 }
 
 # Run the shim the way the provider would, with a synthetic payload and an archive of its
@@ -293,7 +620,10 @@ mj_capture_selftest() {
   printf '{"%s":"majordomus self test","%s":"selftest-%s","%s":"user"}' \
     "$(mj_capture_first "$p" 6)" "$(mj_capture_first "$p" 4)" "$$" "$(mj_capture_first "$p" 7)" \
     | MJ_CAPTURE_DIR="$tmp" "$(mj_capture_shim "$p")" >/dev/null 2>&1 || rc=1
+  # both halves, because both are what the hook is supposed to leave behind: a shim that
+  # writes a record and no rendering is wired but not doing the whole of its job.
   [ "$rc" = 0 ] && { grep -qF 'majordomus self test' "$tmp"/*.json 2>/dev/null || rc=1; }
+  [ "$rc" = 0 ] && { grep -qF 'majordomus self test' "$tmp"/*.md   2>/dev/null || rc=1; }
   rm -rf "$tmp"
   return "$rc"
 }
@@ -402,6 +732,7 @@ mj_validate_prompt_capture() {
   local dir rel tracked
   dir="$(mj_capture_dir)"; rel="$(mj_rel "$dir")"
 
+  mj_capture_schema "$rel"
   [ -d "$dir" ] || { mj_doctrine_ok capture "$rel" "no archive here; nothing has been captured into this checkout"; return 0; }
 
   tracked="$(mj_git ls-files -- "$rel" 2>/dev/null | head -n 3 | tr '\n' ' ')"
@@ -414,6 +745,7 @@ mj_validate_prompt_capture() {
   fi
 
   mj_capture_records "$dir" "$rel"
+  mj_capture_pairs "$dir" "$rel"
   mj_capture_failures "$dir" "$rel"
   return 0
 }
@@ -424,7 +756,10 @@ mj_validate_prompt_capture() {
 # clears by being deleted, deliberately, once a person has read it: it is a diagnostic, and
 # unlike a record, nothing is lost by removing it.
 mj_capture_failures() {
-  local dir="$1" rel="$2" log="$dir/.capture.log" n
+  local dir="$1" rel="$2" n log
+  # a second 'local': $dir is not yet this function's own inside the first one, and the
+  # path it built resolved to the caller's variable of the same name by luck
+  log="$dir/.capture.log"
   [ -s "$log" ] || return 0
   n="$(grep -c . "$log" 2>/dev/null || true)"
   mj_doctrine_fail capture "$rel/.capture.log" \
@@ -432,25 +767,81 @@ mj_capture_failures() {
     "cat $rel/.capture.log   # then remove it once understood"
 }
 
-# Every record is one file of one line: the schema identifier, the closed field set, and
-# none of the model's half of the exchange. One awk pass over the archive, batched by find,
-# so the cost is the archive's size and not a process per record.
+# Every record is written twice, under one stem: the JSON that is the record and the
+# Markdown that renders it. Neither half alone is the archive this repository claims to
+# keep — a directory of records nobody reads, or of renderings nothing can be rebuilt from
+# — so a stem that carries one and not the other is a finding, and `capture render` closes
+# the gap the only way it can be closed honestly, from the record.
+#
+# An .md with no .json is the opposite defect and is not repairable: nothing can reconstruct
+# a record from a rendering, so it is reported for a person to remove rather than fixed.
+# The identifier in every record is also the path to the file that describes it, so the
+# archive is self-describing or it is not: a record naming a schema nothing defines is a
+# record no one can be held to. The derivation is mechanical — `<ns>.<name>/<version>` is
+# `.ai/repo/schemas/<ns>/<name>/<version>.proto` — which is the point: there is no registry
+# to fall out of step with, and adding a version means adding a file at the path its own
+# identifier already names.
+mj_capture_schema() {
+  local rel="$1" stem ext path missing="" n=0
+  stem="$(mj_capture_schema_stem "$MJ_CAPTURE_SCHEMA")" || {
+    mj_doctrine_fail capture "$rel" "the schema identifier '$MJ_CAPTURE_SCHEMA' is not <namespace>/<version> and names no file" "grep -n MJ_CAPTURE_SCHEMA= lib/capture.sh"
+    return 0; }
+  for ext in $MJ_CAPTURE_SCHEMA_EXT; do
+    path="$stem.$ext"; n=$((n + 1))
+    [ -f "$MJ_HOME/$path" ] || [ -f "$MJ_ROOT/$path" ] || missing="$missing $path"
+  done
+  if [ -n "$missing" ]; then
+    mj_doctrine_fail capture "$stem" "$MJ_CAPTURE_SCHEMA names$missing and they do not exist; a record describes both its halves or it describes neither" "ls $(dirname "$stem")"
+  else
+    mj_doctrine_ok capture "$stem" "$n file(s) describe $MJ_CAPTURE_SCHEMA at the path the identifier derives: the record as JSON Schema, the document as protobuf"
+  fi
+}
+
+mj_capture_pairs() {
+  local dir="$1" rel="$2" f md missing="" orphan="" nm=0 no=0
+  for f in "$dir"/*.json; do
+    [ -e "$f" ] || break
+    [ -e "${f%.json}.md" ] && continue
+    nm=$((nm + 1)); [ "$nm" -le 3 ] && missing="$missing $(basename "$f")"
+  done
+  for md in "$dir"/*.md; do
+    [ -e "$md" ] || break
+    [ -e "${md%.md}.json" ] && continue
+    no=$((no + 1)); [ "$no" -le 3 ] && orphan="$orphan $(basename "$md")"
+  done
+  if [ "$nm" != 0 ]; then
+    mj_doctrine_fail capture "$rel" \
+      "$nm record(s) have no Markdown rendering:$missing" "majordomus capture render"
+  elif [ "$no" != 0 ]; then
+    mj_doctrine_fail capture "$rel" \
+      "$no rendering(s) have no record and cannot be rebuilt from one:$orphan" \
+      "ls $rel/*.md   # remove the ones with no .json beside them"
+  else
+    mj_doctrine_ok capture "$rel" "every prompt is present as both a record and a rendering"
+  fi
+}
+
+# Every record is one object, one member per line, opening with the schema identifier and
+# carrying none of the model's half of the exchange. One awk pass over the archive, batched
+# by find, so the cost is the archive's size and not a process per record.
 mj_capture_records() {
   local dir="$1" rel="$2" n out model shape
   n="$(find "$dir" -maxdepth 1 -name '*.json' 2>/dev/null | wc -l | tr -d ' ')"
   [ "$n" -gt 0 ] || { mj_doctrine_ok capture "$rel" "no records yet; the archive is empty"; return 0; }
   out="$(find "$dir" -maxdepth 1 -name '*.json' -exec awk '
-    FNR == 1 { if ($0 !~ /^\{"schema":"majordomus\.prompt\/v1",/ || $0 !~ /\}$/) print "SHAPE " FILENAME }
-    FNR > 1  { if (!s[FILENAME]++) print "SHAPE " FILENAME }
-    /"(response|completion|transcript|messages|reply|assistant)":/ { if (!m[FILENAME]++) print "MODEL " FILENAME }
+    FNR == 1 { seen[FILENAME] = 1; ok[FILENAME] = ($0 == "{") }
+    FNR == 2 { if ($0 !~ /^  "schema": "majordomus\.prompt\/v1",$/) ok[FILENAME] = 0 }
+    { last[FILENAME] = $0 }
+    /"(response|completion|transcript|messages|reply|assistant)": / { if (!m[FILENAME]++) print "MODEL " FILENAME }
+    END { for (f in seen) if (!ok[f] || last[f] != "}") print "SHAPE " f }
   ' {} + 2>/dev/null)"
   model="$(printf '%s' "$out" | grep -c '^MODEL ' || true)"
   shape="$(printf '%s' "$out" | grep -c '^SHAPE ' || true)"
   if [ "$model" != 0 ]; then
     mj_doctrine_fail capture "$rel" "$model record(s) carry the model's half of the exchange: $(printf '%s' "$out" | sed -n 's/^MODEL .*\///p' | head -n 3 | tr '\n' ' ')" "grep -lE '\"(response|completion|transcript|messages|reply|assistant)\":' $rel/*.json"
   elif [ "$shape" != 0 ]; then
-    mj_doctrine_fail capture "$rel" "$shape record(s) are not one line of $MJ_CAPTURE_SCHEMA: $(printf '%s' "$out" | sed -n 's/^SHAPE .*\///p' | head -n 3 | tr '\n' ' ')" "head -n 2 $rel/*.json"
+    mj_doctrine_fail capture "$rel" "$shape record(s) are not a $MJ_CAPTURE_SCHEMA object: $(printf '%s' "$out" | sed -n 's/^SHAPE .*\///p' | head -n 3 | tr '\n' ' ')" "majordomus capture render   # reformats a record written by an older version"
   else
-    mj_doctrine_ok capture "$rel" "$n record(s), $(du -sk "$dir" 2>/dev/null | awk '{ print $1 }') KiB, each one line of $MJ_CAPTURE_SCHEMA and carrying the person's prompt only; nothing prunes them"
+    mj_doctrine_ok capture "$rel" "$n record(s), $(du -sk "$dir" 2>/dev/null | awk '{ print $1 }') KiB, each an object of $MJ_CAPTURE_SCHEMA carrying the person's prompt only; nothing prunes them"
   fi
 }

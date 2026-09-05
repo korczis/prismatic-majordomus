@@ -16,3 +16,5 @@ The prompt that started the work is the one thing nobody keeps. It lives in a pr
 ## Outcome
 
 The prompts are captured below the model, by the provider hook, into files the repository ignores and nothing loads into a context. Whether the wiring is real is answered by running a payload through it rather than by a claim, and a payload that cannot be read is reported instead of dropped.
+
+Each prompt is kept twice under one stem, because the two readers are different. The `.json` record is what the provider sent — its own spans, still escaped, pretty printed one member per line — and it is what everything else is derived from. The `.md` beside it is that record rendered for a person: the fields as front matter and again as a table, then the prompt itself under `## PROMPT`, decoded and fenced. An archive nobody opens is evidence of nothing, and a rendering nothing can be rebuilt from is not evidence at all, so the pair is enforced rather than left to habit. The asymmetry is what makes that safe: `capture render` rebuilds any rendering from its record, and no command can go the other way.
