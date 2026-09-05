@@ -46,7 +46,7 @@ A **capability** is a descriptor with:
 | field | meaning |
 |---|---|
 | `id` | the canonical identity: a namespace, a dot, an opaque local part (`repository.info`, `rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`); unique across both sources |
-| `kind` | `query`: executable, read-only, one typed handler; `resource`: declarative content, read as it is |
+| `kind` | `query`: executable, read-only, one typed handler; `command`: executable, one typed handler, changes this process's own memory and nothing else (a peer announcing itself), bound to `POST` and announced to MCP clients as not read-only; `resource`: declarative content, read as it is. No kind writes to the repository |
 | `title`, `description` | the words every projection shows |
 | `input`, `output` | canonical JSON Schemas; for a query, derived from its Rust types; for a resource, the object view |
 | `provenance` | `builtin` with the module, or `declarative` with the repository-relative path, directory, source class, section and, for a member of a collection file, the member's key path |
@@ -65,10 +65,12 @@ Built at one place per process, from the builtin executables composed explicitly
 `capability/builtin.rs` and from every object of the index. It refuses to build, naming
 every party, on a duplicate id (Rust with Rust, Rust with declarative), a duplicate MCP
 tool name or resource URI, a duplicate HTTP route, a duplicate CLI path, a malformed
-exposure (a route outside `/api/v1/`, a tool name outside `[a-z0-9_]+`), a query without a
-handler, a resource with one, and an executable exposure on a planned or unsupported
-capability. Errors are collected, not stopped at the first. `majordomus capabilities
-validate` runs exactly this and exits 10 with the list.
+exposure (a route outside `/api/v1/`, a tool name outside `[a-z0-9_]+`), a query or a
+command without a handler, a resource with one, a command with an MCP resource exposure
+or an HTTP method other than `POST`, a query exposed as an MCP resource whose input
+requires anything (a read supplies none), and an executable exposure on a planned or
+unsupported capability. Errors are collected, not stopped at the first. `majordomus
+capabilities validate` runs exactly this and exits 10 with the list.
 
 ## Kinds and schemas, read at run time
 
@@ -98,17 +100,21 @@ written by hand.
 
 | projection | derived from | where |
 |---|---|---|
-| MCP tools | capabilities with an `mcp.tool` exposure; `inputSchema` and `outputSchema` are the canonical schemas; `_meta.majordomus.id` carries the id | `majordomus mcp` |
-| MCP resources | capabilities with an `mcp.resource` exposure; a query with one is read as JSON | `majordomus mcp` |
-| HTTP routes | capabilities with an `http` exposure; `GET` binds every top-level input property as a query parameter coerced by its schema type, `POST` binds the JSON body; errors map to 400 `invalid_input`, 404 `not_found`, 422 `refused`, 500 `internal`, 405 for another method on a known path | `majordomus serve` |
+| MCP tools | capabilities with an `mcp.tool` exposure; `inputSchema` and `outputSchema` are the canonical schemas; `_meta.majordomus.id` carries the id; `readOnlyHint` follows the kind | `majordomus mcp` on stdio, and `/mcp` on the shared server |
+| MCP resources | capabilities with an `mcp.resource` exposure; a query with one is read as JSON | `majordomus mcp` on stdio, and `/mcp` on the shared server |
+| HTTP routes | capabilities with an `http` exposure; `GET` binds every top-level input property as a query parameter coerced by its schema type, `POST` binds the JSON body (a command's binding); errors map to 400 `invalid_input`, 404 `not_found`, 422 `refused`, 500 `internal`, 405 for another method on a known path | the shared server `majordomus mcp` starts, and `majordomus serve` |
 | OpenAPI 3.1 | the same routes; `operationId` is the id; `x-majordomus-id`, `-kind`, `-stability`, `-provenance`, `-mcp`, `-cli` carry the rest; schemas hoisted into sorted components; the OAS 3.1 base dialect | `GET /openapi.json`, `docs/generated/openapi.json` |
 | Swagger UI | a shell page that loads `/openapi.json`; it embeds no specification; its assets come from the pinned `swagger-ui-dist` on unpkg, the one part that is not offline | `GET /docs` |
 | command line | `capabilities list` and `describe` dispatch through the registry's `cli` exposure; `schema` and `validate` are views of the registry, not capabilities | `majordomus capabilities …` |
 | reference | the builtin capabilities in full; declarative resources described by rule, listed live | `docs/generated/capabilities.md` |
 | allow-lists | the schemas | `share/allow/*.txt` |
 
-The three infrastructure routes `/`, `/openapi.json` and `/docs` are the HTTP projection's
-own and are not capabilities.
+The infrastructure routes `/`, `/openapi.json`, `/docs` and `/mcp` are the HTTP
+projection's own and are not capabilities; `/mcp` is MCP over HTTP (the Streamable HTTP
+transport's request half, with `Mcp-Session-Id` sessions) and exists on the shared server
+only. One shared server serves a repository: the first `majordomus mcp` or `serve` binds
+it, every later `majordomus mcp` bridges its stdio to it, and the peers see each other
+through `peers.list`; the lifecycle is in [`MCP.md`](MCP.md).
 
 ## Lifecycle and failure policy
 
@@ -132,7 +138,9 @@ does not build.
 Write the file where the repository's `sources.yaml` class for that kind looks, with the
 front matter or YAML its schema allows; track it (or run with `--discovery filesystem`);
 restart. It is a resource capability, an MCP resource, a member of `objects.list`, readable
-through `objects.get` over MCP and HTTP, and listed by `capabilities list`. No Rust, no
+through `objects.get` over MCP and HTTP (one resolution of the URI, shared with the MCP
+resource read, which also answers `majordomus://repository` as `repository.info`'s
+report), and listed by `capabilities list`. No Rust, no
 registration, no projection edited. `apps/majordomus-cli/tests/external_extension.rs` adds,
 removes and breaks objects between restarts and reads them back through every interface.
 
@@ -152,9 +160,12 @@ not define how a format is read.
 
 1. define the typed input and output (`serde` + `schemars::JsonSchema`, doc comments are
    the descriptions),
-2. write one function `fn(&Context, Input) -> Result<Output, CapabilityError>`,
+2. write one function `fn(&Context, Input) -> Result<Output, CapabilityError>`; the
+   context carries the index, the registry, the peer board and, through an MCP session,
+   the calling peer,
 3. describe it with `capability! { id, title, description, input, output, stability,
-   exposure, tags, handler }`,
+   exposure, tags, handler }` (a query), or with `kind: CapabilityKind::Command` after
+   the id when it changes this process's memory,
 4. add it to the list in `builtin::all()`,
 5. add a behavioural test.
 
@@ -189,8 +200,9 @@ stale file. CI runs the check. The committed files are caches: reviewable, never
 | the registry's invariants, both sources, deterministic build | behaviourally verified (`tests/registry.rs`) |
 | every declared projection present, no orphan, one id everywhere; a change to one descriptor reaches MCP, OpenAPI and the reference | behaviourally verified (`tests/projections.rs`) |
 | HTTP over a real socket, OpenAPI, Swagger shell, typed errors, MCP and HTTP answering the same handler identically, a declarative object reaching HTTP and introspection untouched | behaviourally verified (`tests/http_serve.rs`) |
+| one shared server per repository: the lease, the bridge, `/mcp` sessions, the peers and their announcements, the fallback port, `serve` deferring, `--standalone`, the takeover after a kill, the re-attachment, the refusal when the taker cannot serve | behaviourally verified (`tests/mcp_shared.rs`, `tests/shared_units.rs`, `test/cases/90_mcp_shared_server.sh`) |
 | repository-defined kind and schema served without a code change; add, remove, break | behaviourally verified (`tests/external_extension.rs`) |
 | generate, byte-identical regeneration, `--check` on missing and tampered files | behaviourally verified (`tests/generate_check.rs`) |
 | the whole path through the shell tool's own `init` | behaviourally verified (`test/cases/76_capabilities_projections.sh`) |
 | the id grammar, URIs, tool names, route paths, diagnostic codes, `kinds.yaml`, the schema files | implemented; pre-1.0 compatibility surfaces, changes documented, never silent |
-| Swagger UI assets offline, `/openapi.yaml`, path parameters, POST capabilities, hot reload, mutation over any interface, a second transport | not implemented; restart-based rediscovery is the contract |
+| Swagger UI assets offline, `/openapi.yaml`, path parameters, hot reload, mutation of the repository over any interface, a server-initiated stream on `/mcp` | not implemented; restart-based rediscovery is the contract, and a shared server keeps the index it built at start until its last client leaves |

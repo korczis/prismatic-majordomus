@@ -6,7 +6,7 @@ use std::io::Write;
 use serde_json::{json, Value};
 
 use crate::app::App;
-use crate::capability::{CapabilityError, CapabilityKind};
+use crate::capability::CapabilityError;
 use crate::cli::{CapabilitiesArgs, CapabilitiesCommand, OutputFormat, SchemaSide};
 use crate::error::{Error, Result};
 
@@ -27,8 +27,7 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
         } => {
             let input = json!({ "kind": kind, "exposure": exposure });
             let v = ctx
-                .registry
-                .call(ctx, cli_capability(ctx, &["capabilities", "list"])?, input)
+                .execute(cli_capability(ctx, &["capabilities", "list"])?, input)
                 .map_err(map)?;
             match format {
                 OutputFormat::Json => w(&mut out, pretty(&v))?,
@@ -77,9 +76,7 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
         }
         CapabilitiesCommand::Describe { id, format } => {
             let v = ctx
-                .registry
-                .call(
-                    ctx,
+                .execute(
                     cli_capability(ctx, &["capabilities", "describe"])?,
                     json!({ "id": id }),
                 )
@@ -189,7 +186,7 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
             let queries = ctx
                 .registry
                 .iter()
-                .filter(|c| c.kind == CapabilityKind::Query)
+                .filter(|c| c.kind.is_executable())
                 .count();
             w(
                 &mut out,
@@ -201,7 +198,8 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
                     app.schema.schemas().count()
                 ),
             )?;
-            w(&mut out, format!("OK   registry    {} capabilities — every id, MCP name, MCP uri, HTTP route and CLI path unique; {} queries carry a handler", s.total, queries))?;
+            w(&mut out, format!("OK   registry    {} capabilities — every id, MCP name, MCP uri, HTTP route and CLI path unique; {} executable(s) carry a handler", s.total, queries))?;
+            w(&mut out, format!("OK   modules     {} module(s) — every executable composed in the module its namespace names; {} required benchmark target(s), {} waived, {} cached", s.modules, s.benchmark_required, s.benchmark_waived, s.cached))?;
             w(&mut out, format!("OK   mcp         {} tool(s), {} resource(s) — every exposure names an executable capability", s.mcp_tools, s.mcp_resources))?;
             w(
                 &mut out,

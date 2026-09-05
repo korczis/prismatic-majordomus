@@ -209,7 +209,7 @@ fn reference(registry: &CapabilityRegistry, version: &str) -> String {
     s.push_str("# Capability reference\n\n");
     s.push_str("Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI and the command line's `capabilities` commands are projections of the same entries; nothing below is declared anywhere else.\n\n");
     s.push_str("## Executable capabilities\n\n");
-    s.push_str("| id | stability | MCP tool | MCP resource | HTTP | CLI | provenance |\n|---|---|---|---|---|---|---|\n");
+    s.push_str("| id | kind | stability | MCP tool | MCP resource | HTTP | CLI | provenance |\n|---|---|---|---|---|---|---|---|\n");
     let builtin: Vec<_> = registry
         .iter()
         .filter(|c| matches!(c.provenance, Provenance::Builtin { .. }))
@@ -245,9 +245,13 @@ fn reference(registry: &CapabilityRegistry, version: &str) -> String {
             .ok()
             .and_then(|v| v.as_str().map(str::to_string))
             .unwrap_or_default();
+        let kind = serde_json::to_value(c.kind)
+            .ok()
+            .and_then(|v| v.as_str().map(str::to_string))
+            .unwrap_or_default();
         s.push_str(&format!(
-            "| `{}` | {} | {} | {} | {} | {} | {} |\n",
-            c.id, stability, mcp_tool, mcp_res, http, cli, c.provenance
+            "| `{}` | {} | {} | {} | {} | {} | {} | {} |\n",
+            c.id, kind, stability, mcp_tool, mcp_res, http, cli, c.provenance
         ));
     }
     s.push('\n');

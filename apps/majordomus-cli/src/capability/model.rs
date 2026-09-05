@@ -56,8 +56,9 @@ impl CapabilityId {
         Ok(CapabilityId(text.to_string()))
     }
 
-    /// For descriptors written in code; validated when the registry is built.
-    pub(crate) fn unchecked(text: &str) -> Self {
+    /// For descriptors written in code (the `capability!` macro); validated when the
+    /// registry is built, never before.
+    pub fn unchecked(text: &str) -> Self {
         CapabilityId(text.to_string())
     }
 
@@ -78,8 +79,133 @@ impl fmt::Display for CapabilityId {
     }
 }
 
-/// What a capability is. Two kinds exist because two semantics exist: something that is
-/// executed with an input and answers with an output, and something that is read.
+/// A module identity: the namespace of every capability the module composes, matching
+/// `[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative
+/// object's module is its kind.
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(transparent)]
+pub struct ModuleId(String);
+
+impl ModuleId {
+    /// Parse and validate.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::ModuleId;
+    /// assert!(ModuleId::parse("repository").is_ok());
+    /// assert!(ModuleId::parse("Repository").is_err());
+    /// assert!(ModuleId::parse("").is_err());
+    /// ```
+    pub fn parse(text: &str) -> Result<Self, String> {
+        let mut chars = text.chars();
+        let ok = chars.next().is_some_and(|c| c.is_ascii_lowercase())
+            && chars.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '-');
+        if ok {
+            Ok(ModuleId(text.to_string()))
+        } else {
+            Err(format!("module id '{text}' is not [a-z][a-z0-9_-]*"))
+        }
+    }
+
+    /// For descriptors written in code; validated when the registry is built.
+    pub fn unchecked(text: &str) -> Self {
+        ModuleId(text.to_string())
+    }
+
+    /// The id as text.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Display for ModuleId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+/// Why an executable capability is not benchmarked. Typed, so that a waiver is a
+/// reviewable statement and never a convenience; `not_executable` is the registry's own
+/// reason for resources and is never written by hand.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum WaiverReason {
+    /// A resource: read, never executed; nothing to time but `objects.get`, which is.
+    NotExecutable,
+    /// The capability changes something outside this process and cannot be run in a loop.
+    Destructive,
+    /// The capability talks to something the benchmark host cannot provide.
+    ExternalDependency,
+}
+
+/// Whether the capability is a benchmark target. `Required` is the default and the norm:
+/// every executable capability is timed directly and through every transport it is
+/// exposed on, with the cases its input type provides.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "policy", rename_all = "snake_case")]
+pub enum BenchmarkPolicy {
+    /// Timed directly and through every exposure; coverage fails without a case.
+    Required,
+    /// Not timed, for the typed reason; coverage reports it as waived, never as covered.
+    Waived {
+        /// Why.
+        reason: WaiverReason,
+    },
+}
+
+/// Whether, and how, the executor keeps results of this capability. Cache lives in the
+/// executor and nowhere else, so MCP, HTTP and the command line share one; the key is the
+/// canonical id, the normalised input and the registry fingerprint, so a changed
+/// repository never answers from an old entry.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "policy", rename_all = "snake_case")]
+pub enum CachePolicy {
+    /// Every call runs the handler.
+    Disabled,
+    /// Results are kept in this process's memory, bounded, for equal inputs.
+    Process {
+        /// The most entries kept for this capability; the oldest is evicted first.
+        max_entries: usize,
+        /// Seconds an entry stays valid; `None` for the life of the process.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        ttl_seconds: Option<u64>,
+    },
+}
+
+impl CachePolicy {
+    /// Is the policy well-formed? The reason when it is not.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CachePolicy;
+    /// assert!(CachePolicy::Disabled.validate().is_ok());
+    /// assert!(CachePolicy::Process { max_entries: 0, ttl_seconds: None }.validate().is_err());
+    /// ```
+    pub fn validate(&self) -> Result<(), String> {
+        match self {
+            CachePolicy::Disabled => Ok(()),
+            CachePolicy::Process { max_entries: 0, .. } => {
+                Err("a process cache with max_entries 0 keeps nothing".into())
+            }
+            CachePolicy::Process {
+                ttl_seconds: Some(0),
+                ..
+            } => Err("a process cache with ttl_seconds 0 keeps nothing".into()),
+            CachePolicy::Process { .. } => Ok(()),
+        }
+    }
+
+    /// Does the policy keep anything?
+    pub fn is_enabled(&self) -> bool {
+        !matches!(self, CachePolicy::Disabled)
+    }
+}
+
+/// What a capability is. Three kinds exist because three semantics exist: something that
+/// is executed and changes nothing, something that is executed and changes this process's
+/// own memory, and something that is read. Nothing of any kind writes to the repository.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -87,8 +213,30 @@ impl fmt::Display for CapabilityId {
 pub enum CapabilityKind {
     /// Executable and read-only: a typed handler, an input schema, an output schema.
     Query,
+    /// Executable with an effect on this process's in-memory state and nowhere else (a
+    /// peer announcing itself): a typed handler, bound to `POST` over HTTP, and announced
+    /// to MCP clients as not read-only.
+    Command,
     /// Declarative content the repository holds: read as it is, never executed.
     Resource,
+}
+
+impl CapabilityKind {
+    /// Is a capability of this kind called, with a handler, rather than read?
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityKind;
+    /// assert!(CapabilityKind::Query.is_executable() && CapabilityKind::Command.is_executable());
+    /// assert!(!CapabilityKind::Resource.is_executable());
+    /// ```
+    pub fn is_executable(self) -> bool {
+        !matches!(self, CapabilityKind::Resource)
+    }
+
+    /// Does a call of this kind leave the process as it found it?
+    pub fn is_read_only(self) -> bool {
+        !matches!(self, CapabilityKind::Command)
+    }
 }
 
 /// Where a capability stands, in the repository's own vocabulary for claims. A capability
@@ -303,7 +451,10 @@ impl Exposure {
 pub struct Capability {
     /// The canonical identity.
     pub id: CapabilityId,
-    /// Query or resource.
+    /// The module that composes it: the id's namespace for a builtin, the kind for a
+    /// declarative object.
+    pub module: ModuleId,
+    /// Query, command or resource.
     pub kind: CapabilityKind,
     /// The short name every projection shows.
     pub title: String,
@@ -322,6 +473,10 @@ pub struct Capability {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     /// Free tags, from the declarative object's `tags` or the descriptor.
     pub tags: Vec<String>,
+    /// Whether it is a benchmark target; the cases come from the input type.
+    pub benchmark: BenchmarkPolicy,
+    /// Whether the executor keeps its results.
+    pub cache: CachePolicy,
 }
 
 #[cfg(test)]

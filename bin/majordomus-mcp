@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# majordomus-mcp — start the Rust executable's MCP server for the repository you are in,
+# building it first when it is missing or older than its sources. This is the command an
+# MCP client configuration names (.mcp.json for Claude Code, .gemini/settings.json for
+# Gemini CLI, .codex/config.toml for Codex): the client spawns it, speaks MCP on its stdin
+# and stdout, and gets the repository's one shared server (Swagger UI and MCP over HTTP on
+# the loopback interface beside this stdio session) or a bridge to the one already running.
+#
+# stdout belongs to the protocol: nothing here writes to it. Build output and the server's
+# own log go to stderr. Every argument is passed through to `majordomus mcp`
+# (--standalone, --http-port, --inspect, --repo, ...).
+#
+#   MAJORDOMUS_BIN            use this executable and never build
+#   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
+#   MAJORDOMUS_NO_BUILD=1     refuse to build; exit 12 when the executable is missing
+#
+# Exit codes are the executable's; 12 when it is missing and cannot be built.
+set -eu
+
+here="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$here/.." && pwd)"
+crate="$root/apps/majordomus-cli"
+profile="${MAJORDOMUS_BUILD_PROFILE:-debug}"
+bin="${MAJORDOMUS_BIN:-$crate/target/$profile/majordomus}"
+
+# The kinds and schemas the executable reads at run time ship beside this script.
+if [ -z "${MAJORDOMUS_SHARE:-}" ] && [ -f "$root/share/kinds.yaml" ]; then
+  MAJORDOMUS_SHARE="$root/share"; export MAJORDOMUS_SHARE
+fi
+
+# Is the executable missing, or older than any source, manifest or lock file?
+stale=0
+if [ ! -x "$bin" ]; then
+  stale=1
+elif [ -z "${MAJORDOMUS_BIN:-}" ]; then
+  newer="$(find "$crate/src" "$crate/Cargo.toml" "$crate/Cargo.lock" -type f -newer "$bin" 2>/dev/null | head -n 1)"
+  [ -n "$newer" ] && stale=1
+fi
+
+if [ "$stale" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
+  if [ "${MAJORDOMUS_NO_BUILD:-0}" = 1 ]; then
+    printf 'majordomus-mcp: %s is missing or stale and MAJORDOMUS_NO_BUILD is set; run: cargo build --manifest-path %s/Cargo.toml\n' "$bin" "$crate" >&2
+    exit 12
+  fi
+  if ! command -v cargo >/dev/null 2>&1; then
+    printf 'majordomus-mcp: %s is missing or stale and cargo is not installed; install a Rust toolchain (rustup) or set MAJORDOMUS_BIN\n' "$bin" >&2
+    exit 12
+  fi
+  printf 'majordomus-mcp: building the executable (%s profile) ...\n' "$profile" >&2
+  flags=""
+  [ "$profile" = release ] && flags="--release"
+  # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
+  # shellcheck disable=SC2086
+  if ! RUSTFLAGS='' cargo build --quiet --locked --manifest-path "$crate/Cargo.toml" $flags 1>&2; then
+    printf 'majordomus-mcp: the build failed; see above\n' >&2
+    exit 12
+  fi
+fi
+
+[ -x "$bin" ] || { printf 'majordomus-mcp: %s is not an executable\n' "$bin" >&2; exit 12; }
+exec "$bin" mcp "$@"

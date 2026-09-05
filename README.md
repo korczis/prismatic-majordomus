@@ -312,8 +312,9 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 - not an agent framework, orchestrator, or runtime
 - not a prompt library or a memory system
 - not a daemon, database, queue, or hosted service; the Rust executable's `mcp` and
-  `serve` are read-only processes a client or a person starts and owns, on stdio and on the
-  loopback interface ([`docs/CAPABILITIES.md`](docs/CAPABILITIES.md))
+  `serve` are read-only processes a client or a person starts and owns, one shared server
+  per repository on the loopback interface that ends when its last client leaves
+  ([`docs/MCP.md`](docs/MCP.md))
 - not a slice of any other platform; there is no shared code
 
 ## Limitations
@@ -357,17 +358,34 @@ declarative file with its JSON Schema, and MCP, HTTP, OpenAPI, Swagger UI, the c
 and the generated reference are projections of it, so nothing is maintained twice.
 
 ```bash
-cargo build --manifest-path apps/majordomus-cli/Cargo.toml
-apps/majordomus-cli/target/debug/majordomus mcp                  # MCP on stdio, until the client goes
-apps/majordomus-cli/target/debug/majordomus serve                # HTTP on 127.0.0.1:8741, /openapi.json, /docs
-apps/majordomus-cli/target/debug/majordomus capabilities list    # every capability and its projections
-apps/majordomus-cli/target/debug/majordomus generate --check     # the committed projections are current
+just build                      # cargo build of apps/majordomus-cli (or: cargo build --manifest-path apps/majordomus-cli/Cargo.toml)
+just mcp                        # MCP on stdio for the client that spawned it; the first one in a repository is the shared server
+just serve                      # the shared server alone: http://127.0.0.1:8741, Swagger UI at /docs, /openapi.json, /mcp
+just capabilities               # every capability and its projections
+just generate-check             # the committed projections are current
 ```
 
-Both servers write nothing, keep no state, and end with the process that started them;
-`serve` binds the loopback interface unless told otherwise. What is canonical, how a
-repository adds a kind with its schema without a code change, and how the pieces fail:
-[`docs/CAPABILITIES.md`](docs/CAPABILITIES.md); the MCP surface as a client sees it:
+**One server per repository.** The first `majordomus mcp` binds the loopback HTTP
+projection beside its stdio session and logs the URL (Swagger UI at `/docs`, the OpenAPI
+document, MCP over HTTP at `/mcp`); every later `majordomus mcp` in the same repository
+attaches to it instead of starting another, and the server ends when its last client
+leaves. It writes one file, a lease under `.ai/local/state/mcp/`, and nothing under the
+tracked tree.
+
+**Clients start it themselves.** [`.mcp.json`](.mcp.json) (Claude Code),
+[`.gemini/settings.json`](.gemini/settings.json) (Gemini CLI) and
+[`.codex/config.toml`](.codex/config.toml) (Codex) name [`bin/majordomus-mcp`](bin/majordomus-mcp),
+which builds the executable when it must and runs `majordomus mcp`. Open the repository in
+any of them and the server is there; open it in two and they share one.
+
+**Peers see each other.** Every attached client is a peer, named by what it said in
+`initialize`; `majordomus_peers` lists them and `majordomus_announce` tells the others what
+a client is working on and which paths it expects to touch, so Claude, Codex and Gemini in
+one checkout can avoid colliding, out of the box.
+
+What is canonical, how a repository adds a kind with its schema without a code change, and
+how the pieces fail: [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md); the MCP surface, the
+shared server's lifecycle and the client configurations:
 [`docs/MCP.md`](docs/MCP.md). The kinds and their schemas are read at run time from
 [`share/kinds.yaml`](share/kinds.yaml) and [`share/schemas/`](share/schemas/), and the shell
 tool's allow-lists under `share/allow/` are generated from those schemas.
@@ -375,9 +393,12 @@ tool's allow-lists under `share/allow/` are generated from those schemas.
 ## Contributing
 
 Read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the generated [`AGENTS.md`](AGENTS.md).
-The best contribution is often a deletion. Run `bash test/run.sh`; every behaviour has
-a success and a failure case. This repository supervises itself: `bin/majordomus doctor`
-runs in its own pre-commit hook and in CI.
+The best contribution is often a deletion. Run `bash test/run.sh` (`just test` runs it with
+the Rust gate and the site data check); every behaviour has a success and a failure case.
+The [`justfile`](justfile) lists what a person runs here, routed to the Rust executable
+wherever it can do the job and to the shell tool for the lifecycle; `just` alone lists the
+recipes. This repository supervises itself: `bin/majordomus doctor` runs in its own
+pre-commit hook and in CI.
 
 The website is a projection of this repository rather than a second copy of it: every
 page is generated from `README.md`, `docs/`, the policy skeleton and `docs/CLAIMS.yaml`,

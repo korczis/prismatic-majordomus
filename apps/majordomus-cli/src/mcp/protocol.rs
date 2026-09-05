@@ -5,6 +5,8 @@
 
 use serde_json::{json, Value};
 
+use crate::peers::ClientInfo;
+
 use super::surface::{Surface, SurfaceError, ToolOutcome};
 
 /// Protocol versions this server accepts from a client, newest first. A client asking for
@@ -23,11 +25,15 @@ const INTERNAL_ERROR: i64 = -32603;
 const RESOURCE_NOT_FOUND: i64 = -32002;
 
 #[derive(Debug)]
-/// The protocol state over a surface: whether the client has initialised, and the version to announce.
+/// The protocol state over a surface: whether the client has initialised, who it said it
+/// was, the version to announce, and the HTTP endpoint of the shared server this session
+/// belongs to, when there is one.
 pub struct Server {
     surface: Surface,
     version: &'static str,
     initialized: bool,
+    client: Option<ClientInfo>,
+    endpoint: Option<String>,
 }
 
 impl Server {
@@ -37,12 +43,41 @@ impl Server {
             surface,
             version,
             initialized: false,
+            client: None,
+            endpoint: None,
         }
+    }
+
+    /// The base URL of the shared server (`http://127.0.0.1:8741`) the `initialize`
+    /// instructions name, so that a client learns where Swagger UI and the peers are.
+    pub fn with_endpoint(mut self, url: Option<String>) -> Self {
+        self.endpoint = url;
+        self
     }
 
     /// The surface being served.
     pub fn surface(&self) -> &Surface {
         &self.surface
+    }
+
+    /// Has the client completed `initialize`?
+    pub fn is_initialized(&self) -> bool {
+        self.initialized
+    }
+
+    /// What the client said in `initialize`, when it has.
+    pub fn client(&self) -> Option<&ClientInfo> {
+        self.client.as_ref()
+    }
+
+    /// Resume a session another process was serving: the client already initialised
+    /// there and will not do so again. The peer is identified on the board as it was.
+    pub fn resume(&mut self, client: ClientInfo) {
+        if let Some(peer) = self.surface.peer() {
+            self.surface.context().peers.identify(peer, client.clone());
+        }
+        self.client = Some(client);
+        self.initialized = true;
     }
 
     /// The response to a parse failure of an incoming line.
@@ -53,6 +88,9 @@ impl Server {
     /// Handle one decoded message. A notification yields `None`; a batch yields a batch of
     /// the responses its requests produced, or `None` when it held only notifications.
     pub fn handle(&mut self, message: Value) -> Option<Value> {
+        if let Some(peer) = self.surface.peer() {
+            self.surface.context().peers.touch(peer);
+        }
         match message {
             Value::Array(batch) => {
                 if batch.is_empty() {
@@ -107,7 +145,7 @@ impl Server {
             "initialize" => Ok(self.initialize(params)),
             "ping" => Ok(json!({})),
             "resources/list" => Ok(
-                json!({ "resources": self.surface.resources().iter().map(resource_json).collect::<Vec<_>>() }),
+                json!({ "resources": Value::Array(self.surface.resources_json().as_ref().clone()) }),
             ),
             "resources/templates/list" => Ok(json!({ "resourceTemplates": [] })),
             "resources/read" => {
@@ -126,9 +164,9 @@ impl Server {
                     Err(e) => Err((INVALID_PARAMS, e.to_string())),
                 }
             }
-            "tools/list" => Ok(
-                json!({ "tools": self.surface.tools().iter().map(tool_json).collect::<Vec<_>>() }),
-            ),
+            "tools/list" => {
+                Ok(json!({ "tools": Value::Array(self.surface.tools_json().as_ref().clone()) }))
+            }
             "tools/call" => {
                 let name = params
                     .get("name")
@@ -173,8 +211,12 @@ impl Server {
             .find(|v| **v == asked)
             .copied()
             .unwrap_or(PROTOCOL_VERSIONS[0]);
-        let index = self.surface.index();
-        let summary = self.surface.registry().summary();
+        let client = ClientInfo::from_initialize(params);
+        if let Some(peer) = self.surface.peer() {
+            self.surface.context().peers.identify(peer, client.clone());
+            tracing::info!(peer = %peer, client = %client.name, version = %client.version, "peer initialized");
+        }
+        self.client = Some(client);
         json!({
             "protocolVersion": version,
             "capabilities": {
@@ -182,19 +224,39 @@ impl Server {
                 "tools": { "listChanged": false }
             },
             "serverInfo": { "name": SERVER_NAME, "title": "Majordomus", "version": self.version },
-            "instructions": format!(
-                "Read-only view of a repository's AI layer: {} object(s), {} capabilities ({} tools, {} resources), index state {}. Resources are majordomus://<kind>/<identity>; majordomus://repository carries the diagnostics; majordomus_capabilities lists every capability with its projections. Nothing here writes.",
-                index.objects.len(),
-                summary.total,
-                summary.mcp_tools,
-                summary.mcp_resources,
-                match index.state { crate::index::State::Ok => "ok", crate::index::State::Degraded => "degraded" }
-            ),
+            "instructions": self.instructions(),
         })
+    }
+
+    /// The text a client reads after `initialize`: what is served, where the shared
+    /// server is, and who else is attached.
+    pub fn instructions(&self) -> String {
+        let index = self.surface.index();
+        let summary = self.surface.registry().summary();
+        let mut text = format!(
+            "Read-only view of a repository's AI layer: {} object(s), {} capabilities ({} tools, {} resources), index state {}. Resources are majordomus://<kind>/<identity>; majordomus://repository carries the diagnostics; majordomus_capabilities lists every capability with its projections. Nothing here writes to the repository.",
+            index.objects.len(),
+            summary.total,
+            summary.mcp_tools,
+            summary.mcp_resources,
+            match index.state { crate::index::State::Ok => "ok", crate::index::State::Degraded => "degraded" }
+        );
+        if let Some(url) = &self.endpoint {
+            text.push_str(&format!(
+                " This session belongs to the one shared server for this repository at {url}: Swagger UI {url}/docs, OpenAPI {url}/openapi.json, MCP over HTTP {url}/mcp."
+            ));
+        }
+        if let Some(peer) = self.surface.peer() {
+            text.push_str(&format!(
+                " You are peer {peer}; peers attached: {}. majordomus_peers lists them with what they announced; call majordomus_announce with your intent and the paths you expect to touch so that the other clients (Claude, Codex, Gemini, ...) can avoid colliding with you.",
+                self.surface.context().peers.summary()
+            ));
+        }
+        text
     }
 }
 
-fn resource_json(r: &super::surface::Resource) -> Value {
+pub(crate) fn resource_json(r: &super::surface::Resource) -> Value {
     let mut v = json!({ "uri": r.uri, "name": r.name, "mimeType": r.media_type, "_meta": { "majordomus": r.meta } });
     if let Some(t) = &r.title {
         v["title"] = Value::String(t.clone());
@@ -205,13 +267,13 @@ fn resource_json(r: &super::surface::Resource) -> Value {
     v
 }
 
-fn tool_json(t: &super::surface::Tool) -> Value {
+pub(crate) fn tool_json(t: &super::surface::Tool) -> Value {
     json!({
         "name": t.name, "title": t.title, "description": t.description,
         "inputSchema": t.input_schema,
         "outputSchema": t.output_schema,
         "_meta": { "majordomus": { "id": t.id } },
-        "annotations": { "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false }
+        "annotations": { "readOnlyHint": t.read_only, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false }
     })
 }
 

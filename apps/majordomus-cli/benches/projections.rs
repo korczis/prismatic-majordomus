@@ -76,10 +76,7 @@ fn context(root: &Path) -> Arc<Context> {
         .with_index(&index)
         .build()
         .unwrap();
-    Arc::new(Context {
-        index: Arc::new(index),
-        registry: Arc::new(registry),
-    })
+    Arc::new(Context::new(Arc::new(index), Arc::new(registry)))
 }
 
 fn benches(c: &mut Criterion) {
@@ -126,8 +123,7 @@ fn benches(c: &mut Criterion) {
     });
     c.bench_function("capabilities.list call", |b| {
         b.iter(|| {
-            ctx.registry
-                .call(&ctx, "capabilities.list", serde_json::json!({}))
+            ctx.execute("capabilities.list", serde_json::json!({}))
                 .unwrap()
         })
     });

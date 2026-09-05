@@ -798,6 +798,49 @@
       "note": "Byte-identical on regeneration, no timestamps, no absolute paths; --check writes nothing and exits 10 naming every file that differs or is missing. CI runs it."
     },
     {
+      "id": "claim:mcp-shared-server",
+      "kind": "claim",
+      "label": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-shared-server/",
+      "external": false,
+      "note": "The election is one lease file under .ai/local/state/mcp/, created atomically and removed on exit; a stale lease is taken over; a bridged client whose server dies takes over or re-attaches without its client noticing. The crate's tests/mcp_shared.rs covers the socket side; --standalone keeps one process per client."
+    },
+    {
+      "id": "claim:mcp-peers",
+      "kind": "claim",
+      "label": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-peers/",
+      "external": false,
+      "note": "Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; the board is one process's memory and is gone with it. Announcements are informational; scope is enforced by the shell tool's task record, not here."
+    },
+    {
+      "id": "claim:mcp-client-autostart",
+      "kind": "claim",
+      "label": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-client-autostart/",
+      "external": false,
+      "note": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build."
+    },
+    {
+      "id": "claim:mcp-uri-resolution",
+      "kind": "claim",
+      "label": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-uri-resolution/",
+      "external": false,
+      "note": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects_get.rs covers every branch at the library level."
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/capability/registry.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/capability/registry.rs",
@@ -826,6 +869,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/lease.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/lease.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/mcp/protocol.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/mcp/protocol.rs",
@@ -840,9 +890,23 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/peers.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/peers.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:bin/majordomus",
       "kind": "implementation",
       "label": "bin/majordomus",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:bin/majordomus-mcp",
+      "kind": "implementation",
+      "label": "bin/majordomus-mcp",
       "route": null,
       "external": false
     },
@@ -1405,6 +1469,13 @@
       "label": "test/cases/76_capabilities_projections.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/76_capabilities_projections.sh"
+    },
+    {
+      "id": "test:test/cases/90_mcp_shared_server.sh",
+      "kind": "test",
+      "label": "test/cases/90_mcp_shared_server.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/90_mcp_shared_server.sh"
     }
   ],
   "edges": [
@@ -1844,6 +1915,26 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mcp-shared-server",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mcp-peers",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mcp-client-autostart",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mcp-uri-resolution",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -2239,6 +2330,26 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mcp-shared-server",
+      "target": "impl:apps/majordomus-cli/src/lease.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mcp-peers",
+      "target": "impl:apps/majordomus-cli/src/peers.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mcp-client-autostart",
+      "target": "impl:bin/majordomus-mcp",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mcp-uri-resolution",
+      "target": "impl:apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "test:test/cases/00_yaml_flatten.sh",
       "kind": "proved_by"
@@ -2631,6 +2742,26 @@
     {
       "source": "claim:generated-projections-checked",
       "target": "test:test/cases/76_capabilities_projections.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-shared-server",
+      "target": "test:test/cases/90_mcp_shared_server.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-peers",
+      "target": "test:test/cases/90_mcp_shared_server.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-client-autostart",
+      "target": "test:test/cases/90_mcp_shared_server.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-uri-resolution",
+      "target": "test:test/cases/72_rust_mcp.sh",
       "kind": "proved_by"
     }
   ]

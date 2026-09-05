@@ -19,7 +19,7 @@
       "get": {
         "operationId": "capabilities.list",
         "summary": "List capabilities",
-        "description": "Every capability of this executable and this repository, with its kind, stability, provenance and the projections it declares.",
+        "description": "Every capability of this executable and this repository, summarised: kind, module, stability, provenance, the projections it declares, its benchmark and cache policy; the schemas are answered by capabilities.describe.",
         "tags": [
           "capabilities"
         ],
@@ -35,7 +35,7 @@
               ],
               "default": null
             },
-            "description": "Only capabilities of this kind: `query` or `resource`."
+            "description": "Only capabilities of this kind: `query`, `command` or `resource`."
           },
           {
             "name": "exposure",
@@ -78,7 +78,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::capabilities"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_capabilities"
@@ -90,7 +90,7 @@
       "get": {
         "operationId": "capabilities.describe",
         "summary": "Describe one capability",
-        "description": "One capability by canonical id: its schemas, provenance, stability and every projection it appears in.",
+        "description": "One capability by canonical id: its kind, schemas, provenance, stability, exposures, benchmark and cache policy.",
         "tags": [
           "capabilities"
         ],
@@ -132,7 +132,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::capabilities"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_capability"
@@ -144,7 +144,7 @@
       "get": {
         "operationId": "objects.get",
         "summary": "Get one object",
-        "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content.",
+        "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content; a URI a query projects (majordomus://repository) answers that query as a JSON document. The same resolution serves the MCP resource read.",
         "tags": [
           "objects"
         ],
@@ -156,7 +156,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "`majordomus://<kind>/<identity>`."
+            "description": "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`)."
           }
         ],
         "responses": {
@@ -165,7 +165,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ObjectView"
+                  "$ref": "#/components/schemas/ResourceView"
                 }
               }
             }
@@ -186,7 +186,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::objects"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_get"
@@ -256,10 +256,148 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::objects"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_list"
+        }
+      }
+    },
+    "/api/v1/peers": {
+      "get": {
+        "operationId": "peers.list",
+        "summary": "List peers",
+        "description": "Every client attached to this shared server: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, and what it announced. In-memory, gone with the process.",
+        "tags": [
+          "peers"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List peers: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeerList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "peers.list",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::peers"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_peers"
+        }
+      }
+    },
+    "/api/v1/peers/announce": {
+      "post": {
+        "operationId": "peers.announce",
+        "summary": "Announce what this peer is working on",
+        "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+        "tags": [
+          "peers"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnounceInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Announce what this peer is working on: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Peer"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "peers.announce",
+        "x-majordomus-kind": "command",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::peers"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_announce"
+        }
+      }
+    },
+    "/api/v1/perf": {
+      "get": {
+        "operationId": "perf.counters",
+        "summary": "Performance counters",
+        "description": "The counters of this process: repository scans, index and registry builds, schema generations, projection builds, executions, handler invocations, cache hits, misses and evictions, and the phase timings, as they stand now.",
+        "tags": [
+          "perf"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Performance counters: the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CounterSnapshot"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error: invalid input (400), not found (404), refused (422) or internal (500)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "perf.counters",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::perf"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_perf"
         }
       }
     },
@@ -299,7 +437,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::repository"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_repository",
@@ -385,7 +523,7 @@
         "x-majordomus-stability": "behaviorally_verified",
         "x-majordomus-provenance": {
           "source": "builtin",
-          "module": "majordomus_cli::capability::builtin"
+          "module": "majordomus_cli::capability::builtin::objects"
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_search"
@@ -395,6 +533,196 @@
   },
   "components": {
     "schemas": {
+      "AnnounceInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "One line, in the peer's words: the task, the question, the intent."
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it.",
+            "default": []
+          }
+        },
+        "required": [
+          "intent"
+        ],
+        "description": "The input of `peers.announce`: what the calling peer is working on."
+      },
+      "Announcement": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "One line: the task or intent, in the peer's words."
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Repository-relative paths the peer expects to touch; informational, never enforced here."
+          },
+          "at": {
+            "type": "string",
+            "description": "When it was announced, RFC 3339, UTC."
+          }
+        },
+        "required": [
+          "intent",
+          "scope",
+          "at"
+        ],
+        "description": "What a peer said it is working on."
+      },
+      "AnswerView": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "description": "The URI as given."
+          },
+          "id": {
+            "type": "string",
+            "description": "The capability that answered (`repository.info`)."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CapabilityKind",
+            "description": "Its kind: `query`."
+          },
+          "identity": {
+            "type": "string",
+            "description": "The resource name a client lists (`repository`)."
+          },
+          "title": {
+            "type": "string",
+            "description": "The capability's title."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The capability's description, when it has one."
+          },
+          "answer": {
+            "description": "The answer, as the capability's output schema describes it (`capabilities.describe`\ncarries that schema)."
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/CapabilityProvenance",
+            "description": "Where the capability comes from: the Rust module it is composed in."
+          },
+          "media_type": {
+            "type": "string",
+            "description": "`application/json`."
+          },
+          "content": {
+            "type": "string",
+            "description": "The answer as text: byte for byte what `resources/read` returns for the URI."
+          }
+        },
+        "required": [
+          "uri",
+          "id",
+          "kind",
+          "identity",
+          "title",
+          "answer",
+          "provenance",
+          "media_type",
+          "content"
+        ],
+        "description": "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an [`ObjectView`] where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI."
+      },
+      "BenchmarkPolicy": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "policy": {
+                "type": "string",
+                "const": "required"
+              }
+            },
+            "required": [
+              "policy"
+            ],
+            "description": "Timed directly and through every exposure; coverage fails without a case."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "$ref": "#/components/schemas/WaiverReason",
+                "description": "Why."
+              },
+              "policy": {
+                "type": "string",
+                "const": "waived"
+              }
+            },
+            "required": [
+              "policy",
+              "reason"
+            ],
+            "description": "Not timed, for the typed reason; coverage reports it as waived, never as covered."
+          }
+        ],
+        "description": "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides."
+      },
+      "CachePolicy": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "policy": {
+                "type": "string",
+                "const": "disabled"
+              }
+            },
+            "required": [
+              "policy"
+            ],
+            "description": "Every call runs the handler."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "max_entries": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "The most entries kept for this capability; the oldest is evicted first."
+              },
+              "ttl_seconds": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Seconds an entry stays valid; `None` for the life of the process."
+              },
+              "policy": {
+                "type": "string",
+                "const": "process"
+              }
+            },
+            "required": [
+              "policy",
+              "max_entries"
+            ],
+            "description": "Results are kept in this process's memory, bounded, for equal inputs."
+          }
+        ],
+        "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry."
+      },
       "CanonicalSchema": {
         "type": "object",
         "properties": {
@@ -421,9 +749,13 @@
             "$ref": "#/components/schemas/CapabilityId",
             "description": "The canonical identity."
           },
+          "module": {
+            "$ref": "#/components/schemas/ModuleId",
+            "description": "The module that composes it: the id's namespace for a builtin, the kind for a\ndeclarative object."
+          },
           "kind": {
             "$ref": "#/components/schemas/CapabilityKind",
-            "description": "Query or resource."
+            "description": "Query, command or resource."
           },
           "title": {
             "type": "string",
@@ -459,10 +791,19 @@
               "type": "string"
             },
             "description": "Free tags, from the declarative object's `tags` or the descriptor."
+          },
+          "benchmark": {
+            "$ref": "#/components/schemas/BenchmarkPolicy",
+            "description": "Whether it is a benchmark target; the cases come from the input type."
+          },
+          "cache": {
+            "$ref": "#/components/schemas/CachePolicy",
+            "description": "Whether the executor keeps its results."
           }
         },
         "required": [
           "id",
+          "module",
           "kind",
           "title",
           "description",
@@ -470,7 +811,9 @@
           "output",
           "provenance",
           "exposure",
-          "stability"
+          "stability",
+          "benchmark",
+          "cache"
         ],
         "description": "The canonical descriptor. Everything a projection may say about a capability is here."
       },
@@ -487,11 +830,16 @@
           },
           {
             "type": "string",
+            "const": "command",
+            "description": "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only."
+          },
+          {
+            "type": "string",
             "const": "resource",
             "description": "Declarative content the repository holds: read as it is, never executed."
           }
         ],
-        "description": "What a capability is. Two kinds exist because two semantics exist: something that is\nexecuted with an input and answers with an output, and something that is read."
+        "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository."
       },
       "CapabilityList": {
         "type": "object",
@@ -509,9 +857,9 @@
           "capabilities": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Capability"
+              "$ref": "#/components/schemas/CapabilitySummary"
             },
-            "description": "The matching capabilities, by id."
+            "description": "The matching capabilities, by id, without their schemas."
           }
         },
         "required": [
@@ -519,7 +867,7 @@
           "summary",
           "capabilities"
         ],
-        "description": "The answer of `capabilities.list`: the matching capabilities and the registry counted."
+        "description": "The answer of `capabilities.list`: the matching capabilities, summarised, and the\nregistry counted."
       },
       "CapabilityProvenance": {
         "oneOf": [
@@ -591,6 +939,71 @@
         ],
         "description": "Where a capability came from. Never an absolute path."
       },
+      "CapabilitySummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/CapabilityId",
+            "description": "The canonical identity."
+          },
+          "module": {
+            "$ref": "#/components/schemas/ModuleId",
+            "description": "The module that composes it."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CapabilityKind",
+            "description": "Query, command or resource."
+          },
+          "title": {
+            "type": "string",
+            "description": "The short name."
+          },
+          "description": {
+            "type": "string",
+            "description": "The one-paragraph description."
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/CapabilityProvenance",
+            "description": "Where it came from."
+          },
+          "exposure": {
+            "$ref": "#/components/schemas/Exposure",
+            "description": "Where it is projected."
+          },
+          "stability": {
+            "$ref": "#/components/schemas/Stability",
+            "description": "Where it stands."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Free tags."
+          },
+          "benchmark": {
+            "$ref": "#/components/schemas/BenchmarkPolicy",
+            "description": "Whether it is a benchmark target."
+          },
+          "cache": {
+            "$ref": "#/components/schemas/CachePolicy",
+            "description": "Whether the executor keeps its results."
+          }
+        },
+        "required": [
+          "id",
+          "module",
+          "kind",
+          "title",
+          "description",
+          "provenance",
+          "exposure",
+          "stability",
+          "benchmark",
+          "cache"
+        ],
+        "description": "One capability as a listing shows it: everything the descriptor says except its two\nschemas, which `capabilities.describe` answers for one capability. A listing of a\nrepository's registry runs to hundreds of entries; their schemas would be megabytes\nof the same object view repeated."
+      },
       "CliExposure": {
         "type": "object",
         "properties": {
@@ -606,6 +1019,131 @@
           "path"
         ],
         "description": "How a capability appears on the command line: the words after `majordomus`."
+      },
+      "ClientInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "`clientInfo.name`: `claude-code`, `codex`, `gemini-cli`, whatever the client sends."
+          },
+          "version": {
+            "type": "string",
+            "description": "`clientInfo.version`."
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`clientInfo.title`, when the client sends one."
+          }
+        },
+        "required": [
+          "name",
+          "version"
+        ],
+        "description": "What a client said about itself in `initialize`."
+      },
+      "CounterSnapshot": {
+        "type": "object",
+        "properties": {
+          "repository_scans": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Enumerations of the repository's declared sources."
+          },
+          "index_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Index builds."
+          },
+          "registry_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Registry builds."
+          },
+          "schema_generations": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "JSON Schemas derived from Rust types."
+          },
+          "mcp_projection_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "MCP tool and resource listings computed."
+          },
+          "openapi_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "OpenAPI documents built."
+          },
+          "http_projection_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "HTTP routers built."
+          },
+          "executions": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Calls through the executor, every transport."
+          },
+          "handler_invocations": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Handlers actually run."
+          },
+          "cache_hits": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Executions answered from the cache."
+          },
+          "cache_misses": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Executions of a cached capability that ran the handler."
+          },
+          "cache_evictions": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Cache entries dropped."
+          },
+          "phases": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PhaseTotals"
+            },
+            "description": "Phase totals by phase name."
+          }
+        },
+        "required": [
+          "repository_scans",
+          "index_builds",
+          "registry_builds",
+          "schema_generations",
+          "mcp_projection_builds",
+          "openapi_builds",
+          "http_projection_builds",
+          "executions",
+          "handler_invocations",
+          "cache_hits",
+          "cache_misses",
+          "cache_evictions",
+          "phases"
+        ],
+        "description": "The counters and phase totals of this process at one moment. Every value is a count\nor a duration this process measured; none is written anywhere by hand."
       },
       "Diagnostic": {
         "type": "object",
@@ -851,6 +1389,10 @@
         ],
         "description": "An MCP resource: its URI and the short name a client lists."
       },
+      "ModuleId": {
+        "type": "string",
+        "description": "A module identity: the namespace of every capability the module composes, matching\n`[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative\nobject's module is its kind."
+      },
       "ObjectList": {
         "type": "object",
         "properties": {
@@ -1026,6 +1568,112 @@
         ],
         "description": "One declarative object of the repository's layer, as a client reads it."
       },
+      "Peer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/PeerId",
+            "description": "`p1`, `p2`, ..."
+          },
+          "client": {
+            "$ref": "#/components/schemas/ClientInfo",
+            "description": "The client behind it."
+          },
+          "transport": {
+            "$ref": "#/components/schemas/Transport",
+            "description": "How it is attached."
+          },
+          "connected_at": {
+            "type": "string",
+            "description": "When it attached, RFC 3339, UTC."
+          },
+          "last_seen_seconds_ago": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Seconds since its last message."
+          },
+          "announcement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Announcement"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its announcement, when it made one."
+          }
+        },
+        "required": [
+          "id",
+          "client",
+          "transport",
+          "connected_at",
+          "last_seen_seconds_ago"
+        ],
+        "description": "One peer as the board lists it."
+      },
+      "PeerId": {
+        "type": "string",
+        "description": "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server."
+      },
+      "PeerList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many peers are attached, the caller included."
+          },
+          "caller": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeerId"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The caller's own peer id, when the call came through an MCP session."
+          },
+          "peers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Peer"
+            },
+            "description": "The peers, in attachment order; `p1` started the server."
+          }
+        },
+        "required": [
+          "count",
+          "peers"
+        ],
+        "description": "The answer of `peers.list`: every client attached to this shared server."
+      },
+      "PhaseTotals": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How many times the phase ran."
+          },
+          "total_nanos": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Nanoseconds spent in it, summed."
+          }
+        },
+        "required": [
+          "count",
+          "total_nanos"
+        ],
+        "description": "A phase's totals."
+      },
       "RepositoryInfo": {
         "type": "object",
         "properties": {
@@ -1135,6 +1783,39 @@
           "capabilities"
         ],
         "description": "The repository, its layer, its git state, and the state of this process's index."
+      },
+      "ResourceView": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ObjectView",
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "const": "declarative"
+              }
+            },
+            "required": [
+              "source"
+            ],
+            "description": "A file of the layer, read as it is."
+          },
+          {
+            "$ref": "#/components/schemas/AnswerView",
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "const": "builtin"
+              }
+            },
+            "required": [
+              "source"
+            ],
+            "description": "A query with a resource exposure, executed and rendered as a JSON document."
+          }
+        ],
+        "description": "The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a\ncapability's provenance is."
       },
       "SearchHit": {
         "type": "object",
@@ -1352,6 +2033,30 @@
             "format": "uint",
             "minimum": 0,
             "description": "With a CLI exposure."
+          },
+          "modules": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Modules: composed, derived, and one per declarative kind."
+          },
+          "benchmark_required": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Executables whose benchmark policy is required."
+          },
+          "benchmark_waived": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Executables waived from benchmarking for a typed reason."
+          },
+          "cached": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Executables the executor caches."
           }
         },
         "required": [
@@ -1363,9 +2068,48 @@
           "mcp_tools",
           "mcp_resources",
           "http_routes",
-          "cli_commands"
+          "cli_commands",
+          "modules",
+          "benchmark_required",
+          "benchmark_waived",
+          "cached"
         ],
         "description": "The registry counted: by source, kind, stability and projection."
+      },
+      "Transport": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "stdio",
+            "description": "The owner's own client, on the process's stdin and stdout."
+          },
+          {
+            "type": "string",
+            "const": "http",
+            "description": "MCP over HTTP at `/mcp`: a `majordomus mcp` bridge, or a client speaking it directly."
+          }
+        ],
+        "description": "How a peer reached the server."
+      },
+      "WaiverReason": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "not_executable",
+            "description": "A resource: read, never executed; nothing to time but `objects.get`, which is."
+          },
+          {
+            "type": "string",
+            "const": "destructive",
+            "description": "The capability changes something outside this process and cannot be run in a loop."
+          },
+          {
+            "type": "string",
+            "const": "external_dependency",
+            "description": "The capability talks to something the benchmark host cannot provide."
+          }
+        ],
+        "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
       }
     }
   },
@@ -1374,7 +2118,8 @@
     "infrastructure": [
       "/",
       "/openapi.json",
-      "/docs"
+      "/docs",
+      "/mcp"
     ],
     "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body"
   }

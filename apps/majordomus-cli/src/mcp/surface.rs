@@ -8,8 +8,11 @@ use std::sync::Arc;
 use serde::Serialize;
 use serde_json::{json, Value};
 
-use crate::capability::{CapabilityError, CapabilityKind, CapabilityRegistry, Context};
+use crate::capability::{builtin, CapabilityError, CapabilityKind, CapabilityRegistry, Context};
 use crate::index::Index;
+
+use super::protocol::{resource_json, tool_json};
+use crate::peers::PeerId;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 /// One resource as a client lists it.
@@ -56,6 +59,9 @@ pub struct Tool {
     pub input_schema: Value,
     /// The canonical output schema.
     pub output_schema: Value,
+    /// Does a call leave the process as it found it? Every tool leaves the repository
+    /// untouched; `false` means it changes this process's in-memory state.
+    pub read_only: bool,
 }
 
 /// What a tool call produced: a value, or a refusal with the reason. Refusals are
@@ -82,10 +88,22 @@ pub enum SurfaceError {
     Internal(String),
 }
 
+/// The tool and resource listings, computed once per shared listing and served from
+/// memory: `tools/list` and `resources/list` clone prepared JSON, they do not walk the
+/// registry.
+#[derive(Default)]
+struct Listing {
+    tools: std::sync::OnceLock<Arc<Vec<Tool>>>,
+    tools_json: std::sync::OnceLock<Arc<Vec<Value>>>,
+    resources: std::sync::OnceLock<Arc<Vec<Resource>>>,
+    resources_json: std::sync::OnceLock<Arc<Vec<Value>>>,
+}
+
 #[derive(Clone)]
 /// The registry seen as resources and tools.
 pub struct Surface {
     ctx: Arc<Context>,
+    listing: Arc<Listing>,
 }
 
 impl std::fmt::Debug for Surface {
@@ -99,7 +117,47 @@ impl std::fmt::Debug for Surface {
 impl Surface {
     /// A surface over a loaded context.
     pub fn new(ctx: Arc<Context>) -> Self {
-        Surface { ctx }
+        Surface {
+            ctx,
+            listing: Arc::new(Listing::default()),
+        }
+    }
+
+    /// The same surface, seen from one peer: every call it makes carries that identity,
+    /// which is how `peers.announce` knows who is speaking. The listings are shared.
+    pub fn for_peer(&self, peer: PeerId) -> Self {
+        Surface {
+            ctx: Arc::new(self.ctx.for_caller(peer)),
+            listing: Arc::clone(&self.listing),
+        }
+    }
+
+    /// The tool listing as `tools/list` answers it, prepared once.
+    pub fn tools_json(&self) -> Arc<Vec<Value>> {
+        Arc::clone(
+            self.listing
+                .tools_json
+                .get_or_init(|| Arc::new(self.tools().iter().map(tool_json).collect())),
+        )
+    }
+
+    /// The resource listing as `resources/list` answers it, prepared once.
+    pub fn resources_json(&self) -> Arc<Vec<Value>> {
+        Arc::clone(
+            self.listing
+                .resources_json
+                .get_or_init(|| Arc::new(self.resources().iter().map(resource_json).collect())),
+        )
+    }
+
+    /// The context behind the surface.
+    pub fn context(&self) -> &Arc<Context> {
+        &self.ctx
+    }
+
+    /// The peer this surface speaks for, when it speaks for one.
+    pub fn peer(&self) -> Option<&PeerId> {
+        self.ctx.caller.as_ref()
     }
 
     /// The index behind the surface.
@@ -113,15 +171,25 @@ impl Surface {
     }
 
     /// Every resource: executable ones (a query read as a document) first, then the
-    /// declarative ones, each group by canonical id.
-    pub fn resources(&self) -> Vec<Resource> {
+    /// declarative ones, each group by canonical id. Computed once and shared.
+    pub fn resources(&self) -> Arc<Vec<Resource>> {
+        Arc::clone(
+            self.listing
+                .resources
+                .get_or_init(|| Arc::new(self.compute_resources())),
+        )
+    }
+
+    fn compute_resources(&self) -> Vec<Resource> {
+        let _phase = crate::perf::phase(crate::perf::Phase::McpProjectionBuild);
+        crate::perf::Counters::bump(&crate::perf::COUNTERS.mcp_projection_builds);
         let mut out: Vec<(u8, Resource)> = Vec::new();
         for c in self.ctx.registry.iter() {
             let Some(res) = c.exposure.mcp.as_ref().and_then(|m| m.resource.as_ref()) else {
                 continue;
             };
             let (rank, media_type, meta) = match c.kind {
-                CapabilityKind::Query => (
+                CapabilityKind::Query | CapabilityKind::Command => (
                     0,
                     "application/json".to_string(),
                     json!({ "id": c.id, "kind": "query", "provenance": c.provenance }),
@@ -158,43 +226,33 @@ impl Surface {
         out.into_iter().map(|(_, r)| r).collect()
     }
 
-    /// Read one resource: an object's content, or a query with a resource exposure answered as JSON.
+    /// Read one resource: an object's content, or a query with a resource exposure answered
+    /// as JSON. The resolution is `objects.get`'s ([`builtin::resolve`]), so the tool, the
+    /// HTTP route and this read answer one URI alike.
     pub fn read(&self, uri: &str) -> Result<ResourceContent, SurfaceError> {
-        let c = self
-            .ctx
-            .registry
-            .by_mcp_uri(uri)
-            .ok_or_else(|| SurfaceError::UnknownResource(uri.to_string()))?;
-        match c.kind {
-            CapabilityKind::Resource => {
-                let object = self
-                    .ctx
-                    .index
-                    .get(uri)
-                    .ok_or_else(|| SurfaceError::UnknownResource(uri.to_string()))?;
-                Ok(ResourceContent {
-                    uri: uri.to_string(),
-                    media_type: object.media_type.to_string(),
-                    text: object.content.clone(),
-                })
-            }
-            CapabilityKind::Query => {
-                let value = self
-                    .ctx
-                    .registry
-                    .call(&self.ctx, c.id.as_str(), json!({}))
-                    .map_err(|e| SurfaceError::Internal(e.to_string()))?;
-                Ok(ResourceContent {
-                    uri: uri.to_string(),
-                    media_type: "application/json".into(),
-                    text: pretty(&value),
-                })
-            }
-        }
+        let resolved = builtin::resolve(&self.ctx, uri).map_err(|e| match e {
+            CapabilityError::NotFound(_) => SurfaceError::UnknownResource(uri.to_string()),
+            other => SurfaceError::Internal(other.to_string()),
+        })?;
+        Ok(ResourceContent {
+            uri: uri.to_string(),
+            media_type: resolved.media_type(),
+            text: resolved.text(),
+        })
     }
 
-    /// Every tool, by canonical id.
-    pub fn tools(&self) -> Vec<Tool> {
+    /// Every tool, by canonical id. Computed once and shared.
+    pub fn tools(&self) -> Arc<Vec<Tool>> {
+        Arc::clone(
+            self.listing
+                .tools
+                .get_or_init(|| Arc::new(self.compute_tools())),
+        )
+    }
+
+    fn compute_tools(&self) -> Vec<Tool> {
+        let _phase = crate::perf::phase(crate::perf::Phase::McpProjectionBuild);
+        crate::perf::Counters::bump(&crate::perf::COUNTERS.mcp_projection_builds);
         self.ctx
             .registry
             .iter()
@@ -207,6 +265,7 @@ impl Surface {
                     id: c.id.to_string(),
                     input_schema: c.input.for_mcp(),
                     output_schema: c.output.for_mcp(),
+                    read_only: c.kind.is_read_only(),
                 })
             })
             .collect()
@@ -219,11 +278,7 @@ impl Surface {
             .registry
             .by_mcp_tool(name)
             .ok_or_else(|| SurfaceError::UnknownTool(name.to_string()))?;
-        match self
-            .ctx
-            .registry
-            .call(&self.ctx, c.id.as_str(), args.clone())
-        {
+        match self.ctx.execute(c.id.as_str(), args.clone()) {
             Ok(v) => Ok(ToolOutcome::Ok(v)),
             Err(CapabilityError::Internal(e)) => Err(SurfaceError::Internal(e)),
             Err(e) => Ok(ToolOutcome::Refused(e.to_string())),
@@ -233,12 +288,7 @@ impl Surface {
     /// The repository report, as the `repository.info` capability answers it.
     pub fn repository_info(&self) -> Result<Value, SurfaceError> {
         self.ctx
-            .registry
-            .call(&self.ctx, "repository.info", json!({}))
+            .execute("repository.info", json!({}))
             .map_err(|e| SurfaceError::Internal(e.to_string()))
     }
-}
-
-fn pretty(v: &Value) -> String {
-    serde_json::to_string_pretty(v).unwrap_or_else(|_| v.to_string())
 }
