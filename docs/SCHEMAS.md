@@ -930,6 +930,11 @@ status: accepted
 date: 2026-09-05
 tags: [architecture, capabilities]
 supersedes: [adr-0002]
+related:
+  - rule:majordomus.capability-registry
+  - claim:capability-registry
+  - file:apps/majordomus-cli/src/capability
+  - test:test/cases/91_canonical_architecture.sh
 provenance:
   origin: extracted
   derived_from:
@@ -955,6 +960,7 @@ provenance:
 | `tags` | no | ids, same pattern as elsewhere |
 | `supersedes` | no | decisions this one stands in for; each must exist and name this one back |
 | `superseded_by` | no | present exactly when the status is `superseded` |
+| `related` | no | what the decision put in force: `rule:<id>`, `claim:<id>`, `file:<path>`, `test:<path>`. Each is validated, and the knowledge graph turns it into an edge — `declares`, `supports`, `references`, `tested_by` — so the reverse direction is a query, never a second edge to maintain |
 | `provenance.origin` | no | `authored` (a person wrote it) or `extracted` (`adr propose` derived it) |
 | `provenance.derived_from` | no | typed references: `decision:`, `session:`, `commit:`, `issue:`, `file:`, `test:` |
 

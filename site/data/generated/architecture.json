@@ -50,6 +50,16 @@
       "external": false
     },
     {
+      "id": "lib/rules.sh",
+      "kind": "module",
+      "label": "rules",
+      "command": "rules",
+      "summary": "the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)",
+      "read_only": true,
+      "route": "/commands/rules/",
+      "external": false
+    },
+    {
       "id": ".ai/repo/adrs/.id.lock",
       "kind": "artifact",
       "label": "repo/adrs/.id.lock",
@@ -357,16 +367,6 @@
       "summary": null,
       "read_only": null,
       "route": null,
-      "external": false
-    },
-    {
-      "id": "lib/rules.sh",
-      "kind": "module",
-      "label": "rules",
-      "command": "rules",
-      "summary": "the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)",
-      "read_only": true,
-      "route": "/commands/rules/",
       "external": false
     },
     {
@@ -949,6 +949,11 @@
     {
       "source": "lib/adr.sh",
       "target": "lib/knowledge.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/adr.sh",
+      "target": "lib/rules.sh",
       "kind": "sources"
     },
     {

@@ -1261,6 +1261,13 @@ majordomus adr check [--json]                         validate every decision an
   `2`. Referenced evidence makes the record `provenance.origin: extracted`, and an
   extracted record with no evidence is refused as an assertion. `--supersedes` writes both
   halves of the relation, so the chain is walkable from either end.
+- `related` is the other half of a record's references, and it is authored rather than
+  written by `propose`: `rule:<id>`, `claim:<id>`, `file:<path>`, `test:<path>` — what the
+  decision put in force, as against `provenance.derived_from`, which is where it came from.
+  Each is validated where its type says the target lives, and the extractor turns it into a
+  graph edge (`declares`, `supports`, `references`, `tested_by`), so the reverse direction —
+  which decision put this rule in force — is `knowledge edges`, not a second list somebody
+  keeps in step.
 - `check` validates every record against the allow-list generated from the schema (no
   unknown key), `schema: adr/v1`, the closed status set, an `id` whose number equals the
   file-name prefix, the required body sections; and across the set: duplicate identities,

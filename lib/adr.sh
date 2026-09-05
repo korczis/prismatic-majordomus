@@ -23,6 +23,8 @@
 
 # shellcheck source=knowledge.sh
 . "$MJ_LIB_DIR/knowledge.sh"
+# shellcheck source=rules.sh
+. "$MJ_LIB_DIR/rules.sh"
 
 MJ_ADR_SCHEMA="adr/v1"
 MJ_ADR_STATUSES="proposed accepted superseded rejected"
@@ -31,6 +33,10 @@ MJ_ADR_SECTIONS="Context Decision Consequences"
 # The reference vocabulary, shared by the decision and knowledge records: a
 # reference is <type>:<value>, and a file: or test: reference must resolve.
 MJ_ADR_REF_TYPES="decision session commit issue file test"
+# what a decision put in force, as opposed to where it came from: a rule of the effective
+# set, a claim of the matrix, a document or implementation, a behavioural case. The graph
+# turns each into an edge, so nothing writes the reverse direction down.
+MJ_ADR_REL_TYPES="rule claim file test"
 
 mj_cmd_adr() {
   local sub="${1:-}"; [ $# -gt 0 ] && shift
@@ -105,6 +111,32 @@ mj_adr_ref_valid() {
   return 0
 }
 
+# mj_adr_rel_valid REF — a forward reference: the type is one this record may state, and
+# the target exists where that type says it lives. A rule is looked up in the effective set
+# and a claim in the matrix, because a decision that names something nothing declares is a
+# dangling end the reader cannot follow.
+mj_adr_rel_valid() {
+  local ref="$1" t="${1%%:*}" v="${1#*:}"
+  case "$ref" in *:*) ;; *) printf 'related "%s" is not <type>:<value>\n' "$ref"; return 1 ;; esac
+  case " $MJ_ADR_REL_TYPES " in
+    *" $t "*) ;;
+    *) printf 'related "%s" has an unknown type "%s" (one of %s)\n' "$ref" "$t" "$(printf '%s' "$MJ_ADR_REL_TYPES" | sed 's/ /, /g')"; return 1 ;;
+  esac
+  [ -n "$v" ] || { printf 'related "%s" has an empty value\n' "$ref"; return 1; }
+  case "$t" in
+    file|test) [ -e "$MJ_ROOT/$v" ] || { printf 'related "%s" names a path that does not exist\n' "$ref"; return 1; } ;;
+    rule)
+      if mj_rules_load; then
+        mj_rule_index "$v" >/dev/null || { printf 'related "%s" names a rule the effective set does not have\n' "$ref"; return 1; }
+      else printf 'related "%s" cannot be checked: the rules do not resolve (%s)\n' "$ref" "$MJ_RULES_ERROR"; return 1; fi ;;
+    claim)
+      if [ -f "$MJ_ROOT/docs/CLAIMS.yaml" ]; then
+        grep -q "^  - id: $v\$" "$MJ_ROOT/docs/CLAIMS.yaml" || { printf 'related "%s" names a claim docs/CLAIMS.yaml does not have\n' "$ref"; return 1; }
+      fi ;;
+  esac
+  return 0
+}
+
 # mj_adr_validate FILE BASENAME — every reason on its own line; exit 1 when any. Reads
 # only this file; cross-record checks (unique ids, reciprocal supersession) are
 # mj_adr_check's, which has the whole catalogue in hand.
@@ -157,6 +189,9 @@ mj_adr_validate_loaded() {
   fi
   refs="$(mj_adr_lst provenance.derived_from)"; n=0
   for v in $refs; do n=$((n + 1)); mj_adr_ref_valid "$v" || rc=1; done
+  # what the decision put in force. Optional: a decision may be taken before anything
+  # implements it, and a record that names nothing is not thereby wrong.
+  for v in $(mj_adr_lst related); do mj_adr_rel_valid "$v" || rc=1; done
   if [ "$origin" = extracted ]; then
     [ "$n" -gt 0 ] || { printf 'provenance.origin is extracted but derived_from names nothing: an extracted record without evidence is an assertion\n'; rc=1; }
     # only `accepted` is refused, and for one reason: acceptance is the person's act, and a

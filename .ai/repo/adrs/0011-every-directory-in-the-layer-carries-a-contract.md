@@ -8,6 +8,12 @@ date: 2026-09-05
 tags:
   - context
   - governance
+related:
+  - rule:majordomus.context-integrity
+  - claim:context-coverage
+  - file:lib/context_docs.sh
+  - file:docs/CONTEXT.md
+  - test:test/cases/69_context_documents.sh
 provenance:
   origin: extracted
   derived_from:

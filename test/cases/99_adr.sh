@@ -170,6 +170,56 @@ superseded_by: adr-0001/' "$adr2" && rm -f "$adr2.bak"
 git add . >/dev/null
 expect_exit 0 "$MJ" adr check
 
+# ---------------------------------------------------------------- what a decision put in force
+# `related` is the forward edge, and every type is checked where that type says the target
+# lives. The reverse direction is never written: it is this graph read backwards.
+cp "$adr1" "$T/keep1.md"
+mkdir -p docs test/cases
+printf '# a case this repository has, so that a test: reference has something to resolve to\n' > test/cases/99_probe.sh
+# a repository that declares where its cases live gets test nodes; without the class the
+# reference is to a tracked file the graph has no node for, which is silence, not a finding
+printf '  - id: test\n    kind: test\n    discovery: vcs\n    pathspec: \x27:(glob)test/cases/*.sh\x27\n    required: false\n' >> .ai/repo/knowledge/sources.yaml
+printf 'claims:\n  - id: state-untracked\n    claim: The state directory is never tracked\n' > docs/CLAIMS.yaml
+sed -i.bak 's|^status: proposed$|status: proposed\
+related:\
+  - rule:majordomus.adr-integrity\
+  - claim:state-untracked\
+  - file:.ai/manifest.yaml\
+  - test:test/cases/99_probe.sh|' "$adr1" && rm -f "$adr1.bak"
+git add . >/dev/null
+expect_exit 0 "$MJ" adr check
+# each reference became an edge of the graph, with the key that stated it as provenance
+"$MJ" knowledge edges > edges.txt
+expect_grep '^declares +adr:adr-0001 +rule:majordomus\.adr-integrity +.*:related\.0$' edges.txt
+expect_grep '^supports +adr:adr-0001 +claim:state-untracked +.*:related\.1$' edges.txt
+expect_grep '^tested_by +adr:adr-0001 +test:test/cases/99_probe\.sh +.*:related\.3$' edges.txt
+rm -f edges.txt
+# a rule the effective set does not have
+sed -i.bak 's|^  - rule:majordomus.adr-integrity$|  - rule:majordomus.no-such-rule|' "$adr1" && rm -f "$adr1.bak"
+git add . >/dev/null
+expect_exit 10 "$MJ" adr check
+expect_grep 'names a rule the effective set does not have'
+sed -i.bak 's|^  - rule:majordomus.no-such-rule$|  - rule:majordomus.adr-integrity|' "$adr1" && rm -f "$adr1.bak"
+# a claim the matrix does not have
+sed -i.bak 's|^  - claim:state-untracked$|  - claim:no-such-claim|' "$adr1" && rm -f "$adr1.bak"
+git add . >/dev/null
+expect_exit 10 "$MJ" adr check
+expect_grep 'names a claim docs/CLAIMS\.yaml does not have'
+sed -i.bak 's|^  - claim:no-such-claim$|  - claim:state-untracked|' "$adr1" && rm -f "$adr1.bak"
+# a path the repository does not contain
+sed -i.bak 's|^  - file:.ai/manifest.yaml$|  - file:lib/gone.sh|' "$adr1" && rm -f "$adr1.bak"
+git add . >/dev/null
+expect_exit 10 "$MJ" adr check
+expect_grep 'related "file:lib/gone.sh" names a path that does not exist'
+sed -i.bak 's|^  - file:lib/gone.sh$|  - file:.ai/manifest.yaml|' "$adr1" && rm -f "$adr1.bak"
+# a type that is not one a decision may state forward: provenance has its own vocabulary
+sed -i.bak 's|^  - test:test/cases/99_probe.sh$|  - session:s-1|' "$adr1" && rm -f "$adr1.bak"
+git add . >/dev/null
+expect_exit 10 "$MJ" adr check
+expect_grep 'unknown front-matter key|has an unknown type "session"'
+cp "$T/keep1.md" "$adr1"; rm -f docs/CLAIMS.yaml; git add -A >/dev/null
+expect_exit 0 "$MJ" adr check
+
 # ---------------------------------------------------------------- the tree is sound again
 expect_exit 0 "$MJ" adr check
 expect_grep 'every identity unique'

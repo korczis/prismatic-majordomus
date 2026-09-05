@@ -260,7 +260,7 @@
       "title": "Architecture decision integrity",
       "class": "blocking",
       "principle": "Externalise decisions and durable state",
-      "statement": "A decision is canonical data under the adrs section; it is valid against the decision schema, its identity is unique and fixes its file name, supersession is reciprocal, and a record the tool derived is proposed rather than accepted.",
+      "statement": "A decision is canonical data under the adrs section; it is valid against the decision schema, its identity is unique and fixes its file name, supersession is reciprocal, every reference it makes resolves in both directions of the graph, and a record the tool derived is proposed rather than accepted.",
       "summary": "Every architecture decision the repository holds parses against the decision contract, claims an identity nothing else claims, and every relation and reference it makes resolves.",
       "validator": "adr",
       "validator_function": "mj_validate_adr",
@@ -274,7 +274,8 @@
       "policy_key": "",
       "claims": [
         "adr-catalogue",
-        "adr-propose"
+        "adr-propose",
+        "adr-traceability"
       ],
       "test": "test/cases/99_adr.sh",
       "depends_on": [

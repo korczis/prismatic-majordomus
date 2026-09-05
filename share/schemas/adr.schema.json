@@ -48,6 +48,11 @@
       "type": "string",
       "pattern": "^adr-[0-9]{4}$"
     },
+    "related": {
+      "description": "What the decision put in force, as typed references: `rule:<id>` a rule of the effective set, `claim:<id>` a claim of docs/CLAIMS.yaml, `file:<path>` a document or an implementation, `test:<path>` a behavioural case. Every reference is validated, and the knowledge graph turns each into an edge, so the reverse index — what a rule, a file or a test was decided by — is derived rather than authored twice.",
+      "type": "array",
+      "items": { "type": "string", "pattern": "^(rule|claim|file|test):.+$" }
+    },
     "provenance": {
       "description": "Where the record came from. A record with origin `extracted` was proposed by the tool from a durable local record and may not be `accepted` in the same act that created it.",
       "type": "object",
