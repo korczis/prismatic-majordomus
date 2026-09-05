@@ -36,6 +36,7 @@ cargo doc -D warnings
 cargo bench --no-run
 capabilities validate
 generate --check
+bench coverage --check
 cargo llvm-cov --fail-under-lines $threshold'
 got="$(grep -oE '^[[:space:]]*step "[^"]+"' "$RC" | sed -E 's/^[[:space:]]*step "//; s/"$//' | grep -v '^rust-check:')"
 [ "$got" = "$want" ] || { printf '    scripts/rust-check does not run the gates in CI'"'"'s order\n    want:\n%s\n    got:\n%s\n' "$want" "$got"; exit 1; }
@@ -46,6 +47,7 @@ expect_grep "RUSTDOCFLAGS='-D warnings' cargo doc --no-deps" "$RC"
 expect_grep 'cargo bench --no-run' "$RC"
 expect_grep 'cargo run --quiet -- capabilities validate' "$RC"
 expect_grep 'cargo run --quiet -- generate --check' "$RC"
+expect_grep 'cargo run --quiet -- bench coverage --check' "$RC"
 expect_grep 'cargo llvm-cov --all-targets --summary-only --fail-under-lines "[$]threshold"' "$RC"
 expect_grep 'scripts/rust-coverage-threshold' "$RC"
 
@@ -55,8 +57,10 @@ th="$(cat "$TH")"
 case "$th" in ''|*[!0-9]*) echo "    scripts/rust-coverage-threshold is not one integer: '$th'"; exit 1 ;; esac
 { [ "$th" -ge 90 ] && [ "$th" -le 100 ]; } || { echo "    the coverage floor is $th; the rule expects 90 to 100"; exit 1; }
 
-# --- CI runs the same gates in the same order on every push, and the coverage job reads
-#     the same file the script reads
+# --- CI runs the same gates in the same order on every push, plus the one it alone can:
+#     the benchmark check against the committed baseline of its own profile (a baseline is
+#     per platform and profile, so the script has none to check here); and the coverage
+#     job reads the same file the script reads
 rust_job="$(awk '/^  rust:/{f=1} /^  coverage:/{f=0} f' "$WF")"
 [ -n "$rust_job" ] || { echo "    validate.yml has no rust job"; exit 1; }
 want_ci='cargo fmt --check
@@ -65,7 +69,9 @@ cargo test --no-fail-fast
 cargo doc --no-deps
 cargo bench --no-run
 cargo run --quiet -- capabilities validate
-cargo run --quiet -- generate --check'
+cargo run --quiet -- generate --check
+cargo run --quiet -- bench coverage --check
+cargo run --quiet -- bench --profile ci --check --no-write'
 got_ci="$(printf '%s\n' "$rust_job" | grep -E '^ +- run: ' | sed -E 's/^ +- run: //')"
 [ "$got_ci" = "$want_ci" ] || { printf '    the rust job does not run the gates in the order of scripts/rust-check\n    want:\n%s\n    got:\n%s\n' "$want_ci" "$got_ci"; exit 1; }
 printf '%s\n' "$rust_job" | grep -q 'RUSTDOCFLAGS: -D warnings' || { echo "    the rust job builds the docs without -D warnings"; exit 1; }

@@ -2,7 +2,7 @@
 
 ## What it means
 
-Whatever the Rust executable must satisfy before it is merged is written down once, as an executable script, and CI runs the same list in the same order. A person runs `just rust-check` and sees exactly what the pull request will see: `cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings` (a public item without documentation is a warning, so it is an error here), `cargo test --no-fail-fast` with the unit, integration and doc-example suites, `cargo doc --no-deps` with warnings denied, `cargo bench --no-run`, `majordomus capabilities validate`, `majordomus generate --check`, and `cargo llvm-cov` failing under the committed floor. Nothing in that list is advisory and nothing is skipped on a branch.
+Whatever the Rust executable must satisfy before it is merged is written down once, as an executable script, and CI runs the same list in the same order. A person runs `just rust-check` and sees exactly what the pull request will see: `cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings` (a public item without documentation is a warning, so it is an error here), `cargo test --no-fail-fast` with the unit, integration and doc-example suites, `cargo doc --no-deps` with warnings denied, `cargo bench --no-run`, `majordomus capabilities validate`, `majordomus generate --check`, `majordomus bench coverage --check`, and `cargo llvm-cov` failing under the committed floor. CI runs one gate more, `majordomus bench --profile ci --check --no-write`, the benchmark check against the baseline committed for its own profile; a baseline is per platform and profile, so the script has none to check locally. Nothing in that list is advisory and nothing is skipped on a branch.
 
 ## How it works
 

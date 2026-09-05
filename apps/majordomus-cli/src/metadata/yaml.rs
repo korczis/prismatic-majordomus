@@ -196,7 +196,30 @@ fn typed(s: &Scalar) -> Value {
                 .map(|n| Value::Number(Number::from(n)))
                 .unwrap_or_else(|_| Value::String(t.to_string()))
         }
+        // a decimal with digits on both sides of one point (0.5, -1.25); anything else
+        // that merely looks numeric (1e3, .5, 1., 0x10) stays text, as the shell tool
+        // reads it
+        t if is_decimal(t) => t
+            .parse::<f64>()
+            .ok()
+            .and_then(Number::from_f64)
+            .map(Value::Number)
+            .unwrap_or_else(|| Value::String(t.to_string())),
         t => Value::String(t.to_string()),
+    }
+}
+
+/// `-?[0-9]+\.[0-9]+`, and nothing wider: the one decimal form the subset types as a number.
+fn is_decimal(t: &str) -> bool {
+    let body = t.strip_prefix('-').unwrap_or(t);
+    match body.split_once('.') {
+        Some((int, frac)) => {
+            !int.is_empty()
+                && !frac.is_empty()
+                && int.bytes().all(|b| b.is_ascii_digit())
+                && frac.bytes().all(|b| b.is_ascii_digit())
+        }
+        None => false,
     }
 }
 
@@ -301,6 +324,21 @@ pub fn scalar_string(v: &Value) -> Option<String> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn unquoted_integers_and_decimals_are_numbers_and_everything_else_is_text() {
+        let m = parse_mapping(
+            "a: 10\nb: -3\nc: 0.5\nd: -1.25\ne: \"0.5\"\nf: 1e3\ng: .5\nh: 1.\ni: 0x10\nj: 1.2.3\n",
+        )
+        .unwrap();
+        assert_eq!(m["a"], json!(10));
+        assert_eq!(m["b"], json!(-3));
+        assert_eq!(m["c"], json!(0.5));
+        assert_eq!(m["d"], json!(-1.25));
+        for k in ["e", "f", "g", "h", "i", "j"] {
+            assert!(m[k].is_string(), "{k} = {:?}", m[k]);
+        }
+    }
 
     #[test]
     fn flattens_like_the_shell_tool() {

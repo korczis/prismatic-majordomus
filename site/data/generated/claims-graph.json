@@ -849,7 +849,7 @@
       "status": "guaranteed",
       "route": "/guarantees/rust-evidence-gates/",
       "external": false,
-      "note": "Format, lints with warnings as errors (a public item without documentation is one), the suites with the doc examples, rustdoc with warnings denied, the benchmarks building, the registry's own validation, the committed projections in sync, and line coverage above the committed floor. The case reads the script, the workflow and the justfile and fails when they disagree on a gate or its order; with a toolchain present it also runs the doc examples and builds the benchmarks."
+      "note": "Format, lints with warnings as errors (a public item without documentation is one), the suites with the doc examples, rustdoc with warnings denied, the benchmarks building, the registry's own validation, the committed projections in sync, the benchmark coverage complete, and line coverage above the committed floor; CI adds the benchmark check against its own profile's baseline. The case reads the script, the workflow and the justfile and fails when they disagree on a gate or its order; with a toolchain present it also runs the doc examples and builds the benchmarks."
     },
     {
       "id": "claim:rust-coverage-floor",

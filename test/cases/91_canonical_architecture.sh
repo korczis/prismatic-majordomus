@@ -48,7 +48,7 @@ required="$(jq '.tallies.total.required' "$S/coverage.json")"
 # --- a benchmark run is a versioned document, written under the local half, never under the tree
 before="$(git status --porcelain; git ls-files -s | shasum -a 256)"
 "$RB" bench objects.get --transport direct --profile quick --format json 2>/dev/null > "$S/run.json" || { echo "    bench failed"; exit 1; }
-jq -e '.schema == "majordomus/benchmark-result/v1" and .profile == "quick" and (.results | length) == 1 and .results[0].key == "objects.get|direct|first-object" and (.results[0].stats.samples > 0) and (.provenance.registry_fingerprint | length) == 64' "$S/run.json" >/dev/null \
+jq -e '.schema == "majordomus/benchmark-result/v1" and .profile == "quick" and (.results | length) >= 1 and .results[0].key == "objects.get|direct|first-object" and all(.results[]; (.key | startswith("objects.get|direct|")) and .stats.samples > 0) and (.provenance.registry_fingerprint | length) == 64' "$S/run.json" >/dev/null \
   || { echo "    the run is not a result document"; cat "$S/run.json"; exit 1; }
 ls .ai/local/benchmarks/*-quick.json >/dev/null 2>&1 || { echo "    the run was not written under .ai/local/benchmarks/"; exit 1; }
 after="$(git status --porcelain; git ls-files -s | shasum -a 256)"
