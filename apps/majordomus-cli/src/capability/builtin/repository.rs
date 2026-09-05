@@ -13,6 +13,10 @@ use crate::{capability, module};
 
 use super::{get, Empty};
 
+/// The URI under which `repository.info` is read as an MCP resource, and the one URI
+/// `objects.get` answers by executing a query rather than by reading the index.
+pub const REPOSITORY_URI: &str = "majordomus://repository";
+
 /// The repository, its layer, its git state, and the state of this process's index.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct RepositoryReport {
@@ -64,7 +68,7 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_repository".into()),
-                        resource: Some(McpResource { uri: "majordomus://repository".into(), name: "repository".into() }),
+                        resource: Some(McpResource { uri: REPOSITORY_URI.into(), name: "repository".into() }),
                     }),
                     http: get("/api/v1/repository"),
                     cli: None,

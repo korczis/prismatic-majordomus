@@ -91,7 +91,7 @@ fn hundreds_of_mcp_requests_rebuild_nothing() {
         "tools and resources, once each"
     );
 
-    let calls: [(&str, Value); 6] = [
+    let calls: [(&str, Value); 7] = [
         ("tools/list", json!({})),
         ("resources/list", json!({})),
         (
@@ -109,6 +109,10 @@ fn hundreds_of_mcp_requests_rebuild_nothing() {
         (
             "resources/read",
             json!({ "uri": "majordomus://rule/project.alpha@1" }),
+        ),
+        (
+            "tools/call",
+            json!({ "name": "majordomus_get", "arguments": { "uri": "majordomus://repository" } }),
         ),
     ];
     for i in 0..REQUESTS {

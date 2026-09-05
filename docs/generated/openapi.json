@@ -144,7 +144,7 @@
       "get": {
         "operationId": "objects.get",
         "summary": "Get one object",
-        "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content.",
+        "description": "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content; a URI a query projects (majordomus://repository) answers that query as a JSON document. The same resolution serves the MCP resource read.",
         "tags": [
           "objects"
         ],
@@ -156,7 +156,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "`majordomus://<kind>/<identity>`."
+            "description": "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`)."
           }
         ],
         "responses": {
@@ -165,7 +165,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ObjectView"
+                  "$ref": "#/components/schemas/ResourceView"
                 }
               }
             }
@@ -580,6 +580,65 @@
           "at"
         ],
         "description": "What a peer said it is working on."
+      },
+      "AnswerView": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "description": "The URI as given."
+          },
+          "id": {
+            "type": "string",
+            "description": "The capability that answered (`repository.info`)."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CapabilityKind",
+            "description": "Its kind: `query`."
+          },
+          "identity": {
+            "type": "string",
+            "description": "The resource name a client lists (`repository`)."
+          },
+          "title": {
+            "type": "string",
+            "description": "The capability's title."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The capability's description, when it has one."
+          },
+          "answer": {
+            "description": "The answer, as the capability's output schema describes it (`capabilities.describe`\ncarries that schema)."
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/CapabilityProvenance",
+            "description": "Where the capability comes from: the Rust module it is composed in."
+          },
+          "media_type": {
+            "type": "string",
+            "description": "`application/json`."
+          },
+          "content": {
+            "type": "string",
+            "description": "The answer as text: byte for byte what `resources/read` returns for the URI."
+          }
+        },
+        "required": [
+          "uri",
+          "id",
+          "kind",
+          "identity",
+          "title",
+          "answer",
+          "provenance",
+          "media_type",
+          "content"
+        ],
+        "description": "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an [`ObjectView`] where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI."
       },
       "BenchmarkPolicy": {
         "oneOf": [
@@ -1724,6 +1783,39 @@
           "capabilities"
         ],
         "description": "The repository, its layer, its git state, and the state of this process's index."
+      },
+      "ResourceView": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ObjectView",
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "const": "declarative"
+              }
+            },
+            "required": [
+              "source"
+            ],
+            "description": "A file of the layer, read as it is."
+          },
+          {
+            "$ref": "#/components/schemas/AnswerView",
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "const": "builtin"
+              }
+            },
+            "required": [
+              "source"
+            ],
+            "description": "A query with a resource exposure, executed and rendered as a JSON document."
+          }
+        ],
+        "description": "The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a\ncapability's provenance is."
       },
       "SearchHit": {
         "type": "object",

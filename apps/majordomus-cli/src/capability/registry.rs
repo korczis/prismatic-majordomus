@@ -13,8 +13,8 @@ use crate::index::Index;
 use super::benchmark::CaseProvider;
 use super::handler::{CapabilityError, Context, Executable, Handler};
 use super::model::{
-    BenchmarkPolicy, Capability, CapabilityId, CapabilityKind, HttpMethod, ModuleId, Provenance,
-    Stability, WaiverReason,
+    BenchmarkPolicy, Capability, CapabilityId, CapabilityKind, HttpMethod, McpResource, ModuleId,
+    Provenance, Stability, WaiverReason,
 };
 use super::module::ModuleDescriptor;
 
@@ -513,6 +513,19 @@ impl Builder {
                     } else {
                         registry.by_mcp_uri.insert(res.uri.clone(), c.id.clone());
                     }
+                    // a read supplies no input: a query read as a resource must accept `{}`
+                    let (_, required) = c.input.properties();
+                    if c.kind.is_executable() && !required.is_empty() {
+                        errors.push(RegistryError::Shape {
+                            id: id.clone(),
+                            provenance: prov.clone(),
+                            reason: format!(
+                                "a query read as the resource '{}' is called with no input, and its input requires {}",
+                                res.uri,
+                                required.join(", ")
+                            ),
+                        });
+                    }
                 }
             }
             if let Some(http) = &c.exposure.http {
@@ -707,11 +720,23 @@ impl CapabilityRegistry {
             .and_then(|id| self.get(id.as_str()))
     }
 
-    /// The capability an MCP resource URI projects.
-    pub fn by_mcp_uri(&self, uri: &str) -> Option<&Capability> {
-        self.by_mcp_uri
+    /// The capability an MCP resource URI projects, with the resource exposure it matched:
+    /// a declarative object, or a query read as a document (`majordomus://repository`).
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{builtin, CapabilityKind, CapabilityRegistry};
+    /// let r = CapabilityRegistry::builder().with_builtin(builtin::all()).build().unwrap();
+    /// let (c, res) = r.by_mcp_uri(builtin::REPOSITORY_URI).unwrap();
+    /// assert_eq!((c.id.as_str(), c.kind, res.name.as_str()), ("repository.info", CapabilityKind::Query, "repository"));
+    /// assert!(r.by_mcp_uri("majordomus://rule/none@1").is_none());
+    /// ```
+    pub fn by_mcp_uri(&self, uri: &str) -> Option<(&Capability, &McpResource)> {
+        let c = self
+            .by_mcp_uri
             .get(uri)
-            .and_then(|id| self.get(id.as_str()))
+            .and_then(|id| self.get(id.as_str()))?;
+        let res = c.exposure.mcp.as_ref()?.resource.as_ref()?;
+        Some((c, res))
     }
 
     /// The capability an HTTP method and path project.

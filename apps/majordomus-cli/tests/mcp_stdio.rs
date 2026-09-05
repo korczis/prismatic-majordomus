@@ -87,6 +87,7 @@ fn handshake_discovery_and_a_real_round_trip() {
         json!({ "jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": { "name": "majordomus_search", "arguments": { "query": "normative" } } }),
         json!({ "jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": { "name": "majordomus_repository", "arguments": {} } }),
         json!({ "jsonrpc": "2.0", "id": 10, "method": "resources/read", "params": { "uri": "majordomus://repository" } }),
+        json!({ "jsonrpc": "2.0", "id": 11, "method": "tools/call", "params": { "name": "majordomus_get", "arguments": { "uri": "majordomus://repository" } } }),
     ];
     let (code, frames, stderr) = session(&f.root(), &[], &requests);
     assert_eq!(code, 0, "server exits 0 at EOF; stderr:\n{stderr}");
@@ -101,7 +102,7 @@ fn handshake_discovery_and_a_real_round_trip() {
     let r = by_id(&frames);
     assert_eq!(
         r.len(),
-        10,
+        11,
         "one response per request, none for the notification: {frames:?}"
     );
 
@@ -209,6 +210,30 @@ fn handshake_discovery_and_a_real_round_trip() {
     let text: Value =
         serde_json::from_str(r[&10]["result"]["contents"][0]["text"].as_str().unwrap()).unwrap();
     assert_eq!(text["state"], "ok");
+
+    // one resolution: the same URI through the tool is the query's answer as a document,
+    // tagged builtin, and its text is byte for byte what resources/read returned
+    let got = &r[&11]["result"];
+    assert_eq!(got["isError"], false, "{got}");
+    let doc = &got["structuredContent"];
+    assert_eq!(doc["source"], "builtin");
+    assert_eq!(doc["uri"], "majordomus://repository");
+    assert_eq!(doc["id"], "repository.info");
+    assert_eq!(doc["kind"], "query");
+    assert_eq!(doc["identity"], "repository");
+    assert_eq!(doc["title"], "Repository and index state");
+    assert_eq!(doc["media_type"], "application/json");
+    assert_eq!(doc["provenance"]["source"], "builtin");
+    assert_eq!(
+        doc["answer"], *repo,
+        "the tool's answer is repository.info's"
+    );
+    assert_eq!(
+        doc["content"], r[&10]["result"]["contents"][0]["text"],
+        "the document text is what resources/read returns"
+    );
+    // and a declarative object carries the same tag, the other way
+    assert_eq!(get["structuredContent"]["source"], "declarative");
 }
 
 #[test]

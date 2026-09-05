@@ -266,7 +266,9 @@ Diagnostic codes: `malformed_front_matter`, `missing_front_matter`, `malformed_y
 Repository content is untrusted input: symlinks are never followed or read; a file over
 4 MiB or a front matter over 64 KiB is refused; invalid UTF-8 is refused; only paths the
 declared pathspecs match are read, and only from the repository root; `resources/read` and
-`objects.get` answer from the in-memory index, never from a path a client names; the HTTP
+`objects.get` answer from the in-memory index and the registry (one resolution of a URI,
+shared by both; `majordomus://repository` executes `repository.info`), never from a path a
+client names; the HTTP
 server binds loopback by default, reads at most 1 MiB of body, and trusts no header beyond
 the session id it issued itself, which names a session and grants nothing (every session
 sees the same read-only registry). The lease is trusted only after the server it names has

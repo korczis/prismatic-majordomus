@@ -56,11 +56,13 @@ req() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,\"
   req 3 resources/read '{"uri":"majordomus://rule/majordomus.scope-integrity@1"}'
   req 4 tools/call '{"name":"majordomus_get","arguments":{"uri":"majordomus://prompt/continue"}}'
   req 5 tools/call '{"name":"majordomus_repository","arguments":{}}'
+  req 6 tools/call '{"name":"majordomus_get","arguments":{"uri":"majordomus://repository"}}'
+  req 7 resources/read '{"uri":"majordomus://repository"}'
 } > "$S/session.in"
 rc=0; MAJORDOMUS_LOG=debug "$RB" mcp < "$S/session.in" > "$S/session.out" 2> "$S/session.err" || rc=$?
 [ "$rc" = 0 ] || { echo "    the server exited $rc at EOF"; cat "$S/session.err"; exit 1; }
 # stdout: exactly one JSON frame per request, nothing else
-[ "$(wc -l < "$S/session.out" | tr -d ' ')" = 5 ] || { echo "    expected 5 frames on stdout, got:"; cat "$S/session.out"; exit 1; }
+[ "$(wc -l < "$S/session.out" | tr -d ' ')" = 7 ] || { echo "    expected 7 frames on stdout, got:"; cat "$S/session.out"; exit 1; }
 n=0
 while IFS= read -r line; do
   n=$((n+1))
@@ -84,6 +86,19 @@ sed -n 4p "$S/session.out" | jq -e '.result.isError == false and .result.structu
   || { echo "    majordomus_get did not return the prompt's metadata"; exit 1; }
 sed -n 5p "$S/session.out" | jq -e '.result.structuredContent.state == "ok" and (.result.structuredContent.diagnostics | length) == 0 and .result.structuredContent.repository.git.state == "available"' >/dev/null \
   || { echo "    majordomus_repository does not report a healthy index"; exit 1; }
+# one resolution for the tool, the route and the resource read: the repository URI answers
+# repository.info as a JSON document tagged builtin, a file of the layer is tagged declarative,
+# and the document's text is byte for byte what resources/read returns for the same URI
+sed -n 4p "$S/session.out" | jq -e '.result.structuredContent.source == "declarative"' >/dev/null \
+  || { echo "    majordomus_get does not tag a file of the layer as declarative"; exit 1; }
+sed -n 6p "$S/session.out" | jq -e '.result.isError == false and .result.structuredContent.source == "builtin" and .result.structuredContent.id == "repository.info" and .result.structuredContent.identity == "repository" and .result.structuredContent.media_type == "application/json" and .result.structuredContent.answer.state == "ok"' >/dev/null \
+  || { echo "    majordomus_get did not answer majordomus://repository as repository.info"; exit 1; }
+sed -n 5p "$S/session.out" | jq -S '.result.structuredContent' > "$S/report.json"
+sed -n 6p "$S/session.out" | jq -S '.result.structuredContent.answer' > "$S/answer.json"
+cmp -s "$S/report.json" "$S/answer.json" || { echo "    majordomus_get's answer is not majordomus_repository's report"; exit 1; }
+sed -n 6p "$S/session.out" | jq -j '.result.structuredContent.content' > "$S/get.txt"
+sed -n 7p "$S/session.out" | jq -j '.result.contents[0].text' > "$S/read2.txt"
+cmp -s "$S/get.txt" "$S/read2.txt" || { echo "    majordomus_get and resources/read disagree on majordomus://repository"; exit 1; }
 # nothing changed
 after="$(git status --porcelain; git ls-files -s | shasum -a 256)"
 [ "$before" = "$after" ] || { echo "    serving changed the repository"; git status --porcelain; exit 1; }

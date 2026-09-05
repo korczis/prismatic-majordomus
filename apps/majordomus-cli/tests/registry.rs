@@ -213,10 +213,12 @@ fn every_projection_collision_is_explicit() {
         http: None,
         cli: None,
     };
-    let errs = errors_of(vec![
-        query("a.one", res("majordomus://x"), Stability::Implemented, "m"),
-        query("a.two", res("majordomus://x"), Stability::Implemented, "m"),
-    ]);
+    let readable = |id: &str| {
+        let mut q = query(id, res("majordomus://x"), Stability::Implemented, "m");
+        q.capability.input = CanonicalSchema::empty();
+        q
+    };
+    let errs = errors_of(vec![readable("a.one"), readable("a.two")]);
     assert!(
         matches!(&errs[..], [RegistryError::DuplicateMcpUri { uri, .. }] if uri == "majordomus://x"),
         "{errs:?}"
@@ -504,4 +506,42 @@ fn benchmark_policy_follows_the_kind() {
     );
     assert_eq!(s.benchmark_waived, 0);
     assert!(s.cached >= 1, "at least one query is cached");
+}
+
+#[test]
+fn a_query_read_as_a_resource_accepts_an_empty_input() {
+    let res = |uri: &str| Exposure {
+        mcp: Some(McpExposure {
+            tool: None,
+            resource: Some(McpResource {
+                uri: uri.into(),
+                name: "n".into(),
+            }),
+        }),
+        http: None,
+        cli: None,
+    };
+    // `In` requires `name`: a read supplies no input, so the registry refuses, naming both
+    let errs = errors_of(vec![query(
+        "a.one",
+        res("majordomus://a"),
+        Stability::Implemented,
+        "m",
+    )]);
+    assert!(
+        matches!(&errs[..], [RegistryError::Shape { id, reason, .. }]
+            if id == "a.one" && reason.contains("majordomus://a") && reason.contains("requires name")),
+        "{errs:?}"
+    );
+    // an input with nothing required builds, and the lookup answers the capability with
+    // the exposure the URI matched
+    let mut ok = query("a.two", res("majordomus://b"), Stability::Implemented, "m");
+    ok.capability.input = CanonicalSchema::empty();
+    let r = CapabilityRegistry::builder()
+        .with_builtin(vec![ok])
+        .build()
+        .unwrap();
+    let (c, matched) = r.by_mcp_uri("majordomus://b").unwrap();
+    assert_eq!((c.id.as_str(), matched.name.as_str()), ("a.two", "n"));
+    assert!(r.by_mcp_uri("majordomus://a").is_none());
 }

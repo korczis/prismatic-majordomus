@@ -1,15 +1,21 @@
 //! The `objects` module: the declarative objects of the repository's layer, listed, read
-//! and searched.
+//! and searched, and the one resolution of a `majordomus://` URI that `objects.get` and
+//! the MCP resource read share.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{CachePolicy, Exposure, Stability};
+use crate::capability::model::{
+    CachePolicy, Capability, CapabilityKind, Exposure, McpResource, Provenance, Stability,
+};
 use crate::capability::module::ModuleDescriptor;
+use crate::model::Object;
 use crate::{capability, module};
 
+use super::repository::REPOSITORY_URI;
 use super::{get, mcp, ObjectSummary, ObjectView};
 
 // ---------------------------------------------------------------- objects.list
@@ -82,19 +88,127 @@ fn objects_list(ctx: &Context, input: ListInput) -> Result<ObjectList, Capabilit
     })
 }
 
+// ---------------------------------------------------------------- resolution
+
+/// What a `majordomus://` URI names, resolved through the registry. This is the one rule
+/// `objects.get` and the MCP `resources/read` share, so that the tool, the HTTP route and
+/// the resource cannot answer one URI differently.
+#[derive(Debug)]
+pub enum Resolved<'a> {
+    /// A declarative object of the layer, as the index holds it.
+    Object(&'a Object),
+    /// A query with a resource exposure ([`REPOSITORY_URI`]), executed through the
+    /// executor like any other call.
+    Answer {
+        /// The capability that answered.
+        capability: &'a Capability,
+        /// The resource exposure the URI matched.
+        resource: &'a McpResource,
+        /// The answer, as the capability's output schema describes it.
+        value: Value,
+    },
+}
+
+impl Resolved<'_> {
+    /// IANA media type of [`Resolved::text`]: the object's, or `application/json`.
+    pub fn media_type(&self) -> String {
+        match self {
+            Resolved::Object(o) => o.media_type.to_string(),
+            Resolved::Answer { .. } => "application/json".to_string(),
+        }
+    }
+
+    /// The content as `resources/read` returns it: the file as read, or the answer
+    /// pretty-printed.
+    pub fn text(&self) -> String {
+        match self {
+            Resolved::Object(o) => o.content.clone(),
+            Resolved::Answer { value, .. } => pretty_json(value),
+        }
+    }
+}
+
+/// A JSON value as the text a resource read returns.
+fn pretty_json(v: &Value) -> String {
+    serde_json::to_string_pretty(v).unwrap_or_else(|_| v.to_string())
+}
+
+/// Resolve a URI: the capability the registry projects at it, then the object behind a
+/// resource or the answer of a query. An unknown URI is `NotFound`; a registry naming an
+/// object the index does not hold is `Internal`; a query that refuses passes its refusal
+/// through, and any other failure of the query is `Internal`, naming the capability.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::{resolve, Resolved, REPOSITORY_URI};
+/// use majordomus_cli::capability::{builtin, CapabilityError, CapabilityRegistry, Context};
+/// use majordomus_cli::git::GitState;
+/// use majordomus_cli::index::{Index, RepositoryInfo, State};
+/// use std::sync::Arc;
+/// // an index with no objects: only the repository report answers
+/// let index = Index {
+///     repository: RepositoryInfo {
+///         root: "/tmp/doc".into(), layer_schema: "ai-repository/v1".into(),
+///         sections: Default::default(), git: GitState::Unavailable { reason: "doc".into() },
+///         discovery: "filesystem".into(), source_classes: vec![], kind_sources: vec![],
+///     },
+///     objects: vec![], diagnostics: vec![], state: State::Ok, fingerprint: String::new(),
+/// };
+/// let registry = CapabilityRegistry::builder().with_builtin(builtin::all()).with_index(&index).build().unwrap();
+/// let ctx = Context::new(Arc::new(index), Arc::new(registry));
+/// match resolve(&ctx, REPOSITORY_URI).unwrap() {
+///     Resolved::Answer { capability, resource, value } => {
+///         assert_eq!(capability.id.as_str(), "repository.info");
+///         assert_eq!(resource.name, "repository");
+///         assert_eq!(value["objects"], 0);
+///     }
+///     other => panic!("{other:?}"),
+/// }
+/// assert!(matches!(resolve(&ctx, "majordomus://rule/none@1"), Err(CapabilityError::NotFound(_))));
+/// ```
+pub fn resolve<'a>(ctx: &'a Context, uri: &str) -> Result<Resolved<'a>, CapabilityError> {
+    let (capability, resource) = ctx
+        .registry
+        .by_mcp_uri(uri)
+        .ok_or_else(|| CapabilityError::NotFound(format!("unknown resource: {uri}")))?;
+    if !capability.kind.is_executable() {
+        return ctx.index.get(uri).map(Resolved::Object).ok_or_else(|| {
+            CapabilityError::Internal(format!(
+                "{uri}: the registry names {} and the index holds no such object",
+                capability.id
+            ))
+        });
+    }
+    let value = ctx
+        .execute(capability.id.as_str(), json!({}))
+        .map_err(|e| match e {
+            CapabilityError::Refused(reason) => CapabilityError::Refused(reason),
+            other => CapabilityError::Internal(format!(
+                "{uri}: {} did not answer: {other}",
+                capability.id
+            )),
+        })?;
+    Ok(Resolved::Answer {
+        capability,
+        resource,
+        value,
+    })
+}
+
 // ---------------------------------------------------------------- objects.get
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// The input of `objects.get`: which object.
 pub struct GetInput {
-    /// `majordomus://<kind>/<identity>`.
+    /// `majordomus://<kind>/<identity>`, or a URI a query projects
+    /// (`majordomus://repository`).
     pub uri: String,
 }
 
 impl BenchmarkCases for GetInput {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
-        ctx.index
+        let mut cases: Vec<NamedCase<Self>> = ctx
+            .index
             .objects
             .first()
             .map(|o| {
@@ -103,15 +217,80 @@ impl BenchmarkCases for GetInput {
                     GetInput { uri: o.uri.clone() },
                 )]
             })
-            .unwrap_or_default()
+            .unwrap_or_default();
+        cases.push(NamedCase::new(
+            "repository",
+            GetInput {
+                uri: REPOSITORY_URI.into(),
+            },
+        ));
+        cases
     }
 }
 
-fn objects_get(ctx: &Context, input: GetInput) -> Result<ObjectView, CapabilityError> {
-    ctx.index
-        .get(&input.uri)
-        .map(ObjectView::of)
-        .ok_or_else(|| CapabilityError::NotFound(format!("unknown resource: {}", input.uri)))
+/// A URI a query projects (`majordomus://repository`), answered: the same fields a client
+/// reads on an [`ObjectView`] where they apply, the answer itself as data, and the text
+/// `resources/read` returns for the URI.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct AnswerView {
+    /// The URI as given.
+    pub uri: String,
+    /// The capability that answered (`repository.info`).
+    pub id: String,
+    /// Its kind: `query`.
+    pub kind: CapabilityKind,
+    /// The resource name a client lists (`repository`).
+    pub identity: String,
+    /// The capability's title.
+    pub title: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The capability's description, when it has one.
+    pub description: Option<String>,
+    /// The answer, as the capability's output schema describes it (`capabilities.describe`
+    /// carries that schema).
+    pub answer: Value,
+    /// Where the capability comes from: the Rust module it is composed in.
+    pub provenance: Provenance,
+    /// `application/json`.
+    pub media_type: String,
+    /// The answer as text: byte for byte what `resources/read` returns for the URI.
+    pub content: String,
+}
+
+/// The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a
+/// capability's provenance is.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "source", rename_all = "lowercase")]
+pub enum ResourceView {
+    /// A file of the layer, read as it is.
+    Declarative(ObjectView),
+    /// A query with a resource exposure, executed and rendered as a JSON document.
+    Builtin(AnswerView),
+}
+
+fn objects_get(ctx: &Context, input: GetInput) -> Result<ResourceView, CapabilityError> {
+    let resolved = resolve(ctx, &input.uri)?;
+    let (media_type, content) = (resolved.media_type(), resolved.text());
+    Ok(match resolved {
+        Resolved::Object(o) => ResourceView::Declarative(ObjectView::of(o)),
+        Resolved::Answer {
+            capability,
+            resource,
+            value,
+        } => ResourceView::Builtin(AnswerView {
+            uri: input.uri,
+            id: capability.id.to_string(),
+            kind: capability.kind,
+            identity: resource.name.clone(),
+            title: capability.title.clone(),
+            description: (!capability.description.is_empty())
+                .then(|| capability.description.clone()),
+            answer: value,
+            provenance: capability.provenance.clone(),
+            media_type,
+            content,
+        }),
+    })
 }
 
 // ---------------------------------------------------------------- objects.search
@@ -253,9 +432,9 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "objects.get",
                 title: "Get one object",
-                description: "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content.",
+                description: "One object by URI (majordomus://<kind>/<identity>): metadata, provenance and content; a URI a query projects (majordomus://repository) answers that query as a JSON document. The same resolution serves the MCP resource read.",
                 input: GetInput,
-                output: ObjectView,
+                output: ResourceView,
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure { mcp: mcp("majordomus_get"), http: get("/api/v1/object"), cli: None },
                 tags: ["objects"],

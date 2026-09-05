@@ -67,7 +67,8 @@ every party, on a duplicate id (Rust with Rust, Rust with declarative), a duplic
 tool name or resource URI, a duplicate HTTP route, a duplicate CLI path, a malformed
 exposure (a route outside `/api/v1/`, a tool name outside `[a-z0-9_]+`), a query or a
 command without a handler, a resource with one, a command with an MCP resource exposure
-or an HTTP method other than `POST`, and an executable exposure on a planned or
+or an HTTP method other than `POST`, a query exposed as an MCP resource whose input
+requires anything (a read supplies none), and an executable exposure on a planned or
 unsupported capability. Errors are collected, not stopped at the first. `majordomus
 capabilities validate` runs exactly this and exits 10 with the list.
 
@@ -137,7 +138,9 @@ does not build.
 Write the file where the repository's `sources.yaml` class for that kind looks, with the
 front matter or YAML its schema allows; track it (or run with `--discovery filesystem`);
 restart. It is a resource capability, an MCP resource, a member of `objects.list`, readable
-through `objects.get` over MCP and HTTP, and listed by `capabilities list`. No Rust, no
+through `objects.get` over MCP and HTTP (one resolution of the URI, shared with the MCP
+resource read, which also answers `majordomus://repository` as `repository.info`'s
+report), and listed by `capabilities list`. No Rust, no
 registration, no projection edited. `apps/majordomus-cli/tests/external_extension.rs` adds,
 removes and breaks objects between restarts and reads them back through every interface.
 

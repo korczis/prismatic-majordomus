@@ -131,6 +131,14 @@ Consequences a repository can rely on:
 | `majordomus://repository` | JSON: root, layer schema, sections, git state, discovery mode, kinds present, every diagnostic |
 | `majordomus://<kind>/<identity>` | the file as read, `text/markdown` or `application/yaml` |
 
+A URI is resolved once, by one function, wherever it is asked for: `resources/read`,
+the `majordomus_get` tool and `GET /api/v1/object` answer the same URI alike. A URI the
+registry does not know is not found on every one of them. `majordomus://repository` is a
+query (`repository.info`) with a resource exposure: read as a resource it is the report
+as JSON text; read through `majordomus_get` it is the report as data (`answer`) with the
+same text beside it (`content`). The registry refuses a query exposed as a resource whose
+input requires anything, because a read supplies none.
+
 Identity is the kind's identity fields joined with `@` — `majordomus.scope-integrity@1`
 for a rule, `continue` for a prompt, `implementation` for a profile, `M001` for a
 milestone — or, for a kind with no identity fields (policy, document), the
@@ -143,7 +151,7 @@ manifest section it falls under, and its size.
 | tool | capability | arguments | answers |
 |---|---|---|---|
 | `majordomus_list` | `objects.list` | `kind?`, `tag?` | the objects, summarised |
-| `majordomus_get` | `objects.get` | `uri` | metadata, provenance, media type, content |
+| `majordomus_get` | `objects.get` | `uri` | tagged by `source`: `declarative`, a file of the layer with metadata, provenance, media type and content; or `builtin`, a query the URI projects (`majordomus://repository`) with its `answer`, the capability's provenance and the same text as `content` |
 | `majordomus_search` | `objects.search` | `query`, `kind?`, `limit?` | case-insensitive substring hits with one snippet line each |
 | `majordomus_repository` | `repository.info` | none | the `majordomus://repository` document |
 | `majordomus_capabilities` | `capabilities.list` | `kind?`, `exposure?` | every capability with its projections |
@@ -202,7 +210,8 @@ rules contract requires. Nothing is repaired, defaulted or rewritten.
 ## What proves it
 
 `test/cases/72_rust_mcp.sh` builds the executable and speaks to it over pipes inside a
-repository the shell tool's `init` wrote; `76_capabilities_projections.sh` reads one
+repository the shell tool's `init` wrote, and reads `majordomus://repository` through the
+tool and the resource read to see one answer; `76_capabilities_projections.sh` reads one
 capability back through every interface; `90_mcp_shared_server.sh` starts two clients
 through `bin/majordomus-mcp` in such a repository and checks that one server serves both,
 that each sees the other, that the lease comes and goes with the server, and that the

@@ -20,11 +20,11 @@ use super::module::ModuleDescriptor;
 
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
 pub use objects::{
-    GetInput, ListInput, ObjectList, SearchHit, SearchInput, SearchResult, SEARCH_DEFAULT_LIMIT,
-    SEARCH_MAX_LIMIT,
+    resolve, AnswerView, GetInput, ListInput, ObjectList, Resolved, ResourceView, SearchHit,
+    SearchInput, SearchResult, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
 };
 pub use peers::{AnnounceInput, PeerList};
-pub use repository::RepositoryReport;
+pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use views::{Empty, ObjectSummary, ObjectView};
 
 /// The application: its modules, in one place. A new module is one line here; a new
