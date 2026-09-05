@@ -978,22 +978,13 @@
       "note": "Tags from registry.modules(), examples from the capabilities' BenchmarkCases against the repository's index, responses from one status table keyed by kind, info from about.rs and the crate manifest; benches/routes.rs times every route with the same cases; the site projects the committed document, renders /docs/api/ and serves /openapi.json raw, and site-check refuses a build without them."
     },
     {
-      "id": "claim:provider-projections-one-renderer",
+      "id": "claim:scope-declared",
       "kind": "claim",
-      "label": "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, GEMINI.md, ...) are a target of majordomus generate, rendered from the policy and the provider templates byte for byte as the shell tool renders them, and generate --check refuses a hand-edited or stale one in CI",
+      "label": "What a worker reads of the repository is declared once in .ai/repo/scope.yaml, out wins over in, and the Rust executable discovers, indexes and serves nothing outside it",
       "status": "guaranteed",
-      "route": "/guarantees/provider-projections-one-renderer/",
+      "route": "/guarantees/scope-declared/",
       "external": false,
-      "note": "One renderer, two entry points that agree on every stamp; the policy is the only input (its hash and the profiles' is the stamp's first hash). A target outside the repository, a provider without a template, a token the policy cannot fill, and an always_loaded target over the budget are refused with the reason, and nothing is written. Region mode keeps the host document outside the markers. apps/majordomus-cli/tests/providers_projection.rs covers the fixture side; CI runs generate --check on every push."
-    },
-    {
-      "id": "claim:site-registry-dataset",
-      "kind": "claim",
-      "label": "The site's Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI",
-      "status": "guaranteed",
-      "route": "/guarantees/site-registry-dataset/",
-      "external": false,
-      "note": "Every builtin capability with its exposures, every object of the layer without its content, every kind with its schema, the declared provider projections, and the registry and index fingerprints; no timestamps, no absolute paths, no git state. The directory is the Rust executable's alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; the test follows one mutation to exactly the projection it concerns."
+      "note": "The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared."
     },
     {
       "id": "claim:site-deploy-one-path",
@@ -1113,6 +1104,13 @@
       "id": "impl:apps/majordomus-cli/src/providers.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/providers.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/scope.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/scope.rs",
       "route": null,
       "external": false
     },
@@ -1457,6 +1455,13 @@
       "kind": "source",
       "label": "docs/SCHEMAS.md",
       "route": "/docs/schemas/",
+      "external": false
+    },
+    {
+      "id": "source:docs/SCOPE.md",
+      "kind": "source",
+      "label": "docs/SCOPE.md",
+      "route": "/docs/scope/",
       "external": false
     },
     {
@@ -1808,6 +1813,13 @@
       "label": "test/cases/93_rust_provider_projections.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/93_rust_provider_projections.sh"
+    },
+    {
+      "id": "test:test/cases/93_scope_policy.sh",
+      "kind": "test",
+      "label": "test/cases/93_scope_policy.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/93_scope_policy.sh"
     },
     {
       "id": "test:test/cases/94_ci_plan.sh",
@@ -2361,13 +2373,8 @@
       "kind": "specified_by"
     },
     {
-      "source": "claim:provider-projections-one-renderer",
-      "target": "source:docs/CAPABILITIES.md",
-      "kind": "specified_by"
-    },
-    {
-      "source": "claim:site-registry-dataset",
-      "target": "source:docs/CAPABILITIES.md",
+      "source": "claim:scope-declared",
+      "target": "source:docs/SCOPE.md",
       "kind": "specified_by"
     },
     {
@@ -2871,13 +2878,8 @@
       "kind": "implemented_by"
     },
     {
-      "source": "claim:provider-projections-one-renderer",
-      "target": "impl:apps/majordomus-cli/src/providers.rs",
-      "kind": "implemented_by"
-    },
-    {
-      "source": "claim:site-registry-dataset",
-      "target": "impl:apps/majordomus-cli/src/site.rs",
+      "source": "claim:scope-declared",
+      "target": "impl:apps/majordomus-cli/src/scope.rs",
       "kind": "implemented_by"
     },
     {
@@ -3381,13 +3383,8 @@
       "kind": "proved_by"
     },
     {
-      "source": "claim:provider-projections-one-renderer",
-      "target": "test:test/cases/93_rust_provider_projections.sh",
-      "kind": "proved_by"
-    },
-    {
-      "source": "claim:site-registry-dataset",
-      "target": "test:apps/majordomus-cli/tests/projections.rs",
+      "source": "claim:scope-declared",
+      "target": "test:test/cases/93_scope_policy.sh",
       "kind": "proved_by"
     },
     {
