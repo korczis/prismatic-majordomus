@@ -308,6 +308,397 @@
           "title": "Doctor"
         }
       ]
+    },
+    {
+      "slug": "re-arguing-a-settled-decision",
+      "title": "Re-arguing a decision that was settled last week",
+      "description": "Why a decision that lives only in a transcript is reopened by the next session, and how a recorded reason and an explicit open question replace the argument.",
+      "hook": "watched a session undo last week's decision, for the reason it was made",
+      "weight": 6,
+      "route": "/why/re-arguing-a-settled-decision/",
+      "commands": [
+        "decision",
+        "question"
+      ],
+      "responsibilities": [
+        "state",
+        "finish"
+      ],
+      "claims": [
+        "decision-record",
+        "decision-attribution",
+        "open-question-gate",
+        "blocker-survives-handover",
+        "blocker-store"
+      ],
+      "claim_detail": [
+        {
+          "id": "decision-record",
+          "claim": "A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited",
+          "status": "guaranteed"
+        },
+        {
+          "id": "decision-attribution",
+          "claim": "A decision record without a task, a head and a reason is reported, and does not block",
+          "status": "advisory"
+        },
+        {
+          "id": "open-question-gate",
+          "claim": "An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass",
+          "status": "guaranteed"
+        },
+        {
+          "id": "blocker-survives-handover",
+          "claim": "A blocking question keeps blocking after the work is handed to a new task",
+          "status": "guaranteed"
+        },
+        {
+          "id": "blocker-store",
+          "claim": "An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does",
+          "status": "guaranteed"
+        }
+      ],
+      "command_detail": [
+        {
+          "name": "decision",
+          "summary": "record or read durable decisions",
+          "read_only": false
+        },
+        {
+          "name": "question",
+          "summary": "open, resolve and list questions that block acceptance",
+          "read_only": false
+        }
+      ],
+      "responsibility_detail": [
+        {
+          "slug": "state",
+          "title": "State"
+        },
+        {
+          "slug": "finish",
+          "title": "Finish"
+        }
+      ]
+    },
+    {
+      "slug": "task-in-progress-for-three-weeks",
+      "title": "A task \"in progress\" that nobody has touched for three weeks",
+      "description": "Why an abandoned task looks active, and how computed identity, checkpoint intervals and drift reports tell a live task from a dead one.",
+      "hook": "found a task \"in progress\" that nobody had touched for three weeks",
+      "weight": 7,
+      "route": "/why/task-in-progress-for-three-weeks/",
+      "commands": [
+        "checkpoint",
+        "watch",
+        "check"
+      ],
+      "responsibilities": [
+        "state",
+        "watch"
+      ],
+      "claims": [
+        "git-identity",
+        "worktree-ownership",
+        "checkpoint-record",
+        "checkpoint-interval",
+        "consistency-check",
+        "drift-watch"
+      ],
+      "claim_detail": [
+        {
+          "id": "git-identity",
+          "claim": "Identity fields on every state record are computed from git and never authored",
+          "status": "guaranteed"
+        },
+        {
+          "id": "worktree-ownership",
+          "claim": "A task record names the checkout it belongs to, and another checkout is never held to its scope",
+          "status": "guaranteed"
+        },
+        {
+          "id": "checkpoint-record",
+          "claim": "A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated",
+          "status": "guaranteed"
+        },
+        {
+          "id": "checkpoint-interval",
+          "claim": "A profile sets how often a worker should checkpoint, and a stale task is reported",
+          "status": "advisory"
+        },
+        {
+          "id": "consistency-check",
+          "claim": "check reports whether state, scope, blockers and checkpoint age are consistent right now",
+          "status": "guaranteed"
+        },
+        {
+          "id": "drift-watch",
+          "claim": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift",
+          "status": "guaranteed"
+        }
+      ],
+      "command_detail": [
+        {
+          "name": "checkpoint",
+          "summary": "record compact progress inside the active task",
+          "read_only": false
+        },
+        {
+          "name": "watch",
+          "summary": "what has drifted: state, policy, projections, retention",
+          "read_only": true
+        },
+        {
+          "name": "check",
+          "summary": "is the current task consistent with policy, scope, state?",
+          "read_only": true
+        }
+      ],
+      "responsibility_detail": [
+        {
+          "slug": "state",
+          "title": "State"
+        },
+        {
+          "slug": "watch",
+          "title": "Watch"
+        }
+      ]
+    },
+    {
+      "slug": "what-the-workers-did-last-night",
+      "title": "Asking what the workers did last night, and getting a transcript",
+      "description": "Why a conversation log cannot answer an operational question, and how an append-only ledger with a closed vocabulary can.",
+      "hook": "asked what the workers did last night and had only transcripts to grep",
+      "weight": 8,
+      "route": "/why/what-the-workers-did-last-night/",
+      "commands": [
+        "history",
+        "search"
+      ],
+      "responsibilities": [
+        "watch",
+        "state"
+      ],
+      "claims": [
+        "history-ledger-read",
+        "ledger-integrity",
+        "event-vocabulary",
+        "record-search",
+        "record-retention",
+        "retention-caps",
+        "semantic-retrieval"
+      ],
+      "claim_detail": [
+        {
+          "id": "history-ledger-read",
+          "claim": "The ledger is readable back as operational history, filtered by task, event and time",
+          "status": "guaranteed"
+        },
+        {
+          "id": "ledger-integrity",
+          "claim": "Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record",
+          "status": "guaranteed"
+        },
+        {
+          "id": "event-vocabulary",
+          "claim": "The ledger's event vocabulary is closed, on the way in and on the way out",
+          "status": "guaranteed"
+        },
+        {
+          "id": "record-search",
+          "claim": "Durable records are searchable literally, across kinds, without an index",
+          "status": "guaranteed"
+        },
+        {
+          "id": "record-retention",
+          "claim": "Rotating the ledger archives the oldest lines and never deletes them",
+          "status": "guaranteed"
+        },
+        {
+          "id": "retention-caps",
+          "claim": "The append-only ledger and handover store have retention caps that are checked",
+          "status": "guaranteed"
+        },
+        {
+          "id": "semantic-retrieval",
+          "claim": "Ranked or semantic retrieval over durable records is deliberately not implemented",
+          "status": "rejected"
+        }
+      ],
+      "command_detail": [
+        {
+          "name": "history",
+          "summary": "read the append-only ledger back",
+          "read_only": true
+        },
+        {
+          "name": "search",
+          "summary": "find durable records without reading all of them",
+          "read_only": true
+        }
+      ],
+      "responsibility_detail": [
+        {
+          "slug": "watch",
+          "title": "Watch"
+        },
+        {
+          "slug": "state",
+          "title": "State"
+        }
+      ]
+    },
+    {
+      "slug": "rule-in-a-readme-nobody-loaded",
+      "title": "The rule for that directory, in a README no session ever loaded",
+      "description": "Why one always-loaded file cannot carry every local rule, and how a tree of scoped documents is composed for the path a worker is about to touch.",
+      "hook": "found the rule for that directory in a README no session ever loaded",
+      "weight": 9,
+      "route": "/why/rule-in-a-readme-nobody-loaded/",
+      "commands": [
+        "context",
+        "rules"
+      ],
+      "responsibilities": [
+        "layer",
+        "policy"
+      ],
+      "claims": [
+        "context-documents",
+        "context-impact",
+        "ai-layer-manifest",
+        "context-selection-budget",
+        "rule-resolution",
+        "vendored-rule-package"
+      ],
+      "claim_detail": [
+        {
+          "id": "context-documents",
+          "claim": "The context that applies to a path is composed from the layer's scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing",
+          "status": "guaranteed"
+        },
+        {
+          "id": "context-impact",
+          "claim": "The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing",
+          "status": "guaranteed"
+        },
+        {
+          "id": "ai-layer-manifest",
+          "claim": "The repository's AI layer is one directory whose manifest names every section, readable without the tool",
+          "status": "guaranteed"
+        },
+        {
+          "id": "context-selection-budget",
+          "claim": "The assembled context obeys a line budget, and every section it drops is named with its reason",
+          "status": "guaranteed"
+        },
+        {
+          "id": "rule-resolution",
+          "claim": "The effective rule set is resolved as a dependency graph in a deterministic order, and a set that does not resolve is applied by nothing",
+          "status": "guaranteed"
+        },
+        {
+          "id": "vendored-rule-package",
+          "claim": "The rule baseline is vendored into the repository with a manifest naming every file and its hash, and a hand edit is detected and refused",
+          "status": "guaranteed"
+        }
+      ],
+      "command_detail": [
+        {
+          "name": "context",
+          "summary": "what the next worker needs to know now, within budget",
+          "read_only": true
+        },
+        {
+          "name": "rules",
+          "summary": "the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)",
+          "read_only": true
+        }
+      ],
+      "responsibility_detail": [
+        {
+          "slug": "layer",
+          "title": "Layer"
+        },
+        {
+          "slug": "policy",
+          "title": "Policy"
+        }
+      ]
+    },
+    {
+      "slug": "three-roadmaps-none-of-them-true",
+      "title": "Three roadmaps, and none of them true",
+      "description": "Why a plan kept in prose disagrees with itself the first time anything changes, and how a dependency graph with derived status replaces it.",
+      "hook": "read three roadmaps for one project and believed none of them",
+      "weight": 10,
+      "route": "/why/three-roadmaps-none-of-them-true/",
+      "commands": [
+        "plan"
+      ],
+      "responsibilities": [
+        "plan"
+      ],
+      "claims": [
+        "project-schema",
+        "project-status-derived",
+        "dag-validation",
+        "execution-waves",
+        "evidence-gates-done",
+        "roadmap-derived",
+        "github-projection"
+      ],
+      "claim_detail": [
+        {
+          "id": "project-schema",
+          "claim": "Milestones and issues are canonical repository files, and a key nobody reads is an error",
+          "status": "guaranteed"
+        },
+        {
+          "id": "project-status-derived",
+          "claim": "Issue and milestone status is derived from recorded facts and is stored nowhere",
+          "status": "guaranteed"
+        },
+        {
+          "id": "dag-validation",
+          "claim": "A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name",
+          "status": "guaranteed"
+        },
+        {
+          "id": "execution-waves",
+          "claim": "Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-gates-done",
+          "claim": "An issue cannot be completed while a required piece of evidence is missing",
+          "status": "guaranteed"
+        },
+        {
+          "id": "roadmap-derived",
+          "claim": "The roadmap is derived from milestone state, and no document may be a second authority for it",
+          "status": "guaranteed"
+        },
+        {
+          "id": "github-projection",
+          "claim": "GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten",
+          "status": "guaranteed"
+        }
+      ],
+      "command_detail": [
+        {
+          "name": "plan",
+          "summary": "the milestone and issue model: validate, read, and move an issue",
+          "read_only": false
+        }
+      ],
+      "responsibility_detail": [
+        {
+          "slug": "plan",
+          "title": "Plan"
+        }
+      ]
     }
   ],
   "by_claim": {
@@ -318,7 +709,8 @@
       "re-explaining-context"
     ],
     "git-identity": [
-      "re-explaining-context"
+      "re-explaining-context",
+      "task-in-progress-for-three-weeks"
     ],
     "divergence-label": [
       "re-explaining-context"
@@ -367,12 +759,105 @@
     ],
     "wiring-reconciliation": [
       "two-rulebooks-one-repository"
+    ],
+    "decision-record": [
+      "re-arguing-a-settled-decision"
+    ],
+    "decision-attribution": [
+      "re-arguing-a-settled-decision"
+    ],
+    "open-question-gate": [
+      "re-arguing-a-settled-decision"
+    ],
+    "blocker-survives-handover": [
+      "re-arguing-a-settled-decision"
+    ],
+    "blocker-store": [
+      "re-arguing-a-settled-decision"
+    ],
+    "worktree-ownership": [
+      "task-in-progress-for-three-weeks"
+    ],
+    "checkpoint-record": [
+      "task-in-progress-for-three-weeks"
+    ],
+    "checkpoint-interval": [
+      "task-in-progress-for-three-weeks"
+    ],
+    "consistency-check": [
+      "task-in-progress-for-three-weeks"
+    ],
+    "drift-watch": [
+      "task-in-progress-for-three-weeks"
+    ],
+    "history-ledger-read": [
+      "what-the-workers-did-last-night"
+    ],
+    "ledger-integrity": [
+      "what-the-workers-did-last-night"
+    ],
+    "event-vocabulary": [
+      "what-the-workers-did-last-night"
+    ],
+    "record-search": [
+      "what-the-workers-did-last-night"
+    ],
+    "record-retention": [
+      "what-the-workers-did-last-night"
+    ],
+    "retention-caps": [
+      "what-the-workers-did-last-night"
+    ],
+    "semantic-retrieval": [
+      "what-the-workers-did-last-night"
+    ],
+    "context-documents": [
+      "rule-in-a-readme-nobody-loaded"
+    ],
+    "context-impact": [
+      "rule-in-a-readme-nobody-loaded"
+    ],
+    "ai-layer-manifest": [
+      "rule-in-a-readme-nobody-loaded"
+    ],
+    "context-selection-budget": [
+      "rule-in-a-readme-nobody-loaded"
+    ],
+    "rule-resolution": [
+      "rule-in-a-readme-nobody-loaded"
+    ],
+    "vendored-rule-package": [
+      "rule-in-a-readme-nobody-loaded"
+    ],
+    "project-schema": [
+      "three-roadmaps-none-of-them-true"
+    ],
+    "project-status-derived": [
+      "three-roadmaps-none-of-them-true"
+    ],
+    "dag-validation": [
+      "three-roadmaps-none-of-them-true"
+    ],
+    "execution-waves": [
+      "three-roadmaps-none-of-them-true"
+    ],
+    "evidence-gates-done": [
+      "three-roadmaps-none-of-them-true"
+    ],
+    "roadmap-derived": [
+      "three-roadmaps-none-of-them-true"
+    ],
+    "github-projection": [
+      "three-roadmaps-none-of-them-true"
     ]
   },
   "by_responsibility": {
     "state": [
       "re-explaining-context",
-      "two-agents-one-bug"
+      "two-agents-one-bug",
+      "re-arguing-a-settled-decision",
+      "task-in-progress-for-three-weeks",
+      "what-the-workers-did-last-night"
     ],
     "handover": [
       "re-explaining-context"
@@ -384,16 +869,28 @@
       "strongest-model-renames-a-variable"
     ],
     "finish": [
-      "done-because-the-model-said-so"
+      "done-because-the-model-said-so",
+      "re-arguing-a-settled-decision"
     ],
     "policy": [
-      "two-rulebooks-one-repository"
+      "two-rulebooks-one-repository",
+      "rule-in-a-readme-nobody-loaded"
     ],
     "projection": [
       "two-rulebooks-one-repository"
     ],
     "doctor": [
       "two-rulebooks-one-repository"
+    ],
+    "watch": [
+      "task-in-progress-for-three-weeks",
+      "what-the-workers-did-last-night"
+    ],
+    "layer": [
+      "rule-in-a-readme-nobody-loaded"
+    ],
+    "plan": [
+      "three-roadmaps-none-of-them-true"
     ]
   },
   "by_command": {
@@ -402,7 +899,8 @@
     ],
     "check": [
       "re-explaining-context",
-      "two-agents-one-bug"
+      "two-agents-one-bug",
+      "task-in-progress-for-three-weeks"
     ],
     "start": [
       "two-agents-one-bug",
@@ -416,6 +914,33 @@
     ],
     "doctor": [
       "two-rulebooks-one-repository"
+    ],
+    "decision": [
+      "re-arguing-a-settled-decision"
+    ],
+    "question": [
+      "re-arguing-a-settled-decision"
+    ],
+    "checkpoint": [
+      "task-in-progress-for-three-weeks"
+    ],
+    "watch": [
+      "task-in-progress-for-three-weeks"
+    ],
+    "history": [
+      "what-the-workers-did-last-night"
+    ],
+    "search": [
+      "what-the-workers-did-last-night"
+    ],
+    "context": [
+      "rule-in-a-readme-nobody-loaded"
+    ],
+    "rules": [
+      "rule-in-a-readme-nobody-loaded"
+    ],
+    "plan": [
+      "three-roadmaps-none-of-them-true"
     ]
   }
 }

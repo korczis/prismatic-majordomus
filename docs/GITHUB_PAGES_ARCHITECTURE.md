@@ -20,7 +20,7 @@ being maintained separately from the repository that backs it.
 | marketing copy | headline, section leads, button labels; no claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
 | navigation | five intents, their dropdown items and hrefs | `site/data/nav.toml` | yes |
 | claim detail | what each claim means, how it works, how to see it, what it does not cover, why it exists | `docs/claims/<id>.md` | yes |
-| case studies | the five recognition moments, each with its homepage hook in front matter | `site/content-src/why/*.md` | yes |
+| case studies | the recognition moments, each with its homepage hook in front matter | `site/content-src/why/*.md` | yes |
 | rendering reference | representative Markdown for visual validation | `site/content-src/render-test.md` | yes |
 | derived data | stable JSON the templates read | `site/data/generated/*.json` | never |
 | derived release artifact | the claims matrix as Markdown | `docs/SITE_CLAIMS.md` | never |
