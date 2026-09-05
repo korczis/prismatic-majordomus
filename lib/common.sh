@@ -398,11 +398,14 @@ mj_yget()  { awk -v k="$2" 'index($0, k "=") == 1 { print substr($0, length(k) +
 mj_ylist() { awk -v k="$2" 'index($0, k ".") == 1 { r = substr($0, length(k) + 2); if (r ~ /^[0-9]+=/) { sub(/^[0-9]+=/, "", r); print r } }' "$1"; }
 # keys not matching any regex in an allowlist file -> printed; returns 1 if any
 mj_yaml_unknown_keys() {
-  local flat="$1" allow="$2" bad=0 key
-  while IFS='=' read -r key _; do
-    grep -qE -f "$allow" <<<"$key" || { printf '%s\n' "$key"; bad=1; }
-  done < "$flat"
-  return $bad
+  # one grep per file, not one per key: the keys are cut out in one pass and the ones no
+  # allow-list pattern matches are the unknown ones. On a plan of a hundred records the
+  # per-key shape ran thousands of grep processes and was most of plan validate.
+  local flat="$1" allow="$2" out
+  out="$(cut -d= -f1 "$flat" | grep -vE -f "$allow" || true)"
+  [ -n "$out" ] || return 0
+  printf '%s\n' "$out"
+  return 1
 }
 
 # ---------------------------------------------------------------- regions and stamps

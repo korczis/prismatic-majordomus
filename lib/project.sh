@@ -47,8 +47,12 @@ mj_project_load() {
     flat="$MJ_PJ/flat/$id"
     [ -f "$flat" ] && { mj_err "duplicate id $id ($f)"; rc=2; continue; }
     mj_yaml_flatten "$f" > "$flat" 2>/dev/null || { mj_err "$f does not parse"; rc=2; continue; }
-    [ "$(mj_yget "$flat" id)" = "$id" ] || { mj_err "$f declares id '$(mj_yget "$flat" id)' but its filename says $id"; rc=2; continue; }
-    awk -F= -v i="$id" '{ k=$1; sub(/^[^=]*=/, "", $0); printf "M\t%s\t%s\t%s\n", i, k, $0 }' "$flat" >> "$raw"
+    # the id check rides on the same pass that emits the rows: a record whose id field
+    # disagrees with its filename emits nothing and is refused by name
+    awk -F= -v i="$id" '$1 == "id" { v = $0; sub(/^[^=]*=/, "", v); seen = v }
+      { k=$1; sub(/^[^=]*=/, "", $0); rows[++n] = "M\t" i "\t" k "\t" $0 }
+      END { if (seen != i) { printf "%s\n", seen > "/dev/stderr"; exit 3 } for (r = 1; r <= n; r++) print rows[r] }' "$flat" >> "$raw" 2>"$MJ_PJ/id.err" \
+      || { mj_err "$f declares id '$(cat "$MJ_PJ/id.err")' but its filename says $id"; rc=2; continue; }
     MJ_PJ_MILESTONES="$MJ_PJ_MILESTONES $id"
   done
   for f in "$dir"/issues/*.yaml; do
@@ -57,8 +61,12 @@ mj_project_load() {
     flat="$MJ_PJ/flat/$id"
     [ -f "$flat" ] && { mj_err "duplicate id $id ($f)"; rc=2; continue; }
     mj_yaml_flatten "$f" > "$flat" 2>/dev/null || { mj_err "$f does not parse"; rc=2; continue; }
-    [ "$(mj_yget "$flat" id)" = "$id" ] || { mj_err "$f declares id '$(mj_yget "$flat" id)' but its filename says $id"; rc=2; continue; }
-    awk -F= -v i="$id" '{ k=$1; sub(/^[^=]*=/, "", $0); printf "I\t%s\t%s\t%s\n", i, k, $0 }' "$flat" >> "$raw"
+    # the id check rides on the same pass that emits the rows: a record whose id field
+    # disagrees with its filename emits nothing and is refused by name
+    awk -F= -v i="$id" '$1 == "id" { v = $0; sub(/^[^=]*=/, "", v); seen = v }
+      { k=$1; sub(/^[^=]*=/, "", $0); rows[++n] = "I\t" i "\t" k "\t" $0 }
+      END { if (seen != i) { printf "%s\n", seen > "/dev/stderr"; exit 3 } for (r = 1; r <= n; r++) print rows[r] }' "$flat" >> "$raw" 2>"$MJ_PJ/id.err" \
+      || { mj_err "$f declares id '$(cat "$MJ_PJ/id.err")' but its filename says $id"; rc=2; continue; }
     MJ_PJ_ISSUES="$MJ_PJ_ISSUES $id"
   done
   [ "$rc" = 0 ] || return 2

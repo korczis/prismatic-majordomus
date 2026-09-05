@@ -29,5 +29,15 @@ validation:
 evidence_required:
   - batch_reads
 risk: "Unknown-key detection moved into awk must keep the same allow-list semantics; case 44 mutates a record and expects the refusal."
+started_at: 2026-09-05T02:06:00Z
+verified_at: 2026-09-05T02:16:00Z
+completed_at: 2026-09-05T02:16:00Z
+evidence:
+  - covers: batch_reads
+    type: test
+    command: "MJ_TIMING=1 bin/majordomus plan validate"
+    result: "mj_yaml_unknown_keys is one cut and one grep per file instead of one grep per key, and the record id check rides on the awk pass that emits the model rows; on this repository validate:project went from 3483 ms to 452 ms, doctor from 10.0 s to 3.9 s and plan validate from 4.4 s to 1.1 s with the same findings; an issue whose id disagrees with its filename is still refused by name; cases 02, 16, 24, 40, 41, 43, 44, 45 and 47 pass unchanged"
+    commit: next
+    recorded_at: 2026-09-05T02:16:00Z
 created_at: 2026-09-05
 updated_at: 2026-09-05
