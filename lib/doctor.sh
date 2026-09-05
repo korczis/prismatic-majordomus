@@ -347,6 +347,30 @@ mj_validate_ai_layout() {
   # the plan is the one section a repository may not have: an absent directory is a
   # repository without a plan, which `plan` says, not a broken layer
   [ -d "$MJ_PROJECT_DIR" ] || mj_info layout "$(mj_rel "$MJ_PROJECT_DIR")" "absent; this repository has no plan"
+  # the scope: what a worker reads of this repository. Named by the manifest, it must exist,
+  # carry only keys the schema declares (share/allow/scope.txt is generated from it) and be
+  # the version this distribution reads; unnamed, the executable's default applies, which is
+  # said rather than assumed
+  if [ -n "$MJ_SCOPE_FILE" ]; then
+    if [ ! -f "$MJ_SCOPE_FILE" ]; then
+      mj_doctrine_fail layout "$(mj_rel "$MJ_SCOPE_FILE")" "named by the manifest as section 'scope' but absent" "majordomus init --extend"; bad=1
+    else
+      local sflat sk
+      sflat="$(mktemp "${TMPDIR:-/tmp}/mj.scope.XXXXXX")"
+      if ! mj_yaml_flatten "$MJ_SCOPE_FILE" > "$sflat" 2>/dev/null; then
+        mj_doctrine_fail layout "$(mj_rel "$MJ_SCOPE_FILE")" "does not parse" "majordomus scope"; bad=1
+      elif [ "$(mj_yget "$sflat" version)" != "1" ]; then
+        mj_doctrine_fail layout "$(mj_rel "$MJ_SCOPE_FILE")" "version '$(mj_yget "$sflat" version)' is not 1" "majordomus scope"; bad=1
+      elif sk="$(mj_yaml_unknown_keys "$sflat" "$MJ_ALLOW_DIR/scope.txt")"; [ -n "$sk" ]; then
+        mj_doctrine_fail layout "$(mj_rel "$MJ_SCOPE_FILE")" "unknown key(s): $(printf '%s' "$sk" | tr '\n' ' ')" "majordomus scope"; bad=1
+      else
+        mj_doctrine_ok layout "$(mj_rel "$MJ_SCOPE_FILE")" "version 1; $(grep -c '^in\.' "$sflat") in pathspec(s); every key is one the schema declares"
+      fi
+      rm -f "$sflat"
+    fi
+  else
+    mj_info layout ".ai/repo/scope.yaml" "the manifest names no scope section; the executable reads the distribution's default (majordomus init --extend adds it)"
+  fi
   [ -f "$MJ_AI_DIR/README.md" ] || { mj_doctrine_fail layout ".ai/README.md" "the protocol entrypoint is absent; the layer is not readable without the tool" "majordomus init --extend"; bad=1; }
   rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"
   if ! mj_git check-ignore -q "$rel/state/current.yaml" 2>/dev/null; then

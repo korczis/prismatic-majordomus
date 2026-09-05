@@ -45,6 +45,13 @@ H
   mj_init_file "$skel/ai/manifest.yaml" "$MJ_AI_MANIFEST"
   mj_init_file "$skel/ai/repo/README.md" "$MJ_AI_REPO_DIR/README.md"
   mj_init_file "$skel/policy.yaml" "$MJ_POLICY_FILE"
+  # the scope: seeded beside the policy; an --extend on a layer whose manifest predates
+  # the section seeds the file and says the manifest must name it
+  if [ -n "$MJ_SCOPE_FILE" ]; then mj_init_file "$skel/ai/repo/scope.yaml" "$MJ_SCOPE_FILE"
+  else
+    mj_init_file "$skel/ai/repo/scope.yaml" "$MJ_AI_REPO_DIR/scope.yaml"
+    printf 'note: %s names no scope section; add `scope: repo/scope.yaml` under sections: so that the file applies\n' "$(mj_rel "$MJ_AI_MANIFEST")" >&2
+  fi
   mj_init_tree "$skel/profiles" "$MJ_PROFILES_DIR" '*.yaml'
   mj_init_tree "$skel/prompts" "$MJ_PROMPTS_DIR" '*.md'
   mj_init_file "$skel/ai/repo/rules/README.md" "$MJ_RULES_DIR/README.md"
