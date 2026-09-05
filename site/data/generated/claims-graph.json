@@ -1077,6 +1077,24 @@
       "note": "site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds."
     },
     {
+      "id": "claim:adr-catalogue",
+      "kind": "claim",
+      "label": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
+      "status": "guaranteed",
+      "route": "/guarantees/adr-catalogue/",
+      "external": false,
+      "note": "share/kinds.yaml declares the kind, share/schemas/adr.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section."
+    },
+    {
+      "id": "claim:adr-propose",
+      "kind": "claim",
+      "label": "majordomus adr propose writes a decision with status proposed and refuses to write any other status, allocates its identity under a lock so concurrent workers never collide, and records what the decision was derived from",
+      "status": "guaranteed",
+      "route": "/guarantees/adr-propose/",
+      "external": false,
+      "note": "Acceptance is the person's act — a tool that can write `accepted` turns its own inference into repository truth and a later reader cannot tell which, so propose has no flag for it and an extracted record claiming it is a finding. An extracted record must name its evidence in provenance.derived_from, whose references are typed and whose file and test references must resolve; it may still be superseded, because that is something a later record did to it. The identity is allocated under a lock over the section directory, and the case proves it with real concurrent processes, because this repository shipped two 0005s and two 0007s before anything checked."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -1220,6 +1238,13 @@
       "id": "impl:bin/majordomus-mcp",
       "kind": "implementation",
       "label": "bin/majordomus-mcp",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/adr.sh",
+      "kind": "implementation",
+      "label": "lib/adr.sh",
       "route": null,
       "external": false
     },
@@ -2013,6 +2038,13 @@
       "label": "test/cases/97_pages_fast_path.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_pages_fast_path.sh"
+    },
+    {
+      "id": "test:test/cases/99_adr.sh",
+      "kind": "test",
+      "label": "test/cases/99_adr.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/99_adr.sh"
     }
   ],
   "edges": [
@@ -2607,6 +2639,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:adr-catalogue",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:adr-propose",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -3157,6 +3199,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:adr-catalogue",
+      "target": "impl:lib/adr.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:adr-propose",
+      "target": "impl:lib/adr.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "test:test/cases/00_yaml_flatten.sh",
       "kind": "proved_by"
@@ -3704,6 +3756,16 @@
     {
       "source": "claim:skill-site-projection",
       "target": "test:test/cases/95_skills.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:adr-catalogue",
+      "target": "test:test/cases/99_adr.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:adr-propose",
+      "target": "test:test/cases/99_adr.sh",
       "kind": "proved_by"
     }
   ]

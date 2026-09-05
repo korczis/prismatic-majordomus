@@ -443,6 +443,24 @@ commands:
     demo: knowledge-index
     note: Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it.
 
+  - id: adr
+    title: adr
+    summary: The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.
+    category: memory
+    stage: conclude
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: true
+    syntax: majordomus adr <list|show <id>|propose "<title>"|check> [--json]
+    reads: [.ai/repo/adrs/, .ai/repo/knowledge/sources.yaml, share/allow/adr.txt]
+    writes: [.ai/repo/adrs/, .ai/local/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12, 13, 15]
+    demo: adr-propose
+    note: "propose writes status 'proposed' and refuses --status: accepting a decision is a person editing the field. The identity is allocated under a lock over the section directory, so two worktrees proposing at once get two identities; check refuses duplicate identities, a superseded record with no replacement, and one-sided supersession."
+
   - id: usecase
     title: usecase
     summary: The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.

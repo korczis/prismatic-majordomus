@@ -82,6 +82,18 @@ sources:
     pathspec: ':(glob).ai/repo/project/issues/*.yaml'
     required: false
 
+  - id: adr
+    kind: adr
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/adrs/[0-9][0-9][0-9][0-9]-*.md'
+    required: false
+
+  - id: curated
+    kind: knowledge
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/knowledge/curated/*.md'
+    required: false
+
   - id: use_case
     kind: use-case
     discovery: vcs

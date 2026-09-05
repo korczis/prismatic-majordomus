@@ -1,7 +1,21 @@
+---
+schema: adr/v1
+id: adr-0003
+kind: adr
+title: One shared MCP server per repository, peers, and clients that start it themselves
+status: accepted
+date: 2026-09-05
+tags:
+  - mcp
+  - concurrency
+  - architecture
+provenance:
+  origin: authored
+---
+
 # 3. One shared MCP server per repository, peers, and clients that start it themselves
 
-Status: accepted, 2026-09-05. Extends ADR 1 and ADR 2.
-
+Extends ADR 1 and ADR 2.
 ## Context
 
 ADR 1 made `majordomus mcp` a process per client: stdio only, no port, dead with its

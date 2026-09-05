@@ -254,6 +254,34 @@
       "source": "share/standard/majordomus/rules/policy-integrity.v1.md"
     },
     {
+      "id": "majordomus.adr-integrity",
+      "slug": "adr-integrity",
+      "title": "Architecture decision integrity",
+      "class": "blocking",
+      "principle": "Externalise decisions and durable state",
+      "statement": "A decision is canonical data under the adrs section; it is valid against the decision schema, its identity is unique and fixes its file name, supersession is reciprocal, and a record the tool derived is proposed rather than accepted.",
+      "summary": "Every architecture decision the repository holds parses against the decision contract, claims an identity nothing else claims, and every relation and reference it makes resolves.",
+      "validator": "adr",
+      "validator_function": "mj_validate_adr",
+      "defined_in": "lib/adr.sh",
+      "category": "adr",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "adr-catalogue",
+        "adr-propose"
+      ],
+      "test": "test/cases/99_adr.sh",
+      "depends_on": [
+        "majordomus.externalise-decisions@1"
+      ],
+      "source": "share/standard/majordomus/rules/adr-integrity.v1.md"
+    },
+    {
       "id": "majordomus.blocker-resolution",
       "slug": "blocker-resolution",
       "title": "Blocker resolution",
@@ -949,8 +977,8 @@
     }
   ],
   "counts": {
-    "declared": 34,
-    "blocking": 30,
+    "declared": 35,
+    "blocking": 31,
     "advisory": 4
   },
   "index": {
@@ -963,30 +991,31 @@
     "majordomus.catalogue-integrity": 6,
     "majordomus.context-integrity": 7,
     "majordomus.policy-integrity": 8,
-    "majordomus.blocker-resolution": 9,
-    "majordomus.decision-records": 10,
-    "majordomus.dag-integrity": 11,
-    "majordomus.command-surface": 12,
-    "majordomus.doctrine-wiring-integrity": 13,
-    "majordomus.enforcement-wiring": 14,
-    "majordomus.command-coverage": 15,
-    "majordomus.handover-integrity": 16,
-    "majordomus.note-integrity": 17,
-    "majordomus.profile-requirements": 18,
-    "majordomus.project-integrity": 19,
-    "majordomus.projection-integrity": 20,
-    "majordomus.context-budget": 21,
-    "majordomus.prompt-capture": 22,
-    "majordomus.prompt-integrity": 23,
-    "majordomus.questions-store-integrity": 24,
-    "majordomus.retention-caps": 25,
-    "majordomus.roadmap-integrity": 26,
-    "majordomus.rule-package-integrity": 27,
-    "majordomus.scope-integrity": 28,
-    "majordomus.skill-integrity": 29,
-    "majordomus.state-consistency": 30,
-    "majordomus.task-continuity": 31,
-    "majordomus.use-case-coverage": 32,
-    "majordomus.verification-integrity": 33
+    "majordomus.adr-integrity": 9,
+    "majordomus.blocker-resolution": 10,
+    "majordomus.decision-records": 11,
+    "majordomus.dag-integrity": 12,
+    "majordomus.command-surface": 13,
+    "majordomus.doctrine-wiring-integrity": 14,
+    "majordomus.enforcement-wiring": 15,
+    "majordomus.command-coverage": 16,
+    "majordomus.handover-integrity": 17,
+    "majordomus.note-integrity": 18,
+    "majordomus.profile-requirements": 19,
+    "majordomus.project-integrity": 20,
+    "majordomus.projection-integrity": 21,
+    "majordomus.context-budget": 22,
+    "majordomus.prompt-capture": 23,
+    "majordomus.prompt-integrity": 24,
+    "majordomus.questions-store-integrity": 25,
+    "majordomus.retention-caps": 26,
+    "majordomus.roadmap-integrity": 27,
+    "majordomus.rule-package-integrity": 28,
+    "majordomus.scope-integrity": 29,
+    "majordomus.skill-integrity": 30,
+    "majordomus.state-consistency": 31,
+    "majordomus.task-continuity": 32,
+    "majordomus.use-case-coverage": 33,
+    "majordomus.verification-integrity": 34
   }
 }

@@ -1540,6 +1540,32 @@
       "source_route": "/docs/github-pages-architecture/",
       "command": null,
       "test_case": "95_skills"
+    },
+    {
+      "id": "adr-catalogue",
+      "claim": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/adr.sh",
+      "test": "test/cases/99_adr.sh",
+      "status": "guaranteed",
+      "note": "share/kinds.yaml declares the kind, share/schemas/adr.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section.",
+      "responsibility": "layer",
+      "source_route": "/docs/schemas/",
+      "command": "adr",
+      "test_case": "99_adr"
+    },
+    {
+      "id": "adr-propose",
+      "claim": "majordomus adr propose writes a decision with status proposed and refuses to write any other status, allocates its identity under a lock so concurrent workers never collide, and records what the decision was derived from",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/adr.sh",
+      "test": "test/cases/99_adr.sh",
+      "status": "guaranteed",
+      "note": "Acceptance is the person's act — a tool that can write `accepted` turns its own inference into repository truth and a later reader cannot tell which, so propose has no flag for it and an extracted record claiming it is a finding. An extracted record must name its evidence in provenance.derived_from, whose references are typed and whose file and test references must resolve; it may still be superseded, because that is something a later record did to it. The identity is allocated under a lock over the section directory, and the case proves it with real concurrent processes, because this repository shipped two 0005s and two 0007s before anything checked.",
+      "responsibility": "layer",
+      "source_route": "/docs/schemas/",
+      "command": "adr",
+      "test_case": "99_adr"
     }
   ]
 }

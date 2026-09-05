@@ -1,6 +1,19 @@
-# 7. Prompt capture happens below the model, or is reported as unavailable
+---
+schema: adr/v1
+id: adr-0009
+kind: adr
+title: Prompt capture happens below the model, or is reported as unavailable
+status: accepted
+date: 2026-09-05
+tags:
+  - capture
+  - providers
+  - privacy
+provenance:
+  origin: authored
+---
 
-Status: accepted, 2026-09-05.
+# 9. Prompt capture happens below the model, or is reported as unavailable
 
 ## Context
 

@@ -1,7 +1,21 @@
+---
+schema: adr/v1
+id: adr-0004
+kind: adr
+title: One canonical declaration, composed modules, derived projections, and performance as evidence
+status: accepted
+date: 2026-09-05
+tags:
+  - registry
+  - performance
+  - architecture
+provenance:
+  origin: authored
+---
+
 # 4. One canonical declaration, composed modules, derived projections, and performance as evidence
 
-Status: accepted, 2026-09-05. Extends ADR 2 and ADR 3.
-
+Extends ADR 2 and ADR 3.
 ## Context
 
 ADR 2 made every interface of the Rust executable a projection of one capability

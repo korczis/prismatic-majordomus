@@ -1,7 +1,20 @@
-# 5. Use cases are executable canonical objects of the layer
+---
+schema: adr/v1
+id: adr-0008
+kind: adr
+title: Use cases are executable canonical objects of the layer
+status: accepted
+date: 2026-09-05
+tags:
+  - use-cases
+  - evidence
+provenance:
+  origin: authored
+---
 
-Status: accepted, 2026-09-05. Extends ADR 2 (one canonical registry) to the catalogue.
+# 8. Use cases are executable canonical objects of the layer
 
+Extends ADR 2 (one canonical registry) to the catalogue.
 ## Context
 
 The site's use-case catalogue was six entries in `share/use-cases.yaml`: prose about

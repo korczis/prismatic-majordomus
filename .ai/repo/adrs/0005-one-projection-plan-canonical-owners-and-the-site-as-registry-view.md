@@ -1,7 +1,21 @@
+---
+schema: adr/v1
+id: adr-0005
+kind: adr
+title: One projection plan over the canonical inputs, named owners for every truth, and the site as a view of the registry
+status: accepted
+date: 2026-09-05
+tags:
+  - projections
+  - site
+  - architecture
+provenance:
+  origin: authored
+---
+
 # 5. One projection plan over the canonical inputs, named owners for every truth, and the site as a view of the registry
 
-Status: accepted, 2026-09-05. Extends ADR 2 and ADR 4.
-
+Extends ADR 2 and ADR 4.
 ## Context
 
 ADR 2 and ADR 4 made every interface of the Rust executable a projection of one

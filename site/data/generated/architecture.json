@@ -30,6 +30,36 @@
       "external": false
     },
     {
+      "id": "lib/adr.sh",
+      "kind": "module",
+      "label": "adr",
+      "command": "adr",
+      "summary": "the repository's architecture decisions: list, show, propose, check",
+      "read_only": null,
+      "route": "/commands/adr/",
+      "external": false
+    },
+    {
+      "id": "lib/knowledge.sh",
+      "kind": "module",
+      "label": "knowledge",
+      "command": "knowledge",
+      "summary": "the compiled index over what this repository states",
+      "read_only": true,
+      "route": "/commands/knowledge/",
+      "external": false
+    },
+    {
+      "id": ".ai/repo/adrs/.id.lock",
+      "kind": "artifact",
+      "label": "repo/adrs/.id.lock",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/bench.sh",
       "kind": "module",
       "label": "bench",
@@ -450,16 +480,6 @@
       "external": false
     },
     {
-      "id": ".ai/repo/adrs",
-      "kind": "artifact",
-      "label": "repo/adrs",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": ".ai/repo/use-cases",
       "kind": "artifact",
       "label": "repo/use-cases",
@@ -507,16 +527,6 @@
       "summary": null,
       "read_only": null,
       "route": null,
-      "external": false
-    },
-    {
-      "id": "lib/knowledge.sh",
-      "kind": "module",
-      "label": "knowledge",
-      "command": "knowledge",
-      "summary": "the compiled index over what this repository states",
-      "read_only": true,
-      "route": "/commands/knowledge/",
       "external": false
     },
     {
@@ -813,6 +823,11 @@
     },
     {
       "source": "bin/majordomus",
+      "target": "lib/adr.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
       "target": "lib/bench.sh",
       "kind": "sources"
     },
@@ -942,6 +957,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/adr.sh",
+      "target": "lib/knowledge.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/bench.sh",
       "target": "lib/commands.sh",
       "kind": "sources"
@@ -1004,6 +1024,11 @@
     {
       "source": "lib/context.sh",
       "target": "lib/prompt.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/adr.sh",
       "kind": "sources"
     },
     {
@@ -1172,6 +1197,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/adr.sh",
+      "target": ".ai/repo/adrs/.id.lock",
+      "kind": "uses"
+    },
+    {
       "source": "lib/check.sh",
       "target": ".ai/local/state/checkpoints",
       "kind": "uses"
@@ -1283,11 +1313,6 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/repo/adrs",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
       "target": ".ai/repo/applications",
       "kind": "uses"
     },
@@ -1354,11 +1379,6 @@
     {
       "source": "lib/migrate.sh",
       "target": ".ai/repo/README.md",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/migrate.sh",
-      "target": ".ai/repo/adrs",
       "kind": "uses"
     },
     {

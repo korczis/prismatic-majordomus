@@ -155,3 +155,19 @@ events:
     requires: [ran, failed]
     public: true
     note: Counts only; the evidence files carry each step's command, exit code, output and assertions.
+
+  - id: adr.proposed
+    title: Architecture decision proposed
+    summary: A decision record was written with status proposed; accepting it is a person's act on the file.
+    emitted_by: adr
+    requires: [adr, title]
+    public: true
+    note: Never emitted for an acceptance. The tool writes proposed and nothing else, so an accepted decision leaves no event here and the file's history is the record.
+
+  - id: knowledge.proposed
+    title: Knowledge candidate proposed
+    summary: A curated knowledge record was written with status candidate and the evidence it was derived from.
+    emitted_by: knowledge
+    requires: [knowledge, title]
+    public: true
+    note: A candidate is a statement waiting to be confirmed; the tool never writes verified.
