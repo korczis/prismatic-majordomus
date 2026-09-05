@@ -67,8 +67,11 @@ impl Index {
         let (files, mut diagnostics) = discovery::discover(repo, sources, source)?;
         let mut objects = Vec::with_capacity(files.len());
         for file in &files {
-            match read_object(repo, schema, file) {
-                Ok(object) => objects.push(object),
+            match read_objects(repo, schema, file) {
+                Ok((mut read, mut member_diagnostics)) => {
+                    objects.append(&mut read);
+                    diagnostics.append(&mut member_diagnostics);
+                }
                 Err(d) => diagnostics.push(d),
             }
         }
@@ -163,11 +166,14 @@ fn dedupe(objects: &mut Vec<Object>, diagnostics: &mut Vec<Diagnostic>) {
     objects.retain(|o| !duplicates.contains_key(&o.uri));
 }
 
-fn read_object(
+/// Read one discovered file into its objects: one for most kinds, one per member for a
+/// collection file. A failure of the whole file is the `Err`; a failure of one member is a
+/// diagnostic beside the members that were read.
+fn read_objects(
     repo: &Repository,
     schema: &KindSchema,
     file: &DiscoveredFile,
-) -> std::result::Result<Object, Diagnostic> {
+) -> std::result::Result<(Vec<Object>, Vec<Diagnostic>), Diagnostic> {
     let rel = file.rel_path.as_str();
     let d = |code, msg: String| Diagnostic::error(code, Some(rel.to_string()), msg);
     let Some(mut spec) = schema.kind(&file.kind) else {
@@ -183,9 +189,22 @@ fn read_object(
     let abs = repo.root().join(rel);
     let content = read_text(&abs).map_err(|(code, msg)| d(code, msg))?;
     let bytes = content.len() as u64;
+    let directory = match rel.rsplit_once('/') {
+        Some((dir, _)) => dir.to_string(),
+        None => ".".to_string(),
+    };
+    let provenance = |member: Option<String>| Provenance {
+        path: rel.to_string(),
+        directory: directory.clone(),
+        source_class: file.class.clone(),
+        section: repo.section_of(rel).map(str::to_string),
+        bytes,
+        member,
+    };
 
     let (metadata, body, media_type): (Map<String, Value>, String, &'static str) = match spec.format
     {
+        Format::Text => (Map::new(), content.clone(), "text/plain"),
         Format::Yaml => {
             let map = yaml::parse_mapping(&content).map_err(|e| d("malformed_yaml", e))?;
             (map, content.clone(), "application/yaml")
@@ -193,30 +212,77 @@ fn read_object(
         Format::Markdown => {
             let split = frontmatter::split(&content)
                 .map_err(|e| d("malformed_front_matter", e.to_string()))?;
+            let map = match split.front {
+                Some(front) => {
+                    frontmatter::parse(front).map_err(|e| d("malformed_front_matter", e))?
+                }
+                None => Map::new(),
+            };
             if split.front.is_none() {
                 if let Some(fallback) = spec.without_front_matter.as_deref() {
                     // Validated at schema load: the fallback exists and accepts the file.
-                    if let Some(f) = schema.kind(fallback) {
+                    if let Some((name, f)) = schema.kinds().find(|(k, _)| k.as_str() == fallback) {
                         spec = f;
-                        kind = fallback;
+                        kind = name.as_str();
+                    }
+                }
+            } else if let Some(declared) = map.get("kind").and_then(Value::as_str) {
+                // A file that declares a kind the schema lets files declare is that kind,
+                // whatever class found it.
+                if declared != kind && schema.is_declared_kind(declared) {
+                    if let Some((name, f)) = schema.kinds().find(|(k, _)| k.as_str() == declared) {
+                        spec = f;
+                        kind = name.as_str();
                     }
                 }
             }
-            let map = match (split.front, spec.front_matter) {
-                (Some(front), _) => {
-                    frontmatter::parse(front).map_err(|e| d("malformed_front_matter", e))?
-                }
-                (None, FrontMatterRule::Required) => {
-                    return Err(d(
-                        "missing_front_matter",
-                        "no front matter, and the kind requires it".into(),
-                    ))
-                }
-                (None, _) => Map::new(),
-            };
+            if split.front.is_none() && spec.front_matter == FrontMatterRule::Required {
+                return Err(d(
+                    "missing_front_matter",
+                    "no front matter, and the kind requires it".into(),
+                ));
+            }
             (map, split.body.to_string(), "text/markdown")
         }
     };
+
+    if let Some(sv) = &spec.schema_version {
+        check_version(sv, &metadata).map_err(|(code, msg)| d(code, msg))?;
+    }
+
+    // a collection file: one object per member of the named list
+    if let Some(list) = &spec.members {
+        let Some(items) = metadata.get(list).and_then(Value::as_array) else {
+            return Err(d(
+                "missing_field",
+                format!("no list '{list}' holding the members"),
+            ));
+        };
+        let mut objects = Vec::new();
+        let mut diagnostics = Vec::new();
+        for (i, item) in items.iter().enumerate() {
+            let member = format!("{list}.{i}");
+            let Value::Object(item) = item else {
+                diagnostics.push(d(
+                    "malformed_yaml",
+                    format!("member {member} is not a mapping"),
+                ));
+                continue;
+            };
+            match object_of(
+                spec,
+                kind,
+                item,
+                "",
+                &member,
+                provenance(Some(member.clone())),
+            ) {
+                Ok(o) => objects.push(o),
+                Err(msg) => diagnostics.push(d("missing_field", format!("member {member}: {msg}"))),
+            }
+        }
+        return Ok((objects, diagnostics));
+    }
 
     if let Some(allow) = schema.allow_for(spec) {
         let unknown = allow.unknown(yaml::key_paths(&metadata).iter().map(String::as_str));
@@ -242,33 +308,58 @@ fn read_object(
             ));
         }
     }
-    if let Some(sv) = &spec.schema_version {
-        match metadata.get(&sv.field).and_then(Value::as_u64) {
-            Some(v) if sv.supported.contains(&v) => {}
-            Some(v) => {
-                return Err(d(
-                    "unsupported_version",
-                    format!(
-                        "{} {v} is not among the supported {:?}",
-                        sv.field, sv.supported
-                    ),
-                ))
-            }
-            None => return Err(d("missing_field", format!("no integer '{}'", sv.field))),
-        }
-    }
+    let object = object_of(spec, kind, &metadata, &body, rel, provenance(None))
+        .map_err(|msg| d("missing_field", msg))?;
+    Ok((
+        vec![Object {
+            content,
+            media_type,
+            ..object
+        }],
+        Vec::new(),
+    ))
+}
 
-    let identity = identity_of(spec, &metadata, rel).map_err(|f| d("missing_field", f))?;
-    let title = title_of(spec, &metadata, &body);
+fn check_version(
+    sv: &crate::metadata::SchemaVersion,
+    metadata: &Map<String, Value>,
+) -> std::result::Result<(), (&'static str, String)> {
+    match metadata.get(&sv.field) {
+        Some(v) if sv.supported.contains(v) => Ok(()),
+        Some(v) => Err((
+            "unsupported_version",
+            format!(
+                "{} {v} is not among the supported {}",
+                sv.field,
+                serde_json::to_string(&sv.supported).unwrap_or_default()
+            ),
+        )),
+        None => Err(("missing_field", format!("no '{}'", sv.field))),
+    }
+}
+
+/// Build the object of a metadata mapping: identity, title, description, URI. Content and
+/// media type for a whole file are filled by the caller; a member carries itself as JSON.
+fn object_of(
+    spec: &KindSpec,
+    kind: &str,
+    metadata: &Map<String, Value>,
+    body: &str,
+    fallback_identity: &str,
+    provenance: Provenance,
+) -> std::result::Result<Object, String> {
+    let identity = identity_of(spec, metadata, fallback_identity)?;
+    let title = title_of(spec, metadata, body);
     let description = spec
         .description
         .as_deref()
         .and_then(|f| metadata.get(f))
         .and_then(yaml::scalar_string);
-
-    let directory = match rel.rsplit_once('/') {
-        Some((dir, _)) => dir.to_string(),
-        None => ".".to_string(),
+    let is_member = provenance.member.is_some();
+    let text = if is_member {
+        serde_json::to_string_pretty(&Value::Object(metadata.clone())).unwrap_or_default()
+    } else {
+        String::new()
     };
     Ok(Object {
         uri: uri_for(kind, &identity),
@@ -276,17 +367,19 @@ fn read_object(
         identity,
         title,
         description,
-        metadata: Value::Object(metadata),
-        body,
-        content,
-        media_type,
-        provenance: Provenance {
-            path: rel.to_string(),
-            directory,
-            source_class: file.class.clone(),
-            section: repo.section_of(rel).map(str::to_string),
-            bytes,
+        metadata: Value::Object(metadata.clone()),
+        body: if is_member {
+            text.clone()
+        } else {
+            body.to_string()
         },
+        content: text,
+        media_type: if is_member {
+            "application/json"
+        } else {
+            "text/plain"
+        },
+        provenance,
     })
 }
 

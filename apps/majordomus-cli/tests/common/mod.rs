@@ -30,6 +30,9 @@ sections:
   knowledge: repo/knowledge
   adrs: repo/adrs
   project: repo/project
+
+context:
+  documents: [README.md]
 ";
 
 pub const SOURCES: &str = "version: 1
@@ -88,6 +91,81 @@ sources:
     discovery: vcs
     pathspec: ':(glob)*.md'
     required: false
+
+  - id: claims
+    kind: claim
+    discovery: vcs
+    pathspec: ':(glob)docs/CLAIMS.yaml'
+    required: false
+
+  - id: claim_page
+    kind: document
+    discovery: vcs
+    pathspec: ':(glob)docs/claims/*.md'
+    required: false
+
+  - id: library
+    kind: implementation
+    discovery: vcs
+    pathspec: ':(glob)lib/*.sh'
+    required: false
+
+  - id: case
+    kind: test
+    discovery: vcs
+    pathspec: ':(glob)test/cases/*.sh'
+    required: false
+";
+
+/// A context document as the layer's READMEs carry it (`schema: context/v1`).
+pub fn context_doc(id: &str, title: &str) -> String {
+    format!(
+        "---
+schema: context/v1
+id: {id}
+kind: context
+title: {title}
+description: What this directory is for.
+status: active
+scope: subtree
+providers: [\"*\"]
+audience: [human, agent]
+composition: extend
+order: 100
+---
+
+# {title}
+
+Read this before the files beside it.
+"
+    )
+}
+
+pub const CLAIMS: &str = "version: 1
+
+statuses:
+  - id: guaranteed
+    meaning: Deterministic and blocking.
+  - id: planned
+    meaning: Specified and not implemented.
+
+claims:
+  - id: policy-parse
+    claim: The policy is parsed and an unknown key is refused
+    source: docs/SCHEMAS.md
+    implementation: lib/a.sh
+    test: test/cases/00_x.sh
+    status: guaranteed
+    responsibility: policy
+    note: A restricted YAML subset.
+
+  - id: routing
+    claim: Routing recommendations will follow measurement
+    source: docs/DESIGN.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none
 ";
 
 pub const POLICY: &str = "version: 1
@@ -162,7 +240,35 @@ impl Fixture {
         f.write(".ai/repo/prompts/continue.md", PROMPT);
         f.write(
             ".ai/repo/rules/README.md",
-            "# Repository rules\n\nHow to read one.\n",
+            &context_doc("ai.repo.rules", "Repository rules"),
+        );
+        f.write(
+            ".ai/repo/workflows/README.md",
+            &context_doc("ai.repo.workflows", "Workflows"),
+        );
+        f.write("docs/CLAIMS.yaml", CLAIMS);
+        f.write(
+            "docs/claims/policy-parse.md",
+            "# The policy is parsed
+
+## What it means
+
+Parsed.
+",
+        );
+        f.write(
+            "lib/a.sh",
+            "#!/usr/bin/env bash
+# the one library file
+echo a
+",
+        );
+        f.write(
+            "test/cases/00_x.sh",
+            "# majordomus-covers: none
+. \"$ROOT/test/lib.sh\"
+true
+",
         );
         f.write(
             ".ai/repo/rules/project/alpha.v1.md",

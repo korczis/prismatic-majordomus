@@ -118,13 +118,20 @@ fn provenance_and_classification_are_correct() {
     assert_eq!(readme.provenance.section, None);
 
     let rules_readme = index
-        .get("majordomus://document/.ai/repo/rules/README.md")
+        .get("majordomus://context/ai.repo.rules")
         .expect("rules readme");
     assert_eq!(
         rules_readme.provenance.source_class, "rule",
         "discovered by the rule class"
     );
-    assert_eq!(rules_readme.kind, "document", "read as a document");
+    assert_eq!(rules_readme.kind, "context", "read as the kind it declares");
+    assert_eq!(rules_readme.metadata["schema"], "context/v1");
+    let a_sh = index
+        .get("majordomus://implementation/lib/a.sh")
+        .expect("library file");
+    assert_eq!(a_sh.media_type, "text/plain");
+    assert!(a_sh.content.starts_with("#!/usr/bin/env bash"));
+    assert!(a_sh.metadata.as_object().unwrap().is_empty());
 
     let policy = index
         .get("majordomus://policy/.ai/repo/policy.yaml")

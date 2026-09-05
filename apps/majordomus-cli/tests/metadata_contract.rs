@@ -33,8 +33,14 @@ fn a_valid_fixture_has_no_diagnostics_and_every_kind_present() {
         "majordomus://policy/.ai/repo/policy.yaml",
         "majordomus://document/README.md",
         "majordomus://document/docs/CLI.md",
-        "majordomus://document/.ai/repo/rules/README.md",
+        "majordomus://context/ai.repo.rules",
+        "majordomus://context/ai.repo.workflows",
         "majordomus://document/.ai/repo/workflows/task-lifecycle.md",
+        "majordomus://claim/policy-parse",
+        "majordomus://claim/routing",
+        "majordomus://document/docs/claims/policy-parse.md",
+        "majordomus://implementation/lib/a.sh",
+        "majordomus://test/test/cases/00_x.sh",
     ] {
         assert!(
             uris.contains(&expected.to_string()),
@@ -346,4 +352,161 @@ fn broken_sources_file_stops_startup() {
     let (code, _, err) = common::run_in(&f.root(), &["mcp", "--inspect"], "");
     assert_eq!(code, 10, "{err}");
     assert!(err.contains("pathspec must start with :(glob)"), "{err}");
+}
+
+#[test]
+fn a_context_document_is_read_as_context_whatever_class_found_it() {
+    let f = Fixture::new();
+    let (code, v, _) = inspect(&f.root(), &[]);
+    assert_eq!(code, 0);
+    let rules_readme = v["resources"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["uri"] == "majordomus://context/ai.repo.rules")
+        .expect("context resource");
+    assert_eq!(rules_readme["meta"]["kind"], "context");
+    assert_eq!(
+        rules_readme["meta"]["provenance"]["source_class"], "rule",
+        "discovered by the rule class"
+    );
+    assert_eq!(
+        rules_readme["meta"]["provenance"]["path"],
+        ".ai/repo/rules/README.md"
+    );
+    // an unsupported context schema is named, and a declared kind nothing lets a file declare is a mismatch
+    f.write(
+        ".ai/repo/rules/README.md",
+        &common::context_doc("ai.repo.rules", "Rules").replace("context/v1", "context/v0"),
+    );
+    f.write(
+        ".ai/repo/prompts/odd.md",
+        "---\nname: odd\ndescription: d\n---\n",
+    );
+    f.write(
+        ".ai/repo/workflows/plan.md",
+        "---\nschema: context/v1\nid: x\nkind: profile\n---\n",
+    );
+    f.commit("odd");
+    let (code, v, _) = inspect(&f.root(), &[]);
+    assert_eq!(code, 10);
+    let codes = diagnostic_codes(&v);
+    assert!(
+        codes.contains(&(
+            "unsupported_version".into(),
+            Some(".ai/repo/rules/README.md".into())
+        )),
+        "{codes:?}"
+    );
+    assert!(
+        codes
+            .iter()
+            .any(|(c, p)| p.as_deref() == Some(".ai/repo/workflows/plan.md")
+                && (c == "unknown_key" || c == "kind_mismatch")),
+        "{codes:?}"
+    );
+}
+
+#[test]
+fn a_collection_file_yields_one_object_per_member_with_member_provenance() {
+    let f = Fixture::new();
+    let (code, v, _) = inspect(&f.root(), &[]);
+    assert_eq!(code, 0);
+    let res = v["resources"].as_array().unwrap();
+    let claim = res
+        .iter()
+        .find(|r| r["uri"] == "majordomus://claim/policy-parse")
+        .expect("claim resource");
+    assert_eq!(claim["meta"]["provenance"]["path"], "docs/CLAIMS.yaml");
+    assert_eq!(claim["meta"]["provenance"]["member"], "claims.0");
+    assert_eq!(claim["meta"]["provenance"]["source_class"], "claims");
+    assert_eq!(claim["media_type"], "application/json");
+    assert_eq!(
+        claim["title"],
+        "The policy is parsed and an unknown key is refused"
+    );
+    assert_eq!(claim["description"], "A restricted YAML subset.");
+    // reading it returns the member as JSON, not the whole file
+    let (_, out, _) = common::run_in(
+        &f.root(),
+        &[
+            "capabilities",
+            "describe",
+            "claim.routing",
+            "--format",
+            "json",
+        ],
+        "",
+    );
+    let c: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(c["provenance"]["path"], "docs/CLAIMS.yaml");
+    assert_eq!(c["provenance"]["member"], "claims.1");
+    // a member without its identity is named by member, the others still serve; a wrong file version stops the file
+    f.write(
+        "docs/CLAIMS.yaml",
+        &common::CLAIMS.replace("  - id: routing\n    claim:", "  - claim:"),
+    );
+    f.commit("no id");
+    let (code, v, _) = inspect(&f.root(), &[]);
+    assert_eq!(code, 10);
+    let d = diagnostics(&v);
+    let hit = d
+        .iter()
+        .find(|d| d["code"] == "missing_field" && d["path"] == "docs/CLAIMS.yaml")
+        .expect("member diagnostic");
+    assert!(
+        hit["message"].as_str().unwrap().contains("claims.1"),
+        "{hit}"
+    );
+    assert!(resource_uris(&v).contains(&"majordomus://claim/policy-parse".to_string()));
+    f.write(
+        "docs/CLAIMS.yaml",
+        &common::CLAIMS.replace("version: 1", "version: 2"),
+    );
+    f.commit("v2");
+    let (_, v, _) = inspect(&f.root(), &[]);
+    let codes = diagnostic_codes(&v);
+    assert!(
+        codes.contains(&(
+            "unsupported_version".into(),
+            Some("docs/CLAIMS.yaml".into())
+        )),
+        "{codes:?}"
+    );
+    assert!(!resource_uris(&v)
+        .iter()
+        .any(|u| u.starts_with("majordomus://claim/")));
+}
+
+#[test]
+fn text_kinds_carry_content_and_no_metadata() {
+    let f = Fixture::new();
+    let (_, out, _) = common::run_in(
+        &f.root(),
+        &[
+            "capabilities",
+            "describe",
+            "implementation.lib/a.sh",
+            "--format",
+            "json",
+        ],
+        "",
+    );
+    let c: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(c["kind"], "resource");
+    assert_eq!(c["provenance"]["media_type"], "text/plain");
+    assert_eq!(
+        c["exposure"]["mcp"]["resource"]["uri"],
+        "majordomus://implementation/lib/a.sh"
+    );
+    let (code, v, _) = inspect(&f.root(), &[]);
+    assert_eq!(code, 0);
+    let t = v["resources"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["uri"] == "majordomus://test/test/cases/00_x.sh")
+        .unwrap();
+    assert_eq!(t["meta"]["kind"], "test");
+    assert!(t["title"].is_null() || t["title"] == "test/cases/00_x.sh");
 }

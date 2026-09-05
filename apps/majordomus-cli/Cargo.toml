@@ -36,6 +36,11 @@ tiny_http = "0.12"
 
 [dev-dependencies]
 tempfile = "3"
+criterion = { version = "0.8", default-features = false }
+
+[[bench]]
+name = "projections"
+harness = false
 
 [profile.release]
 strip = true

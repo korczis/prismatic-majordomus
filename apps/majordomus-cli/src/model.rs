@@ -75,6 +75,10 @@ pub struct Provenance {
     pub section: Option<String>,
     /// Size of the file in bytes.
     pub bytes: u64,
+    /// For an object that is one member of a collection file: the member's key path in
+    /// the file (`claims.3`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub member: Option<String>,
 }
 
 /// One declarative object of the layer: a rule, a prompt, a profile, a document.

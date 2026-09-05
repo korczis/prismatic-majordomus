@@ -33,6 +33,15 @@ pub struct LocalHalf {
     pub implicit_context: bool,
 }
 
+/// The scoped context documents: file names that must carry the context contract
+/// (`schema: context/v1`) wherever they appear under the layer.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+pub struct ContextConventions {
+    #[serde(default)]
+    pub documents: Vec<String>,
+}
+
 /// `.ai/manifest.yaml`, typed. Unknown keys are refused through `share/allow/manifest.txt`.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -42,6 +51,9 @@ pub struct Manifest {
     pub local: LocalHalf,
     /// Section name to path, relative to `.ai/`. Sorted by name.
     pub sections: BTreeMap<String, String>,
+    /// Optional: absent in a layer written before context documents existed.
+    #[serde(default)]
+    pub context: Option<ContextConventions>,
 }
 
 impl Manifest {
@@ -172,6 +184,10 @@ mod tests {
         let m = Manifest::parse(Path::new("m"), MANIFEST_TEXT).unwrap();
         assert_eq!(m.schema, LAYER_SCHEMA);
         assert_eq!(m.sections["rules"], "repo/rules");
+        assert_eq!(m.context, None);
+        let with_context = format!("{MANIFEST_TEXT}context:\n  documents: [README.md]\n");
+        let m = Manifest::parse(Path::new("m"), &with_context).unwrap();
+        assert_eq!(m.context.unwrap().documents, vec!["README.md"]);
     }
 
     #[test]

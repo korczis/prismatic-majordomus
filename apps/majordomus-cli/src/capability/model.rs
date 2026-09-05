@@ -121,6 +121,9 @@ pub enum Provenance {
         #[serde(skip_serializing_if = "Option::is_none")]
         section: Option<String>,
         media_type: String,
+        /// For one member of a collection file, its key path in the file (`claims.3`).
+        #[serde(skip_serializing_if = "Option::is_none")]
+        member: Option<String>,
     },
 }
 
@@ -128,7 +131,14 @@ impl fmt::Display for Provenance {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Provenance::Builtin { module } => write!(f, "builtin {module}"),
-            Provenance::Declarative { path, .. } => write!(f, "{path}"),
+            Provenance::Declarative {
+                path,
+                member: Some(m),
+                ..
+            } => write!(f, "{path}#{m}"),
+            Provenance::Declarative {
+                path, member: None, ..
+            } => write!(f, "{path}"),
         }
     }
 }

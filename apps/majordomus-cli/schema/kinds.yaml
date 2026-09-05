@@ -8,7 +8,7 @@
 # file does not know is reported, never guessed.
 #
 # fields:
-#   format          markdown | yaml — how the file is read
+#   format          markdown | yaml | text — how the file is read; text carries no metadata
 #   front_matter    required | optional | none — for markdown, whether a YAML front matter
 #                   block must be present, may be present, or is not looked for
 #   without_front_matter
@@ -23,9 +23,18 @@
 #   title           the metadata field holding the title, or '@heading' for the first
 #                   level-one Markdown heading; absent means no title
 #   description     the metadata field holding the one-line description; absent means none
-#   schema_version  a field that must carry one of the supported values, when the kind
-#                   has a format version distinct from its identity
+#   schema_version  a field that must carry one of the supported values (integers or
+#                   strings), when the kind has a format version distinct from its identity
+#   members         for a yaml kind: the list in the file that holds the objects, one per
+#                   item; identity, title and description are read from each item, and
+#                   schema_version still applies to the file
+#
+# declared: markdown kinds a file may declare for itself through its front matter `kind:`
+# whatever class discovered it. A README inside the rules tree that says `kind: context`
+# is a context document, not a broken rule; a kind not listed here is a mismatch.
 schema: majordomus-kinds/v1
+
+declared: [context]
 
 kinds:
   rule:
@@ -79,3 +88,32 @@ kinds:
     front_matter: optional
     identity: []
     title: '@heading'
+
+  context:
+    format: markdown
+    front_matter: required
+    allow: context
+    identity: [id]
+    title: title
+    description: description
+    schema_version:
+      field: schema
+      supported: [context/v1]
+
+  claim:
+    format: yaml
+    members: claims
+    identity: [id]
+    title: claim
+    description: note
+    schema_version:
+      field: version
+      supported: [1]
+
+  implementation:
+    format: text
+    identity: []
+
+  test:
+    format: text
+    identity: []

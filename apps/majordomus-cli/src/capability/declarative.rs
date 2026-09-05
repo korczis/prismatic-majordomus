@@ -29,6 +29,7 @@ pub fn capability_of(object: &Object) -> Capability {
             source_class: object.provenance.source_class.clone(),
             section: object.provenance.section.clone(),
             media_type: object.media_type.to_string(),
+            member: object.provenance.member.clone(),
         },
         exposure: Exposure {
             mcp: Some(McpExposure {

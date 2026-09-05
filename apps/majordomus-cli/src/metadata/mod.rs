@@ -17,30 +17,9 @@ pub const KINDS_YAML: &str = include_str!("../../schema/kinds.yaml");
 /// The one schema version this executable reads.
 pub const KINDS_SCHEMA: &str = "majordomus-kinds/v1";
 
-/// The key allow-lists, embedded from the repository's `share/allow/` so that this
-/// executable and the shell tool validate the same keys from the same files.
-const ALLOW_LISTS: &[(&str, &str)] = &[
-    (
-        "manifest",
-        include_str!("../../../../share/allow/manifest.txt"),
-    ),
-    ("rule", include_str!("../../../../share/allow/rule.txt")),
-    ("prompt", include_str!("../../../../share/allow/prompt.txt")),
-    (
-        "profile",
-        include_str!("../../../../share/allow/profile.txt"),
-    ),
-    ("policy", include_str!("../../../../share/allow/policy.txt")),
-    (
-        "milestone",
-        include_str!("../../../../share/allow/milestone.txt"),
-    ),
-    ("issue", include_str!("../../../../share/allow/issue.txt")),
-    (
-        "project",
-        include_str!("../../../../share/allow/project.txt"),
-    ),
-];
+// The key allow-lists, embedded from the repository's `share/allow/` by build.rs so that
+// this executable and the shell tool validate the same keys from the same files.
+include!(concat!(env!("OUT_DIR"), "/allow_lists.rs"));
 
 /// How a file of a kind is read.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -48,6 +27,8 @@ const ALLOW_LISTS: &[(&str, &str)] = &[
 pub enum Format {
     Markdown,
     Yaml,
+    /// Read as UTF-8 text with no metadata: source files, test cases.
+    Text,
 }
 
 /// Whether a Markdown kind must, may, or does not carry front matter.
@@ -60,11 +41,13 @@ pub enum FrontMatterRule {
     None,
 }
 
+/// A field whose value must be one of the listed ones: an integer (`version: 1`) or a
+/// string (`schema: context/v1`).
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SchemaVersion {
     pub field: String,
-    pub supported: Vec<u64>,
+    pub supported: Vec<serde_json::Value>,
 }
 
 /// One entry of `kinds.yaml`.
@@ -88,12 +71,21 @@ pub struct KindSpec {
     pub description: Option<String>,
     #[serde(default)]
     pub schema_version: Option<SchemaVersion>,
+    /// For a yaml kind: the file's list that holds the objects, one object per item
+    /// (`claims` for `docs/CLAIMS.yaml`). Identity, title and description are then read
+    /// from each item; `schema_version` still applies to the file.
+    #[serde(default)]
+    pub members: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct KindsFile {
     schema: String,
+    /// Markdown kinds a file may declare through its front matter `kind:` whatever class
+    /// discovered it: a context document inside the rules tree is a context document.
+    #[serde(default)]
+    declared: Vec<String>,
     kinds: BTreeMap<String, KindSpec>,
 }
 
@@ -101,6 +93,7 @@ struct KindsFile {
 #[derive(Debug)]
 pub struct KindSchema {
     kinds: BTreeMap<String, KindSpec>,
+    declared: Vec<String>,
     allow: BTreeMap<String, AllowList>,
 }
 
@@ -119,10 +112,36 @@ impl KindSchema {
             });
         }
         let mut allow = BTreeMap::new();
+        for d in &file.declared {
+            match file.kinds.get(d) {
+                Some(k)
+                    if k.format == Format::Markdown
+                        && k.front_matter == FrontMatterRule::Required => {}
+                _ => {
+                    return Err(Error::KindSchema {
+                        reason: format!(
+                            "declared kind '{d}' is not a markdown kind that requires front matter"
+                        ),
+                    })
+                }
+            }
+        }
         for (name, spec) in &file.kinds {
-            if spec.format == Format::Yaml && spec.front_matter != FrontMatterRule::None {
+            if spec.format != Format::Markdown && spec.front_matter != FrontMatterRule::None {
                 return Err(Error::KindSchema {
-                    reason: format!("kind '{name}': a yaml kind has no front matter rule"),
+                    reason: format!("kind '{name}': only a markdown kind has a front matter rule"),
+                });
+            }
+            if spec.members.is_some() && spec.format != Format::Yaml {
+                return Err(Error::KindSchema {
+                    reason: format!("kind '{name}': only a yaml kind has members"),
+                });
+            }
+            if spec.format == Format::Text
+                && (spec.allow.is_some() || !spec.identity.is_empty() || spec.members.is_some())
+            {
+                return Err(Error::KindSchema {
+                    reason: format!("kind '{name}': a text kind has no metadata, so no allow-list, identity fields or members"),
                 });
             }
             if let Some(fallback) = &spec.without_front_matter {
@@ -143,12 +162,18 @@ impl KindSchema {
         }
         Ok(KindSchema {
             kinds: file.kinds,
+            declared: file.declared,
             allow,
         })
     }
 
     pub fn kind(&self, name: &str) -> Option<&KindSpec> {
         self.kinds.get(name)
+    }
+
+    /// Is `name` a kind a markdown file may declare for itself?
+    pub fn is_declared_kind(&self, name: &str) -> bool {
+        self.declared.iter().any(|d| d == name)
     }
 
     pub fn kinds(&self) -> impl Iterator<Item = (&String, &KindSpec)> {
@@ -229,6 +254,56 @@ mod tests {
         assert_eq!(rule.identity, vec!["id", "version"]);
         assert!(schema.allow_for(rule).is_some());
         assert!(schema.kind("document").is_some());
+        assert!(schema.is_declared_kind("context") && !schema.is_declared_kind("rule"));
+        assert_eq!(
+            schema.kind("claim").unwrap().members.as_deref(),
+            Some("claims")
+        );
+        assert_eq!(schema.kind("test").unwrap().format, Format::Text);
+    }
+
+    #[test]
+    fn declared_kinds_members_and_text_kinds_are_validated() {
+        let bad = KINDS_YAML.replace("declared: [context]", "declared: [profile]");
+        assert!(matches!(
+            KindSchema::parse(&bad),
+            Err(Error::KindSchema { .. })
+        ));
+        let bad = KINDS_YAML.replace(
+            "    format: text\n    identity: []\n",
+            "    format: text\n    identity: [id]\n",
+        );
+        assert!(matches!(
+            KindSchema::parse(&bad),
+            Err(Error::KindSchema { .. })
+        ));
+    }
+
+    #[test]
+    fn every_embedded_allow_list_comes_from_share_allow() {
+        let names: Vec<&str> = ALLOW_LISTS.iter().map(|(n, _)| *n).collect();
+        for expected in [
+            "manifest",
+            "rule",
+            "prompt",
+            "profile",
+            "policy",
+            "milestone",
+            "issue",
+            "context",
+        ] {
+            assert!(
+                names.contains(&expected),
+                "{expected} missing from {names:?}"
+            );
+        }
+        assert!(
+            names.windows(2).all(|w| w[0] < w[1]),
+            "sorted by name: {names:?}"
+        );
+        assert!(AllowList::embedded("context")
+            .unwrap()
+            .allows("composition"));
     }
 
     #[test]
