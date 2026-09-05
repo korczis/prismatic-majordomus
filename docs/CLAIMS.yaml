@@ -480,6 +480,15 @@ claims:
     responsibility: layer
     note: A document is a Markdown file under .ai/ whose front matter carries schema context/v1; the file name is a convention and the id is the identity. Ordering is depth, then declared order, then path. Providers and audience filter; extend, replace and final compose; a duplicate id, a dangling reference, a superseded final document or a cycle is refused by name.
 
+  - id: context-coverage
+    claim: Every directory of the layer carries a context document, the exemption is declared by the contract that governs the subtree, and a descendant may narrow that requirement but never weaken it
+    source: docs/CONTEXT.md
+    implementation: lib/context_docs.sh
+    test: test/cases/69_context_documents.sh
+    status: guaranteed
+    responsibility: layer
+    note: A directory inside the tree with no document is missing-contract, naming the directory and, where an ancestor made the requirement explicit, the contract that did. The exemption is children.require_contract on a subtree document; the value nearest a directory applies, absence means one is owed, and lowering an inherited true is illegal-override. The tree is the manifest's directory minus the local half and the vendored package.
+
   - id: context-impact
     claim: The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing
     source: docs/CLI.md

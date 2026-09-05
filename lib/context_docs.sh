@@ -143,6 +143,10 @@ mj_ctxd_scan() {
       if (first["scope"] != "explicit" && first["paths.0"] != "") fail("invalid-front-matter: paths are for scope explicit only (scope is " first["scope"] ")")
       if (first["composition"] == "replace" && first["supersedes.0"] == "") fail("invalid-front-matter: composition replace names nothing in supersedes")
       if (first["composition"] != "replace" && first["supersedes.0"] != "") fail("invalid-front-matter: supersedes is for composition replace only (composition is " first["composition"] ")")
+      if (first["children.require_contract"] != "") {
+        if (first["children.require_contract"] != "true" && first["children.require_contract"] != "false") fail("invalid-front-matter: children.require_contract \047" first["children.require_contract"] "\047 is neither true nor false")
+        if (first["scope"] != "subtree") fail("invalid-front-matter: children.require_contract states what descendants owe and is for scope subtree only (scope is " first["scope"] ")")
+      }
       for (i = 1; i <= nl; i++) {
         if (keys[i] ~ /^providers\.[0-9]+$/ && vals[i] != "*" && index(provs, " " vals[i] " ") == 0)
           fail("unknown-provider: provider \047" vals[i] "\047 is not one the policy projects (have:" provs ")")
@@ -154,6 +158,7 @@ mj_ctxd_scan() {
       print "docs." n ".path=" file >> flat
       print "docs." n ".dir=" dir >> flat
       print "docs." n ".depth=" depth >> flat
+      if (first["children.require_contract"] != "") print "docs." n ".children_require_contract=" first["children.require_contract"] >> flat
       has_aud = 0
       for (i = 1; i <= nl; i++) if (keys[i] ~ /^(paths|providers|audience|supersedes|tracks)\.[0-9]+$/) { print "docs." n "." keys[i] "=" vals[i] >> flat; if (keys[i] ~ /^audience/) has_aud = 1 }
       if (!has_aud) { print "docs." n ".audience.0=human" >> flat; print "docs." n ".audience.1=agent" >> flat }
@@ -238,7 +243,65 @@ mj_ctxd_cross_check() {
     i=$((i + 1))
   done
   mj_ctxd_cycles
+  mj_ctxd_coverage
   [ "$noglob" = 1 ] || set +f
+  return 0
+}
+
+# the index of a document whose directory is $1, or 1
+mj_ctxd_index_for_dir() {
+  local i=0
+  while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do [ "$(mj_ctxd "$i" dir)" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i + 1)); done
+  return 1
+}
+
+# The children.require_contract that governs directory $1: the nearest declaration at or
+# above it ($2 = strict skips a declaration in the directory itself), as "<value><TAB><path>".
+# Empty when nothing declares it, which the caller reads as the default: a contract is owed.
+mj_ctxd_require_at() {
+  local dir="$1" strict="${2:-0}" i=0 val ddir d best_depth=-1 best_val="" best_path=""
+  while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
+    val="$(mj_ctxd "$i" children_require_contract)"
+    ddir="$(mj_ctxd "$i" dir)"
+    if [ -n "$val" ] && mj_path_contains "$ddir" "$dir" && { [ "$strict" = 0 ] || [ "$ddir" != "$dir" ]; }; then
+      d="$(mj_ctxd "$i" depth)"
+      if [ "$d" -gt "$best_depth" ]; then best_depth="$d"; best_val="$val"; best_path="$(mj_ctxd "$i" path)"; fi
+    fi
+    i=$((i + 1))
+  done
+  printf '%s\t%s' "$best_val" "$best_path"
+}
+
+# Coverage: every directory of the tree carries a context document, and no descendant
+# weakens an ancestor that says its children owe one. The exemption is declared by the
+# contract that governs the subtree (children.require_contract: false), never by a list at
+# the root: it moves with the tree it describes. ADR 0011.
+mj_ctxd_coverage() {
+  local tree local_rel vendor_rel d gov val path i
+  tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"; vendor_rel="$(mj_rel "$MJ_RULES_DIR")/vendor"
+  # narrowing only: false may become true below, true may not become false
+  i=0
+  while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
+    if [ "$(mj_ctxd "$i" children_require_contract)" = false ]; then
+      gov="$(mj_ctxd_require_at "$(mj_ctxd "$i" dir)" 1)"; val="${gov%%"$MJ_CTXD_TAB"*}"; path="${gov#*"$MJ_CTXD_TAB"}"
+      [ "$val" = true ] && mj_ctxd_problem illegal-override "$(mj_ctxd "$i" path)" \
+        "declares children.require_contract: false under $path, which requires one; a descendant may narrow an inherited constraint, never weaken it" \
+        "majordomus context explain $(mj_ctxd "$i" dir)"
+    fi
+    i=$((i + 1))
+  done
+  # every directory inside the tree, minus the local half and the vendored package, whose
+  # integrity is its manifest's business rather than a reader's
+  while IFS= read -r d; do
+    [ -n "$d" ] || continue
+    case "$d" in "$local_rel"|"$local_rel"/*|"$vendor_rel"|"$vendor_rel"/*) continue ;; esac
+    mj_ctxd_index_for_dir "$d" >/dev/null && continue
+    gov="$(mj_ctxd_require_at "$d")"; val="${gov%%"$MJ_CTXD_TAB"*}"; path="${gov#*"$MJ_CTXD_TAB"}"
+    [ "$val" = false ] && continue
+    mj_ctxd_problem missing-contract "$d" \
+      "carries no context document$([ "$val" = true ] && printf ', and %s requires one of every directory below it' "$path"); a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)" \
+      "printf '%s\\n' '---' 'schema: context/v1' > $d/README.md"
+  done < <(cd "$MJ_ROOT" && find "$tree" -type d -print 2>/dev/null | LC_ALL=C sort)
   return 0
 }
 

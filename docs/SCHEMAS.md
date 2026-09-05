@@ -322,6 +322,8 @@ composition: extend               # extend | replace | final
 order: 100                        # integer; ties within one depth are broken by path
 supersedes: []                    # replace only: ids of ancestor-chain documents, none of them final
 tracks: [lib/rules.sh]            # git pathspecs this document describes
+children:                         # subtree only: what the directories below owe
+  require_contract: true          # true | false; the default where nothing declares it is true
 ---
 ```
 
@@ -340,6 +342,7 @@ tracks: [lib/rules.sh]            # git pathspecs this document describes
 | `order` | yes | an integer; less is earlier within one depth |
 | `supersedes` | with `replace` | ids in the ancestor chain this document stands in for; a `final` ancestor cannot be named |
 | `tracks` | no | pathspecs whose change names this document for review |
+| `children.require_contract` | no | `subtree` only: whether every directory below this one owes a context document. Absent everywhere above a directory means `true`. A descendant may raise `false` to `true`; lowering an inherited `true` is `illegal-override` |
 
 The allowed keys are `share/allow/context.txt`; any other key is an error. There are no
 defaults: a required key that is missing is `invalid-front-matter`, not a silent value.

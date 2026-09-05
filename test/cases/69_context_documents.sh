@@ -28,7 +28,7 @@ expect_grep 'OK +context'
 expect_exit 0 "$MJ" context list
 expect_grep '^ai\.layer +\.ai/README\.md +subtree +final'
 expect_grep '^ai\.repo\.rules +\.ai/repo/rules/README\.md'
-[ "$(chain .ai/repo/rules/project)" = "ai.layer ai.repo ai.repo.rules" ] || { echo "    the seeded chain is wrong: $(chain .ai/repo/rules/project)"; exit 1; }
+[ "$(chain .ai/repo/rules/project)" = "ai.layer ai.repo ai.repo.rules ai.repo.rules.project" ] || { echo "    the seeded chain is wrong: $(chain .ai/repo/rules/project)"; exit 1; }
 
 # a Markdown file with no front matter, and one of another kind, are not documents
 printf '# notes\n\nno front matter here\n' > .ai/repo/notes.md
@@ -41,8 +41,10 @@ mkdir -p "$A"; printf '# stray\n' > "$A/README.md"
 expect_exit 10 "$MJ" context validate
 expect_grep 'areas/README\.md.*invalid-front-matter.*manifest names README\.md'
 rm -f "$A/README.md" .ai/repo/notes.md
-# a document recognised by contract alone, whatever its name
-cdoc "$A/guide.md" ai.repo.areas subtree 100
+# a document recognised by contract alone, whatever its name. The scope fixtures below
+# create bare directories on purpose, so this subtree exempts its children from coverage;
+# coverage itself is proved at the end, in a subtree of its own.
+cdoc "$A/guide.md" ai.repo.areas subtree 100 'children:' '  require_contract: false' 
 expect_exit 0 "$MJ" context validate
 expect_exit 0 "$MJ" context list
 expect_grep '^ai\.repo\.areas +\.ai/repo/areas/guide\.md'
@@ -231,3 +233,43 @@ expect_exit 0 "$MJ" context
 expect_grep '## CONTEXT DOCUMENTS'
 expect_grep 'ai\.repo\.areas\.alpha'
 expect_no_grep 'ai\.repo\.areas\.beta'
+
+# ---------------------------------------------------------------- coverage
+# Every directory of the tree carries a document; the exemption is declared by the contract
+# that governs the subtree, never by a list at the root (ADR 0011).
+Z=.ai/repo/zones
+mkdir -p "$Z"; printf 'x\n' > "$Z/data.yaml"
+expect_exit 10 "$MJ" context validate
+expect_grep 'zones — missing-contract: carries no context document'
+expect_exit 10 "$MJ" context resolve "$Z"
+cdoc "$Z/README.md" ai.repo.zones subtree 100
+expect_exit 0 "$MJ" context validate
+# a directory below it owes one too, and says so with the directory that requires it named
+mkdir -p "$Z/deep"; printf 'x\n' > "$Z/deep/data.yaml"
+expect_exit 10 "$MJ" context validate
+expect_grep 'zones/deep — missing-contract'
+# the governing contract may exempt its children; the exemption reaches the whole subtree
+cdoc "$Z/README.md" ai.repo.zones subtree 100 'children:' '  require_contract: false'
+expect_exit 0 "$MJ" context validate
+mkdir -p "$Z/deep/deeper"; printf 'x\n' > "$Z/deep/deeper/data.yaml"
+expect_exit 0 "$MJ" context validate
+# a descendant may narrow the exemption for its own subtree
+cdoc "$Z/deep/README.md" ai.repo.zones.deep subtree 100 'children:' '  require_contract: true'
+expect_exit 10 "$MJ" context validate
+expect_grep 'deep/deeper — missing-contract.*requires one of every directory below it'
+cdoc "$Z/deep/deeper/README.md" ai.repo.zones.deep.deeper subtree 100
+expect_exit 0 "$MJ" context validate
+# and may not weaken what an ancestor requires
+cdoc "$Z/deep/deeper/README.md" ai.repo.zones.deep.deeper subtree 100 'children:' '  require_contract: false'
+expect_exit 10 "$MJ" context validate
+expect_grep 'illegal-override.*children\.require_contract: false.*never weaken it'
+# the key states what descendants owe, so it belongs to a subtree document only
+cdoc "$Z/deep/deeper/README.md" ai.repo.zones.deep.deeper directory 100 'children:' '  require_contract: true'
+expect_exit 10 "$MJ" context validate
+expect_grep 'invalid-front-matter.*children\.require_contract.*scope subtree only'
+# and its value is a boolean, not whatever a person typed
+cdoc "$Z/deep/deeper/README.md" ai.repo.zones.deep.deeper subtree 100 'children:' '  require_contract: yes'
+expect_exit 10 "$MJ" context validate
+expect_grep 'invalid-front-matter.*neither true nor false'
+rm -rf "$Z"
+expect_exit 0 "$MJ" context validate

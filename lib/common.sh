@@ -724,6 +724,16 @@ trap mj_cleanup EXIT
 # extra front-matter lines differ.
 
 # front matter of a record (between the first --- and the next ---), empty if malformed
+# Is this Markdown file a context document rather than an instance of the kind that lives
+# beside it? A section's README sits in the same directory as its files and declares the
+# context contract; a kind's discovery walks the directory and must not read it as one of
+# its own. Coverage made these READMEs universal (ADR 0011), so the test is shared.
+mj_is_context_doc() {
+  [ -f "$1" ] || return 1
+  [ "$(awk 'NR == 1 && $0 != "---" { exit } NR > 1 && $0 == "---" { exit }
+            NR > 1 && $0 == "kind: context" { print "yes"; exit }' "$1" 2>/dev/null)" = yes ]
+}
+
 mj_record_front() { awk 'NR==1&&$0!="---"{exit 2} NR>1&&$0=="---"{exit} NR>1' "$1"; }
 # body of a record: everything after the second ---
 mj_record_body()  { awk 'c>=2{print} /^---$/{c++}' "$1"; }
