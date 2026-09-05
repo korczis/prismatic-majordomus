@@ -9,6 +9,15 @@ P="$ROOT/site/public"
 for r in "" why why/two-agents-one-bug getting-started limitations roadmap profiles profiles/debugging policy guarantees guarantees/guaranteed guarantees/init-refuses supervises supervises/finish commands commands/doctor architecture docs docs/cli docs/design render-test; do [ -f "$P/$r/index.html" ] || { echo "    missing route /$r/"; exit 1; }; done
 # homepage sections come from data, not templates
 expect_grep 'A session grades its own homework' "$P/index.html"
+# the hero: every proposition's headline from marketing.toml is on the homepage, the first is the one h1
+n_props="$(grep -c '^  { label = ' "$ROOT/site/data/marketing.toml")"; [ "$n_props" -ge 3 ]
+found=0; while read -r h; do grep -qF ">$h<" "$P/index.html" && found=$((found+1)); done <<EOF_H
+$(grep -oE 'headline = "[^"]*"' "$ROOT/site/data/marketing.toml" | sed 's/^headline = "//; s/"$//')
+EOF_H
+[ "$found" = "$n_props" ] || { echo "    $found of $n_props hero propositions on the homepage"; exit 1; }
+expect_grep "<h1[^>]*>$(grep -oE 'headline = "[^"]*"' "$ROOT/site/data/marketing.toml" | head -1 | sed 's/^headline = "//; s/"$//')</h1>" "$P/index.html"
+expect_grep 'id="hero-p-1"[^>]* checked' "$P/index.html"
+expect_grep 'id="how-it-works"' "$P/index.html"
 expect_grep "v$(jq -r .version "$ROOT/site/data/generated/project.json")" "$P/index.html"
 for p in $(jq -r '.profiles[].slug' "$ROOT/site/data/generated/profiles.json"); do expect_grep "$p" "$P/profiles/index.html"; done
 expect_grep "$(jq -r '.principles[0]' "$ROOT/site/data/generated/lifecycle.json" | cut -d' ' -f1-3)" "$P/supervises/index.html"

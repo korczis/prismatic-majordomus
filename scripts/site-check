@@ -27,6 +27,15 @@ done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -
 # 3. marketing copy: line budget, no numbers, no claim words
 ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 60 ] && ok promo "marketing.toml is $ml lines, budget 60" || bad promo "marketing.toml is $ml lines, budget 60"
 if grep -vE '^\s*#' "$SITE/data/marketing.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "marketing.toml contains a number; numbers are computed, never written"; fi
+# 3b. the hero: every proposition in marketing.toml is on the homepage in full, the first one is
+# the page's h1 and the checked default, and the primary action lands on a section of the page
+HL="$(grep -oE 'headline = "[^"]*"' "$SITE/data/marketing.toml" | sed 's/^headline = "//; s/"$//')"
+hero_bad=0
+printf '%s\n' "$HL" | while read -r h; do grep -qF ">$h<" "$PUB/index.html" || echo "$h"; done | head -1 | grep -q . && { bad hero "a proposition's headline is not on the homepage"; hero_bad=1; }
+grep -qF ">$(printf '%s\n' "$HL" | head -1)</h1>" "$PUB/index.html" || { bad hero "the h1 is not the first proposition's headline"; hero_bad=1; }
+grep -qE 'id="hero-p-1"[^>]* checked' "$PUB/index.html" || { bad hero "the first proposition is not the checked default"; hero_bad=1; }
+grep -oE 'href="#[a-z-]+"' "$PUB/index.html" | sed 's/href="#//; s/"$//' | sort -u | while read -r a; do grep -q "id=\"$a\"" "$PUB/index.html" || echo "$a"; done | head -1 | grep -q . && { bad hero "an in-page link has no target section"; hero_bad=1; }
+[ "$hero_bad" = 0 ] && ok hero "$(printf '%s\n' "$HL" | wc -l | tr -d ' ') propositions on the homepage, the first is the h1 and the default; in-page links resolve"
 # 4. routes: metadata, landmarks, no unresolved placeholders, one h1, viewport
 for f in $pages; do
   rel="${f#"$PUB"/}"
