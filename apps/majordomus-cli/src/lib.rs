@@ -10,6 +10,8 @@
 //! Nothing below `commands` knows about clap; nothing below `mcp` knows about JSON-RPC; and
 //! the model knows nothing about either.
 
+pub mod app;
+pub mod capability;
 pub mod cli;
 pub mod commands;
 pub mod discovery;

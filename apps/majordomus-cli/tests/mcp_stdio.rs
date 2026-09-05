@@ -147,15 +147,22 @@ fn handshake_discovery_and_a_real_round_trip() {
         .iter()
         .map(|t| t["name"].as_str().unwrap())
         .collect();
+    // ordered by canonical id, one per capability with an MCP tool exposure
     assert_eq!(
         tools,
         [
-            "majordomus_list",
+            "majordomus_capability",
+            "majordomus_capabilities",
             "majordomus_get",
+            "majordomus_list",
             "majordomus_search",
             "majordomus_repository"
         ]
     );
+    let list_tool = &r[&5]["result"]["tools"][3];
+    assert_eq!(list_tool["_meta"]["majordomus"]["id"], "objects.list");
+    assert!(list_tool["inputSchema"]["properties"]["kind"].is_object());
+    assert!(list_tool["outputSchema"]["properties"]["objects"].is_object());
     assert!(r[&5]["result"]["tools"]
         .as_array()
         .unwrap()

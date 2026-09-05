@@ -17,6 +17,7 @@ const PARSE_ERROR: i64 = -32700;
 const INVALID_REQUEST: i64 = -32600;
 const METHOD_NOT_FOUND: i64 = -32601;
 const INVALID_PARAMS: i64 = -32602;
+const INTERNAL_ERROR: i64 = -32603;
 /// MCP's code for a resource that does not exist.
 const RESOURCE_NOT_FOUND: i64 = -32002;
 
@@ -117,6 +118,7 @@ impl Server {
                     Err(SurfaceError::UnknownResource(u)) => {
                         Err((RESOURCE_NOT_FOUND, format!("resource not found: {u}")))
                     }
+                    Err(SurfaceError::Internal(e)) => Err((INTERNAL_ERROR, e)),
                     Err(e) => Err((INVALID_PARAMS, e.to_string())),
                 }
             }
@@ -149,6 +151,7 @@ impl Server {
                     Ok(ToolOutcome::Refused(reason)) => Ok(
                         json!({ "content": [{ "type": "text", "text": reason }], "isError": true }),
                     ),
+                    Err(SurfaceError::Internal(e)) => Err((INTERNAL_ERROR, e)),
                     Err(e) => Err((INVALID_PARAMS, e.to_string())),
                 }
             }
@@ -167,6 +170,7 @@ impl Server {
             .copied()
             .unwrap_or(PROTOCOL_VERSIONS[0]);
         let index = self.surface.index();
+        let summary = self.surface.registry().summary();
         json!({
             "protocolVersion": version,
             "capabilities": {
@@ -175,9 +179,11 @@ impl Server {
             },
             "serverInfo": { "name": SERVER_NAME, "title": "Majordomus", "version": self.version },
             "instructions": format!(
-                "Read-only view of the repository's AI layer at {}: {} object(s), index state {}. Resources are majordomus://<kind>/<identity>; majordomus://repository carries the diagnostics. Nothing here writes.",
-                index.repository.root,
+                "Read-only view of a repository's AI layer: {} object(s), {} capabilities ({} tools, {} resources), index state {}. Resources are majordomus://<kind>/<identity>; majordomus://repository carries the diagnostics; majordomus_capabilities lists every capability with its projections. Nothing here writes.",
                 index.objects.len(),
+                summary.total,
+                summary.mcp_tools,
+                summary.mcp_resources,
                 match index.state { crate::index::State::Ok => "ok", crate::index::State::Degraded => "degraded" }
             ),
         })
@@ -199,6 +205,8 @@ fn tool_json(t: &super::surface::Tool) -> Value {
     json!({
         "name": t.name, "title": t.title, "description": t.description,
         "inputSchema": t.input_schema,
+        "outputSchema": t.output_schema,
+        "_meta": { "majordomus": { "id": t.id } },
         "annotations": { "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false }
     })
 }

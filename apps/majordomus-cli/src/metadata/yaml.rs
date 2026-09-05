@@ -400,8 +400,10 @@ mod tests {
         let m = parse_mapping("context:\n  task: true\n  depth: 0\nempty:\nnext: 1\n").unwrap();
         assert_eq!(
             m,
-            serde_json::from_value(json!({ "context": { "task": true, "depth": 0 }, "next": 1 }))
-                .unwrap()
+            serde_json::from_value::<serde_json::Map<String, Value>>(
+                json!({ "context": { "task": true, "depth": 0 }, "next": 1 })
+            )
+            .unwrap()
         );
     }
 }

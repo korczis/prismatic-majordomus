@@ -5,19 +5,20 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use serde::Serialize;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
 
 /// What git says about the repository, or why it could not be asked.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "state", rename_all = "lowercase")]
 pub enum GitState {
     Available(GitInfo),
     Unavailable { reason: String },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct GitInfo {
     /// Absolute path of the work tree top level.
     pub toplevel: PathBuf,
@@ -26,7 +27,7 @@ pub struct GitInfo {
     /// Branch name, or `None` when detached or unborn.
     pub branch: Option<String>,
     /// `clean` or `dirty`, from `git status --porcelain`.
-    pub working_tree: &'static str,
+    pub working_tree: String,
 }
 
 /// Ask git about `root`. Never fails: a missing `git` or a directory that is not a work
@@ -50,7 +51,8 @@ pub fn inspect(root: &Path) -> GitState {
         Ok(s) if s.trim().is_empty() => "clean",
         Ok(_) => "dirty",
         Err(_) => "unknown",
-    };
+    }
+    .to_string();
     GitState::Available(GitInfo {
         toplevel,
         head,

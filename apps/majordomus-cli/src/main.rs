@@ -24,7 +24,6 @@ fn main() -> ExitCode {
     match majordomus_cli::commands::run(cli) {
         Ok(code) => ExitCode::from(code),
         Err(err) => {
-            tracing::error!("{err}");
             eprintln!("majordomus: {err}");
             ExitCode::from(err.exit_code())
         }

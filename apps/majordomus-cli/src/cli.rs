@@ -56,19 +56,26 @@ pub enum Transport {
     Stdio,
 }
 
-#[derive(Debug, Args)]
-pub struct McpArgs {
+/// Where and how the repository is read; shared by every command that reads it.
+#[derive(Debug, Args, Default)]
+pub struct RepoArgs {
     /// Start the search for the repository root here (default: the current directory)
-    #[arg(long, value_name = "PATH")]
+    #[arg(long, value_name = "PATH", global = true)]
     pub repo: Option<PathBuf>,
 
     /// How declarative files are enumerated
-    #[arg(long, value_enum, default_value_t = DiscoveryMode::Vcs)]
+    #[arg(long, value_enum, default_value_t = DiscoveryMode::Vcs, global = true)]
     pub discovery: DiscoveryMode,
 
-    /// Refuse to serve when any file of the layer carries an error diagnostic
-    #[arg(long)]
+    /// Refuse to proceed when any file of the layer carries an error diagnostic
+    #[arg(long, global = true)]
     pub strict: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct McpArgs {
+    #[command(flatten)]
+    pub repo: RepoArgs,
 
     /// Print what would be served, and every diagnostic, then exit without serving
     #[arg(long)]

@@ -9,7 +9,8 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use serde::Serialize;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use crate::discovery::{self, DiscoveredFile, DiscoverySource, Sources};
@@ -23,7 +24,7 @@ use crate::repository::Repository;
 pub const MAX_FILE_BYTES: u64 = 4 * 1024 * 1024;
 
 /// Whether every discovered file became an object.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum State {
     Ok,
@@ -31,14 +32,15 @@ pub enum State {
 }
 
 /// What the index knows about the repository it was built from.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RepositoryInfo {
     pub root: String,
     pub layer_schema: String,
     /// Manifest section name to repository-relative path.
     pub sections: BTreeMap<String, String>,
     pub git: GitState,
-    pub discovery: &'static str,
+    /// `vcs` or `filesystem`.
+    pub discovery: String,
     /// Source class id to kind, in declared order.
     pub source_classes: Vec<(String, String)>,
 }
@@ -87,7 +89,7 @@ impl Index {
                 .filter_map(|k| repo.section_path(k).map(|p| (k.clone(), p)))
                 .collect(),
             git,
-            discovery: source.name(),
+            discovery: source.name().to_string(),
             source_classes: sources
                 .sources
                 .iter()

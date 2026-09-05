@@ -2,12 +2,15 @@
 //! could not become one. Nothing here knows about files being read or protocols being
 //! spoken; those layers produce and consume these types.
 
-use serde::Serialize;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts
 /// the index into the degraded state; `Warning` and `Info` do neither.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Info,
@@ -17,11 +20,11 @@ pub enum Severity {
 
 /// One finding about the declarative state, named by a stable code, tied to a path where
 /// there is one, and carrying the command that reproduces it where there is one.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Diagnostic {
     pub severity: Severity,
     /// A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.
-    pub code: &'static str,
+    pub code: String,
     /// Repository-relative path of the file concerned, when there is one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
@@ -32,7 +35,7 @@ impl Diagnostic {
     pub fn error(code: &'static str, path: Option<String>, message: impl Into<String>) -> Self {
         Diagnostic {
             severity: Severity::Error,
-            code,
+            code: code.into(),
             path,
             message: message.into(),
         }
@@ -40,7 +43,7 @@ impl Diagnostic {
     pub fn warning(code: &'static str, path: Option<String>, message: impl Into<String>) -> Self {
         Diagnostic {
             severity: Severity::Warning,
-            code,
+            code: code.into(),
             path,
             message: message.into(),
         }
@@ -48,7 +51,7 @@ impl Diagnostic {
     pub fn info(code: &'static str, path: Option<String>, message: impl Into<String>) -> Self {
         Diagnostic {
             severity: Severity::Info,
-            code,
+            code: code.into(),
             path,
             message: message.into(),
         }
@@ -56,7 +59,7 @@ impl Diagnostic {
 }
 
 /// Where an object came from. Every field is computed from the repository, never authored.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Provenance {
     /// Repository-relative path, forward slashes, as the version-control index names it.
     pub path: String,

@@ -56,6 +56,20 @@ pub enum Error {
 
     #[error("protocol: {reason}")]
     Protocol { reason: String },
+
+    #[error("the capability registry does not build:\n{}", errors.iter().map(|e| format!("  {e}")).collect::<Vec<_>>().join("\n"))]
+    Registry {
+        errors: Vec<crate::capability::RegistryError>,
+    },
+
+    #[error("http: {reason}")]
+    Http { reason: String },
+
+    #[error("unknown capability: {id} (run: majordomus capabilities list)")]
+    CapabilityNotFound { id: String },
+
+    #[error("generated artifact(s) stale: {} (run: majordomus generate)", files.join(", "))]
+    Stale { files: Vec<String> },
 }
 
 impl Error {
@@ -67,11 +81,15 @@ impl Error {
             | Error::UnsupportedSchema { .. }
             | Error::InvalidSources { .. }
             | Error::UnknownKeys { .. }
-            | Error::StrictDiagnostics { .. } => 10,
+            | Error::StrictDiagnostics { .. }
+            | Error::Registry { .. }
+            | Error::Stale { .. } => 10,
+            Error::CapabilityNotFound { .. } => 12,
             Error::KindSchema { .. }
             | Error::Git { .. }
             | Error::Io { .. }
             | Error::Transport(_)
+            | Error::Http { .. }
             | Error::Protocol { .. } => 13,
         }
     }
