@@ -35,7 +35,10 @@ impl App {
             Some(p) => p.clone(),
             None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
         };
-        let repository = Repository::discover(&start)?;
+        let repository = {
+            let _phase = crate::perf::phase(crate::perf::Phase::RepositoryDiscovery);
+            Repository::discover(&start)?
+        };
         tracing::info!(repository_root = %repository.root().display(), "repository found");
         let share = Share::locate(args.share.as_deref(), repository.root())?;
         tracing::info!(share = %share.dir().display(), origin = share.origin, "share directory");
@@ -110,15 +113,12 @@ impl App {
         index: Index,
     ) -> Result<Self> {
         let registry = CapabilityRegistry::builder()
-            .with_builtin(builtin::all())
+            .with_modules(builtin::modules())
             .with_index(&index)
             .build()
             .map_err(|errors| Error::Registry { errors })?;
         tracing::info!(capabilities = registry.len(), "registry built");
-        let context = Arc::new(Context {
-            index: Arc::new(index),
-            registry: Arc::new(registry),
-        });
+        let context = Arc::new(Context::new(Arc::new(index), Arc::new(registry)));
         Ok(App {
             repository,
             share,

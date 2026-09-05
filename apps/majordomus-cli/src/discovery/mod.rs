@@ -216,6 +216,7 @@ pub fn discover(
     sources: &Sources,
     source: &dyn DiscoverySource,
 ) -> Result<(Vec<DiscoveredFile>, Vec<Diagnostic>)> {
+    crate::perf::Counters::bump(&crate::perf::COUNTERS.repository_scans);
     let mut files = Vec::new();
     let mut diagnostics = Vec::new();
     let mut claimed = std::collections::BTreeMap::<String, String>::new();

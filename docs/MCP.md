@@ -9,20 +9,94 @@ option, the kind schema) is in the application's own
 
 ## What it is
 
-One process, started by the client, speaking the Model Context Protocol over stdio,
-serving the repository's AI layer read-only:
+A process the client starts, speaking the Model Context Protocol on its stdin and stdout,
+serving the repository's AI layer read-only, and joining the repository's one shared
+server: the first such process in a repository binds the loopback HTTP projection beside
+its stdio session (Swagger UI, the OpenAPI document, every capability route, MCP over
+HTTP) and says where; every later one attaches to it.
 
 ```bash
 cargo build --manifest-path apps/majordomus-cli/Cargo.toml
 apps/majordomus-cli/target/debug/majordomus mcp --inspect    # what would be served, and every diagnostic
-apps/majordomus-cli/target/debug/majordomus mcp              # serve until the client goes
+apps/majordomus-cli/target/debug/majordomus mcp              # serve until the client goes; the first one is the server
+apps/majordomus-cli/target/debug/majordomus mcp --standalone # this client alone: no port, no lease, no peers
+bin/majordomus-mcp                                           # the same, built first when needed: what a client configuration names
 ```
 
-It is not a daemon: it lives as long as the client's pipe, listens on no port, keeps no
-state, needs no database, and writes nothing. It is one projection of the executable's
-capability registry ([`CAPABILITIES.md`](CAPABILITIES.md)): the same capabilities are the
-HTTP routes of `majordomus serve` and the `capabilities` commands, and every tool and
-resource here is derived from a registry entry, none declared in the MCP code.
+The log on stderr names it the moment it is up:
+
+```
+shared server listening on http://127.0.0.1:8741 (swagger ui http://127.0.0.1:8741/docs, openapi http://127.0.0.1:8741/openapi.json, mcp over http http://127.0.0.1:8741/mcp); the one server for this repository ...
+```
+
+It is not a daemon: nothing starts it but a client, nothing keeps it alive but clients,
+and it ends when its own client is gone and the last attached one has left. It keeps no
+state beyond its memory, needs no database, and writes one file: the lease under
+`.ai/local/state/mcp/`, the checkout-local half the layer reserves for operational state,
+removed when the server stops. It is one projection of the executable's capability
+registry ([`CAPABILITIES.md`](CAPABILITIES.md)): the same capabilities are the HTTP routes
+and the `capabilities` commands, and every tool and resource here is derived from a
+registry entry, none declared in the MCP code. The decision is
+[`.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md`](../.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md).
+
+## One server per repository
+
+| | |
+|---|---|
+| election | the first process to create `.ai/local/state/mcp/server.json` (atomically) is the server; it binds, writes its URL into the file, and logs it |
+| port | `--http-port` (default `8741`) on `--http-host` (default `127.0.0.1`); a taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
+| attaching | a later `majordomus mcp` reads the lease, checks that the server answers for this root, and bridges its stdio to `/mcp`: one HTTP request per message, a ping every twenty seconds, no index and no registry of its own, so it starts in milliseconds |
+| stale lease | a lease whose server does not answer for this root (the process was killed) is taken over by the next process; an abandoned lease with no URL is taken over after a grace period |
+| lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
+| takeover | a bridged peer whose server died elects again on its next message: it becomes the server itself, carrying its client's `initialize` across so that the client never notices, or attaches to whichever process won first (`re-attached to the shared server`); when it can serve neither way (its own `--strict` refuses a degraded layer) the client gets a JSON-RPC error naming why, never silence |
+| options | the server's `--discovery` and `--strict` apply to every session it serves; a bridge inherits them and the log says which server it attached to |
+| `--standalone` | the first version's behaviour: this client alone, no port, no lease, no peers, nothing written anywhere |
+| `serve` | the same shared server without a stdio session of its own; when one already runs it logs the URL and exits 0 |
+
+## Starting it from a client
+
+The root of this repository carries the configuration each client reads, all naming the
+same launcher, so that the first client to open the repository becomes the server and the
+others attach:
+
+| client | file | what it names |
+|---|---|---|
+| Claude Code | [`.mcp.json`](../.mcp.json) | a stdio server, `bin/majordomus-mcp`; Claude Code asks once whether to trust a project server |
+| Gemini CLI | [`.gemini/settings.json`](../.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
+| Codex | [`.codex/config.toml`](../.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
+| anything speaking Streamable HTTP | the running server's `/mcp` | `initialize` answers with an `Mcp-Session-Id`; every later request carries it; `DELETE /mcp` ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes |
+
+`bin/majordomus-mcp` builds the executable when it is missing or older than its sources
+(`MAJORDOMUS_BUILD_PROFILE=release` for a release build; `MAJORDOMUS_BIN` names an
+executable and never builds; `MAJORDOMUS_NO_BUILD=1` refuses to build and exits 12 with the
+command to run), sets `MAJORDOMUS_SHARE` to the distribution's `share/` beside it, writes
+nothing to stdout, and passes every argument to `majordomus mcp`. `just mcp`, `just serve`
+and `just inspect` at the root do the same for a person; `just docs-ui` opens the running
+server's Swagger UI.
+
+## Peers
+
+Every session is a peer: the server's own stdio client, every bridged `majordomus mcp`,
+and every client speaking `/mcp` directly. A peer is named by what its client sent in
+`initialize` (`clientInfo.name` and `version`: `claude-code`, `codex`, `gemini-cli`, or
+whatever the client calls itself), numbered `p1`, `p2`, ... in attachment order, with the
+transport, when it attached and when it was last seen. The `initialize` result's
+`instructions` tell a client the server's URL, its own peer id and every other peer with
+what it announced, before its first tool call.
+
+| tool | capability | arguments | answers |
+|---|---|---|---|
+| `majordomus_peers` | `peers.list` | none | every peer, the caller's own id, and each peer's announcement |
+| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record with its announcement |
+
+An announcement is one line of intent and the repository-relative paths the peer expects
+to touch. It is informational: other clients read it to avoid a collision; nothing here
+enforces it (the shell tool's `start --scope` and `check` do that, per worktree). The
+board lives in the server's memory and is gone with the process; `peers.announce` is the
+one capability of kind `command`, because it changes that memory, and it is announced to
+MCP clients as not read-only. Over plain HTTP there is no caller, so `POST
+/api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without a
+`caller`.
 
 ## What decides what is served
 
@@ -72,11 +146,14 @@ manifest section it falls under, and its size.
 | `majordomus_repository` | `repository.info` | none | the `majordomus://repository` document |
 | `majordomus_capabilities` | `capabilities.list` | `kind?`, `exposure?` | every capability with its projections |
 | `majordomus_capability` | `capabilities.describe` | `id` | one capability: schemas, provenance, every projection |
+| `majordomus_peers` | `peers.list` | none | the clients attached to this shared server (above) |
+| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | records what the calling peer is working on (above) |
 
-All six are read-only and say so in their annotations; each carries the canonical id in
-`_meta.majordomus.id` and its `inputSchema` and `outputSchema` from the canonical schemas.
-A refused call is a result with `isError: true`; an unknown tool, method or resource is a
-protocol error.
+Every query is read-only and says so in its annotations; `majordomus_announce`, the one
+command, says it is not, and it changes this process's memory and nothing else. Each tool
+carries the canonical id in `_meta.majordomus.id` and its `inputSchema` and
+`outputSchema` from the canonical schemas. A refused call is a result with
+`isError: true`; an unknown tool, method or resource is a protocol error.
 
 ## Failure behaviour
 
@@ -89,7 +166,12 @@ protocol error.
 | `git` unusable | `--discovery vcs` (the default) exits `13` naming `--discovery filesystem`; the git block of `majordomus://repository` reads `unavailable` with the reason |
 | no share directory (kinds and schemas) found | exit `12`, every directory tried named, and `--share` / `MAJORDOMUS_SHARE` named as the remedy |
 | a kind schema or a schema file invalid, or a repository redefining a distributed kind | exit `10`, both files named |
-| client closes its pipe | the process ends with `0` |
+| client closes its pipe | the process ends with `0`, after the last attached peer has left when it was the server |
+| the port is taken | a free port is bound instead; both are logged |
+| the lease names a server that does not answer for this root | it is taken over; `stale lease` is logged with the URL |
+| the shared server a bridge is attached to dies | the bridge takes over on its next message, or re-attaches to the process that did; the client never re-initialises |
+| a bridge cannot take over (its `--strict`, a broken layer) | the client's request is answered with a JSON-RPC error (`-32603`) naming why; the stdio session stays open |
+| the lease cannot be created or joined (a filesystem refusing writes under `.ai/local/`) | exit `13`, the path named; `--standalone` serves without it |
 
 Two files of one kind claiming one identity are both excluded and both named, as the
 rules contract requires. Nothing is repaired, defaulted or rewritten.
@@ -103,16 +185,26 @@ rules contract requires. Nothing is repaired, defaulted or rewritten.
   provider files are served as documents with their directory recorded; nothing merges
   or ranks them, because the repository defines no merge semantics. Recorded in
   [`.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md`](../.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md).
-- **Any mutation**, any second transport, subscriptions, list-change notifications.
-  The HTTP projection is a separate command, `majordomus serve`, on the loopback
-  interface; see [`CAPABILITIES.md`](CAPABILITIES.md).
+- **Any mutation of the repository**, subscriptions, list-change notifications, and a
+  server-initiated stream on `/mcp` (this server sends nothing unasked). The HTTP
+  projection of the same registry is served by the shared server and by `majordomus
+  serve`; see [`CAPABILITIES.md`](CAPABILITIES.md).
+- **Persistent coordination.** The peer board is one process's memory: what a peer is
+  working on across sessions and machines is the shell tool's task record and scope, not
+  this.
 
 ## What proves it
 
 `test/cases/72_rust_mcp.sh` builds the executable and speaks to it over pipes inside a
 repository the shell tool's `init` wrote; `76_capabilities_projections.sh` reads one
-capability back through every interface. The crate's own suite
+capability back through every interface; `90_mcp_shared_server.sh` starts two clients
+through `bin/majordomus-mcp` in such a repository and checks that one server serves both,
+that each sees the other, that the lease comes and goes with the server, and that the
+three client configurations name the launcher. The crate's own suite
 (`cargo test --manifest-path apps/majordomus-cli/Cargo.toml`) covers the command line,
 root selection, the metadata contract, determinism, the protocol round trip, protocol-only
-stdout, non-mutation, and the add–remove–break sequence of external extension. The
-claims are in [`CLAIMS.yaml`](CLAIMS.yaml) under `mcp-`.
+stdout, non-mutation, the add–remove–break sequence of external extension, and, in
+`tests/mcp_shared.rs`, the shared server over real pipes and sockets: the election, the
+bridge, `/mcp` sessions, the fallback port, `serve` deferring, `--standalone`, the takeover
+after a kill, the re-attachment, and the refusal when the taker cannot serve. The claims
+are in [`CLAIMS.yaml`](CLAIMS.yaml) under `mcp-`.

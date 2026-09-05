@@ -37,6 +37,117 @@ pub enum Command {
     Capabilities(CapabilitiesArgs),
     /// Write the committed projections of the registry (docs/generated), or check that they are current
     Generate(GenerateArgs),
+    /// Time every externally callable operation (each capability directly, over MCP and over HTTP, and the transports' own operations), report coverage, compare with the accepted baseline
+    Bench(BenchArgs),
+}
+
+#[derive(Debug, Args)]
+#[command(args_conflicts_with_subcommands = true)]
+/// `majordomus bench`.
+pub struct BenchArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `coverage` or `baseline`; none runs the benchmarks.
+    pub command: Option<BenchCommand>,
+
+    /// Only targets of this capability id, or whose key starts with this text
+    pub id: Option<String>,
+
+    /// Only this transport
+    #[arg(long, value_enum, default_value_t = TransportArg::All)]
+    pub transport: TransportArg,
+
+    /// How much to measure
+    #[arg(long, value_enum, default_value_t = ProfileArg::Quick)]
+    pub profile: ProfileArg,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Compare with the accepted baseline of this platform under .ai/repo/benchmarks/rust/policy.yaml; exit 10 on a regression
+    #[arg(long)]
+    pub check: bool,
+
+    /// Do not write the result under .ai/local/benchmarks/
+    #[arg(long)]
+    pub no_write: bool,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `bench` subcommands.
+pub enum BenchCommand {
+    /// Every required target and whether it is covered; the denominator is generated from the registry
+    Coverage {
+        #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        /// Output shape
+        format: OutputFormat,
+        /// Exit 10 when any required target is missing or waived
+        #[arg(long)]
+        check: bool,
+    },
+    /// The accepted baseline of this platform under .ai/repo/benchmarks/rust/
+    Baseline {
+        #[command(subcommand)]
+        /// What to do with it.
+        command: BaselineCommand,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+/// The `bench baseline` subcommands.
+pub enum BaselineCommand {
+    /// Run the benchmarks and record them as this platform's baseline (a reviewable, tracked file)
+    Update {
+        /// How much to measure
+        #[arg(long, value_enum, default_value_t = ProfileArg::Full)]
+        profile: ProfileArg,
+        /// Record even from a dirty work tree
+        #[arg(long)]
+        allow_dirty: bool,
+    },
+}
+
+/// The transports `bench` can be limited to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
+pub enum TransportArg {
+    /// Every target.
+    #[default]
+    All,
+    /// Capabilities through the executor, in process.
+    Direct,
+    /// Capabilities through a real `majordomus mcp` child.
+    Mcp,
+    /// Capabilities over a real loopback socket.
+    Http,
+    /// The transports' own operations only.
+    System,
+}
+
+/// How much `bench` measures.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
+pub enum ProfileArg {
+    /// Fast developer feedback: few samples.
+    #[default]
+    Quick,
+    /// Stable evidence: many samples, many cold spawns.
+    Full,
+    /// Conservative: structural gates plus a modest measurement.
+    Ci,
+}
+
+impl ProfileArg {
+    /// The name the benchmark module knows.
+    pub fn name(self) -> &'static str {
+        match self {
+            ProfileArg::Quick => "quick",
+            ProfileArg::Full => "full",
+            ProfileArg::Ci => "ci",
+        }
+    }
 }
 
 /// Output shape for commands that print to a person or a script. `mcp` speaks its own
@@ -108,9 +219,23 @@ pub struct McpArgs {
     /// The transport to serve on
     #[arg(long, value_enum, default_value_t = Transport::Stdio)]
     pub transport: Transport,
+
+    /// Serve this client alone: no shared server, no HTTP, no Swagger UI, no peers, and
+    /// nothing written anywhere. The default is the shared server (below)
+    #[arg(long)]
+    pub standalone: bool,
+
+    /// Interface the shared server binds when this process is the one that starts it
+    #[arg(long, default_value = "127.0.0.1", value_name = "HOST")]
+    pub http_host: String,
+
+    /// Port the shared server binds when this process starts it; when it is taken, a free
+    /// port is used instead and the URL is logged on stderr either way
+    #[arg(long, default_value_t = DEFAULT_PORT, value_name = "PORT")]
+    pub http_port: u16,
 }
 
-/// The default port of `serve`.
+/// The default port of the HTTP projection: `serve`, and the shared server `mcp` starts.
 pub const DEFAULT_PORT: u16 = 8741;
 
 #[derive(Debug, Args)]
@@ -194,8 +319,12 @@ pub enum GenerateTarget {
     All,
     /// `docs/generated/openapi.json`.
     Openapi,
-    /// `docs/generated/capabilities.md`.
+    /// `docs/generated/capabilities.md` and `docs/generated/modules/<id>.md`.
     Docs,
+    /// `docs/generated/benchmarks.md`: every benchmark target and the coverage
+    Benchmarks,
+    /// `docs/generated/registry.json`: the builtin registry as data
+    Registry,
     /// The shell tool's allow-lists under share/allow, derived from the schemas
     Allow,
 }

@@ -5,9 +5,9 @@ mod common;
 
 use majordomus_cli::capability::handler::handler;
 use majordomus_cli::capability::{
-    CanonicalSchema, Capability, CapabilityId, CapabilityKind, CapabilityRegistry, CliExposure,
-    Executable, Exposure, HttpExposure, HttpMethod, McpExposure, McpResource, Provenance,
-    RegistryError, Stability,
+    BenchmarkPolicy, CachePolicy, CanonicalSchema, Capability, CapabilityId, CapabilityKind,
+    CapabilityRegistry, CliExposure, Executable, Exposure, HttpExposure, HttpMethod, McpExposure,
+    McpResource, ModuleId, Provenance, RegistryError, Stability,
 };
 use majordomus_cli::discovery::{Sources, VcsIndex};
 use majordomus_cli::git::GitState;
@@ -31,6 +31,7 @@ fn query(id: &str, exposure: Exposure, stability: Stability, module: &str) -> Ex
     Executable {
         capability: Capability {
             id: CapabilityId::parse(id).unwrap_or_else(|_| unchecked(id)),
+            module: ModuleId::unchecked(""),
             kind: CapabilityKind::Query,
             title: format!("Fixture {id}"),
             description: "A fixture capability.".into(),
@@ -42,12 +43,15 @@ fn query(id: &str, exposure: Exposure, stability: Stability, module: &str) -> Ex
             exposure,
             stability,
             tags: vec![],
+            benchmark: BenchmarkPolicy::Required,
+            cache: CachePolicy::Disabled,
         },
         handler: handler::<serde_json::Value, Out, _>(|_, v| {
             Ok(Out {
                 echo: v.to_string(),
             })
         }),
+        cases: |_| vec![],
     }
 }
 
@@ -317,4 +321,187 @@ fn the_same_inputs_build_the_same_registry() {
     assert_eq!(a.registry().summary(), b.registry().summary());
     assert!(a.registry().get("rule.project.alpha@1").is_some());
     assert!(a.registry().get("repository.info").is_some());
+}
+
+// ---------------------------------------------------------------- modules
+
+use majordomus_cli::capability::registry::ModuleSource;
+use majordomus_cli::capability::{builtin, ModuleDescriptor};
+
+fn module_of(id: &str, execs: Vec<Executable>) -> ModuleDescriptor {
+    ModuleDescriptor::new(id, id, "A fixture module.", Stability::Experimental, execs)
+}
+
+#[test]
+fn every_builtin_module_composes_only_its_own_namespace_and_the_registry_lists_it() {
+    let modules = builtin::modules();
+    let ids: Vec<&str> = modules.iter().map(|m| m.id.as_str()).collect();
+    let mut unique = ids.clone();
+    unique.sort();
+    unique.dedup();
+    assert_eq!(ids.len(), unique.len(), "module ids are unique: {ids:?}");
+    for m in &modules {
+        assert!(
+            !m.capabilities.is_empty(),
+            "module {} composes nothing",
+            m.id
+        );
+        for e in &m.capabilities {
+            assert_eq!(
+                e.capability.module, m.id,
+                "{} is stamped with its module",
+                e.capability.id
+            );
+            assert_eq!(
+                e.capability.id.namespace(),
+                m.id.as_str(),
+                "{}",
+                e.capability.id
+            );
+        }
+    }
+    let registry = CapabilityRegistry::builder()
+        .with_modules(builtin::modules())
+        .build()
+        .unwrap();
+    for m in &modules {
+        let info = registry.module(m.id.as_str()).expect("module listed");
+        assert_eq!(info.source, ModuleSource::Builtin);
+        assert_eq!(info.capabilities, m.capabilities.len());
+        assert_eq!(info.title, m.title);
+        assert_eq!(info.stability, Some(m.stability));
+    }
+    assert_eq!(registry.summary().modules, modules.len());
+    assert_eq!(registry.modules().count(), modules.len());
+    // the flat list is the same set of executables
+    assert_eq!(
+        builtin::all().len(),
+        modules.iter().map(|m| m.capabilities.len()).sum::<usize>()
+    );
+}
+
+#[test]
+fn a_capability_composed_in_the_wrong_module_is_refused_by_name() {
+    let errs = CapabilityRegistry::builder()
+        .with_modules(vec![module_of(
+            "alpha",
+            vec![
+                query("alpha.one", tool("a"), Stability::Implemented, "m"),
+                query("beta.two", tool("b"), Stability::Implemented, "m"),
+            ],
+        )])
+        .build()
+        .unwrap_err();
+    assert!(
+        matches!(&errs[..], [RegistryError::ModuleMismatch { id, module, namespace, .. }] if id == "beta.two" && module == "alpha" && namespace == "beta"),
+        "{errs:?}"
+    );
+}
+
+#[test]
+fn a_module_composed_twice_and_an_invalid_module_id_are_refused() {
+    let errs = CapabilityRegistry::builder()
+        .with_modules(vec![
+            module_of(
+                "alpha",
+                vec![query("alpha.one", tool("a"), Stability::Implemented, "m")],
+            ),
+            module_of(
+                "alpha",
+                vec![query("alpha.two", tool("b"), Stability::Implemented, "m")],
+            ),
+            module_of("Bad", vec![]),
+        ])
+        .build()
+        .unwrap_err();
+    assert!(
+        errs.iter()
+            .any(|e| matches!(e, RegistryError::DuplicateModule { id, .. } if id == "alpha")),
+        "{errs:?}"
+    );
+    assert!(
+        errs.iter()
+            .any(|e| matches!(e, RegistryError::InvalidModuleId { id, .. } if id == "Bad")),
+        "{errs:?}"
+    );
+}
+
+#[test]
+fn executables_without_a_descriptor_get_a_derived_module_and_declarative_kinds_get_theirs() {
+    let f = common::Fixture::new();
+    let app = common::load_app(&f);
+    let registry = app.registry();
+    let rule = registry.module("rule").expect("the rule kind is a module");
+    assert_eq!(rule.source, ModuleSource::Declarative);
+    assert_eq!(rule.capabilities, 1);
+    assert_eq!(
+        registry
+            .get("rule.project.alpha@1")
+            .unwrap()
+            .module
+            .as_str(),
+        "rule"
+    );
+    let derived = CapabilityRegistry::builder()
+        .with_builtin(vec![query(
+            "zeta.one",
+            tool("z"),
+            Stability::Implemented,
+            "m",
+        )])
+        .build()
+        .unwrap();
+    let z = derived.module("zeta").unwrap();
+    assert_eq!(z.source, ModuleSource::Derived);
+    assert_eq!(derived.get("zeta.one").unwrap().module.as_str(), "zeta");
+}
+
+#[test]
+fn a_cache_policy_that_keeps_nothing_and_a_cached_command_are_refused() {
+    let mut empty = query("alpha.one", tool("a"), Stability::Implemented, "m");
+    empty.capability.cache = CachePolicy::Process {
+        max_entries: 0,
+        ttl_seconds: None,
+    };
+    let mut command = query("alpha.two", tool("b"), Stability::Implemented, "m");
+    command.capability.kind = CapabilityKind::Command;
+    command.capability.cache = CachePolicy::Process {
+        max_entries: 8,
+        ttl_seconds: None,
+    };
+    let errs = CapabilityRegistry::builder()
+        .with_builtin(vec![empty, command])
+        .build()
+        .unwrap_err();
+    assert_eq!(errs.len(), 2, "{errs:?}");
+    assert!(
+        errs.iter()
+            .all(|e| matches!(e, RegistryError::InvalidCachePolicy { .. })),
+        "{errs:?}"
+    );
+}
+
+#[test]
+fn benchmark_policy_follows_the_kind() {
+    let mut waived_wrong = query("alpha.one", tool("a"), Stability::Implemented, "m");
+    waived_wrong.capability.benchmark = BenchmarkPolicy::Waived {
+        reason: majordomus_cli::capability::WaiverReason::NotExecutable,
+    };
+    let errs = CapabilityRegistry::builder()
+        .with_builtin(vec![waived_wrong])
+        .build()
+        .unwrap_err();
+    assert!(
+        matches!(&errs[..], [RegistryError::Shape { reason, .. }] if reason.contains("not executable")),
+        "{errs:?}"
+    );
+    let f = common::Fixture::new();
+    let app = common::load_app(&f);
+    let s = app.registry().summary();
+    assert_eq!(
+        s.benchmark_required, s.builtin,
+        "every builtin is a required benchmark target"
+    );
+    assert_eq!(s.benchmark_waived, 0);
+    assert!(s.cached >= 1, "at least one query is cached");
 }

@@ -93,7 +93,7 @@ fn openapi_docs_and_one_operation_over_a_real_socket() {
     let (status, repo) = s.get("/api/v1/repository");
     assert_eq!(status, 200);
     assert_eq!(repo["state"], "ok");
-    assert_eq!(repo["capabilities"]["http_routes"], 6);
+    assert_eq!(repo["capabilities"]["http_routes"], 9);
 }
 
 #[test]

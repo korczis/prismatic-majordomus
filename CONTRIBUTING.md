@@ -21,7 +21,8 @@ arbitrary. Most of them were paid for.
 
 - new agents, personas, roles, tiers, or registries
 - a daemon, database, queue, or background process; the Rust executable's `mcp` (stdio)
-  and `serve` (loopback HTTP) are read-only and end with the process that started them
+  and `serve` (loopback HTTP) are read-only, one shared server per repository owned by the
+  clients attached to it, and gone with the last of them
 - a check that reports but is described as enforcing
 - a number written into prose that a command could compute
 - an edit to a generated file instead of to the source it is generated from
@@ -36,9 +37,11 @@ arbitrary. Most of them were paid for.
 2. Branch from `master`. Keep the branch to one concern.
 3. Add or change the test in `test/cases/` first. Tests run in a disposable temporary
    repository, never against this checkout.
-4. Run `test/run.sh` and `shellcheck` if available. The site cases skip themselves when
-   `zola`, `jq` or `node_modules/` are absent, so a CLI-only change needs none of them;
-   `72_rust_mcp.sh` skips itself when `cargo` is absent.
+4. Run `test/run.sh` and `shellcheck` if available (`just test` runs the suite, the Rust
+   gate and the site data check; `just lint-shell` runs shellcheck). The site cases skip
+   themselves when `zola`, `jq` or `node_modules/` are absent, so a CLI-only change needs
+   none of them; `72_rust_mcp.sh`, `76_capabilities_projections.sh` and
+   `90_mcp_shared_server.sh` skip themselves when `cargo` is absent.
    For a change under `apps/majordomus-cli/`, run `scripts/rust-check`: format, clippy
    with warnings as errors (a public item without documentation is one), `cargo test`
    including doctests, `cargo doc`, `majordomus generate --check`, `capabilities validate`

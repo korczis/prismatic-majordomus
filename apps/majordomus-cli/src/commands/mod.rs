@@ -1,6 +1,7 @@
 //! Command dispatch: each command is a function from its arguments to an exit code, and
 //! this module is the only place that maps one to the other.
 
+pub mod bench;
 pub mod capabilities;
 pub mod generate;
 pub mod mcp;
@@ -16,5 +17,6 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Serve(args) => serve::run(args),
         Command::Capabilities(args) => capabilities::run(args),
         Command::Generate(args) => generate::run(args),
+        Command::Bench(args) => bench::run(args),
     }
 }

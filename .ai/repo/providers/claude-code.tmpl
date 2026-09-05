@@ -1,0 +1,27 @@
+# CLAUDE.md
+
+Claude Code bootstrap. The repository's provider-neutral AI context lives under
+[`.ai/`](.ai/); nothing specific to Claude is needed here.
+
+Read `README.md`, then [`.ai/README.md`](.ai/README.md), and follow its
+discovery protocol: the effective rules under `.ai/repo/rules/` with their
+dependencies, the workflows and knowledge the task needs, and never `.ai/local/`.
+
+Before working under a path, run `majordomus context resolve <path>` (or read the
+`README.md` chain from `.ai/` down to that directory): each document adds to its
+ancestors and the nearest one does not replace them. A provider's own nested-file
+loading is an optimisation; the Majordomus resolution is what applies.
+
+This repository serves its `.ai/` layer over MCP. The client configurations at the root
+(`.mcp.json` for Claude Code, `.gemini/settings.json` for Gemini CLI, `.codex/config.toml`
+for Codex) start `bin/majordomus-mcp`, which builds the Rust executable when it must and
+runs `majordomus mcp`: one shared server per repository, Swagger UI at the URL it logs on
+stderr, and every attached client visible to the others. Prefer its `majordomus_*` tools
+to reading `.ai/` by hand, and call `majordomus_announce` with your intent and the paths
+you expect to touch, so that the other clients (Claude, Codex, Gemini, ...) can avoid
+colliding with you. The surface is `docs/MCP.md`; `just` lists the recipes a person runs.
+
+This repository is supervised by Majordomus. Run `majordomus context` before working;
+the task lifecycle is `.ai/repo/workflows/task-lifecycle.md`; the default profile is
+`{{DEFAULT_PROFILE}}`. `AGENTS.md` carries the same bootstrap for every
+other worker, and a rule that exists in one of these files and not in `.ai/` is a bug.

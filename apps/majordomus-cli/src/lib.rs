@@ -12,6 +12,7 @@
 #![warn(missing_docs)]
 
 pub mod app;
+pub mod bench;
 pub mod capability;
 pub mod cli;
 pub mod commands;
@@ -21,12 +22,16 @@ pub mod generate;
 pub mod git;
 pub mod http;
 pub mod index;
+pub mod lease;
 pub mod logging;
 pub mod mcp;
 pub mod metadata;
 pub mod model;
+pub mod peers;
+pub mod perf;
 pub mod repository;
 pub mod share;
+pub mod shared;
 
 pub use error::Error;
 pub use index::Index;

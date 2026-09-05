@@ -40,6 +40,7 @@ impl CanonicalSchema {
     /// assert_eq!(required, ["name"]);
     /// ```
     pub fn of<T: JsonSchema>() -> Self {
+        crate::perf::Counters::bump(&crate::perf::COUNTERS.schema_generations);
         let mut schema = schemars::schema_for!(T).to_value();
         let name = schema
             .get("title")

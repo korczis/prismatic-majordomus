@@ -3,15 +3,17 @@
 The Rust executable of Majordomus. It builds a binary named `majordomus` that reads the
 repository's provider-neutral AI layer under `.ai/`, composes one capability registry from
 its own executable capabilities and the layer's objects, and serves that registry through
-several interfaces, all read-only: MCP over stdio (`mcp`), HTTP with an OpenAPI document
-and a Swagger UI shell on the loopback interface (`serve`), introspection on the command
-line (`capabilities`), and generated reference files (`generate`).
+several interfaces, all read-only: MCP over stdio (`mcp`), which also starts, or attaches
+to, the repository's one shared server (HTTP with an OpenAPI document, a Swagger UI shell
+and MCP over HTTP on the loopback interface, the same server `serve` runs alone),
+introspection on the command line (`capabilities`), and generated reference files
+(`generate`). Every client attached to the shared server is a peer the others can see.
 
 It is not a second implementation of the shell tool: `init`, `start`, `check`, `finish`,
 `doctor`, `update` and the task lifecycle live in `bin/majordomus` at the repository root,
 and this executable advertises only the commands it implements. The architecture is
 [`docs/CAPABILITIES.md`](../../docs/CAPABILITIES.md); the MCP surface as a client sees it
-is [`docs/MCP.md`](../../docs/MCP.md); the decisions are ADR 1 and ADR 2 under
+is [`docs/MCP.md`](../../docs/MCP.md); the decisions are ADR 1, ADR 2 and ADR 3 under
 `.ai/repo/adrs/`.
 
 ## What belongs here, and what does not
@@ -34,8 +36,11 @@ B=apps/majordomus-cli/target/debug/majordomus
 $B --help
 $B --version
 $B mcp --inspect                  # what would be served, every diagnostic; exit 10 when degraded
-$B mcp                            # MCP on stdio until the client goes
-$B serve                          # HTTP on 127.0.0.1:8741; /openapi.json, /docs, /api/v1/...
+$B mcp                            # MCP on stdio until the client goes; the first one in a repository is the shared server (Swagger UI at the URL it logs), every later one attaches
+$B mcp --standalone               # this client alone: no port, no lease, no peers
+$B serve                          # the shared server alone: 127.0.0.1:8741, /openapi.json, /docs, /mcp, /api/v1/...; exits 0 when one already runs
+bin/majordomus-mcp                # builds $B when needed, then `mcp`: what .mcp.json, .gemini/settings.json and .codex/config.toml name
+just                              # the recipes a person runs, routed to $B wherever it can serve them
 $B capabilities list              # every capability with its projections
 $B capabilities describe objects.get
 $B capabilities schema objects.search --side input
@@ -52,18 +57,24 @@ cargo fmt --check
 cargo clippy --all-targets --all-features -- -D warnings   # missing_docs is an error here
 cargo test                                                  # unit, integration, doctests
 cargo doc --no-deps                                         # RUSTDOCFLAGS="-D warnings" in CI
-cargo bench                                                 # criterion, benches/projections.rs
+cargo bench                                                 # criterion, benches/projections.rs and benches/shared.rs
 cargo llvm-cov --all-targets --summary-only                 # coverage; CI enforces the threshold in scripts/rust-check
 ```
 
-`scripts/rust-check` at the repository root runs all of it in the order CI does. The tests
-build a disposable repository each and never read this checkout; `test/cases/72_rust_mcp.sh`
-and `76_capabilities_projections.sh` at the repository root run the built binary against a
-repository the shell tool's own `init` wrote, which is the cross-check that the two
-executables read the same layer.
+`scripts/rust-check` at the repository root (`just rust-check`) runs all of it in the order
+CI does. The tests build a disposable repository each and never read this checkout;
+`test/cases/72_rust_mcp.sh`, `76_capabilities_projections.sh` and `90_mcp_shared_server.sh`
+at the repository root run the built binary against a repository the shell tool's own
+`init` wrote, which is the cross-check that the two executables read the same layer.
 
 The binary shares its name with the shell tool on purpose. Put one or the other on `PATH`,
-or call this one by path; an MCP client configuration names the path anyway:
+or call this one by path. An MCP client is configured once, at the repository root, and
+this repository ships those files: [`.mcp.json`](../../.mcp.json) for Claude Code,
+[`.gemini/settings.json`](../../.gemini/settings.json) for Gemini CLI and
+[`.codex/config.toml`](../../.codex/config.toml) for Codex all start
+[`bin/majordomus-mcp`](../../bin/majordomus-mcp), which builds this crate when the
+executable is missing or older than its sources, sets `MAJORDOMUS_SHARE`, and `exec`s
+`majordomus mcp`. To name the executable directly:
 
 ```json
 { "mcpServers": { "majordomus": { "command": "/path/to/apps/majordomus-cli/target/debug/majordomus", "args": ["mcp"], "env": { "MAJORDOMUS_SHARE": "/path/to/prismatic-majordomus/share" } } } }
@@ -101,24 +112,30 @@ Every command starts from the same options:
 | | |
 |---|---|
 | stdout | protocol frames only, one JSON-RPC message per line; nothing else, ever |
-| stderr | structured diagnostics through `tracing`, filtered by `MAJORDOMUS_LOG` (default `info`) |
+| stderr | structured diagnostics through `tracing`, filtered by `MAJORDOMUS_LOG` (default `info`); the shared server's URL, Swagger UI and `/mcp` are logged the moment it is bound |
 | stdin | protocol frames, one per line; EOF ends the session |
-| side effects | none |
-| exit | `0` at EOF or when the client closes its read end |
-| `--inspect [--format text\|json]` | print the repository, resources, tools and every diagnostic, then exit; 10 when there is an error diagnostic |
-| `--transport stdio` | the only transport; the option exists so that a second one is an addition |
+| shared server | the first `mcp` in a repository creates the lease `.ai/local/state/mcp/server.json`, binds `--http-host`:`--http-port` (default `127.0.0.1:8741`; a taken port is replaced by a free one and both are logged), publishes the URL in the lease, and serves HTTP beside its stdio; every later `mcp` in the same repository finds the lease, checks that the server answers for this root, and bridges its stdio to `/mcp` (no index, no registry, no port of its own); a lease whose server does not answer is taken over |
+| lifetime | the server serves until its own client is gone and the last attached peer has left; then it closes the port and removes the lease. A bridge whose server dies takes over on its next message (its client's `initialize` is carried across) or attaches to whichever process won; when it can do neither the client gets a JSON-RPC error naming why |
+| peers | every session is a peer named by its `initialize` `clientInfo`; `majordomus_peers` lists them, `majordomus_announce` records what the caller is working on; the `initialize` instructions name the URL, the caller's peer id and every other peer |
+| side effects | the lease file under `.ai/local/state/mcp/` (the checkout-local half, never tracked), removed on exit; a loopback socket; nothing under the tracked tree, ever |
+| exit | `0` at EOF or when the client closes its read end (after the last peer has left, for the server); `13` when the lease cannot be created or joined |
+| `--standalone` | this client alone: no shared server, no HTTP, no lease, no peers, nothing written anywhere |
+| `--http-host <HOST>`, `--http-port <PORT>` | where the shared server binds when this process starts it |
+| `--inspect [--format text\|json]` | print the repository, resources, tools and every diagnostic, then exit; 10 when there is an error diagnostic; touches no port and no lease |
+| `--transport stdio` | the transport of this process's own client; the option exists so that a second one is an addition |
 
 ### `majordomus serve`
 
 | | |
 |---|---|
 | bind | `--host` (default `127.0.0.1`) and `--port` (default `8741`; `0` picks a free port and the address is logged on stderr) |
-| routes | `/` (an index), `/openapi.json`, `/docs`, and one route per capability with an HTTP exposure under `/api/v1/`; `HEAD` answers like `GET` without a body |
-| binding | `GET` binds every top-level input property as a query parameter coerced by its schema type; `POST` binds the JSON body (no builtin uses it yet) |
-| errors | JSON `{ "error": { "code", "message" } }`: 400 `invalid_input`, 404 `not_found`, 405 `method_not_allowed`, 413 `too_large`, 422 `refused`, 500 `internal` |
-| lifecycle | when stdin is a pipe or a socket the server stops at its end of file; otherwise (a terminal, `/dev/null`, a file) it runs until the process is stopped |
-| side effects | none; nothing is written, no state is kept between requests |
-| exit | `0` when stopped through stdin; `13` when the port cannot be bound |
+| shared server | the same server `mcp` starts, without a stdio session: it takes the lease, and when another process already holds it, logs that server's URL and exits 0 rather than starting a second one |
+| routes | `/` (an index, with the root it serves), `/openapi.json`, `/docs`, `/mcp` (MCP over HTTP: `POST` a JSON-RPC message, `Mcp-Session-Id` from `initialize` on every later request, `DELETE` to end the session, `GET` is 405), and one route per capability with an HTTP exposure under `/api/v1/`; `HEAD` answers like `GET` without a body |
+| binding | `GET` binds every top-level input property as a query parameter coerced by its schema type; `POST` binds the JSON body (a command's binding: `peers.announce`) |
+| errors | JSON `{ "error": { "code", "message" } }`: 400 `invalid_input`, `invalid_json`, `session_required`; 404 `not_found`, `session_not_found`; 405 `method_not_allowed`; 413 `too_large`; 422 `refused`; 500 `internal` |
+| lifecycle | when stdin is a pipe or a socket the server starts stopping at its end of file and waits for attached peers to leave; otherwise (a terminal, `/dev/null`, a file) it runs until the process is stopped |
+| side effects | the lease under `.ai/local/state/mcp/`, removed on exit; nothing else is written, no state is kept between requests beyond the peer board and the open sessions |
+| exit | `0` when stopped through stdin, or when another process already serves; `13` when the port cannot be bound |
 
 Swagger UI's own assets are loaded by the browser from the pinned `swagger-ui-dist` on
 unpkg; the document it renders is local. That is the one part of the HTTP projection that
@@ -155,13 +172,14 @@ The same contract as `docs/CLI.md`:
 | command | filesystem mutation | git mutation | network | stdout |
 |---|---|---|---|---|
 | `--help`, `--version`, `capabilities …`, `mcp --inspect`, `generate --check` | no | no | no | text or JSON |
-| `mcp` | no | no | no | MCP protocol |
-| `serve` | no | no | listens on loopback; the browser fetches Swagger UI assets | HTTP on the socket, nothing on stdout |
+| `mcp` | the lease under `.ai/local/state/mcp/` (not tracked), removed on exit; none with `--standalone` | no | listens on loopback (the server) or connects to it (a bridge); the browser fetches Swagger UI assets | MCP protocol |
+| `serve` | the lease, as above | no | listens on loopback; the browser fetches Swagger UI assets | HTTP on the socket, nothing on stdout |
 | `generate` (without `--check`) | writes `docs/generated/` and `share/allow/` | no | no | the paths written |
 
-`tests/mcp_stdio.rs::serving_mutates_nothing` and
+`tests/mcp_stdio.rs::serving_mutates_nothing`,
 `tests/http_serve.rs::serving_from_a_nested_directory_finds_the_same_root_and_writes_nothing`
-compare `git status` and every tracked blob before and after a session.
+and `test/cases/90_mcp_shared_server.sh` compare `git status` and every tracked blob before
+and after a session; `tests/mcp_shared.rs` checks that the lease is gone after the server.
 
 ## Architecture
 
@@ -169,7 +187,11 @@ compare `git status` and every tracked blob before and after a session.
 main.rs               parse, init stderr logging, run, map the error to an exit code
 cli.rs                clap declarations; RepoArgs shared by every command
 app.rs                the one composition point: repository -> share -> kinds and schemas -> index -> registry
-commands/             mcp, serve, capabilities, generate: each a function from its arguments to an exit code
+commands/             mcp, serve, capabilities, generate: each a function from its arguments to an exit code;
+                      mcp holds the session that is answered locally (this process is the server) or bridged
+lease.rs              one shared server per repository: the lease file, the election, the stale-lease takeover
+shared.rs             the shared server: bind, publish the URL, serve until the last peer leaves, release
+peers.rs              the peer board: sessions named by their clients, announcements, in memory only
 repository.rs         root discovery (nearest .ai/manifest.yaml), the typed manifest
 share.rs              locating the distribution's share directory; reading its schemas
 discovery/            sources.yaml, the DiscoverySource trait, its two implementations, :(glob) matching
@@ -179,8 +201,10 @@ model.rs              Object, Provenance, Diagnostic, Severity: the domain of th
 capability/           the canonical model: model.rs (descriptor), schema.rs (canonical schemas and their
                       MCP and OpenAPI projections), handler.rs (typed handlers, Context, the capability! macro),
                       registry.rs (the registry and its invariants), builtin.rs (the executables), declarative.rs
-mcp/                  surface.rs (the registry as resources and tools), protocol.rs (JSON-RPC and MCP), stdio.rs
-http/                 router.rs (routes and binding from the registry), openapi.rs, swagger.rs, server.rs (tiny_http)
+mcp/                  surface.rs (the registry as resources and tools), protocol.rs (JSON-RPC and MCP), stdio.rs,
+                      bridge.rs (a stdio session forwarded to another process's shared server; its own HTTP client)
+http/                 router.rs (routes and binding from the registry), openapi.rs, swagger.rs, server.rs (tiny_http,
+                      a few worker threads), mcp.rs (MCP over HTTP at /mcp: sessions, expiry)
 generate.rs           the one generator pipeline and the allow-list derivation
 git/                  read-only git: toplevel, head, branch, dirty state, ls-files
 logging.rs, error.rs  tracing to stderr; the typed errors and their exit codes
@@ -190,8 +214,9 @@ Dependencies flow inward: `commands` knows clap and everything below; `mcp` and 
 know the registry and nothing about clap or files; `capability` knows the index's model;
 `index`, `discovery`, `metadata`, `repository`, `share` and `git` know the model and the
 errors; `model` knows nothing. No MCP library and no HTTP framework: the read-only subset
-of MCP is eight methods in one file, and six loopback routes need a synchronous accept
-loop, not an async runtime. The one trait, `DiscoverySource`, exists because two
+of MCP is eight methods in one file, a handful of loopback routes need a few synchronous
+worker threads over one immutable registry, not an async runtime, and a bridge's request is
+thirty lines over `TcpStream`. The one trait, `DiscoverySource`, exists because two
 enumerations ship. Dependencies: `clap`, `serde`, `serde_json`, `schemars`, `jsonschema`,
 `tiny_http`, `thiserror`, `tracing`, `tracing-subscriber`; dev: `tempfile`, `criterion`.
 
@@ -242,7 +267,11 @@ Repository content is untrusted input: symlinks are never followed or read; a fi
 4 MiB or a front matter over 64 KiB is refused; invalid UTF-8 is refused; only paths the
 declared pathspecs match are read, and only from the repository root; `resources/read` and
 `objects.get` answer from the in-memory index, never from a path a client names; the HTTP
-server binds loopback by default, reads at most 1 MiB of body, and trusts no header. Not
+server binds loopback by default, reads at most 1 MiB of body, and trusts no header beyond
+the session id it issued itself, which names a session and grants nothing (every session
+sees the same read-only registry). The lease is trusted only after the server it names has
+answered for this root; a peer's announcement is text other peers read, never a path the
+server opens. Not
 defended against: a hostile `sources.yaml` naming a huge tree (the walk is bounded by the
 repository, not by a budget), and memory, since every object's content is held for the
 session.
@@ -258,12 +287,16 @@ session.
 | MCP: handshake, listing, reads, tools, errors, clean EOF, protocol-only stdout, no mutation | behaviourally verified (`tests/mcp_stdio.rs`) |
 | the registry's invariants; every projection present and none orphan; a change reaches every projection | behaviourally verified (`tests/registry.rs`, `tests/projections.rs`) |
 | HTTP over a socket, OpenAPI, Swagger shell, typed errors, HEAD, `/dev/null` stdin, MCP/HTTP parity | behaviourally verified (`tests/http_serve.rs`) |
+| one shared server per repository: lease, bridge, `/mcp` sessions, peers, fallback port, `serve` deferring, `--standalone`, takeover, re-attachment, refusal | behaviourally verified (`tests/mcp_shared.rs`, `tests/shared_units.rs`, `test/cases/90_mcp_shared_server.sh`) |
 | `generate`, byte-identical regeneration, `--check` | behaviourally verified (`tests/generate_check.rs`) |
 | the layer `init` writes, served with state `ok`; one capability through every interface | behaviourally verified (`test/cases/72_rust_mcp.sh`, `76_capabilities_projections.sh`) |
 | CLI names, URIs, tool names, routes, diagnostic codes, `kinds.yaml`, the schema files | implemented; pre-1.0, changes are documented, never silent |
 | `--discovery filesystem` | implemented; a convenience outside the layer's contract |
 
 Deferred, deliberately: MCP prompts (prompt assets render `{{CONTEXT}}` from local state
-the shell tool owns), a second transport, mutation over any interface, subscriptions and
-list-change notifications, path parameters and POST capabilities, `/openapi.yaml`, Swagger
-UI assets offline, hot reload, the `.ai/local/` half, a content hash per object.
+the shell tool owns), mutation of the repository over any interface, subscriptions and
+list-change notifications, a server-initiated stream on `/mcp`, path parameters,
+`/openapi.yaml`, Swagger UI assets offline, hot reload (a shared server keeps the index it
+built at start until its last client leaves), the `.ai/local/` half as served content, a
+content hash per object, and persistent coordination (the peer board is one process's
+memory; the task record and scope of the shell tool are the durable form).

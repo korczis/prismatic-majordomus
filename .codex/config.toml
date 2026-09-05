@@ -1,0 +1,9 @@
+# Project-scoped Codex configuration, loaded when the project is trusted. It names the
+# repository's own MCP server: the Rust executable's `majordomus mcp`, built on first use
+# by bin/majordomus-mcp. The same server serves Claude Code (.mcp.json) and Gemini CLI
+# (.gemini/settings.json); the first client to start it owns it, every later one attaches,
+# and each sees the others through the majordomus_peers tool.
+[mcp_servers.majordomus]
+command = "./bin/majordomus-mcp"
+args = []
+startup_timeout_sec = 120

@@ -185,7 +185,7 @@ fn new_commands_have_help_and_honest_exit_codes() {
         "",
     );
     assert_ne!(code, 0);
-    assert!(err.contains("not query or resource"), "{err}");
+    assert!(err.contains("not query, command or resource"), "{err}");
 }
 
 #[test]

@@ -20,7 +20,7 @@ pub const OPENAPI_VERSION: &str = "3.1.0";
 pub const OAS_DIALECT: &str = "https://spec.openapis.org/oas/3.1/dialect/base";
 
 /// The routes that are the projection's own, not capabilities.
-pub const INFRASTRUCTURE_ROUTES: &[&str] = &["/", "/openapi.json", "/docs"];
+pub const INFRASTRUCTURE_ROUTES: &[&str] = &["/", "/openapi.json", "/docs", "/mcp"];
 
 /// The OpenAPI document of the registry. Fails only on a schema component name defined twice with different content.
 ///
@@ -34,6 +34,8 @@ pub const INFRASTRUCTURE_ROUTES: &[&str] = &["/", "/openapi.json", "/docs"];
 /// assert_eq!(doc["paths"]["/api/v1/object"]["get"]["x-majordomus-mcp"]["tool"], "majordomus_get");
 /// ```
 pub fn document(registry: &CapabilityRegistry, version: &str) -> Result<Value, String> {
+    let _phase = crate::perf::phase(crate::perf::Phase::OpenApiBuild);
+    crate::perf::Counters::bump(&crate::perf::COUNTERS.openapi_builds);
     let mut components: BTreeMap<String, Value> = BTreeMap::new();
     let error_ref = CanonicalSchema::of::<ErrorBody>().openapi_ref(&mut components)?;
     let mut paths: BTreeMap<String, BTreeMap<String, Value>> = BTreeMap::new();

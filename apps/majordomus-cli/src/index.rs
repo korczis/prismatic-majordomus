@@ -64,6 +64,9 @@ pub struct Index {
     pub diagnostics: Vec<Diagnostic>,
     /// Ok, or degraded when a diagnostic is an error.
     pub state: State,
+    /// A hash of every object's path and content, in URI order: the repository state this
+    /// index is a picture of, stable across processes.
+    pub fingerprint: String,
 }
 
 impl Index {
@@ -76,6 +79,8 @@ impl Index {
         source: &dyn DiscoverySource,
         git: GitState,
     ) -> Result<Self> {
+        let _phase = crate::perf::phase(crate::perf::Phase::IndexBuild);
+        crate::perf::Counters::bump(&crate::perf::COUNTERS.index_builds);
         let (files, mut diagnostics) = discovery::discover(repo, sources, source)?;
         let mut objects = Vec::with_capacity(files.len());
         for file in &files {
@@ -118,11 +123,23 @@ impl Index {
             state = ?state,
             "index built"
         );
+        let fingerprint = {
+            use sha2::{Digest, Sha256};
+            let mut h = Sha256::new();
+            for o in &objects {
+                h.update(o.provenance.path.as_bytes());
+                h.update(b"\0");
+                h.update(o.content.as_bytes());
+                h.update(b"\n");
+            }
+            format!("{:x}", h.finalize())
+        };
         Ok(Index {
             repository,
             objects,
             diagnostics,
             state,
+            fingerprint,
         })
     }
 
