@@ -104,7 +104,8 @@ jobs:
           RUSTDOCFLAGS: -D warnings
       - run: cargo bench --no-run
       # the registry builds and every projection with it; the committed projections
-      # (docs/generated, share/allow) match the registry and the schemas
+      # (docs/generated, share/allow, the provider bootstraps AGENTS.md/CLAUDE.md, and the
+      # site's registry dataset) match the registry, the schemas and the policy
       - run: cargo run --quiet -- capabilities validate
       - run: cargo run --quiet -- generate --check
       # every externally callable operation is a benchmark target; the denominator is the
