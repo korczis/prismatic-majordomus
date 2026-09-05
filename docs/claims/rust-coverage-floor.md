@@ -1,4 +1,4 @@
-# Line coverage of the Rust crate is measured on every push and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage
+# Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage
 
 ## What it means
 
@@ -18,7 +18,7 @@ cd apps/majordomus-cli && cargo llvm-cov --all-targets --summary-only | tail -3
 
 ## What it does not cover
 
-Coverage is measured on Linux in CI, once per push; the case does not measure it, because a measurement takes minutes and belongs in one place. The floor is on lines, not on regions, functions or branches. A file under the floor is not refused as long as the crate as a whole is above it; the summary names the files, and raising the floor is how the bar moves. Lowering it is an edit to the file and to the case, so it is visible, but nothing prevents a reviewer from accepting it.
+Coverage is measured on Linux in CI, once per run that selects the `rust-coverage` gate (the `rust` and `share` classes of `.ai/repo/ci/gates.yaml`, and every full plan: master, the schedule, a dispatch, a pull request labelled `ci:full`); a change that cannot reach the crate does not recompile it with instrumentation. The case does not measure it, because a measurement takes minutes and belongs in one place. The floor is on lines, not on regions, functions or branches. A file under the floor is not refused as long as the crate as a whole is above it; the summary names the files, and raising the floor is how the bar moves. Lowering it is an edit to the file and to the case, so it is visible, but nothing prevents a reviewer from accepting it.
 
 ## Why it exists
 

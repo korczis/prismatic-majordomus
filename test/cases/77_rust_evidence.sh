@@ -12,8 +12,8 @@
 # coverage measurement are CI's rust and coverage jobs and `just rust-check`; this case
 # proves they are wired, not that they pass on this machine.
 #
-# The structural half never skips. The behavioural half skips itself when cargo is
-# absent, as the other Rust cases do.
+# The structural half never skips. The behavioural half skips itself when there is
+# neither cargo nor a MAJORDOMUS_BIN to drive, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
 CRATE="$ROOT/apps/majordomus-cli"
 RC="$ROOT/scripts/rust-check"
@@ -34,10 +34,13 @@ cargo clippy -D warnings
 cargo test
 cargo doc -D warnings
 cargo bench --no-run
+cargo build
 capabilities validate
 generate --check
 bench coverage --check
-cargo llvm-cov --fail-under-lines $threshold'
+bench --profile ci --check
+cargo llvm-cov --fail-under-lines $threshold
+artifact $ARTIFACT'
 got="$(grep -oE '^[[:space:]]*step "[^"]+"' "$RC" | sed -E 's/^[[:space:]]*step "//; s/"$//' | grep -v '^rust-check:')"
 [ "$got" = "$want" ] || { printf '    scripts/rust-check does not run the gates in CI'"'"'s order\n    want:\n%s\n    got:\n%s\n' "$want" "$got"; exit 1; }
 expect_grep 'cargo fmt --check$' "$RC"
@@ -57,30 +60,28 @@ th="$(cat "$TH")"
 case "$th" in ''|*[!0-9]*) echo "    scripts/rust-coverage-threshold is not one integer: '$th'"; exit 1 ;; esac
 { [ "$th" -ge 90 ] && [ "$th" -le 100 ]; } || { echo "    the coverage floor is $th; the rule expects 90 to 100"; exit 1; }
 
-# --- CI runs the same gates in the same order on every push, plus the one it alone can:
-#     the benchmark check against the committed baseline of its own profile (a baseline is
-#     per platform and profile, so the script has none to check here); and the coverage
-#     job reads the same file the script reads
+# --- CI runs the same script: the rust job calls scripts/rust-check itself, --ci for every
+#     gate when the crate can be affected (the benchmark check against the platform's
+#     baseline included) or --integration for the registry checks alone, and asks it for the
+#     executable as an artifact; the coverage job reads the same threshold file the script
+#     reads; the bench job runs the benchmark check where the committed baseline is
 rust_job="$(awk '/^  rust:/{f=1} /^  coverage:/{f=0} f' "$WF")"
 [ -n "$rust_job" ] || { echo "    validate.yml has no rust job"; exit 1; }
-want_ci='cargo fmt --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --no-fail-fast
-cargo doc --no-deps
-cargo bench --no-run
-cargo run --quiet -- capabilities validate
-cargo run --quiet -- generate --check
-cargo run --quiet -- bench coverage --check
-cargo run --quiet -- bench --profile ci --check --no-write'
-got_ci="$(printf '%s\n' "$rust_job" | grep -E '^ +- run: ' | sed -E 's/^ +- run: //')"
-[ "$got_ci" = "$want_ci" ] || { printf '    the rust job does not run the gates in the order of scripts/rust-check\n    want:\n%s\n    got:\n%s\n' "$want_ci" "$got_ci"; exit 1; }
-printf '%s\n' "$rust_job" | grep -q 'RUSTDOCFLAGS: -D warnings' || { echo "    the rust job builds the docs without -D warnings"; exit 1; }
+printf '%s\n' "$rust_job" | grep -qE '^ +run: (MJ_CI_TIMINGS=[^ ]+ )?scripts/rust-check "\$MODE" --artifact ' \
+  || { echo "    the rust job does not run scripts/rust-check with the plan's mode and an artifact"; exit 1; }
+printf '%s\n' "$rust_job" | grep -q "rust_check == 'true' && '--ci' || '--integration'" \
+  || { echo "    the rust job does not choose --ci or --integration from the plan"; exit 1; }
 printf '%s\n' "$rust_job" | grep -q 'components: rustfmt, clippy' || { echo "    the rust job installs no rustfmt and clippy"; exit 1; }
-cov_job="$(awk '/^  coverage:/{f=1} /^  site:/{f=0} f' "$WF")"
+printf '%s\n' "$rust_job" | grep -q 'upload-artifact' || { echo "    the rust job publishes no executable artifact"; exit 1; }
+grep -qE "^  (step \"cargo doc -D warnings\";|.*)RUSTDOCFLAGS='-D warnings' cargo doc" "$RC" || { echo "    scripts/rust-check builds the docs without -D warnings"; exit 1; }
+cov_job="$(awk '/^  coverage:/{f=1} /^  bench:/{f=0} f' "$WF")"
 [ -n "$cov_job" ] || { echo "    validate.yml has no coverage job"; exit 1; }
 printf '%s\n' "$cov_job" | grep -qF 'cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat ../../scripts/rust-coverage-threshold)"' \
   || { echo "    the coverage job does not fail under scripts/rust-coverage-threshold"; exit 1; }
-# the two jobs run on every push and pull request, not on a schedule or by hand only
+bench_job="$(awk '/^  bench:/{f=1} /^  site:/{f=0} f' "$WF")"
+printf '%s\n' "$bench_job" | grep -qF 'cargo run --quiet -- bench --profile ci --check --no-write' \
+  || { echo "    the bench job does not run the benchmark check against the baseline"; exit 1; }
+# the jobs run on pull requests and on master, not on a schedule or by hand only
 awk '/^on:/{f=1} /^jobs:/{f=0} f' "$WF" | grep -qE '^  (push|pull_request):' || { echo "    validate.yml does not run on push"; exit 1; }
 
 # --- a person is routed to the same gates
@@ -114,16 +115,18 @@ expect_grep '^    test: test/cases/77_rust_evidence\.sh$' "$CLAIMS"
 
 # --- with a toolchain: the doc examples pass, the benchmarks build, and the executable
 #     says every executable capability has a benchmark policy
-command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed (the behavioural half)"; exit 0; }
 MANIFEST="$CRATE/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj77.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-RUSTFLAGS='' cargo test -q --manifest-path "$MANIFEST" --doc >"$S/doc.log" 2>&1 \
-  || { tail -40 "$S/doc.log"; echo "    the doc examples do not pass"; exit 1; }
-grep -qE 'test result: ok\. [1-9][0-9]* passed' "$S/doc.log" || { cat "$S/doc.log"; echo "    no doc example ran"; exit 1; }
-RUSTFLAGS='' cargo bench -q --no-run --manifest-path "$MANIFEST" >"$S/bench.log" 2>&1 \
-  || { tail -40 "$S/bench.log"; echo "    the benchmarks do not build"; exit 1; }
-RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }
-RB="$CRATE/target/debug/majordomus"
+if command -v cargo >/dev/null 2>&1; then
+  RUSTFLAGS='' cargo test -q --manifest-path "$MANIFEST" --doc >"$S/doc.log" 2>&1 \
+    || { tail -40 "$S/doc.log"; echo "    the doc examples do not pass"; exit 1; }
+  grep -qE 'test result: ok\. [1-9][0-9]* passed' "$S/doc.log" || { cat "$S/doc.log"; echo "    no doc example ran"; exit 1; }
+  RUSTFLAGS='' cargo bench -q --no-run --manifest-path "$MANIFEST" >"$S/bench.log" 2>&1 \
+    || { tail -40 "$S/bench.log"; echo "    the benchmarks do not build"; exit 1; }
+else
+  echo "    skip: cargo not installed (the doc examples and the benchmark build are cargo's)"
+fi
+RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 "$MJ" init >/dev/null
 git add -A >/dev/null && git commit -qm install

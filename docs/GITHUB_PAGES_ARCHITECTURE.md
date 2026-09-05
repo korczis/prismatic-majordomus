@@ -213,11 +213,15 @@ disclosure works without JavaScript.
 
 ## GitHub Pages deployment
 
-`.github/workflows/pages.yml`: checkout → Node 22 → pinned Zola → `npm ci` →
-`bash test/run.sh` → `bin/majordomus doctor` → `scripts/generate-site-data --check` →
-`scripts/site-build` → `scripts/site-check` → `scripts/site-probe` → upload `site/public` →
-deploy. The site never
-deploys from a tree whose tests fail or whose derived data is stale.
+The site deploys from the validation workflow's own run, `.github/workflows/validate.yml`
+(there is no separate Pages workflow; [`CI.md`](CI.md) has the whole shape). On a push to
+master the `site` job runs `scripts/generate-site-data --check` → `scripts/site-build` →
+`scripts/site-check` → `scripts/site-probe` and uploads the `site/public` it built as the
+Pages artifact; the `pages` job deploys those bytes once the jobs that guard the site are
+green: `structure` (doctor, the derived data current), `suite` (`bash test/run.sh`), `rust`
+(the registry projections the Registry page reads are current) and `site`. The site never
+deploys from a tree whose tests fail, whose derived data is stale, or whose registry
+dataset is stale, and nothing is built or measured twice for one commit.
 
 ## Sync guarantee
 
@@ -238,6 +242,7 @@ scripts/site-serve          # generate, build, serve at http://127.0.0.1:1111/pr
 scripts/site-build          # production build into site/public/
 scripts/site-check          # the static checks CI runs
 scripts/site-probe          # the browser-measured checks (needs Chrome; --quick for one page per section)
+SITE_PROBE_JOBS=4 scripts/site-probe   # as CI runs it: four routes at a time
 ```
 
 ## Adding new canonical data

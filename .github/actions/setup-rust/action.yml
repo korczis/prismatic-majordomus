@@ -1,0 +1,33 @@
+name: setup-rust
+description: >-
+  The pinned Rust toolchain and the crate's build cache, the same in every job that touches
+  apps/majordomus-cli. The cache (Swatinem/rust-cache) holds the cargo registry, the git
+  checkouts of dependencies and the target directory, keyed by the job, the OS, the
+  toolchain and Cargo.lock, restored from the default branch when a branch has none yet.
+inputs:
+  components:
+    description: rustup components to add (comma separated), e.g. rustfmt,clippy
+    required: false
+    default: ""
+  cache:
+    description: whether to restore and save the build cache
+    required: false
+    default: "true"
+outputs:
+  cache-hit:
+    description: whether the build cache was restored from an exact key
+    value: ${{ steps.cache.outputs.cache-hit }}
+runs:
+  using: composite
+  steps:
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        components: ${{ inputs.components }}
+    - id: cache
+      if: inputs.cache == 'true'
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: apps/majordomus-cli
+        # a red job leaves no cache behind: a half-built target directory would be restored
+        # by the next run of the same key
+        cache-on-failure: false

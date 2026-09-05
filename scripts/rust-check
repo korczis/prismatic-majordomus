@@ -2,28 +2,81 @@
 # The gates the Rust executable must pass, in the order CI runs them: format, lints with
 # warnings as errors (a public item without documentation is one), the suites including
 # doctests, rustdoc with warnings denied, the benchmarks compiling, the registry's own
-# validation, the committed projections in sync, and line coverage above the threshold in
-# scripts/rust-coverage-threshold when cargo-llvm-cov is installed.
+# validation, the committed projections in sync, the benchmark coverage complete, and line
+# coverage above the threshold in scripts/rust-coverage-threshold when cargo-llvm-cov is
+# installed. One script, so that CI and a person run the same gates in the same order.
+#
+#   scripts/rust-check                  every gate (coverage when cargo-llvm-cov is installed)
+#   scripts/rust-check --ci             every gate but coverage (its own CI job), plus the
+#                                       benchmark check against this platform's baseline
+#   scripts/rust-check --integration    the executable built and the registry checks only:
+#                                       capabilities validate, generate --check, bench
+#                                       coverage --check. What a change outside the crate
+#                                       can affect: the layer, the schemas, the documents the
+#                                       registry dataset is derived from.
+#   --artifact DIR                      after building, copy the executable into DIR with a
+#                                       majordomus-cli.json beside it (commit, target triple,
+#                                       rustc, Cargo.lock digest, profile) for a later job
+#   MJ_CI_TIMINGS=FILE                  append "rust-check<TAB>step<TAB>seconds" per step
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
+MODE=all; ARTIFACT=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --ci) MODE=ci; shift ;;
+    --integration) MODE=integration; shift ;;
+    --artifact) ARTIFACT="$2"; shift 2 ;;
+    *) echo "rust-check: unknown option $1" >&2; exit 2 ;;
+  esac
+done
 cd "$CRATE"
 # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
 RUSTFLAGS=''; export RUSTFLAGS
-step() { printf '==> %s\n' "$*"; }
-step "cargo fmt --check";            cargo fmt --check
-step "cargo clippy -D warnings";     cargo clippy --all-targets --all-features -- -D warnings
-step "cargo test";                   cargo test --no-fail-fast
-step "cargo doc -D warnings";        RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --quiet
-step "cargo bench --no-run";         cargo bench --no-run --quiet
+t_step=""; last=""
+step() {
+  local now; now="$(date +%s)"
+  if [ -n "$t_step" ]; then
+    printf '    (%ss)\n' "$((now - t_step))"
+    [ -n "${MJ_CI_TIMINGS:-}" ] && printf 'rust-check\t%s\t%s\n' "$last" "$((now - t_step))" >> "$MJ_CI_TIMINGS"
+  fi
+  printf '==> %s\n' "$*"; last="$*"; t_step="$now"
+}
+if [ "$MODE" != integration ]; then
+  step "cargo fmt --check";            cargo fmt --check
+  step "cargo clippy -D warnings";     cargo clippy --all-targets --all-features -- -D warnings
+  step "cargo test";                   cargo test --no-fail-fast
+  step "cargo doc -D warnings";        RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --quiet
+  step "cargo bench --no-run";         cargo bench --no-run --quiet
+fi
+step "cargo build";                  cargo build --quiet
 step "capabilities validate";        cargo run --quiet -- capabilities validate
 step "generate --check";             cargo run --quiet -- generate --check
 step "bench coverage --check";       cargo run --quiet -- bench coverage --check
-threshold="$(cat "$ROOT/scripts/rust-coverage-threshold")"
-if cargo llvm-cov --version >/dev/null 2>&1; then
-  step "cargo llvm-cov --fail-under-lines $threshold"
-  cargo llvm-cov --all-targets --summary-only --fail-under-lines "$threshold"
-else
-  printf '==> coverage: cargo-llvm-cov not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview); CI enforces %s%%\n' "$threshold"
+if [ "$MODE" = ci ]; then
+  # a conservative measurement through the real transports, compared with this platform's
+  # baseline under .ai/repo/benchmarks/rust/ when one is committed
+  step "bench --profile ci --check";   cargo run --quiet -- bench --profile ci --check --no-write
+fi
+if [ "$MODE" = all ]; then
+  threshold="$(cat "$ROOT/scripts/rust-coverage-threshold")"
+  if cargo llvm-cov --version >/dev/null 2>&1; then
+    step "cargo llvm-cov --fail-under-lines $threshold"
+    cargo llvm-cov --all-targets --summary-only --fail-under-lines "$threshold"
+  else
+    printf '==> coverage: cargo-llvm-cov not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview); CI enforces %s%%\n' "$threshold"
+  fi
+fi
+if [ -n "$ARTIFACT" ]; then
+  # The executable as a build output for a later job, with what a consumer needs in order
+  # to know it is the one it expects: the commit, the target, the toolchain, the lock file.
+  step "artifact $ARTIFACT"
+  mkdir -p "$ARTIFACT"
+  cp "$CRATE/target/debug/majordomus" "$ARTIFACT/majordomus"
+  host="$(rustc -vV | sed -n 's/^host: //p')"
+  if command -v shasum >/dev/null 2>&1; then lock="$(shasum -a 256 "$CRATE/Cargo.lock" | cut -d' ' -f1)"
+  else lock="$(sha256sum "$CRATE/Cargo.lock" | cut -d' ' -f1)"; fi
+  printf '{"schema":1,"name":"majordomus","profile":"debug","commit":"%s","target":"%s","rustc":"%s","cargo_lock_sha256":"%s","built_at":"%s"}\n' \
+    "$(git -C "$ROOT" rev-parse HEAD)" "$host" "$(rustc -V)" "$lock" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$ARTIFACT/majordomus-cli.json"
 fi
 step "rust-check: every gate passed"

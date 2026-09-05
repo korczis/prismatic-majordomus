@@ -1,0 +1,31 @@
+name: setup-site
+description: >-
+  What the derived site needs to build: the pinned Node with npm's cache, the build
+  dependencies from package-lock.json, and the pinned Zola. The same in every job that
+  builds the site or runs the cases that do.
+inputs:
+  node-version:
+    description: the Node major to install
+    required: false
+    default: "22"
+  zola-version:
+    description: the Zola release to install
+    required: false
+    default: "0.23.4"
+outputs:
+  npm-cache-hit:
+    description: whether npm's cache was restored
+    value: ${{ steps.node.outputs.cache-hit }}
+runs:
+  using: composite
+  steps:
+    - id: node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+    - shell: bash
+      run: npm ci --no-audit --no-fund
+    - uses: taiki-e/install-action@v2
+      with:
+        tool: zola@${{ inputs.zola-version }}

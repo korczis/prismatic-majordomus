@@ -38,10 +38,16 @@ arbitrary. Most of them were paid for.
 3. Add or change the test in `test/cases/` first. Tests run in a disposable temporary
    repository, never against this checkout.
 4. Run `test/run.sh` and `shellcheck` if available (`just test` runs the suite, the Rust
-   gate and the site data check; `just lint-shell` runs shellcheck). The site cases skip
-   themselves when `zola`, `jq` or `node_modules/` are absent, so a CLI-only change needs
-   none of them; `72_rust_mcp.sh`, `76_capabilities_projections.sh` and
-   `90_mcp_shared_server.sh` skip themselves when `cargo` is absent.
+   gate and the site data check; `just lint-shell` runs shellcheck; `MJ_TEST_JOBS=4 bash
+   test/run.sh` runs the cases four at a time, which is how CI runs them). `just ci-plan`
+   says which gates CI would run for your working tree and why, `just ci-fast` runs them
+   with CI's own commands, `just ci-full` runs every gate; [`docs/CI.md`](docs/CI.md) is
+   the whole picture. The site cases skip themselves when `zola`, `jq` or `node_modules/`
+   are absent, so a CLI-only change needs none of them; the Rust cases
+   (`72_rust_mcp.sh`, `76_capabilities_projections.sh`, `77_rust_evidence.sh`,
+   `90_mcp_shared_server.sh`, `91_canonical_architecture.sh`,
+   `93_rust_provider_projections.sh`) drive the executable `MAJORDOMUS_BIN` names, build
+   it once with cargo when it is unset, and skip themselves when there is neither.
    For a change under `apps/majordomus-cli/`, run `scripts/rust-check`: format, clippy
    with warnings as errors (a public item without documentation is one), `cargo test`
    including doctests, `cargo doc`, `majordomus generate --check`, `capabilities validate`

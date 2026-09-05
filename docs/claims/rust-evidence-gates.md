@@ -1,4 +1,4 @@
-# Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs the same gates in the same order on every push
+# Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs that script on every change that can reach the crate
 
 ## What it means
 
@@ -6,7 +6,7 @@ Whatever the Rust executable must satisfy before it is merged is written down on
 
 ## How it works
 
-`scripts/rust-check` is the list, one `step` per gate, in CI's order. The `rust` job in `.github/workflows/validate.yml` runs the same commands as separate steps on Linux and macOS, and the `coverage` job runs the coverage gate with the same threshold file. The justfile's `test` recipe depends on `rust-check`, so the whole suite of the repository (`just test`) includes the crate's gates. `test/cases/77_rust_evidence.sh` reads all three, the script, the workflow and the justfile, and fails when they disagree about a gate or its order, when the crate roots lose `#![warn(missing_docs)]`, or when the rule `project.rust-cli-evidence` stops being active and blocking; with a toolchain present it also runs the doc examples, builds the benchmarks and asks the built executable for the benchmark policy of every executable capability.
+`scripts/rust-check` is the list, one `step` per gate, in CI's order. The `rust` job in `.github/workflows/validate.yml` runs the script itself, `--ci` when the plan says the crate can be affected (every gate but coverage, plus the benchmark check) or `--integration` when only the data the registry reads changed (the executable built, `capabilities validate`, `generate --check`, `bench coverage --check`), and asks it for the executable as an artifact; the `coverage` job runs the coverage gate with the same threshold file; the `bench` job runs the benchmark check on macOS, where the committed baseline is; the `macos` job runs the crate's suites there. The justfile's `test` recipe depends on `rust-check`, so the whole suite of the repository (`just test`) includes the crate's gates. `test/cases/77_rust_evidence.sh` reads all three, the script, the workflow and the justfile, and fails when they disagree about a gate or its order, when the crate roots lose `#![warn(missing_docs)]`, or when the rule `project.rust-cli-evidence` stops being active and blocking; with a toolchain present it also runs the doc examples, builds the benchmarks and asks the built executable for the benchmark policy of every executable capability.
 
 ## How to see it
 
@@ -14,7 +14,8 @@ Whatever the Rust executable must satisfy before it is merged is written down on
 just rust-check                          # every gate, in CI's order; stops at the first failure
 just test-shell 77_rust_evidence         # the wiring agrees, the doc examples pass, the benchmarks build
 grep -oE 'step "[^"]+"' scripts/rust-check
-awk '/^  rust:/,/^  coverage:/' .github/workflows/validate.yml | grep -- '- run:'
+awk '/^  rust:/,/^  coverage:/' .github/workflows/validate.yml | grep -- 'rust-check'
+scripts/ci-plan --full x --format text | grep rust
 ```
 
 ## What it does not cover

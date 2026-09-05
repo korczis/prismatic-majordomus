@@ -1,165 +1,354 @@
+# The one validation workflow. It is an adapter over repository-owned tooling, never a
+# second implementation of the gates: `scripts/ci-plan` decides from the CI model in
+# .ai/repo/ci/gates.yaml which gates a change can affect, every job runs the same script a
+# person runs, and `scripts/ci/verdict` turns the plan and the jobs' results into the one
+# status a branch rule can require. Docs: docs/CI.md.
+#
+# The shape: plan → structure (always) → the selected gates, in parallel → ci (the verdict);
+# on master the verified site artifact of the same run deploys to GitHub Pages.
 name: validate
 on:
-  push:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  push:
+    branches: [master]
+  workflow_dispatch:
+  schedule:
+    # the full plan once a week, so a gate nothing selected for a while still has a run
+    - cron: '17 4 * * 1'
+
+permissions:
+  contents: read
+
+# A newer commit of the same pull request supersedes the runs of the older ones. master,
+# the schedule and a dispatch never cancel: every commit of master gets its evidence and
+# its deployment, in order.
+concurrency:
+  group: validate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  test:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  # ------------------------------------------------------------------ plan
+  # What this change can affect, from the model: a pull request is planned from its diff
+  # against the base it will merge into (HEAD^1 of the merge commit); everything else, and a
+  # pull request labelled ci:full, runs the full plan. The plan is the artifact ci-plan.
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.plan.outputs.mode }}
+      selected: ${{ steps.plan.outputs.selected }}
+      shell_suite: ${{ steps.plan.outputs.shell_suite }}
+      rust_check: ${{ steps.plan.outputs.rust_check }}
+      rust_integration: ${{ steps.plan.outputs.rust_integration }}
+      rust_coverage: ${{ steps.plan.outputs.rust_coverage }}
+      rust_bench: ${{ steps.plan.outputs.rust_bench }}
+      site_build: ${{ steps.plan.outputs.site_build }}
+      site_probe: ${{ steps.plan.outputs.site_probe }}
+      macos: ${{ steps.plan.outputs.macos }}
     steps:
       - uses: actions/checkout@v4
-      # The CLI needs no Node. The derived site's tests and check do (flowbite assets),
-      # so the matrix installs it once; the CLI's own tests would pass without it.
-      - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-      - run: npm ci --no-audit --no-fund
-      - name: shell syntax
-        run: for f in bin/majordomus lib/*.sh test/run.sh test/lib.sh test/cases/*.sh; do bash -n "$f"; done
-      - name: shellcheck
-        if: runner.os == 'Linux'
+          fetch-depth: 2
+      - id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref_name }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
-          sudo apt-get install -y shellcheck >/dev/null
-          shellcheck -x -s bash -S warning bin/majordomus lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/github-sync scripts/site-build scripts/site-check scripts/site-serve scripts/rules-package scripts/rust-check
-          shellcheck -x -s bash -S warning test/cases/*.sh
+          case "$EVENT" in
+            pull_request)
+              case ",$LABELS," in
+                *,ci:full,*) scripts/ci-plan --full "pull request labelled ci:full" > plan.json ;;
+                *) scripts/ci-plan --base HEAD^1 --head HEAD > plan.json ;;
+              esac ;;
+            *) scripts/ci-plan --full "$EVENT on $REF" > plan.json ;;
+          esac
+          jq -r '"mode=\(.mode)", "selected=\(.selected | join(" "))", (.gates[] | "\(.id | gsub("-"; "_"))=\(.selected)")' plan.json >> "$GITHUB_OUTPUT"
+          {
+            echo "## plan"; echo
+            jq -r '"**\(.mode)** — \(.reason). \(.changed | length) changed path(s), base `\(.base)`, head `\(.head)`."' plan.json; echo
+            echo '| gate | job | planned | reason |'; echo '|---|---|---|---|'
+            jq -r '.gates[] | "| \(.id) | \(.job) | \(if .selected then "run" else "skip" end) | \(.reason) |"' plan.json
+            echo
+            jq -r 'if (.classes | length) > 0 then "Classes: " + (.classes | map("\(.id) (\(.paths | length))") | join(", ")) else "" end' plan.json
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-plan
+          path: plan.json
+          retention-days: 14
+
+  # ------------------------------------------------------------------ structure
+  # The cheap, deterministic gates every plan runs: the shell syntax and shellcheck, then
+  # doctor, watch, the context documents, the continuity subsystem, the project model, the
+  # offline GitHub projection and the derived site data, through scripts/ci/core-check.
+  structure:
+    needs: plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y shellcheck >/dev/null
+      - name: shell-lint
+        run: scripts/ci/shell-lint
+      - name: core-check
+        run: MJ_CI_TIMINGS=timings.tsv scripts/ci/core-check
+      - if: always()
+        run: scripts/ci/summary --job structure --timings timings.tsv
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-structure
+          path: timings.tsv
+          retention-days: 14
+
+  # ------------------------------------------------------------------ suite
+  # Every behavioural case (test/run.sh), four at a time, in a disposable repository each.
+  # The Rust cases drive the executable built here once (MAJORDOMUS_BIN); the two that are
+  # cargo's own gates (the crate's HTTP and projection suites, the doc examples, the
+  # benchmark build) keep cargo, warm from the cache. Zola and the site dependencies are
+  # present so the site cases run rather than skip.
+  suite:
+    needs: plan
+    if: needs.plan.outputs.shell_suite == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable, built once for every case
+        run: |
+          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
       # The one canonical validation surface. Every behavioural, negative and integration
       # case runs here; nothing is skipped, and no failure is swallowed. test/run.sh exits
       # non-zero when any case fails, and this step has no `|| true` to hide it.
       - name: behavioural tests
+        env:
+          MJ_TEST_JOBS: 4
+          MJ_TEST_REPORT: suite.tsv
         run: bash test/run.sh
-      - name: self-supervision
-        run: |
-          git config core.hooksPath .githooks
-          bin/majordomus doctor
-          bin/majordomus watch
-      # The scoped context documents: the tree validates, every projection matches its
-      # stamp, and this repository resolves its own context from the root down.
-      - name: context documents in sync
-        run: |
-          bin/majordomus context check-sync
-          bin/majordomus context resolve lib | grep -q '^01  ai.layer'
-      # The continuity subsystem reached through the real CLI, in this checkout rather than
-      # in a disposable one: the commands a worker actually runs must work where the tool
-      # supervises itself, not only in a fixture.
-      - name: continuity subsystem is reachable
-        run: |
-          bin/majordomus context --budget-lines 400 > /dev/null
-          bin/majordomus context --json | head -c 1 | grep -q '{'
-          bin/majordomus history --validate
-          bin/majordomus handover --resolve > /dev/null
-          bin/majordomus checkpoint --list > /dev/null
-          bin/majordomus decision list > /dev/null
-          bin/majordomus question list --all > /dev/null
-          bin/majordomus prompt list | grep -q .
-          for p in $(ls .ai/repo/prompts/*.md | xargs -n1 basename | sed 's/\.md$//'); do
-            bin/majordomus prompt render "$p" | grep -q '{{' && { echo "unrendered token in $p"; exit 1; }
-            true
-          done
-      # The canonical project model: schemas, references, the dependency graph, and status
-      # consistency. Blocking, with no advisory pass — a model that cannot be executed is not
-      # a warning. `plan validate` exits 10 on any failing finding and 0 on warnings only.
-      - name: the project model validates
-        run: bin/majordomus plan validate
-      # The GitHub projection, computed offline. This needs no token and makes no request: it
-      # renders what would be posted from the canonical model, so a projection that cannot be
-      # produced fails here rather than at the moment somebody runs --apply.
-      - name: the GitHub projection is producible offline
-        run: |
-          scripts/github-sync --plan
-          for id in $(bin/majordomus plan list | awk 'NR>1{print $1}'); do
-            scripts/github-sync --render "$id" | grep -q '^<!-- majordomus:begin' || { echo "no generated region for $id"; exit 1; }
-          done
-      # The committed derived site data must match the canonical files it is generated from.
-      - name: derived site data in sync
-        run: scripts/generate-site-data --check
+      - if: always()
+        run: scripts/ci/summary --job suite --report suite.tsv --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-suite
+          path: suite.tsv
+          retention-days: 14
 
-  # The Rust executable: format, lints as errors, and its own suite, which spawns the built
-  # binary and speaks MCP to it over pipes. The behavioural case 72_rust_mcp.sh in the job
-  # above covers the cross-check against the layer the shell tool writes.
+  # ------------------------------------------------------------------ rust
+  # The Rust executable through scripts/rust-check: every gate (--ci: format, lints as
+  # errors, the suites, rustdoc, the benchmarks building, the registry checks, the benchmark
+  # check against this platform's baseline) when the crate can be affected, or the registry
+  # checks alone (--integration) when only the data it reads changed. Either way the built
+  # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: apps/majordomus-cli
+    needs: plan
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - id: rust
+        uses: ./.github/actions/setup-rust
         with:
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/majordomus-cli
-      - run: cargo fmt --check
-      # missing documentation on a public item is a warning, and warnings are errors here
-      - run: cargo clippy --all-targets --all-features -- -D warnings
-      - run: cargo test --no-fail-fast
-      - run: cargo doc --no-deps
+      - name: rust-check
         env:
-          RUSTDOCFLAGS: -D warnings
-      - run: cargo bench --no-run
-      # the registry builds and every projection with it; the committed projections
-      # (docs/generated, share/allow, the provider bootstraps AGENTS.md/CLAUDE.md, and the
-      # site's registry dataset) match the registry, the schemas and the policy
-      - run: cargo run --quiet -- capabilities validate
-      - run: cargo run --quiet -- generate --check
-      # every externally callable operation is a benchmark target; the denominator is the
-      # registry's, and a missing case fails here before it can be merged
-      - run: cargo run --quiet -- bench coverage --check
-      # a conservative measurement through the real transports, compared with this
-      # platform's baseline under .ai/repo/benchmarks/rust/ when one is committed
-      - run: cargo run --quiet -- bench --profile ci --check --no-write
+          MODE: ${{ needs.plan.outputs.rust_check == 'true' && '--ci' || '--integration' }}
+        run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
+      - id: target
+        run: echo "triple=$(rustc -vV | sed -n 's/^host: //p')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: majordomus-cli-${{ steps.target.outputs.triple }}
+          path: dist
+          retention-days: 7
+      - if: always()
+        run: scripts/ci/summary --job rust --timings timings.tsv --fact "mode=${{ needs.plan.outputs.rust_check == 'true' && 'ci' || 'integration' }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "artifact=majordomus-cli-${{ steps.target.outputs.triple }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-rust
+          path: timings.tsv
+          retention-days: 14
 
+  # ------------------------------------------------------------------ coverage
   # Line coverage of the crate, with the threshold scripts/rust-check enforces locally.
   coverage:
+    needs: plan
+    if: needs.plan.outputs.rust_coverage == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/majordomus-cli
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - id: rust
+        uses: ./.github/actions/setup-rust
         with:
           components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/majordomus-cli
       - run: cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat ../../scripts/rust-coverage-threshold)"
+      - if: always()
+        run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "threshold=$(cat ../../scripts/rust-coverage-threshold)"
 
+  # ------------------------------------------------------------------ bench
+  # The benchmark check against the committed baseline of its platform (.ai/repo/benchmarks/
+  # rust/): a conservative measurement through the real transports. The baseline is per
+  # platform, and the one committed is macOS's, so this is where the comparison is real.
+  bench:
+    needs: plan
+    if: needs.plan.outputs.rust_bench == 'true'
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/majordomus-cli
+    steps:
+      - uses: actions/checkout@v4
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - run: cargo run --quiet -- bench --profile ci --check --no-write
+      - if: always()
+        run: ../../scripts/ci/summary --job bench --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
+
+  # ------------------------------------------------------------------ site
+  # The site built once: the derived data current, the build, every static check over the
+  # output, then every route at every width in a real browser (four at a time). On master
+  # the same bytes become the Pages artifact the deploy job publishes; nothing rebuilds them.
   site:
+    needs: plan
+    if: needs.plan.outputs.site_build == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci --no-audit --no-fund
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: zola@0.23.4
+      - id: site
+        uses: ./.github/actions/setup-site
       - name: derived site data in sync
-        run: scripts/generate-site-data --check
+        run: scripts/ci/timed site-build "generate-site-data --check" timings.tsv scripts/generate-site-data --check
       - name: build the site
-        run: scripts/site-build
+        run: scripts/ci/timed site-build site-build timings.tsv scripts/site-build
       # Metadata and landmarks on every route, no unrendered template delimiter, every
       # internal link resolving, no remote asset, no credential, and the generated data
       # still matching its canonical sources.
       - name: check the site
-        run: scripts/site-check
-      # Every route measured at every supported width, in a real browser. The deploy
-      # workflow samples one route per template; this one is the complete measurement, and
-      # the branch is not green until it passes. It runs here rather than in front of the
-      # artifact so that a slow check does not sit between a green build and a published
-      # page — the deploy queue was reaching seventeen minutes with it there, long enough
-      # that pushes began superseding each other's deploys.
+        run: scripts/ci/timed site-build site-check timings.tsv scripts/site-check
+      # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile
+      # menu, the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately:
+      # every overflow this site has produced came from canonical data rendered into a shared
+      # template, which no sample of one route per template can see.
       - name: probe the site in a browser
-        run: CHROME_BIN=google-chrome scripts/site-probe
+        if: needs.plan.outputs.site_probe == 'true'
+        run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed site-probe site-probe timings.tsv scripts/site-probe
       - name: manifest
         run: cat site/data/generated/source.json
+      - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: actions/configure-pages@v5
+      - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/public
+      - if: always()
+        run: scripts/ci/summary --job site --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "routes=$(find site/public -name index.html | wc -l | tr -d ' ')"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-site
+          path: timings.tsv
+          retention-days: 14
+
+  # ------------------------------------------------------------------ macos
+  # The behaviour that depends on the platform: the suite under the stock macOS shell
+  # (bash 3.2) and BSD userland, and the crate's own suites there (files, signals, the
+  # lease, the spawned processes). Lints, docs and coverage are platform-independent and
+  # run on Linux only.
+  macos:
+    needs: plan
+    if: needs.plan.outputs.macos == 'true'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: shell syntax under bash 3.2
+        run: for f in bin/majordomus lib/*.sh test/run.sh test/lib.sh test/cases/*.sh; do /bin/bash -n "$f"; done
+      - name: the executable, built once for every case
+        run: |
+          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+      - name: behavioural tests
+        env:
+          MJ_TEST_JOBS: 3
+          MJ_TEST_REPORT: suite.tsv
+        run: bash test/run.sh
+      - name: the crate's suites
+        run: RUSTFLAGS='' cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
+      - if: always()
+        run: scripts/ci/summary --job macos --report suite.tsv --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-macos
+          path: suite.tsv
+          retention-days: 14
+
+  # ------------------------------------------------------------------ ci
+  # The one status to require: green only when planning succeeded, every selected gate's job
+  # succeeded, and no job that ran failed or was cancelled. Always runs, so a required check
+  # is never left pending by a skipped job. It also gathers the jobs' timing rows into the
+  # artifact ci-performance-metrics.
+  ci:
+    needs: [plan, structure, suite, rust, coverage, bench, site, macos]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ci-plan
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ci-metrics-*
+          path: metrics
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          printf '%s' "$NEEDS" > needs.json
+          scripts/ci/metrics metrics > ci-metrics.tsv
+          scripts/ci/verdict --plan plan.json --needs needs.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-performance-metrics
+          path: |
+            plan.json
+            needs.json
+            ci-metrics.tsv
+          retention-days: 90
+
+  # ------------------------------------------------------------------ pages
+  # The verified site of this run, published. The prerequisites are the gates that guard
+  # the site (the structure, the suite, the registry projections current, the site built,
+  # checked and probed); coverage, macOS and the benchmark check gate merging, not
+  # publishing, exactly as before this workflow replaced pages.yml. Deployments queue in
+  # order and never cancel one another.
+  pages:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    needs: [plan, structure, suite, rust, site]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

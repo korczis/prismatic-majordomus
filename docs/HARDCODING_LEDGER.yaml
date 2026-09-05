@@ -382,20 +382,23 @@ findings:
 
   - id: ci-platform-matrix
     path: .github/workflows/validate.yml
-    lines: "8-10"
+    lines: "the runs-on of the bench and macos jobs"
     concept: supported operating systems
     authority: "the support contract"
-    duplicated_in: []
+    duplicated_in: [.ai/repo/ci/gates.yaml]
     risk: low
     detail: >-
       ubuntu-latest and macos-latest are a deliberate product decision about which
-      environments are supported, not a fact discoverable from the repository. Listed here so
-      that it is recorded as intentional rather than missed.
+      environments are supported, not a fact discoverable from the repository. Linux is the
+      blocking path; macOS runs the behavioural suite under the stock shell and the crate's
+      suites, and the benchmark check where the committed baseline is, when the plan says a
+      change can reach them (docs/CI.md). Listed here so that it is recorded as intentional
+      rather than missed.
     recommended: KEEP_LITERAL
     target: "-"
     priority: 4
     status: open
-    reproduce: "sed -n '5,12p' .github/workflows/validate.yml"
+    reproduce: "grep -n 'runs-on: macos' .github/workflows/validate.yml; grep -n 'id: macos' -A3 .ai/repo/ci/gates.yaml"
 
   - id: schema-allowlists
     path: share/allow
