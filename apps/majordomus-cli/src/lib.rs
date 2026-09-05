@@ -29,9 +29,12 @@ pub mod metadata;
 pub mod model;
 pub mod peers;
 pub mod perf;
+pub mod policy;
+pub mod providers;
 pub mod repository;
 pub mod share;
 pub mod shared;
+pub mod site;
 pub mod synthetic;
 
 pub use error::Error;

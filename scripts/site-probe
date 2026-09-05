@@ -6,6 +6,7 @@
 #
 #   scripts/site-probe            probe every route at 320, 390 and 1280 px
 #   scripts/site-probe --quick    homepage and one page per section only
+#   SITE_PROBE_ONLY='/plan/ /registry/' scripts/site-probe   only the named routes (local iteration)
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"; QUICK=0
 [ "${1:-}" = --quick ] && QUICK=1
@@ -36,6 +37,12 @@ fails=0; ok() { printf 'OK   %-10s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-10
 title_of() { "$CHROME" --headless=new --disable-gpu --window-size=1400,1000 --virtual-time-budget=9000 --dump-dom "$1" 2>/dev/null | grep -oE '<title>[^<]*' | sed 's/<title>//' | head -1; }
 
 routes="$(cd "$WORK/out" && find . -name index.html | sed 's#^\.##; s#index.html$##' | sort)"
+# SITE_PROBE_ONLY='/plan/ /guarantees/guaranteed/' narrows the sweep to named routes while a
+# layout fix is iterated on; CI never sets it, so the deploy still waits for every route.
+if [ -n "${SITE_PROBE_ONLY:-}" ]; then
+  routes="$(for r in $routes; do for o in $SITE_PROBE_ONLY; do [ "$r" = "$o" ] && printf '%s\n' "$r"; done; done; true)"
+  [ -n "$routes" ] || { echo "site-probe: SITE_PROBE_ONLY names no built route" >&2; exit 12; }
+fi
 if [ "$QUICK" = 1 ]; then
   # Sample one route per template, not one per section. Pages that share a template share
   # their layout, which is what makes a sample sound; section names are a proxy that stops
