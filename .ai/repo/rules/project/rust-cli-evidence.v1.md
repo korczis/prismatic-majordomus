@@ -25,4 +25,4 @@ CI fails on a missing doc, a failing doctest, a coverage figure under the thresh
 
 # Verification
 
-`scripts/rust-check`, and the `rust` job in `.github/workflows/validate.yml`.
+`test/cases/77_rust_evidence.sh`: the wiring, read from the crate roots, `scripts/rust-check`, the threshold file, the CI workflow and the justfile, which must agree on every gate and its order; with a toolchain present it also runs the doc examples, builds the benchmarks and reads the benchmark policy of every executable capability back through the built executable. The gates themselves: `scripts/rust-check` (`just rust-check`), and the `rust` and `coverage` jobs in `.github/workflows/validate.yml`. Claims `rust-evidence-gates`, `rust-coverage-floor` and `rust-hot-path-benchmarks` in `docs/CLAIMS.yaml`.

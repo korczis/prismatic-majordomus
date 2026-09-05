@@ -820,3 +820,30 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: .mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build.
+
+  - id: rust-evidence-gates
+    claim: Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs the same gates in the same order on every push
+    source: .ai/repo/rules/project/rust-cli-evidence.v1.md
+    implementation: scripts/rust-check
+    test: test/cases/77_rust_evidence.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: Format, lints with warnings as errors (a public item without documentation is one), the suites with the doc examples, rustdoc with warnings denied, the benchmarks building, the registry's own validation, the committed projections in sync, and line coverage above the committed floor. The case reads the script, the workflow and the justfile and fails when they disagree on a gate or its order; with a toolchain present it also runs the doc examples and builds the benchmarks.
+
+  - id: rust-coverage-floor
+    claim: Line coverage of the Rust crate is measured on every push and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage
+    source: .ai/repo/rules/project/rust-cli-evidence.v1.md
+    implementation: .github/workflows/validate.yml
+    test: test/cases/77_rust_evidence.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: cargo-llvm-cov over all targets, --fail-under-lines. The floor is 90; the case refuses a floor under 90, so lowering it is an edit to a test that a reviewer sees, not a quiet change to a number. Raising it when the figure rises is one edit to the file.
+
+  - id: rust-hot-path-benchmarks
+    claim: The paths of the Rust executable that scale with the repository carry criterion benchmarks that build on every push, and every executable capability declares its benchmark policy, required or waived for a typed reason
+    source: .ai/repo/rules/project/rust-cli-evidence.v1.md
+    implementation: apps/majordomus-cli/benches/projections.rs
+    test: test/cases/77_rust_evidence.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The YAML subset and front matter, glob matching, the index, the registry, the OpenAPI document, one MCP listing and one capability call (benches/projections.rs); the router, the bridge and the shared server (benches/shared.rs). Numbers are reported, not asserted; no latency budget is promised until one is measured on CI. The capability! macro does not compile an executable without benchmark cases, the registry counts the required and the waived, and the case reads the policy of every executable back through capabilities list.
