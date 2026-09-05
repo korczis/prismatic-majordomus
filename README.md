@@ -402,6 +402,13 @@ any of them and the server is there; open it in two and they share one.
 a client is working on and which paths it expects to touch, so Claude, Codex and Gemini in
 one checkout can avoid colliding, out of the box.
 
+**Every use case is executed, not described.** What a person does with the tool is one
+file under `.ai/repo/use-cases/`, naming the commands, rules and claims it relies on and
+carrying a scenario the tool runs against itself; the page it becomes shows that
+execution, its maturity is observed from the evidence, and a public command no use case
+runs is a gap `doctor` reports and `finish` refuses. `majordomus usecase` lists, runs,
+tallies, traces and scaffolds them: [`docs/USE_CASES.md`](docs/USE_CASES.md).
+
 **It reads what the repository declares it may.** What a worker reads of the repository is
 declared once in `.ai/repo/scope.yaml` (in: the sources, the tests, the layer; out, which
 wins: version control, the local half, dependencies, build outputs, secrets, generated
