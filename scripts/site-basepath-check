@@ -70,17 +70,21 @@ for f in $sources; do
     hits="$(grep -n -E "fetch\(\s*['\"]/" "$f" 2>/dev/null || true)"
     [ -n "$hits" ] && finding "$f fetches from an origin-absolute path" "$hits" ;;
   esac
-  # a loopback origin written into the source: correct for whoever wrote it, wrong for
-  # everybody the site is published to
-  hits="$(grep -n -E 'https?://(127\.0\.0\.1|localhost)' "$f" 2>/dev/null || true)"
-  [ -n "$hits" ] && finding "$f names a loopback origin" "$hits"
+  # a loopback origin a reader can follow: correct for whoever wrote it, wrong for everybody
+  # the site is published to. Only in link position — documentation that quotes a server's
+  # own log line is describing a URL, not offering one.
+  hits="$(grep -n -E '((href|src)="|\]\()https?://(127\.0\.0\.1|localhost)' "$f" 2>/dev/null || true)"
+  [ -n "$hits" ] && finding "$f links to a loopback origin" "$hits"
 done
 
 # ---------------------------------------------------------------- a build, when there is one
 [ -z "$BUILT" ] && [ -d "site/public" ] && BUILT="site/public"
 if [ -n "$BUILT" ] && [ -d "$BUILT" ]; then
-  hits="$(grep -rln -E 'https?://(127\.0\.0\.1|localhost)' "$BUILT" 2>/dev/null | head -5 || true)"
-  [ -n "$hits" ] && finding "the build at $BUILT carries a loopback origin" "$hits"
+  # A page may legitimately *quote* a loopback URL — the MCP guarantees print the server's
+  # own log line, and a documented example is not a link. What must not exist is a loopback
+  # URL a reader can follow, so this looks at href and src rather than at the whole page.
+  hits="$(grep -rn -E '(href|src)="https?://(127\.0\.0\.1|localhost)' "$BUILT" 2>/dev/null | head -5 || true)"
+  [ -n "$hits" ] && finding "the build at $BUILT links to a loopback origin" "$hits"
   # Zola writes the base into every resolved link, so a build made for one mount must not
   # be published to the other. Find which base the output actually carries.
   idx="$BUILT/index.html"
