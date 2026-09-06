@@ -1077,8 +1077,8 @@ listen:
   interface: all                # loopback | all — `all` is stated intent, not a suppressed warning
 
 health:
-  liveness: /healthz            # must be a route a capability registers
-  readiness: /readyz            # likewise
+  liveness: /api/v1/live        # must be a route a capability registers
+  readiness: /api/v1/ready      # likewise
   grace_seconds: 2
   interval_seconds: 15
   timeout_seconds: 2

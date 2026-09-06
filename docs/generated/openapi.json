@@ -531,6 +531,82 @@
         }
       }
     },
+    "/api/v1/live": {
+      "get": {
+        "operationId": "health.live",
+        "summary": "Liveness",
+        "description": "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say.",
+        "tags": [
+          "health"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liveness: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Liveness"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "health.live",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::health"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        }
+      }
+    },
     "/api/v1/object": {
       "get": {
         "operationId": "objects.get",
@@ -995,6 +1071,82 @@
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_perf"
+        }
+      }
+    },
+    "/api/v1/ready": {
+      "get": {
+        "operationId": "health.ready",
+        "summary": "Readiness",
+        "description": "Can this process serve traffic: the registry and the index it built at start-up, already resident, and how the layer read. Only local initialisation — never an external provider, a database or another service, because a readiness check that probes a dependency fails a deployment for something that is not this process.",
+        "tags": [
+          "health"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Readiness: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Readiness"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "health.ready",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::health"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
         }
       }
     },
@@ -2633,6 +2785,24 @@
         ],
         "description": "The HTTP methods a capability may be bound to."
       },
+      "Liveness": {
+        "type": "object",
+        "properties": {
+          "alive": {
+            "type": "boolean",
+            "description": "Always `true`. A process that could not answer would not answer at all, which is\nthe signal."
+          },
+          "version": {
+            "type": "string",
+            "description": "This executable's version, so a rolling deployment can tell which build answered."
+          }
+        },
+        "required": [
+          "alive",
+          "version"
+        ],
+        "description": "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for."
+      },
       "McpExposure": {
         "type": "object",
         "properties": {
@@ -3171,6 +3341,43 @@
           "total_nanos"
         ],
         "description": "A phase's totals."
+      },
+      "Readiness": {
+        "type": "object",
+        "properties": {
+          "ready": {
+            "type": "boolean",
+            "description": "Whether every part below is in place."
+          },
+          "version": {
+            "type": "string",
+            "description": "This executable's version."
+          },
+          "capabilities": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many capabilities the registry holds; zero would mean nothing to serve."
+          },
+          "objects": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many objects the index holds. Read from the index this process built at\nstart-up: it is already in memory, and reading it walks nothing."
+          },
+          "layer": {
+            "$ref": "#/components/schemas/HealthStatus",
+            "description": "Whether the layer read cleanly. A degraded layer is still served — the diagnostics\nare the point — so this reports rather than refuses."
+          }
+        },
+        "required": [
+          "ready",
+          "version",
+          "capabilities",
+          "objects",
+          "layer"
+        ],
+        "description": "The answer to \"can this process serve traffic\": the local initialisation a request\nwould need, and nothing beyond this process. A readiness check that grew a dependency\nprobe fails a deployment because an unrelated service is down."
       },
       "Reason": {
         "oneOf": [

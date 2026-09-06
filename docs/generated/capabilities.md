@@ -11,7 +11,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 |---|---|---|---|---|
 | `capabilities` | Capabilities | behaviorally_verified | 2 | [`modules/capabilities.md`](modules/capabilities.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
-| `health` | Health | behaviorally_verified | 1 | [`modules/health.md`](modules/health.md) |
+| `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
 | `objects` | Objects | behaviorally_verified | 3 | [`modules/objects.md`](modules/objects.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
@@ -25,6 +25,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `capabilities.list` | `capabilities` | query | behaviorally_verified | `majordomus_capabilities` | — | `GET /api/v1/capabilities` | `majordomus capabilities list` | process, 16 entries | required |
 | `graph.get` | `graph` | query | behaviorally_verified | `majordomus_graph` | — | `GET /api/v1/graph` | — | process, 16 entries | required |
 | `graph.list` | `graph` | query | behaviorally_verified | `majordomus_graphs` | `majordomus://graphs` | `GET /api/v1/graphs` | — | — | required |
+| `health.live` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/live` | — | — | required |
+| `health.ready` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/ready` | — | — | required |
 | `health.report` | `health` | query | behaviorally_verified | `majordomus_health` | `majordomus://health` | `GET /api/v1/health` | — | process, 4 entries, 5s | required |
 | `objects.get` | `objects` | query | behaviorally_verified | `majordomus_get` | — | `GET /api/v1/object` | — | — | required |
 | `objects.list` | `objects` | query | behaviorally_verified | `majordomus_list` | — | `GET /api/v1/objects` | — | — | required |

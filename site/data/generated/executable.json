@@ -69,6 +69,40 @@
       "tool": "majordomus_graphs"
     },
     {
+      "api_anchor": "/docs/api/#op-health-live",
+      "claims": [],
+      "cli": null,
+      "id": "health.live",
+      "kind": "query",
+      "module": "health",
+      "module_route": "/registry/modules/health/",
+      "resource": null,
+      "route": "/registry/capabilities/health-live/",
+      "slug": "health-live",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "tests": [],
+      "title": "Liveness",
+      "tool": null
+    },
+    {
+      "api_anchor": "/docs/api/#op-health-ready",
+      "claims": [],
+      "cli": null,
+      "id": "health.ready",
+      "kind": "query",
+      "module": "health",
+      "module_route": "/registry/modules/health/",
+      "resource": null,
+      "route": "/registry/capabilities/health-ready/",
+      "slug": "health-ready",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "tests": [],
+      "title": "Readiness",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/#op-health-report",
       "claims": [],
       "cli": null,
@@ -414,7 +448,7 @@
     ]
   },
   "counts": {
-    "capabilities": 14,
+    "capabilities": 16,
     "claims": 20,
     "modules": 7
   },
@@ -464,6 +498,16 @@
     },
     {
       "capabilities": [
+        {
+          "id": "health.live",
+          "route": "/registry/capabilities/health-live/",
+          "slug": "health-live"
+        },
+        {
+          "id": "health.ready",
+          "route": "/registry/capabilities/health-ready/",
+          "slug": "health-ready"
+        },
         {
           "id": "health.report",
           "route": "/registry/capabilities/health-report/",

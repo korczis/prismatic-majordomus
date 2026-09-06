@@ -32,8 +32,11 @@ listen:
   interface: all
 
 health:
-  liveness: /healthz
-  readiness: /readyz
+  # Registered capabilities, not router entries: every capability route lives under
+  # /api/v1/, so these are the paths the registry actually serves and the platform polls
+  # what OpenAPI, the reference and the smoke suite already know about.
+  liveness: /api/v1/live
+  readiness: /api/v1/ready
   grace_seconds: 2
   interval_seconds: 15
   timeout_seconds: 2
@@ -52,8 +55,14 @@ machines:
 
 region: fra
 
-# No budget is declared yet. Each one is written by the run that measures it (I0921,
-# I0922, I0923); a number nobody measured would be a preference wearing a baseline's name.
+# Every budget below is written by the run that measured it; a number nobody measured
+# would be a preference wearing a baseline's name. The size, cold-start and memory figures
+# are not here yet because nothing has measured them (I0921, I0922, I0923).
+budgets:
+  # `majordomus bench health.live` and `bench health.ready`, quick profile, debug build:
+  # p99 2.1 ms and 6.4 ms over HTTP. The ceiling leaves room for a loaded machine and is
+  # still an order of magnitude under any platform's check timeout.
+  blocking_check_ms: 25
 
 provider:
   name: fly

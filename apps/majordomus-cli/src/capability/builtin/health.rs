@@ -118,6 +118,64 @@ pub struct Health {
     pub checks: Vec<HealthCheck>,
 }
 
+/// The answer to "is this process alive": the cheapest true thing this executable can
+/// say about itself. Deliberately not a summary of anything — a probe that grew an
+/// opinion would stop reporting the one fact the platform polls it for.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct Liveness {
+    /// Always `true`. A process that could not answer would not answer at all, which is
+    /// the signal.
+    pub alive: bool,
+    /// This executable's version, so a rolling deployment can tell which build answered.
+    pub version: String,
+}
+
+/// The answer to "can this process serve traffic": the local initialisation a request
+/// would need, and nothing beyond this process. A readiness check that grew a dependency
+/// probe fails a deployment because an unrelated service is down.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct Readiness {
+    /// Whether every part below is in place.
+    pub ready: bool,
+    /// This executable's version.
+    pub version: String,
+    /// How many capabilities the registry holds; zero would mean nothing to serve.
+    pub capabilities: usize,
+    /// How many objects the index holds. Read from the index this process built at
+    /// start-up: it is already in memory, and reading it walks nothing.
+    pub objects: usize,
+    /// Whether the layer read cleanly. A degraded layer is still served — the diagnostics
+    /// are the point — so this reports rather than refuses.
+    pub layer: HealthStatus,
+}
+
+/// Liveness. No filesystem, no index traversal, no network: two fields this process can
+/// answer with while doing anything else.
+fn liveness(_: &Context, _: Empty) -> Result<Liveness, CapabilityError> {
+    Ok(Liveness {
+        alive: true,
+        version: crate::VERSION.into(),
+    })
+}
+
+/// Readiness. Only what this process needs in order to answer a request, all of it already
+/// resident: the registry it built, the index it built, and how that index read. Nothing
+/// here contacts a provider, a database or another service, and nothing here walks a tree.
+fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
+    let capabilities = ctx.registry.summary().total;
+    let objects = ctx.index.objects.len();
+    Ok(Readiness {
+        ready: capabilities > 0,
+        version: crate::VERSION.into(),
+        capabilities,
+        objects,
+        layer: match ctx.index.state {
+            State::Degraded => HealthStatus::Warn,
+            State::Ok => HealthStatus::Ok,
+        },
+    })
+}
+
 fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     let index = &ctx.index;
     let mut checks = Vec::new();
@@ -351,6 +409,76 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Process { max_entries: 4, ttl_seconds: Some(5) },
                 handler: health,
             },
+            capability! {
+                id: "health.live",
+                title: "Liveness",
+                description: "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say.",
+                input: Empty,
+                output: Liveness,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure { mcp: None, http: get("/api/v1/live"), cli: None },
+                tags: ["health", "deployment"],
+                handler: liveness,
+            },
+            capability! {
+                id: "health.ready",
+                title: "Readiness",
+                description: "Can this process serve traffic: the registry and the index it built at start-up, already resident, and how the layer read. Only local initialisation — never an external provider, a database or another service, because a readiness check that probes a dependency fails a deployment for something that is not this process.",
+                input: Empty,
+                output: Readiness,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure { mcp: None, http: get("/api/v1/ready"), cli: None },
+                tags: ["health", "deployment"],
+                handler: readiness,
+            },
         ],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::synthetic::{Shape, SyntheticRepository};
+
+    /// Liveness says one thing and reads nothing: the counters prove it moved no
+    /// canonical state, and the answer is the same whatever the layer holds.
+    #[test]
+    fn liveness_is_the_same_answer_whatever_the_layer_holds() {
+        let small = SyntheticRepository::new(Shape { rules: 1, ..Shape::default() })
+            .expect("a synthetic repository");
+        let large = SyntheticRepository::new(Shape { rules: 40, ..Shape::default() })
+            .expect("a synthetic repository");
+        let a = liveness(&small.context().expect("a context"), Empty {}).expect("alive");
+        let b = liveness(&large.context().expect("a context"), Empty {}).expect("alive");
+        assert_eq!(a, b);
+        assert!(a.alive);
+        assert_eq!(a.version, crate::VERSION);
+    }
+
+    /// Readiness reads what this process already holds — the registry it built and the
+    /// index it built — and reports the layer rather than refusing over it.
+    #[test]
+    fn readiness_reports_what_this_process_already_holds() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let r = readiness(&ctx, Empty {}).expect("ready");
+        assert!(r.ready);
+        assert_eq!(r.capabilities, ctx.registry.summary().total);
+        assert_eq!(r.objects, ctx.index.objects.len());
+        assert_eq!(r.layer, HealthStatus::Ok);
+    }
+
+    /// Both are registered capabilities, so every projection carries them without a
+    /// second registration anywhere: a route the smoke suite and the platform can read
+    /// out of the registry rather than out of a list somebody maintains.
+    #[test]
+    fn both_are_registered_routes() {
+        let routes: Vec<String> = module()
+            .capabilities
+            .iter()
+            .filter_map(|c| c.capability.exposure.http.as_ref().map(|h| h.path.clone()))
+            .collect();
+        assert!(routes.contains(&"/api/v1/live".to_string()), "{routes:?}");
+        assert!(routes.contains(&"/api/v1/ready".to_string()), "{routes:?}");
     }
 }

@@ -5,26 +5,26 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "958adbfa853a053e91435a5387b0f4ffbfeea62b5f9b8800804a4605e016965f",
+    "fingerprint": "19f8ac7f4fb49ea325b0cd037f76074e9b4781512db8dd2fa5ff7c7509c60cf8",
     "summary": {
-      "total": 694,
-      "builtin": 14,
+      "total": 696,
+      "builtin": 16,
       "declarative": 680,
       "by_kind": {
         "command": 1,
-        "query": 13,
+        "query": 15,
         "resource": 680
       },
       "by_stability": {
-        "behaviorally_verified": 14,
+        "behaviorally_verified": 16,
         "implemented": 680
       },
       "mcp_tools": 14,
       "mcp_resources": 684,
-      "http_routes": 14,
+      "http_routes": 16,
       "cli_commands": 4,
       "modules": 25,
-      "benchmark_required": 14,
+      "benchmark_required": 16,
       "benchmark_waived": 0,
       "cached": 4
     },
@@ -1507,6 +1507,172 @@
           "policy": "disabled"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+      },
+      {
+        "id": "health.live",
+        "module": "health",
+        "kind": "query",
+        "title": "Liveness",
+        "description": "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "Liveness",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "alive": {
+                "type": "boolean",
+                "description": "Always `true`. A process that could not answer would not answer at all, which is\nthe signal."
+              },
+              "version": {
+                "type": "string",
+                "description": "This executable's version, so a rolling deployment can tell which build answered."
+              }
+            },
+            "required": [
+              "alive",
+              "version"
+            ],
+            "description": "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for.",
+            "title": "Liveness"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::health"
+        },
+        "exposure": {
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/live"
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "health",
+          "deployment"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
+      },
+      {
+        "id": "health.ready",
+        "module": "health",
+        "kind": "query",
+        "title": "Readiness",
+        "description": "Can this process serve traffic: the registry and the index it built at start-up, already resident, and how the layer read. Only local initialisation — never an external provider, a database or another service, because a readiness check that probes a dependency fails a deployment for something that is not this process.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "Readiness",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ready": {
+                "type": "boolean",
+                "description": "Whether every part below is in place."
+              },
+              "version": {
+                "type": "string",
+                "description": "This executable's version."
+              },
+              "capabilities": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many capabilities the registry holds; zero would mean nothing to serve."
+              },
+              "objects": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many objects the index holds. Read from the index this process built at\nstart-up: it is already in memory, and reading it walks nothing."
+              },
+              "layer": {
+                "$ref": "#/$defs/HealthStatus",
+                "description": "Whether the layer read cleanly. A degraded layer is still served — the diagnostics\nare the point — so this reports rather than refuses."
+              }
+            },
+            "required": [
+              "ready",
+              "version",
+              "capabilities",
+              "objects",
+              "layer"
+            ],
+            "description": "The answer to \"can this process serve traffic\": the local initialisation a request\nwould need, and nothing beyond this process. A readiness check that grew a dependency\nprobe fails a deployment because an unrelated service is down.",
+            "title": "Readiness",
+            "$defs": {
+              "HealthStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ok",
+                    "description": "The engine that decides this dimension is satisfied."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warn",
+                    "description": "Nothing is broken and something is worth looking at."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fail",
+                    "description": "The engine that decides this dimension is not satisfied."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "This process cannot decide it, and says so rather than reporting `ok`."
+                  }
+                ],
+                "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::health"
+        },
+        "exposure": {
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/ready"
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "health",
+          "deployment"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
       },
       {
         "id": "health.report",
@@ -3991,8 +4157,10 @@
         "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 1,
+        "capabilities": 3,
         "capability_ids": [
+          "health.live",
+          "health.ready",
           "health.report"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
@@ -4157,7 +4325,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0017c4627288fbd647da35cb11deb9c2bf23a1e9eb034da0d8c9a21865bd70d5",
+    "fingerprint": "6961f7359e6932bff35ef03884de33125c90874c54d0379d927ee53ca515f3ea",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -5573,7 +5741,7 @@
         "path": ".ai/repo/deployments/majordomus.yaml",
         "section": "deployments",
         "source_class": "deployment",
-        "bytes": 1843
+        "bytes": 2454
       },
       {
         "uri": "majordomus://document/.ai/repo/knowledge/curated/start-here.md",
@@ -14669,6 +14837,18 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/live",
+        "id": "health.live",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/ready",
+        "id": "health.ready",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/health",
         "id": "health.report",
         "kind": "query"
@@ -14999,6 +15179,44 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/graphs"
+      },
+      {
+        "key": "health.live|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "health.live",
+        "module": "health",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "health.live|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "health.live",
+        "module": "health",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/live"
+      },
+      {
+        "key": "health.ready|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "health.ready",
+        "module": "health",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "health.ready|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "health.ready",
+        "module": "health",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/ready"
       },
       {
         "key": "health.report|direct|default",
@@ -15666,6 +15884,34 @@
           "cases": 1
         },
         {
+          "subject": "health.live",
+          "module": "health",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "health.live",
+          "module": "health",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "health.ready",
+          "module": "health",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "health.ready",
+          "module": "health",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "health.report",
           "module": "health",
           "transport": "direct",
@@ -15962,14 +16208,14 @@
       ],
       "tallies": {
         "direct": {
-          "required": 14,
-          "covered": 14,
+          "required": 16,
+          "covered": 16,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 14,
-          "covered": 14,
+          "required": 16,
+          "covered": 16,
           "missing": 0,
           "waived": 0
         },
@@ -15986,8 +16232,8 @@
           "waived": 0
         },
         "total": {
-          "required": 54,
-          "covered": 54,
+          "required": 58,
+          "covered": 58,
           "missing": 0,
           "waived": 0
         }

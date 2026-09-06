@@ -1,8 +1,8 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 14,
-    "schemas": 65,
+    "operations": 16,
+    "schemas": 67,
     "tags": 7
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1159,11 +1159,13 @@
         "graph.get",
         "graph.list",
         "health.report",
+        "health.live",
         "objects.get",
         "objects.list",
         "peers.list",
         "peers.announce",
         "perf.counters",
+        "health.ready",
         "repository.info",
         "repository.scope",
         "repository.scope_classify",
@@ -1677,7 +1679,8 @@
       "used_by": [],
       "used_by_schemas": [
         "Health",
-        "HealthCheck"
+        "HealthCheck",
+        "Readiness"
       ],
       "values": [
         {
@@ -1749,6 +1752,34 @@
           "value": "POST"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for.",
+      "is_enum": false,
+      "name": "Liveness",
+      "properties": [
+        {
+          "description": "Always `true`. A process that could not answer would not answer at all, which is\nthe signal.",
+          "name": "alive",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "This executable's version, so a rolling deployment can tell which build answered.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "health.live"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -2439,6 +2470,57 @@
       "used_by_schemas": [
         "CounterSnapshot"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer to \"can this process serve traffic\": the local initialisation a request\nwould need, and nothing beyond this process. A readiness check that grew a dependency\nprobe fails a deployment because an unrelated service is down.",
+      "is_enum": false,
+      "name": "Readiness",
+      "properties": [
+        {
+          "description": "Whether every part below is in place.",
+          "name": "ready",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "This executable's version.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many capabilities the registry holds; zero would mean nothing to serve.",
+          "name": "capabilities",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many objects the index holds. Read from the index this process built at\nstart-up: it is already in memory, and reading it walks nothing.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Whether the layer read cleanly. A degraded layer is still served — the diagnostics\nare the point — so this reports rather than refuses.",
+          "name": "layer",
+          "refs": [
+            "HealthStatus"
+          ],
+          "required": true,
+          "type": "HealthStatus"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "health.ready"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -3514,6 +3596,110 @@
           "result_schema": "Health",
           "stability": "behaviorally_verified",
           "summary": "Health of this process"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/live\"",
+          "description": "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say.",
+          "id": "health.live",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/live",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::health",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Liveness: the result.",
+              "schema": "Liveness",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Liveness",
+          "stability": "behaviorally_verified",
+          "summary": "Liveness"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/ready\"",
+          "description": "Can this process serve traffic: the registry and the index it built at start-up, already resident, and how the layer read. Only local initialisation — never an external provider, a database or another service, because a readiness check that probes a dependency fails a deployment for something that is not this process.",
+          "id": "health.ready",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/ready",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::health",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Readiness: the result.",
+              "schema": "Readiness",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Readiness",
+          "stability": "behaviorally_verified",
+          "summary": "Readiness"
         }
       ]
     },
