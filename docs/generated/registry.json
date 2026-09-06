@@ -20,6 +20,14 @@
       "capabilities": 1
     },
     {
+      "id": "directories",
+      "title": "Directory contracts",
+      "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 1
+    },
+    {
       "id": "graph",
       "title": "Graphs",
       "description": "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape.",
@@ -1550,6 +1558,410 @@
         "ttl_seconds": 2
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+    },
+    {
+      "id": "directories.list",
+      "module": "directories",
+      "kind": "query",
+      "title": "The layer's directory contracts",
+      "description": "Every directory of the layer the index knows, with the contract it declares, whether it owes one and which contract decided, and — for a named path, or when asked for everywhere — the effective chain composed from the root down, least specific first.",
+      "input": {
+        "name": "DirectoriesInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "One directory, repository-relative and inside the layer. Its effective chain is\nalways resolved. Absent means every directory of the layer."
+            },
+            "effective": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "Resolve the effective chain for every directory, not only for a named one."
+            },
+            "state": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/DirectoryState"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only directories in this state: `documented`, `exempt` or `owed`."
+            }
+          },
+          "description": "Which directories to answer for, and how much of the hierarchy to resolve.",
+          "title": "DirectoriesInput",
+          "$defs": {
+            "DirectoryState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "documented",
+                  "description": "It carries a context document of its own."
+                },
+                {
+                  "type": "string",
+                  "const": "exempt",
+                  "description": "It owes none, because a contract above it says so."
+                },
+                {
+                  "type": "string",
+                  "const": "owed",
+                  "description": "It owes one and has none."
+                }
+              ],
+              "description": "Whether a directory of the layer carries the contract it owes."
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "DirectoryReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "root": {
+              "type": "string",
+              "description": "The layer root the tree is rooted at."
+            },
+            "tallies": {
+              "$ref": "#/$defs/DirectoryTallies",
+              "description": "The directories in each state."
+            },
+            "directories": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DirectoryNode"
+              },
+              "description": "Every directory asked for, sorted by path."
+            }
+          },
+          "required": [
+            "root",
+            "tallies",
+            "directories"
+          ],
+          "description": "The layer's directories, what each owes, and the contracts that apply.",
+          "title": "DirectoryReport",
+          "$defs": {
+            "DirectoryTallies": {
+              "type": "object",
+              "properties": {
+                "directories": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Every directory of the layer the index knows."
+                },
+                "documented": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Carrying a contract of their own."
+                },
+                "exempt": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Released by a contract above them."
+                },
+                "owed": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Owing a contract and carrying none."
+                }
+              },
+              "required": [
+                "directories",
+                "documented",
+                "exempt",
+                "owed"
+              ],
+              "description": "How many directories are in each state."
+            },
+            "DirectoryNode": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative, forward slashes."
+                },
+                "depth": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Segments below the layer root; the root itself is 0."
+                },
+                "parent": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The directory above, when it is inside the layer."
+                },
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The directories immediately below, sorted."
+                },
+                "state": {
+                  "$ref": "#/$defs/DirectoryState",
+                  "description": "Whether it carries the contract it owes."
+                },
+                "requires_contract": {
+                  "type": "boolean",
+                  "description": "Whether a contract is owed here at all."
+                },
+                "governed_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The contract that made the requirement explicit, when one did."
+                },
+                "exempted_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The contract that released this subtree, when one did."
+                },
+                "objects": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many objects of any kind the index holds directly in this directory."
+                },
+                "contract": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ContractView"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The contract this directory declares, before inheritance."
+                },
+                "effective": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/EffectiveEntry"
+                  },
+                  "description": "The contracts that apply here once inheritance is resolved, least specific first.\nPresent when the request asked for it, or when it asked about one path."
+                }
+              },
+              "required": [
+                "path",
+                "depth",
+                "state",
+                "requires_contract",
+                "objects"
+              ],
+              "description": "One directory of the layer, what it owes, and what applies to it."
+            },
+            "DirectoryState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "documented",
+                  "description": "It carries a context document of its own."
+                },
+                {
+                  "type": "string",
+                  "const": "exempt",
+                  "description": "It owes none, because a contract above it says so."
+                },
+                {
+                  "type": "string",
+                  "const": "owed",
+                  "description": "It owes one and has none."
+                }
+              ],
+              "description": "Whether a directory of the layer carries the contract it owes."
+            },
+            "ContractView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The document's identity; it survives a move, the file name does not."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The document's path, repository-relative."
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "One line naming the directory."
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "One line saying what the directory is for."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`active` or `deprecated`; a deprecated document is listed and never applied."
+                },
+                "scope": {
+                  "type": "string",
+                  "description": "`directory`, `subtree` or `explicit`: how far the document reaches."
+                },
+                "composition": {
+                  "type": "string",
+                  "description": "`extend`, `replace` or `final`: how it composes with what is above it."
+                },
+                "order": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "Ties within one depth are broken by this, then by path."
+                },
+                "providers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "`*`, or the providers the document is written for."
+                },
+                "audience": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Who it addresses; both when it says nothing."
+                },
+                "tracks": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Pathspecs whose change names this document for review."
+                },
+                "children_require_contract": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether the directories below owe a contract, when this document says."
+                },
+                "children_exempt": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Subtrees below this one that owe nothing: carried, not authored here."
+                }
+              },
+              "required": [
+                "id",
+                "path",
+                "status",
+                "scope",
+                "composition",
+                "order",
+                "providers",
+                "audience"
+              ],
+              "description": "A directory contract as the document declares it, before anything is inherited."
+            },
+            "EffectiveEntry": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The document's identity."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The document's path."
+                },
+                "depth": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Depth below the layer root; less is less specific and applies first."
+                },
+                "order": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "The declared order, the second sort key."
+                },
+                "composition": {
+                  "type": "string",
+                  "description": "`extend`, `replace` or `final`."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it applies to this directory, in words."
+                },
+                "local": {
+                  "type": "boolean",
+                  "description": "True for the directory's own document, false for one it inherits."
+                }
+              },
+              "required": [
+                "id",
+                "path",
+                "depth",
+                "order",
+                "composition",
+                "reason",
+                "local"
+              ],
+              "description": "One contract in a directory's effective chain, in the order it is applied."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::directories"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_directories",
+          "resource": {
+            "uri": "majordomus://directories",
+            "name": "directories"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/directories"
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "directories",
+        "context",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 8,
+        "ttl_seconds": 5
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs"
     },
     {
       "id": "graph.get",

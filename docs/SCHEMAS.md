@@ -324,6 +324,7 @@ supersedes: []                    # replace only: ids of ancestor-chain document
 tracks: [lib/rules.sh]            # git pathspecs this document describes
 children:                         # subtree only: what the directories below owe
   require_contract: true          # true | false; the default where nothing declares it is true
+  exempt: []                      # subtrees this layer carries but does not author
 ---
 ```
 
@@ -343,6 +344,7 @@ children:                         # subtree only: what the directories below owe
 | `supersedes` | with `replace` | ids in the ancestor chain this document stands in for; a `final` ancestor cannot be named |
 | `tracks` | no | pathspecs whose change names this document for review |
 | `children.require_contract` | no | `subtree` only: whether every directory below this one owes a context document. Absent everywhere above a directory means `true`. A descendant may raise `false` to `true`; lowering an inherited `true` is `illegal-override` |
+| `children.exempt` | no | `subtree` only: repository-relative directories inside this document's own scope that owe no context document, and nor does anything below them — a subtree the layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Naming a directory outside the document's scope, or its own directory, is `illegal-override`; a directory that does not exist is `broken-reference` |
 
 The allowed keys are `share/allow/context.txt`; any other key is an error. There are no
 defaults: a required key that is missing is `invalid-front-matter`, not a silent value.
