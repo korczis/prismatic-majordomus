@@ -379,6 +379,47 @@ that can be bypassed by mistyping one.</p>
 does not decide what a checkpoint should say, and it makes no network call. If you want a
 model to write your checkpoint, have the worker write it and pipe it in. The tool is
 deterministic infrastructure and stays that way.</p>
+<h2 id="who-runs-the-lifecycle"><a class="zola-anchor" href="#who-runs-the-lifecycle" aria-label="Anchor link for: who-runs-the-lifecycle">Who runs the lifecycle</a></h2>
+<p>Nothing above requires a worker to remember any of it.</p>
+<p>Where a provider announces the boundaries of a sitting, its own hooks run the lifecycle.
+The start event opens the episode, freezes the context the builder resolved at that moment,
+and writes a briefing to standard output — which the provider adds to the context it is
+about to build. That is the one moment at which a continuation record reaches a worker
+without the worker asking for it, and it is the difference between a record that is written
+automatically and one that is also read.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>provider fires SessionStart</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        +--&gt; session opens (or the open one is kept)</span></span>
+<span class="giallo-l"><span>        +--&gt; the working context is frozen</span></span>
+<span class="giallo-l"><span>        +--&gt; the briefing goes to stdout: the episode, the resolved handover with its</span></span>
+<span class="giallo-l"><span>        |    divergence label, the blockers, and the one section to act on</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>   work happens</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>provider fires PreCompact</span></span>
+<span class="giallo-l"><span>        +--&gt; a derived checkpoint, because the conversation is about to stop holding it</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>provider fires SessionEnd</span></span>
+<span class="giallo-l"><span>        +--&gt; a derived handover, when the task is still active</span></span>
+<span class="giallo-l"><span>        +--&gt; the episode closes into its envelope of references</span></span></code></pre>
+<p>The briefing is bounded by <code>session.briefing_budget_lines</code> and carries references, labels
+and one section — never a conversation. Each of the three behaviours is a switch in the
+policy, and <code>session.briefing_on_start: false</code> restores the older silence.</p>
+<p>This is the one route by which anything under <code>local/</code> reaches a model's context without
+being asked for. It is narrow on purpose, and the other half of that rule is unconditional:
+nothing under <code>local/</code> is ever published by a generator or served on a public surface.
+<code>.ai/repo/adrs/0017-an-episode-that-opens-is-handed-what-the-last-one-left.md</code> records why.</p>
+<p>A worker with no such provider loses none of the model and all of the automation: every
+command below is the same, and running them is again a matter of remembering.</p>
+<h2 id="reading-it-back-from-somewhere-other-than-a-terminal"><a class="zola-anchor" href="#reading-it-back-from-somewhere-other-than-a-terminal" aria-label="Anchor link for: reading-it-back-from-somewhere-other-than-a-terminal">Reading it back from somewhere other than a terminal</a></h2>
+<p><code>continuity.state</code> in the Rust executable reads this same local half and reports it over
+MCP (<code>majordomus_continuity</code>), over HTTP (<code>GET /api/v1/continuity</code>) and in the Cockpit's
+Continuity page: the open episode, the active task, the handover and checkpoint that
+resolve here with their divergence labels, and the blockers. It uses the same two tiers and
+the same four labels, and it never writes — the lifecycle has one writer, and a second
+account of events the ledger already holds is what this design refuses.</p>
+<p>It is served and never published. Those records name this machine, so no generated document
+and no site page carries one, and a test proves it.</p>
 <h2 id="where-the-lifecycle-puts-each-piece"><a class="zola-anchor" href="#where-the-lifecycle-puts-each-piece" aria-label="Anchor link for: where-the-lifecycle-puts-each-piece">Where the lifecycle puts each piece</a></h2>
 <pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>majordomus start &quot;&lt;task&gt;&quot; --scope &lt;paths&gt; [--profile &lt;name&gt;]</span></span>
 <span class="giallo-l"><span>        |                                  names any prior record for this branch</span></span>
@@ -445,7 +486,7 @@ models are shaped this way.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0b0c104ba3e3c4b1d2eef032fa9a12af2734dd40" class="font-mono hover:underline">0b0c104</a> · inputs <span class="font-mono">db1dbbe59375</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/abef20060380deecb9bf5fe94adeed8caead695c" class="font-mono hover:underline">abef200</a> · inputs <span class="font-mono">dd5ebfe44b8e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

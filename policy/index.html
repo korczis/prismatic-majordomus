@@ -246,6 +246,17 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+# The provider&#39;s episode events do three things beyond drawing the boundary. The start event
+# hands the worker a briefing on standard output, which the provider adds to the context it
+# is about to build; the compaction event records a derived checkpoint, because a compaction
+# discards the conversation while the work continues; the end event writes a derived
+# continuation record when the task is still active.
+session:
+  briefing_on_start: true
+  briefing_budget_lines: 60              # cap on what the start event injects, per episode
+  checkpoint_on_compact: true
+  handover_on_end: true
+
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline&#39;s
 # p50, p95 and p99; doctor and watch report their own wall time against these budgets
@@ -313,7 +324,7 @@ projections:
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0b0c104ba3e3c4b1d2eef032fa9a12af2734dd40" class="font-mono hover:underline">0b0c104</a> · inputs <span class="font-mono">db1dbbe59375</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/abef20060380deecb9bf5fe94adeed8caead695c" class="font-mono hover:underline">abef200</a> · inputs <span class="font-mono">dd5ebfe44b8e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

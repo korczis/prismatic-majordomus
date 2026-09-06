@@ -177,7 +177,8 @@
       <li><a href="#about" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">About</a></li>
       <li><a href="#errors" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Errors</a></li>
       <li><a href="#infrastructure" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Server routes</a></li><li><a href="#tag-capabilities" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">capabilities</a>
-        <ul class="ml-3 hidden lg:block"><li><a href="#op-capabilities-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capabilities</a></li><li><a href="#op-capabilities-describe" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capability</a></li></ul></li><li><a href="#tag-graph" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">graph</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-capabilities-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capabilities</a></li><li><a href="#op-capabilities-describe" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capability</a></li></ul></li><li><a href="#tag-continuity" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">continuity</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-continuity-state" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/continuity</a></li></ul></li><li><a href="#tag-graph" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">graph</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-graph-get" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/graph</a></li><li><a href="#op-graph-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/graphs</a></li></ul></li><li><a href="#tag-health" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">health</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-health-report" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/health</a></li></ul></li><li><a href="#tag-objects" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">objects</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-objects-get" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/object</a></li><li><a href="#op-objects-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/objects</a></li><li><a href="#op-objects-search" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/search</a></li></ul></li><li><a href="#tag-peers" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">peers</a>
@@ -315,6 +316,51 @@
                 <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
                 <td class="px-3 py-2 font-mono"><a href="#schema-Capability" class="text-fg-brand hover:underline">Capability</a></td>
                 <td class="px-3 py-2 text-body">Describe one capability: the result.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+              </tr></tbody>
+          </table>
+        </div>
+      </article></section><section id="tag-continuity" class="mt-12 scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">continuity</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">What this checkout&#39;s lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes.</p><article id="op-continuity-state" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+          <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/continuity</code>
+          <a href="#op-continuity-state" class="font-mono text-xs text-body-subtle hover:underline">continuity.state</a>
+        </div>
+        <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">What the lifecycle is holding</h3>
+        <p class="mt-1 text-sm text-body">The open episode, the active task, the handover and checkpoint that resolve for this worktree and branch, each with its divergence label, the unresolved questions that refuse completion, and the record tallies. Selection is two-tiered and never repository-wide: a record from an unrelated worktree or branch is not offered, because a briefing that is quietly about somebody else is worse than none. Absence is reported as absence.</p>
+        <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+          <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=2, ttl_seconds=2)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_continuity</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;continuity&quot;, &quot;uri&quot;: &quot;majordomus://continuity&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+        <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading">curl -s &quot;http://127.0.0.1:8741/api/v1/continuity&quot;</pre></div>
+
+        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[28rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-Continuity" class="text-fg-brand hover:underline">Continuity</a></td>
+                <td class="px-3 py-2 text-body">What the lifecycle is holding: the result.</td>
               </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
                 <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
@@ -951,7 +997,51 @@ the repository does not have is an invalid input, not an empty answer.</td>
         </div>
       </article></section><section id="schemas" class="mt-12 scroll-mt-24">
       <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
-      <p class="mt-2 text-sm text-body">Every component of the document, derived from the Rust types the capabilities take and return. Each row of the API's shape is the type's own field, its doc comment the description.</p><article id="schema-AnnounceInput" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+      <p class="mt-2 text-sm text-body">Every component of the document, derived from the Rust types the capabilities take and return. Each row of the API's shape is the type's own field, its doc comment the description.</p><article id="schema-ActiveTask" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">ActiveTask</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">The active task of this checkout, when there is one.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The task id.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">task</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">What is being worked on.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">profile</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The execution profile it runs under.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">outcome</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Its typed outcome so far: <code>active</code>, <code>handed_over</code>, or a finished one.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">scope</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The paths it claims.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">started_at</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">When it started.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">head</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The commit it started at.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Continuity" class="font-mono text-fg-brand hover:underline">Continuity</a></p></article><article id="schema-AnnounceInput" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">AnnounceInput</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -1412,7 +1502,82 @@ of the same object view repeated.</p><div class="mt-3 overflow-x-auto rounded-ba
                 <td class="px-3 py-2 text-body"><code>clientInfo.title</code>, when the client sends one.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Peer" class="font-mono text-fg-brand hover:underline">Peer</a></p></article><article id="schema-CounterSnapshot" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Peer" class="font-mono text-fg-brand hover:underline">Peer</a></p></article><article id="schema-Continuity" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Continuity</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">What the lifecycle of this checkout is holding.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">present</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Whether this checkout's lifecycle has ever run: a ledger line, a task, an episode or
+a record. False in a fresh clone, which is not a fault.</p>
+<p>It is not "the directory exists". Several things create that directory before
+anything has been recorded in it, so a reader that took its presence for evidence
+would be told the lifecycle had run in a checkout where it never had.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">worktree</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The worktree this answer is about. Every selection below is scoped to it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">branch</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The branch, or <code>DETACHED</code>.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">head</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The commit this checkout is on.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">working_tree</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body"><code>clean</code> or <code>dirty</code>.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">session</td>
+                <td class="px-3 py-2 font-mono text-body">OpenSession | null <span class="text-body-subtle">→</span> <a href="#schema-OpenSession" class="text-fg-brand hover:underline">OpenSession</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The open episode, or <code>None</code>.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">task</td>
+                <td class="px-3 py-2 font-mono text-body">ActiveTask | null <span class="text-body-subtle">→</span> <a href="#schema-ActiveTask" class="text-fg-brand hover:underline">ActiveTask</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The active task, or <code>None</code>.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">handover</td>
+                <td class="px-3 py-2 font-mono text-body">Record | null <span class="text-body-subtle">→</span> <a href="#schema-Record" class="text-fg-brand hover:underline">Record</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The record the next worker would resume from, or <code>None</code> when nothing resolves here.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">checkpoint</td>
+                <td class="px-3 py-2 font-mono text-body">Record | null <span class="text-body-subtle">→</span> <a href="#schema-Record" class="text-fg-brand hover:underline">Record</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The newest progress note for this worktree and branch, or <code>None</code>.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">blockers</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Unresolved questions on this branch. Every one refuses <code>finish --outcome completed</code>,
+whichever task opened it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">tallies</td>
+                <td class="px-3 py-2 font-mono text-body">map of integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">How many records of each kind this checkout holds, against the policy's caps.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">What a reader should know before trusting any of the above: a diverged record, a
+foreign open session, a malformed file that was skipped. Empty is the good case.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a></p></article><article id="schema-CounterSnapshot" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">CounterSnapshot</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -1546,7 +1711,13 @@ there is one, and carrying the command that reproduces it where there is one.</p
                 <td class="px-3 py-2 text-body">What is wrong, for a person; the code is for a program.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-RepositoryReport" class="font-mono text-fg-brand hover:underline">RepositoryReport</a></p></article><article id="schema-Edge" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-RepositoryReport" class="font-mono text-fg-brand hover:underline">RepositoryReport</a></p></article><article id="schema-Divergence" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Divergence</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;exact&quot; | &quot;advanced&quot; | &quot;diverged&quot; | &quot;different_context&quot; | &quot;unknown&quot;</span>
+        </div><p class="mt-2 text-sm text-body">How far a record's recorded commit is from the commit this checkout is on.</p>
+<p>The four words are the shell tool's, deliberately. A reader that met <code>advanced</code> from one
+surface and <code>stale</code> from another would have to learn the same four facts twice.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">exact</code><span class="min-w-0 text-body">Written at this commit. Trust it.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">advanced</code><span class="min-w-0 text-body">Git has moved forward since. Trust it, and expect some of it to be done.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">diverged</code><span class="min-w-0 text-body">The recorded commit is not an ancestor: history was rewritten. Trust git, not this.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">different_context</code><span class="min-w-0 text-body">Another branch or another worktree. This record is not about your work.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">unknown</code><span class="min-w-0 text-body">Git could not answer, so this process says so rather than guessing `exact`.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Record" class="font-mono text-fg-brand hover:underline">Record</a></p></article><article id="schema-Edge" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Edge</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -1585,7 +1756,7 @@ resolve an end adds an external node rather than a dangling edge.</p><div class=
                 <td class="px-3 py-2 text-body">The one error.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">ErrorDetail</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -1930,7 +2101,12 @@ and live under [<code>HttpExposure::PREFIX</code>].</p><div class="mt-3 overflow
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">HttpMethod</h3>
           <span class="font-mono text-xs text-body-subtle">&quot;GET&quot; | &quot;POST&quot;</span>
-        </div><p class="mt-2 text-sm text-body">The HTTP methods a capability may be bound to.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">GET</code><span class="min-w-0 text-body">Read-only; the input is bound from the query string.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">POST</code><span class="min-w-0 text-body">The input is bound from the JSON body. No builtin uses it yet.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-HttpExposure" class="font-mono text-fg-brand hover:underline">HttpExposure</a></p></article><article id="schema-McpExposure" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-2 text-sm text-body">The HTTP methods a capability may be bound to.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">GET</code><span class="min-w-0 text-body">Read-only; the input is bound from the query string.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">POST</code><span class="min-w-0 text-body">The input is bound from the JSON body. No builtin uses it yet.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-HttpExposure" class="font-mono text-fg-brand hover:underline">HttpExposure</a></p></article><article id="schema-Match" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Match</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;same_worktree_same_branch&quot; | &quot;same_branch&quot;</span>
+        </div><p class="mt-2 text-sm text-body">Which tier of the resolution rule matched. There is no third tier on purpose: a record
+from an unrelated worktree or branch is never offered.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">same_worktree_same_branch</code><span class="min-w-0 text-body">Same repository, same worktree, same branch.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">same_branch</code><span class="min-w-0 text-body">Same repository, same branch, another worktree of it.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Record" class="font-mono text-fg-brand hover:underline">Record</a></p></article><article id="schema-McpExposure" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">McpExposure</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -2190,7 +2366,57 @@ the file (<code>claims.3</code>).</td>
                 <td class="px-3 py-2 text-body">The file as read.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ResourceView" class="font-mono text-fg-brand hover:underline">ResourceView</a></p></article><article id="schema-Origin" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ResourceView" class="font-mono text-fg-brand hover:underline">ResourceView</a></p></article><article id="schema-OpenSession" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">OpenSession</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">The open episode of this worktree, when there is one.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">session_id</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The episode's id.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">started_at</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">When it opened.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">owner</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Who opened it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">worker</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The worker identity, when one was supplied. Never inferred.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">provider</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The provider whose event opened it, when one did.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">branch</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The branch it opened on.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">start_head</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The commit it opened at.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">foreign</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">True when the open record here belongs to another checkout. Such a record is
+reported and never treated as this checkout's episode.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Continuity" class="font-mono text-fg-brand hover:underline">Continuity</a></p></article><article id="schema-Origin" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Origin</h3>
           <span class="font-mono text-xs text-body-subtle">&quot;repository&quot; | &quot;distribution&quot;</span>
@@ -2373,7 +2599,62 @@ the file (<code>claims.3</code>).</td>
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Reason</h3>
           <span class="font-mono text-xs text-body-subtle">&quot;path&quot; | &quot;secret&quot; | &quot;generated&quot; | &quot;archive&quot; | &quot;image&quot; | &quot;video&quot; | &quot;pdf&quot; | &quot;database_dump&quot; | &quot;undeclared&quot; | &quot;fixture_over_limit&quot; | &quot;over_limit&quot; | &quot;binary&quot;</span>
-        </div><p class="mt-2 text-sm text-body">Why a path is out. The order is the order the rules decide in.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">path</code><span class="min-w-0 text-body">Named under `out.paths`.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">secret</code><span class="min-w-0 text-body">A secret.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">generated</code><span class="min-w-0 text-body">A generated asset.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">archive</code><span class="min-w-0 text-body">An archive.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">image</code><span class="min-w-0 text-body">An image.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">video</code><span class="min-w-0 text-body">Video.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">pdf</code><span class="min-w-0 text-body">A PDF document.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">database_dump</code><span class="min-w-0 text-body">A database dump.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">undeclared</code><span class="min-w-0 text-body">Matches no `in` pathspec.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">fixture_over_limit</code><span class="min-w-0 text-body">A fixture over `out.fixtures.max_bytes`.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">over_limit</code><span class="min-w-0 text-body">Over `out.max_bytes`.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">binary</code><span class="min-w-0 text-body">Content with a NUL byte in its first [`SNIFF_BYTES`]: not text.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Classification" class="font-mono text-fg-brand hover:underline">Classification</a> <a href="#schema-OutFile" class="font-mono text-fg-brand hover:underline">OutFile</a></p></article><article id="schema-RepositoryInfo" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-2 text-sm text-body">Why a path is out. The order is the order the rules decide in.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">path</code><span class="min-w-0 text-body">Named under `out.paths`.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">secret</code><span class="min-w-0 text-body">A secret.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">generated</code><span class="min-w-0 text-body">A generated asset.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">archive</code><span class="min-w-0 text-body">An archive.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">image</code><span class="min-w-0 text-body">An image.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">video</code><span class="min-w-0 text-body">Video.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">pdf</code><span class="min-w-0 text-body">A PDF document.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">database_dump</code><span class="min-w-0 text-body">A database dump.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">undeclared</code><span class="min-w-0 text-body">Matches no `in` pathspec.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">fixture_over_limit</code><span class="min-w-0 text-body">A fixture over `out.fixtures.max_bytes`.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">over_limit</code><span class="min-w-0 text-body">Over `out.max_bytes`.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">binary</code><span class="min-w-0 text-body">Content with a NUL byte in its first [`SNIFF_BYTES`]: not text.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Classification" class="font-mono text-fg-brand hover:underline">Classification</a> <a href="#schema-OutFile" class="font-mono text-fg-brand hover:underline">OutFile</a></p></article><article id="schema-Record" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Record</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">One durable record of the local half, as much of it as a reader needs to decide whether
+to open the file.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Repository-relative path. The body is at the path; it is not copied here.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">created_at</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">When the record says it was written.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">task_id</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The task it belongs to, or <code>none</code>.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">branch</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The branch it was written on.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">head</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The commit it was written at.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">working_tree</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Whether the working tree was clean or dirty then.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">matched</td>
+                <td class="px-3 py-2 font-mono text-body">Match <span class="text-body-subtle">→</span> <a href="#schema-Match" class="text-fg-brand hover:underline">Match</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Which tier of the resolution rule matched.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">divergence</td>
+                <td class="px-3 py-2 font-mono text-body">Divergence <span class="text-body-subtle">→</span> <a href="#schema-Divergence" class="text-fg-brand hover:underline">Divergence</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">How far its commit is from this one.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">next_action</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The section a resuming worker acts on, when the record has one. A handover's <code>Next Action</code>; empty for a record that carries no sections.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Continuity" class="font-mono text-fg-brand hover:underline">Continuity</a></p></article><article id="schema-RepositoryInfo" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">RepositoryInfo</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -2747,7 +3028,7 @@ reason for resources and is never written by hand.</p><ul class="mt-3 space-y-1 
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0b0c104ba3e3c4b1d2eef032fa9a12af2734dd40" class="font-mono hover:underline">0b0c104</a> · inputs <span class="font-mono">db1dbbe59375</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/abef20060380deecb9bf5fe94adeed8caead695c" class="font-mono hover:underline">abef200</a> · inputs <span class="font-mono">dd5ebfe44b8e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

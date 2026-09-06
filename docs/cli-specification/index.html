@@ -475,6 +475,16 @@ proves the two agree in both directions.</li>
 <code>handover.required_sections</code> as level-one headings, each with non-empty content;
 template placeholders in angle brackets count as empty. Optional: <code># Completed</code>,
 <code># Decisions</code>, <code># Verification</code>, <code># Risks</code>, <code># Open Work</code>.</p>
+<p><code>--derive</code> composes the body instead of reading stdin, from the task record, the ledger,
+git, the open questions and the newest checkpoint — each already written, already validated
+and already identity-checked. It calls no model and makes no network request, which is what
+makes it safe for a provider hook to run: a derived body can be wrong only if a record it
+reads is wrong, and every one of those has its own gate. The policy's required sections are
+emitted in the policy's order; a required section this generator cannot fill is refused by
+name rather than written empty, because an empty section passes the section gate and tells
+the next worker nothing. An authored body still says more than a derived one, and <code>--derive</code>
+exists so that the absence of somebody willing to type is no longer the same thing as the
+absence of a record.</p>
 <p><strong>Writes:</strong> one new file <code>state/handovers/&lt;utc-ts&gt;--&lt;branch-key&gt;--&lt;short-head&gt;--&lt;rand&gt;.md</code>,
 mode <code>0600</code>, created atomically (temp file, then hard link; retry with a new random
 suffix on collision). Front matter is computed from git and from <code>current.yaml</code>; a body
@@ -484,6 +494,10 @@ that tries to set identity fields is rejected.</p>
 <p><code>--close</code> additionally sets the task's outcome to <code>handed_over</code>, so that a new task may
 <code>start</code> in this checkout; the old record is archived by that <code>start</code>. Without
 <code>--close</code> the task stays active for the next session to continue.</p>
+<p>The provider's <code>SessionEnd</code> event runs <code>--derive --close</code> when the task is still active, so
+an episode that ends leaves a continuation record and not only the envelope of what it
+produced. The two answer different questions: the session record indexes the episode, and a
+handover is what the next worker resumes from.</p>
 <p><strong>Refuses</strong> (<code>10</code>) if a required section is missing or empty, or if the body contains
 an identity field. Refuses (<code>12</code>) with no active task unless <code>--no-task</code>.</p>
 <p><strong>Resolve:</strong> <code>majordomus handover --resolve</code> finds the most relevant prior handover for
@@ -706,6 +720,12 @@ and appends <code>task.checkpoint</code> to the ledger.</p>
 <code>check --checkpoint</code> has always done. The two are the same operation; <code>checkpoint</code> is the
 one that can also say what was true.</p>
 <ul>
+<li><code>--derive</code> composes the body from git and the ledger instead of reading stdin: the commit,
+the working tree, how many files have changed since the task started, the commits since
+then, and the count of blockers. It stays inside the same cap, and it is what the
+provider's compaction event runs — a compaction discards the conversation while the work
+continues, and the moment it is announced is the only moment anything can be written about
+a context that is about to stop being reachable.</li>
 <li><code>--show</code> prints the newest checkpoint for the active task in this worktree and branch.</li>
 <li><code>--list</code> lists this worktree's checkpoints, newest first, with each one's git label.</li>
 </ul>
@@ -1551,7 +1571,7 @@ are inert until the first <code>start</code>.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0b0c104ba3e3c4b1d2eef032fa9a12af2734dd40" class="font-mono hover:underline">0b0c104</a> · inputs <span class="font-mono">db1dbbe59375</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/abef20060380deecb9bf5fe94adeed8caead695c" class="font-mono hover:underline">abef200</a> · inputs <span class="font-mono">dd5ebfe44b8e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
