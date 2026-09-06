@@ -1631,6 +1631,19 @@
       "source_route": "/docs/schemas/",
       "command": "adr",
       "test_case": "99_adr"
+    },
+    {
+      "id": "cli-documentation-executable",
+      "claim": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
+      "source": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
+      "implementation": "apps/majordomus-cli/src/cli.rs",
+      "test": "apps/majordomus-cli/tests/cli_docs.rs",
+      "status": "guaranteed",
+      "note": "The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown.",
+      "responsibility": "none",
+      "source_route": null,
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/cli_docs.rs"
     }
   ]
 }
