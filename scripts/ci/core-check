@@ -57,6 +57,22 @@ scripts/github-sync --plan
 for id in $(bin/majordomus plan list | awk 'NR>1{print $1}'); do
   scripts/github-sync --render "$id" | grep -q '^<!-- majordomus:begin' || { echo "no generated region for $id"; exit 1; }
 done
+# No authored document names somebody's home directory. `scripts/site-check` already refuses
+# a *built site* that carries one, but it runs at the moment of deployment: by then the text
+# is on master, the deploy is red, and the person who has to fix it is whoever tried to
+# publish rather than whoever wrote it. The same pattern applied to the sources the site is
+# projected from fails here instead, where the text was written.
+#
+# This is not hypothetical. The reasoning of I0908 — an issue whose stated purpose is that
+# "no absolute developer path exists anywhere in the image" — named a home directory, reached
+# plan.json, reached the site, and broke the deploy gate on master (fixed by #67).
+step "no authored document names a home directory"
+hits="$(git grep -n -I -E '/Users/[a-z]+/|/home/[a-z]+/dev/' -- \
+          '.ai/repo/**' 'docs/**' 'site/content-src/**' 'README.md' 2>/dev/null || true)"
+if [ -n "$hits" ]; then
+  printf 'a home directory is named in an authored document; write what the path means instead:\n%s\n' "$hits" >&2
+  exit 1
+fi
 # The committed derived site data must match the canonical files it is generated from.
 step "derived site data in sync"
 scripts/generate-site-data --check

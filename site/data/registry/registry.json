@@ -6,25 +6,25 @@
     "version": "0.2.0"
   },
   "registry": {
-    "fingerprint": "9742b410d3e00c71671e658ec2ad856707c42db6f3504aff544a4bb697ef5d13",
+    "fingerprint": "d019685c45ddcce010d1a2e4eff8979249ca979fe0b31416f6834c608e739a05",
     "summary": {
-      "total": 952,
+      "total": 936,
       "builtin": 32,
-      "declarative": 920,
+      "declarative": 904,
       "by_kind": {
         "command": 1,
         "query": 31,
-        "resource": 920
+        "resource": 904
       },
       "by_stability": {
         "behaviorally_verified": 32,
-        "implemented": 920
+        "implemented": 904
       },
       "mcp_tools": 30,
-      "mcp_resources": 931,
+      "mcp_resources": 915,
       "http_routes": 32,
       "cli_commands": 14,
-      "modules": 38,
+      "modules": 37,
       "benchmark_required": 32,
       "benchmark_waived": 0,
       "cached": 14
@@ -358,8 +358,6 @@
             "path": "/api/v1/artifacts"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "artifacts",
@@ -441,14 +439,6 @@
                 "$ref": "#/$defs/Exposure",
                 "description": "Where it is projected; absence is explicit."
               },
-              "availability": {
-                "$ref": "#/$defs/Availability",
-                "description": "Where it means anything: classified from the kind and the transports above, so\nthat a projection reads a field instead of deciding for itself."
-              },
-              "visibility": {
-                "$ref": "#/$defs/Visibility",
-                "description": "Who it is for: classified from the same transports."
-              },
               "stability": {
                 "$ref": "#/$defs/Stability",
                 "description": "Where it stands."
@@ -479,8 +469,6 @@
               "output",
               "provenance",
               "exposure",
-              "availability",
-              "visibility",
               "stability",
               "benchmark",
               "cache"
@@ -735,51 +723,6 @@
                 ],
                 "description": "How a capability appears on the command line: the words after `majordomus`."
               },
-              "Availability": {
-                "oneOf": [
-                  {
-                    "type": "string",
-                    "const": "always",
-                    "description": "True in every environment, a published page with no server included: the layer's\nown content, which a build renders and a process serves from the same index."
-                  },
-                  {
-                    "type": "string",
-                    "const": "runtime",
-                    "description": "A process must be running to answer: everything with a handler, whether it is\nreached over HTTP, over MCP or from the command line."
-                  },
-                  {
-                    "type": "string",
-                    "const": "build_time",
-                    "description": "A value captured when the site was generated, rendered afterwards as the capture\nit is. Nothing classifies to this yet; the static projection of the graph is what\nwill declare it, and it is on the model so that a captured value can be labelled\nas captured instead of being shown as current."
-                  },
-                  {
-                    "type": "string",
-                    "const": "authenticated",
-                    "description": "A process must be running and the caller must be one it has authenticated. Nothing\nin this repository authenticates a caller yet; a surface that does will say so\nhere rather than in the template that renders its link."
-                  }
-                ],
-                "description": "Where a capability means anything: the environment a caller must be in for it to\nanswer at all.\n\nThe published site and the running server are genuinely different places. Without this\non the model, every template grows its own idea of what works where — and the usual\nshape that takes is a condition on the page's own address, which is a rule hidden\nwhere nobody will find it and nothing can test it. This is the only thing a projection\nmay ask.\n\nIt is classified rather than declared: the facts that decide it — what kind of thing\nthis is and which transports it is projected through — are already on the descriptor,\nand asking each declaration to restate them would be the same knowledge written twice.\n[`Availability::classify`] is the one place the rule lives."
-              },
-              "Visibility": {
-                "oneOf": [
-                  {
-                    "type": "string",
-                    "const": "public",
-                    "description": "Offered to anyone who can reach the process: an HTTP route or an MCP entry."
-                  },
-                  {
-                    "type": "string",
-                    "const": "developer",
-                    "description": "Offered to whoever runs the executable, and to nobody over a network."
-                  },
-                  {
-                    "type": "string",
-                    "const": "internal",
-                    "description": "Projected nowhere. It exists, it is listed as existing, and no surface offers it."
-                  }
-                ],
-                "description": "Who a capability is for, and whether anything offers it.\n\nInternal is a statement, not an omission: a capability nothing projects is invisible\neither way, and the difference between deliberate and forgotten is exactly what this\nrecords."
-              },
               "Stability": {
                 "oneOf": [
                   {
@@ -935,8 +878,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "introspection"
@@ -1566,8 +1507,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "introspection"
@@ -1901,8 +1840,6 @@
             "path": "/api/v1/continuity"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "continuity",
@@ -2014,8 +1951,6 @@
             "path": "/api/v1/deployments/check"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "deployment",
@@ -2611,8 +2546,6 @@
             "path": "/api/v1/deployment"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "deployment"
@@ -3263,8 +3196,6 @@
             "path": "/api/v1/deployments"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "deployment"
@@ -3665,8 +3596,6 @@
             "path": "/api/v1/directories"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "directories",
@@ -3773,8 +3702,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "distribution",
@@ -3861,8 +3788,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "distribution",
@@ -4120,8 +4045,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "distribution",
@@ -4275,8 +4198,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "distribution",
@@ -4428,13 +4349,6 @@
                   "external": {
                     "type": "boolean",
                     "description": "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository."
-                  },
-                  "facts": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "$ref": "#/$defs/Fact"
-                    },
-                    "description": "What the object's own kind declares about it, as its schema validated it: the\nfields of its front matter that are facts about the thing rather than the document\nitself. A rule carries its class and its statement, a skill its inputs and\noutputs, a decision its date — the vocabulary that makes each kind worth having,\nrather than the four fields every kind happens to share."
                   }
                 },
                 "required": [
@@ -4443,31 +4357,6 @@
                   "label"
                 ],
                 "description": "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere."
-              },
-              "Fact": {
-                "anyOf": [
-                  {
-                    "type": "boolean",
-                    "description": "A yes or a no."
-                  },
-                  {
-                    "type": "integer",
-                    "format": "int64",
-                    "description": "A whole number: an order, a version, a weight."
-                  },
-                  {
-                    "type": "string",
-                    "description": "One short value."
-                  },
-                  {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Several short values."
-                  }
-                ],
-                "description": "One fact a node carries from its object's front matter, in the shapes a node can hold."
               },
               "Edge": {
                 "type": "object",
@@ -4540,8 +4429,6 @@
             "path": "/api/v1/graph"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "graph"
@@ -4644,8 +4531,6 @@
             "path": "/api/v1/graphs"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "graph",
@@ -4706,8 +4591,6 @@
             "path": "/api/v1/live"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "health",
@@ -4814,8 +4697,6 @@
             "path": "/api/v1/ready"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "health",
@@ -4970,8 +4851,6 @@
             "path": "/api/v1/health"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "health",
@@ -5317,8 +5196,6 @@
             "path": "/api/v1/object"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "objects"
@@ -5453,8 +5330,6 @@
             "path": "/api/v1/objects"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "objects"
@@ -5618,8 +5493,6 @@
             "path": "/api/v1/search"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "objects"
@@ -5800,8 +5673,6 @@
             "path": "/api/v1/peers/announce"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "peers",
@@ -5999,8 +5870,6 @@
             "path": "/api/v1/peers"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "peers",
@@ -6177,8 +6046,6 @@
             "path": "/api/v1/perf"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "performance",
@@ -6604,8 +6471,6 @@
             "path": "/api/v1/repository"
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "repository",
@@ -7043,8 +6908,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "repository",
@@ -7243,8 +7106,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "repository",
@@ -7397,8 +7258,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "why",
@@ -7566,8 +7425,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "why",
@@ -7745,8 +7602,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "why",
@@ -8355,8 +8210,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "why",
@@ -8794,8 +8647,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "why"
@@ -9008,8 +8859,6 @@
             ]
           }
         },
-        "availability": "runtime",
-        "visibility": "public",
         "stability": "behaviorally_verified",
         "tags": [
           "why",
@@ -9026,14 +8875,6 @@
       }
     ],
     "modules": [
-      {
-        "id": "adr",
-        "title": "adr",
-        "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
-        "source": "declarative",
-        "capabilities": 20,
-        "capability_ids": []
-      },
       {
         "id": "application",
         "title": "application",
@@ -9349,7 +9190,7 @@
         "title": "session",
         "description": "Declarative objects of kind 'session' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 6,
+        "capabilities": 8,
         "capability_ids": []
       },
       {
@@ -9373,7 +9214,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 104,
+        "capabilities": 106,
         "capability_ids": []
       },
       {
@@ -9404,8 +9245,8 @@
     ]
   },
   "index": {
-    "fingerprint": "8cc3dc995990f9c0db344b26fe3e0ec5acefb0fabd78bdd7ff21ddbbeb053169",
-    "state": "degraded",
+    "fingerprint": "8deef6c22c64edbb4f6f10ef5769fa3ffab49546c2aaf182f2ccc55cc8990334",
+    "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
       "adrs": ".ai/repo/adrs",
@@ -9426,7 +9267,6 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 20,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -9446,328 +9286,14 @@
       "prompt": 4,
       "rule": 87,
       "scope": 1,
-      "session": 6,
+      "session": 8,
       "skill": 3,
       "taxonomy": 10,
-      "test": 104,
+      "test": 106,
       "use-case": 39
     },
-    "diagnostics": {
-      "error": 1
-    },
+    "diagnostics": {},
     "objects": [
-      {
-        "uri": "majordomus://adr/adr-0001",
-        "kind": "adr",
-        "identity": "adr-0001",
-        "title": "A Rust executable with a data-driven, read-only MCP surface over stdio",
-        "description": "A Rust executable with a data-driven, read-only MCP surface over stdio",
-        "path": ".ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 6860,
-        "tags": [
-          "rust",
-          "mcp",
-          "architecture"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0002",
-        "kind": "adr",
-        "identity": "adr-0002",
-        "title": "A canonical capability registry, with MCP, HTTP, OpenAPI, Swagger UI, the CLI and the reference as projections",
-        "description": "A canonical capability registry, with MCP, HTTP, OpenAPI, Swagger UI, the CLI and the reference as projections",
-        "path": ".ai/repo/adrs/0002-canonical-capability-registry.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 6278,
-        "tags": [
-          "registry",
-          "projections",
-          "architecture"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0003",
-        "kind": "adr",
-        "identity": "adr-0003",
-        "title": "One shared MCP server per repository, peers, and clients that start it themselves",
-        "description": "One shared MCP server per repository, peers, and clients that start it themselves",
-        "path": ".ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 11387,
-        "tags": [
-          "mcp",
-          "concurrency",
-          "architecture"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0004",
-        "kind": "adr",
-        "identity": "adr-0004",
-        "title": "One canonical declaration, composed modules, derived projections, and performance as evidence",
-        "description": "One canonical declaration, composed modules, derived projections, and performance as evidence",
-        "path": ".ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 12051,
-        "tags": [
-          "registry",
-          "performance",
-          "architecture"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0005",
-        "kind": "adr",
-        "identity": "adr-0005",
-        "title": "One projection plan over the canonical inputs, named owners for every truth, and the site as a view of the registry",
-        "description": "One projection plan over the canonical inputs, named owners for every truth, and the site as a view of the registry",
-        "path": ".ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 12216,
-        "tags": [
-          "projections",
-          "site",
-          "architecture"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0006",
-        "kind": "adr",
-        "identity": "adr-0006",
-        "title": "CI planned from one model of what affects what, gates as repository-owned scripts, and the site deployed from the run that verified it",
-        "description": "CI planned from one model of what affects what, gates as repository-owned scripts, and the site deployed from the run that verified it",
-        "path": ".ai/repo/adrs/0006-ci-planned-from-one-model-and-the-site-deployed-from-its-verified-run.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 5809,
-        "tags": [
-          "ci",
-          "deployment"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0007",
-        "kind": "adr",
-        "identity": "adr-0007",
-        "title": "Skills are data under the layer's skills section, and every surface that shows one is a projection",
-        "description": "Skills are data under the layer's skills section, and every surface that shows one is a projection",
-        "path": ".ai/repo/adrs/0007-skills-are-data-not-registrations.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 3731,
-        "tags": [
-          "skills",
-          "projections"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0008",
-        "kind": "adr",
-        "identity": "adr-0008",
-        "title": "Use cases are executable canonical objects of the layer",
-        "description": "Use cases are executable canonical objects of the layer",
-        "path": ".ai/repo/adrs/0008-executable-use-cases.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 6346,
-        "tags": [
-          "use-cases",
-          "evidence"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0009",
-        "kind": "adr",
-        "identity": "adr-0009",
-        "title": "Prompt capture happens below the model, or is reported as unavailable",
-        "description": "Prompt capture happens below the model, or is reported as unavailable",
-        "path": ".ai/repo/adrs/0009-prompt-capture-happens-below-the-model.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 9183,
-        "tags": [
-          "capture",
-          "providers",
-          "privacy"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0010",
-        "kind": "adr",
-        "identity": "adr-0010",
-        "title": "Curated knowledge is one kind with a class, not a second store",
-        "description": "Curated knowledge is one kind with a class, not a second store",
-        "path": ".ai/repo/adrs/0010-curated-knowledge-is-one-kind-with-a-class-not-a-second-stor.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 787,
-        "tags": [
-          "knowledge"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0011",
-        "kind": "adr",
-        "identity": "adr-0011",
-        "title": "Every directory in the layer carries a contract",
-        "description": "Every directory in the layer carries a contract",
-        "path": ".ai/repo/adrs/0011-every-directory-in-the-layer-carries-a-contract.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 6959,
-        "tags": [
-          "context",
-          "governance"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0012",
-        "kind": "adr",
-        "identity": "adr-0012",
-        "title": "The Cockpit is a sixth projection of the registry, not an application over it",
-        "description": "The Cockpit is a sixth projection of the registry, not an application over it",
-        "path": ".ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 9670,
-        "tags": [
-          "architecture",
-          "capabilities",
-          "rust",
-          "interface"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0013",
-        "kind": "adr",
-        "identity": "adr-0013",
-        "title": "Every web surface is discovered from its producer, resolved once, and projected",
-        "description": "Every web surface is discovered from its producer, resolved once, and projected",
-        "path": ".ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 6456,
-        "tags": [
-          "architecture",
-          "web"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0014",
-        "kind": "adr",
-        "identity": "adr-0014",
-        "title": "A closed session is a shared object of the layer, not a local note",
-        "description": "A closed session is a shared object of the layer, not a local note",
-        "path": ".ai/repo/adrs/0014-a-closed-session-is-a-shared-object-of-the-layer-not-a-local.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 5827,
-        "tags": [
-          "architecture",
-          "records"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0015",
-        "kind": "adr",
-        "identity": "adr-0015",
-        "title": "The episode boundary is drawn by the provider, not by the model",
-        "description": "The episode boundary is drawn by the provider, not by the model",
-        "path": ".ai/repo/adrs/0015-the-episode-boundary-is-drawn-by-the-provider-not-by-the-mod.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 6675,
-        "tags": [
-          "architecture",
-          "provider"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0016",
-        "kind": "adr",
-        "identity": "adr-0016",
-        "title": "The scenario is a body section, not a header field",
-        "description": "The scenario is a body section, not a header field",
-        "path": ".ai/repo/adrs/0016-the-scenario-is-a-body-section-not-a-header-field.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 4393,
-        "tags": [
-          "use-cases",
-          "schemas",
-          "context"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0017",
-        "kind": "adr",
-        "identity": "adr-0017",
-        "title": "An episode that opens is handed what the last one left",
-        "description": "An episode that opens is handed what the last one left",
-        "path": ".ai/repo/adrs/0017-an-episode-that-opens-is-handed-what-the-last-one-left.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 10383,
-        "tags": [
-          "architecture",
-          "continuity",
-          "provider"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0018",
-        "kind": "adr",
-        "identity": "adr-0018",
-        "title": "Operational moments are objects of the layer, not pages of the site",
-        "description": "Operational moments are objects of the layer, not pages of the site",
-        "path": ".ai/repo/adrs/0018-operational-moments-are-objects-of-the-layer-not-pages-of-th.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 6478,
-        "tags": [
-          "why",
-          "catalogue",
-          "projections"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0019",
-        "kind": "adr",
-        "identity": "adr-0019",
-        "title": "Distribution is one model, and every surface that ships the tool is a projection of it",
-        "description": "Distribution is one model, and every surface that ships the tool is a projection of it",
-        "path": ".ai/repo/adrs/0019-distribution-is-one-model-and-every-surface-that-ships-the-t.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 7389,
-        "tags": [
-          "distribution",
-          "release"
-        ]
-      },
-      {
-        "uri": "majordomus://adr/adr-0020",
-        "kind": "adr",
-        "identity": "adr-0020",
-        "title": "The capability graph is composed, not centralised, and projected twice",
-        "description": "The capability graph is composed, not centralised, and projected twice",
-        "path": ".ai/repo/adrs/0020-the-capability-graph-is-composed-not-centralised-and-projecte.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 10902,
-        "tags": [
-          "architecture",
-          "capabilities",
-          "interface",
-          "web"
-        ]
-      },
       {
         "uri": "majordomus://application/ci-gated-project",
         "kind": "application",
@@ -12383,7 +11909,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 34685
+        "bytes": 34700
       },
       {
         "uri": "majordomus://document/docs/README.md",
@@ -12455,7 +11981,7 @@
         "title": "Why — the operational moments, as data",
         "path": "docs/WHY.md",
         "source_class": "document",
-        "bytes": 8797
+        "bytes": 8813
       },
       {
         "uri": "majordomus://document/docs/claims/adr-catalogue.md",
@@ -13701,7 +13227,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 69274
+        "bytes": 71126
       },
       {
         "uri": "majordomus://implementation/lib/check.sh",
@@ -13781,7 +13307,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 51890
+        "bytes": 53225
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -15067,7 +14593,7 @@
         "path": ".ai/repo/project/issues/I0908.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2360
+        "bytes": 2368
       },
       {
         "uri": "majordomus://issue/I0909",
@@ -15364,7 +14890,7 @@
         "path": ".ai/repo/project/issues/I1003.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3425
+        "bytes": 2156
       },
       {
         "uri": "majordomus://issue/I1004",
@@ -15375,7 +14901,7 @@
         "path": ".ai/repo/project/issues/I1004.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3415
+        "bytes": 2111
       },
       {
         "uri": "majordomus://issue/I1005",
@@ -15386,7 +14912,7 @@
         "path": ".ai/repo/project/issues/I1005.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1984
+        "bytes": 1941
       },
       {
         "uri": "majordomus://issue/I1006",
@@ -15606,7 +15132,7 @@
         "path": ".ai/repo/project/issues/I1025.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2760
+        "bytes": 2111
       },
       {
         "uri": "majordomus://issue/I1026",
@@ -16473,7 +15999,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 3534
+        "bytes": 4113
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -17937,6 +17463,28 @@
         "bytes": 838
       },
       {
+        "uri": "majordomus://session/s-20260906100402-1b4e",
+        "kind": "session",
+        "identity": "s-20260906100402-1b4e",
+        "title": "Session s-20260906100402-1b4e on feature/ai-artifacts",
+        "description": "Session s-20260906100402-1b4e on feature/ai-artifacts",
+        "path": ".ai/repo/sessions/20260906T104136Z--s-20260906100402-1b4e--feature-ai-artifacts--2b42014--217c31a51008928f.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 776
+      },
+      {
+        "uri": "majordomus://session/s-20260906104842-c7cf",
+        "kind": "session",
+        "identity": "s-20260906104842-c7cf",
+        "title": "Session s-20260906104842-c7cf on feature/ai-artifacts",
+        "description": "Session s-20260906104842-c7cf on feature/ai-artifacts",
+        "path": ".ai/repo/sessions/20260906T110558Z--s-20260906104842-c7cf--feature-ai-artifacts--2b42014--159467df2ddcde14.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 11487
+      },
+      {
         "uri": "majordomus://skill/deploy-site",
         "kind": "skill",
         "identity": "deploy-site",
@@ -18326,7 +17874,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 10871
+        "bytes": 11520
       },
       {
         "uri": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -18358,7 +17906,7 @@
         "identity": "test/cases/29_prompt_capture.sh",
         "path": "test/cases/29_prompt_capture.sh",
         "source_class": "case",
-        "bytes": 22930
+        "bytes": 25884
       },
       {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
@@ -18567,6 +18115,22 @@
         "path": "test/cases/56_derived_current_gate.sh",
         "source_class": "case",
         "bytes": 4945
+      },
+      {
+        "uri": "majordomus://test/test/cases/57_derived_merge_driver.sh",
+        "kind": "test",
+        "identity": "test/cases/57_derived_merge_driver.sh",
+        "path": "test/cases/57_derived_merge_driver.sh",
+        "source_class": "case",
+        "bytes": 6201
+      },
+      {
+        "uri": "majordomus://test/test/cases/58_home_path_gate.sh",
+        "kind": "test",
+        "identity": "test/cases/58_home_path_gate.sh",
+        "path": "test/cases/58_home_path_gate.sh",
+        "source_class": "case",
+        "bytes": 2746
       },
       {
         "uri": "majordomus://test/test/cases/60_session_lifecycle.sh",
@@ -18918,7 +18482,7 @@
         "identity": "test/cases/98_why_catalogue.sh",
         "path": "test/cases/98_why_catalogue.sh",
         "source_class": "case",
-        "bytes": 9728
+        "bytes": 9742
       },
       {
         "uri": "majordomus://test/test/cases/99_adr.sh",
@@ -19368,7 +18932,7 @@
       "identity": [
         "id"
       ],
-      "objects": 20
+      "objects": 0
     },
     {
       "name": "application",
@@ -19576,7 +19140,7 @@
       "identity": [
         "session_id"
       ],
-      "objects": 6
+      "objects": 8
     },
     {
       "name": "session-context",
@@ -19613,7 +19177,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 104
+      "objects": 106
     },
     {
       "name": "use-case",
@@ -20679,10 +20243,6 @@
               {
                 "name": "distribution",
                 "help": "The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/"
-              },
-              {
-                "name": "graph",
-                "help": "docs/generated/graph.json and its schema: the composed graph as data"
               }
             ],
             "defaults": [
