@@ -172,7 +172,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
-      <span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span>
+      <span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">described</span></span>
       <a href="https://korczis.github.io/prismatic-majordomus/use-cases/knowledge/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Repository knowledge</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">basic</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">reviewer</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">maintainer</span><span class="rounded border border-default px-1.5 py-0.5 font-mono bg-success-soft text-fg-success-strong">read-only</span>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
 <p>Something happened to the task last week: a checkpoint, a decision, a handover. The person asking was not there. The ledger has every event, but reading a JSON file end to end is not an answer, and a ledger with a corrupt line in it is worse than none if the tool skips it quietly.</p>
@@ -183,108 +183,50 @@
 <li><code>search &lt;text&gt;</code>: durable records matched literally across kinds</li>
 <li><code>watch</code>: the retention caps on the ledger, the handovers and the checkpoints</li>
 </ul>
-<h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
+<h2 id="scenario"><a class="zola-anchor" href="#scenario" aria-label="Anchor link for: scenario">Scenario</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">etup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">ctive-task-records</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">g</span><span class="z-l-4 z-d-1">iven</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">an active task that has already produced a checkpoint, a decision and an open question</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">teps</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> h</span><span class="z-l-8 z-d-8">istory</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">history</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the ledger read back oldest first, one event per line, from a closed vocabulary</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">task.started</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">task.checkpoint</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">decision.recorded</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> b</span><span class="z-l-8 z-d-8">y-event</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">history</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--event</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">task.checkpoint</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">only the events of one kind</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">task.checkpoint</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_not_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">decision.recorded</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> v</span><span class="z-l-8 z-d-8">alid</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">history</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--validate</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">every line is a well-formed event; a malformed line would be a failure, not a skipped record</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">every event is registered</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">history --validate: ok</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> f</span><span class="z-l-8 z-d-8">ind</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">search</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">parser</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a durable record found literally, across kinds, without an index</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^decision </span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">^checkpoint </span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">match</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">aps</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">watch</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the ledger, the handovers and the checkpoints are under their retention caps</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^OK   retention   ledger</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">^OK   retention   checkpoints</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">0 drift finding</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">every event has a name from the closed vocabulary</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the ledger is never silently repaired or truncated</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">rotation archives, it does not delete</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
 <p>What happened is readable by task, event and time, a malformed line is a failure rather than a skipped record, and the ledger stays within its cap by rotating the oldest lines into an archive.</p>
 </article>
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
-    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">active-task-records</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-3">
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>an active task that has already produced a checkpoint, a decision and an open question</span></li></ul>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
-        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-words font-mono text-xs">majordomus history</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-words font-mono text-xs">majordomus history --event task.checkpoint</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-words font-mono text-xs">majordomus history --validate</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">4</span><code class="min-w-0 break-words font-mono text-xs">majordomus search parser</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">5</span><code class="min-w-0 break-words font-mono text-xs">majordomus watch</code></li></ol>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>every event has a name from the closed vocabulary</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>the ledger is never silently repaired or truncated</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>rotation archives, it does not delete</span></li></ul>
-      </div>
-    </div>
-
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
-    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 5 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
-    <ol class="mt-4 space-y-4"><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">1</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/history/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus history</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the ledger read back oldest first, one event per line, from a closed vocabulary</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>&lt;time&gt;  projections.updated -                      &lt;head&gt;  targets=3
-&lt;time&gt;  task.started        t-&lt;id&gt;  &lt;head&gt;  profile=implementation scope=lib
-&lt;time&gt;  task.checkpoint     t-&lt;id&gt;  &lt;head&gt;  &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
-&lt;time&gt;  decision.recorded   t-&lt;id&gt;  &lt;head&gt;  refuse tabs in the parser
-&lt;time&gt;  question.opened     t-&lt;id&gt;  &lt;head&gt;  should tabs be an error or a warning?</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /task.started/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /task.checkpoint/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /decision.recorded/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">2</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/history/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus history --event task.checkpoint</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">only the events of one kind</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>&lt;time&gt;  task.checkpoint     t-&lt;id&gt;  &lt;head&gt;  &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /task.checkpoint/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_not_contains /decision.recorded/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">3</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/history/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus history --validate</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">every line is a well-formed event; a malformed line would be a failure, not a skipped record</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>OK   ledger      5 lines — every line carries ts and event, and every event is registered
-history --validate: ok</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /every event is registered/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /history --validate: ok/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">4</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/search/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus search parser</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">a durable record found literally, across kinds, without an index</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>checkpoint  .ai/local/state/checkpoints/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md:16  the parser now refuses tabs
-decision    .ai/local/state/decisions.md:13  ## &lt;date&gt; — refuse tabs in the parser
-history     .ai/local/state/ledger.jsonl:4  {&quot;ts&quot;:&quot;&lt;time&gt;&quot;,&quot;event&quot;:&quot;decision.recorded&quot;,&quot;head&quot;:&quot;&lt;sha&gt;&quot;,&quot;branch&quot;:&quot;mai
-search: 3 match(es)</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^decision /</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^checkpoint /</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /match/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">5</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/watch/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus watch</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the ledger, the handovers and the checkpoints are under their retention caps</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>OK   layout      .ai/manifest.yaml — schema ai-repository/v1
-OK   layout      .ai/repo/scope.yaml — version 1; 21 in pathspec(s); every key is one the schema declares
-OK   layout      .ai/local/ — ignored, and nothing under it is tracked
-OK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool
-OK   checkpoint  t-&lt;id&gt; — &lt;n&gt;m ago, interval 15m
-INFO checkpoint  .ai/local/state/checkpoints/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md — newest record, &lt;n&gt;m ago  [reproduce: majordomus checkpoint --show]
-OK   records     ledger.jsonl — every line is a well-formed event
-OK   policy      19 key(s) — every policy value the code reads is declared, with no reader-side default
-OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own
-OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions
-OK   context     .ai/ — 15 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
-OK   policy      policy+profiles — match the last update (&lt;hash12&gt;)
-INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
-OK   records     decisions.md — every entry is attributable
-INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
-OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
-OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
-INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   projection  AGENTS.md — content matches its stamp
-OK   projection  CLAUDE.md — content matches its stamp
-OK   projection  GEMINI.md — content matches its stamp
-OK   context     builder — 55 lines, budget 300  [reproduce: majordomus context]
-OK   capture     .ai/local/prompts — ignored and untracked
-OK   capture     .ai/local/prompts — no records yet; the archive is empty
-OK   prompt      4 asset(s) — front matter valid, every token known
-OK   records     open-questions.md — every entry parses
-OK   retention   ledger — 5 lines, cap 5000
-OK   retention   handovers — 0 files, cap 200
-OK   retention   checkpoints — 1 files, cap 500
-INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))
-OK   rules       48 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
-OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
-OK   session     .ai/local/session-contexts — ignored and untracked
-OK   session     .ai/local/session-contexts — no working contexts yet; the store is empty
-INFO skill       .ai/repo/skills/ — no skills; nothing to validate
-OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)
-·    budget      watch — &lt;timed against the policy budget&gt;
-OK   state       t-&lt;id&gt; — active; scope, checkpoint, blockers and records reported above
-OK   checkpoint  &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md — &lt;n&gt;m ago
-watch: 0 drift finding(s)</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^OK   retention   ledger/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^OK   retention   checkpoints/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /0 drift finding/</li></ul>
-      </li></ol>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
+    <p class="mt-2 text-sm text-body">This use case is described, not proved: it names its commands and rules, and nothing executes it. It cannot be more than <em>described</em> until a scenario is added.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
@@ -305,7 +247,7 @@ watch: 0 drift finding(s)</code></pre>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/read-back-what-happened.md</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
-        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">described</dd></div>
       </dl>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -340,7 +282,7 @@ watch: 0 drift finding(s)</code></pre>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0169c885ea692ce0bf2522af704ea3527c04cdc0" class="font-mono hover:underline">0169c88</a> · inputs <span class="font-mono">7e3f0e074123</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ad8ebd76fac78e156985f691fb85a48e48ebc11b" class="font-mono hover:underline">ad8ebd7</a> · inputs <span class="font-mono">4896c24baabb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

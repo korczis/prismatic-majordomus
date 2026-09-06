@@ -223,23 +223,28 @@ so the first use case of a repository is one file.</p>
 <span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">laims</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">d</span><span class="z-l-8 z-d-8">ispatcher-wiring</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> ids in docs/CLAIMS.yaml</span></span>
 <span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">esponsibilities</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">d</span><span class="z-l-8 z-d-8">octor</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> ids in docs/RESPONSIBILITIES.yaml</span></span>
 <span class="giallo-l"><span class="z-l-4 z-d-1">a</span><span class="z-l-4 z-d-1">pplications</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">c</span><span class="z-l-8 z-d-8">i-gated-project</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> each names this use case back</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">cenario</span><span class="z-l-6 z-d-9">:</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">  s</span><span class="z-l-4 z-d-1">etup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> i</span><span class="z-l-8 z-d-8">nstalled</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> test/fixtures/commands/setup/installed.sh</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">  g</span><span class="z-l-4 z-d-1">iven</span><span class="z-l-6 z-d-9">:</span></span>
-<span class="giallo-l"><span>    -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">Majordomus installed; no git hook invokes the tool yet</span><span class="z-l-8 z-d-8">&#39;</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">  s</span><span class="z-l-4 z-d-1">teps</span><span class="z-l-6 z-d-9">:</span></span>
-<span class="giallo-l"><span>    -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> f</span><span class="z-l-8 z-d-8">ind-the-gap</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">      r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">doctor</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">      n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the enforcement the policy declares reaches no hook</span><span class="z-l-8 z-d-8">&#39;</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">        e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 10</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">        s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^FAIL wiring</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">doctor-on-commit</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
-<span class="giallo-l"><span class="z-l-4 z-d-1">  t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
-<span class="giallo-l"><span>    -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a declared enforcement that nothing invokes is a failure, not a green line</span><span class="z-l-8 z-d-8">&#39;</span></span>
 <span class="giallo-l"><span>---</span></span>
 <span class="giallo-l"></span>
 <span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> Situation</span></span>
 <span class="giallo-l"><span>...</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> Scenario</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>```</span><span class="z-l-8 z-d-8">y</span><span class="z-l-8 z-d-8">aml</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">etup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> i</span><span class="z-l-8 z-d-8">nstalled</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> test/fixtures/commands/setup/installed.sh</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">g</span><span class="z-l-4 z-d-1">iven</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">Majordomus installed; no git hook invokes the tool yet</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">teps</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> f</span><span class="z-l-8 z-d-8">ind-the-gap</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">doctor</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the enforcement the policy declares reaches no hook</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 10</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^FAIL wiring</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">doctor-on-commit</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a declared enforcement that nothing invokes is a failure, not a green line</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>```</span></span>
+<span class="giallo-l"></span>
 <span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> Outcome</span></span>
 <span class="giallo-l"><span>...</span></span></code></pre>
 <p>What the object does not carry, because it is derived: a command's description or
@@ -248,10 +253,15 @@ related use cases, the category's title or count, and the observed maturity. The
 refuses a key it does not declare, and <code>majordomus usecase validate</code> refuses a reference
 that does not resolve, a category the taxonomy lacks, a setup script or stdin body that
 does not exist, a scenario step that runs a command the use case does not list, a body
-without <code># Situation</code> and <code># Outcome</code>, an id that is not the file name, a duplicate id, and
-an active use case that targets <code>guaranteed</code> without a scenario.</p>
+without <code># Situation</code>, <code># Scenario</code> and <code># Outcome</code>, an id that is not the file name, a
+duplicate id, and an active use case that targets <code>guaranteed</code> without a scenario.</p>
 <h2 id="given-when-then"><a class="zola-anchor" href="#given-when-then" aria-label="Anchor link for: given-when-then">Given, when, then</a></h2>
-<p>The scenario is the executable form of the narrative. <code>setup</code> names a prepared state (a
+<p>The scenario is the executable form of the narrative, and it is a body section rather
+than a header field: front matter says what an object is — its identity and its
+classification — and a twenty-line program is neither. <code># Scenario</code> holds exactly one
+fenced <code>yaml</code> block, between <code># Situation</code> and <code># Outcome</code>, so that a reader meets the
+situation, the proof and the result in the order they happen.</p>
+<p><code>setup</code> names a prepared state (a
 shell script under the fixtures, shared with the command demonstrations, so what a use
 case starts from is what a command page shows); <code>given</code> says it in words. Each step is
 one real invocation of <code>bin/majordomus</code>, in a disposable repository, in order, in the same
@@ -376,7 +386,7 @@ count to bump, and the related links of every other page recompute themselves.</
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0169c885ea692ce0bf2522af704ea3527c04cdc0" class="font-mono hover:underline">0169c88</a> · inputs <span class="font-mono">7e3f0e074123</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ad8ebd76fac78e156985f691fb85a48e48ebc11b" class="font-mono hover:underline">ad8ebd7</a> · inputs <span class="font-mono">4896c24baabb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

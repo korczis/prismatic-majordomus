@@ -172,7 +172,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
-      <span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span>
+      <span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">described</span></span>
       <a href="https://korczis.github.io/prismatic-majordomus/use-cases/mcp/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Serving the layer to AI clients</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">basic</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">agent</span><span class="rounded border border-default px-1.5 py-0.5 font-mono bg-success-soft text-fg-success-strong">read-only</span>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
 <p>A client wants the rule about scope, or the decision about the parser, and has the whole layer in front of it. Reading every file to find one is what makes agents slow and expensive; asking a person is what makes them wrong.</p>
@@ -183,101 +183,37 @@
 <li><code>prompt list</code>: the prompt assets, also served as resources</li>
 <li>over MCP: <code>majordomus_search</code>, <code>majordomus_get</code> by <code>majordomus://</code> URI, <code>majordomus_list</code> by kind</li>
 </ul>
-<h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
+<h2 id="scenario"><a class="zola-anchor" href="#scenario" aria-label="Anchor link for: scenario">Scenario</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">etup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">ctive-task-records</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">g</span><span class="z-l-4 z-d-1">iven</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">an active task that has already produced a checkpoint, a decision and an open question</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">teps</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">earch</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">search</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">parser</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">durable records matched literally, across kinds, without an index</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^decision </span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">parser</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">match</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> n</span><span class="z-l-8 z-d-8">odes</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">knowledge</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">nodes</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--kind</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">rule</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">one node per canonical object of one kind, with its identity</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^rule </span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> p</span><span class="z-l-8 z-d-8">rompts</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">prompt</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">list</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the repository’s own prompt assets, the ones an MCP client can also read as resources</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^continue </span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">^debug </span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the shell and the MCP server answer from the same files</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a majordomus:// URI resolves the same way through the resource read, the tool and the HTTP route</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">no index has to exist for the literal search to work</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
 <p>One question, one answer, from the shell or from the server, without reading the layer end to end. The URI a client gets back resolves the same way everywhere.</p>
 </article>
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
-    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">active-task-records</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-3">
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>an active task that has already produced a checkpoint, a decision and an open question</span></li></ul>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
-        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-words font-mono text-xs">majordomus search parser</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-words font-mono text-xs">majordomus knowledge nodes --kind rule</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-words font-mono text-xs">majordomus prompt list</code></li></ol>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>the shell and the MCP server answer from the same files</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>a majordomus:// URI resolves the same way through the resource read, the tool and the HTTP route</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>no index has to exist for the literal search to work</span></li></ul>
-      </div>
-    </div>
-
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
-    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 3 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
-    <ol class="mt-4 space-y-4"><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">1</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/search/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus search parser</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">durable records matched literally, across kinds, without an index</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>checkpoint  .ai/local/state/checkpoints/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md:16  the parser now refuses tabs
-decision    .ai/local/state/decisions.md:13  ## &lt;date&gt; — refuse tabs in the parser
-history     .ai/local/state/ledger.jsonl:4  {&quot;ts&quot;:&quot;&lt;time&gt;&quot;,&quot;event&quot;:&quot;decision.recorded&quot;,&quot;head&quot;:&quot;&lt;sha&gt;&quot;,&quot;branch&quot;:&quot;mai
-search: 3 match(es)</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^decision /</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /parser/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /match/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">2</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/knowledge/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus knowledge nodes --kind rule</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">one node per canonical object of one kind, with its identity</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>rule        shared      d74138475923  rule:majordomus.adr-integrity                        Architecture decision integrity
-rule        shared      1c35b4925c67  rule:majordomus.ai-layout-integrity                  AI layer integrity
-rule        shared      6b737b2767d6  rule:majordomus.blocker-resolution                   Blocker resolution
-rule        shared      6cba4af62112  rule:majordomus.bootstrap-integrity                  Bootstrap integrity
-rule        shared      826525b6e3a9  rule:majordomus.catalogue-integrity                  Catalogue integrity
-rule        shared      a56642f78cc5  rule:majordomus.checkpoint-freshness                 Checkpoint freshness
-rule        shared      78f8269d371d  rule:majordomus.command-coverage                     Every public command is exercised and refuted
-rule        shared      e468040ac890  rule:majordomus.command-surface                      The command surface is declared and reconciled
-rule        shared      523fbb99c024  rule:majordomus.context-budget                       Context budget
-rule        shared      018f8d63e837  rule:majordomus.context-integrity                    Context integrity
-rule        shared      f5336d1b0b06  rule:majordomus.dag-integrity                        Dependency graph integrity
-rule        shared      d804fedbbf1a  rule:majordomus.decision-records                     Decision records
-rule        shared      f795ca7a1da4  rule:majordomus.decision-threshold                   The decision threshold
-rule        shared      a843319fda37  rule:majordomus.define-done-first                    Define done before executing
-rule        shared      87de78333726  rule:majordomus.depth-is-not-verbosity               Execution depth is not output verbosity
-rule        shared      2033490a50b9  rule:majordomus.doctrine-wiring-integrity            Doctrine wiring integrity
-rule        shared      afc294593532  rule:majordomus.enforcement-wiring                   Enforcement wiring
-rule        shared      c02aa47f226c  rule:majordomus.externalise-decisions                Externalise decisions and durable state
-rule        shared      db680840291e  rule:majordomus.handover-integrity                   Handover integrity
-rule        shared      c7307cc9d919  rule:majordomus.handovers-carry-state                Handovers transfer state, not transcripts
-rule        shared      5eae52cc5589  rule:majordomus.isolated-parallelism                 Parallel work requires isolation
-rule        shared      7fa1a1c5c27e  rule:majordomus.justified-escalation                 Escalate capability and effort only when justified
-rule        shared      ebe4eb49d09c  rule:majordomus.layout-integrity                     Layout integrity
-rule        shared      d3c88435f42d  rule:majordomus.ledger-integrity                     Ledger integrity
-rule        shared      cbd041431c84  rule:majordomus.minimum-sufficient-context           Load minimum sufficient context
-rule        shared      d1bb01668123  rule:majordomus.note-integrity                       Note integrity
-rule        shared      fb8aff3c3984  rule:majordomus.one-worker-one-scope                 One worker, one clear scope
-rule        shared      51e122071249  rule:majordomus.policy-completeness                  Policy completeness
-rule        shared      ae11a7b983a5  rule:majordomus.policy-integrity                     Policy integrity
-rule        shared      abbd45d5b53e  rule:majordomus.profile-requirements                 Profile requirements
-rule        shared      f2fd82b09aaa  rule:majordomus.project-integrity                    Project model integrity
-rule        shared      bc3eadf4f9f5  rule:majordomus.projection-integrity                 Projection integrity
-rule        shared      090884980623  rule:majordomus.prompt-capture                       Prompt capture is proven, or reported unavailable
-rule        shared      c820246fbdc1  rule:majordomus.prompt-integrity                     Prompt integrity
-rule        shared      58fca43f73a9  rule:majordomus.questions-store-integrity            Questions store integrity
-rule        shared      cc00432f6e4e  rule:majordomus.retention-caps                       Retention caps
-rule        shared      848a019157cf  rule:majordomus.roadmap-integrity                    The roadmap is a projection, never a document
-rule        shared      e254bad15ecd  rule:majordomus.rule-package-integrity               Rule package integrity
-rule        shared      5bae41c80fda  rule:majordomus.scope-integrity                      Scope integrity
-rule        shared      a5edecdf55cf  rule:majordomus.session-lifecycle                    The episode boundary is drawn below the model, and its working context is local
-rule        shared      8f779c44c5c2  rule:majordomus.session-records                      Session records are shared objects with a closed field set
-rule        shared      84f5b9f70992  rule:majordomus.sessions-are-workers                 Sessions are workers, not memory
-rule        shared      09607d5f2e00  rule:majordomus.skill-integrity                      Skill integrity
-rule        shared      70a6e878886b  rule:majordomus.state-consistency                    State consistency
-rule        shared      7e381d15f9f3  rule:majordomus.task-continuity                      Task continuity
-rule        shared      1955176df430  rule:majordomus.use-case-coverage                    Use-case coverage
-rule        shared      489da6725d95  rule:majordomus.verification-integrity               Verification integrity
-rule        shared      1b01d93b42fa  rule:majordomus.verify-outcomes                      Verify outcomes, not activity
-knowledge nodes: 48 in scope all, kind rule</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^rule /</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">3</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/prompt/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus prompt list</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the repository’s own prompt assets, the ones an MCP client can also read as resources</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>continue               resume a task from durable state instead of from someone&#39;s memory
-debug                  frame a defect so that the fix is proven, not asserted
-handover               produce a continuation record body for the current task
-review                 review the working diff against the claimed scope and the finish contract</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^continue /</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^debug /</li></ul>
-      </li></ol>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
+    <p class="mt-2 text-sm text-body">This use case is described, not proved: it names its commands and rules, and nothing executes it. It cannot be more than <em>described</em> until a scenario is added.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
@@ -299,7 +235,7 @@ review                 review the working diff against the claimed scope and the
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/find-an-object-without-reading-everything.md</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
-        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">described</dd></div>
       </dl>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -334,7 +270,7 @@ review                 review the working diff against the claimed scope and the
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0169c885ea692ce0bf2522af704ea3527c04cdc0" class="font-mono hover:underline">0169c88</a> · inputs <span class="font-mono">7e3f0e074123</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ad8ebd76fac78e156985f691fb85a48e48ebc11b" class="font-mono hover:underline">ad8ebd7</a> · inputs <span class="font-mono">4896c24baabb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -198,12 +198,13 @@ projections), <a href="../.ai/repo/adrs/0004-canonical-architecture-and-performa
 <span class="giallo-l"><span>        ↓</span></span>
 <span class="giallo-l"><span>MODULE COMPOSITION          module! { id, title, description, stability, capabilities: [...] }</span></span>
 <span class="giallo-l"><span>        ↓</span></span>
-<span class="giallo-l"><span>ROOT COMPOSITION            compose_modules![repository, objects, capabilities, peers, perf]</span></span>
+<span class="giallo-l"><span>ROOT COMPOSITION            compose_modules![repository, objects, capabilities, graph, health, peers, perf]</span></span>
 <span class="giallo-l"><span>        ↓</span></span>
 <span class="giallo-l"><span>CAPABILITY REGISTRY         + every declarative object of the layer, validated, frozen, fingerprinted</span></span>
 <span class="giallo-l"><span>        ↓</span></span>
-<span class="giallo-l"><span>DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · benchmark targets and coverage</span></span>
-<span class="giallo-l"><span>                            · cache policy · perf counters · docs/generated/*</span></span></code></pre>
+<span class="giallo-l"><span>DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · the Cockpit</span></span>
+<span class="giallo-l"><span>                            · benchmark targets and coverage · cache policy · perf counters</span></span>
+<span class="giallo-l"><span>                            · docs/generated/* · the website&#39;s /registry/ pages</span></span></code></pre>
 <p>A contributor adding one capability edits one <code>capability!</code> block (with its typed input
 and output and the input's benchmark cases) and runs <code>majordomus generate</code>. Nothing else.</p>
 <h2 id="what-is-canonical-what-is-derived-what-is-not-authoritative"><a class="zola-anchor" href="#what-is-canonical-what-is-derived-what-is-not-authoritative" aria-label="Anchor link for: what-is-canonical-what-is-derived-what-is-not-authoritative">What is canonical, what is derived, what is not authoritative</a></h2>
@@ -213,12 +214,15 @@ and output and the input's benchmark cases) and runs <code>majordomus generate</
 <span class="giallo-l"><span>  builtin/&lt;module&gt;.rs, composed by          OpenAPI document               the committed snapshots</span></span>
 <span class="giallo-l"><span>  module! and compose_modules!              Swagger UI configuration         under docs/generated/</span></span>
 <span class="giallo-l"><span>declarative objects of the layer            capabilities list/describe       (caches of the registry)</span></span>
-<span class="giallo-l"><span>  .ai/** as sources.yaml maps them          benchmark targets, coverage    a latency number in prose</span></span>
-<span class="giallo-l"><span>how each kind is read and validated         cache behaviour (executor)       (evidence lives under</span></span>
-<span class="giallo-l"><span>  share/kinds.yaml, share/schemas/*.json    perf counters                    .ai/local/benchmarks/ and</span></span>
-<span class="giallo-l"><span>  .ai/repo/knowledge/kinds.yaml, schemas/   docs/generated/*                 .ai/repo/benchmarks/rust/)</span></span>
-<span class="giallo-l"><span>the regression policy                       share/allow/*.txt (shell tool)</span></span>
-<span class="giallo-l"><span>  .ai/repo/benchmarks/rust/policy.yaml</span></span></code></pre><pre class="mermaid">
+<span class="giallo-l"><span>  .ai/** as sources.yaml maps them          the Cockpit&#39;s pages,           a latency number in prose</span></span>
+<span class="giallo-l"><span>how each kind is read and validated           navigation, search, palette,   (evidence lives under</span></span>
+<span class="giallo-l"><span>  share/kinds.yaml, share/schemas/*.json      runner form and graphs         .ai/local/benchmarks/ and</span></span>
+<span class="giallo-l"><span>  .ai/repo/knowledge/kinds.yaml, schemas/   benchmark targets, coverage      .ai/repo/benchmarks/rust/)</span></span>
+<span class="giallo-l"><span>the regression policy                       cache behaviour (executor)     the Cockpit&#39;s own markup</span></span>
+<span class="giallo-l"><span>  .ai/repo/benchmarks/rust/policy.yaml      perf counters                    (a projection, never a</span></span>
+<span class="giallo-l"><span>the graph derivations                       docs/generated/*                  place a fact is stated)</span></span>
+<span class="giallo-l"><span>  graph::DERIVATIONS, from the registry     share/allow/*.txt (shell tool)</span></span>
+<span class="giallo-l"><span>  and the index                             the website&#39;s /registry/ pages</span></span></code></pre><pre class="mermaid">
 flowchart TD
   B[typed executable descriptors&lt;br/&gt;capability/builtin.rs] --&gt; R[CapabilityRegistry]
   D[declarative objects&lt;br/&gt;.ai/** via sources.yaml] --&gt; I[index] --&gt; R
@@ -227,11 +231,18 @@ flowchart TD
   R --&gt; H[HTTP routes]
   R --&gt; O[OpenAPI document] --&gt; S[Swagger UI]
   R --&gt; C[capabilities list / describe]
-  R --&gt; G[docs/generated]
+  R --&gt; K2[the Cockpit&lt;br/&gt;pages, navigation, runner, graphs]
+  R --&gt; G[docs/generated] --&gt; W[the website's /registry/ pages]
   K --&gt; A[share/allow/*.txt]
 </pre>
 <p>A change to one descriptor, one declarative file, one kind or one schema reaches every
 projection on the next start or the next <code>majordomus generate</code>; nothing is edited twice.</p>
+<p>The Cockpit (<a href="https://korczis.github.io/prismatic-majordomus/docs/cockpit/"><code>COCKPIT.md</code></a>, ADR 12) is the projection a person reads. It is on
+this list rather than beside it: its pages are laid out from what a capability answered
+through the same executor every other transport calls, its navigation catalogues are the
+registry's modules and the index's kinds, its runner's form is generated from the input
+schema, and its examples are the capability's own benchmark cases. Nothing in it names a
+capability, a kind, a route or a graph.</p>
 <h2 id="the-model"><a class="zola-anchor" href="#the-model" aria-label="Anchor link for: the-model">The model</a></h2>
 <p>A <strong>capability</strong> is a descriptor with:</p>
 <div class="overflow-x-auto">
@@ -526,7 +537,7 @@ with a document edit. The committed files are caches: reviewable, never edited.<
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0169c885ea692ce0bf2522af704ea3527c04cdc0" class="font-mono hover:underline">0169c88</a> · inputs <span class="font-mono">7e3f0e074123</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ad8ebd76fac78e156985f691fb85a48e48ebc11b" class="font-mono hover:underline">ad8ebd7</a> · inputs <span class="font-mono">4896c24baabb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

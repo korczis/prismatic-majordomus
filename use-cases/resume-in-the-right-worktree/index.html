@@ -172,7 +172,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
-      <span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span>
+      <span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">described</span></span>
       <a href="https://korczis.github.io/prismatic-majordomus/use-cases/continuity/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Sessions and handover</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">intermediate</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">agent</span><span class="rounded border border-default px-1.5 py-0.5 font-mono bg-neutral-secondary-medium text-heading">writes state</span>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
 <p>Two checkouts of one repository, two workers. A task record that travels with a branch into a worktree that never claimed it would hold the wrong person to the wrong scope, and a handover from another branch offered as the one to resume from would send the next worker down the wrong path.</p>
@@ -182,64 +182,37 @@
 <li><code>check</code>: refuses to evaluate a task this checkout does not own</li>
 <li><code>context</code>: this worktree’s own identity, with no task borrowed from elsewhere</li>
 </ul>
-<h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
+<h2 id="scenario"><a class="zola-anchor" href="#scenario" aria-label="Anchor link for: scenario">Scenario</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">etup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">wo-worktrees</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">g</span><span class="z-l-4 z-d-1">iven</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">installed and wired, with a second worktree on another branch holding an active task scoped to lib</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">teps</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> n</span><span class="z-l-8 z-d-8">othing-here</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">handover</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--resolve</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">no handover was written for this worktree and branch; absence is reported, never a record from elsewhere</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">No relevant handover</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> n</span><span class="z-l-8 z-d-8">ot-my-task</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">check</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the other worktree’s task is not this checkout’s; check reports no active task here instead of holding this checkout to a scope it never claimed</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 12</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">no active task</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">ead-only-view</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">context</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">what this worktree knows: its own git identity and no task</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^## GIT</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">none active</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">handover --resolve never offered a record from another branch</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">check did not enforce the other worktree’s scope here</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">local state under .ai/local/ is this checkout’s own and untracked</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
 <p>Records are resolved by worktree and branch. What another checkout is doing is visible through overlap, not enforced here, and nothing under .ai/local/ is shared through git.</p>
 </article>
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
-    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">two-worktrees</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-3">
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>installed and wired, with a second worktree on another branch holding an active task scoped to lib</span></li></ul>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
-        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-words font-mono text-xs">majordomus handover --resolve</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-words font-mono text-xs">majordomus check</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-words font-mono text-xs">majordomus context</code></li></ol>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>handover --resolve never offered a record from another branch</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>check did not enforce the other worktree’s scope here</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>local state under .ai/local/ is this checkout’s own and untracked</span></li></ul>
-      </div>
-    </div>
-
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
-    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 3 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
-    <ol class="mt-4 space-y-4"><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">1</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/handover/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus handover --resolve</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">no handover was written for this worktree and branch; absence is reported, never a record from elsewhere</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>No relevant handover.</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /No relevant handover/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">2</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/check/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus check</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 12</span></div><p class="mt-2 text-sm text-body">the other worktree’s task is not this checkout’s; check reports no active task here instead of holding this checkout to a scope it never claimed</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>majordomus: no active task (.ai/local/state/current.yaml); run: majordomus start</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 12</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /no active task/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">3</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/context/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus context</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">what this worktree knows: its own git identity and no task</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code># Majordomus context — &lt;time&gt;
-# a projection of durable state, not a source of truth: validate every line against git
-
-## GIT
-repository   &lt;repo&gt;
-branch       main
-head         &lt;sha&gt;
-working_tree clean
-
-## TASK
-none active — run: majordomus start &quot;&lt;task&gt;&quot; --scope &lt;paths&gt;
-
-## EXCLUDED
-- context documents — no active task names a scope; run: majordomus context resolve &lt;path&gt;
-- handover — no record for this worktree and branch — absence, not a stale match
-
-## BUDGET
-18 of 300 lines</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^## GIT/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /none active/</li></ul>
-      </li></ol>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
+    <p class="mt-2 text-sm text-body">This use case is described, not proved: it names its commands and rules, and nothing executes it. It cannot be more than <em>described</em> until a scenario is added.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
@@ -260,7 +233,7 @@ none active — run: majordomus start &quot;&lt;task&gt;&quot; --scope &lt;paths
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/resume-in-the-right-worktree.md</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
-        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">described</dd></div>
       </dl>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -295,7 +268,7 @@ none active — run: majordomus start &quot;&lt;task&gt;&quot; --scope &lt;paths
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0169c885ea692ce0bf2522af704ea3527c04cdc0" class="font-mono hover:underline">0169c88</a> · inputs <span class="font-mono">7e3f0e074123</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ad8ebd76fac78e156985f691fb85a48e48ebc11b" class="font-mono hover:underline">ad8ebd7</a> · inputs <span class="font-mono">4896c24baabb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

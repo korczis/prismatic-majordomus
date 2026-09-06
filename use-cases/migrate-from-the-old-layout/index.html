@@ -172,161 +172,40 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
-      <span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span>
+      <span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">described</span></span>
       <a href="https://korczis.github.io/prismatic-majordomus/use-cases/adoption/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Getting started and adoption</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">basic</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">maintainer</span><span class="rounded border border-default px-1.5 py-0.5 font-mono bg-neutral-secondary-medium text-heading">writes state</span>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
 <p>A repository installed Majordomus before the <code>.ai/</code> layer existed and keeps its policy under <code>.majordomus/</code>. Every command refuses to read it, and the maintainer wants to know what will move before anything does.</p>
-<h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
+<h2 id="scenario"><a class="zola-anchor" href="#scenario" aria-label="Anchor link for: scenario">Scenario</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">etup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> l</span><span class="z-l-8 z-d-8">egacy-layout</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">g</span><span class="z-l-4 z-d-1">iven</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">project data under .majordomus/, the pre-.ai layout, and no manifest</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">teps</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> p</span><span class="z-l-8 z-d-8">lan-it</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">migrate</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--dry-run</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">every move named, nothing written</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^migrate: \.majordomus/ \(pre-\.ai layout\) -&gt; \.ai/</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">move  \.majordomus/policy\.yaml -&gt; \.ai/repo/policy\.yaml</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">o-it</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">migrate</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the files move, the old directory is backed up, the manifest is written</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^migrated: \.ai/ is the layout</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> n</span><span class="z-l-8 z-d-8">othing-left</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">migrate</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a second migration says the layer is already there and moves nothing</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^already migrated: \.ai/manifest\.yaml is present</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the migration is explicit, dry-runnable and backed up</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">afterwards every command reads the layer and refuses the old path by name</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
 <p><code>migrate --dry-run</code> lists every move; <code>migrate</code> performs it with a backup and writes the manifest; a second run says there is nothing to migrate, and <code>doctor</code> proves the layer is real.</p>
 </article>
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
-    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">legacy-layout</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-3">
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>project data under .majordomus/, the pre-.ai layout, and no manifest</span></li></ul>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
-        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-words font-mono text-xs">majordomus migrate --dry-run</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-words font-mono text-xs">majordomus migrate</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-words font-mono text-xs">majordomus migrate</code></li></ol>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>the migration is explicit, dry-runnable and backed up</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>afterwards every command reads the layer and refuses the old path by name</span></li></ul>
-      </div>
-    </div>
-
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
-    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 3 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
-    <ol class="mt-4 space-y-4"><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">1</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/migrate/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus migrate --dry-run</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">every move named, nothing written</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>migrate: .majordomus/ (pre-.ai layout) -&gt; .ai/ (ai-repository/v1)
-  move  .majordomus/policy.yaml -&gt; .ai/repo/policy.yaml
-  move  .majordomus/profiles/README.md -&gt; .ai/repo/profiles/README.md
-  move  .majordomus/profiles/debugging.yaml -&gt; .ai/repo/profiles/debugging.yaml
-  move  .majordomus/profiles/deep-work.yaml -&gt; .ai/repo/profiles/deep-work.yaml
-  move  .majordomus/profiles/implementation.yaml -&gt; .ai/repo/profiles/implementation.yaml
-  move  .majordomus/profiles/routine.yaml -&gt; .ai/repo/profiles/routine.yaml
-  move  .majordomus/project/README.md -&gt; .ai/repo/project/README.md
-  move  .majordomus/prompts/README.md -&gt; .ai/repo/prompts/README.md
-  move  .majordomus/prompts/continue.md -&gt; .ai/repo/prompts/continue.md
-  move  .majordomus/prompts/debug.md -&gt; .ai/repo/prompts/debug.md
-  move  .majordomus/prompts/handover.md -&gt; .ai/repo/prompts/handover.md
-  move  .majordomus/prompts/review.md -&gt; .ai/repo/prompts/review.md
-  state .majordomus/state/decisions.md -&gt; .ai/local/state/decisions.md
-  state .majordomus/state/ledger.jsonl -&gt; .ai/local/state/ledger.jsonl
-  state .majordomus/state/open-questions.md -&gt; .ai/local/state/open-questions.md
-  seed  the rest of .ai/ from the skeleton: protocol, manifest, vendored rules, knowledge, workflows
-  state backup first: tmp/majordomus-migrate-backup/&lt;utc&gt;/state/, byte for byte; then moved, and taken out of the index
-  then  .ai/local/ appended to .gitignore once; majordomus update --force; majordomus doctor
-dry run: nothing written</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^migrate: \.majordomus/ \(pre-\.ai layout\) -&gt; \.ai//</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /move  \.majordomus/policy\.yaml -&gt; \.ai/repo/policy\.yaml/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">2</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/migrate/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus migrate</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the files move, the old directory is backed up, the manifest is written</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>migrate: .majordomus/ (pre-.ai layout) -&gt; .ai/ (ai-repository/v1)
-  move  .majordomus/policy.yaml -&gt; .ai/repo/policy.yaml
-  move  .majordomus/profiles/README.md -&gt; .ai/repo/profiles/README.md
-  move  .majordomus/profiles/debugging.yaml -&gt; .ai/repo/profiles/debugging.yaml
-  move  .majordomus/profiles/deep-work.yaml -&gt; .ai/repo/profiles/deep-work.yaml
-  move  .majordomus/profiles/implementation.yaml -&gt; .ai/repo/profiles/implementation.yaml
-  move  .majordomus/profiles/routine.yaml -&gt; .ai/repo/profiles/routine.yaml
-  move  .majordomus/project/README.md -&gt; .ai/repo/project/README.md
-  move  .majordomus/prompts/README.md -&gt; .ai/repo/prompts/README.md
-  move  .majordomus/prompts/continue.md -&gt; .ai/repo/prompts/continue.md
-  move  .majordomus/prompts/debug.md -&gt; .ai/repo/prompts/debug.md
-  move  .majordomus/prompts/handover.md -&gt; .ai/repo/prompts/handover.md
-  move  .majordomus/prompts/review.md -&gt; .ai/repo/prompts/review.md
-  state .majordomus/state/decisions.md -&gt; .ai/local/state/decisions.md
-  state .majordomus/state/ledger.jsonl -&gt; .ai/local/state/ledger.jsonl
-  state .majordomus/state/open-questions.md -&gt; .ai/local/state/open-questions.md
-  seed  the rest of .ai/ from the skeleton: protocol, manifest, vendored rules, knowledge, workflows
-  state backup first: tmp/majordomus-migrate-backup/&lt;utc&gt;/state/, byte for byte; then moved, and taken out of the index
-  then  .ai/local/ appended to .gitignore once; majordomus update --force; majordomus doctor
-backup .majordomus/state/ -&gt; tmp/majordomus-migrate-backup/&lt;time&gt;/state/ (byte for byte; verified)
-WARN  backup      tmp/majordomus-migrate-backup/&lt;time&gt; — is not ignored by git; do not commit it  [reproduce: git check-ignore -v tmp/majordomus-migrate-backup/&lt;time&gt;]
-seeded
-  .ai/repo/README.md
-  .ai/repo/scope.yaml
-  .ai/repo/rules/README.md
-  .ai/repo/rules/project/README.md
-  .ai/repo/rules/vendor/majordomus/
-  .ai/repo/knowledge/
-  .ai/repo/knowledge/curated/README.md
-  .ai/repo/workflows/
-  .ai/repo/skills/
-  .ai/repo/adrs/
-  .ai/repo/sessions/README.md
-moved 12 canonical file(s) into .ai/repo/, 3 state file(s) into .ai/local/state/, dropped 0 derived file(s), backed up and removed 0 provider file(s)
-removed .majordomus/ (empty)
---- majordomus update --force
-unchanged AGENTS.md
-unchanged CLAUDE.md
-unchanged GEMINI.md
-generated 3 target(s) from policy ec90b6bc9090; each carries its own stamp
-update: exit 0
---- majordomus doctor
-OK   layout      .ai/manifest.yaml — schema ai-repository/v1
-OK   layout      .ai/repo/scope.yaml — version 1; 21 in pathspec(s); every key is one the schema declares
-OK   layout      .ai/local/ — ignored, and nothing under it is tracked
-OK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool
-OK   layout      .ai/local/state/handovers — present
-OK   layout      .ai/local/state/checkpoints — present
-OK   layout      .ai/repo/prompts — present
-OK   records     ledger.jsonl — every line is a well-formed event
-OK   policy      19 key(s) — every policy value the code reads is declared, with no reader-side default
-OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own
-INFO catalogue   - — the manifest names no use-cases section; nothing to resolve
-OK   context     .ai/ — 13 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
-OK   policy      .ai/repo/policy.yaml — parsed, version 1
-OK   profiles    4 files — parsed; default &#39;implementation&#39; exists
-INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
-OK   records     decisions.md — every entry is attributable
-INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
-OK   doctrine    37 doctrines — validator, dispatch, propagation, test and CI resolve for every one
-FAIL wiring      doctor-on-commit — hook .git/hooks/pre-commit does not exist  [reproduce: ls -l .git/hooks/pre-commit]
-FAIL wiring      finish-on-push — hook .git/hooks/pre-push does not exist  [reproduce: ls -l .git/hooks/pre-push]
-OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
-OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
-INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   projection  AGENTS.md — content matches its stamp
-OK   projection  CLAUDE.md — content matches its stamp
-OK   projection  GEMINI.md — content matches its stamp
-OK   budget      AGENTS.md — 32 lines, budget 150
-OK   links       AGENTS.md — all references resolve
-OK   counts      AGENTS.md — no hardcoded counts
-OK   context     builder — 18 lines, budget 300  [reproduce: majordomus context]
-OK   capture     .ai/local/prompts — ignored and untracked
-OK   capture     .ai/local/prompts — no records yet; the archive is empty
-OK   prompt      4 asset(s) — front matter valid, every token known
-OK   records     open-questions.md — every entry parses
-OK   retention   ledger — 3 lines, cap 5000
-OK   retention   handovers — 0 files, cap 200
-OK   retention   checkpoints — 0 files, cap 500
-INFO project     .ai/repo/project — no canonical project model here; nothing to validate
-OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))
-OK   rules       48 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
-OK   session     .ai/local/session-contexts — ignored and untracked
-OK   session     .ai/local/session-contexts — no working contexts yet; the store is empty
-INFO skill       .ai/repo/skills/ — no skills; nothing to validate
-INFO use-case    - — no use-cases section in the manifest; nothing to cover
-INFO env         - — bash &lt;version&gt;, git &lt;version&gt;, jq &lt;version&gt;, shellcheck present
-·    budget      doctor — &lt;timed against the policy budget&gt;
-doctor: 2 failure(s)
-doctor: exit 10
-migrated: .ai/ is the layout; review with git status, then commit the tracked half</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^migrated: \.ai/ is the layout/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">3</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/migrate/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus migrate</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">a second migration says the layer is already there and moves nothing</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>already migrated: .ai/manifest.yaml is present and .majordomus/policy.yaml is not</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^already migrated: \.ai/manifest\.yaml is present/</li></ul>
-      </li></ol>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
+    <p class="mt-2 text-sm text-body">This use case is described, not proved: it names its commands and rules, and nothing executes it. It cannot be more than <em>described</em> until a scenario is added.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
@@ -347,7 +226,7 @@ migrated: .ai/ is the layout; review with git status, then commit the tracked ha
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/migrate-from-the-old-layout.md</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
-        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">described</dd></div>
       </dl>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -382,7 +261,7 @@ migrated: .ai/ is the layout; review with git status, then commit the tracked ha
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0169c885ea692ce0bf2522af704ea3527c04cdc0" class="font-mono hover:underline">0169c88</a> · inputs <span class="font-mono">7e3f0e074123</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ad8ebd76fac78e156985f691fb85a48e48ebc11b" class="font-mono hover:underline">ad8ebd7</a> · inputs <span class="font-mono">4896c24baabb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

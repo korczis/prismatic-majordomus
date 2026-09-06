@@ -172,7 +172,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
-      <span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span>
+      <span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">described</span></span>
       <a href="https://korczis.github.io/prismatic-majordomus/use-cases/continuity/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Sessions and handover</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">basic</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">agent</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">contributor</span><span class="rounded border border-default px-1.5 py-0.5 font-mono bg-neutral-secondary-medium text-heading">writes state</span>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
 <p>A task runs for hours. The session that holds it can be cut off by a context limit, a crash or a person closing the laptop, and everything the worker learned since the last durable record goes with it. A transcript is not a record; it is not resumable and it is not the tool's to keep.</p>
@@ -182,101 +182,38 @@
 <li><code>check</code>: reports whether the checkpoint is fresh against the profile's interval, beside scope and blockers</li>
 <li><code>context</code>: the next worker reads the newest checkpoint inside the assembled context, not a pasted log</li>
 </ul>
-<h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
+<h2 id="scenario"><a class="zola-anchor" href="#scenario" aria-label="Anchor link for: scenario">Scenario</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">etup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">ctive-task</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">g</span><span class="z-l-4 z-d-1">iven</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">an active task scoped to lib, with work done inside that scope</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">teps</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">heckpoint</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">checkpoint</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    s</span><span class="z-l-4 z-d-1">tdin</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">heckpoint-body.md</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a capped progress record; its branch and head are computed from git, never written by hand</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">\.ai/local/state/checkpoints/</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> f</span><span class="z-l-8 z-d-8">resh</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">check</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the checkpoint is fresh against the profile interval and the task is consistent with git</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">0 failing</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">esume</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">context</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the newest checkpoint is part of what the next worker reads</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^## TASK</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">checkpoint</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the checkpoint file carries the branch and head it was written at</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">check reports the checkpoint age against the profile interval</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">context names the task and its newest checkpoint</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
 <p>Progress exists as a file the tool can find, capped so that it stays a summary, and the profile decides how stale is too stale. A session that stops mid-task loses at most one interval.</p>
 </article>
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
-    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">active-task</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-3">
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>an active task scoped to lib, with work done inside that scope</span></li></ul>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
-        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-words font-mono text-xs">majordomus checkpoint</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-words font-mono text-xs">majordomus check</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-words font-mono text-xs">majordomus context</code></li></ol>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>the checkpoint file carries the branch and head it was written at</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>check reports the checkpoint age against the profile interval</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>context names the task and its newest checkpoint</span></li></ul>
-      </div>
-    </div>
-
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
-    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 3 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
-    <ol class="mt-4 space-y-4"><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">1</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/checkpoint/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus checkpoint</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span><span class="font-mono text-xs text-body-subtle">&lt; checkpoint-body.md</span></div><p class="mt-2 text-sm text-body">a capped progress record; its branch and head are computed from git, never written by hand</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>.ai/local/state/checkpoints/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /\.ai/local/state/checkpoints//</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">2</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/check/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus check</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the checkpoint is fresh against the profile interval and the task is consistent with git</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>OK   checkpoint  t-&lt;id&gt; — &lt;n&gt;m ago, interval 15m
-INFO checkpoint  .ai/local/state/checkpoints/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md — newest record, &lt;n&gt;m ago  [reproduce: majordomus checkpoint --show]
-OK   records     ledger.jsonl — every line is a well-formed event
-OK   blockers    t-&lt;id&gt; — none open
-OK   records     decisions.md — every entry is attributable
-OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
-OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)
-INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
-OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
-check: 9 finding(s), 0 failing</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /0 failing/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">3</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/context/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus context</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the newest checkpoint is part of what the next worker reads</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code># Majordomus context — &lt;time&gt;
-# a projection of durable state, not a source of truth: validate every line against git
-
-## GIT
-repository   &lt;repo&gt;
-branch       main
-head         &lt;sha&gt;
-working_tree dirty
-task_record  exact (recorded head &lt;head&gt;)
-
-## TASK
-id           t-&lt;id&gt;
-task         narrow the parser
-profile      implementation
-owner        &lt;owner&gt;
-outcome      active
-scope        lib
-started      &lt;time&gt; (&lt;n&gt;m ago)
-checkpoint   &lt;time&gt; (&lt;n&gt;m ago, interval 15m)
-
-## PROFILE implementation
-capability   standard
-effort       medium
-verbosity    concise
-presentation engineering
-verification verify command
-output       outcome, changes, verification, blockers, next_action
-
-## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain &lt;path&gt;)
-lib  ai.layer
-
-## DECISIONS (5 most recent for this task)
-(none)
-
-## LATEST CHECKPOINT (.ai/local/state/checkpoints/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md, &lt;n&gt;m ago, exact)
-the parser now refuses tabs; the message names the column
-
-## FILES TOUCHED IN SCOPE (1)
-lib/a
-
-## EXCLUDED
-- handover — no record for this worktree and branch — absence, not a stale match
-- history — profile implementation sets context.recent_history_depth: 0
-
-## BUDGET
-46 of 300 lines</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^## TASK/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /checkpoint/</li></ul>
-      </li></ol>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
+    <p class="mt-2 text-sm text-body">This use case is described, not proved: it names its commands and rules, and nothing executes it. It cannot be more than <em>described</em> until a scenario is added.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
@@ -297,7 +234,7 @@ lib/a
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/checkpoint-long-work.md</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
-        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">described</dd></div>
       </dl>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -332,7 +269,7 @@ lib/a
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0169c885ea692ce0bf2522af704ea3527c04cdc0" class="font-mono hover:underline">0169c88</a> · inputs <span class="font-mono">7e3f0e074123</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ad8ebd76fac78e156985f691fb85a48e48ebc11b" class="font-mono hover:underline">ad8ebd7</a> · inputs <span class="font-mono">4896c24baabb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

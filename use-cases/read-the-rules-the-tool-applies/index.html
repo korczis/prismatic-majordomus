@@ -172,178 +172,46 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
-      <span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span>
+      <span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">described</span></span>
       <a href="https://korczis.github.io/prismatic-majordomus/use-cases/policy/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Policy and enforcement</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">basic</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">maintainer</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">reviewer</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">agent</span><span class="rounded border border-default px-1.5 py-0.5 font-mono bg-neutral-secondary-medium text-heading">writes state</span>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
 <p>A reviewer asks which rules hold in this repository and whether anything actually checks them. The answer is scattered across a wiki, a CI file and somebody's memory.</p>
-<h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
+<h2 id="scenario"><a class="zola-anchor" href="#scenario" aria-label="Anchor link for: scenario">Scenario</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">etup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> i</span><span class="z-l-8 z-d-8">nstalled</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">g</span><span class="z-l-4 z-d-1">iven</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">the vendored baseline plus this repository&#39;s own rules</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">teps</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> l</span><span class="z-l-8 z-d-8">ist</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">rules</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">list</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">every active rule, its version, class and origin, in one deterministic order</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^majordomus\.scope-integrity +v1 +blocking +vendor:majordomus</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">ead-one</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">rules</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">show</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">majordomus.scope-integrity</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the rule as the tool reads it: identity, class, dependencies, enforcement</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^id: majordomus\.scope-integrity$</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">^class: blocking$</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">efuse-unknown</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">rules</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">show</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">nosuch.rule</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a rule that does not exist is named, not guessed</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 12</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">no rule &#39;nosuch.rule&#39;</span><span class="z-l-8 z-d-8">&quot;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> w</span><span class="z-l-8 z-d-8">hat-is-enforced</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">doctrine</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">list</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the rules with an x-majordomus block, and the commands that run them</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">majordomus.scope-integrity</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">blocking</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">the effective set is the baseline plus the repository&#39;s rules, with no override</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a rule without an enforcing block is normative for whoever reads it and says so</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
 <p><code>rules list</code> is the effective set, <code>rules show</code> is one rule as the tool reads it, and <code>doctrine list</code> is the subset the tool enforces with the command that runs each one.</p>
 </article>
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
-    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">installed</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-3">
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>the vendored baseline plus this repository&#39;s own rules</span></li></ul>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
-        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-words font-mono text-xs">majordomus rules list</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-words font-mono text-xs">majordomus rules show majordomus.scope-integrity</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-words font-mono text-xs">majordomus rules show nosuch.rule</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">4</span><code class="min-w-0 break-words font-mono text-xs">majordomus doctrine list</code></li></ol>
-      </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
-        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>the effective set is the baseline plus the repository&#39;s rules, with no override</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>a rule without an enforcing block is normative for whoever reads it and says so</span></li></ul>
-      </div>
-    </div>
-
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
-    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 4 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
-    <ol class="mt-4 space-y-4"><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">1</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/rules/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus rules list</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">every active rule, its version, class and origin, in one deterministic order</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>majordomus.sessions-are-workers            v1  advisory  vendor:majordomus not machine-enforced
-majordomus.ai-layout-integrity             v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.checkpoint-freshness            v1  advisory  vendor:majordomus enforced by check,watch
-majordomus.layout-integrity                v1  advisory  vendor:majordomus enforced by doctor
-majordomus.ledger-integrity                v1  blocking  vendor:majordomus enforced by check,doctor,watch
-majordomus.policy-completeness             v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.minimum-sufficient-context      v1  advisory  vendor:majordomus not machine-enforced
-majordomus.bootstrap-integrity             v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.catalogue-integrity             v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.context-integrity               v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.policy-integrity                v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.externalise-decisions           v1  advisory  vendor:majordomus not machine-enforced
-majordomus.adr-integrity                   v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.blocker-resolution              v1  blocking  vendor:majordomus enforced by check,finish
-majordomus.decision-records                v1  advisory  vendor:majordomus enforced by check,doctor,watch
-majordomus.decision-threshold              v1  blocking  vendor:majordomus not machine-enforced
-majordomus.one-worker-one-scope            v1  advisory  vendor:majordomus not machine-enforced
-majordomus.dag-integrity                   v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.justified-escalation            v1  advisory  vendor:majordomus not machine-enforced
-majordomus.depth-is-not-verbosity          v1  advisory  vendor:majordomus not machine-enforced
-majordomus.define-done-first               v1  advisory  vendor:majordomus not machine-enforced
-majordomus.command-surface                 v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.doctrine-wiring-integrity       v1  blocking  vendor:majordomus enforced by doctor
-majordomus.enforcement-wiring              v1  blocking  vendor:majordomus enforced by doctor
-majordomus.verify-outcomes                 v1  advisory  vendor:majordomus not machine-enforced
-majordomus.command-coverage                v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.isolated-parallelism            v1  advisory  vendor:majordomus not machine-enforced
-majordomus.handovers-carry-state           v1  advisory  vendor:majordomus not machine-enforced
-majordomus.handover-integrity              v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.note-integrity                  v1  blocking  vendor:majordomus enforced by finish
-majordomus.profile-requirements            v1  blocking  vendor:majordomus enforced by finish
-majordomus.project-integrity               v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.projection-integrity            v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.context-budget                  v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.prompt-capture                  v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.prompt-integrity                v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.questions-store-integrity       v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.retention-caps                  v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.roadmap-integrity               v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.rule-package-integrity          v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch
-majordomus.session-records                 v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.session-lifecycle               v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.skill-integrity                 v1  blocking  vendor:majordomus enforced by doctor,watch
-majordomus.state-consistency               v1  blocking  vendor:majordomus enforced by check,finish,watch
-majordomus.task-continuity                 v1  advisory  vendor:majordomus enforced by finish
-majordomus.use-case-coverage               v1  blocking  vendor:majordomus enforced by doctor,check,finish
-majordomus.verification-integrity          v1  blocking  vendor:majordomus enforced by finish</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^majordomus\.scope-integrity +v1 +blocking +vendor:majordomus/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">2</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/rules/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus rules show majordomus.scope-integrity</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the rule as the tool reads it: identity, class, dependencies, enforcement</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code># .ai/repo/rules/vendor/majordomus/rules/scope-integrity.v1.md
-
----
-id: majordomus.scope-integrity
-version: 1
-kind: rule
-title: Scope integrity
-description: A task touches only the paths it claimed; work found elsewhere is not accepted as done.
-statement: Work outside the paths a task claimed is not accepted as that task&#39;s work.
-status: active
-class: blocking
-depends_on: [majordomus.one-worker-one-scope@1]
-tags: [scope, verification]
-
-x-majordomus:
-  validator: scope
-  category: scope
-  enforced_by: [check, finish, watch]
-  policy_key: scope_respected
-  exit_code: 10
-  claims: [scope-enforcement, scoped-task]
-  tests: [test/cases/04_start_check.sh]
----
-
-# Rationale
-
-A task touches only the paths it claimed; work found elsewhere is not accepted as done.
-
-# Required behaviour
-
-Work outside the paths a task claimed is not accepted as that task&#39;s work.
-
-# Failure behaviour
-
-A violation is a `FAIL` finding under the category `scope`, and the command that found it exits 10. Under `watch` the same violation is reported as drift and the command exits 11.
-
-# Verification
-
-`mj_validate_scope` decides it, dispatched from `check, finish, watch`. The behavioural case `test/cases/04_start_check.sh` proves it, and CI runs that case.</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^id: majordomus\.scope-integrity$/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^class: blocking$/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">3</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/rules/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus rules show nosuch.rule</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 12</span></div><p class="mt-2 text-sm text-body">a rule that does not exist is named, not guessed</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>majordomus: no rule &#39;nosuch.rule&#39; in the effective set (see: majordomus rules list)</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 12</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /no rule &#39;nosuch.rule&#39;/</li></ul>
-      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span class="font-mono text-xs text-body-subtle">4</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/commands/doctrine/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus doctrine list</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the rules with an x-majordomus block, and the commands that run them</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>majordomus.ai-layout-integrity         blocking  mj_validate_ai_layout    doctor,watch
-majordomus.checkpoint-freshness        advisory  mj_validate_checkpoint   check,watch
-majordomus.layout-integrity            advisory  mj_validate_layout       doctor
-majordomus.ledger-integrity            blocking  mj_validate_ledger       check,doctor,watch
-majordomus.policy-completeness         blocking  mj_validate_policy_defaults doctor,watch
-majordomus.bootstrap-integrity         blocking  mj_validate_bootstrap    doctor,watch
-majordomus.catalogue-integrity         blocking  mj_validate_catalogue    doctor,watch
-majordomus.context-integrity           blocking  mj_validate_context      doctor,watch
-majordomus.policy-integrity            blocking  mj_validate_policy       doctor,watch
-majordomus.adr-integrity               blocking  mj_validate_adr          doctor,watch
-majordomus.blocker-resolution          blocking  mj_validate_blockers     check,finish
-majordomus.decision-records            advisory  mj_validate_decisions    check,doctor,watch
-majordomus.dag-integrity               blocking  mj_validate_dag          doctor,watch
-majordomus.command-surface             blocking  mj_validate_command_surface doctor,watch
-majordomus.doctrine-wiring-integrity   blocking  mj_validate_doctrine_wiring doctor
-majordomus.enforcement-wiring          blocking  mj_validate_wiring       doctor
-majordomus.command-coverage            blocking  mj_validate_command_coverage doctor,watch
-majordomus.handover-integrity          blocking  mj_validate_resolver     doctor,watch
-majordomus.note-integrity              blocking  mj_validate_note         finish
-majordomus.profile-requirements        blocking  mj_validate_profile_requirements finish
-majordomus.project-integrity           blocking  mj_validate_project      doctor,watch
-majordomus.projection-integrity        blocking  mj_validate_projection   doctor,watch
-majordomus.context-budget              blocking  mj_validate_budget       doctor,watch
-majordomus.prompt-capture              blocking  mj_validate_prompt_capture doctor,watch
-majordomus.prompt-integrity            blocking  mj_validate_prompts      doctor,watch
-majordomus.questions-store-integrity   blocking  mj_validate_questions_store doctor,watch
-majordomus.retention-caps              blocking  mj_validate_retention    doctor,watch
-majordomus.roadmap-integrity           blocking  mj_validate_roadmap      doctor,watch
-majordomus.rule-package-integrity      blocking  mj_validate_rule_package doctor,watch
-majordomus.scope-integrity             blocking  mj_validate_scope        check,finish,watch
-majordomus.session-records             blocking  mj_validate_session_records doctor,watch
-majordomus.session-lifecycle           blocking  mj_validate_session_lifecycle doctor,watch
-majordomus.skill-integrity             blocking  mj_validate_skills       doctor,watch
-majordomus.state-consistency           blocking  mj_validate_state        check,finish,watch
-majordomus.task-continuity             advisory  mj_validate_continuity   finish
-majordomus.use-case-coverage           blocking  mj_validate_use_case_coverage doctor,check,finish
-majordomus.verification-integrity      blocking  mj_validate_verification finish</code></pre>
-        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /majordomus.scope-integrity/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /blocking/</li></ul>
-      </li></ol>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
+    <p class="mt-2 text-sm text-body">This use case is described, not proved: it names its commands and rules, and nothing executes it. It cannot be more than <em>described</em> until a scenario is added.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
@@ -364,7 +232,7 @@ majordomus.verification-integrity      blocking  mj_validate_verification finish
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/read-the-rules-the-tool-applies.md</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
-        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">described</dd></div>
       </dl>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -399,7 +267,7 @@ majordomus.verification-integrity      blocking  mj_validate_verification finish
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0169c885ea692ce0bf2522af704ea3527c04cdc0" class="font-mono hover:underline">0169c88</a> · inputs <span class="font-mono">7e3f0e074123</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ad8ebd76fac78e156985f691fb85a48e48ebc11b" class="font-mono hover:underline">ad8ebd7</a> · inputs <span class="font-mono">4896c24baabb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

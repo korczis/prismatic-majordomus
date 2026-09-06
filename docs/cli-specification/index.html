@@ -833,7 +833,8 @@ refuses to build the site from a skill that does not validate.</p>
 <span class="giallo-l"><span>OK   skill       1 skill(s) — every one parses, matches its directory and carries its sections</span></span>
 <span class="giallo-l"><span>OK   skill       5 reference(s) — every related id and every example resolves</span></span>
 <span class="giallo-l"><span>skills: 1 discovered, 1 valid; examples: 5; references: 5 checked; failures: 0</span></span></code></pre><h2 id="majordomus-capture"><a class="zola-anchor" href="#majordomus-capture" aria-label="Anchor link for: majordomus-capture"><code>majordomus capture</code></a></h2>
-<p>Record the person's raw prompts and draw the episode boundary from the provider's own
+<p>Record the person's raw prompts from a provider hook — as a JSON record with a Markdown
+and a YAML rendering of it — draw the episode boundary from the provider's own lifecycle
 hooks, install those hooks, and report what each provider actually does in this repository.</p>
 <p><strong>Why a hook and not an instruction.</strong> A worker cannot be asked to record its own prompts.
 It never sees the bytes the person typed, only what the provider assembled from them, and a
@@ -862,11 +863,93 @@ still runs and the self test still passes, since it sends a payload of the tool'
 making. Read the log and delete it; it is a diagnostic, and unlike a record, nothing is lost
 by removing it. The prompt text itself is the raw span from the payload, copied through
 still escaped, so no decode and re-encode step can lose a character.</p>
-<p><strong>One prompt is one file</strong>, <code>.ai/local/prompts/YYYYMMDDHHMMSS-&lt;slug&gt;.json</code>, where the slug
-is the opening of the prompt itself:</p>
+<p><strong>One prompt is two files under one stem</strong>, <code>.ai/local/prompts/YYYYMMDDHHMMSS-&lt;slug&gt;.json</code>
+and <code>.md</code>, where the slug is the opening of the prompt itself:</p>
 <pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>.ai/local/prompts/</span></span>
 <span class="giallo-l"><span>  20260905113342-why-arent-prompts-saved-automatically.json</span></span>
-<span class="giallo-l"><span>  20260905114501-make-it-a-file-per-prompt.json</span></span></code></pre>
+<span class="giallo-l"><span>  20260905113342-why-arent-prompts-saved-automatically.md</span></span>
+<span class="giallo-l"><span>  20260905114501-make-it-a-file-per-prompt.json</span></span>
+<span class="giallo-l"><span>  20260905114501-make-it-a-file-per-prompt.md</span></span></code></pre>
+<p><strong>Both formats, always, and they are not alternatives.</strong> The <code>.json</code> is the record: the
+provider's own spans, still escaped, pretty printed one member per line — what everything
+else is derived from and what capture must not lose. A record is read by people too, and a
+single forty-kilobyte line is not something any editor or diff shows usefully; the
+indentation lies outside the string spans, so the prompt's bytes are untouched by it. The <code>.md</code> is that record rendered for a person, in one shape
+every rendering has: the fields as YAML front matter, the same fields again as a table, and
+the prompt last under <code>## PROMPT</code>, decoded and fenced.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">chema</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">majordomus.capture/v1</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">s</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">2026-09-05T12:48:55Z</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rovider</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">claude-code</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">e</span><span class="z-l-4 z-d-1">vent</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">UserPromptSubmit</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">bb6f8c96</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">ession</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">5b13785c-728f</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">ource</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">user</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">wd</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">~/src/your-repo</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">epository</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">~/src/your-repo</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">ranch</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">feature/prompt-capture-markdown</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">h</span><span class="z-l-4 z-d-1">ead</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a0ccbc9e25d6ec7f6bb754f3515affb9b1cc4014</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">ecord</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">20260905124855-make-it-a-file-per-prompt.json</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Prompt — 2026-09-05 12:48:55 UTC</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-6 z-l-bg3 z-d-9 z-d-bg4">---</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-6 z-l-bg3 z-d-9 z-d-bg4">---</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b"> **</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">Started</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">**</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4"> `</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">2026-09-05T12:48:55Z</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b"> **</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">Provider</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">**</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4"> `</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">claude-code</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> · </span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">UserPromptSubmit</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b"> **</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">Session</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">**</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4"> `</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">5b13785c-728f</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b"> **</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">Prompt</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">**</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4"> `</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">bb6f8c96</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b"> **</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">Source</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">**</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4"> `</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">user</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b"> **</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">Repository</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">**</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4"> `</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">~/src/your-repo</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b"> **</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">Branch</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">**</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4"> `</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">feature/prompt-capture-markdown</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> · </span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">a0ccbc9</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b"> **</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">Directory</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">**</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4"> `</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">~/src/your-repo</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b"> **</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">Schema</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">**</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4"> `</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">majordomus.capture/v1</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> · </span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">share/schemas/majordomus/capture/capture.v1.proto</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4">|</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b"> **</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">Record</span><span class="z-l-15 z-l-bg3 z-l-b z-d-14 z-d-bg4 z-d-b">**</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4"> `</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">20260905124855-make-it-a-file-per-prompt.json</span><span class="z-l-16 z-l-bg3 z-d-16 z-d-bg4">`</span><span class="z-l-4 z-l-bg3 z-d-1 z-d-bg4"> |</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">##</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> PROMPT</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-10 z-l-bg1 z-d-4 z-d-bg2">```</span></span>
+<span class="giallo-l"><span>make it a file per prompt</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-bg1 z-d-4 z-d-bg2">```</span></span></code></pre>
+<p>The fields appear twice because the two readers are different: front matter is what a tool
+parses, the table is what a person reads, and one function writes both out of one record in
+one pass, so they cannot drift. A row is omitted rather than printed as <code>null</code>, because a
+row reading <code>null</code> tells a person less than an absent row does.</p>
+<p><strong>The schema identifier is the path to the file that describes it.</strong> <code>&lt;namespace&gt;.&lt;name&gt;/&lt;version&gt;</code>
+is <code>share/schemas/&lt;vendor&gt;/&lt;name&gt;/&lt;name&gt;.v&lt;n&gt;.proto</code>, so <code>majordomus.capture/v1</code> resolves
+to <code>share/schemas/majordomus/capture/capture.v1.proto</code> with no registry in between — a reader
+holding a record holds the way to read it, and there is nothing that can fall out of step
+with the records it claims to describe. That file is protobuf used as a schema language and
+not as a wire format: nothing serialises these messages, and it is the one place the record's
+fields and the document's sections are defined, so the two projections cannot disagree.
+<code>majordomus update</code> installs it; <code>doctor</code> fails if the identifier names a file that is not
+there.</p>
+<p><strong>Some header fields are absent, and absent means not observed.</strong> The hook runs before the
+model is invoked, so when a record is written the turn has not happened: <code>finished_at</code>,
+<code>duration_ms</code>, <code>model</code>, <code>effort</code> and <code>tokens</code> are not knowable from it, and a conforming
+writer leaves them out rather than writing null — an absent field says "not observed", a null
+one would claim it was observed to be nothing. The renderer omits the row rather than
+printing a placeholder, so a record the hook wrote shows <code>Started</code> and no <code>Finished</code>. When
+something that can observe the turn fills them in, the rows appear with no change to the
+shape. The same holds for the <code>## CONTEXT</code> and <code>## OUTPUT</code> sections, which the schema
+declares and the renderer emits exactly when the record carries the field behind them.</p>
+<p><code>## OUTPUT</code> is the model's half of the exchange, which a prompt record may not carry — the
+doctrine fails a record naming a response or a transcript. A conforming writer puts it in a
+separate after-the-turn record whose <code>meta.parent</code> names the prompt record, and the rendering
+joins the two.</p>
+<p><strong>The fence is sized to the prompt</strong>, never fixed at three backticks. Prompts quote code,
+and a prompt that opens a fence of its own would end the block early and spill the rest of
+itself into the document; the renderer measures the longest run of backticks inside and
+opens with one longer, which is how the prompt is quoted verbatim without a byte of it
+being touched.</p>
+<p>The direction between them is what makes the pair safe to enforce: a rendering can be
+rebuilt from a record and a record can never be rebuilt from a rendering. So <code>doctor</code> fails
+on a record with no rendering and names <code>capture render</code> as the repair, and fails on a
+rendering with no record without offering one, because there is none — that half is reported
+for a person to delete. <code>capture render</code> walks the archive, writes the renderings that are
+missing, touches nothing that already has one, and never writes a record; <code>--force</code> rewrites
+them all, which is for a change to the rendering itself and not for anything a hook does.</p>
 <p>A record is immutable once written, two hooks cannot interleave inside one file, the name
 sorts chronologically, and the directory listing is already a readable history. The slug is
 a hint and never a faithful rendering — escapes and non-ASCII collapse into hyphens, and
@@ -903,7 +986,7 @@ discovering that the hook meant to keep their prompts had been discarding them.<
 <tr><td><code>unconfigured</code></td><td>an adapter exists, but this repository does not wire it</td></tr>
 <tr><td><code>named</code></td><td>the configuration declares the hook, but not the shim this tool wrote</td></tr>
 <tr><td><code>wired</code></td><td>the shim is in place and executable, but a payload through it produced no record</td></tr>
-<tr><td><code>verified</code></td><td>a synthetic payload driven through the shim produced a record</td></tr>
+<tr><td><code>verified</code></td><td>a synthetic payload driven through the shim produced a record and its rendering</td></tr>
 </tbody></table>
 </div>
 <p>A repository holds itself to this by declaring an <code>enforcement</code> entry with
@@ -954,8 +1037,10 @@ diagnostic may charge. Everything else on the path runs exactly as it does in a 
 <span class="giallo-l"><span>INFO  capture  .claude/hooks/majordomus-session-end  written and made executable</span></span>
 <span class="giallo-l"><span>INFO  capture  .claude/settings.json  written with the UserPromptSubmit, SessionStart, SessionEnd hook(s)</span></span>
 <span class="giallo-l"><span>$ majordomus capture status</span></span>
-<span class="giallo-l"><span>claude-code            verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record</span></span>
-<span class="giallo-l"><span>claude-code:session    verified     .claude/hooks/majordomus-session-start and .claude/hooks/majordomus-session-end are wired, and a synthetic payload through the end shim reached the command</span></span></code></pre><h2 id="majordomus-search"><a class="zola-anchor" href="#majordomus-search" aria-label="Anchor link for: majordomus-search"><code>majordomus search</code></a></h2>
+<span class="giallo-l"><span>claude-code            verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its renderings</span></span>
+<span class="giallo-l"><span>claude-code:session    verified     .claude/hooks/majordomus-session-start and .claude/hooks/majordomus-session-end are wired, and a synthetic payload through the end shim reached the command</span></span>
+<span class="giallo-l"><span>$ majordomus capture render</span></span>
+<span class="giallo-l"><span>0 rendering(s) written into .ai/local/prompts</span></span></code></pre><h2 id="majordomus-search"><a class="zola-anchor" href="#majordomus-search" aria-label="Anchor link for: majordomus-search"><code>majordomus search</code></a></h2>
 <p>Find durable records without reading all of them. Read-only.</p>
 <p>A literal, case-insensitive, fixed-string search across handovers, checkpoints, decisions,
 questions, prompt assets and the ledger, in that order — authority order, so the most
@@ -1466,7 +1551,7 @@ are inert until the first <code>start</code>.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0169c885ea692ce0bf2522af704ea3527c04cdc0" class="font-mono hover:underline">0169c88</a> · inputs <span class="font-mono">7e3f0e074123</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ad8ebd76fac78e156985f691fb85a48e48ebc11b" class="font-mono hover:underline">ad8ebd7</a> · inputs <span class="font-mono">4896c24baabb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

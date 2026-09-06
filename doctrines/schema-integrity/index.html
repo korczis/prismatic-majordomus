@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>I0701 — Reproduce the misattribution as an executable case — Prismatic Majordomus</title>
-<meta name="description" content="Write a behavioural case in which two workers share one checkout — one starts a task, the other records a decision — and assert what happens today, so that the defect stops being an anecdote and becomes something a command demonstrates.">
-<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/plan/i0701/">
+<title>Every object has a schema, and the rules resolve in one stated order — Prismatic Majordomus</title>
+<meta name="description" content="The order the rules apply in is written down rather than left in the code; every kind the tool reads declares a schema, every schema is named by a kind, and every path under the repository&#39;s AI layer is claimed by a source so that nothing is carried through unvalidated.">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/doctrines/schema-integrity/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
-<meta property="og:title" content="I0701 — Reproduce the misattribution as an executable case — Prismatic Majordomus">
-<meta property="og:description" content="Write a behavioural case in which two workers share one checkout — one starts a task, the other records a decision — and assert what happens today, so that the defect stops being an anecdote and becomes something a command demonstrates.">
-<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/plan/i0701/">
+<meta property="og:title" content="Every object has a schema, and the rules resolve in one stated order — Prismatic Majordomus">
+<meta property="og:description" content="The order the rules apply in is written down rather than left in the code; every kind the tool reads declares a schema, every schema is named by a kind, and every path under the repository&#39;s AI layer is claimed by a source so that nothing is carried through unvalidated.">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/doctrines/schema-integrity/">
 <meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
@@ -159,62 +159,94 @@
     <nav class="flex" aria-label="Breadcrumb">
   <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
     <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
-    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="font-medium text-body hover:text-fg-brand">The plan</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="font-medium text-body hover:text-fg-brand">Doctrine</a></li>
     <li aria-hidden="true">/</li>
-    <li aria-current="page" class="font-medium text-heading">I0701 — Reproduce the misattribution as an executable case</li>
+    <li aria-current="page" class="font-medium text-heading">Every object has a schema, and the rules resolve in one stated order</li>
   </ol>
 </nav>
 
-    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">I0701 — Reproduce the misattribution as an executable case</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Write a behavioural case in which two workers share one checkout — one starts a task, the other records a decision — and assert what happens today, so that the defect stops being an anecdote and becomes something a command demonstrates.</p>
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Every object has a schema, and the rules resolve in one stated order</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">The order the rules apply in is written down rather than left in the code; every kind the tool reads declares a schema, every schema is named by a kind, and every path under the repository&#39;s AI layer is claimed by a source so that nothing is carried through unvalidated.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span><span class="text-sm text-body">wave 0 · p1 · debugging profile · parallel safe</span></p>
-  <p class="mt-3 text-sm text-body">Part of <a href="https://korczis.github.io/prismatic-majordomus/plan/m002/" class="text-fg-brand hover:underline">M002 — A durable record names the worker that wrote it</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I0701</code> will be accepted.</p>
+    <p class="flex flex-wrap items-center gap-3"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">blocking</span><span class="text-sm text-body">A violation stops the command with exit 10.</span></p>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The chain</h2>
+    <p class="mt-2 text-sm text-body">A rule is enforced only when every link below holds. <a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/" class="text-fg-brand hover:underline">majordomus doctor</a> resolves each one from the source on every run; this page shows what it resolved.</p>
+    <ol class="mt-4 list-none rounded-base border border-default bg-neutral-primary-soft px-5 py-2">
+      
+<li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-default py-2 last:border-0">
+  <span class="w-6 shrink-0 font-mono text-xs text-body-subtle">1</span>
+  <span class="w-40 shrink-0 text-sm font-medium text-heading">Declared</span>
+  <span class="min-w-0 break-words font-mono text-xs text-body"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/standard/majordomus/rules/schema-integrity.v1.md" class="text-fg-brand hover:underline">majordomus.schema-integrity</a></span>
+</li>
+
+      
+<li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-default py-2 last:border-0">
+  <span class="w-6 shrink-0 font-mono text-xs text-body-subtle">2</span>
+  <span class="w-40 shrink-0 text-sm font-medium text-heading">Validator</span>
+  <span class="min-w-0 break-words font-mono text-xs text-body"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/lib/doctor.sh" class="text-fg-brand hover:underline">mj_validate_schema_integrity</a></span>
+</li>
+
+      
+<li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-default py-2 last:border-0">
+  <span class="w-6 shrink-0 font-mono text-xs text-body-subtle">3</span>
+  <span class="w-40 shrink-0 text-sm font-medium text-heading">Runs under</span>
+  <span class="min-w-0 break-words font-mono text-xs text-body">doctor, watch</span>
+</li>
+
+<li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-default py-2 last:border-0">
+  <span class="w-6 shrink-0 font-mono text-xs text-body-subtle">4</span>
+  <span class="w-40 shrink-0 text-sm font-medium text-heading">On violation</span>
+  <span class="min-w-0 break-words font-mono text-xs text-body">exit 10</span>
+</li>
+
+<li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-default py-2 last:border-0">
+  <span class="w-6 shrink-0 font-mono text-xs text-body-subtle">5</span>
+  <span class="w-40 shrink-0 text-sm font-medium text-heading">Proved by</span>
+  <span class="min-w-0 break-words font-mono text-xs text-body"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/test/cases/32_schema_integrity.sh" class="text-fg-brand hover:underline">test/cases/32_schema_integrity.sh</a></span>
+</li>
+
+      
+<li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-default py-2 last:border-0">
+  <span class="w-6 shrink-0 font-mono text-xs text-body-subtle">6</span>
+  <span class="w-40 shrink-0 text-sm font-medium text-heading">Run by CI</span>
+  <span class="min-w-0 break-words font-mono text-xs text-body"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/.github/workflows/validate.yml" class="text-fg-brand hover:underline">.github/workflows/validate.yml</a></span>
+</li>
+
+    </ol>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where it runs</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctor/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm text-fg-brand">majordomus doctor</span><span class="text-sm text-body">Is Majordomus itself healthy, and is every enforcement it declares actually wired here?</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/watch/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm text-fg-brand">majordomus watch</span><span class="text-sm text-body">What has drifted since the last update — policy, projections, state, retention.</span></a></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Read it here</h2>
+    <div class="mt-3 max-w-2xl">
+<figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ copied: false }">
+  <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
+    <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">read one rule</span>
+    <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="copied ? 'Copied' : 'Copy to clipboard'">
+      <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
+      <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+    </button>
+  </figcaption>
+  <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src"><code class="language-bash">majordomus doctrine show majordomus.schema-integrity
+majordomus check --rule majordomus.schema-integrity</code></pre></div>
+</figure>
+</div>
   </div>
 
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Write a behavioural case in which two workers share one checkout — one starts a task, the other records a decision — and assert what happens today, so that the defect stops being an anecdote and becomes something a command demonstrates.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">This was found by three sessions colliding in one evening, which is a story rather than a test. A characterisation case is what makes the fix provable and what turns the eventual behaviour change red if it regresses.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">decision, checkpoint and question resolve the active task from .majordomus/state/current.yaml. Nothing in test/cases exercises a second worker writing while somebody else&#39;s task is active.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">A case runs the sequence in a disposable repository, asserts that the record is attributed to the active task rather than to the worker that wrote it, and says in a comment that this is the gap being characterised rather than the behaviour being blessed.</p>
-
-  
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li class="font-mono text-heading break-words">test/cases</li></ul>
-  
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Out of scope</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li>Any change to lib/decision.sh, lib/checkpoint.sh or lib/question.sh</li></ul>
-
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Dependencies</h2>
-  <p class="mt-2 text-sm text-body">None. This issue is a root of the graph.</p>
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What waits on this</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://korczis.github.io/prismatic-majordomus/plan/i0702/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0702</span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span><span class="min-w-0 break-words text-sm text-heading">Decide how a record is attributed, between named alternatives</span></a></li>
-  </ul>
-
-  
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Acceptance criteria</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li>The case starts a task, then records a decision as a second worker, and reaches an entry in decisions.md</li><li>It asserts the current attribution explicitly and marks it in a comment as the gap, not the goal</li><li>It covers checkpoint and question as well as decision, or says why they are out of its reach</li><li>It runs in a disposable repository like every other case</li></ul>
-  
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validation</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li class="font-mono text-heading break-words">bash test/run.sh</li></ul>
-  
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence required</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li class="font-mono text-heading break-words">gap_reproduced</li></ul>
-
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">A characterisation test that pins the wrong behaviour is a trap unless the comment saying so is unmissable; that comment is the whole safety mechanism.</p>
-
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
-  <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-  </dl>
-  <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
-
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/project/issues/I0701.yaml" class="break-all font-mono text-fg-brand hover:underline">.ai/repo/project/issues/I0701.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0701</code>.</p>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">doctrines</h2>
+      <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/ai-layout-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">AI layer integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/checkpoint-freshness/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Checkpoint freshness</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/layout-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Layout integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/ledger-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Ledger integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/policy-completeness/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Policy completeness</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/bootstrap-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Bootstrap integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/catalogue-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Catalogue integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/context-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Context integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/policy-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Policy integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/adr-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Architecture decision integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/blocker-resolution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Blocker resolution</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/decision-records/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Decision records</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/dag-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dependency graph integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/command-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command surface is declared and reconciled</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/doctrine-wiring-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine wiring integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/enforcement-wiring/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Enforcement wiring</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/command-coverage/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Every public command is exercised and refuted</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/handover-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Handover integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/note-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Note integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/profile-requirements/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Profile requirements</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/project-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Project model integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/projection-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Projection integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/context-budget/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Context budget</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/prompt-capture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prompt capture is proven, or reported unavailable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/prompt-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prompt integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/questions-store-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Questions store integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/retention-caps/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Retention caps</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/roadmap-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap is a projection, never a document</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/rule-package-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Rule package integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/schema-integrity/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Every object has a schema, and the rules resolve in one stated order</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/scope-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scope integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/session-records/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Session records are shared objects with a closed field set</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/session-lifecycle/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The episode boundary is drawn below the model, and its working context is local</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/skill-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Skill integrity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/state-consistency/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">State consistency</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/task-continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Task continuity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/use-case-coverage/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Use-case coverage</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/verification-integrity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Verification integrity</a></li></ul>
+    </div>
+    <div class="mt-4 rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">principle</h2><p class="text-sm text-body">Sessions are workers, not memory</p>
+    </div>
+  </aside>
 </div>
 
 </div>

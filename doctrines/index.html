@@ -166,8 +166,8 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
   <dl class="grid max-w-3xl grid-cols-1 gap-4 border-b border-default pb-8 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">37</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">33</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">38</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">34</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">advisory</dt><dd class="mt-1 text-2xl font-semibold text-heading">4</dd></div>
   </dl>
   <p class="mt-4 max-w-3xl text-sm text-body">Counted from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/share/standard/majordomus/" class="text-fg-brand hover:underline">the rule package</a> when this page was built. Every doctrine below resolves to a validator function, a command that dispatches it, a test, and a CI job — or the build fails and this page is not published.</p><div class="mt-8" x-data="{ q: '', cls: 'all' }">
@@ -347,7 +347,7 @@
         <a href="https://korczis.github.io/prismatic-majordomus/doctrines/prompt-capture/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
           <div class="mb-2 flex items-start justify-between gap-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">blocking</span><span class="font-mono text-xs text-body-subtle">doctor · watch</span></div>
           <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Prompt capture is proven, or reported unavailable</h2>
-          <p class="text-sm leading-relaxed text-body">A repository that declares prompt capture has it wired below the model and proven by running it; the archive stays ignored and untracked, and every record carries the person&#39;s prompt and nothing the model said.</p>
+          <p class="text-sm leading-relaxed text-body">A repository that declares prompt capture has it wired below the model and proven by running it; the archive stays ignored and untracked, every prompt is present as both a record and a rendering, and neither carries anything the model said.</p>
           <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_prompt_capture</span>
         </a>
       </li><li x-show="(cls === 'all' || cls === 'blocking') && ('majordomus.prompt-integrity prompt integrity prompts doctor watch'.includes(q.toLowerCase()))">
@@ -384,6 +384,13 @@
           <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Rule package integrity</h2>
           <p class="text-sm leading-relaxed text-body">The repository&#39;s effective rule set is real: the vendored baseline matches its manifest file for file, every rule resolves with its dependencies and no two claim one identity, and no project rule reuses the vendored namespace.</p>
           <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_rule_package</span>
+        </a>
+      </li><li x-show="(cls === 'all' || cls === 'blocking') && ('majordomus.schema-integrity every object has a schema, and the rules resolve in one stated order schema_integrity doctor watch'.includes(q.toLowerCase()))">
+        <a href="https://korczis.github.io/prismatic-majordomus/doctrines/schema-integrity/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <div class="mb-2 flex items-start justify-between gap-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">blocking</span><span class="font-mono text-xs text-body-subtle">doctor · watch</span></div>
+          <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Every object has a schema, and the rules resolve in one stated order</h2>
+          <p class="text-sm leading-relaxed text-body">The order the rules apply in is written down rather than left in the code; every kind the tool reads declares a schema, every schema is named by a kind, and every path under the repository&#39;s AI layer is claimed by a source so that nothing is carried through unvalidated.</p>
+          <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_schema_integrity</span>
         </a>
       </li><li x-show="(cls === 'all' || cls === 'blocking') && ('majordomus.scope-integrity scope integrity scope check finish watch'.includes(q.toLowerCase()))">
         <a href="https://korczis.github.io/prismatic-majordomus/doctrines/scope-integrity/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
@@ -465,7 +472,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0169c885ea692ce0bf2522af704ea3527c04cdc0" class="font-mono hover:underline">0169c88</a> · inputs <span class="font-mono">7e3f0e074123</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ad8ebd76fac78e156985f691fb85a48e48ebc11b" class="font-mono hover:underline">ad8ebd7</a> · inputs <span class="font-mono">4896c24baabb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
