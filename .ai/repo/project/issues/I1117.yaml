@@ -1,0 +1,33 @@
+id: I1117
+milestone: two-folder-integration
+title: The hand-maintained lists are removed, not left running beside the derivation
+slug: remove-manual-registries
+priority: p1
+profile: deep-work
+parallel_safe: false
+objective: "Find every list that enumerates what discovery already finds — indexes, menus, route tables, provider lists, documentation catalogues — and remove it, so that one derivation is the only one."
+why: "Two systems doing the same job is worse than either alone: the old one keeps working just well enough that nobody notices it has diverged. This session alone found the same route list four times and a page list twice."
+current_state: "Several such lists have been removed already; the rest are what phase one recorded and what the derivation makes redundant."
+desired_state: "Each replaced list is deleted, its consumers read the derivation, and nothing survives as a fallback."
+scope:
+  - apps/majordomus-cli/src
+  - site
+non_scope:
+  - Deleting a list that is genuinely authoritative for something the model does not hold
+  - Leaving a hand-written list in place as a fallback
+depends_on:
+  - I1106
+acceptance_criteria:
+  - The lists that are replaced are enumerated from the repository rather than assumed, and each is removed or justified as authoritative for something else
+  - Every consumer reads the derivation after the removal, and nothing removed remains reachable as a fallback
+  - What the interfaces show is the same as before the removal, except where the derivation is more complete
+  - A check refuses a new enumeration of a discoverable namespace
+validation:
+  - bash test/run.sh
+  - majordomus generate --check
+evidence_required:
+  - duplicates_removed
+  - enumeration_refused
+risk: "A list quietly holding something the model does not carry loses that content when it goes. Each removal is checked against what the derivation actually produces, item by item."
+created_at: 2026-09-06
+updated_at: 2026-09-06

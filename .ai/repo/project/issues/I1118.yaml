@@ -1,0 +1,36 @@
+id: I1118
+milestone: two-folder-integration
+title: Every invariant of this milestone is a rule with a check that runs
+slug: two-folder-doctrine
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Turn the invariants — bounded footprint, no manual registration, disposable derived artifacts, reversible managed mutations, idempotent reconciliation, root files as adapters, zero-registration extension — into project rules, each with an executable check that CI runs and a negative test that proves it fires."
+why: "Everything in this milestone decays the moment a change can land without a check noticing. A rule with no check is a suggestion, and this repository has a rule saying exactly that."
+current_state: "The invariants exist as prose in the mission and as behaviour in the code. No rule states them and no check enforces them."
+desired_state: "Each invariant is a rule with a check, each check has a negative test, and CI runs all of them."
+scope:
+  - .ai/repo/rules/project
+non_scope:
+  - A rule with no executable check
+  - Restating a constraint an existing rule already enforces
+depends_on:
+  - I1110
+  - I1116
+acceptance_criteria:
+  - Majordomus-owned persistent state outside the two namespaces fails a check unless the ledger records it as a bridge
+  - A secondary registry enumerating a discoverable namespace fails a check
+  - A generated artifact without provenance, or read back as canonical input, fails a check
+  - A mutation outside the two namespaces without a ledger entry fails a check
+  - A non-idempotent reconciliation fails a check
+  - Each rule has a negative test proving its check fires, and CI executes every one
+validation:
+  - bin/majordomus doctor
+  - bash test/run.sh
+evidence_required:
+  - rules_authored
+  - checks_fire
+  - ci_runs_them
+risk: "Seven rules for one milestone is a lot of doctrine. Any constraint an existing rule already covers is referenced rather than restated, and the review has to insist on that."
+created_at: 2026-09-06
+updated_at: 2026-09-06

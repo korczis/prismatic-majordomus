@@ -1,0 +1,33 @@
+id: I1102
+milestone: two-folder-integration
+title: The two namespaces are a typed contract, not a habit
+slug: canonical-two-folder-layout
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Declare the canonical layout of `.ai/` and `.majordomus/` as typed, versioned data — what each namespace holds, what it must never hold, and which lifecycle each directory's contents carry — so that the boundary can be checked rather than remembered."
+why: "The boundary between portable knowledge and control-plane mechanics is the whole architecture. Stated only in prose it survives until the first subsystem finds it convenient to write an index next to a rule."
+current_state: "Both namespaces exist and are populated. Nothing declares what belongs in which, and nothing refuses a control-plane artifact written under `.ai/` or a copy of authored knowledge written under `.majordomus/`."
+desired_state: "The layout is a schema-backed declaration; a check reads it and refuses a path that contradicts it."
+scope:
+  - share/schemas
+  - share/skeleton
+non_scope:
+  - A configuration file restating what a convention already fixes
+  - Moving existing content; that is the migration issue
+depends_on:
+  - I1101
+acceptance_criteria:
+  - Each namespace declares what it holds, in typed and versioned form, generated from the canonical Rust types where generation is available
+  - `.ai/` is defined as portable semantic material that keeps its meaning without this tool and across providers, and `.majordomus/` as control-plane state that must never hold a second copy of it
+  - A check refuses an artifact placed in the namespace whose contract excludes it, and names both the path and the contract it violates
+  - The skeleton a new repository receives is derived from the same declaration rather than being a parallel copy of it
+validation:
+  - cargo test --workspace --all-features
+  - bin/majordomus doctor
+evidence_required:
+  - layout_declared
+  - boundary_checked
+risk: "A layout schema can become a second description of the tree it describes. It declares intent and lifecycle; the tree remains what discovery finds."
+created_at: 2026-09-06
+updated_at: 2026-09-06
