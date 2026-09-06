@@ -473,6 +473,9 @@ mod tests {
             repo: Some("/nonexistent/majordomus/checkout".into()),
             ..RepoArgs::default()
         };
-        assert_eq!(banner_command(&args, Some("off"), None).expect("no work"), 0);
+        assert_eq!(
+            banner_command(&args, Some("off"), None).expect("no work"),
+            0
+        );
     }
 }

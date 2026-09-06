@@ -749,7 +749,7 @@ pub(crate) mod tests_support {
                 },
                 ServiceState {
                     id: "index".into(),
-                    title: "Route index".into(),
+                    title: "Home page".into(),
                     path: "/".into(),
                     url: Some("http://127.0.0.1:8741/".into()),
                     availability: ServiceAvailability::Available,

@@ -2,7 +2,7 @@
 //!
 //! One capability, one handler, and every surface a projection of it — the MCP tool and
 //! resource, the HTTP route, the OpenAPI operation, the Cockpit page and the command line
-//! all answer with the value [`crate::environment::resolve`] built. The direnv banner is
+//! all answer with the value [`crate::environment::resolve()`] built. The direnv banner is
 //! the same value rendered for a terminal.
 //!
 //! The handler runs inside a process that already holds the index, so it resolves in full:

@@ -2,10 +2,11 @@
 //! anything is answering there now.
 //!
 //! Paths are not written here. Each descriptor names the constant that already decides its
-//! route — [`crate::cockpit::PREFIX`], [`crate::capability::HttpExposure::PREFIX`], the
-//! entries of [`crate::http::openapi::INFRASTRUCTURE_ROUTES`] — so a route that moves moves
-//! here too, and `every_infrastructure_route_is_described` fails the build if a new one is
-//! added without a name for it. The base address is the shared server's lease, which is
+//! route — [`crate::cockpit::PREFIX`], [`crate::capability::HttpExposure::PREFIX`],
+//! [`crate::http::swagger::SWAGGER_PATH`], [`crate::web::discover::DOCS_MOUNT`] and the
+//! rest of what [`crate::http::openapi::infrastructure_routes`] lists — so a route that
+//! moves moves here too, and `every_infrastructure_route_is_described` fails the build if
+//! a new one is added without a name for it. The base address is the shared server's lease, which is
 //! where a running server publishes it and the only place it is true.
 //!
 //! Availability is decided by a connection attempt with a hard budget and no name
@@ -17,6 +18,8 @@ use std::time::Duration;
 
 use crate::capability::HttpExposure;
 use crate::cockpit;
+use crate::http::{mcp, swagger};
+use crate::web::discover::DOCS_MOUNT;
 
 use super::{ServiceAvailability, ServiceState};
 
@@ -34,7 +37,7 @@ struct Descriptor {
 
 /// Every service, in the order a snapshot reports them: the human surfaces first, the
 /// machine ones after.
-fn descriptors() -> [Descriptor; 6] {
+fn descriptors() -> [Descriptor; 7] {
     [
         Descriptor {
             id: "cockpit",
@@ -42,9 +45,14 @@ fn descriptors() -> [Descriptor; 6] {
             path: cockpit::PREFIX,
         },
         Descriptor {
+            id: "docs",
+            title: "Documentation",
+            path: DOCS_MOUNT,
+        },
+        Descriptor {
             id: "swagger",
             title: "Swagger UI",
-            path: "/docs",
+            path: swagger::SWAGGER_PATH,
         },
         Descriptor {
             id: "api",
@@ -56,16 +64,16 @@ fn descriptors() -> [Descriptor; 6] {
         Descriptor {
             id: "openapi",
             title: "OpenAPI document",
-            path: "/openapi.json",
+            path: swagger::SPEC_PATH,
         },
         Descriptor {
             id: "mcp",
             title: "MCP over HTTP",
-            path: "/mcp",
+            path: mcp::PATH,
         },
         Descriptor {
             id: "index",
-            title: "Route index",
+            title: "Home page",
             path: "/",
         },
     ]
@@ -78,7 +86,7 @@ fn descriptors() -> [Descriptor; 6] {
 pub fn resolve(root: &Path, local_half: &str, probe: bool) -> Vec<ServiceState> {
     let base = published_url(root, local_half);
     // One connection attempt for the whole server, not one per route: they are all the
-    // same socket, and six probes would cost six times as much to learn one thing.
+    // same socket, and seven probes would cost seven times as much to learn one thing.
     let availability = match (&base, probe) {
         (Some(url), true) => super::probe::reachable(url, PROBE_BUDGET),
         (Some(_), false) => ServiceAvailability::Unknown,
@@ -127,7 +135,7 @@ pub fn join(base: &str, path: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::http::openapi::INFRASTRUCTURE_ROUTES;
+    use crate::http::openapi::infrastructure_routes;
 
     /// The reason the paths are constants rather than strings: a route added to the
     /// server's own infrastructure list without a name here would be a service the
@@ -135,9 +143,9 @@ mod tests {
     #[test]
     fn every_infrastructure_route_is_described() {
         let described: Vec<&str> = descriptors().iter().map(|d| d.path).collect();
-        for route in INFRASTRUCTURE_ROUTES {
+        for route in infrastructure_routes() {
             assert!(
-                described.contains(route),
+                described.contains(&route.as_str()),
                 "the server serves {route} and no service describes it"
             );
         }
