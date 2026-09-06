@@ -720,9 +720,9 @@ mj_capture_session() {
     payload="$(mktemp "${TMPDIR:-/tmp}/mj.ses.XXXXXX")"; scan="$payload.f"
     cat > "$payload"
     if awk -f "$MJ_LIB_DIR/json_scan.awk" < "$payload" > "$scan" 2>/dev/null; then
-      psession="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 7)")")"
-      source="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 8)")")"
-      reason="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 9)")")"
+      psession="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 7)")")"
+      source="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 8)")")"
+      reason="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 9)")")"
     elif [ -s "$payload" ]; then
       mj_session_context_log "$provider $event payload not understood; the episode boundary was drawn without it"
     fi
@@ -748,7 +748,10 @@ mj_capture_session() {
 
 # The strings the provider sends are its own; nothing here lets one name a path or reach a
 # shell, so they are reduced to the same safe form the prompt archive uses for an identity.
-mj_capture_plain() {
+# Named apart from `mj_capture_plain` deliberately: that one reads a field out of a scan and
+# takes two arguments, this one takes a value, and a shell keeps only the last definition of
+# a name — so sharing one turned every row of every rendering into the scan's own path.
+mj_capture_safe() {
   local v="$1"
   [ -z "$v" ] && return 0
   [ "$v" = null ] && return 0
