@@ -254,6 +254,10 @@ mj_migrate_seed() {
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/skills" "$MJ_SKILLS_DIR" '*.md'
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/adrs" "$MJ_ADRS_DIR" '*.md'
   mkdir -p "$MJ_PROJECT_DIR"
+  if [ -n "${MJ_SESSIONS_DIR:-}" ]; then
+    mkdir -p "$MJ_SESSIONS_DIR"
+    mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$MJ_SESSIONS_DIR/README.md"
+  fi
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
   # the legacy templates a person had changed land in a directory the manifest names no
   # section for; it is still a directory of the layer, so it says what it holds and why

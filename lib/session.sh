@@ -24,6 +24,17 @@ mj_session_dir()  { printf '%s' "$MJ_STATE_DIR/sessions"; }
 mj_session_store() {
   if [ -n "${MJ_SESSIONS_DIR:-}" ]; then printf '%s' "$MJ_SESSIONS_DIR"; else mj_session_dir; fi
 }
+# The section exists the moment a record needs it, and it carries its contract from the
+# distribution: a directory of the layer without one is a finding (ADR 0011), and the
+# episode that created it did not cause that.
+mj_session_store_ready() {
+  local dir; dir="$(mj_session_store)"
+  mkdir -p "$dir"
+  [ -n "${MJ_SESSIONS_DIR:-}" ] || return 0
+  [ -f "$dir/README.md" ] && return 0
+  [ -f "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" ] || return 0
+  cp "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$dir/README.md"
+}
 # One line naming the work, for a listing: the task's title when the episode had a task.
 mj_session_title() {
   local task="$1" sid="$2"
@@ -256,6 +267,7 @@ mj_session_close() {
   if [ -s "$body" ]; then printf '\n' >> "$rec"; cat "$body" >> "$rec"; fi
   rm -f "$body"
 
+  mj_session_store_ready
   final="$(mj_publish_record "$(mj_session_store)" "$sid" "$rec")" \
     || { rm -f "$rec" "$win"; mj_die "$MJ_EX_INTERNAL" "could not create a unique session file"; }
   rm -f "$rec" "$win"
@@ -412,6 +424,7 @@ mj_session_keys() {
   [ -d "$dir" ] || return 0
   for f in "$dir"/*.md; do
     [ -f "$f" ] || continue
+    mj_is_context_doc "$f" && continue          # the section's own contract is not a record
     fm="$(mktemp "${TMPDIR:-/tmp}/mj.slf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.slg.XXXXXX")"
     if mj_record_front "$f" > "$fm" 2>/dev/null && mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
       created="$(mj_yget "$flat" created_at)"
@@ -450,7 +463,9 @@ mj_session_list() {
   esac; done
 
   local key f n=0 first=1 label mine
-  mine="$(mj_git_repo_id)"
+  # A shared record names the repository by its remote, a local one by its git directory:
+  # this is the same repository under either name (ADR 0014).
+  mine="$(mj_repository_id)"
   [ "$MJ_JSON" = 1 ] && printf '{"schema":1,"sessions":['
   for key in $(mj_session_keys); do
     f="${key#*|}"; f="${f#*|}"
@@ -459,7 +474,7 @@ mj_session_list() {
     # branch. --all lifts it and says so, because a record from elsewhere is worth seeing
     # when you asked for everything and is never worth being handed silently.
     if [ "$scope_all" = 0 ]; then
-      [ "$MJ_SREC_REPO" = "$mine" ] || continue
+      [ "$MJ_SREC_REPO" = "$mine" ] || [ "$MJ_SREC_REPO" = "$(mj_git_repo_id)" ] || continue
       [ "$MJ_SREC_BRANCH" = "$(mj_git_branch)" ] || continue
     fi
     label="$(mj_git_label "$MJ_SREC_HEAD" "$MJ_SREC_BRANCH")"
@@ -544,4 +559,64 @@ mj_session_show_file() {
   mj_record_front "$f" | sed -n '/^session_id:/,$p'
   printf -- '---\n'
   mj_record_body "$f"
+}
+
+# ---------------------------------------------------------------- the doctrine
+# majordomus.session-records: a closed episode is a shared object with a closed field set,
+# carrying what the repository can prove and nothing about the machine that ran it.
+#
+# The Rust index refuses an unknown key when it builds; this is the same contract read from
+# the shell, so `doctor` answers for the section without a toolchain present.
+mj_validate_session_records() {
+  local dir f fm flat n=0 bad=0 ids="" id absolute
+  dir="$(mj_session_store)"
+  [ -n "${MJ_SESSIONS_DIR:-}" ] || return 0      # a layer with no sessions section owes nothing
+  [ -d "$dir" ] || return 0
+  for f in "$dir"/*.md; do
+    [ -f "$f" ] || continue
+    mj_is_context_doc "$f" && continue           # the section's own contract is not a record
+    n=$((n + 1))
+    fm="$(mktemp "${TMPDIR:-/tmp}/mj.svf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.svg.XXXXXX")"
+    if ! mj_record_front "$f" > "$fm" 2>/dev/null || ! mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
+      mj_doctrine_fail session "$(basename "$f")" "front matter does not parse" "head -n 20 $(mj_rel "$f")"
+      bad=1; rm -f "$fm" "$flat"; continue
+    fi
+    rm -f "$fm"
+    local unknown; unknown="$(mj_yaml_unknown_keys "$flat" "$MJ_ALLOW_DIR/session-record.txt" || true)"
+    [ -n "$unknown" ] && {
+      mj_doctrine_fail session "$(basename "$f")" "front-matter key(s) the contract does not have: $(printf '%s' "$unknown" | tr '\n' ' ' | sed 's/ $//')" "head -n 20 $(mj_rel "$f")"
+      bad=1
+    }
+    [ "$(mj_yget "$flat" schema)" = "session/v1" ] || {
+      mj_doctrine_fail session "$(basename "$f")" "schema is '$(mj_yget "$flat" schema)', and this executable reads session/v1" "head -n 3 $(mj_rel "$f")"
+      bad=1
+    }
+    local key
+    for key in kind session_id started_at closed_at outcome; do
+      [ -n "$(mj_yget "$flat" "$key")" ] || {
+        mj_doctrine_fail session "$(basename "$f")" "lacks $key, which every record carries" "head -n 20 $(mj_rel "$f")"
+        bad=1
+      }
+    done
+    case "$(mj_yget "$flat" outcome)" in
+      closed|interrupted|"") ;;
+      *) mj_doctrine_fail session "$(basename "$f")" "outcome '$(mj_yget "$flat" outcome)' is neither closed nor interrupted" "head -n 20 $(mj_rel "$f")"; bad=1 ;;
+    esac
+    # A shared record names no absolute path: those are facts about a machine, and the
+    # ledger, which is local, is where they belong (ADR 0014).
+    absolute="$(awk -F= '$2 ~ /^\// { print $1 }' "$flat" | head -n 3 | tr '\n' ' ')"
+    [ -n "$absolute" ] && {
+      mj_doctrine_fail session "$(basename "$f")" "carries an absolute path in: ${absolute% }" "grep -n ': /' $(mj_rel "$f")"
+      bad=1
+    }
+    id="$(mj_yget "$flat" session_id)"
+    case " $ids " in
+      *" $id "*) mj_doctrine_fail session "$id" "two records claim this identity" "grep -rln 'session_id: $id' $(mj_rel "$dir")"; bad=1 ;;
+      *) ids="$ids $id" ;;
+    esac
+    rm -f "$flat"
+  done
+  [ "$n" -gt 0 ] && [ "$bad" = 0 ] \
+    && mj_doctrine_ok session "$(mj_rel "$dir")/" "$n record(s) — every field the contract has, no conversation, no absolute path" "majordomus session list"
+  return 0
 }

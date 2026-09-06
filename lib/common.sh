@@ -827,16 +827,24 @@ mj_resolve_latest() {
   [ -d "$dir" ] || return 1
   for f in "$dir"/*.md; do
     [ -f "$f" ] || continue
+    mj_is_context_doc "$f" && continue        # a section's own contract is not a record
     fm="$(mktemp "${TMPDIR:-/tmp}/mj.fm.XXXXXX")"
     mj_record_front "$f" > "$fm" || { rm -f "$fm"; mj_err "warning: skipped $f: no front matter"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; }
     flat="$(mktemp "${TMPDIR:-/tmp}/mj.fl.XXXXXX")"
     if ! mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
       rm -f "$fm" "$flat"; mj_err "warning: skipped $f: malformed front matter"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
-    if [ "$(mj_yget "$flat" schema_version)" != 1 ] || [ -z "$(mj_yget "$flat" head)" ] || [ -z "$(mj_yget "$flat" created_at)" ]; then
+    # A record carries a version, a head and a time. `schema_version: 1` is what the local
+    # records have always said; a shared session record says `schema: <kind>/v1` instead,
+    # and both are versions this resolver reads (ADR 0014).
+    if { [ "$(mj_yget "$flat" schema_version)" != 1 ] && [ -z "$(mj_yget "$flat" schema)" ]; } \
+       || [ -z "$(mj_yget "$flat" head)" ] || [ -z "$(mj_yget "$flat" created_at)" ]; then
       rm -f "$fm" "$flat"; mj_err "warning: skipped $f: missing required fields"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
     if [ -n "$want_task" ] && [ "$(mj_yget "$flat" task_id)" != "$want_task" ]; then rm -f "$fm" "$flat"; continue; fi
     tier=""
-    if [ "$(mj_yget "$flat" repository_id)" = "$my_id" ]; then
+    # A shared record names the repository by its remote, a local one by its git directory;
+    # the same repository answers to either (ADR 0014).
+    if [ "$(mj_yget "$flat" repository_id)" = "$my_id" ] \
+       || [ "$(mj_yget "$flat" repository_id)" = "$(mj_repository_id)" ]; then
       # Tier 0 is "this worktree". A local record names it by path; a shared one names it by
       # `worktree_id`, because an absolute path is a fact about a disk and a shared record
       # carries none (ADR 0014). Either identifies the same working copy.

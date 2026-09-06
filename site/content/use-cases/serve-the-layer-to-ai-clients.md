@@ -6,7 +6,7 @@ weight = 8
 id = "serve-the-layer-to-ai-clients"
 source = ".ai/repo/use-cases/serve-the-layer-to-ai-clients.md"
 category = "mcp"
-maturity = "guaranteed"
+maturity = "executable"
 +++
 
 ## Situation
