@@ -1,7 +1,7 @@
 +++
 title = "Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised"
 description = "A wave is the set of issues whose dependencies are all satisfied at the same depth. Wave zero is every root; an issue sits one layer past its deepest dependency. Waves are derived on every read and stored nowhere, so no execution plan can go stale. Sharing a wave is necessary for two issues to run concurrently and is not sufficient: if their declared scope paths overlap, the overlap is reported and they are serialised."
-weight = 92
+weight = 93
 [extra]
 claim_id = "execution-waves"
 status = "guaranteed"

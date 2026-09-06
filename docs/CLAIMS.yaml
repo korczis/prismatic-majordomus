@@ -149,7 +149,7 @@ claims:
     test: test/cases/29_prompt_capture.sh
     status: guaranteed
     responsibility: policy
-    note: Covers the four states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, and a record set that cannot carry model output.
+    note: Covers the five states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, a record set that cannot carry model output, the record-and-rendering pair every prompt is kept as, and the schema identifier resolving to the two files that describe both halves.
 
   - id: prompt-assets
     claim: Every repository-local prompt asset renders, and an unknown token is a failure
@@ -479,6 +479,15 @@ claims:
     status: guaranteed
     responsibility: layer
     note: A document is a Markdown file under .ai/ whose front matter carries schema context/v1; the file name is a convention and the id is the identity. Ordering is depth, then declared order, then path. Providers and audience filter; extend, replace and final compose; a duplicate id, a dangling reference, a superseded final document or a cycle is refused by name.
+
+  - id: context-coverage
+    claim: Every directory of the layer carries a context document, the exemption is declared by the contract that governs the subtree, and a descendant may narrow that requirement but never weaken it
+    source: docs/CONTEXT.md
+    implementation: lib/context_docs.sh
+    test: test/cases/69_context_documents.sh
+    status: guaranteed
+    responsibility: layer
+    note: A directory inside the tree with no document is missing-contract, naming the directory and, where an ancestor made the requirement explicit, the contract that did. The exemption is children.require_contract on a subtree document; the value nearest a directory applies, absence means one is owed, and lowering an inherited true is illegal-override. The tree is the manifest's directory minus the half the manifest declares untracked; nothing else is skipped by name, and a subtree the layer carries but does not author is released by children.exempt on the contract that governs it, which may name only directories inside its own scope.
 
   - id: context-impact
     claim: The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing
@@ -1027,6 +1036,15 @@ claims:
     status: guaranteed
     responsibility: none      # the site's own deploy path, not a supervised responsibility
     note: The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site/SKILL.md.
+  - id: derived-data-current
+    claim: A commit whose derived data is behind its canonical inputs is refused before it exists, and a repository that unwires that gate is a doctor failure
+    source: docs/GITHUB_PAGES_ARCHITECTURE.md
+    implementation: scripts/pages
+    test: test/cases/56_derived_current_gate.sh
+    status: guaranteed
+    responsibility: policy
+    note: The generator records the input hash in site/data/generated/source.json, so `pages current` answers "must this be regenerated?" in a fifth of a second without generating anything, which is what lets it run on every commit rather than only in CI. It is declared in the policy's enforcement list as derived-current, wired by git-hook:pre-commit, and doctor verifies that wiring the way it verifies the others - so the gate refuses the stale commit and the doctrine refuses the repository that removes the gate. Before this, staleness surfaced only after a merge, and the person it stopped was never the person who caused it.
+
   - id: executable-reference-derived
     claim: The site's pages about the Rust executable (one per module, one per capability, the command line, the MCP surface, the benchmarks, the executable's own narrative) are derived from the registry manifest and the registry dataset the executable generates, nothing names a capability by hand, and a capability that joins or leaves the registry gains or loses its page, its index entries and its links from the generators alone
     source: docs/GITHUB_PAGES_ARCHITECTURE.md
@@ -1072,6 +1090,24 @@ claims:
     responsibility: none      # the site pipeline, not a supervised responsibility
     note: site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds.
 
+  - id: session-records
+    claim: A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered
+    source: docs/SCHEMAS.md
+    implementation: lib/session.sh
+    test: test/cases/63_session_records.sh
+    status: guaranteed
+    responsibility: layer
+    note: The record lives under the manifest's sessions section. Every field is derived - times from the clock, heads and commits from git, the reference lists from the ledger's events for the episode - and the body is the only authored part. The repository is named by its remote and the working copy by a hash, so the resolver can tell one checkout's records from another's without disclosing a path. One source class discovers them; the index, MCP, the object routes, the graph and the site follow.
+
+  - id: session-lifecycle
+    claim: A provider hook opens the episode below the model and hands the worker what the last one left, records what a compaction is about to discard, and closes the episode with a continuation record beside its envelope
+    source: docs/DOCTRINE.md
+    implementation: lib/session_context.sh
+    test: test/cases/54_session_lifecycle_hooks.sh
+    status: guaranteed
+    responsibility: policy
+    note: The provider's own SessionStart, PreCompact and SessionEnd events draw the boundary and drive the lifecycle; each is idempotent because the events are, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The start event writes the policy's briefing to stdout, which is how a continuation record reaches a worker who did not ask for one; the other two write none, because they fire inside a turn already under way. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation.
+
   - id: adr-catalogue
     claim: An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving
     source: docs/SCHEMAS.md
@@ -1081,6 +1117,15 @@ claims:
     responsibility: layer
     note: share/kinds.yaml declares the kind, share/schemas/adr.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section.
 
+  - id: adr-traceability
+    claim: A decision states what it put in force as typed references, each one validated, and the reverse direction — what a rule, a document, an implementation or a case was decided by — is read from the knowledge graph rather than written down a second time
+    source: docs/SCHEMAS.md
+    implementation: lib/adr.sh
+    test: test/cases/99_adr.sh
+    status: guaranteed
+    responsibility: layer
+    note: The forward edge is `related` in the decision's front matter - rule:<id>, claim:<id>, file:<path>, test:<path>. Validation refuses a rule the effective set does not have, a claim the matrix does not have and a path the repository does not contain. The extractor turns each into a graph edge (declares, supports, references, tested_by) whose provenance is the front-matter key that stated it, so `knowledge edges` answers both directions from one authored fact.
+
   - id: adr-propose
     claim: majordomus adr propose writes a decision with status proposed and refuses to write any other status, allocates its identity under a lock so concurrent workers never collide, and records what the decision was derived from
     source: docs/SCHEMAS.md
@@ -1089,3 +1134,12 @@ claims:
     status: guaranteed
     responsibility: layer
     note: Acceptance is the person's act — a tool that can write `accepted` turns its own inference into repository truth and a later reader cannot tell which, so propose has no flag for it and an extracted record claiming it is a finding. An extracted record must name its evidence in provenance.derived_from, whose references are typed and whose file and test references must resolve; it may still be superseded, because that is something a later record did to it. The identity is allocated under a lock over the section directory, and the case proves it with real concurrent processes, because this repository shipped two 0005s and two 0007s before anything checked.
+
+  - id: cli-documentation-executable
+    claim: Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable
+    source: .ai/repo/rules/project/rust-cli-evidence.v1.md
+    implementation: apps/majordomus-cli/src/cli.rs
+    test: apps/majordomus-cli/tests/cli_docs.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown.

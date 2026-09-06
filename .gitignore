@@ -11,6 +11,11 @@
 # test scratch
 /test/tmp/
 
+# the generated web root: one directory per web surface, written by its producer, plus the
+# resolved manifest and the composed publication. Derived state, reproducible from source,
+# never read as truth (ADR 0013).
+/target/
+
 # site build dependencies (not part of the CLI)
 node_modules
 
@@ -42,3 +47,12 @@ site/static/syntax-*.css
 
 # personal Claude Code settings; the shared ones, including the capture hook, are tracked
 .claude/settings.local.json
+
+# The Cockpit's heavy vendored libraries: built by scripts/cockpit-assets from the pinned
+# npm packages, lazy-loaded by one page each, and every page complete without them.
+# share/cockpit/vendor/alpine.csp.min.js is committed: the interaction depends on it and it
+# is small. share/cockpit/cockpit.css is committed: it is a generated artifact, drift-checked.
+share/cockpit/vendor/cytoscape.min.js
+share/cockpit/vendor/three.module.min.js
+share/cockpit/vendor/three.core.min.js
+share/cockpit/vendor/p5.min.js

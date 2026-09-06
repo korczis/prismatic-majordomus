@@ -6,7 +6,7 @@ weight = 1
 id = "adopt-an-existing-repository"
 source = ".ai/repo/use-cases/adopt-an-existing-repository.md"
 category = "adoption"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
@@ -18,6 +18,44 @@ The repository already has a governance root — a CLAUDE.md, an AGENTS.md, a co
 - `init`: writes .ai/ and refuses if an installation is already there
 - `update`: renders the projection into the region between the markers, leaving the rest of the file alone
 - `doctor`: proves the projection matches its own stamp and the declared enforcement is actually invoked
+
+## Scenario
+
+```yaml
+setup: authored-governance
+given:
+  - 'a hand-written CLAUDE.md people follow, committed'
+  - 'Majordomus installed, the policy projecting CLAUDE.md in region mode'
+  - 'the two enforcements wired as git hooks'
+steps:
+  - id: refuse-overwrite
+    run: ['init']
+    note: 'a second init never overwrites a layer that is there'
+    expect:
+      exit: 15
+      stdout_contains: ['already exists']
+  - id: render-the-region
+    run: ['update']
+    note: 'the generated region is appended inside the authored file and stamped; the authored text is untouched'
+    expect:
+      exit: 0
+      stdout_contains: ['^create CLAUDE.md$']
+      files_contain:
+        - path: CLAUDE.md
+          pattern: 'Hand-written governance'
+        - path: CLAUDE.md
+          pattern: '^<!-- majordomus:begin [0-9a-f]{12} [0-9a-f]{16} -->$'
+  - id: prove-it-holds
+    run: ['doctor']
+    note: 'the projection matches its stamp and the declared enforcement is invoked by the hooks'
+    expect:
+      exit: 0
+      stdout_contains: ['^OK   projection', 'doctor: 0 failure']
+then:
+  - 'the authored text is byte for byte what it was'
+  - 'the region carries the policy hash and its own content hash'
+  - 'doctor is green because the hooks exist and call the tool'
+```
 
 ## Outcome
 

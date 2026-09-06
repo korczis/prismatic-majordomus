@@ -1,17 +1,47 @@
 +++
 title = "Move a repository from the pre-.ai layout to the layer"
 description = "See what a migration would move, move it with a backup, and prove the result is a layer the tool reads."
-weight = 29
+weight = 32
 [extra]
 id = "migrate-from-the-old-layout"
 source = ".ai/repo/use-cases/migrate-from-the-old-layout.md"
 category = "adoption"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
 
 A repository installed Majordomus before the `.ai/` layer existed and keeps its policy under `.majordomus/`. Every command refuses to read it, and the maintainer wants to know what will move before anything does.
+
+## Scenario
+
+```yaml
+setup: legacy-layout
+given:
+  - 'project data under .majordomus/, the pre-.ai layout, and no manifest'
+steps:
+  - id: plan-it
+    run: ['migrate', '--dry-run']
+    note: 'every move named, nothing written'
+    expect:
+      exit: 0
+      stdout_contains: ['^migrate: \.majordomus/ \(pre-\.ai layout\) -> \.ai/', 'move  \.majordomus/policy\.yaml -> \.ai/repo/policy\.yaml']
+  - id: do-it
+    run: ['migrate']
+    note: 'the files move, the old directory is backed up, the manifest is written'
+    expect:
+      exit: 0
+      stdout_contains: ['^migrated: \.ai/ is the layout']
+  - id: nothing-left
+    run: ['migrate']
+    note: 'a second migration says the layer is already there and moves nothing'
+    expect:
+      exit: 0
+      stdout_contains: ['^already migrated: \.ai/manifest\.yaml is present']
+then:
+  - 'the migration is explicit, dry-runnable and backed up'
+  - 'afterwards every command reads the layer and refuses the old path by name'
+```
 
 ## Outcome
 

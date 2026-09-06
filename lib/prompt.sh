@@ -82,6 +82,7 @@ mj_prompt_list() {
   [ -d "$dir" ] || { printf 'no prompt assets ($(mj_rel "$MJ_PROMPTS_DIR")/ does not exist; run: majordomus update)\n'; return 0; }
   for f in "$dir"/*.md; do
     [ -f "$f" ] || continue
+    mj_is_context_doc "$f" && continue          # the section's own README is not an asset
     n=$((n + 1))
     fm="$(mktemp "${TMPDIR:-/tmp}/mj.pl.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.pm.XXXXXX")"; desc="(unreadable)"
     if mj_record_front "$f" > "$fm" 2>/dev/null && mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then desc="$(mj_yget "$flat" description)"; fi

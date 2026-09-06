@@ -92,7 +92,12 @@ mj_require_installed() {
 # command, a hook) must read its own distribution, not the one that started it.
 if [ -n "${MJ_BIN_DIR:-}" ]; then MJ_HOME="$(cd "$MJ_BIN_DIR/.." && pwd)"
 else MJ_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; fi
-MJ_SHARE_DIR="$MJ_HOME/share"
+# The distribution's data: kinds, schemas, allow-lists, the skeleton, the standard rule
+# package. MAJORDOMUS_SHARE names it, the same variable the Rust executable reads, so one
+# distribution serves both halves of the tool and a test can point them at a fixture
+# together. Unset, it is the share directory beside this executable, which is what an
+# ordinary run wants and what makes the tool work from any checkout.
+MJ_SHARE_DIR="${MAJORDOMUS_SHARE:-$MJ_HOME/share}"
 MJ_SKELETON_DIR="$MJ_SHARE_DIR/skeleton"
 MJ_ALLOW_DIR="$MJ_SHARE_DIR/allow"
 MJ_STD_RULES_DIR="$MJ_SHARE_DIR/standard/majordomus"
@@ -102,6 +107,7 @@ export MJ_SHARE_DIR MJ_SKELETON_DIR MJ_ALLOW_DIR MJ_STD_RULES_DIR MJ_PROVIDERS_D
 MJ_LAYOUT=""; MJ_AI_DIR=""; MJ_AI_MANIFEST=""; MJ_AI_REPO_DIR=""; MJ_AI_LOCAL_DIR=""
 MJ_STATE_DIR=""; MJ_POLICY_FILE=""; MJ_SCOPE_FILE=""; MJ_PROFILES_DIR=""; MJ_PROMPTS_DIR=""; MJ_PROJECT_DIR=""
 MJ_RULES_DIR=""; MJ_KNOWLEDGE_DIR=""; MJ_ADRS_DIR=""; MJ_SKILLS_DIR=""; MJ_WORKFLOWS_DIR=""
+MJ_SESSIONS_DIR=""
 MJ_PROVIDERS_DIR=""; MJ_TEMPLATES_DIR=""; MJ_CACHE_DIR=""
 
 # a repository path, relative to the repository root, for messages and records
@@ -132,6 +138,9 @@ mj_resolve_layout() {
     MJ_WORKFLOWS_DIR="$MJ_AI_DIR/$(mj_man sections.workflows)"
     MJ_KNOWLEDGE_DIR="$MJ_AI_DIR/$(mj_man sections.knowledge)"
     MJ_ADRS_DIR="$MJ_AI_DIR/$(mj_man sections.adrs)"
+    # the sessions section is optional: a layer written before it existed names none, and a
+    # closed episode then stays in the checkout-local half where it always was
+    MJ_SESSIONS_DIR=""; [ -n "$(mj_man sections.sessions)" ] && MJ_SESSIONS_DIR="$MJ_AI_DIR/$(mj_man sections.sessions)"
     MJ_PROJECT_DIR="$MJ_AI_DIR/$(mj_man sections.project)"
     MJ_PROVIDERS_DIR="$MJ_AI_REPO_DIR/providers"
     MJ_TEMPLATES_DIR="$MJ_AI_REPO_DIR/templates"
@@ -677,6 +686,21 @@ mj_load_current() {
   [ -f "$MJ_CUR" ] || return 1
   MJ_CUR_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.cur.XXXXXX")"
   mj_yaml_flatten "$MJ_CUR" > "$MJ_CUR_FLAT" || return 2
+  mj_allow_warn current "$MJ_CUR_FLAT" "$MJ_ALLOW_DIR/current.txt" "$(mj_rel "$MJ_CUR")"
+  return 0
+}
+
+# Hold a flattened local-state file to its schema, by way of the allow-list `generate allow`
+# derives from it. The local half of the layer is not indexed, so no kind applies a schema
+# there; this is where those schemas are applied instead, and it is what keeps a schema from
+# being a file that describes nothing. A warning rather than a failure, deliberately: these
+# records are this checkout's own, an unknown key means the record is stale or foreign, and
+# neither is a reason to refuse the command a person is running.
+mj_allow_warn() {
+  local kind="$1" flat="$2" allow="$3" rel="$4" k
+  [ -f "$allow" ] || return 0
+  k="$(mj_yaml_unknown_keys "$flat" "$allow" || true)"
+  [ -z "$k" ] || mj_warn "$kind" "$rel" "unknown key(s) the $kind schema does not declare: $(printf '%s' "$k" | tr '\n' ' ')" "majordomus doctor"
   return 0
 }
 mj_cur() { [ -n "${MJ_CUR_FLAT:-}" ] || return 0; mj_yget "$MJ_CUR_FLAT" "$1"; }
@@ -724,6 +748,51 @@ trap mj_cleanup EXIT
 # extra front-matter lines differ.
 
 # front matter of a record (between the first --- and the next ---), empty if malformed
+# mj_change_set MODE [BASE] -> "<status> <TAB> <path> <TAB> <new path or empty>" per change,
+# sorted by path: `staged` reads the index, `base` reads <ref>..worktree, anything else the
+# working tree against HEAD. Untracked files count as additions, because a file git does not
+# know about yet is still a change somebody is about to commit. One reader, so that every
+# command that asks "what changed" gets the same answer.
+mj_change_set() {
+  local mode="$1" base="${2:-}" tab
+  tab="$(printf '\t')"
+  case "$mode" in
+    staged) mj_git diff --name-status -M --cached 2>/dev/null ;;
+    base)   mj_git diff --name-status -M "$base" 2>/dev/null
+            mj_git ls-files --others --exclude-standard 2>/dev/null | sed 's/^/A\t/' ;;
+    *)      mj_git diff --name-status -M HEAD 2>/dev/null
+            mj_git ls-files --others --exclude-standard 2>/dev/null | sed 's/^/A\t/' ;;
+  esac | awk -F'\t' '{ s = substr($1, 1, 1); if (s == "R" || s == "C") print s "\t" $2 "\t" $3; else print s "\t" $2 "\t" }' \
+       | LC_ALL=C sort -t "$tab" -k2,2
+}
+
+# A stable identity for this working copy that names no path: the first sixteen hex digits
+# of the sha256 of its absolute path. Two checkouts of one repository differ; the same
+# checkout is the same across runs; and the path itself is not disclosed by a shared record.
+# The repository, named without naming a disk: the remote's URL when there is one, and a
+# hash of the common git directory when there is not. A shared record carries this; the
+# local records keep mj_git_repo_id, which is a path and is theirs to hold.
+mj_repository_id() {
+  local remote; remote="$(mj_git config --get remote.origin.url 2>/dev/null)"
+  if [ -n "$remote" ]; then printf '%s' "$remote"; else printf 'local:%s' "$(mj_worktree_id)"; fi
+}
+
+mj_worktree_id() {
+  if command -v sha256sum >/dev/null 2>&1; then printf '%s' "$MJ_ROOT" | sha256sum | cut -c1-16
+  elif command -v shasum >/dev/null 2>&1; then printf '%s' "$MJ_ROOT" | shasum -a 256 | cut -c1-16
+  else printf '%s' "$MJ_ROOT" | cksum | tr -d ' ' | cut -c1-16; fi
+}
+
+# Is this Markdown file a context document rather than an instance of the kind that lives
+# beside it? A section's README sits in the same directory as its files and declares the
+# context contract; a kind's discovery walks the directory and must not read it as one of
+# its own. Coverage made these READMEs universal (ADR 0011), so the test is shared.
+mj_is_context_doc() {
+  [ -f "$1" ] || return 1
+  [ "$(awk 'NR == 1 && $0 != "---" { exit } NR > 1 && $0 == "---" { exit }
+            NR > 1 && $0 == "kind: context" { print "yes"; exit }' "$1" 2>/dev/null)" = yes ]
+}
+
 mj_record_front() { awk 'NR==1&&$0!="---"{exit 2} NR>1&&$0=="---"{exit} NR>1' "$1"; }
 # body of a record: everything after the second ---
 mj_record_body()  { awk 'c>=2{print} /^---$/{c++}' "$1"; }
@@ -778,17 +847,30 @@ mj_resolve_latest() {
   [ -d "$dir" ] || return 1
   for f in "$dir"/*.md; do
     [ -f "$f" ] || continue
+    mj_is_context_doc "$f" && continue        # a section's own contract is not a record
     fm="$(mktemp "${TMPDIR:-/tmp}/mj.fm.XXXXXX")"
     mj_record_front "$f" > "$fm" || { rm -f "$fm"; mj_err "warning: skipped $f: no front matter"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; }
     flat="$(mktemp "${TMPDIR:-/tmp}/mj.fl.XXXXXX")"
     if ! mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
       rm -f "$fm" "$flat"; mj_err "warning: skipped $f: malformed front matter"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
-    if [ "$(mj_yget "$flat" schema_version)" != 1 ] || [ -z "$(mj_yget "$flat" head)" ] || [ -z "$(mj_yget "$flat" created_at)" ]; then
+    # A record carries a version, a head and a time. `schema_version: 1` is what the local
+    # records have always said; a shared session record says `schema: <kind>/v1` instead,
+    # and both are versions this resolver reads (ADR 0014).
+    if { [ "$(mj_yget "$flat" schema_version)" != 1 ] && [ -z "$(mj_yget "$flat" schema)" ]; } \
+       || [ -z "$(mj_yget "$flat" head)" ] || [ -z "$(mj_yget "$flat" created_at)" ]; then
       rm -f "$fm" "$flat"; mj_err "warning: skipped $f: missing required fields"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
     if [ -n "$want_task" ] && [ "$(mj_yget "$flat" task_id)" != "$want_task" ]; then rm -f "$fm" "$flat"; continue; fi
     tier=""
-    if [ "$(mj_yget "$flat" repository_id)" = "$my_id" ]; then
-      if [ "$(mj_yget "$flat" worktree)" = "$MJ_ROOT" ] && [ "$(mj_yget "$flat" branch)" = "$my_branch" ]; then tier=0
+    # A shared record names the repository by its remote, a local one by its git directory;
+    # the same repository answers to either (ADR 0014).
+    if [ "$(mj_yget "$flat" repository_id)" = "$my_id" ] \
+       || [ "$(mj_yget "$flat" repository_id)" = "$(mj_repository_id)" ]; then
+      # Tier 0 is "this worktree". A local record names it by path; a shared one names it by
+      # `worktree_id`, because an absolute path is a fact about a disk and a shared record
+      # carries none (ADR 0014). Either identifies the same working copy.
+      if { [ "$(mj_yget "$flat" worktree)" = "$MJ_ROOT" ] \
+           || { [ -n "$(mj_yget "$flat" worktree_id)" ] && [ "$(mj_yget "$flat" worktree_id)" = "$(mj_worktree_id)" ]; }; } \
+         && [ "$(mj_yget "$flat" branch)" = "$my_branch" ]; then tier=0
       elif [ "$my_branch" != DETACHED ] && [ "$(mj_yget "$flat" branch)" = "$my_branch" ]; then tier=1; fi
     fi
     if [ -n "$tier" ]; then

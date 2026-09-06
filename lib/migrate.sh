@@ -238,18 +238,32 @@ mj_migrate_seed() {
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/scope.yaml" "$MJ_AI_REPO_DIR/scope.yaml"
   mj_init_tree "$MJ_SKELETON_DIR/profiles" "$MJ_PROFILES_DIR" '*.yaml'
   mj_init_tree "$MJ_SKELETON_DIR/prompts" "$MJ_PROMPTS_DIR" '*.md'
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/profiles/README.md" "$MJ_PROFILES_DIR/README.md"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/prompts/README.md" "$MJ_PROMPTS_DIR/README.md"
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/rules/README.md" "$MJ_RULES_DIR/README.md"
   mkdir -p "$MJ_RULES_DIR/project"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/rules/project/README.md" "$MJ_RULES_DIR/project/README.md"
   if [ ! -d "$MJ_RULES_DIR/vendor/$MJ_RULES_VENDOR_NS" ]; then
     mj_rules_vendor_install "$MJ_STD_RULES_DIR" "$MJ_RULES_DIR/vendor/$MJ_RULES_VENDOR_NS"
     MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_rel "$MJ_RULES_DIR")/vendor/$MJ_RULES_VENDOR_NS/"
   fi
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/knowledge" "$MJ_KNOWLEDGE_DIR" '*'
   mkdir -p "$MJ_KNOWLEDGE_DIR/curated"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/knowledge/curated/README.md" "$MJ_KNOWLEDGE_DIR/curated/README.md"
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/workflows" "$MJ_WORKFLOWS_DIR" '*.md'
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/skills" "$MJ_SKILLS_DIR" '*.md'
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/adrs" "$MJ_ADRS_DIR" '*.md'
   mkdir -p "$MJ_PROJECT_DIR"
+  # The sessions section, by the path the skeleton's manifest names: the resolved variable
+  # is empty on the first run, because the manifest that names the section is being seeded
+  # in this same pass, and a second run would then report a file the first should have made.
+  mkdir -p "$MJ_AI_REPO_DIR/sessions"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$MJ_AI_REPO_DIR/sessions/README.md"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
+  # the legacy templates a person had changed land in a directory the manifest names no
+  # section for; it is still a directory of the layer, so it says what it holds and why
+  [ -d "$MJ_AI_REPO_DIR/templates" ] \
+    && mj_init_file "$MJ_SKELETON_DIR/ai/repo/templates/README.md" "$MJ_AI_REPO_DIR/templates/README.md"
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \
            "$MJ_AI_LOCAL_DIR/cache" "$MJ_AI_LOCAL_DIR/session-contexts"
   [ -f "$MJ_STATE_DIR/decisions.md" ]      || cp "$MJ_SKELETON_DIR/templates/decisions.md" "$MJ_STATE_DIR/decisions.md"

@@ -1,0 +1,149 @@
+// A scoped context document under the AI layer: the README that says what a directory is
+// for, how it is laid out, and what the files in it are called.
+//
+// Every directory of the layer carries one (the `ai-document-integrity` rule), and the
+// resolution for a path is the chain of them from the tree root down, least specific
+// first. The three required sections are the questions a reader arriving at an unfamiliar
+// directory actually has; anything beyond them is the author's to add.
+//
+// Canonical. `majordomus generate` projects this file into share/allow/context.txt,
+// share/sections/context.txt and context.v1.schema.json beside it.
+
+syntax = "proto3";
+
+package majordomus.context.v1;
+
+import "majordomus/options.proto";
+
+option (majordomus.schema_id) = "majordomus.context/v1";
+option (majordomus.allow_list) = "context";
+option (majordomus.document_format) = "markdown";
+
+// The whole document: the contract that makes it resolvable, then the prose a person reads.
+message Document {
+  Header header = 1 [(majordomus.required) = true];
+  Body body = 2 [(majordomus.required) = true];
+}
+
+message Header {
+  option (majordomus.closed) = true;
+
+  string schema = 1 [(majordomus.required) = true, (majordomus.const) = "context/v1"];
+
+  // The identity. The file name is a convention; this is what survives a move.
+  string id = 2 [
+    (majordomus.required) = true,
+    (majordomus.pattern) = "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$"
+  ];
+
+  string kind = 3 [(majordomus.required) = true, (majordomus.const) = "context"];
+
+  string title = 4 [(majordomus.required) = true];
+
+  // One line saying what the directory is for, as a listing shows it.
+  string description = 5 [(majordomus.required) = true];
+
+  Status status = 6 [(majordomus.required) = true];
+
+  // Where the document applies: its own directory, its directory and everything below, or
+  // the directories `paths` lists.
+  Scope scope = 7 [(majordomus.required) = true];
+
+  // How it composes with its ancestors: extend appends, replace supersedes the ancestors
+  // it names, final marks a document no descendant may supersede.
+  Composition composition = 8 [(majordomus.required) = true];
+
+  // Ties documents at one depth. Lower comes first.
+  int64 order = 9 [(majordomus.required) = true];
+
+  // For `scope: explicit`: the directories it applies to.
+  repeated string paths = 10;
+
+  // The providers it is rendered for; ["*"] is every one.
+  repeated string providers = 11 [(majordomus.required) = true, (majordomus.min_items) = 1];
+
+  // Who it is written for: human, agent.
+  repeated string audience = 12;
+
+  // For `composition: replace`: the ancestor documents it stands in for.
+  repeated string supersedes = 13;
+
+  // Pathspecs outside the tree this document also covers, so that a document about
+  // lib/rules.sh reaches a worker editing it.
+  repeated string tracks = 14;
+
+  // What the directories below this one owe. Subtree documents only; the value nearest a
+  // directory applies, and a descendant may raise require_contract to true but never lower
+  // an inherited true.
+  Children children = 15;
+}
+
+// The obligation a document places on the subtree beneath it.
+message Children {
+  option (majordomus.closed) = true;
+
+  bool require_contract = 1;
+
+  // Directories inside this document's scope that owe no contract, and nor does anything
+  // below them: a subtree the layer carries but does not author, such as an installed
+  // package whose integrity is its own manifest's business. Repository-relative. The
+  // exemption is declared by the contract that governs the subtree, so it travels with the
+  // tree it describes instead of living in a list inside the tool; naming a directory
+  // outside this document's own scope, or its own directory, is refused.
+  repeated string exempt = 2;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_ACTIVE = 1 [(majordomus.value) = "active"];
+  STATUS_DEPRECATED = 2 [(majordomus.value) = "deprecated"];
+}
+
+enum Scope {
+  SCOPE_UNSPECIFIED = 0;
+  SCOPE_DIRECTORY = 1 [(majordomus.value) = "directory"];
+  SCOPE_SUBTREE = 2 [(majordomus.value) = "subtree"];
+  SCOPE_EXPLICIT = 3 [(majordomus.value) = "explicit"];
+}
+
+enum Composition {
+  COMPOSITION_UNSPECIFIED = 0;
+  COMPOSITION_EXTEND = 1 [(majordomus.value) = "extend"];
+  COMPOSITION_REPLACE = 2 [(majordomus.value) = "replace"];
+  COMPOSITION_FINAL = 3 [(majordomus.value) = "final"];
+}
+
+// The body. A reader who opens a directory's README wants three things and usually in this
+// order: what is this for, what is in it, and what do I call the file I am about to add.
+// Everything else a directory needs to say is welcome after them.
+message Body {
+  option (majordomus.body) = true;
+
+  // What the directory is for, and what does not belong in it.
+  Section purpose = 1 [
+    (majordomus.heading) = "Purpose",
+    (majordomus.level) = 2,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  // What is in it: the files and subdirectories, and what each holds.
+  Section structure = 2 [
+    (majordomus.heading) = "Structure",
+    (majordomus.level) = 2,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  // What a new file here is called, and what fixes the name.
+  Section naming_conventions = 3 [
+    (majordomus.heading) = "Naming conventions",
+    (majordomus.level) = 2,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+}
+
+message Section {
+  string heading = 1;
+  uint32 level = 2;
+  bool empty = 3;
+}

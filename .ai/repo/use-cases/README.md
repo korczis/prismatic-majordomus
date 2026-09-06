@@ -3,7 +3,7 @@ schema: context/v1
 id: ai.repo.use-cases
 kind: context
 title: Use cases
-description: The tasks people perform with the tool, each one a file with the commands, rules and claims it names and the scenario that proves it.
+description: The tasks people perform with the tool, each one a file with the commands, rules and claims it names and the scenario section that proves it.
 status: active
 scope: subtree
 providers: ["*"]
@@ -15,11 +15,14 @@ order: 100
 # Use cases
 
 A use case is a task somebody performs with the tool: one Markdown file with front matter
-(the identity, the category, the commands, rules, claims, responsibilities and
-applications it names, and a scenario) and a body (`# Situation`, `# Outcome`, and what
-else the author says). The front-matter contract is `share/schemas/use-case.schema.json`.
+(the identity, the category, and the commands, rules, claims, responsibilities and
+applications it names) and a body (`# Situation`, `# Scenario`, `# Outcome`, and what else
+the author says). The contract is `share/schemas/majordomus/use-case/use-case.v1.proto`,
+whose `Header` describes the front matter and whose `Body` names the sections.
 
-The scenario is the proof: a fresh repository prepared by a named setup script, then real
+The scenario is the proof, and it is a section rather than a header field: front matter
+says what an object is, and a program is not that. `# Scenario` carries exactly one fenced
+`yaml` block — a fresh repository prepared by a named setup script, then real
 invocations of the tool, each with its expected exit code and output. `majordomus usecase
 run` executes it and records normalised evidence under the local half; a page that shows
 what a command printed shows that evidence, never a pasted transcript.

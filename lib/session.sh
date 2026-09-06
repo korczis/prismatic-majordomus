@@ -15,9 +15,38 @@
 
 # shellcheck source=project.sh
 . "$MJ_LIB_DIR/project.sh"
+# the bounded working context this episode freezes when it opens
+# shellcheck source=session_context.sh
+. "$MJ_LIB_DIR/session_context.sh"
 
 mj_session_file() { printf '%s' "$MJ_STATE_DIR/session-current.yaml"; }
 mj_session_dir()  { printf '%s' "$MJ_STATE_DIR/sessions"; }
+# Where a closed record is written and read from: the layer's tracked sessions section when
+# the manifest names one, and the checkout-local store when it does not. A closed episode is
+# a shared object of the layer (ADR 0014); the open one never is.
+mj_session_store() {
+  if [ -n "${MJ_SESSIONS_DIR:-}" ]; then printf '%s' "$MJ_SESSIONS_DIR"; else mj_session_dir; fi
+}
+# The section exists the moment a record needs it, and it carries its contract from the
+# distribution: a directory of the layer without one is a finding (ADR 0011), and the
+# episode that created it did not cause that.
+mj_session_store_ready() {
+  local dir; dir="$(mj_session_store)"
+  mkdir -p "$dir"
+  [ -n "${MJ_SESSIONS_DIR:-}" ] || return 0
+  [ -f "$dir/README.md" ] && return 0
+  [ -f "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" ] || return 0
+  cp "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$dir/README.md"
+}
+# One line naming the work, for a listing: the task's title when the episode had a task.
+mj_session_title() {
+  local task="$1" sid="$2"
+  if [ "$task" != none ] && mj_load_current && [ -n "$(mj_cur title)" ]; then
+    printf '%s' "$(mj_cur title)"
+  else
+    printf 'Session %s on %s' "$sid" "$(mj_git_branch)"
+  fi
+}
 
 # Load the open session into MJ_SES_FLAT. 0 loaded · 1 none · 2 does not parse.
 mj_load_session() {
@@ -26,6 +55,12 @@ mj_load_session() {
   rm -f "${MJ_SES_FLAT:-}" 2>/dev/null || true
   MJ_SES_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.ses.XXXXXX")"
   mj_yaml_flatten "$f" > "$MJ_SES_FLAT" 2>/dev/null || return 2
+  # the record's shape, from the schema by way of its generated allow-list. A key the
+  # schema does not declare is a record written by something else or by an older version,
+  # and reading it as if it were ours is how a field silently means nothing. It is a
+  # warning and not a refusal: this is local state, and a session record nobody can parse
+  # must not stop the command a person actually ran.
+  mj_allow_warn session "$MJ_SES_FLAT" "$MJ_ALLOW_DIR/session.txt" "$(mj_rel "$f")"
   return 0
 }
 mj_ses() { [ -n "${MJ_SES_FLAT:-}" ] || return 0; mj_yget "$MJ_SES_FLAT" "$1"; }
@@ -44,7 +79,7 @@ mj_cmd_session() {
   local sub="${1:-status}"
   case "$sub" in
     --help|-h|help) mj_session_usage; return 0 ;;
-    start|status|close|list|show|latest) shift || true ;;
+    start|status|close|list|show|latest|context) shift || true ;;
     *) mj_die "$MJ_EX_USAGE" "session: unknown subcommand '$sub' (see: majordomus session --help)" ;;
   esac
   mj_require_installed
@@ -55,6 +90,7 @@ mj_cmd_session() {
     list)   mj_session_list "$@" ;;
     show)   mj_session_show "$@" ;;
     latest) mj_session_latest "$@" ;;
+    context) mj_session_context_cmd "$@" ;;
   esac
 }
 
@@ -68,6 +104,7 @@ usage: majordomus session <subcommand> [options]
   list [--all] [--json]                   closed episodes, newest first            (read-only)
   show <session-id> [--json]              one closed record, whole                 (read-only)
   latest [--path] [--json]                the newest that resolves here            (read-only)
+  context [<session-id>]                  the working context of an episode        (read-only)
 
   One open session per worktree. start refuses (15) while one is open.
   A session is not a task: it claims no paths, gates no acceptance, and is optional.
@@ -75,25 +112,54 @@ usage: majordomus session <subcommand> [options]
   close derives what the episode produced from the ledger. Nothing writes into an open
   session while it is open, so no other command pays for it and there is no second
   mutable account of events the ledger already holds.
+
+  start freezes the context the builder resolved into .ai/local/session-contexts/, and
+  close appends what the close knows to the same document. That store is local: it names
+  this machine and it is a snapshot of a projection, so neither half of it is shared.
+
+  A provider hook opens and closes the episode where one is wired (majordomus capture
+  install). --if-open and --if-none are what make that safe to run on every event: a
+  provider that fires twice, resumes or compacts must not open a second episode, and an
+  end event with nothing open is not a failure.
 H
 }
 
 # ---------------------------------------------------------------- start
 mj_session_start() {
-  local owner="${USER:-unknown}" worker=""
+  local owner="${USER:-unknown}" worker="" if_open=refuse provider="" psession=""
   while [ $# -gt 0 ]; do case "$1" in
     --owner) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--owner needs a value"; owner="$2"; shift 2 ;;
     --owner=*) owner="${1#--owner=}"; shift ;;
     --worker) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--worker needs a value"; worker="$2"; shift 2 ;;
     --worker=*) worker="${1#--worker=}"; shift ;;
+    # What an already-open episode means. A person opening one by hand is told that one is
+    # open, because that is a mistake worth stopping. A provider hook is not making that
+    # mistake: it fires on a resume and on a compaction as well as on a first start, and
+    # the honest answer to "the episode is already open" is to keep it.
+    --if-open) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--if-open needs a value"; if_open="$2"; shift 2 ;;
+    --if-open=*) if_open="${1#--if-open=}"; shift ;;
+    # Who delivered the event. Only something running inside a provider's own hook can
+    # name it, which is what makes opened_by: hook a fact rather than a claim; and the
+    # provider's own session identity is what ties this episode to the prompt archive,
+    # whose records carry the same string.
+    --provider) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--provider needs a value"; provider="$2"; shift 2 ;;
+    --provider=*) provider="${1#--provider=}"; shift ;;
+    --provider-session) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--provider-session needs a value"; psession="$2"; shift 2 ;;
+    --provider-session=*) psession="${1#--provider-session=}"; shift ;;
     --help|-h) mj_session_usage; return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "session start: unknown option $1" ;;
   esac; done
+  case "$if_open" in refuse|keep) ;;
+    *) mj_die "$MJ_EX_USAGE" "session start: --if-open must be refuse or keep" ;;
+  esac
 
   local rc=0; mj_load_session || rc=$?
   case "$rc" in
     0) if mj_session_is_foreign; then
          mj_warn session "$(mj_ses session_id)" "the open record here belongs to $(mj_ses worktree); replacing it in this working copy only" "cat $(mj_rel "$MJ_STATE_DIR")/session-current.yaml"
+       elif [ "$if_open" = keep ]; then
+         printf 'session %s already open here since %s; kept\n' "$(mj_ses session_id)" "$(mj_ses started_at)"
+         return 0
        else
          mj_die "$MJ_EX_REFUSED" "session $(mj_ses session_id) is open here since $(mj_ses started_at); run majordomus session close first"
        fi ;;
@@ -116,7 +182,13 @@ mj_session_start() {
   mv "$tmp" "$f"
   mj_ledger_append session.started "\"owner\":\"$(mj_json_esc "$owner")\"${worker:+,\"worker\":\"$(mj_json_esc "$worker")\"}"
 
+  # The working context is written after the episode exists, and its failure never costs
+  # one: a session whose context could not be frozen is still a session, and the store
+  # says so in its own log rather than through this command's exit code.
+  local ctx; ctx="$(mj_session_context_open "$id" "$([ -n "$provider" ] && printf hook || printf hand)" "$provider" "$psession" "$worker")"
+
   printf 'session %s opened at %s (head %s)\n' "$id" "$now" "$(mj_git_head | cut -c1-7)"
+  [ -n "$ctx" ] && printf 'working context: %s\n' "$ctx"
   printf 'next: majordomus plan next; majordomus context; majordomus session close when the episode ends\n'
 }
 
@@ -176,13 +248,22 @@ mj_session_status() {
 # put a write on the hot path of commands that today append one line, and would create a
 # second mutable account of facts the ledger already holds.
 mj_session_close() {
-  local outcome=closed
+  local outcome=closed if_none=refuse
   while [ $# -gt 0 ]; do case "$1" in
     --outcome) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--outcome needs a value"; outcome="$2"; shift 2 ;;
     --outcome=*) outcome="${1#--outcome=}"; shift ;;
+    # What no open episode means. To a person it is a mistake — they meant to close
+    # something. To a provider's end event it is the normal case: the episode was closed by
+    # hand, or none was ever opened, and refusing there would put a failure in front of
+    # somebody leaving the room.
+    --if-none) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--if-none needs a value"; if_none="$2"; shift 2 ;;
+    --if-none=*) if_none="${1#--if-none=}"; shift ;;
     --help|-h) mj_session_usage; return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "session close: unknown option $1" ;;
   esac; done
+  case "$if_none" in refuse|ignore) ;;
+    *) mj_die "$MJ_EX_USAGE" "session close: --if-none must be refuse or ignore" ;;
+  esac
   # Two values, both self-reported and neither verified — the record says so. `closed` is a
   # worker ending an episode deliberately; `interrupted` tells the next reader that the
   # episode was cut short and its records may be incomplete, which is the one thing about
@@ -193,7 +274,8 @@ mj_session_close() {
 
   local rc=0; mj_load_session || rc=$?
   case "$rc" in
-    1) mj_die "$MJ_EX_MISSING" "no open session in this worktree (run: majordomus session start)" ;;
+    1) [ "$if_none" = ignore ] && return 0
+       mj_die "$MJ_EX_MISSING" "no open session in this worktree (run: majordomus session start)" ;;
     2) mj_die "$MJ_EX_CONTRACT" "session-current.yaml does not parse; move it aside or repair it (run: majordomus doctor)" ;;
   esac
   mj_session_is_foreign && mj_die "$MJ_EX_REFUSED" \
@@ -222,12 +304,16 @@ mj_session_close() {
     # created_at, head and working_tree describe the close, so the record reads back
     # through the same resolver and the same divergence label as a handover; start_head
     # and start_working_tree describe the open.
-    printf -- '---\nschema_version: 1\ncreated_at: %s\ntask_id: %s\nprofile: %s\nowner: "%s"\n' \
-      "$closed_at" "$task" "$profile" "$(printf '%s' "$owner" | sed 's/"/\\"/g')"
-    printf 'repository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
-      "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
+    # A shared record carries what the repository can prove and nothing about this machine:
+    # the absolute worktree path is a fact about a disk, and the person who ran it is not
+    # the repository's business (ADR 0014). Both stay in the ledger, which is local.
+    printf -- '---\nschema: session/v1\nkind: session\ncreated_at: %s\ntask_id: %s\nprofile: %s\n' \
+      "$closed_at" "$task" "$profile"
+    printf 'repository_id: %s\nworktree_id: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
+      "$(mj_repository_id)" "$(mj_worktree_id)" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
     mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' | sed 's/^/  - /'
     printf 'session_id: %s\nstarted_at: %s\nclosed_at: %s\noutcome: %s\n' "$sid" "$started" "$closed_at" "$outcome"
+    printf 'title: "%s"\n' "$(printf '%s' "$(mj_session_title "$task" "$sid")" | sed 's/"/\\"/g')"
     [ -n "$(mj_ses worker)" ] && printf 'worker: "%s"\n' "$(printf '%s' "$(mj_ses worker)" | sed 's/"/\\"/g')"
     printf 'start_head: %s\nstart_working_tree: %s\n' "$(mj_ses start_head)" "$(mj_ses start_working_tree)"
     mj_session_commits "$(mj_ses start_head)"
@@ -237,7 +323,8 @@ mj_session_close() {
   if [ -s "$body" ]; then printf '\n' >> "$rec"; cat "$body" >> "$rec"; fi
   rm -f "$body"
 
-  final="$(mj_publish_record "$(mj_session_dir)" "$sid" "$rec")" \
+  mj_session_store_ready
+  final="$(mj_publish_record "$(mj_session_store)" "$sid" "$rec")" \
     || { rm -f "$rec" "$win"; mj_die "$MJ_EX_INTERNAL" "could not create a unique session file"; }
   rm -f "$rec" "$win"
 
@@ -246,6 +333,9 @@ mj_session_close() {
   mj_ledger_append session.closed \
     "\"outcome\":\"$outcome\",\"session_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\""
   rm -f "$(mj_session_file)"
+  # The working context of the episode learns how it ended. It is appended to, never
+  # rewritten, so nothing the worker typed into it between the two events is lost.
+  mj_session_context_close "$sid" "$outcome" "${final#"$MJ_ROOT/"}" >/dev/null
   printf '%s\n' "${final#"$MJ_ROOT/"}"
 }
 
@@ -389,10 +479,11 @@ mj_session_milestones_of() {
 # One sort key per record: "<created_at>|<ledger rank>|<path>", newest first.
 mj_session_keys() {
   local dir f fm flat created
-  dir="$(mj_session_dir)"
+  dir="$(mj_session_store)"
   [ -d "$dir" ] || return 0
   for f in "$dir"/*.md; do
     [ -f "$f" ] || continue
+    mj_is_context_doc "$f" && continue          # the section's own contract is not a record
     fm="$(mktemp "${TMPDIR:-/tmp}/mj.slf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.slg.XXXXXX")"
     if mj_record_front "$f" > "$fm" 2>/dev/null && mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
       created="$(mj_yget "$flat" created_at)"
@@ -431,7 +522,9 @@ mj_session_list() {
   esac; done
 
   local key f n=0 first=1 label mine
-  mine="$(mj_git_repo_id)"
+  # A shared record names the repository by its remote, a local one by its git directory:
+  # this is the same repository under either name (ADR 0014).
+  mine="$(mj_repository_id)"
   [ "$MJ_JSON" = 1 ] && printf '{"schema":1,"sessions":['
   for key in $(mj_session_keys); do
     f="${key#*|}"; f="${f#*|}"
@@ -440,7 +533,7 @@ mj_session_list() {
     # branch. --all lifts it and says so, because a record from elsewhere is worth seeing
     # when you asked for everything and is never worth being handed silently.
     if [ "$scope_all" = 0 ]; then
-      [ "$MJ_SREC_REPO" = "$mine" ] || continue
+      [ "$MJ_SREC_REPO" = "$mine" ] || [ "$MJ_SREC_REPO" = "$(mj_git_repo_id)" ] || continue
       [ "$MJ_SREC_BRANCH" = "$(mj_git_branch)" ] || continue
     fi
     label="$(mj_git_label "$MJ_SREC_HEAD" "$MJ_SREC_BRANCH")"
@@ -469,13 +562,48 @@ mj_session_latest() {
   # The shared resolver, not a second rule: same repository, same worktree, same branch,
   # then same branch, then nothing. A record from an unrelated worktree is never offered,
   # because borrowed context cannot be recognised as wrong until it has been acted on.
-  if ! mj_resolve_latest "$(mj_session_dir)" ""; then
+  if ! mj_resolve_latest "$(mj_session_store)" ""; then
     if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"latest":null}\n'
     else printf 'No closed session for this worktree and branch.\n'; fi
     return 0
   fi
   [ "$path_only" = 1 ] && { printf '%s\n' "${MJ_RES_PATH#"$MJ_ROOT/"}"; return 0; }
   mj_session_show_file "$MJ_RES_PATH" "$MJ_RES_MATCH"
+}
+
+# ---------------------------------------------------------------- context
+# Where the working context of an episode is, so that a person who wants to add to it does
+# not have to know how the store names its files. Read-only, and it prints a path rather
+# than the document: the document is local evidence, and a command that pours it into a
+# terminal invites it into somebody's context, which is the one thing the local half of the
+# layer forbids.
+mj_session_context_cmd() {
+  local sid="" a
+  for a in "$@"; do case "$a" in
+    --help|-h) mj_session_usage; return 0 ;;
+    -*) mj_die "$MJ_EX_USAGE" "session context: unknown option $a" ;;
+    *) [ -n "$sid" ] && mj_die "$MJ_EX_USAGE" "session context: one session id at a time"; sid="$a" ;;
+  esac; done
+
+  if [ -z "$sid" ]; then
+    local rc=0; mj_load_session || rc=$?
+    [ "$rc" = 2 ] && mj_die "$MJ_EX_CONTRACT" "session-current.yaml does not parse; move it aside or repair it (run: majordomus doctor)"
+    if [ "$rc" = 1 ]; then
+      if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"session_id":null,"context":null}\n'
+      else printf 'No open session in this worktree.\nnext: majordomus session start\n'; fi
+      return 0
+    fi
+    sid="$(mj_ses session_id)"
+  fi
+
+  local out; out="$(mj_session_context_path "$sid")"
+  if [ -z "$out" ]; then
+    if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"session_id":"%s","context":null}\n' "$sid"
+    else printf 'No working context for %s under %s.\n' "$sid" "$(mj_rel "$(mj_session_context_dir)")"; fi
+    return "$MJ_EX_MISSING"
+  fi
+  if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"session_id":"%s","context":"%s"}\n' "$sid" "$(mj_json_esc "${out#"$MJ_ROOT/"}")"
+  else printf '%s\n' "${out#"$MJ_ROOT/"}"; fi
 }
 
 mj_session_show() {
@@ -525,4 +653,64 @@ mj_session_show_file() {
   mj_record_front "$f" | sed -n '/^session_id:/,$p'
   printf -- '---\n'
   mj_record_body "$f"
+}
+
+# ---------------------------------------------------------------- the doctrine
+# majordomus.session-records: a closed episode is a shared object with a closed field set,
+# carrying what the repository can prove and nothing about the machine that ran it.
+#
+# The Rust index refuses an unknown key when it builds; this is the same contract read from
+# the shell, so `doctor` answers for the section without a toolchain present.
+mj_validate_session_records() {
+  local dir f fm flat n=0 bad=0 ids="" id absolute
+  dir="$(mj_session_store)"
+  [ -n "${MJ_SESSIONS_DIR:-}" ] || return 0      # a layer with no sessions section owes nothing
+  [ -d "$dir" ] || return 0
+  for f in "$dir"/*.md; do
+    [ -f "$f" ] || continue
+    mj_is_context_doc "$f" && continue           # the section's own contract is not a record
+    n=$((n + 1))
+    fm="$(mktemp "${TMPDIR:-/tmp}/mj.svf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.svg.XXXXXX")"
+    if ! mj_record_front "$f" > "$fm" 2>/dev/null || ! mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
+      mj_doctrine_fail session "$(basename "$f")" "front matter does not parse" "head -n 20 $(mj_rel "$f")"
+      bad=1; rm -f "$fm" "$flat"; continue
+    fi
+    rm -f "$fm"
+    local unknown; unknown="$(mj_yaml_unknown_keys "$flat" "$MJ_ALLOW_DIR/session-record.txt" || true)"
+    [ -n "$unknown" ] && {
+      mj_doctrine_fail session "$(basename "$f")" "front-matter key(s) the contract does not have: $(printf '%s' "$unknown" | tr '\n' ' ' | sed 's/ $//')" "head -n 20 $(mj_rel "$f")"
+      bad=1
+    }
+    [ "$(mj_yget "$flat" schema)" = "session/v1" ] || {
+      mj_doctrine_fail session "$(basename "$f")" "schema is '$(mj_yget "$flat" schema)', and this executable reads session/v1" "head -n 3 $(mj_rel "$f")"
+      bad=1
+    }
+    local key
+    for key in kind session_id started_at closed_at outcome; do
+      [ -n "$(mj_yget "$flat" "$key")" ] || {
+        mj_doctrine_fail session "$(basename "$f")" "lacks $key, which every record carries" "head -n 20 $(mj_rel "$f")"
+        bad=1
+      }
+    done
+    case "$(mj_yget "$flat" outcome)" in
+      closed|interrupted|"") ;;
+      *) mj_doctrine_fail session "$(basename "$f")" "outcome '$(mj_yget "$flat" outcome)' is neither closed nor interrupted" "head -n 20 $(mj_rel "$f")"; bad=1 ;;
+    esac
+    # A shared record names no absolute path: those are facts about a machine, and the
+    # ledger, which is local, is where they belong (ADR 0014).
+    absolute="$(awk -F= '$2 ~ /^\// { print $1 }' "$flat" | head -n 3 | tr '\n' ' ')"
+    [ -n "$absolute" ] && {
+      mj_doctrine_fail session "$(basename "$f")" "carries an absolute path in: ${absolute% }" "grep -n ': /' $(mj_rel "$f")"
+      bad=1
+    }
+    id="$(mj_yget "$flat" session_id)"
+    case " $ids " in
+      *" $id "*) mj_doctrine_fail session "$id" "two records claim this identity" "grep -rln 'session_id: $id' $(mj_rel "$dir")"; bad=1 ;;
+      *) ids="$ids $id" ;;
+    esac
+    rm -f "$flat"
+  done
+  [ "$n" -gt 0 ] && [ "$bad" = 0 ] \
+    && mj_doctrine_ok session "$(mj_rel "$dir")/" "$n record(s) — every field the contract has, no conversation, no absolute path" "majordomus session list"
+  return 0
 }

@@ -26,7 +26,7 @@ pub const OPENAPI_VERSION: &str = "3.1.0";
 pub const OAS_DIALECT: &str = "https://spec.openapis.org/oas/3.1/dialect/base";
 
 /// The routes that are the projection's own, not capabilities.
-pub const INFRASTRUCTURE_ROUTES: &[&str] = &["/", "/openapi.json", "/docs", "/mcp"];
+pub const INFRASTRUCTURE_ROUTES: &[&str] = &["/", "/openapi.json", "/docs", "/cockpit", "/mcp"];
 
 /// The error statuses the router answers, by code, with the reason each one is given.
 /// `refused` is a command's alone: a query has nothing to refuse.

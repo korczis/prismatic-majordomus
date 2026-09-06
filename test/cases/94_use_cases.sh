@@ -25,7 +25,7 @@ expect_grep "unknown subcommand 'bogus'"
 expect_exit 12 "$MJ" usecase show nosuch
 expect_grep "no use case 'nosuch'"
 
-# --- one use case: a file with a scenario, nothing else to register
+# --- one use case: a file with a scenario section, nothing else to register
 cat > "$UC/see-the-version.md" <<'MD'
 ---
 id: see-the-version
@@ -42,30 +42,34 @@ doctrines: []
 claims: [exit-code-contract]
 responsibilities: []
 applications: []
-scenario:
-  setup: bare
-  given:
-    - 'nothing installed'
-  steps:
-    - id: print
-      run: ['version']
-      note: 'the version string'
-      expect:
-        exit: 0
-        stdout_contains: ['^majordomus [0-9]+\.[0-9]+\.[0-9]+$']
-    - id: refuse
-      run: ['version', '--no-such-option']
-      note: 'a usage error'
-      expect:
-        exit: 2
-        stdout_contains: ['unknown option']
-  then:
-    - 'the version needs no repository'
 ---
 
 # Situation
 
 Which tool is this?
+
+# Scenario
+
+```yaml
+setup: bare
+given:
+  - 'nothing installed'
+steps:
+  - id: print
+    run: ['version']
+    note: 'the version string'
+    expect:
+      exit: 0
+      stdout_contains: ['^majordomus [0-9]+\.[0-9]+\.[0-9]+$']
+  - id: refuse
+    run: ['version', '--no-such-option']
+    note: 'a usage error'
+    expect:
+      exit: 2
+      stdout_contains: ['unknown option']
+then:
+  - 'the version needs no repository'
+```
 
 # Outcome
 
@@ -106,10 +110,31 @@ expect_exit 10 "$MJ" usecase run see-the-version
 expect_grep '^see-the-version +FAIL +expected /everything is fine/'
 grep -q '"result":"fail"' "$EV" || { echo "    evidence does not record the failure"; exit 1; }
 git checkout -q -- "$UC/see-the-version.md"
-sed -i.bak "s/        exit: 2$/        exit: 0/" "$UC/see-the-version.md"; rm -f "$UC/see-the-version.md.bak"
+sed -i.bak "s/^      exit: 2$/      exit: 0/" "$UC/see-the-version.md"; rm -f "$UC/see-the-version.md.bak"
 expect_exit 10 "$MJ" usecase run see-the-version
 expect_grep 'expected exit 0, got 2'
 git checkout -q -- "$UC/see-the-version.md"
+
+# --- and the same failure through --json, which is the form every generator reads.
+# The count of failures is a fact about the run, not about how it is printed. This lived
+# only in the text branch once, so `--json` reported "failed":0 and exited 0 however the
+# scenarios went — and scripts/generate-site-data relies on exactly that exit code to
+# refuse to publish a demonstration that does not hold. A green exit there did not stop
+# the site; it silently lowered the use case's maturity instead, which is the difference
+# between knowing something is broken and not knowing anything about it.
+sed -i.bak "s/stdout_contains: \['unknown option'\]/stdout_contains: ['everything is fine']/" "$UC/see-the-version.md"; rm -f "$UC/see-the-version.md.bak"
+expect_exit 10 "$MJ" usecase run --json see-the-version
+"$MJ" usecase run --json see-the-version > run.json 2>/dev/null || true
+jq -e '.failed == 1 and .ran == 1' run.json >/dev/null \
+  || { echo "    the JSON run does not report its own failure"; cat run.json; exit 1; }
+jq -e '[.results[] | select(.result != "pass")] | length == 1' run.json >/dev/null \
+  || { echo "    the failing scenario is not in the JSON results"; cat run.json; exit 1; }
+git checkout -q -- "$UC/see-the-version.md"
+# a passing run still exits 0 and says so, so the fix did not make --json fail always
+expect_exit 0 "$MJ" usecase run --json see-the-version
+"$MJ" usecase run --json see-the-version > run.json 2>/dev/null
+jq -e '.failed == 0 and .ran == 1 and (.results[0].result == "pass")' run.json >/dev/null \
+  || { echo "    a passing scenario is not reported as passing in JSON"; cat run.json; exit 1; }
 
 # --- every broken reference is refused with the entity and the relation named
 probe() { # description, sed expression, expected pattern
@@ -122,13 +147,13 @@ probe "unknown command"   "s/^commands: \[version\]/commands: [version, nosuchcm
 probe "unknown doctrine"  "s/^doctrines: \[\]/doctrines: [majordomus.nosuch]/"              "names doctrine 'majordomus.nosuch', which no rule declares"
 probe "unknown claim"     "s/^claims: \[exit-code-contract\]/claims: [nosuch-claim]/"       "names claim 'nosuch-claim'"
 probe "unknown category"  "s/^category: adoption/category: nosuch/"                          "category 'nosuch' is not in taxonomy.yaml"
-probe "unknown setup"     "s/^  setup: bare/  setup: nosuch/"                                "names setup 'nosuch'"
+probe "unknown setup"     "s/^setup: bare/setup: nosuch/"                                "names setup 'nosuch'"
 probe "step not listed"   "s/run: \['version', '--no-such-option'\]/run: ['doctor']/"        "step 'refuse' runs 'doctor', which the use case does not list under commands"
 probe "unknown key"       "s/^difficulty: basic/difficulty: basic\ncolour: red/"             "unknown key.s.: colour"
 probe "no situation"      "s/^# Situation/# Setting/"                                        "body has no '# Situation' heading"
 probe "unknown application" "s/^applications: \[\]/applications: [nosuch-app]/"             "names application 'nosuch-app', which does not exist"
 # a guaranteed target with no scenario is refused: a guarantee needs executable evidence
-awk '/^scenario:/{skip=1} /^---$/ && NR>1 {skip=0} !skip' "$UC/see-the-version.md" > "$UC/x.md" && mv "$UC/x.md" "$UC/see-the-version.md"
+awk '/^# Scenario$/{skip=1} /^# Outcome$/{skip=0} !skip' "$UC/see-the-version.md" > "$UC/x.md" && mv "$UC/x.md" "$UC/see-the-version.md"
 expect_exit 10 "$MJ" usecase validate
 expect_grep 'targets guaranteed and has no scenario'
 git checkout -q -- "$UC/see-the-version.md"

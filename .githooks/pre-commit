@@ -1,3 +1,8 @@
 #!/bin/sh
 # install once: git config core.hooksPath .githooks
 bin/majordomus doctor || exit $?
+# The derived data is a projection of the tree it was generated from, and a commit that moves
+# a canonical input without regenerating publishes nothing and breaks the deploy for whoever
+# lands next. `pages current` compares the recorded input hash with this tree's in a fifth of
+# a second, which is why it can run here rather than only in CI.
+scripts/pages current || exit $?

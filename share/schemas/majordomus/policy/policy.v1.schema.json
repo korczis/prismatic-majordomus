@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/policy/policy.v1.schema.json",
+  "x-majordomus-schema": "majordomus.policy/v1",
+  "title": "Policy",
+  "description": "The one provider-neutral policy, .ai/repo/policy.yaml: budgets, verification, retention, enforcement and projections.",
+  "x-majordomus-allow": "policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "always_loaded_budget_lines": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "builder_budget_lines": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "recent_decisions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_list_items": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "strategy": {
+          "type": "string"
+        },
+        "transcript_is_state": {
+          "type": "boolean"
+        }
+      }
+    },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "string"
+        },
+        "checkpoint_interval_default": {
+          "type": "string"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required_for_changes": {
+          "type": "boolean"
+        },
+        "finish_requires": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_body_lines": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "retention_max_files": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "handover": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required_sections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "retention_max_files": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "description": "What the provider's episode events do beyond drawing the boundary: how much the start event hands the worker, and whether the compaction and end events record anything.",
+      "additionalProperties": false,
+      "properties": {
+        "briefing_on_start": {
+          "type": "boolean",
+          "description": "Hand the worker a briefing on the start event's standard output, which the provider adds to the context it is about to build. False restores the older silence, in which a continuation record is written and nothing loads it."
+        },
+        "briefing_budget_lines": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Hard cap on what the start event writes to the provider's context. Text that arrives in every episode is paid for in every episode."
+        },
+        "checkpoint_on_compact": {
+          "type": "boolean",
+          "description": "Record a derived checkpoint when the provider announces a compaction. A compaction discards the conversation while the work continues."
+        },
+        "handover_on_end": {
+          "type": "boolean",
+          "description": "Write a derived continuation record when an episode ends with its task still active."
+        }
+      }
+    },
+    "ledger": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "retention_max_lines": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "enforcement": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "path",
+          "wired_by"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "wired_by": {
+            "type": "string"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "projections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "provider",
+          "target"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "always_loaded": {
+            "type": "boolean"
+          },
+          "mode": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How majordomus bench samples, and the thresholds bench --check and the command budgets apply.",
+      "properties": {
+        "samples": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "warmup": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "regression": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "p50": {
+              "type": "number",
+              "minimum": 0
+            },
+            "p95": {
+              "type": "number",
+              "minimum": 0
+            },
+            "p99": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "budget": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "doctor_ms": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "watch_ms": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "use_cases": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How use-case coverage is gated: per class of target, whether a gap fails, is reported, or is not looked at.",
+      "properties": {
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "commands": {
+              "enum": [
+                "required",
+                "advisory",
+                "off"
+              ]
+            },
+            "claims": {
+              "enum": [
+                "required",
+                "advisory",
+                "off"
+              ]
+            },
+            "mcp_tools": {
+              "enum": [
+                "required",
+                "advisory",
+                "off"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

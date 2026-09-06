@@ -202,8 +202,8 @@
       "title": "Context integrity",
       "class": "blocking",
       "principle": "Load minimum sufficient context",
-      "statement": "Every context document under the layer carries the context contract with a unique identity, every reference in it resolves within its ancestor chain, no final document is superseded, and the effective context for any path is computed from the tree root down in one deterministic order.",
-      "summary": "The scoped context documents under the AI layer carry the context contract, compose into one deterministic chain for every path, and a tree that does not validate resolves nothing.",
+      "statement": "Every directory of the layer carries a context document unless the contract governing it exempts its children, every document carries the contract with a unique identity, every reference resolves within its ancestor chain, no final document is superseded, no descendant weakens what an ancestor requires, and the effective context for any path is computed from the tree root down in one deterministic order.",
+      "summary": "Every directory of the AI layer carries a context document, each one carries the contract, they compose into one deterministic chain for every path, and a tree that does not validate resolves nothing.",
       "validator": "context",
       "validator_function": "mj_validate_context",
       "defined_in": "lib/context_docs.sh",
@@ -216,6 +216,7 @@
       "policy_key": "",
       "claims": [
         "context-documents",
+        "context-coverage",
         "context-impact"
       ],
       "test": "test/cases/69_context_documents.sh",
@@ -259,7 +260,7 @@
       "title": "Architecture decision integrity",
       "class": "blocking",
       "principle": "Externalise decisions and durable state",
-      "statement": "A decision is canonical data under the adrs section; it is valid against the decision schema, its identity is unique and fixes its file name, supersession is reciprocal, and a record the tool derived is proposed rather than accepted.",
+      "statement": "A decision is canonical data under the adrs section; it is valid against the decision schema, its identity is unique and fixes its file name, supersession is reciprocal, every reference it makes resolves in both directions of the graph, and a record the tool derived is proposed rather than accepted.",
       "summary": "Every architecture decision the repository holds parses against the decision contract, claims an identity nothing else claims, and every relation and reference it makes resolves.",
       "validator": "adr",
       "validator_function": "mj_validate_adr",
@@ -273,7 +274,8 @@
       "policy_key": "",
       "claims": [
         "adr-catalogue",
-        "adr-propose"
+        "adr-propose",
+        "adr-traceability"
       ],
       "test": "test/cases/99_adr.sh",
       "depends_on": [
@@ -649,8 +651,8 @@
       "title": "Prompt capture is proven, or reported unavailable",
       "class": "blocking",
       "principle": "Sessions are workers, not memory",
-      "statement": "Prompt capture is either wired below the model and proven by execution, or reported as unavailable; the archive is never committed, and a record carries the closed field set and no model output.",
-      "summary": "A repository that declares prompt capture has it wired below the model and proven by running it; the archive stays ignored and untracked, and every record carries the person's prompt and nothing the model said.",
+      "statement": "Prompt capture is either wired below the model and proven by execution, or reported as unavailable; the archive is never committed, every prompt is present as both a JSON record and its Markdown rendering, and the schema every record names resolves to the file that describes it.",
+      "summary": "A repository that declares prompt capture has it wired below the model and proven by running it; the archive stays ignored and untracked, every prompt is present as both a record and a rendering, and neither carries anything the model said.",
       "validator": "prompt_capture",
       "validator_function": "mj_validate_prompt_capture",
       "defined_in": "lib/capture.sh",
@@ -808,6 +810,31 @@
       "source": "share/standard/majordomus/rules/rule-package-integrity.v1.md"
     },
     {
+      "id": "majordomus.schema-integrity",
+      "slug": "schema-integrity",
+      "title": "Every object has a schema, and the rules resolve in one stated order",
+      "class": "blocking",
+      "principle": "Sessions are workers, not memory",
+      "statement": "The effective rule set resolves in one deterministic order — the vendored baseline in manifest order, then the project's own, as a dependency graph — and every object kind declares a schema, every schema is named by a kind, and every path under .ai/repo/ is claimed by a source mapping.",
+      "summary": "The order the rules apply in is written down rather than left in the code; every kind the tool reads declares a schema, every schema is named by a kind, and every path under the repository's AI layer is claimed by a source so that nothing is carried through unvalidated.",
+      "validator": "schema_integrity",
+      "validator_function": "mj_validate_schema_integrity",
+      "defined_in": "lib/doctor.sh",
+      "category": "schema",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [],
+      "test": "test/cases/32_schema_integrity.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/schema-integrity.v1.md"
+    },
+    {
       "id": "majordomus.scope-integrity",
       "slug": "scope-integrity",
       "title": "Scope integrity",
@@ -835,6 +862,62 @@
         "majordomus.one-worker-one-scope@1"
       ],
       "source": "share/standard/majordomus/rules/scope-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.session-records",
+      "slug": "session-records",
+      "title": "Session records are shared objects with a closed field set",
+      "class": "blocking",
+      "principle": "Sessions are workers, not memory",
+      "statement": "A closed session is a shared object of the layer: written by the tool from git and the ledger, valid against the session record contract, carrying no conversation and no fact about the machine that ran it, and discovered like every other kind rather than registered anywhere.",
+      "summary": "A closed execution episode is written once, into the layer's sessions section, against a schema that admits what the repository can prove and nothing else.",
+      "validator": "session_records",
+      "validator_function": "mj_validate_session_records",
+      "defined_in": "lib/session.sh",
+      "category": "session",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "session-records"
+      ],
+      "test": "test/cases/63_session_records.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1",
+        "majordomus.externalise-decisions@1"
+      ],
+      "source": "share/standard/majordomus/rules/session-records.v1.md"
+    },
+    {
+      "id": "majordomus.session-lifecycle",
+      "slug": "session-lifecycle",
+      "title": "The episode boundary is drawn below the model, and its working context is local",
+      "class": "blocking",
+      "principle": "Sessions are workers, not memory",
+      "statement": "An episode boundary a provider can observe is drawn by that provider's hook, proven by driving a payload through it; the start event hands the worker a briefing bounded by the policy and the other events write nothing to standard output; every open episode has a working context, and the store of working contexts is ignored, untracked, contract-shaped and free of transcripts.",
+      "summary": "Where a provider fires session events, the episode is opened and closed by that provider's hook rather than by the model, the start event hands the worker the bounded briefing the policy declares, and the working context each open freezes stays under the ignored half of the layer, carries the declared keys, and never carries a conversation.",
+      "validator": "session_lifecycle",
+      "validator_function": "mj_validate_session_lifecycle",
+      "defined_in": "lib/session_context.sh",
+      "category": "session",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "session-lifecycle"
+      ],
+      "test": "test/cases/54_session_lifecycle_hooks.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1",
+        "majordomus.session-records@1"
+      ],
+      "source": "share/standard/majordomus/rules/session-lifecycle.v1.md"
     },
     {
       "id": "majordomus.skill-integrity",
@@ -977,8 +1060,8 @@
     }
   ],
   "counts": {
-    "declared": 35,
-    "blocking": 31,
+    "declared": 38,
+    "blocking": 34,
     "advisory": 4
   },
   "index": {
@@ -1011,11 +1094,14 @@
     "majordomus.retention-caps": 26,
     "majordomus.roadmap-integrity": 27,
     "majordomus.rule-package-integrity": 28,
-    "majordomus.scope-integrity": 29,
-    "majordomus.skill-integrity": 30,
-    "majordomus.state-consistency": 31,
-    "majordomus.task-continuity": 32,
-    "majordomus.use-case-coverage": 33,
-    "majordomus.verification-integrity": 34
+    "majordomus.schema-integrity": 29,
+    "majordomus.scope-integrity": 30,
+    "majordomus.session-records": 31,
+    "majordomus.session-lifecycle": 32,
+    "majordomus.skill-integrity": 33,
+    "majordomus.state-consistency": 34,
+    "majordomus.task-continuity": 35,
+    "majordomus.use-case-coverage": 36,
+    "majordomus.verification-integrity": 37
   }
 }

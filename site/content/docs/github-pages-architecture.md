@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages architecture"
 description = "how the website is derived from the repository and checked for drift"
-weight = 29
+weight = 30
 [extra]
 source = "docs/GITHUB_PAGES_ARCHITECTURE.md"
 +++
@@ -39,6 +39,7 @@ being maintained separately from the repository that backs it.
 | skills | the repository's skills, one directory each; the site reads the catalogue `lib/skills.sh` derives from the source class `skill` | `.ai/repo/skills/<id>/SKILL.md` | yes |
 | rendering reference | representative Markdown for visual validation | `site/content-src/render-test.md` | yes |
 | derived data | stable JSON the templates read | `site/data/generated/*.json` | never |
+| the layer's directory contracts | every directory of `.ai/`, the contract it carries or the one that exempts it, and the counts | `site/data/generated/context.json` (from `majordomus context list --json`) | never |
 | derived release artifact | the claims matrix as Markdown | `docs/SITE_CLAIMS.md` | never |
 | derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command, doctrine, use case, application, milestone, issue, case study, skill, module and capability | `site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry,skills}/`, `render-test.md`, `architecture.md` | never |
 | derived routes and links for the executable | one route per module and per capability, the executable's pages, the API anchor, the source on GitHub, the claims attached to each surface | `site/data/generated/executable.json` | never |

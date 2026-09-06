@@ -1,7 +1,7 @@
 +++
 title = "An issue cannot be completed while a required piece of evidence is missing"
 description = "Each issue declares evidence_required: tokens naming the proofs its completion depends on. majordomus plan evidence attaches one piece of evidence against one of those tokens, and refuses a token the issue does not declare. majordomus plan done refuses while any token is uncovered. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE."
-weight = 93
+weight = 94
 [extra]
 claim_id = "evidence-gates-done"
 status = "guaranteed"

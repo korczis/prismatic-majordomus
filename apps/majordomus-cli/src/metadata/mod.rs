@@ -72,8 +72,8 @@ pub struct KindSpec {
     /// carries none is read as instead (the rules tree's own README is a document).
     #[serde(default)]
     pub without_front_matter: Option<String>,
-    /// The JSON Schema the metadata must satisfy, by name (`rule` for
-    /// `schemas/rule.schema.json`); absent means no contract.
+    /// The document schema the file must satisfy, by identity (`majordomus.rule/v1`,
+    /// which is `schemas/majordomus/rule/rule.v1.*`); absent means no contract.
     #[serde(default)]
     pub schema: Option<String>,
     #[serde(default)]
@@ -121,6 +121,19 @@ struct Source {
     text: String,
 }
 
+/// Every `.proto` document schema under a schema root, as the JSON Schema each derives.
+/// The proto is the definition; this is the same contract in the language the validator
+/// speaks.
+fn derived_schemas(dir: &std::path::Path, source: &str) -> Result<Vec<(String, Value)>> {
+    crate::proto::read_dir(dir, source)?
+        .into_values()
+        .map(|file| {
+            let schema = crate::proto::project::to_json_schema(&file)?;
+            Ok((file.schema_id, schema))
+        })
+        .collect()
+}
+
 fn rel_or_abs(path: &std::path::Path, root: &std::path::Path) -> String {
     path.strip_prefix(root)
         .map(|p| p.display().to_string())
@@ -129,13 +142,20 @@ fn rel_or_abs(path: &std::path::Path, root: &std::path::Path) -> String {
 
 /// One JSON Schema, compiled, with where it came from.
 pub struct Schema {
-    /// The schema name, `<name>.schema.json` without the suffix.
+    /// The schema identity, `<vendor>.<name>/v<n>`, which its path derives.
     pub name: String,
     /// Directory the file was read from, repository-relative when inside the repository.
     pub source: String,
-    /// The schema as parsed.
+    /// The schema as parsed: the whole document for a Markdown kind, the metadata itself
+    /// for a YAML one.
     pub json: Value,
+    /// The whole document.
     validator: jsonschema::Validator,
+    /// The front matter alone. A Markdown kind's schema describes `{header, body}`, and
+    /// what a caller has in hand at validation time is the front matter, so the header
+    /// half is compiled separately rather than every caller wrapping its value in an
+    /// object. For a YAML kind the two are the same validator's work and this is `None`.
+    header: Option<jsonschema::Validator>,
 }
 
 impl std::fmt::Debug for Schema {
@@ -160,23 +180,53 @@ pub struct Violation {
 
 impl Schema {
     fn compile(name: &str, source: &str, json: Value) -> Result<Self> {
-        let validator = jsonschema::validator_for(&json).map_err(|e| Error::KindSchema {
-            reason: format!(
-                "{source}/{name}{}: not a valid JSON Schema: {e}",
-                crate::share::SCHEMA_SUFFIX
-            ),
-        })?;
+        let compile = |value: &Value, what: &str| {
+            jsonschema::validator_for(value).map_err(|e| Error::KindSchema {
+                reason: format!("{source}: {name}: {what} is not a valid JSON Schema: {e}"),
+            })
+        };
+        let validator = compile(&json, "the document schema")?;
+        // A whole-document schema keeps the front-matter contract under `$defs/Header`;
+        // compiling a document that refers to it gives a validator for the header alone
+        // without a second copy of the contract.
+        let header = match (
+            json.get("properties").and_then(|p| p.get("header")),
+            json.get("$defs"),
+        ) {
+            (Some(_), Some(defs)) => Some(compile(
+                &serde_json::json!({
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "$ref": "#/$defs/Header",
+                    "$defs": defs,
+                }),
+                "its header",
+            )?),
+            _ => None,
+        };
         Ok(Schema {
             name: name.to_string(),
             source: source.to_string(),
             json,
             validator,
+            header,
         })
     }
 
-    /// Every violation of `instance`, in document order; empty when it conforms.
+    /// Every violation of the front matter `instance`, in document order; empty when it
+    /// conforms. For a Markdown kind this is the `Header` half of the contract; for a YAML
+    /// kind the metadata is the whole document and this is all of it.
     pub fn validate(&self, instance: &Value) -> Vec<Violation> {
-        self.validator
+        self.violations(self.header.as_ref().unwrap_or(&self.validator), instance)
+    }
+
+    /// Every violation of a whole document — `{"header": ..., "body": ...}` — in document
+    /// order. For a kind whose schema describes no body this is [`Self::validate`].
+    pub fn validate_document(&self, instance: &Value) -> Vec<Violation> {
+        self.violations(&self.validator, instance)
+    }
+
+    fn violations(&self, validator: &jsonschema::Validator, instance: &Value) -> Vec<Violation> {
+        validator
             .iter_errors(instance)
             .map(|e| {
                 let path = e
@@ -220,6 +270,13 @@ impl SchemaSet {
     /// error naming both directories.
     pub fn extend(&mut self, schemas: Vec<(String, Value)>, from: &str) -> Result<()> {
         for (name, json) in schemas {
+            // The committed projection of a `.proto` already loaded from its source: the
+            // source wins, and the cache is compared by `generate --check`, not here.
+            if json.get(crate::proto::project::DERIVED_EXTENSION).is_some()
+                && self.schemas.contains_key(&name)
+            {
+                continue;
+            }
             if let Some(first) = self.schemas.get(&name) {
                 return Err(Error::KindSchema {
                     reason: format!("schema '{name}' exists in both {} and {from}; a repository adds schemas, it does not redefine them", first.source),
@@ -251,10 +308,14 @@ impl KindSchema {
             std::fs::read_to_string(&dist_path).map_err(|e| Error::io(&dist_path, e))?;
         let mut schemas = SchemaSet::default();
         let dist_schemas = share.schemas_dir();
-        schemas.extend(
-            crate::share::read_schema_dir(&dist_schemas)?,
-            &rel_or_abs(&dist_schemas, repo.root()),
-        )?;
+        let dist_source = rel_or_abs(&dist_schemas, repo.root());
+        // The `.proto` is canonical for a Markdown kind, so it is read first and its JSON
+        // Schema derived here. The copy committed beside it is a cache for the readers that
+        // cannot parse proto — the shell tool above all — and `generate --check` is what
+        // keeps it current; loading the cache instead of the source would let a stale file
+        // decide what validates.
+        schemas.extend(derived_schemas(&dist_schemas, &dist_source)?, &dist_source)?;
+        schemas.extend(crate::share::read_schema_dir(&dist_schemas)?, &dist_source)?;
         let mut sources = vec![Source {
             path: rel_or_abs(&dist_path, repo.root()),
             text: dist_text,
@@ -271,10 +332,9 @@ impl KindSchema {
                 });
             }
             let repo_schemas = dir.join(REPO_SCHEMAS_DIR);
-            schemas.extend(
-                crate::share::read_schema_dir(&repo_schemas)?,
-                &format!("{knowledge}/{REPO_SCHEMAS_DIR}"),
-            )?;
+            let repo_source = format!("{knowledge}/{REPO_SCHEMAS_DIR}");
+            schemas.extend(derived_schemas(&repo_schemas, &repo_source)?, &repo_source)?;
+            schemas.extend(crate::share::read_schema_dir(&repo_schemas)?, &repo_source)?;
         }
         Self::parse_all(&sources, schemas)
     }
@@ -369,7 +429,7 @@ impl KindSchema {
             if let Some(schema) = &spec.schema {
                 if !schemas.schemas.contains_key(schema) {
                     return Err(Error::KindSchema {
-                        reason: format!("kind '{name}' names schema '{schema}', and no schemas/{schema}.schema.json exists in the distribution or the repository"),
+                        reason: format!("kind '{name}' names schema '{schema}', and neither the distribution nor the repository holds it; a schema's identity fixes its path, so this is schemas/{} or the .proto beside it", crate::proto::project::schema_path(schema).unwrap_or_else(|_| format!("<{schema} is not <vendor>.<name>/v<n>>"))),
                     });
                 }
             }
@@ -430,6 +490,12 @@ mod tests {
         let mut schemas = SchemaSet::default();
         schemas
             .extend(
+                derived_schemas(&share.join("schemas"), "share/schemas").unwrap(),
+                "share/schemas",
+            )
+            .unwrap();
+        schemas
+            .extend(
                 crate::share::read_schema_dir(&share.join("schemas")).unwrap(),
                 "share/schemas",
             )
@@ -446,7 +512,7 @@ mod tests {
         assert_eq!(rule.identity, vec!["id", "version"]);
         assert_eq!(
             schema.schema_for(rule).map(|s| s.name.as_str()),
-            Some("rule")
+            Some("majordomus.rule/v1")
         );
         assert!(schema.kind("document").is_some());
         assert!(schema.is_declared_kind("context") && !schema.is_declared_kind("rule"));
@@ -460,7 +526,7 @@ mod tests {
             Some("document")
         );
         assert!(
-            schema.schema("manifest").is_some(),
+            schema.schema("majordomus.manifest/v1").is_some(),
             "schemas that no kind names are still loaded"
         );
     }
@@ -468,7 +534,7 @@ mod tests {
     #[test]
     fn a_schema_validates_and_names_unknown_keys_and_wrong_types() {
         let (_, schemas) = dist();
-        let rule = schemas.get("rule").unwrap();
+        let rule = schemas.get("majordomus.rule/v1").unwrap();
         let ok: Value = serde_json::json!({ "id": "p.x", "version": 1, "kind": "rule", "title": "T", "description": "D", "statement": "S", "status": "active", "class": "advisory", "depends_on": [], "tags": ["a"] });
         assert!(rule.validate(&ok).is_empty());
         let mut bad = ok.clone();
@@ -492,19 +558,25 @@ mod tests {
         let mut redefine = SchemaSet::default();
         redefine
             .extend(
-                vec![("rule".into(), serde_json::json!({ "type": "object" }))],
+                vec![(
+                    "majordomus.rule/v1".into(),
+                    serde_json::json!({ "type": "object" }),
+                )],
                 "a",
             )
             .unwrap();
         let err = redefine
             .extend(
-                vec![("rule".into(), serde_json::json!({ "type": "object" }))],
+                vec![(
+                    "majordomus.rule/v1".into(),
+                    serde_json::json!({ "type": "object" }),
+                )],
                 "b",
             )
             .unwrap_err();
         assert!(
             err.to_string()
-                .contains("schema 'rule' exists in both a and b"),
+                .contains("schema 'majordomus.rule/v1' exists in both a and b"),
             "{err}"
         );
     }
@@ -550,7 +622,7 @@ mod tests {
         ))
         .contains("text kind"));
         assert!(
-            bad(&text.replace("    schema: rule\n", "    schema: nothing\n"))
+            bad(&text.replace("    schema: majordomus.rule/v1\n", "    schema: nothing\n"))
                 .contains("schema 'nothing'")
         );
         let mut invalid = SchemaSet::default();

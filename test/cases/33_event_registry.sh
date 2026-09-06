@@ -73,8 +73,11 @@ for e in $registered; do
   grep -q "| \`$e\` |" "$ROOT/docs/SCHEMAS.md" || {
     echo "    docs/SCHEMAS.md does not document the event '$e'"; exit 1; }
 done
-for e in $(grep -oE '^\| `[a-z][a-z._]*` \|' "$ROOT/docs/SCHEMAS.md" | sed 's/^| `//; s/` |$//' | sort -u); do
-  case "$e" in *.*) ;; *) continue ;; esac      # the table shares the file with field-name tables
+# The events table is one section of a file full of field tables, and a field name may carry
+# a dot too (children.require_contract), so the rows are read from that section alone rather
+# than from every row in the file that happens to look like one.
+events_table() { awk '/^\| event \| extra fields \|$/ { t = 1; next } t && !/^\|/ { exit } t' "$ROOT/docs/SCHEMAS.md"; }
+for e in $(events_table | grep -oE '^\| `[a-z][a-z._]*` \|' | sed 's/^| `//; s/` |$//' | sort -u); do
   printf '%s\n' "$registered" | grep -Fxq "$e" || {
     echo "    docs/SCHEMAS.md documents the event '$e', which is not registered"; exit 1; }
 done

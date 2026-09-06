@@ -1,12 +1,12 @@
 +++
 title = "Serve the repository's AI layer to every AI client through one shared server"
 description = "Open the repository in Claude Code, Codex or Gemini CLI and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other."
-weight = 7
+weight = 8
 [extra]
 id = "serve-the-layer-to-ai-clients"
 source = ".ai/repo/use-cases/serve-the-layer-to-ai-clients.md"
 category = "mcp"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
@@ -17,6 +17,29 @@ Three AI clients are open in one checkout. Each reads .ai/ by hand, none knows t
 
 - `init`: writes the .ai/ layer the executable serves; the client configurations at the root (.mcp.json, .gemini/settings.json, .codex/config.toml) start bin/majordomus-mcp, which builds the Rust executable when it must
 - `doctor`: proves the layer and its projections are consistent before a client reads them, and that the MCP client autostart is wired
+
+## Scenario
+
+```yaml
+setup: installed-wired
+given:
+  - 'a repository with the layer installed and its projections generated'
+steps:
+  - id: nothing-to-add
+    run: ['init', '--extend']
+    note: 'the layer is complete; the client configurations at the root start the server'
+    expect:
+      exit: 0
+      stdout_contains: ['nothing to add']
+  - id: healthy
+    run: ['doctor']
+    note: 'what the server will serve is what doctor proved'
+    expect:
+      exit: 0
+      stdout_contains: ['doctor: 0 failure']
+then:
+  - 'an MCP client opened here starts the shared server through bin/majordomus-mcp and reads the same layer'
+```
 
 ## Outcome
 

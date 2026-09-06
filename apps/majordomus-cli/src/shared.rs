@@ -1,6 +1,6 @@
 //! The shared server: one per repository, holding the lease, serving the HTTP projection
-//! (Swagger UI, OpenAPI, the capability routes) and MCP over HTTP for every peer that
-//! attaches. It is started by the first `majordomus mcp` or `serve` in a repository and
+//! (the Cockpit, Swagger UI, OpenAPI, the capability routes) and MCP over HTTP for every
+//! peer that attaches. It is started by the first `majordomus mcp` or `serve` in a repository and
 //! ends when its owner's session is over and the last peer has left.
 
 use std::sync::Arc;
@@ -26,6 +26,7 @@ pub struct SharedServer {
 impl SharedServer {
     /// Bind, publish the URL into the lease, and start serving. With `fallback`, a taken
     /// port is replaced by a free one and said so; without it, a taken port is an error.
+    #[allow(clippy::too_many_arguments)]
     pub fn start(
         ctx: Arc<Context>,
         version: &'static str,
@@ -33,6 +34,7 @@ impl SharedServer {
         port: u16,
         fallback: bool,
         lease: Lease,
+        share_dir: Option<&std::path::Path>,
     ) -> Result<Self> {
         let bound = if fallback {
             server::bind_or_fallback(host, port)?
@@ -41,13 +43,40 @@ impl SharedServer {
         };
         let url = bound.url();
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&ctx), version, url.clone()));
-        let router = Router::new(ctx, version).with_mcp(Arc::clone(&endpoint));
+        // The static surfaces of the repository, resolved once at startup: whatever the
+        // producers have generated is served from its own directory, and nothing here names
+        // one of them (ADR 0013). A repository with none mounts none.
+        let root = ctx.index.repository.root.clone();
+        let surfaces = crate::web::discover::discover(
+            std::path::Path::new(&root),
+            crate::web::discover::Runtime::full(),
+        )
+        .map(|topology| {
+            Arc::new(crate::web::serve::StaticSurfaces::new(
+                &topology,
+                std::path::Path::new(&root),
+            ))
+        })
+        .ok();
+        let mounted: Vec<String> = surfaces
+            .as_ref()
+            .map(|s| s.ids().into_iter().map(str::to_string).collect())
+            .unwrap_or_default();
+        let mut router = Router::new(ctx, version)
+            .with_mcp(Arc::clone(&endpoint))
+            .with_cockpit(share_dir);
+        if let Some(surfaces) = surfaces {
+            if !surfaces.is_empty() {
+                router = router.with_surfaces(surfaces);
+            }
+        }
         lease.publish(&url)?;
         let running = bound.start(router);
         tracing::info!(
             url = %url,
             lease = %lease.path().display(),
-            "shared server listening on {url} (swagger ui {url}/docs, openapi {url}/openapi.json, mcp over http {url}/mcp); the one server for this repository: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
+            surfaces = %if mounted.is_empty() { "none".to_string() } else { mounted.join(", ") },
+            "shared server listening on {url} (cockpit {url}/cockpit, swagger ui {url}/docs, openapi {url}/openapi.json, mcp over http {url}/mcp); the one server for this repository: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
         );
         Ok(SharedServer {
             running,

@@ -1,0 +1,59 @@
+{% extends "page.html" %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+{%- set cx = load_data(path="data/generated/context.json") -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Directories in the tree</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">{{ cx.counts.directories }}</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Carrying a contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">{{ cx.counts.documented }}</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Exempt, by their governing contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">{{ cx.counts.exempt }}</dd></div>
+  </dl>
+
+  {#- The tree, in the order the resolver walks it: least specific first. Indentation is the
+      directory's depth below the layer root, and every row carries the verdict validation
+      reached for that directory rather than one this page worked out for itself. -#}
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The tree</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Each row is a directory of <code class="font-mono">{{ cx.tree }}</code>. A directory carries its own contract, or the contract that governs its subtree exempts it — instances of a kind, such as a skill and its examples, owe no contract of their own. What applies to a path is <code class="font-mono">majordomus context resolve &lt;path&gt;</code>; this page is the shape that resolution walks.</p>
+
+  <ul class="mt-6 space-y-2" role="list">
+    {%- for d in cx.directories -%}
+    {#- depth as an indent, in literal classes so the CSS build sees every one of them; the
+        indent starts at the second level, so a narrow screen keeps its width -#}
+    {%- if d.depth == 1 %}{% set indent = "sm:ml-3" %}{% elif d.depth == 2 %}{% set indent = "sm:ml-6" %}{% elif d.depth == 3 %}{% set indent = "sm:ml-9" %}{% elif d.depth >= 4 %}{% set indent = "sm:ml-12" %}{% else %}{% set indent = "" %}{% endif -%}
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-4 {{ indent }}">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">{{ d.name }}/</code>
+        <span class="font-mono text-xs text-body-subtle">{{ d.dir }}</span>
+        {%- if d.contract -%}
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ d.contract.scope }}</span>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ d.contract.composition }}</span>
+        {%- if d.contract.children_require_contract == false -%}
+        <span class="rounded bg-brand-softer px-1.5 py-0.5 font-mono text-xs text-fg-brand-strong">children exempt</span>
+        {%- elif d.contract.children_require_contract == true -%}
+        <span class="rounded bg-brand-softer px-1.5 py-0.5 font-mono text-xs text-fg-brand-strong">children required</span>
+        {%- endif -%}
+        {%- endif -%}
+      </div>
+      {%- if d.contract %}
+      <p class="mt-2 text-sm text-heading"><code class="font-mono text-xs text-fg-brand">{{ d.contract.id }}</code> — {{ d.contract.title }}</p>
+      <p class="mt-1 text-sm leading-relaxed text-body">{{ d.contract.description }}</p>
+      {%- if d.contract.tracks | length > 0 %}
+      <p class="mt-2 text-xs text-body-subtle">tracks {% for t in d.contract.tracks %}<code class="font-mono">{{ t }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+      {%- endif %}
+      {%- else %}
+      <p class="mt-2 text-sm text-body">No contract of its own; {% if d.governed_by %}<code class="font-mono text-xs">{{ d.governed_by }}</code> exempts the directories below it{% else %}nothing requires one here{% endif %}.</p>
+      {%- endif %}
+    </li>
+    {%- endfor -%}
+  </ul>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">How a chain is composed</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">The effective context for a path is every applicable document from the root down to it, least specific first, ordered by depth, then the declared order, then the path. A <code class="font-mono">subtree</code> document applies to its directory and everything below; a <code class="font-mono">directory</code> document to its own directory alone; an <code class="font-mono">explicit</code> one to the directories it lists. <code class="font-mono">extend</code> appends, <code class="font-mono">replace</code> names the ancestors it stands in for, and <code class="font-mono">final</code> may not be superseded by anything below it.</p>
+</div>
+{% endblock content %}

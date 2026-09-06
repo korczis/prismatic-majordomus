@@ -1,0 +1,1354 @@
+{
+  "schema": 1,
+  "tree": ".ai",
+  "documents": [
+    {
+      "id": "ai.layer",
+      "path": ".ai/README.md",
+      "dir": ".ai",
+      "depth": 0,
+      "scope": "subtree",
+      "composition": "final",
+      "order": 10,
+      "status": "active",
+      "title": "Repository AI context",
+      "description": "The protocol of the layer: what it holds, who owns which half, how it is discovered, and what outranks what.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
+      "id": "ai.repo",
+      "path": ".ai/repo/README.md",
+      "dir": ".ai/repo",
+      "depth": 1,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 20,
+      "status": "active",
+      "title": "Tracked repository context",
+      "description": "The tracked half of the layer and what each section under it is for.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
+      "id": "ai.repo.adrs",
+      "path": ".ai/repo/adrs/README.md",
+      "dir": ".ai/repo/adrs",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Architecture decisions",
+      "description": "Accepted, durable decisions about how this repository is built.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
+      "id": "ai.repo.applications",
+      "path": ".ai/repo/applications/README.md",
+      "dir": ".ai/repo/applications",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Applications",
+      "description": "The contexts the tool suits, when each fits and when it does not, composed from use cases.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
+      "id": "ai.repo.benchmarks",
+      "path": ".ai/repo/benchmarks/README.md",
+      "dir": ".ai/repo/benchmarks",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Benchmarks",
+      "description": "The recorded baselines a performance claim is compared against, one directory per measured surface.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
+      "id": "ai.repo.ci",
+      "path": ".ai/repo/ci/README.md",
+      "dir": ".ai/repo/ci",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Continuous integration",
+      "description": "The gates this repository runs, which changed paths select them, and what publication may spend.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "scripts/ci-plan",
+        "scripts/pages",
+        ".github/workflows/validate.yml"
+      ]
+    },
+    {
+      "id": "ai.repo.knowledge",
+      "path": ".ai/repo/knowledge/README.md",
+      "dir": ".ai/repo/knowledge",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Knowledge",
+      "description": "How repository knowledge is declared and discovered, never collected.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "lib/knowledge.sh",
+        "share/knowledge-sources.yaml"
+      ]
+    },
+    {
+      "id": "ai.repo.profiles",
+      "path": ".ai/repo/profiles/README.md",
+      "dir": ".ai/repo/profiles",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Profiles",
+      "description": "How much context, effort and ceremony a task gets, declared per working mode.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "lib/common.sh",
+        "share/allow/profile.txt"
+      ]
+    },
+    {
+      "id": "ai.repo.project",
+      "path": ".ai/repo/project/README.md",
+      "dir": ".ai/repo/project",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Project model",
+      "description": "Milestones as outcomes, issues as execution contracts, and a dependency graph that decides what is next.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "lib/project.sh",
+        "lib/project.awk",
+        "share/allow/project.txt"
+      ]
+    },
+    {
+      "id": "ai.repo.prompts",
+      "path": ".ai/repo/prompts/README.md",
+      "dir": ".ai/repo/prompts",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Prompt assets",
+      "description": "The provider-neutral prompts the tool renders, with the tokens it fills in.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "lib/prompt.sh",
+        "share/allow/prompt.txt"
+      ]
+    },
+    {
+      "id": "ai.repo.providers",
+      "path": ".ai/repo/providers/README.md",
+      "dir": ".ai/repo/providers",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Provider templates",
+      "description": "The one source each provider bootstrap is rendered from; the files at the root are output.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "lib/update.sh",
+        ".ai/repo/policy.yaml"
+      ]
+    },
+    {
+      "id": "ai.repo.rules",
+      "path": ".ai/repo/rules/README.md",
+      "dir": ".ai/repo/rules",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Repository rules",
+      "description": "The rule object format, where rules live, how they are loaded and composed.",
+      "children_require_contract": true,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "lib/rules.sh",
+        "lib/doctrine.sh",
+        "share/standard/majordomus",
+        "share/allow/rule.txt"
+      ]
+    },
+    {
+      "id": "ai.repo.sessions",
+      "path": ".ai/repo/sessions/README.md",
+      "dir": ".ai/repo/sessions",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Session records",
+      "description": "One immutable record per closed execution episode, derived from git and the ledger and shared with every surface.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "lib/session.sh",
+        "share/schemas/majordomus/session-record/session-record.v1.schema.json"
+      ]
+    },
+    {
+      "id": "ai.repo.skills",
+      "path": ".ai/repo/skills/README.md",
+      "dir": ".ai/repo/skills",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Skills",
+      "description": "Reusable provider-neutral operational procedures, loaded only when the task is about them.",
+      "children_require_contract": false,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
+      "id": "ai.repo.use-cases",
+      "path": ".ai/repo/use-cases/README.md",
+      "dir": ".ai/repo/use-cases",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Use cases",
+      "description": "The tasks people perform with the tool, each one a file with the commands, rules and claims it names and the scenario section that proves it.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
+      "id": "ai.repo.workflows",
+      "path": ".ai/repo/workflows/README.md",
+      "dir": ".ai/repo/workflows",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Workflows",
+      "description": "The multi-step processes a worker follows here, and when each applies.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "lib/start.sh",
+        "lib/check.sh",
+        "lib/finish.sh",
+        "lib/handover.sh",
+        "lib/plan.sh"
+      ]
+    },
+    {
+      "id": "ai.repo.benchmarks.pages",
+      "path": ".ai/repo/benchmarks/pages/README.md",
+      "dir": ".ai/repo/benchmarks/pages",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Publication baselines",
+      "description": "What publishing the site cost on a named platform, kept as the comparison for the next run.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "scripts/pages"
+      ]
+    },
+    {
+      "id": "ai.repo.benchmarks.rust",
+      "path": ".ai/repo/benchmarks/rust/README.md",
+      "dir": ".ai/repo/benchmarks/rust",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Executable baselines",
+      "description": "Per-platform baselines for the Rust executable's commands, with the policy that decides a regression.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "apps/majordomus-cli/src/bench",
+        "scripts/rust-check"
+      ]
+    },
+    {
+      "id": "ai.repo.knowledge.curated",
+      "path": ".ai/repo/knowledge/curated/README.md",
+      "dir": ".ai/repo/knowledge/curated",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Curated notes",
+      "description": "What this repository chose to write about itself, discovered as a knowledge source class.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
+      "id": "ai.repo.project.issues",
+      "path": ".ai/repo/project/issues/README.md",
+      "dir": ".ai/repo/project/issues",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Issues",
+      "description": "Execution contracts: one bounded change each, with its scope, its dependencies and the evidence it must leave.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "share/allow/issue.txt"
+      ]
+    },
+    {
+      "id": "ai.repo.project.milestones",
+      "path": ".ai/repo/project/milestones/README.md",
+      "dir": ".ai/repo/project/milestones",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Milestones",
+      "description": "One outcome each, written as the problem it ends and the state that proves it ended.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "share/allow/milestone.txt"
+      ]
+    },
+    {
+      "id": "ai.repo.rules.project",
+      "path": ".ai/repo/rules/project/README.md",
+      "dir": ".ai/repo/rules/project",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Project rules",
+      "description": "The rules this repository wrote for itself, one file each, resolved with the vendored baseline.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    }
+  ],
+  "directories": [
+    {
+      "dir": ".ai",
+      "document": "ai.layer",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 0,
+      "name": ".ai",
+      "contract": {
+        "index": 1,
+        "id": "ai.layer",
+        "path": ".ai/README.md",
+        "dir": ".ai",
+        "depth": 0,
+        "scope": "subtree",
+        "composition": "final",
+        "order": 10,
+        "status": "active",
+        "title": "Repository AI context",
+        "description": "The protocol of the layer: what it holds, who owns which half, how it is discovered, and what outranks what.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "4cc466ecbcb9282ed51a8dc1fd2b206f19b2574d28abab5421ec41fadd1317b6"
+      }
+    },
+    {
+      "dir": ".ai/repo",
+      "document": "ai.repo",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 1,
+      "name": "repo",
+      "contract": {
+        "index": 2,
+        "id": "ai.repo",
+        "path": ".ai/repo/README.md",
+        "dir": ".ai/repo",
+        "depth": 1,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 20,
+        "status": "active",
+        "title": "Tracked repository context",
+        "description": "The tracked half of the layer and what each section under it is for.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "1074d3cbea61cca67d53668fcd760a81fc37ab46fea14c3fc9c3b79f718bc78c"
+      }
+    },
+    {
+      "dir": ".ai/repo/adrs",
+      "document": "ai.repo.adrs",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "adrs",
+      "contract": {
+        "index": 3,
+        "id": "ai.repo.adrs",
+        "path": ".ai/repo/adrs/README.md",
+        "dir": ".ai/repo/adrs",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Architecture decisions",
+        "description": "Accepted, durable decisions about how this repository is built.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "210fe3243d2c69906c9f83e75ebd9b1a0a456c8e95f3d182f5cdae7129fafec2"
+      }
+    },
+    {
+      "dir": ".ai/repo/applications",
+      "document": "ai.repo.applications",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "applications",
+      "contract": {
+        "index": 4,
+        "id": "ai.repo.applications",
+        "path": ".ai/repo/applications/README.md",
+        "dir": ".ai/repo/applications",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Applications",
+        "description": "The contexts the tool suits, when each fits and when it does not, composed from use cases.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "833a49c4a2dcea6549e2187efe2abdb333cca35ded8cc5bb906ea258b39121f2"
+      }
+    },
+    {
+      "dir": ".ai/repo/benchmarks",
+      "document": "ai.repo.benchmarks",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "benchmarks",
+      "contract": {
+        "index": 5,
+        "id": "ai.repo.benchmarks",
+        "path": ".ai/repo/benchmarks/README.md",
+        "dir": ".ai/repo/benchmarks",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Benchmarks",
+        "description": "The recorded baselines a performance claim is compared against, one directory per measured surface.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "9cc694e16669777f3e797e7e7b0f31b1f41825c698d6bfa62db6439946918c3b"
+      }
+    },
+    {
+      "dir": ".ai/repo/benchmarks/pages",
+      "document": "ai.repo.benchmarks.pages",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 3,
+      "name": "pages",
+      "contract": {
+        "index": 17,
+        "id": "ai.repo.benchmarks.pages",
+        "path": ".ai/repo/benchmarks/pages/README.md",
+        "dir": ".ai/repo/benchmarks/pages",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Publication baselines",
+        "description": "What publishing the site cost on a named platform, kept as the comparison for the next run.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "scripts/pages"
+        ],
+        "paths": [],
+        "sha256": "3ce7348a9354530620d768ccb4d2c13fc2147071b0a51d9c94ef892ac50650f8"
+      }
+    },
+    {
+      "dir": ".ai/repo/benchmarks/rust",
+      "document": "ai.repo.benchmarks.rust",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 3,
+      "name": "rust",
+      "contract": {
+        "index": 18,
+        "id": "ai.repo.benchmarks.rust",
+        "path": ".ai/repo/benchmarks/rust/README.md",
+        "dir": ".ai/repo/benchmarks/rust",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Executable baselines",
+        "description": "Per-platform baselines for the Rust executable's commands, with the policy that decides a regression.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "apps/majordomus-cli/src/bench",
+          "scripts/rust-check"
+        ],
+        "paths": [],
+        "sha256": "70723d37a5e8af4ef057cd0b93a324b251f5c5c51abf1d6bcd1c21355a133342"
+      }
+    },
+    {
+      "dir": ".ai/repo/ci",
+      "document": "ai.repo.ci",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "ci",
+      "contract": {
+        "index": 6,
+        "id": "ai.repo.ci",
+        "path": ".ai/repo/ci/README.md",
+        "dir": ".ai/repo/ci",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Continuous integration",
+        "description": "The gates this repository runs, which changed paths select them, and what publication may spend.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "scripts/ci-plan",
+          "scripts/pages",
+          ".github/workflows/validate.yml"
+        ],
+        "paths": [],
+        "sha256": "758ecb44965860fbd1359e70f5eb60bcb2cade0d338616f84af66e59ffd57671"
+      }
+    },
+    {
+      "dir": ".ai/repo/knowledge",
+      "document": "ai.repo.knowledge",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "knowledge",
+      "contract": {
+        "index": 7,
+        "id": "ai.repo.knowledge",
+        "path": ".ai/repo/knowledge/README.md",
+        "dir": ".ai/repo/knowledge",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Knowledge",
+        "description": "How repository knowledge is declared and discovered, never collected.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "lib/knowledge.sh",
+          "share/knowledge-sources.yaml"
+        ],
+        "paths": [],
+        "sha256": "940b66ef23466289a0fcf7eca36a47b89d3ccc973dee3ec99cda70951e243862"
+      }
+    },
+    {
+      "dir": ".ai/repo/knowledge/curated",
+      "document": "ai.repo.knowledge.curated",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 3,
+      "name": "curated",
+      "contract": {
+        "index": 19,
+        "id": "ai.repo.knowledge.curated",
+        "path": ".ai/repo/knowledge/curated/README.md",
+        "dir": ".ai/repo/knowledge/curated",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Curated notes",
+        "description": "What this repository chose to write about itself, discovered as a knowledge source class.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "b66365c9e627c0ffd7cd3185ebeaeaca5373b4ae9d15d081788ed141edb0f56a"
+      }
+    },
+    {
+      "dir": ".ai/repo/profiles",
+      "document": "ai.repo.profiles",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "profiles",
+      "contract": {
+        "index": 8,
+        "id": "ai.repo.profiles",
+        "path": ".ai/repo/profiles/README.md",
+        "dir": ".ai/repo/profiles",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Profiles",
+        "description": "How much context, effort and ceremony a task gets, declared per working mode.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "lib/common.sh",
+          "share/allow/profile.txt"
+        ],
+        "paths": [],
+        "sha256": "13a1315c227583a72eb517e814ec31592c5775d4836125541407b05e00970465"
+      }
+    },
+    {
+      "dir": ".ai/repo/project",
+      "document": "ai.repo.project",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "project",
+      "contract": {
+        "index": 9,
+        "id": "ai.repo.project",
+        "path": ".ai/repo/project/README.md",
+        "dir": ".ai/repo/project",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Project model",
+        "description": "Milestones as outcomes, issues as execution contracts, and a dependency graph that decides what is next.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "lib/project.sh",
+          "lib/project.awk",
+          "share/allow/project.txt"
+        ],
+        "paths": [],
+        "sha256": "944dd9b836b4c8d0300d94122df27601daef7702ba8de652621b0cd4c81d63f8"
+      }
+    },
+    {
+      "dir": ".ai/repo/project/issues",
+      "document": "ai.repo.project.issues",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 3,
+      "name": "issues",
+      "contract": {
+        "index": 20,
+        "id": "ai.repo.project.issues",
+        "path": ".ai/repo/project/issues/README.md",
+        "dir": ".ai/repo/project/issues",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Issues",
+        "description": "Execution contracts: one bounded change each, with its scope, its dependencies and the evidence it must leave.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "share/allow/issue.txt"
+        ],
+        "paths": [],
+        "sha256": "73b4257a7ab66f2d88a2ad971bb9b30b7972d25824dce6b0b9de9221a4ffb328"
+      }
+    },
+    {
+      "dir": ".ai/repo/project/milestones",
+      "document": "ai.repo.project.milestones",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 3,
+      "name": "milestones",
+      "contract": {
+        "index": 21,
+        "id": "ai.repo.project.milestones",
+        "path": ".ai/repo/project/milestones/README.md",
+        "dir": ".ai/repo/project/milestones",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Milestones",
+        "description": "One outcome each, written as the problem it ends and the state that proves it ended.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "share/allow/milestone.txt"
+        ],
+        "paths": [],
+        "sha256": "16d0db3488e9940bf5156117e7e80269c3ac9e5a8336a11171ce81c307d4e051"
+      }
+    },
+    {
+      "dir": ".ai/repo/prompts",
+      "document": "ai.repo.prompts",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "prompts",
+      "contract": {
+        "index": 10,
+        "id": "ai.repo.prompts",
+        "path": ".ai/repo/prompts/README.md",
+        "dir": ".ai/repo/prompts",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Prompt assets",
+        "description": "The provider-neutral prompts the tool renders, with the tokens it fills in.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "lib/prompt.sh",
+          "share/allow/prompt.txt"
+        ],
+        "paths": [],
+        "sha256": "30d0909eb0c4dcb641688f27461ab2f16e37b898e297e914e97521c08a63e3a6"
+      }
+    },
+    {
+      "dir": ".ai/repo/providers",
+      "document": "ai.repo.providers",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "providers",
+      "contract": {
+        "index": 11,
+        "id": "ai.repo.providers",
+        "path": ".ai/repo/providers/README.md",
+        "dir": ".ai/repo/providers",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Provider templates",
+        "description": "The one source each provider bootstrap is rendered from; the files at the root are output.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "lib/update.sh",
+          ".ai/repo/policy.yaml"
+        ],
+        "paths": [],
+        "sha256": "79ff127a21d016355c89df61ae07b1a732c0df49468746421450a2bb796fb8ea"
+      }
+    },
+    {
+      "dir": ".ai/repo/rules",
+      "document": "ai.repo.rules",
+      "requires_contract": true,
+      "governed_by": ".ai/repo/rules/README.md",
+      "depth": 2,
+      "name": "rules",
+      "contract": {
+        "index": 12,
+        "id": "ai.repo.rules",
+        "path": ".ai/repo/rules/README.md",
+        "dir": ".ai/repo/rules",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Repository rules",
+        "description": "The rule object format, where rules live, how they are loaded and composed.",
+        "children_require_contract": true,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "lib/rules.sh",
+          "lib/doctrine.sh",
+          "share/standard/majordomus",
+          "share/allow/rule.txt"
+        ],
+        "paths": [],
+        "sha256": "9f5599b5845fd8e3528f2cf150e49283bd9ef19e51bfe1ef62e55b27024a1228"
+      }
+    },
+    {
+      "dir": ".ai/repo/rules/project",
+      "document": "ai.repo.rules.project",
+      "requires_contract": true,
+      "governed_by": ".ai/repo/rules/README.md",
+      "depth": 3,
+      "name": "project",
+      "contract": {
+        "index": 22,
+        "id": "ai.repo.rules.project",
+        "path": ".ai/repo/rules/project/README.md",
+        "dir": ".ai/repo/rules/project",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Project rules",
+        "description": "The rules this repository wrote for itself, one file each, resolved with the vendored baseline.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "1351826b2c3f10dbfd56a18845fb41f2f334e41a426ba8e48943d8823675c857"
+      }
+    },
+    {
+      "dir": ".ai/repo/sessions",
+      "document": "ai.repo.sessions",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "sessions",
+      "contract": {
+        "index": 13,
+        "id": "ai.repo.sessions",
+        "path": ".ai/repo/sessions/README.md",
+        "dir": ".ai/repo/sessions",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Session records",
+        "description": "One immutable record per closed execution episode, derived from git and the ledger and shared with every surface.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "lib/session.sh",
+          "share/schemas/majordomus/session-record/session-record.v1.schema.json"
+        ],
+        "paths": [],
+        "sha256": "def1ec2391ae3323a01bab39baa0b53b0dc47f3250e403ecd4f47d2f22afcf91"
+      }
+    },
+    {
+      "dir": ".ai/repo/skills",
+      "document": "ai.repo.skills",
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 2,
+      "name": "skills",
+      "contract": {
+        "index": 14,
+        "id": "ai.repo.skills",
+        "path": ".ai/repo/skills/README.md",
+        "dir": ".ai/repo/skills",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Skills",
+        "description": "Reusable provider-neutral operational procedures, loaded only when the task is about them.",
+        "children_require_contract": false,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "3c8ea7ba48a504de0ba7d9b65261206d8c500a759cb72948070fafeeec8cd61a"
+      }
+    },
+    {
+      "dir": ".ai/repo/skills/deploy-site",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 3,
+      "name": "deploy-site",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/skills/implement",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 3,
+      "name": "implement",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/skills/implement/examples",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 4,
+      "name": "examples",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/skills/repo-review",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 3,
+      "name": "repo-review",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/skills/repo-review/examples",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 4,
+      "name": "examples",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/use-cases",
+      "document": "ai.repo.use-cases",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "use-cases",
+      "contract": {
+        "index": 15,
+        "id": "ai.repo.use-cases",
+        "path": ".ai/repo/use-cases/README.md",
+        "dir": ".ai/repo/use-cases",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Use cases",
+        "description": "The tasks people perform with the tool, each one a file with the commands, rules and claims it names and the scenario section that proves it.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "a883fd2937e208c0d1a1e7709c4c256d135b8615128d924fda3f8a44d4f413fd"
+      }
+    },
+    {
+      "dir": ".ai/repo/workflows",
+      "document": "ai.repo.workflows",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "workflows",
+      "contract": {
+        "index": 16,
+        "id": "ai.repo.workflows",
+        "path": ".ai/repo/workflows/README.md",
+        "dir": ".ai/repo/workflows",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Workflows",
+        "description": "The multi-step processes a worker follows here, and when each applies.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "lib/start.sh",
+          "lib/check.sh",
+          "lib/finish.sh",
+          "lib/handover.sh",
+          "lib/plan.sh"
+        ],
+        "paths": [],
+        "sha256": "b565315eb51039456fd46d9ec37cfc8f267042cfe6ef88cb4aa944e2e5bb835f"
+      }
+    }
+  ],
+  "counts": {
+    "directories": 27,
+    "documented": 22,
+    "exempt": 5
+  }
+}

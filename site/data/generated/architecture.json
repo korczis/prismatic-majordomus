@@ -50,6 +50,16 @@
       "external": false
     },
     {
+      "id": "lib/rules.sh",
+      "kind": "module",
+      "label": "rules",
+      "command": "rules",
+      "summary": "the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)",
+      "read_only": true,
+      "route": "/commands/rules/",
+      "external": false
+    },
+    {
       "id": ".ai/repo/adrs/.id.lock",
       "kind": "artifact",
       "label": "repo/adrs/.id.lock",
@@ -87,6 +97,46 @@
       "summary": "record the person's raw prompts from a provider hook, and prove it",
       "read_only": null,
       "route": "/commands/capture/",
+      "external": false
+    },
+    {
+      "id": "lib/session.sh",
+      "kind": "module",
+      "label": "session",
+      "command": "session",
+      "summary": "open, inspect and close one execution episode",
+      "read_only": null,
+      "route": "/commands/session/",
+      "external": false
+    },
+    {
+      "id": "lib/derive.sh",
+      "kind": "module",
+      "label": "derive",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/checkpoint.sh",
+      "kind": "module",
+      "label": "checkpoint",
+      "command": "checkpoint",
+      "summary": "record compact progress inside the active task",
+      "read_only": null,
+      "route": "/commands/checkpoint/",
+      "external": false
+    },
+    {
+      "id": "lib/handover.sh",
+      "kind": "module",
+      "label": "handover",
+      "command": "handover",
+      "summary": "write an append-only continuation record (body on stdin)",
+      "read_only": null,
+      "route": "/commands/handover/",
       "external": false
     },
     {
@@ -200,26 +250,6 @@
       "external": false
     },
     {
-      "id": "lib/checkpoint.sh",
-      "kind": "module",
-      "label": "checkpoint",
-      "command": "checkpoint",
-      "summary": "record compact progress inside the active task",
-      "read_only": null,
-      "route": "/commands/checkpoint/",
-      "external": false
-    },
-    {
-      "id": "lib/handover.sh",
-      "kind": "module",
-      "label": "handover",
-      "command": "handover",
-      "summary": "write an append-only continuation record (body on stdin)",
-      "read_only": null,
-      "route": "/commands/handover/",
-      "external": false
-    },
-    {
       "id": ".ai/repo/policy.yaml",
       "kind": "artifact",
       "label": "repo/policy.yaml",
@@ -233,16 +263,6 @@
       "id": ".ai/repo/providers",
       "kind": "artifact",
       "label": "repo/providers",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/repo/profiles",
-      "kind": "artifact",
-      "label": "repo/profiles",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -310,16 +330,6 @@
       "external": false
     },
     {
-      "id": ".ai/repo/prompts",
-      "kind": "artifact",
-      "label": "repo/prompts",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": "lib/doctor.sh",
       "kind": "module",
       "label": "doctor",
@@ -380,16 +390,6 @@
       "external": false
     },
     {
-      "id": "lib/rules.sh",
-      "kind": "module",
-      "label": "rules",
-      "command": "rules",
-      "summary": "the effective rule set: vendored baseline plus project rules   (read-only, except vendor update)",
-      "read_only": true,
-      "route": "/commands/rules/",
-      "external": false
-    },
-    {
       "id": "lib/finish.sh",
       "kind": "module",
       "label": "finish",
@@ -430,6 +430,26 @@
       "external": false
     },
     {
+      "id": ".ai/repo/profiles/README.md",
+      "kind": "artifact",
+      "label": "repo/profiles/README.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/prompts/README.md",
+      "kind": "artifact",
+      "label": "repo/prompts/README.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/rules/README.md",
       "kind": "artifact",
       "label": "repo/rules/README.md",
@@ -440,9 +460,9 @@
       "external": false
     },
     {
-      "id": ".ai/repo/rules/project",
+      "id": ".ai/repo/rules/project/README.md",
       "kind": "artifact",
-      "label": "repo/rules/project",
+      "label": "repo/rules/project/README.md",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -450,9 +470,9 @@
       "external": false
     },
     {
-      "id": ".ai/repo/knowledge/curated",
+      "id": ".ai/repo/knowledge/curated/README.md",
       "kind": "artifact",
-      "label": "repo/knowledge/curated",
+      "label": "repo/knowledge/curated/README.md",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -493,6 +513,26 @@
       "id": ".ai/repo/applications",
       "kind": "artifact",
       "label": "repo/applications",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/sessions}",
+      "kind": "artifact",
+      "label": "repo/sessions}",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/project/README.md",
+      "kind": "artifact",
+      "label": "repo/project/README.md",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -550,6 +590,26 @@
       "external": false
     },
     {
+      "id": ".ai/repo/sessions/README.md",
+      "kind": "artifact",
+      "label": "repo/sessions/README.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/templates/README.md",
+      "kind": "artifact",
+      "label": "repo/templates/README.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/plan.sh",
       "kind": "module",
       "label": "plan",
@@ -600,13 +660,13 @@
       "external": false
     },
     {
-      "id": "lib/session.sh",
+      "id": "lib/session_context.sh",
       "kind": "module",
-      "label": "session",
-      "command": "session",
-      "summary": "open, inspect and close one execution episode",
+      "label": "session_context",
+      "command": null,
+      "summary": null,
       "read_only": null,
-      "route": "/commands/session/",
+      "route": null,
       "external": false
     },
     {
@@ -678,11 +738,6 @@
     },
     {
       "source": "lib/common.sh",
-      "target": ".ai/repo/profiles",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/common.sh",
       "target": ".ai/repo/providers",
       "kind": "reads"
     },
@@ -702,8 +757,13 @@
       "kind": "reads"
     },
     {
-      "source": "lib/context.sh",
-      "target": ".ai/repo/prompts",
+      "source": "lib/derive.sh",
+      "target": ".ai/local/state/decisions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": ".ai/local/state/ledger.jsonl",
       "kind": "reads"
     },
     {
@@ -724,16 +784,6 @@
     {
       "source": "lib/doctor.sh",
       "target": ".ai/local/state/ledger.jsonl",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/doctor.sh",
-      "target": ".ai/repo/profiles",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/doctor.sh",
-      "target": ".ai/repo/prompts",
       "kind": "reads"
     },
     {
@@ -809,16 +859,6 @@
     {
       "source": "lib/skills.sh",
       "target": ".ai/repo/skills",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/update.sh",
-      "target": ".ai/repo/prompts",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/watch.sh",
-      "target": ".ai/repo/prompts",
       "kind": "reads"
     },
     {
@@ -962,8 +1002,33 @@
       "kind": "sources"
     },
     {
+      "source": "lib/adr.sh",
+      "target": "lib/rules.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/bench.sh",
       "target": "lib/commands.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": "lib/checkpoint.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": "lib/derive.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": "lib/session.sh",
       "kind": "sources"
     },
     {
@@ -998,6 +1063,11 @@
     },
     {
       "source": "lib/checkpoint.sh",
+      "target": "lib/derive.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/checkpoint.sh",
       "target": "lib/handover.sh",
       "kind": "sources"
     },
@@ -1024,6 +1094,21 @@
     {
       "source": "lib/context.sh",
       "target": "lib/prompt.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": "lib/decision.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": "lib/question.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": "lib/session.sh",
       "kind": "sources"
     },
     {
@@ -1078,6 +1163,11 @@
     },
     {
       "source": "lib/doctor.sh",
+      "target": "lib/session.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
       "target": "lib/skills.sh",
       "kind": "sources"
     },
@@ -1099,6 +1189,11 @@
     {
       "source": "lib/finish.sh",
       "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/handover.sh",
+      "target": "lib/derive.sh",
       "kind": "sources"
     },
     {
@@ -1134,6 +1229,16 @@
     {
       "source": "lib/session.sh",
       "target": "lib/project.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": "lib/session_context.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session_context.sh",
+      "target": "lib/context.sh",
       "kind": "sources"
     },
     {
@@ -1247,6 +1352,16 @@
       "kind": "uses"
     },
     {
+      "source": "lib/derive.sh",
+      "target": ".ai/local/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": ".ai/local/state/handovers",
+      "kind": "uses"
+    },
+    {
       "source": "lib/doctor.sh",
       "target": ".ai/local/state/open-questions.md",
       "kind": "uses"
@@ -1318,22 +1433,42 @@
     },
     {
       "source": "lib/init.sh",
+      "target": ".ai/repo/knowledge/curated/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
       "target": ".ai/repo/policy.yaml",
       "kind": "uses"
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/repo/profiles",
+      "target": ".ai/repo/profiles/README.md",
       "kind": "uses"
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/repo/prompts",
+      "target": ".ai/repo/project/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/prompts/README.md",
       "kind": "uses"
     },
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/rules/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/rules/project/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/sessions}",
       "kind": "uses"
     },
     {
@@ -1383,17 +1518,27 @@
     },
     {
       "source": "lib/migrate.sh",
+      "target": ".ai/repo/knowledge/curated/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/migrate.sh",
       "target": ".ai/repo/policy.yaml",
       "kind": "uses"
     },
     {
       "source": "lib/migrate.sh",
-      "target": ".ai/repo/profiles",
+      "target": ".ai/repo/profiles/README.md",
       "kind": "uses"
     },
     {
       "source": "lib/migrate.sh",
-      "target": ".ai/repo/prompts",
+      "target": ".ai/repo/project/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/migrate.sh",
+      "target": ".ai/repo/prompts/README.md",
       "kind": "uses"
     },
     {
@@ -1408,12 +1553,27 @@
     },
     {
       "source": "lib/migrate.sh",
+      "target": ".ai/repo/rules/project/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/migrate.sh",
       "target": ".ai/repo/scope.yaml",
       "kind": "uses"
     },
     {
       "source": "lib/migrate.sh",
+      "target": ".ai/repo/sessions/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/migrate.sh",
       "target": ".ai/repo/skills",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/migrate.sh",
+      "target": ".ai/repo/templates/README.md",
       "kind": "uses"
     },
     {
@@ -1442,18 +1602,8 @@
       "kind": "uses"
     },
     {
-      "source": "lib/prompt.sh",
-      "target": ".ai/repo/prompts",
-      "kind": "uses"
-    },
-    {
       "source": "lib/question.sh",
       "target": ".ai/local/state/open-questions.md",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/rules.sh",
-      "target": ".ai/repo/rules/project",
       "kind": "uses"
     },
     {
@@ -1482,11 +1632,6 @@
       "kind": "uses"
     },
     {
-      "source": "lib/search.sh",
-      "target": ".ai/repo/prompts",
-      "kind": "uses"
-    },
-    {
       "source": "lib/session.sh",
       "target": ".ai/local/state/sessions",
       "kind": "uses"
@@ -1497,11 +1642,6 @@
       "kind": "uses"
     },
     {
-      "source": "lib/start.sh",
-      "target": ".ai/repo/profiles",
-      "kind": "uses"
-    },
-    {
       "source": "lib/update.sh",
       "target": ".ai/local/state/checkpoints",
       "kind": "uses"
@@ -1509,11 +1649,6 @@
     {
       "source": "lib/update.sh",
       "target": ".ai/local/state/handovers",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/update.sh",
-      "target": ".ai/repo/profiles",
       "kind": "uses"
     },
     {
@@ -1577,28 +1712,8 @@
       "kind": "writes"
     },
     {
-      "source": "lib/init.sh",
-      "target": ".ai/repo/knowledge/curated",
-      "kind": "writes"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".ai/repo/rules/project",
-      "kind": "writes"
-    },
-    {
       "source": "lib/migrate.sh",
       "target": ".ai/local/state/handovers",
-      "kind": "writes"
-    },
-    {
-      "source": "lib/migrate.sh",
-      "target": ".ai/repo/knowledge/curated",
-      "kind": "writes"
-    },
-    {
-      "source": "lib/migrate.sh",
-      "target": ".ai/repo/rules/project",
       "kind": "writes"
     },
     {

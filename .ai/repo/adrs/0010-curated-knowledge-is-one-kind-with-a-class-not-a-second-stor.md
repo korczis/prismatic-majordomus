@@ -11,14 +11,14 @@ provenance:
   origin: extracted
   derived_from:
     - decision:t-20260905034523-a9f1
-    - file:share/schemas/knowledge.schema.json
+    - file:share/schemas/majordomus/knowledge/knowledge.v1.schema.json
 ---
 
 # 10. Curated knowledge is one kind with a class, not a second store
 
 ## Context
 
-What forced the decision. Derived from:  decision:t-20260905034523-a9f1 file:share/schemas/knowledge.schema.json.
+What forced the decision. Derived from:  decision:t-20260905034523-a9f1 file:share/schemas/majordomus/knowledge/knowledge.v1.schema.json.
 
 ## Decision
 

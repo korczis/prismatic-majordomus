@@ -4,7 +4,7 @@ command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 expect_exit 0 "$T/scripts/generate-site-data"
-for f in project profiles policy capabilities lifecycle docs diagrams source; do [ -f "$T/site/data/generated/$f.json" ]; jq -e '.schema == 1' "$T/site/data/generated/$f.json" >/dev/null; done
+for f in project profiles policy capabilities lifecycle docs diagrams source context; do [ -f "$T/site/data/generated/$f.json" ]; jq -e '.schema == 1' "$T/site/data/generated/$f.json" >/dev/null; done
 # version comes from the CLI, profiles from the skeleton, claims from CLAIMS.yaml
 [ "$(jq -r .version "$T/site/data/generated/project.json")" = "$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus")" ]
 [ "$(jq '.profiles | length' "$T/site/data/generated/profiles.json")" = "$(ls "$ROOT"/share/skeleton/profiles/*.yaml | wc -l | tr -d ' ')" ]
@@ -12,10 +12,18 @@ for f in project profiles policy capabilities lifecycle docs diagrams source; do
 [ "$(jq '.claims | length' "$T/site/data/generated/capabilities.json")" = "$(awk '/^claims:/{c=1;next} c&&/^  - id: /{n++} END{print n+0}' "$ROOT/docs/CLAIMS.yaml")" ]
 jq -e '.claims | all(.status == "guaranteed" and .test == null | not)' "$T/site/data/generated/capabilities.json" >/dev/null
 jq -e '.principles | length >= 8' "$T/site/data/generated/lifecycle.json" >/dev/null
+# the directory contracts: every directory of the layer is present with the verdict
+# validation reached, and none of them owes a contract it does not have (ADR 0011)
+jq -e '.counts.directories == (.directories | length) and .counts.documented > 0' "$T/site/data/generated/context.json" >/dev/null
+jq -e '[.directories[] | select(.document == null and .requires_contract)] | length == 0' "$T/site/data/generated/context.json" >/dev/null
+jq -e '[.directories[] | select(.contract != null and .contract.children_require_contract == false)] | length > 0' "$T/site/data/generated/context.json" >/dev/null
 jq -e '.diagrams.lifecycle.mermaid | contains("no_match")' "$T/site/data/generated/diagrams.json" >/dev/null
 # derived content exists, has front matter, and projected GitHub-native syntax
-[ -f "$T/site/content/docs/cli.md" ]; expect_grep '^source = "docs/CLI.md"' "$T/site/content/docs/cli.md"
-expect_grep '<div class="overflow-x-auto">' "$T/site/content/docs/cli.md"
+# CLI.md is projected under a slug of its own: /docs/cli/ is the per-command tree, so the
+# specification cannot also live there (doc_slug, CLI_SPEC_SLUG in the generator)
+expect_file "$T/site/content/docs/cli-specification.md"
+expect_grep '^source = "docs/CLI.md"' "$T/site/content/docs/cli-specification.md"
+expect_grep '<div class="overflow-x-auto">' "$T/site/content/docs/cli-specification.md"
 # --check passes when in sync, fails after a canonical edit
 expect_exit 0 "$T/scripts/generate-site-data" --check
 sed -i.bak 's/^effort: high$/effort: xhigh/' "$T/share/skeleton/profiles/debugging.yaml"; rm -f "$T/share/skeleton/profiles/debugging.yaml.bak"
@@ -58,3 +66,18 @@ git -C "$T" checkout -q -- share
 printf '\nmj_validate_unclaimed() { return 0; }\n' >> "$T/lib/check.sh"
 expect_exit 10 "$T/scripts/generate-site-data"
 expect_grep 'mj_validate_unclaimed, which no doctrine declares'
+
+# ---------------------------------------------------------------- nothing reader-relative
+# `session list` labels every record by its divergence from *this* worktree and branch, so
+# the same record labels itself `diverged` here and `different_context` on a CI checkout.
+# A published projection may only carry what the record says about itself: baked in, the
+# label makes the dataset a fact about the machine that generated it, and --check then
+# fails on every other one. This is the defect, from the artifact the repository ships.
+S="$ROOT/site/data/generated/sessions.json"
+if [ "$(jq -r '.count' "$S")" -gt 0 ]; then
+  "$ROOT/bin/majordomus" --repo "$ROOT" session list --all --json \
+    | jq -e '.sessions | length > 0 and all(has("label"))' >/dev/null \
+    || { echo "    session list no longer labels its records; this assertion needs rewriting"; exit 1; }
+  jq -e '.sessions | all(has("label") | not)' "$S" >/dev/null \
+    || { echo "    the published sessions dataset carries the reader-relative label"; exit 1; }
+fi

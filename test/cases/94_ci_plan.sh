@@ -13,7 +13,9 @@ lacks() { ! has "$1" "$2"; }
 
 # --- the model resolves, and a model that does not is refused by name
 expect_exit 0 "$PLAN" --check
-sed 's/gates: \[rust-check, rust-coverage, rust-bench, shell-suite, macos\]/gates: [rust-check, no-such-gate]/' "$MODEL" > broken.yaml
+# the rust class's gate list, whatever it currently holds: a literal here goes stale the
+# day a gate is added to that class, and the mutation then silently does nothing
+awk '/^  - id: rust$/{r=1} r && /^    gates: /{print "    gates: [rust-check, no-such-gate]"; r=0; next} {print}' "$MODEL" > broken.yaml
 grep -q no-such-gate broken.yaml || { echo "    the mutation did not take"; exit 1; }
 expect_exit 10 "$PLAN" --model broken.yaml --check
 expect_grep 'names a gate that does not exist: no-such-gate'
@@ -77,7 +79,16 @@ grep -qx 'mode=affected' gh.txt && grep -qx 'rust_check=true' gh.txt && grep -qx
 # --- the verdict: green only when every selected gate's job succeeded; red on a failure, a
 #     cancellation, a selected gate whose job was skipped, a failed plan, or an empty selection
 plan docs/DESIGN.md > plan.json
-needs() { jq -n --arg s "$1" '$s | split(",") | map(split("=") | {key: .[0], value: {result: .[1]}}) | from_entries'; }
+# A needs context: the jobs the caller names, plus every other job the model declares, as
+# skipped. Naming them all here would go stale the day a job is added, and the verdict would
+# then report the new job as absent rather than the case reporting what it is testing.
+JOBS="$(awk '/^    job: /{print $2}' "$MODEL" | sort -u | tr '\n' ' ')"
+needs() {
+  jq -n --arg s "$1" --arg jobs "plan $JOBS" '
+    ($s | split(",") | map(split("=") | {key: .[0], value: {result: .[1]}}) | from_entries) as $named
+    | ($jobs | split(" ") | map(select(length > 0)) | map({key: ., value: {result: "skipped"}}) | from_entries) as $rest
+    | $rest + $named'
+}
 needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,macos=skipped" > n.json
 expect_exit 0 "$VERDICT" --plan plan.json --needs n.json --summary summary.md
 grep -q '^## ci: green' summary.md || { cat summary.md; echo "    a green verdict did not say so"; exit 1; }
@@ -146,4 +157,20 @@ rc=0; MAJORDOMUS_BIN="$T/no-such-file" rust_bin >/dev/null 2>&1 || rc=$?
 [ "$rc" = 1 ] || { echo "    rust_bin accepted a MAJORDOMUS_BIN that is not executable (rc $rc)"; exit 1; }
 rc=0; MAJORDOMUS_BIN='' PATH="/usr/bin:/bin" rust_bin >/dev/null 2>&1 || rc=$?
 [ "$rc" = 3 ] || { echo "    rust_bin with neither cargo nor MAJORDOMUS_BIN returned $rc, not the skip code 3"; exit 1; }
+# --- a job gated on a plan output the plan job does not expose is a gate that never runs.
+#     The plan step emits one output per gate, but a workflow job reads them through the
+#     `outputs:` block, and GitHub does not complain about a property that is not there — the
+#     condition is simply false for ever. `cockpit-assets` was skipped that way, silently, by
+#     every run. Nothing derives that block, so this is what keeps it honest.
+#     $ROOT and not $H: the harness above is a synthetic checkout with no workflow in it,
+#     and a loop over a file that does not exist finds nothing missing and passes.
+W="$ROOT/.github/workflows/validate.yml"
+[ -f "$W" ] || { echo "    the workflow this check is about is not at $W"; exit 1; }
+grep -q 'needs\.plan\.outputs\.' "$W" || { echo "    no job reads a plan output; this check has stopped checking anything"; exit 1; }
+missing=""
+for ref in $(grep -oE 'needs\.plan\.outputs\.[a-z_]+' "$W" | sed 's/.*\.//' | sort -u); do
+  grep -qE "^      $ref: \\\$\{\{ steps\.plan\.outputs\.$ref \}\}" "$W" || missing="$missing $ref"
+done
+[ -z "$missing" ] || { echo "    job(s) gated on plan output(s) the plan job never exposes:$missing"; exit 1; }
+
 echo "    the plan follows the model, the verdict follows the plan, the runner keeps its semantics"

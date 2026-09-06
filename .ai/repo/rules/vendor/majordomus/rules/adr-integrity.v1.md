@@ -4,7 +4,7 @@ version: 1
 kind: rule
 title: Architecture decision integrity
 description: Every architecture decision the repository holds parses against the decision contract, claims an identity nothing else claims, and every relation and reference it makes resolves.
-statement: A decision is canonical data under the adrs section; it is valid against the decision schema, its identity is unique and fixes its file name, supersession is reciprocal, and a record the tool derived is proposed rather than accepted.
+statement: A decision is canonical data under the adrs section; it is valid against the decision schema, its identity is unique and fixes its file name, supersession is reciprocal, every reference it makes resolves in both directions of the graph, and a record the tool derived is proposed rather than accepted.
 status: active
 class: blocking
 depends_on: [majordomus.externalise-decisions@1]
@@ -15,7 +15,7 @@ x-majordomus:
   category: adr
   enforced_by: [doctor, watch]
   exit_code: 10
-  claims: [adr-catalogue, adr-propose]
+  claims: [adr-catalogue, adr-propose, adr-traceability]
   tests: [test/cases/99_adr.sh]
 ---
 

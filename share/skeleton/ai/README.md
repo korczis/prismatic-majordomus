@@ -40,10 +40,19 @@ local/   this checkout's own state; ignored by Git, never shared, never normativ
 
 `local/` holds operational state: the active task, the ledger, checkpoints, handovers,
 sessions, local decisions and open questions under `local/state/`, rebuildable caches
-under `local/cache/`, bounded working contexts under `local/session-contexts/`, and raw
-local user prompts under `local/prompts/` when an integration can observe them. Nothing
-under `local/` may be loaded into a model's context implicitly, published by a generator,
-or read as policy. `local/` never contains rules.
+under `local/cache/`, the bounded working context of each episode under
+`local/session-contexts/` — written when a session opens, holding the context the builder
+resolved at that moment and the worker's own notes — and raw local user prompts under
+`local/prompts/` when an integration can observe them. Nothing
+under `local/` may be published by a generator, served on a public surface, or read as
+policy, and `local/` never contains rules.
+
+It reaches a model's context by exactly two routes, both bounded by the policy and neither
+of them a transcript: the context builder, when a worker asks it, and the briefing the
+episode-start event writes, which the provider adds to the context it is about to build.
+The second is the reason the first is not enough — a continuation record that is loaded only
+when somebody remembers to load it is a record nobody reads. Everything else about `local/`
+stays exactly as unconditional as it was.
 
 ## Discovery
 

@@ -1,0 +1,665 @@
+/* The Cockpit's stylesheet, in source form. `scripts/cockpit-assets` compiles it to
+   share/cockpit/cockpit.css with the Tailwind CLI and Flowbite's theme, and the compiled
+   file is committed and drift-checked like every other generated artifact.
+
+   There are no utility classes in the Rust that renders the pages. Everything the markup
+   names is defined here, as a composition of Tailwind utilities over Flowbite's theme, so
+   that:
+
+     - the design is readable in one file rather than scattered across a thousand
+       attributes in Rust string literals,
+     - the compiled stylesheet is a function of this file and the pinned versions alone,
+       which makes `scripts/cockpit-assets --check` exact,
+     - a page renders as *what a thing is* (mj-card, mj-badge--fail) rather than as how it
+       currently looks.
+
+   Dark mode follows the site's convention: the `dark` class on <html>, set before first
+   paint by the one inline script the Cockpit ships.
+
+   The tone is a developer control plane: dense, quiet, high-contrast where it matters and
+   flat everywhere else. No shadows doing decoration's work, no gradients, no animation
+   that is not a state change. */
+
+@import "tailwindcss" source(none);
+@import "flowbite/src/themes/default";
+@plugin "flowbite/plugin";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* `source(none)` turns off automatic source detection. Nothing in the repository is
+   scanned for class names: every class this stylesheet emits is written below, as an
+   @apply composition. That is deliberate and it is what makes the output deterministic —
+   a function of this file and the pinned versions alone, and never of what happens to be
+   in the tree — which is what lets `scripts/cockpit-assets --check` be exact. */
+
+@theme {
+  /* Type: one system stack, one monospace stack. Nothing is fetched. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+
+  /* The one accent. Everything else is neutral, because a control plane that colours
+     everything says nothing with colour. */
+  --color-accent-50: oklch(0.97 0.02 250);
+  --color-accent-200: oklch(0.87 0.07 250);
+  --color-accent-500: oklch(0.62 0.16 250);
+  --color-accent-600: oklch(0.55 0.16 250);
+  --color-accent-900: oklch(0.32 0.10 250);
+}
+
+@layer base {
+  :root {
+    --mj-bg: var(--color-white);
+    --mj-bg-raised: var(--color-white);
+    --mj-bg-sunken: var(--color-gray-50);
+    --mj-border: var(--color-gray-200);
+    --mj-text: var(--color-gray-900);
+    --mj-text-muted: var(--color-gray-500);
+    color-scheme: light;
+  }
+  :where(.dark) {
+    --mj-bg: oklch(0.19 0.005 250);
+    --mj-bg-raised: oklch(0.23 0.006 250);
+    --mj-bg-sunken: oklch(0.16 0.005 250);
+    --mj-border: oklch(0.32 0.008 250);
+    --mj-text: oklch(0.94 0.004 250);
+    --mj-text-muted: oklch(0.68 0.008 250);
+    color-scheme: dark;
+  }
+
+  html {
+    background: var(--mj-bg);
+  }
+  body {
+    background: var(--mj-bg);
+    color: var(--mj-text);
+    @apply font-sans text-[13.5px] leading-relaxed antialiased;
+  }
+  /* The focus ring is never removed; a control plane is driven from the keyboard. */
+  :focus-visible {
+    @apply outline-2 outline-offset-2;
+    outline-color: var(--color-accent-500);
+  }
+  [x-cloak] {
+    display: none !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* ---------------------------------------------------------------- structure */
+
+  .mj-body {
+    @apply min-h-screen;
+  }
+
+  .mj-skip {
+    @apply absolute left-2 top-2 z-50 -translate-y-16 rounded px-3 py-2 focus:translate-y-0;
+    background: var(--mj-bg-raised);
+    color: var(--mj-text);
+    border: 1px solid var(--mj-border);
+  }
+
+  /* Wraps rather than overflows: at 390px the brand, the palette button and the external
+     links do not fit on one line, and a control plane that scrolls sideways on a laptop in
+     a split pane is worse than one that is two lines tall. The browser probe measures this
+     at 390, 1024 and 1600. */
+  .mj-topbar {
+    @apply sticky top-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2;
+    background: var(--mj-bg-raised);
+    border-bottom: 1px solid var(--mj-border);
+  }
+
+  .mj-brand {
+    @apply flex items-center gap-2 font-semibold no-underline;
+    color: var(--mj-text);
+  }
+  .mj-brand-mark {
+    @apply grid h-6 w-6 place-items-center rounded text-[11px] font-bold text-white;
+    background: var(--color-accent-600);
+  }
+  .mj-brand-name {
+    @apply tracking-tight;
+  }
+  .mj-brand-suffix {
+    @apply hidden text-[11px] uppercase tracking-[0.14em] sm:inline;
+    color: var(--mj-text-muted);
+  }
+
+  .mj-palette-open {
+    @apply order-3 flex w-full min-w-0 items-center justify-between gap-3 rounded px-3 py-1.5 text-left;
+    @apply sm:order-none sm:ml-auto sm:w-auto sm:max-w-md sm:flex-1;
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+    color: var(--mj-text-muted);
+  }
+  .mj-palette-open:hover {
+    border-color: var(--color-accent-500);
+  }
+
+  .mj-kbd {
+    @apply rounded px-1.5 py-0.5 font-mono text-[11px];
+    background: var(--mj-bg-raised);
+    border: 1px solid var(--mj-border);
+  }
+
+  .mj-topbar-links {
+    @apply ml-auto flex shrink-0 items-center gap-3 text-[12px] sm:ml-0;
+  }
+  .mj-theme-toggle {
+    @apply rounded px-2 py-1 text-[12px];
+    border: 1px solid var(--mj-border);
+    color: var(--mj-text-muted);
+  }
+  .mj-theme-toggle:hover {
+    color: var(--mj-text);
+  }
+  .mj-version {
+    @apply hidden font-mono text-[11px] sm:block;
+    color: var(--mj-text-muted);
+  }
+
+  .mj-layout {
+    @apply mx-auto flex w-full min-w-0 max-w-[1600px] items-start gap-6 px-4;
+  }
+
+  .mj-sidebar {
+    @apply sticky top-12 hidden max-h-[calc(100vh-3.5rem)] w-60 shrink-0 overflow-y-auto py-6 lg:block;
+  }
+  .mj-nav-section {
+    @apply mb-5;
+  }
+  .mj-nav-heading {
+    @apply mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.16em];
+    color: var(--mj-text-muted);
+  }
+  .mj-nav-list {
+    @apply space-y-px;
+  }
+  .mj-nav-link {
+    @apply flex items-center justify-between gap-2 rounded px-2 py-1 no-underline;
+    color: var(--mj-text-muted);
+  }
+  .mj-nav-link:hover {
+    background: var(--mj-bg-sunken);
+    color: var(--mj-text);
+  }
+  .mj-nav-link--current {
+    background: var(--color-accent-50);
+    color: var(--color-accent-900);
+    @apply font-medium;
+  }
+  :where(.dark) .mj-nav-link--current {
+    background: color-mix(in oklch, var(--color-accent-500) 22%, transparent);
+    color: var(--color-accent-200);
+  }
+  .mj-nav-label {
+    @apply truncate;
+  }
+  .mj-nav-count {
+    @apply shrink-0 font-mono text-[10px];
+    color: var(--mj-text-muted);
+  }
+
+  .mj-main {
+    @apply min-w-0 flex-1 py-6;
+  }
+  .mj-page-head {
+    @apply mb-5;
+  }
+  /* A heading is an identity here — `document.docs/EXTRACTION_REPORT.md` — and an identity
+     has no spaces to break at. Breaking anywhere is right for a name; wrapping the page
+     sideways is not. */
+  .mj-page-title {
+    @apply text-xl font-semibold tracking-tight [overflow-wrap:anywhere];
+  }
+  .mj-page-subtitle {
+    @apply mt-1 max-w-3xl [overflow-wrap:anywhere];
+    color: var(--mj-text-muted);
+  }
+  .mj-crumbs {
+    @apply mb-2 flex min-w-0 flex-wrap items-center gap-1 text-[11px] [overflow-wrap:anywhere];
+    color: var(--mj-text-muted);
+  }
+  .mj-crumbs li + li::before {
+    content: "/";
+    @apply mr-1 opacity-50;
+  }
+  .mj-crumbs a {
+    @apply no-underline;
+    color: inherit;
+  }
+  .mj-crumbs a:hover {
+    color: var(--mj-text);
+  }
+
+  .mj-footer {
+    @apply mx-auto flex w-full max-w-[1600px] flex-wrap items-center gap-2 px-4 py-6 text-[11px];
+    color: var(--mj-text-muted);
+  }
+  .mj-hidden {
+    @apply hidden;
+  }
+
+  /* ------------------------------------------------------------------ surfaces */
+
+  .mj-grid {
+    @apply flex flex-col gap-4;
+  }
+
+  .mj-card {
+    @apply rounded-lg p-4;
+    background: var(--mj-bg-raised);
+    border: 1px solid var(--mj-border);
+  }
+  .mj-card-head {
+    @apply mb-3 flex flex-wrap items-center justify-between gap-3;
+  }
+  .mj-card-title {
+    @apply text-[13px] font-semibold uppercase tracking-[0.1em];
+    color: var(--mj-text-muted);
+  }
+  .mj-card > .mj-card-title {
+    @apply mb-3;
+  }
+  .mj-subheading {
+    @apply mb-1 mt-3 text-[11px] font-semibold uppercase tracking-[0.12em];
+    color: var(--mj-text-muted);
+  }
+  .mj-prose {
+    @apply max-w-3xl;
+  }
+  .mj-note {
+    @apply mt-2 text-[12px];
+    color: var(--mj-text-muted);
+  }
+  .mj-muted {
+    color: var(--mj-text-muted);
+  }
+  .mj-empty {
+    @apply rounded border border-dashed p-4 text-center;
+    border-color: var(--mj-border);
+    color: var(--mj-text-muted);
+  }
+
+  /* ---------------------------------------------------------------- statistics */
+
+  .mj-stats {
+    @apply grid min-w-0 gap-px overflow-hidden rounded-lg sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6;
+    background: var(--mj-border);
+    border: 1px solid var(--mj-border);
+  }
+  .mj-stat {
+    @apply flex flex-col gap-0.5 p-3;
+    background: var(--mj-bg-raised);
+  }
+  .mj-stat-value {
+    @apply font-mono text-2xl font-semibold leading-none tracking-tight;
+  }
+  .mj-stat-label {
+    @apply text-[12px];
+  }
+  .mj-stat-source {
+    @apply font-mono text-[10px];
+    color: var(--mj-text-muted);
+  }
+
+  /* -------------------------------------------------------------------- tables */
+
+  /* No negative margin: it made the wrapper eight pixels wider than its parent, which the
+     browser probe measured as a document eight pixels wider than the viewport. A table that
+     needs the room scrolls inside itself; the page never does. */
+  .mj-table-wrap {
+    @apply w-full overflow-x-auto;
+  }
+  .mj-table {
+    @apply w-full border-collapse text-left;
+  }
+  .mj-table th {
+    @apply whitespace-nowrap px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em];
+    color: var(--mj-text-muted);
+    border-bottom: 1px solid var(--mj-border);
+  }
+  .mj-table td {
+    @apply px-2 py-1.5 align-top;
+    border-bottom: 1px solid var(--mj-border);
+  }
+  .mj-table tbody tr:hover td {
+    background: var(--mj-bg-sunken);
+  }
+  .mj-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .mj-facts {
+    @apply grid gap-x-4 gap-y-1;
+    grid-template-columns: minmax(min(8rem, 40%), max-content) minmax(0, 1fr);
+  }
+  .mj-facts-key {
+    @apply text-[11px] uppercase tracking-[0.1em];
+    color: var(--mj-text-muted);
+  }
+  .mj-facts-value {
+    @apply min-w-0 break-words;
+  }
+
+  .mj-list {
+    @apply list-disc space-y-0.5 pl-5;
+  }
+  .mj-checklist {
+    @apply mt-2 space-y-1;
+  }
+  .mj-checklist-item {
+    @apply flex min-w-0 flex-wrap items-baseline gap-2 [overflow-wrap:anywhere];
+  }
+  .mj-checklist-title {
+    @apply font-medium;
+  }
+  .mj-checklist-detail {
+    @apply text-[12px];
+    color: var(--mj-text-muted);
+  }
+  .mj-health-line {
+    @apply mb-2;
+  }
+
+  /* ------------------------------------------------------------ inline pieces */
+
+  .mj-link {
+    color: var(--color-accent-600);
+    @apply underline decoration-1 underline-offset-2;
+  }
+  :where(.dark) .mj-link {
+    color: var(--color-accent-200);
+  }
+  .mj-link:hover {
+    @apply decoration-2;
+  }
+  .mj-clear {
+    @apply self-end pb-1.5 text-[12px];
+  }
+
+  .mj-mono {
+    @apply font-mono text-[12px];
+  }
+  a.mj-mono {
+    @apply break-all;
+  }
+
+  .mj-pre {
+    @apply max-h-[32rem] overflow-auto rounded p-3 font-mono text-[12px] leading-snug;
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+  }
+
+  .mj-marks {
+    @apply inline-flex flex-wrap items-center gap-1;
+  }
+  .mj-tag {
+    @apply rounded px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider;
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+    color: var(--mj-text-muted);
+  }
+
+  /* The badge's colour is an accompaniment; the word is always there, so nothing is
+     carried by colour alone. */
+  .mj-badge {
+    @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium;
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+  }
+  .mj-badge-dot {
+    @apply h-1.5 w-1.5 shrink-0 rounded-full;
+    background: currentColor;
+  }
+  .mj-badge--ok,
+  .mj-badge--declared,
+  .mj-badge--query {
+    @apply text-green-700 dark:text-green-300;
+    border-color: color-mix(in oklch, currentColor 40%, transparent);
+  }
+  .mj-badge--warn,
+  .mj-badge--command,
+  .mj-badge--stale {
+    @apply text-amber-700 dark:text-amber-300;
+    border-color: color-mix(in oklch, currentColor 40%, transparent);
+  }
+  .mj-badge--fail,
+  .mj-badge--error {
+    @apply text-red-700 dark:text-red-300;
+    border-color: color-mix(in oklch, currentColor 40%, transparent);
+  }
+  .mj-badge--unknown,
+  .mj-badge--external {
+    @apply text-gray-600 dark:text-gray-300;
+  }
+  .mj-badge--info,
+  .mj-badge--resource,
+  .mj-badge--generated,
+  .mj-badge--cached,
+  .mj-badge--runtime {
+    color: var(--color-accent-600);
+    border-color: color-mix(in oklch, currentColor 40%, transparent);
+  }
+  :where(.dark) .mj-badge--info,
+  :where(.dark) .mj-badge--resource,
+  :where(.dark) .mj-badge--generated,
+  :where(.dark) .mj-badge--cached,
+  :where(.dark) .mj-badge--runtime {
+    color: var(--color-accent-200);
+  }
+
+  .mj-alert {
+    @apply mb-3 rounded p-3 text-[12.5px];
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+    border-left-width: 3px;
+  }
+  .mj-alert--ok {
+    @apply border-l-green-600;
+  }
+  .mj-alert--info {
+    border-left-color: var(--color-accent-500);
+  }
+  .mj-alert--warn {
+    @apply border-l-amber-500;
+  }
+  .mj-alert--fail {
+    @apply border-l-red-600;
+  }
+
+  .mj-details {
+    @apply mt-2 rounded;
+    border: 1px solid var(--mj-border);
+  }
+  .mj-summary {
+    @apply cursor-pointer select-none px-3 py-1.5 font-mono text-[12px];
+    color: var(--mj-text-muted);
+  }
+  .mj-summary:hover {
+    color: var(--mj-text);
+  }
+  .mj-details[open] .mj-summary {
+    border-bottom: 1px solid var(--mj-border);
+  }
+  .mj-details > *:not(.mj-summary) {
+    @apply m-2;
+  }
+
+  /* --------------------------------------------------------------------- forms */
+
+  .mj-filters {
+    @apply mb-4 flex flex-wrap items-end gap-3 rounded-lg p-3;
+    background: var(--mj-bg-raised);
+    border: 1px solid var(--mj-border);
+  }
+  .mj-fields {
+    @apply grid gap-3 sm:grid-cols-2;
+  }
+  .mj-field {
+    @apply flex min-w-0 flex-col gap-1 sm:min-w-[10rem];
+  }
+  .mj-field-label {
+    @apply flex items-baseline gap-2 text-[11px] font-medium uppercase tracking-[0.1em];
+    color: var(--mj-text-muted);
+  }
+  .mj-field-type {
+    @apply font-mono text-[10px] normal-case tracking-normal opacity-70;
+  }
+  .mj-required {
+    @apply text-[10px] normal-case tracking-normal text-red-600 dark:text-red-300;
+  }
+  .mj-optional {
+    @apply text-[10px] normal-case tracking-normal opacity-60;
+  }
+  .mj-field-help {
+    @apply text-[11.5px];
+    color: var(--mj-text-muted);
+  }
+
+  .mj-input,
+  .mj-select,
+  .mj-textarea {
+    @apply w-full rounded px-2 py-1.5 font-mono text-[12.5px];
+    background: var(--mj-bg);
+    border: 1px solid var(--mj-border);
+    color: var(--mj-text);
+  }
+  .mj-textarea {
+    @apply leading-snug;
+  }
+  .mj-checkbox {
+    @apply h-4 w-4 rounded;
+    border: 1px solid var(--mj-border);
+    accent-color: var(--color-accent-600);
+  }
+
+  .mj-button {
+    @apply rounded px-3 py-1.5 text-[12.5px] font-medium;
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+    color: var(--mj-text);
+  }
+  .mj-button:hover {
+    border-color: var(--color-accent-500);
+  }
+  .mj-button--primary {
+    background: var(--color-accent-600);
+    border-color: var(--color-accent-600);
+    @apply text-white;
+  }
+  .mj-button--quiet {
+    @apply px-2 py-1 text-[11.5px];
+    color: var(--mj-text-muted);
+  }
+  .mj-button[disabled] {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  /* -------------------------------------------------------------------- runner */
+
+  .mj-runner-actions {
+    @apply mt-3 flex flex-wrap items-center gap-3;
+  }
+  .mj-preview {
+    @apply w-full min-w-0 overflow-x-auto whitespace-nowrap rounded px-2 py-1.5 sm:w-auto sm:flex-1;
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+    color: var(--mj-text-muted);
+  }
+  .mj-runner-result {
+    @apply mt-3 empty:hidden;
+  }
+  .mj-runner-status {
+    @apply mb-1 flex flex-wrap items-center gap-2 text-[12px];
+    color: var(--mj-text-muted);
+  }
+
+  /* -------------------------------------------------------------------- canvas */
+
+  .mj-graph,
+  .mj-topology,
+  .mj-activity {
+    @apply w-full rounded;
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+  }
+  .mj-graph {
+    height: min(70vh, 640px);
+  }
+  .mj-topology {
+    height: min(70vh, 620px);
+  }
+  .mj-activity {
+    height: 200px;
+  }
+  .mj-graph-controls {
+    @apply flex min-w-0 flex-wrap items-center gap-2;
+  }
+  .mj-graph-controls .mj-input {
+    @apply w-40 sm:w-56;
+  }
+  /* Until a drawing library fills it, the frame says why it is empty rather than sitting
+     there as a grey rectangle. */
+  .mj-graph:empty::after,
+  .mj-topology:empty::after,
+  .mj-activity:empty::after {
+    content: "The visual layer is not loaded. Everything it would show is listed below.";
+    @apply grid h-full place-items-center p-4 text-center text-[12px];
+    color: var(--mj-text-muted);
+  }
+
+  /* ------------------------------------------------------------------- palette */
+
+  .mj-palette {
+    @apply fixed inset-0 z-50;
+  }
+  .mj-palette-backdrop {
+    @apply absolute inset-0;
+    background: color-mix(in oklch, black 45%, transparent);
+  }
+  .mj-palette-panel {
+    @apply absolute left-1/2 top-24 w-[min(42rem,92vw)] -translate-x-1/2 overflow-hidden rounded-lg;
+    background: var(--mj-bg-raised);
+    border: 1px solid var(--mj-border);
+  }
+  .mj-palette-input {
+    @apply w-full px-4 py-3 font-mono text-[13px];
+    background: transparent;
+    color: var(--mj-text);
+    border-bottom: 1px solid var(--mj-border);
+  }
+  .mj-palette-results {
+    @apply max-h-80 overflow-y-auto;
+  }
+  .mj-palette-results li {
+    @apply flex cursor-pointer items-baseline gap-2 px-4 py-1.5;
+  }
+  .mj-palette-results li[aria-selected="true"] {
+    background: var(--mj-bg-sunken);
+  }
+  .mj-palette-kind {
+    @apply shrink-0 font-mono text-[10px] uppercase tracking-wider;
+    color: var(--mj-text-muted);
+  }
+  .mj-palette-label {
+    @apply truncate font-mono text-[12.5px];
+  }
+  .mj-palette-detail {
+    @apply ml-auto truncate text-[11px];
+    color: var(--mj-text-muted);
+  }
+  .mj-palette-hint {
+    @apply px-4 py-2 text-[11px];
+    color: var(--mj-text-muted);
+    border-top: 1px solid var(--mj-border);
+  }
+}

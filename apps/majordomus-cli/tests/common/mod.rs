@@ -478,10 +478,23 @@ impl Served {
         target: &str,
         body: Option<&str>,
     ) -> (u16, Vec<(String, String)>, String) {
+        self.request_with(method, target, body, &[])
+    }
+
+    /// The same, with further request headers: what a browser sends (`Origin`, `Accept`)
+    /// and a plain client does not.
+    pub fn request_with(
+        &self,
+        method: &str,
+        target: &str,
+        body: Option<&str>,
+        extra: &[(&str, &str)],
+    ) -> (u16, Vec<(String, String)>, String) {
         let mut stream = TcpStream::connect(&self.address).expect("connect");
         let body = body.unwrap_or("");
+        let extra: String = extra.iter().map(|(k, v)| format!("{k}: {v}\r\n")).collect();
         let req = format!(
-            "{method} {target} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
+            "{method} {target} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\nContent-Type: application/json\r\n{extra}Content-Length: {}\r\n\r\n{body}",
             self.address,
             body.len()
         );

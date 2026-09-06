@@ -1,7 +1,7 @@
 +++
 title = "Milestones and issues are canonical repository files, and a key nobody reads is an error"
 description = "A milestone is one file under .ai/repo/project/milestones/, an issue is one file under .ai/repo/project/issues/, and both are hand-written YAML in the same restricted subset the policy uses. Every key in them is checked against an allowlist in share/allow/. A key that no code reads is a failure of majordomus plan validate and of majordomus doctor, not a comment."
-weight = 89
+weight = 90
 [extra]
 claim_id = "project-schema"
 status = "guaranteed"

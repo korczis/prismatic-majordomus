@@ -322,6 +322,9 @@ composition: extend               # extend | replace | final
 order: 100                        # integer; ties within one depth are broken by path
 supersedes: []                    # replace only: ids of ancestor-chain documents, none of them final
 tracks: [lib/rules.sh]            # git pathspecs this document describes
+children:                         # subtree only: what the directories below owe
+  require_contract: true          # true | false; the default where nothing declares it is true
+  exempt: []                      # subtrees this layer carries but does not author
 ---
 ```
 
@@ -340,11 +343,75 @@ tracks: [lib/rules.sh]            # git pathspecs this document describes
 | `order` | yes | an integer; less is earlier within one depth |
 | `supersedes` | with `replace` | ids in the ancestor chain this document stands in for; a `final` ancestor cannot be named |
 | `tracks` | no | pathspecs whose change names this document for review |
+| `children.require_contract` | no | `subtree` only: whether every directory below this one owes a context document. Absent everywhere above a directory means `true`. A descendant may raise `false` to `true`; lowering an inherited `true` is `illegal-override` |
+| `children.exempt` | no | `subtree` only: repository-relative directories inside this document's own scope that owe no context document, and nor does anything below them — a subtree the layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Naming a directory outside the document's scope, or its own directory, is `illegal-override`; a directory that does not exist is `broken-reference` |
 
 The allowed keys are `share/allow/context.txt`; any other key is an error. There are no
 defaults: a required key that is missing is `invalid-front-matter`, not a silent value.
 `majordomus context validate` checks every constraint over the whole tree, and
 `majordomus doctor` dispatches the same check through `majordomus.context-integrity`.
+
+## `.ai/repo/sessions/<stamp>--<id>--<branch>--<head>--<digest>.md`
+
+One closed execution episode, written by `majordomus session close` and by nothing else. A
+shared object of the layer: discovered by the source class `session`, projected to the
+index, `majordomus://session/<id>`, the object routes, the graph and the site, with no list
+of sessions kept anywhere (ADR 0014).
+
+```yaml
+---
+schema: session/v1                # the contract; a version this executable does not read is refused
+kind: session
+session_id: s-20260906035523-7b6c # identity, allocated at open, never reused
+created_at: 2026-09-06T03:55:24Z  # when the record was written: the close
+started_at: 2026-09-06T03:55:23Z
+closed_at: 2026-09-06T03:55:24Z
+outcome: closed                   # closed | interrupted
+title: "Session s-… on feature/x" # one line for a listing; the task's title when it had one
+task_id: none                     # the task the episode belonged to, or none
+profile: none
+worker: "claude-code/opus-5"      # what did the work, as it identified itself
+repository_id: git@github.com:…   # the remote; `local:<hash>` when there is none
+worktree_id: e2d0ee3a34301bd5     # the working copy, named without naming a path
+branch: feature/session-records
+start_head: 4658856…              # the commit the episode started from
+head: 4658856…                    # the commit it ended at
+start_working_tree: dirty         # clean | dirty, at open
+working_tree: dirty               # and at close
+commits: []                       # between the two heads, oldest first
+changed_files: []                 # repository-relative, as git reported them
+tasks: []                         # every list below is read from the ledger's events
+issues: []                        # for this episode: nothing here is authored
+milestones: []
+checkpoints: []
+handovers: []
+decisions: []
+questions: []
+evidence: []
+---
+
+The body: a summary of the work, given on standard input at close.
+```
+
+| Key | Required | Meaning |
+|---|---|---|
+| `schema` | yes | `session/v1` |
+| `kind` | yes | `session` |
+| `session_id` | yes | identity; the file name is a convenience |
+| `started_at`, `closed_at` | yes | RFC 3339, UTC |
+| `outcome` | yes | `closed` or `interrupted` |
+| `title`, `task_id`, `profile`, `worker` | no | what the episode was and what worked it |
+| `repository_id`, `worktree_id` | no | where it ran, without naming a path |
+| `branch`, `start_head`, `head` | no | from git |
+| `start_working_tree`, `working_tree` | no | `clean` or `dirty` |
+| `commits`, `changed_files` | no | from git |
+| `tasks`, `issues`, `milestones`, `checkpoints`, `handovers`, `decisions`, `questions`, `evidence` | no | from the ledger's events for this episode |
+
+Unknown keys are errors, and no value may be an absolute path: a shared record carries what
+the repository can prove, never a fact about the machine that ran it. There is no field for
+a conversation, which is `project.never-store-transcripts` enforced by the contract rather
+than by a habit. The open episode's own state file is a different object with its own schema
+(`session`), and it stays in the checkout-local half.
 
 ## `.ai/repo/rules/vendor/majordomus/manifest.yaml`
 
@@ -700,7 +767,63 @@ open session, exactly as a foreign task record is.
 
 ---
 
-## `.ai/local/state/sessions/<file>.md`
+## `.ai/local/session-contexts/<stamp>--<session-id>.md`
+
+The bounded working context of one episode, written by `session start` and appended to by
+`session close`. Its contract is `majordomus.session-context/v1`
+(`share/schemas/majordomus/session-context/`); the kind is declared in `share/kinds.yaml`
+like every other, and no source class discovers it.
+
+```markdown
+---
+schema: session-context/v1
+kind: session-context
+session_id: s-20260906035523-7b6c
+opened_at: 2026-09-06T03:55:23Z
+opened_by: hook                      # hook | hand
+provider: claude-code                # only when a provider's event opened it
+provider_session: "abc-123"          # the provider's own identity, as it sent it
+branch: master
+head: 9b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b
+task_id: none
+profile: none
+worker: "some-provider/some-model"   # optional; recorded only when supplied
+---
+
+# Working context of session s-20260906035523-7b6c
+
+## Context at open
+<the context builder's output, verbatim>
+
+## Notes
+<the worker's own account of the work>
+
+## Close                              # appended by `session close`
+- closed_at: 2026-09-06T05:12:04Z
+- outcome: closed
+- head: 9b1e2d4f…
+- record: .ai/repo/sessions/20260906T051204Z--s-…--master--9b1e2d4--c0ffee1234567890.md
+```
+
+`opened_by` is `hook` exactly when the open named the provider that delivered the event,
+which only something running inside that provider's hook can do; that is what makes it a
+fact rather than a claim. `provider_session` is the string that ties the episode to the
+prompt archive, whose records carry the same one.
+
+The document is **appended to, never rewritten**: the front matter describes the open, and
+the close adds a section, so whatever a worker typed between the two events survives. It is
+**not tracked**, and unlike the other local state it is not tracked for a second reason as
+well: it is a snapshot of a projection, so re-resolving it later produces a different
+document and no surface can reproduce it (ADR 0015).
+
+It is never a transcript. The derived half is the builder's output and the authored half
+summarises the work; a front-matter key naming a message list, a completion or a model's
+reply is refused by the `majordomus.session-lifecycle` doctrine, which is how
+`project.never-store-transcripts` is kept mechanically here rather than by memory.
+
+---
+
+## `.ai/repo/sessions/<file>.md`
 
 The immutable record of a closed session. Filename:
 `<utc-compact>--<session-id>--<branch-key>--<short-head>--<16 hex>.md`, e.g.
@@ -927,6 +1050,11 @@ status: accepted
 date: 2026-09-05
 tags: [architecture, capabilities]
 supersedes: [adr-0002]
+related:
+  - rule:majordomus.capability-registry
+  - claim:capability-registry
+  - file:apps/majordomus-cli/src/capability
+  - test:test/cases/91_canonical_architecture.sh
 provenance:
   origin: extracted
   derived_from:
@@ -952,6 +1080,7 @@ provenance:
 | `tags` | no | ids, same pattern as elsewhere |
 | `supersedes` | no | decisions this one stands in for; each must exist and name this one back |
 | `superseded_by` | no | present exactly when the status is `superseded` |
+| `related` | no | what the decision put in force: `rule:<id>`, `claim:<id>`, `file:<path>`, `test:<path>`. Each is validated, and the knowledge graph turns it into an edge — `declares`, `supports`, `references`, `tested_by` — so the reverse direction is a query, never a second edge to maintain |
 | `provenance.origin` | no | `authored` (a person wrote it) or `extracted` (`adr propose` derived it) |
 | `provenance.derived_from` | no | typed references: `decision:`, `session:`, `commit:`, `issue:`, `file:`, `test:` |
 
@@ -1050,6 +1179,7 @@ Events and their extra fields:
 | `plan_done` | `issue` |
 | `layout.migrated` | `from`, `to`, `backup` (the copy of local state made before it moved, or empty) |
 | `rules.vendored` | `package` (the revision of the package now vendored) |
+| `adr.proposed` | `adr` (the identity written), `title`; never written for an acceptance, which is a person's edit to the file |
 
 `doctor`, `check` (without `--checkpoint`), `watch`, `context`, `history`, `search`, and
 `prompt` write nothing, the ledger included.

@@ -1,7 +1,7 @@
 +++
 title = "A cached capability of the Rust executable answers the same value uncached, cold and warm, a hit runs no handler, errors and commands are never cached, and the key carries the registry fingerprint"
 description = "A cache is declared on the descriptor (CachePolicy::Process { max_entries, ttl }) and lives in the one executor every transport uses, so MCP, HTTP and the command line share it and none has a cache of its own. For every cached capability and every case its input type provides, the value answered with the cache off, with an empty cache and with a warm cache is the same; a warm answer runs no handler; an error is computed every time; a command is never cached and the registry refuses a descriptor that asks; the cache is bounded per capability and evicts the oldest; the same input with its keys in another order is the same key; and the key carries the registry fingerprint, a hash of every object's content and every descriptor, so two repository states never share an entry."
-weight = 114
+weight = 115
 [extra]
 claim_id = "execution-cache-equivalence"
 status = "guaranteed"

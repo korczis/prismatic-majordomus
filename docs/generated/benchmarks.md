@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 11 | 11 | 0 | 0 |
-| http | 11 | 11 | 0 | 0 |
-| mcp | 11 | 11 | 0 | 0 |
-| system | 9 | 9 | 0 | 0 |
-| total | 42 | 42 | 0 | 0 |
+| direct | 16 | 16 | 0 | 0 |
+| http | 16 | 16 | 0 | 0 |
+| mcp | 16 | 16 | 0 | 0 |
+| system | 12 | 12 | 0 | 0 |
+| total | 60 | 60 | 0 | 0 |
 
 ## Capabilities
 
@@ -21,6 +21,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 |---|---|---|---|---|---|---|---|
 | `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
+| `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
+| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases` |
+| `graph.list` | graph | query | — | covered | covered | covered | `default` |
+| `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
@@ -44,5 +49,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `system.http.index` | http | GET / |
 | `system.http.openapi` | http | GET /openapi.json |
 | `system.http.docs` | http | GET /docs (the Swagger UI shell) |
+| `system.http.cockpit_overview` | http | GET /cockpit (the Cockpit's landing page, server-rendered) |
+| `system.http.cockpit_capabilities` | http | GET /cockpit/capabilities (every capability as a table: the widest page) |
+| `system.http.cockpit_graph` | http | GET /cockpit/graphs/registry (a page whose content is a derived graph) |
 
 Cache modes: a cached capability is measured cold (the cache cleared before every sample) and warm (the same input repeated); the direct transport reports the handler invocations of each. Evidence: `.ai/local/benchmarks/` for local runs, `.ai/repo/benchmarks/rust/` for the accepted baselines and the regression policy.

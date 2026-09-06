@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 11,
-    "schemas": 56,
-    "tags": 5
+    "operations": 16,
+    "schemas": 77,
+    "tags": 9
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -57,6 +57,10 @@
       "what": "Swagger UI over /openapi.json, served by the running server; the page embeds no specification of its own."
     },
     {
+      "path": "/cockpit",
+      "what": ""
+    },
+    {
       "path": "/mcp",
       "what": "MCP over HTTP (Streamable HTTP) for a second client; the shared server only."
     }
@@ -64,6 +68,69 @@
   "openapi": "3.1.0",
   "schema": 1,
   "schemas": [
+    {
+      "description": "The active task of this checkout, when there is one.",
+      "is_enum": false,
+      "name": "ActiveTask",
+      "properties": [
+        {
+          "description": "The task id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is being worked on.",
+          "name": "task",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The execution profile it runs under.",
+          "name": "profile",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its typed outcome so far: `active`, `handed_over`, or a finished one.",
+          "name": "outcome",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The paths it claims.",
+          "name": "scope",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "When it started.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The commit it started at.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Continuity"
+      ],
+      "values": [],
+      "variants": []
+    },
     {
       "description": "The input of `peers.announce`: what the calling peer is working on.",
       "is_enum": false,
@@ -904,6 +971,217 @@
       "variants": []
     },
     {
+      "description": "What the lifecycle of this checkout is holding.",
+      "is_enum": false,
+      "name": "Continuity",
+      "properties": [
+        {
+          "description": "Whether this checkout's lifecycle has ever run: a ledger line, a task, an episode or\na record. False in a fresh clone, which is not a fault.\n\nIt is not \"the directory exists\". Several things create that directory before\nanything has been recorded in it, so a reader that took its presence for evidence\nwould be told the lifecycle had run in a checkout where it never had.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The worktree this answer is about. Every selection below is scoped to it.",
+          "name": "worktree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch, or `DETACHED`.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit this checkout is on.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "`clean` or `dirty`.",
+          "name": "working_tree",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The open episode, or `None`.",
+          "name": "session",
+          "refs": [
+            "OpenSession"
+          ],
+          "required": false,
+          "type": "OpenSession | null"
+        },
+        {
+          "description": "The active task, or `None`.",
+          "name": "task",
+          "refs": [
+            "ActiveTask"
+          ],
+          "required": false,
+          "type": "ActiveTask | null"
+        },
+        {
+          "description": "The record the next worker would resume from, or `None` when nothing resolves here.",
+          "name": "handover",
+          "refs": [
+            "Record"
+          ],
+          "required": false,
+          "type": "Record | null"
+        },
+        {
+          "description": "The newest progress note for this worktree and branch, or `None`.",
+          "name": "checkpoint",
+          "refs": [
+            "Record"
+          ],
+          "required": false,
+          "type": "Record | null"
+        },
+        {
+          "description": "Unresolved questions on this branch. Every one refuses `finish --outcome completed`,\nwhichever task opened it.",
+          "name": "blockers",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "How many records of each kind this checkout holds, against the policy's caps.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "What a reader should know before trusting any of the above: a diverged record, a\nforeign open session, a malformed file that was skipped. Empty is the good case.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.state"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A directory contract as the document declares it, before anything is inherited.",
+      "is_enum": false,
+      "name": "ContractView",
+      "properties": [
+        {
+          "description": "The document's identity; it survives a move, the file name does not.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document's path, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming the directory.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line saying what the directory is for.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`active` or `deprecated`; a deprecated document is listed and never applied.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`directory`, `subtree` or `explicit`: how far the document reaches.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`extend`, `replace` or `final`: how it composes with what is above it.",
+          "name": "composition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Ties within one depth are broken by this, then by path.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "`*`, or the providers the document is written for.",
+          "name": "providers",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Who it addresses; both when it says nothing.",
+          "name": "audience",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Pathspecs whose change names this document for review.",
+          "name": "tracks",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether the directories below owe a contract, when this document says.",
+          "name": "children_require_contract",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Subtrees below this one that owe nothing: carried, not authored here.",
+          "name": "children_exempt",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The counters and phase totals of this process at one moment. Every value is a count\nor a duration this process measured; none is written anywhere by hand.",
       "is_enum": false,
       "name": "CounterSnapshot",
@@ -953,6 +1231,13 @@
         {
           "description": "HTTP routers built.",
           "name": "http_projection_builds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Graphs derived from the registry and the index.",
+          "name": "graph_builds",
           "refs": [],
           "required": true,
           "type": "integer (uint64)"
@@ -1092,6 +1377,344 @@
       "variants": []
     },
     {
+      "description": "One directory of the layer, what it owes, and what applies to it.",
+      "is_enum": false,
+      "name": "DirectoryNode",
+      "properties": [
+        {
+          "description": "Repository-relative, forward slashes.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Segments below the layer root; the root itself is 0.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The directory above, when it is inside the layer.",
+          "name": "parent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The directories immediately below, sorted.",
+          "name": "children",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether it carries the contract it owes.",
+          "name": "state",
+          "refs": [
+            "DirectoryState"
+          ],
+          "required": true,
+          "type": "DirectoryState"
+        },
+        {
+          "description": "Whether a contract is owed here at all.",
+          "name": "requires_contract",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The contract that made the requirement explicit, when one did.",
+          "name": "governed_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The contract that released this subtree, when one did.",
+          "name": "exempted_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many objects of any kind the index holds directly in this directory.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The contract this directory declares, before inheritance.",
+          "name": "contract",
+          "refs": [
+            "ContractView"
+          ],
+          "required": false,
+          "type": "ContractView | null"
+        },
+        {
+          "description": "The contracts that apply here once inheritance is resolved, least specific first.\nPresent when the request asked for it, or when it asked about one path.",
+          "name": "effective",
+          "refs": [
+            "EffectiveEntry"
+          ],
+          "required": false,
+          "type": "array of EffectiveEntry"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The layer's directories, what each owes, and the contracts that apply.",
+      "is_enum": false,
+      "name": "DirectoryReport",
+      "properties": [
+        {
+          "description": "The layer root the tree is rooted at.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The directories in each state.",
+          "name": "tallies",
+          "refs": [
+            "DirectoryTallies"
+          ],
+          "required": true,
+          "type": "DirectoryTallies"
+        },
+        {
+          "description": "Every directory asked for, sorted by path.",
+          "name": "directories",
+          "refs": [
+            "DirectoryNode"
+          ],
+          "required": true,
+          "type": "array of DirectoryNode"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "directories.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a directory of the layer carries the contract it owes.",
+      "is_enum": true,
+      "name": "DirectoryState",
+      "properties": [],
+      "type": "\"documented\" | \"exempt\" | \"owed\"",
+      "used_by": [
+        "directories.list"
+      ],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [
+        {
+          "description": "It carries a context document of its own.",
+          "value": "documented"
+        },
+        {
+          "description": "It owes none, because a contract above it says so.",
+          "value": "exempt"
+        },
+        {
+          "description": "It owes one and has none.",
+          "value": "owed"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How many directories are in each state.",
+      "is_enum": false,
+      "name": "DirectoryTallies",
+      "properties": [
+        {
+          "description": "Every directory of the layer the index knows.",
+          "name": "directories",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Carrying a contract of their own.",
+          "name": "documented",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Released by a contract above them.",
+          "name": "exempt",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Owing a contract and carrying none.",
+          "name": "owed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.",
+      "is_enum": true,
+      "name": "Divergence",
+      "properties": [],
+      "type": "\"exact\" | \"advanced\" | \"diverged\" | \"different_context\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Record"
+      ],
+      "values": [
+        {
+          "description": "Written at this commit. Trust it.",
+          "value": "exact"
+        },
+        {
+          "description": "Git has moved forward since. Trust it, and expect some of it to be done.",
+          "value": "advanced"
+        },
+        {
+          "description": "The recorded commit is not an ancestor: history was rewritten. Trust git, not this.",
+          "value": "diverged"
+        },
+        {
+          "description": "Another branch or another worktree. This record is not about your work.",
+          "value": "different_context"
+        },
+        {
+          "description": "Git could not answer, so this process says so rather than guessing `exact`.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One directed edge. Both ends are node ids of the same graph; a derivation that cannot\nresolve an end adds an external node rather than a dangling edge.",
+      "is_enum": false,
+      "name": "Edge",
+      "properties": [
+        {
+          "description": "The node the edge leaves.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The node the edge enters.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One of the graph's declared edge kinds.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Graph"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One contract in a directory's effective chain, in the order it is applied.",
+      "is_enum": false,
+      "name": "EffectiveEntry",
+      "properties": [
+        {
+          "description": "The document's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document's path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Depth below the layer root; less is less specific and applies first.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The declared order, the second sort key.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "`extend`, `replace` or `final`.",
+          "name": "composition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it applies to this directory, in words.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True for the directory's own document, false for one it inherits.",
+          "name": "local",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The body of every error response.",
       "is_enum": false,
       "name": "ErrorBody",
@@ -1110,6 +1733,11 @@
       "used_by": [
         "capabilities.list",
         "capabilities.describe",
+        "continuity.state",
+        "directories.list",
+        "graph.get",
+        "graph.list",
+        "health.report",
         "objects.get",
         "objects.list",
         "peers.list",
@@ -1319,6 +1947,338 @@
       ]
     },
     {
+      "description": "A derived graph: what it is, where it came from, what its vocabularies mean, and the\nnodes and edges themselves.",
+      "is_enum": false,
+      "name": "Graph",
+      "properties": [
+        {
+          "description": "The identity, `[a-z][a-z0-9-]*`; the last segment of its route.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short name.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One paragraph: what a reader learns from it.",
+          "name": "description",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it was derived from, in the repository's own words.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Node kind to what that kind means.",
+          "name": "node_kinds",
+          "refs": [],
+          "required": true,
+          "type": "map of string"
+        },
+        {
+          "description": "Edge kind to what that edge asserts.",
+          "name": "edge_kinds",
+          "refs": [],
+          "required": true,
+          "type": "map of string"
+        },
+        {
+          "description": "Sorted by id.",
+          "name": "nodes",
+          "refs": [
+            "Node"
+          ],
+          "required": true,
+          "type": "array of Node"
+        },
+        {
+          "description": "Sorted.",
+          "name": "edges",
+          "refs": [
+            "Edge"
+          ],
+          "required": true,
+          "type": "array of Edge"
+        },
+        {
+          "description": "Counts and invariants.",
+          "name": "metadata",
+          "refs": [
+            "GraphMetadata"
+          ],
+          "required": true,
+          "type": "GraphMetadata"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "graph.get"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One graph the executable can derive: what it is, without deriving it.",
+      "is_enum": false,
+      "name": "GraphInfo",
+      "properties": [
+        {
+          "description": "The identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short name.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One paragraph.",
+          "name": "description",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it is derived from.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "GraphList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every graph this executable derives.",
+      "is_enum": false,
+      "name": "GraphList",
+      "properties": [
+        {
+          "description": "How many.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Each, described but not derived.",
+          "name": "graphs",
+          "refs": [
+            "GraphInfo"
+          ],
+          "required": true,
+          "type": "array of GraphInfo"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "graph.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a reader needs to know about the graph as a whole before drawing it.",
+      "is_enum": false,
+      "name": "GraphMetadata",
+      "properties": [
+        {
+          "description": "How many nodes.",
+          "name": "nodes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many edges.",
+          "name": "edges",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Whether the edges form a directed acyclic graph. Derived, never declared: a graph\nwhose contract is a DAG and whose answer here is `false` is a defect in the data.",
+          "name": "acyclic",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "True when the derivation stopped at [`MAX_NODES`] and the graph is a prefix of\nwhat the repository holds.",
+          "name": "truncated",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Graph"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The health of what this process serves.",
+      "is_enum": false,
+      "name": "Health",
+      "properties": [
+        {
+          "description": "The worst check's status.",
+          "name": "status",
+          "refs": [
+            "HealthStatus"
+          ],
+          "required": true,
+          "type": "HealthStatus"
+        },
+        {
+          "description": "How many checks stand where, by status word.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Every dimension, in a stable order.",
+          "name": "checks",
+          "refs": [
+            "HealthCheck"
+          ],
+          "required": true,
+          "type": "array of HealthCheck"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "health.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves.",
+      "is_enum": false,
+      "name": "HealthCheck",
+      "properties": [
+        {
+          "description": "A stable id, `[a-z][a-z0-9-]*`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short name.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "status",
+          "refs": [
+            "HealthStatus"
+          ],
+          "required": true,
+          "type": "HealthStatus"
+        },
+        {
+          "description": "One line: what the engine decided and on what.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The engine that decided it, named so the reader knows what to fix.",
+          "name": "decided_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What reproduces the verdict: a command, or a path.",
+          "name": "evidence",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Findings behind the verdict, when the engine produced any: the diagnostic\nmessages, the stale files, the missing coverage lines.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Health"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole.",
+      "is_enum": true,
+      "name": "HealthStatus",
+      "properties": [],
+      "type": "\"ok\" | \"warn\" | \"fail\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Health",
+        "HealthCheck"
+      ],
+      "values": [
+        {
+          "description": "The engine that decides this dimension is satisfied.",
+          "value": "ok"
+        },
+        {
+          "description": "Nothing is broken and something is worth looking at.",
+          "value": "warn"
+        },
+        {
+          "description": "The engine that decides this dimension is not satisfied.",
+          "value": "fail"
+        },
+        {
+          "description": "This process cannot decide it, and says so rather than reporting `ok`.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under [`HttpExposure::PREFIX`].",
       "is_enum": false,
       "name": "HttpExposure",
@@ -1366,6 +2326,28 @@
         {
           "description": "The input is bound from the JSON body. No builtin uses it yet.",
           "value": "POST"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered.",
+      "is_enum": true,
+      "name": "Match",
+      "properties": [],
+      "type": "\"same_worktree_same_branch\" | \"same_branch\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Record"
+      ],
+      "values": [
+        {
+          "description": "Same repository, same worktree, same branch.",
+          "value": "same_worktree_same_branch"
+        },
+        {
+          "description": "Same repository, same branch, another worktree of it.",
+          "value": "same_branch"
         }
       ],
       "variants": []
@@ -1438,6 +2420,76 @@
       "used_by_schemas": [
         "Capability",
         "CapabilitySummary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere.",
+      "is_enum": false,
+      "name": "Node",
+      "properties": [
+        {
+          "description": "Unique within the graph.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One of the graph's declared node kinds.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short label a renderer draws.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line about the thing, when the source holds one.",
+          "name": "summary",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where the Cockpit shows this thing, when it shows it.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The repository-relative file the node was derived from, when one file owns it.",
+          "name": "source",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "A status word the graph's own vocabulary defines (`accepted`, `active`, `query`).",
+          "name": "status",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository.",
+          "name": "external",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Graph"
       ],
       "values": [],
       "variants": []
@@ -1673,6 +2725,76 @@
       "used_by": [],
       "used_by_schemas": [
         "ResourceView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The open episode of this worktree, when there is one.",
+      "is_enum": false,
+      "name": "OpenSession",
+      "properties": [
+        {
+          "description": "The episode's id.",
+          "name": "session_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it opened.",
+          "name": "started_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who opened it.",
+          "name": "owner",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The worker identity, when one was supplied. Never inferred.",
+          "name": "worker",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The provider whose event opened it, when one did.",
+          "name": "provider",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The branch it opened on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The commit it opened at.",
+          "name": "start_head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "True when the open record here belongs to another checkout. Such a record is\nreported and never treated as this checkout's episode.",
+          "name": "foreign",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Continuity"
       ],
       "values": [],
       "variants": []
@@ -2052,6 +3174,87 @@
           "value": "binary"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file.",
+      "is_enum": false,
+      "name": "Record",
+      "properties": [
+        {
+          "description": "Repository-relative path. The body is at the path; it is not copied here.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the record says it was written.",
+          "name": "created_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The task it belongs to, or `none`.",
+          "name": "task_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch it was written on.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit it was written at.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the working tree was clean or dirty then.",
+          "name": "working_tree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which tier of the resolution rule matched.",
+          "name": "matched",
+          "refs": [
+            "Match"
+          ],
+          "required": true,
+          "type": "Match"
+        },
+        {
+          "description": "How far its commit is from this one.",
+          "name": "divergence",
+          "refs": [
+            "Divergence"
+          ],
+          "required": true,
+          "type": "Divergence"
+        },
+        {
+          "description": "The section a resuming worker acts on, when the record has one. A handover's `Next\nAction`; empty for a record that carries no sections.",
+          "name": "next_action",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Continuity"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -2860,6 +4063,368 @@
           "result_schema": "Capability",
           "stability": "behaviorally_verified",
           "summary": "Describe one capability"
+        }
+      ]
+    },
+    {
+      "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes.",
+      "name": "continuity",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2, ttl_seconds=2",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/continuity\"",
+          "description": "The open episode, the active task, the handover and checkpoint that resolve for this worktree and branch, each with its divergence label, the unresolved questions that refuse completion, and the record tallies. Selection is two-tiered and never repository-wide: a record from an unrelated worktree or branch is not offered, because a briefing that is quietly about somebody else is worse than none. Absence is reported as absence.",
+          "id": "continuity.state",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "continuity",
+            "uri": "majordomus://continuity"
+          },
+          "mcp_tool": "majordomus_continuity",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/continuity",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::continuity",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What the lifecycle is holding: the result.",
+              "schema": "Continuity",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Continuity",
+          "stability": "behaviorally_verified",
+          "summary": "What the lifecycle is holding"
+        }
+      ]
+    },
+    {
+      "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
+      "name": "directories",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=8, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/directories?path=.ai%2Frepo%2Frules&effective=true&state=owed\"",
+          "description": "Every directory of the layer the index knows, with the contract it declares, whether it owes one and which contract decided, and — for a named path, or when asked for everywhere — the effective chain composed from the root down, least specific first.",
+          "id": "directories.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "directories",
+            "uri": "majordomus://directories"
+          },
+          "mcp_tool": "majordomus_directories",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "One directory, repository-relative and inside the layer. Its effective chain is\nalways resolved. Absent means every directory of the layer.",
+              "examples": [
+                {
+                  "case": "one-directory",
+                  "value": "\".ai/repo/rules\""
+                }
+              ],
+              "name": "path",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Resolve the effective chain for every directory, not only for a named one.",
+              "examples": [
+                {
+                  "case": "effective-everywhere",
+                  "value": "true"
+                }
+              ],
+              "name": "effective",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Only directories in this state: `documented`, `exempt` or `owed`.",
+              "examples": [
+                {
+                  "case": "owed",
+                  "value": "\"owed\""
+                }
+              ],
+              "name": "state",
+              "required": false,
+              "type": "DirectoryState | null"
+            }
+          ],
+          "path": "/api/v1/directories",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::directories",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The layer's directory contracts: the result.",
+              "schema": "DirectoryReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DirectoryReport",
+          "stability": "behaviorally_verified",
+          "summary": "The layer's directory contracts"
+        }
+      ]
+    },
+    {
+      "description": "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape.",
+      "name": "graph",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=16",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/graph?id=adrs\"",
+          "description": "One graph by id: its nodes and edges with the vocabularies that say what each kind means, the file every node was derived from, and whether the result is acyclic. Deterministic for a given tree and executable.",
+          "id": "graph.get",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_graph",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The graph's id, as `graph.list` gives it (`registry`, `layer`, `rules`, `adrs`,\n`use-cases`).",
+              "examples": [
+                {
+                  "case": "adrs",
+                  "value": "\"adrs\""
+                },
+                {
+                  "case": "layer",
+                  "value": "\"layer\""
+                },
+                {
+                  "case": "registry",
+                  "value": "\"registry\""
+                },
+                {
+                  "case": "rules",
+                  "value": "\"rules\""
+                },
+                {
+                  "case": "use-cases",
+                  "value": "\"use-cases\""
+                }
+              ],
+              "name": "id",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/graph",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::graph",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Derive one graph: the result.",
+              "schema": "Graph",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Graph",
+          "stability": "behaviorally_verified",
+          "summary": "Derive one graph"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/graphs\"",
+          "description": "Every graph this executable derives: its id, what it shows, and what it is derived from.",
+          "id": "graph.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "graphs",
+            "uri": "majordomus://graphs"
+          },
+          "mcp_tool": "majordomus_graphs",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/graphs",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::graph",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "List graphs: the result.",
+              "schema": "GraphList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "GraphList",
+          "stability": "behaviorally_verified",
+          "summary": "List graphs"
+        }
+      ]
+    },
+    {
+      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+      "name": "health",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=4, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/health\"",
+          "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+          "id": "health.report",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "health",
+            "uri": "majordomus://health"
+          },
+          "mcp_tool": "majordomus_health",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/health",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::health",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Health of this process: the result.",
+              "schema": "Health",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Health",
+          "stability": "behaviorally_verified",
+          "summary": "Health of this process"
         }
       ]
     },

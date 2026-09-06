@@ -249,12 +249,18 @@ mj_knowledge_rows() {
   while IFS="$tab" read -r cls scope kind hash path; do
     [ -n "$path" ] || continue
     abs="$MJ_ROOT/$path"
+    # A section's README declares itself a context document, whatever class discovered it
+    # (share/kinds.yaml: `declared: [context]`). It is read as the kind it declares, not as
+    # an instance of the kind that lives beside it, which would be a node nobody meant.
+    if mj_is_context_doc "$abs"; then kind=document; fi
     printf 'S\t%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$hash" "$path"
     case "$kind" in
       decision|question) printf '%s\n' "$abs" >> "$tmp/lines" ;;
-      document) printf '%s\n' "$abs" >> "$tmp/docs" ;;
+      # a curated note is prose with an identity of its own only sometimes; it is read the
+      # way a document is, for its heading and the links it makes
+      document|knowledge) printf '%s\n' "$abs" >> "$tmp/docs" ;;
       implementation|test) ;;
-      session|handover|checkpoint|prompt|rule) nf=$((nf + 1)); printf '%s\t%s\n' "$nf" "$path" >> "$tmp/front.map"; printf '%s\n' "$abs" >> "$tmp/front.list" ;;
+      session|handover|checkpoint|prompt|rule|adr|skill|use-case|application) nf=$((nf + 1)); printf '%s\t%s\n' "$nf" "$path" >> "$tmp/front.map"; printf '%s\n' "$abs" >> "$tmp/front.list" ;;
       policy|scope|profile|milestone|issue|claim|doctrine) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$tmp/yaml.map"; printf '%s\n' "$abs" >> "$tmp/yaml.list" ;;
       *) ;;   # a kind this reader has no rule for gets no content rows; the extractor says so once
     esac

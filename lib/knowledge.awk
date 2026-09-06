@@ -45,7 +45,7 @@ BEGIN {
     # Every kind this extractor can assert. A source class declaring a kind that is not
     # here is not guessed at: its nodes carry `unknown` and a finding names the class, so
     # a new source class cannot quietly acquire a made-up type.
-    known = " policy scope profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test "
+    known = " policy scope profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge session "
     # The edge types are a closed set. An undeclared type is a defect rather than a new
     # vocabulary word, because a reader who cannot enumerate the relations cannot tell a
     # missing one from one that was never modelled.
@@ -104,6 +104,7 @@ END {
         else if (k == "rule")     edges_rule(i)
         else if (k == "doctrine") edges_doctrines(i)
         else if (k == "document") edges_links(i)
+        else if (k == "adr")      edges_adr(i)
     }
     report_edges()
 }
@@ -117,17 +118,41 @@ function extract_one(i, k,   p, id, title) {
     p = spath[i]
     id = ""
     if      (k == "milestone" || k == "issue" || k == "rule") id = f(p, "id")
+    else if (k == "adr" || k == "skill" || k == "use-case" || k == "application") id = f(p, "id")
+    else if (k == "session")                   id = f(p, "session_id")
     else if (k == "profile" || k == "prompt")  id = f(p, "name")
     else if (k == "session")                   id = f(p, "session_id")
     else if (k == "handover" || k == "checkpoint") id = basename_noext(p)
 
     title = ""
     if      (k == "milestone" || k == "issue" || k == "rule") title = f(p, "title")
+    else if (k == "adr" || k == "skill" || k == "use-case" || k == "application" || k == "session") title = f(p, "title")
     else if (k == "profile" || k == "prompt")  title = f(p, "description")
-    else if (k == "document")                  title = h1[p]
+    # a curated note and a taxonomy carry no identity of their own: the file is the object,
+    # and its first heading, or the comment the file opens with, is what a reader sees
+    else if (k == "document" || k == "knowledge") title = h1[p]
 
     if (id == "") id = p
     emit(node_id(k, id), k, sscope[i], p, shash[i], title)
+}
+
+# A decision -> what it put in force. The record states one direction, in `related`, and the
+# reverse — what a rule, a document or a case was decided by — is this graph read backwards,
+# so nothing maintains the second edge by hand. The reference type chooses the relation:
+# a rule is declared, a claim supported, a case the proof, a file what the decision reaches.
+function edges_adr(si,   p, id, from, n, v, t, tgt) {
+    p = spath[si]
+    id = f(p, "id"); if (id == "") return
+    from = node_id("adr", id)
+    for (n = 0; ; n++) {
+        v = f(p, "related." n)
+        if (v == "") break
+        t = v; sub(/:.*$/, "", t); tgt = v; sub(/^[^:]*:/, "", tgt)
+        if      (t == "rule")  add_edge(from, node_id("rule", tgt), "declares", p ":related." n)
+        else if (t == "claim") add_edge(from, node_id("claim", tgt), "supports", p ":related." n)
+        else if (t == "test")  path_edge(from, tgt, "tested_by", p ":related." n)
+        else if (t == "file")  path_edge(from, tgt, "references", p ":related." n)
+    }
 }
 
 # ---------------------------------------------------------------- the claims matrix

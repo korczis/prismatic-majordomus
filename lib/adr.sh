@@ -23,6 +23,8 @@
 
 # shellcheck source=knowledge.sh
 . "$MJ_LIB_DIR/knowledge.sh"
+# shellcheck source=rules.sh
+. "$MJ_LIB_DIR/rules.sh"
 
 MJ_ADR_SCHEMA="adr/v1"
 MJ_ADR_STATUSES="proposed accepted superseded rejected"
@@ -31,6 +33,10 @@ MJ_ADR_SECTIONS="Context Decision Consequences"
 # The reference vocabulary, shared by the decision and knowledge records: a
 # reference is <type>:<value>, and a file: or test: reference must resolve.
 MJ_ADR_REF_TYPES="decision session commit issue file test"
+# what a decision put in force, as opposed to where it came from: a rule of the effective
+# set, a claim of the matrix, a document or implementation, a behavioural case. The graph
+# turns each into an edge, so nothing writes the reverse direction down.
+MJ_ADR_REL_TYPES="rule claim file test"
 
 mj_cmd_adr() {
   local sub="${1:-}"; [ $# -gt 0 ] && shift
@@ -39,8 +45,9 @@ mj_cmd_adr() {
     show) [ $# -ge 1 ] || mj_die "$MJ_EX_USAGE" "adr show: an adr id is required"; mj_adr_show "$@" ;;
     propose) mj_adr_propose "$@" ;;
     check) mj_adr_check "$@" ;;
+    affected) mj_adr_affected "$@" ;;
     --help|-h|"") mj_adr_usage; [ "$sub" = "" ] && return "$MJ_EX_USAGE"; return 0 ;;
-    *) mj_die "$MJ_EX_USAGE" "adr: unknown subcommand '$sub' (list|show|propose|check)" ;;
+    *) mj_die "$MJ_EX_USAGE" "adr: unknown subcommand '$sub' (list|show|propose|check|affected)" ;;
   esac
 }
 
@@ -51,6 +58,8 @@ usage: majordomus adr list [--status <status>] [--json]      every decision: id,
        majordomus adr propose "<title>" [--from <ref>]...    write a new decision with status: proposed
                               [--tag <tag>]... [--supersedes <id>]
        majordomus adr check [--json]                         validate every decision and every reference it makes
+       majordomus adr affected [--base <ref>|--staged]        the decisions a change set touches, from what they name
+                               [--worktree] [--json]
   a decision is $(mj_rel "$MJ_ADRS_DIR")/<NNNN>-<slug>.md: front matter (schema: $MJ_ADR_SCHEMA, id: adr-NNNN,
   kind, title, status: $(printf '%s' "$MJ_ADR_STATUSES" | sed 's/ /|/g'), date; optional tags, supersedes, superseded_by, provenance)
   over a body with the sections $(printf '%s' "$MJ_ADR_SECTIONS" | sed -e 's/ /, # /g' -e 's/^/# /')
@@ -101,6 +110,32 @@ mj_adr_ref_valid() {
   [ -n "$v" ] || { printf 'reference "%s" has an empty value\n' "$ref"; return 1; }
   case "$t" in
     file|test) [ -e "$MJ_ROOT/$v" ] || { printf 'reference "%s" names a path that does not exist\n' "$ref"; return 1; } ;;
+  esac
+  return 0
+}
+
+# mj_adr_rel_valid REF — a forward reference: the type is one this record may state, and
+# the target exists where that type says it lives. A rule is looked up in the effective set
+# and a claim in the matrix, because a decision that names something nothing declares is a
+# dangling end the reader cannot follow.
+mj_adr_rel_valid() {
+  local ref="$1" t="${1%%:*}" v="${1#*:}"
+  case "$ref" in *:*) ;; *) printf 'related "%s" is not <type>:<value>\n' "$ref"; return 1 ;; esac
+  case " $MJ_ADR_REL_TYPES " in
+    *" $t "*) ;;
+    *) printf 'related "%s" has an unknown type "%s" (one of %s)\n' "$ref" "$t" "$(printf '%s' "$MJ_ADR_REL_TYPES" | sed 's/ /, /g')"; return 1 ;;
+  esac
+  [ -n "$v" ] || { printf 'related "%s" has an empty value\n' "$ref"; return 1; }
+  case "$t" in
+    file|test) [ -e "$MJ_ROOT/$v" ] || { printf 'related "%s" names a path that does not exist\n' "$ref"; return 1; } ;;
+    rule)
+      if mj_rules_load; then
+        mj_rule_index "$v" >/dev/null || { printf 'related "%s" names a rule the effective set does not have\n' "$ref"; return 1; }
+      else printf 'related "%s" cannot be checked: the rules do not resolve (%s)\n' "$ref" "$MJ_RULES_ERROR"; return 1; fi ;;
+    claim)
+      if [ -f "$MJ_ROOT/docs/CLAIMS.yaml" ]; then
+        grep -q "^  - id: $v\$" "$MJ_ROOT/docs/CLAIMS.yaml" || { printf 'related "%s" names a claim docs/CLAIMS.yaml does not have\n' "$ref"; return 1; }
+      fi ;;
   esac
   return 0
 }
@@ -157,6 +192,9 @@ mj_adr_validate_loaded() {
   fi
   refs="$(mj_adr_lst provenance.derived_from)"; n=0
   for v in $refs; do n=$((n + 1)); mj_adr_ref_valid "$v" || rc=1; done
+  # what the decision put in force. Optional: a decision may be taken before anything
+  # implements it, and a record that names nothing is not thereby wrong.
+  for v in $(mj_adr_lst related); do mj_adr_rel_valid "$v" || rc=1; done
   if [ "$origin" = extracted ]; then
     [ "$n" -gt 0 ] || { printf 'provenance.origin is extracted but derived_from names nothing: an extracted record without evidence is an assertion\n'; rc=1; }
     # only `accepted` is refused, and for one reason: acceptance is the person's act, and a
@@ -213,6 +251,70 @@ mj_adr_catalogue() {
       "$f" "${id:--}" "${st:--}" "${date:--}" "${title:--}" "${sb:--}" "${sup:--}" "${reasons:--}" >> "$tmp"
   done < <(mj_adr_files)
   sort -t"$MJ_TAB" -k2,2 "$tmp" > "$out"
+  rm -f "$tmp"
+  return 0
+}
+
+# ---------------------------------------------------------------- affected
+# What a change set touches, read from what the decisions themselves name. A record is
+# affected when its own file changed, or when a path it names in `related` changed — the
+# forward edge doing the work in the direction a reader needs: this file has a decision
+# behind it, go and read whether it still holds.
+#
+# Every item is a review note, never a failure. Whether a decision still stands after the
+# code it governs moved is exactly the judgement a tool may not make, and a command that
+# exited non-zero here would be asserting it had.
+mj_adr_affected() {
+  local mode=worktree base="" changed tmp f id title rel n=0 first=1
+  while [ $# -gt 0 ]; do case "$1" in
+    --base) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--base needs a ref"; mode=base; base="$2"; shift 2 ;;
+    --base=*) mode=base; base="${1#--base=}"; shift ;;
+    --staged) mode=staged; shift ;;
+    --worktree) mode=worktree; shift ;;
+    --json) MJ_JSON=1; shift ;;
+    *) mj_die "$MJ_EX_USAGE" "adr affected: unknown option $1" ;;
+  esac; done
+  mj_require_installed
+  [ "$mode" != base ] || mj_git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1 \
+    || mj_die "$MJ_EX_USAGE" "adr affected: --base '$base' is not a commit in this repository"
+  changed="$(mj_change_set "$mode" "$base" | awk -F"$MJ_TAB" '{ print $2; if ($3 != "") print $3 }' | LC_ALL=C sort -u)"
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.adraff.XXXXXX")"
+  while IFS="$MJ_TAB" read -r f _; do
+    [ -n "$f" ] || continue
+    mj_adr_load "$MJ_ROOT/$f" || continue
+    id="$(mj_adr_get id)"; title="$(mj_adr_get title)"
+    # the record itself
+    printf '%s\n' "$changed" | grep -Fxq "$f" && printf '%s\t%s\t%s\t%s\n' "${id:--}" "$f" "record" "$f" >> "$tmp"
+    # and every path it says it put in force, a directory reference covering what is below it
+    for rel in $(mj_adr_lst related); do
+      case "$rel" in file:*|test:*) ;; *) continue ;; esac
+      rel="${rel#*:}"
+      printf '%s\n' "$changed" | awk -v r="$rel" '$0 == r || index($0, r "/") == 1 { print; found = 1 } END { exit found ? 0 : 1 }' \
+        | while IFS= read -r hit; do printf '%s\t%s\t%s\t%s\n' "${id:--}" "$f" "related" "$hit" >> "$tmp"; done
+    done
+  done < <(mj_adr_files)
+  n="$(awk -F"$MJ_TAB" '{ print $1 }' "$tmp" 2>/dev/null | LC_ALL=C sort -u | grep -c . || true)"
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"schema":1,"mode":"%s","base":%s,"affected":[' "$mode" "$([ -n "$base" ] && printf '"%s"' "$(mj_json_esc "$base")" || printf null)"
+    while IFS="$MJ_TAB" read -r id f why hit; do
+      [ -n "$id" ] || continue
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"adr":"%s","path":"%s","reason":"%s","changed":"%s"}' "$id" "$(mj_json_esc "$f")" "$why" "$(mj_json_esc "$hit")"
+    done < <(LC_ALL=C sort -u "$tmp")
+    printf '],"count":%s}\n' "$n"
+  else
+    if [ ! -s "$tmp" ]; then printf 'adr affected: no decision names anything this change set touches\n'
+    else
+      while IFS="$MJ_TAB" read -r id f why hit; do
+        [ -n "$id" ] || continue
+        case "$why" in
+          record) printf 'WARN adr %-10s the record itself changed (%s)\n' "$id" "$f" ;;
+          *)      printf 'WARN adr %-10s names %s, which this change set touches — read whether the decision still holds (%s)\n' "$id" "$hit" "$f" ;;
+        esac
+      done < <(LC_ALL=C sort -u "$tmp")
+      printf 'adr affected: %s decision(s) to read\n' "$n"
+    fi
+  fi
   rm -f "$tmp"
   return 0
 }

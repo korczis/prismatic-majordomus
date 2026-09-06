@@ -35,6 +35,91 @@
       "tool": "majordomus_capabilities"
     },
     {
+      "api_anchor": "/docs/api/#op-continuity-state",
+      "claims": [],
+      "cli": null,
+      "id": "continuity.state",
+      "kind": "query",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": "majordomus://continuity",
+      "route": "/registry/capabilities/continuity-state/",
+      "slug": "continuity-state",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "What the lifecycle is holding",
+      "tool": "majordomus_continuity"
+    },
+    {
+      "api_anchor": "/docs/api/#op-directories-list",
+      "claims": [],
+      "cli": null,
+      "id": "directories.list",
+      "kind": "query",
+      "module": "directories",
+      "module_route": "/registry/modules/directories/",
+      "resource": "majordomus://directories",
+      "route": "/registry/capabilities/directories-list/",
+      "slug": "directories-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "tests": [],
+      "title": "The layer's directory contracts",
+      "tool": "majordomus_directories"
+    },
+    {
+      "api_anchor": "/docs/api/#op-graph-get",
+      "claims": [],
+      "cli": null,
+      "id": "graph.get",
+      "kind": "query",
+      "module": "graph",
+      "module_route": "/registry/modules/graph/",
+      "resource": null,
+      "route": "/registry/capabilities/graph-get/",
+      "slug": "graph-get",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "tests": [],
+      "title": "Derive one graph",
+      "tool": "majordomus_graph"
+    },
+    {
+      "api_anchor": "/docs/api/#op-graph-list",
+      "claims": [],
+      "cli": null,
+      "id": "graph.list",
+      "kind": "query",
+      "module": "graph",
+      "module_route": "/registry/modules/graph/",
+      "resource": "majordomus://graphs",
+      "route": "/registry/capabilities/graph-list/",
+      "slug": "graph-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "tests": [],
+      "title": "List graphs",
+      "tool": "majordomus_graphs"
+    },
+    {
+      "api_anchor": "/docs/api/#op-health-report",
+      "claims": [],
+      "cli": null,
+      "id": "health.report",
+      "kind": "query",
+      "module": "health",
+      "module_route": "/registry/modules/health/",
+      "resource": "majordomus://health",
+      "route": "/registry/capabilities/health-report/",
+      "slug": "health-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "tests": [],
+      "title": "Health of this process",
+      "tool": "majordomus_health"
+    },
+    {
       "api_anchor": "/docs/api/#op-objects-get",
       "claims": [
         {
@@ -235,7 +320,15 @@
         "test": "test/cases/91_canonical_architecture.sh"
       }
     ],
-    "cli": [],
+    "cli": [
+      {
+        "id": "cli-documentation-executable",
+        "implementation": "apps/majordomus-cli/src/cli.rs",
+        "route": "/guarantees/cli-documentation-executable/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/cli_docs.rs"
+      }
+    ],
     "executable": [
       {
         "id": "mcp-data-driven",
@@ -363,9 +456,9 @@
     ]
   },
   "counts": {
-    "capabilities": 11,
-    "claims": 20,
-    "modules": 5
+    "capabilities": 16,
+    "claims": 21,
+    "modules": 9
   },
   "generator": "majordomus-cli 0.1.0",
   "modules": [
@@ -389,6 +482,75 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "title": "Capabilities"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "continuity.state",
+          "route": "/registry/capabilities/continuity-state/",
+          "slug": "continuity-state"
+        }
+      ],
+      "claims": [],
+      "id": "continuity",
+      "route": "/registry/modules/continuity/",
+      "slug": "continuity",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "title": "Continuity"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "directories.list",
+          "route": "/registry/capabilities/directories-list/",
+          "slug": "directories-list"
+        }
+      ],
+      "claims": [],
+      "id": "directories",
+      "route": "/registry/modules/directories/",
+      "slug": "directories",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "title": "Directory contracts"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "graph.get",
+          "route": "/registry/capabilities/graph-get/",
+          "slug": "graph-get"
+        },
+        {
+          "id": "graph.list",
+          "route": "/registry/capabilities/graph-list/",
+          "slug": "graph-list"
+        }
+      ],
+      "claims": [],
+      "id": "graph",
+      "route": "/registry/modules/graph/",
+      "slug": "graph",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "title": "Graphs"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "health.report",
+          "route": "/registry/capabilities/health-report/",
+          "slug": "health-report"
+        }
+      ],
+      "claims": [],
+      "id": "health",
+      "route": "/registry/modules/health/",
+      "slug": "health",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "title": "Health"
     },
     {
       "capabilities": [

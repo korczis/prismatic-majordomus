@@ -54,14 +54,20 @@ H
   fi
   mj_init_tree "$skel/profiles" "$MJ_PROFILES_DIR" '*.yaml'
   mj_init_tree "$skel/prompts" "$MJ_PROMPTS_DIR" '*.md'
+  # every directory the layer seeds carries its own contract: coverage is a validation
+  # class, and a directory this command creates without one would fail the first doctor
+  mj_init_file "$skel/ai/repo/profiles/README.md" "$MJ_PROFILES_DIR/README.md"
+  mj_init_file "$skel/ai/repo/prompts/README.md" "$MJ_PROMPTS_DIR/README.md"
   mj_init_file "$skel/ai/repo/rules/README.md" "$MJ_RULES_DIR/README.md"
   mkdir -p "$MJ_RULES_DIR/project"
+  mj_init_file "$skel/ai/repo/rules/project/README.md" "$MJ_RULES_DIR/project/README.md"
   if [ ! -d "$MJ_RULES_DIR/vendor/$MJ_RULES_VENDOR_NS" ]; then
     mj_rules_vendor_install "$MJ_STD_RULES_DIR" "$MJ_RULES_DIR/vendor/$MJ_RULES_VENDOR_NS"
     MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_rel "$MJ_RULES_DIR")/vendor/$MJ_RULES_VENDOR_NS/"
   fi
   mj_init_tree "$skel/ai/repo/knowledge" "$MJ_KNOWLEDGE_DIR" '*'
   mkdir -p "$MJ_KNOWLEDGE_DIR/curated"
+  mj_init_file "$skel/ai/repo/knowledge/curated/README.md" "$MJ_KNOWLEDGE_DIR/curated/README.md"
   mj_init_tree "$skel/ai/repo/workflows" "$MJ_WORKFLOWS_DIR" '*.md'
   mj_init_tree "$skel/ai/repo/skills" "$MJ_SKILLS_DIR" '*.md'
   mj_init_tree "$skel/ai/repo/adrs" "$MJ_ADRS_DIR" '*.md'
@@ -70,6 +76,16 @@ H
   mj_init_tree "$skel/ai/repo/use-cases" "$MJ_AI_REPO_DIR/use-cases" '*'
   mj_init_tree "$skel/ai/repo/applications" "$MJ_AI_REPO_DIR/applications" '*'
   mkdir -p "$MJ_PROJECT_DIR"
+  # The sessions section, at the path the manifest names — or, on the first init, at the
+  # path the skeleton's manifest is about to name. The resolved variable is empty on that
+  # first run, because the manifest that names the section is being seeded in the same pass,
+  # so reading it alone would seed nothing here and seed it on the next --extend: a
+  # repository that reports work to do forever. The variable is still preferred when it does
+  # resolve, so a layer whose manifest names another path is honoured rather than overruled.
+  local sessions_dir="${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}"
+  mkdir -p "$sessions_dir"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$sessions_dir/README.md"
+  mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \
