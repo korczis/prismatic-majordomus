@@ -29,5 +29,19 @@ evidence_required:
   - deterministic_output
 risk: "Composing everything invites a model that knows too much and is slower than the hot path allows. It is built on the reads that already happen, and its cost is measured like every other command's."
 created_at: 2026-09-06
-updated_at: 2026-09-06T15:33:09Z
+updated_at: 2026-09-06T15:48:16Z
 started_at: 2026-09-06T15:33:09Z
+completed_at: 2026-09-06T15:48:16Z
+evidence:
+  - covers: federated_graph
+    type: test
+    command: "majordomus serve --port 0 && curl -s \"http://127.0.0.1:$PORT/api/v1/graph?id=composed\""
+    result: "the composed graph over this repository: 825 nodes, 846 edges, 22 node kinds, truncated false — the capability registry and every indexed object in one model"
+    commit: 837f146bbe3e1aa1ce2e5aeeeab79e99c061afa8
+    recorded_at: 2026-09-06T15:48:06Z
+  - covers: deterministic_output
+    type: test
+    command: "cargo test --all-features (apps/majordomus-cli)"
+    result: "every suite ok, 0 failed; the composition tests prove the graph does not depend on the order it read objects in, that nodes and edges come out sorted, that one kind node is shared, and that a kind nobody wrote in the derivation still becomes a kind of the graph"
+    commit: 837f146bbe3e1aa1ce2e5aeeeab79e99c061afa8
+    recorded_at: 2026-09-06T15:48:07Z
