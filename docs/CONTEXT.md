@@ -127,6 +127,15 @@ directory says what it is for before the branch that adds it can be committed �
 `context validate` runs in the pre-commit hook through `doctor`. The decision is
 `.ai/repo/adrs/0011-every-directory-in-the-layer-carries-a-contract.md`.
 
+## On the website
+
+`/context/` renders the same tree: every directory of the layer, the contract it carries or
+the one that exempts it, and what each contract declares. The page reads
+`site/data/generated/context.json`, which `scripts/generate-site-data` writes from one
+`majordomus context list --json` — the tool's own verdict, not a second walk of the same
+files — and the build refuses to publish a tree with a directory that owes a contract and
+has none.
+
 ## Providers
 
 `providers: ["*"]` addresses every worker; a list names the projections from the policy

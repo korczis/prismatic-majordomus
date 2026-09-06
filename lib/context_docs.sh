@@ -272,6 +272,25 @@ mj_ctxd_require_at() {
   printf '%s\t%s' "$best_val" "$best_path"
 }
 
+# Every directory of the tree, with what it owes and what carries it, as
+#   <dir> <TAB> <document index or -> <TAB> true|false <TAB> <governing document path or ->
+# A field is never empty: a tab is IFS whitespace, so `read` would collapse two of them and
+# hand the caller the wrong column.
+# One walk, read by the coverage check and by the JSON projection, so the site renders the
+# same verdict the validator reached rather than recomputing it from the same files.
+mj_ctxd_directories() {
+  local tree local_rel vendor_rel d i gov val path
+  tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"; vendor_rel="$(mj_rel "$MJ_RULES_DIR")/vendor"
+  while IFS= read -r d; do
+    [ -n "$d" ] || continue
+    case "$d" in "$local_rel"|"$local_rel"/*|"$vendor_rel"|"$vendor_rel"/*) continue ;; esac
+    i="$(mj_ctxd_index_for_dir "$d")" || i="-"
+    gov="$(mj_ctxd_require_at "$d")"; val="${gov%%"$MJ_CTXD_TAB"*}"; path="${gov#*"$MJ_CTXD_TAB"}"
+    [ "$val" = false ] || val=true          # nothing declared: a document is owed
+    printf '%s\t%s\t%s\t%s\n' "$d" "$i" "$val" "${path:--}"
+  done < <(cd "$MJ_ROOT" && find "$tree" -type d -print 2>/dev/null | LC_ALL=C sort)
+}
+
 # Coverage: every directory of the tree carries a context document, and no descendant
 # weakens an ancestor that says its children owe one. The exemption is declared by the
 # contract that governs the subtree (children.require_contract: false), never by a list at
@@ -292,16 +311,15 @@ mj_ctxd_coverage() {
   done
   # every directory inside the tree, minus the local half and the vendored package, whose
   # integrity is its manifest's business rather than a reader's
-  while IFS= read -r d; do
+  local doc req
+  while IFS="$MJ_CTXD_TAB" read -r d doc req path; do
     [ -n "$d" ] || continue
-    case "$d" in "$local_rel"|"$local_rel"/*|"$vendor_rel"|"$vendor_rel"/*) continue ;; esac
-    mj_ctxd_index_for_dir "$d" >/dev/null && continue
-    gov="$(mj_ctxd_require_at "$d")"; val="${gov%%"$MJ_CTXD_TAB"*}"; path="${gov#*"$MJ_CTXD_TAB"}"
-    [ "$val" = false ] && continue
+    [ "$doc" = - ] || continue
+    [ "$req" = false ] && continue
     mj_ctxd_problem missing-contract "$d" \
-      "carries no context document$([ "$val" = true ] && printf ', and %s requires one of every directory below it' "$path"); a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)" \
+      "carries no context document$([ "$path" != - ] && printf ', and %s requires one of every directory below it' "$path"); a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)" \
       "printf '%s\\n' '---' 'schema: context/v1' > $d/README.md"
-  done < <(cd "$MJ_ROOT" && find "$tree" -type d -print 2>/dev/null | LC_ALL=C sort)
+  done < <(mj_ctxd_directories)
   return 0
 }
 
@@ -445,9 +463,10 @@ mj_ctxd_require_valid() {
 mj_ctxd_json_doc() {
   local noglob=0; case "$-" in *f*) noglob=1 ;; esac; set -f   # list values such as "*" are words, not globs
   local i="$1" reason="$2" idx="$3" first v
-  printf '{"index":%s,"id":"%s","path":"%s","dir":"%s","depth":%s,"scope":"%s","composition":"%s","order":%s,"status":"%s","title":"%s","providers":[' \
+  printf '{"index":%s,"id":"%s","path":"%s","dir":"%s","depth":%s,"scope":"%s","composition":"%s","order":%s,"status":"%s","title":"%s","description":"%s","children_require_contract":%s,"providers":[' \
     "$idx" "$(mj_ctxd "$i" id)" "$(mj_json_esc "$(mj_ctxd "$i" path)")" "$(mj_json_esc "$(mj_ctxd "$i" dir)")" "$(mj_ctxd "$i" depth)" \
-    "$(mj_ctxd "$i" scope)" "$(mj_ctxd "$i" composition)" "$(mj_ctxd "$i" order)" "$(mj_ctxd "$i" status)" "$(mj_json_esc "$(mj_ctxd "$i" title)")"
+    "$(mj_ctxd "$i" scope)" "$(mj_ctxd "$i" composition)" "$(mj_ctxd "$i" order)" "$(mj_ctxd "$i" status)" "$(mj_json_esc "$(mj_ctxd "$i" title)")" \
+    "$(mj_json_esc "$(mj_ctxd "$i" description)")" "$(v="$(mj_ctxd "$i" children_require_contract)"; [ -n "$v" ] && printf '%s' "$v" || printf null)"
   first=1; for v in $(mj_ctxd_list "$i" providers); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$(mj_json_esc "$v")"; first=0; done
   printf '],"audience":['
   first=1; for v in $(mj_ctxd_list "$i" audience); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$(mj_json_esc "$v")"; first=0; done

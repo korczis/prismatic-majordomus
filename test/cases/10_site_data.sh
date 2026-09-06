@@ -4,7 +4,7 @@ command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 expect_exit 0 "$T/scripts/generate-site-data"
-for f in project profiles policy capabilities lifecycle docs diagrams source; do [ -f "$T/site/data/generated/$f.json" ]; jq -e '.schema == 1' "$T/site/data/generated/$f.json" >/dev/null; done
+for f in project profiles policy capabilities lifecycle docs diagrams source context; do [ -f "$T/site/data/generated/$f.json" ]; jq -e '.schema == 1' "$T/site/data/generated/$f.json" >/dev/null; done
 # version comes from the CLI, profiles from the skeleton, claims from CLAIMS.yaml
 [ "$(jq -r .version "$T/site/data/generated/project.json")" = "$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus")" ]
 [ "$(jq '.profiles | length' "$T/site/data/generated/profiles.json")" = "$(ls "$ROOT"/share/skeleton/profiles/*.yaml | wc -l | tr -d ' ')" ]
@@ -12,6 +12,11 @@ for f in project profiles policy capabilities lifecycle docs diagrams source; do
 [ "$(jq '.claims | length' "$T/site/data/generated/capabilities.json")" = "$(awk '/^claims:/{c=1;next} c&&/^  - id: /{n++} END{print n+0}' "$ROOT/docs/CLAIMS.yaml")" ]
 jq -e '.claims | all(.status == "guaranteed" and .test == null | not)' "$T/site/data/generated/capabilities.json" >/dev/null
 jq -e '.principles | length >= 8' "$T/site/data/generated/lifecycle.json" >/dev/null
+# the directory contracts: every directory of the layer is present with the verdict
+# validation reached, and none of them owes a contract it does not have (ADR 0011)
+jq -e '.counts.directories == (.directories | length) and .counts.documented > 0' "$T/site/data/generated/context.json" >/dev/null
+jq -e '[.directories[] | select(.document == null and .requires_contract)] | length == 0' "$T/site/data/generated/context.json" >/dev/null
+jq -e '[.directories[] | select(.contract != null and .contract.children_require_contract == false)] | length > 0' "$T/site/data/generated/context.json" >/dev/null
 jq -e '.diagrams.lifecycle.mermaid | contains("no_match")' "$T/site/data/generated/diagrams.json" >/dev/null
 # derived content exists, has front matter, and projected GitHub-native syntax
 # CLI.md is projected under a slug of its own: /docs/cli/ is the per-command tree, so the

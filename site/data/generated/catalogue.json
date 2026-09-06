@@ -7783,14 +7783,16 @@
       ],
       "difficulty": "basic",
       "commands": [
-        "adr"
+        "adr",
+        "knowledge"
       ],
       "doctrines": [
         "majordomus.adr-integrity"
       ],
       "claims": [
         "adr-catalogue",
-        "adr-propose"
+        "adr-propose",
+        "adr-traceability"
       ],
       "responsibilities": [
         "layer"
@@ -7799,7 +7801,7 @@
         "long-running-work"
       ],
       "scenario": {
-        "setup": "adr-recorded",
+        "setup": "adr-related",
         "given": [
           "Majordomus installed, with one decision proposed and committed",
           "discovery is over the tracked tree, so a decision git does not hold is not yet part of the layer"
@@ -7852,6 +7854,40 @@
             }
           },
           {
+            "id": "what-it-put-in-force",
+            "run": [
+              "adr",
+              "show",
+              "adr-0001"
+            ],
+            "note": "related is the forward edge: the rule the decision declares, the file it reaches",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "related:",
+                "rule:majordomus.adr-integrity"
+              ]
+            }
+          },
+          {
+            "id": "the-graph-reads-it-backwards",
+            "run": [
+              "knowledge",
+              "edges",
+              "--type",
+              "declares"
+            ],
+            "note": "the same fact as an edge, with the front-matter key that stated it as provenance; nothing wrote the reverse direction down",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "adr:adr-0001",
+                "rule:majordomus.adr-integrity",
+                "related.0"
+              ]
+            }
+          },
+          {
             "id": "not-yours-to-choose",
             "run": [
               "adr",
@@ -7887,6 +7923,8 @@
           }
         ],
         "then": [
+          "a reference a decision makes is validated where its type says the target lives",
+          "the reverse direction is the graph read backwards, never a second list",
           "a decision is one validated file under .ai/repo/adrs/, discovered as data",
           "no invocation of the tool writes status accepted"
         ]
@@ -7896,7 +7934,7 @@
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "record-a-decision-before-it-is-forgotten",
-        "setup": "adr-recorded",
+        "setup": "adr-related",
         "result": "pass",
         "steps": [
           {
@@ -7942,7 +7980,7 @@
             "stdin": null,
             "exit": 0,
             "expected_exit": 0,
-            "output": ".ai/repo/adrs/0001-the-registry-is-the-one-canonical-declaration.md\n\n---\nschema: adr/v1\nid: adr-0001\nkind: adr\ntitle: The registry is the one canonical declaration\nstatus: proposed\ndate: <date>\ntags:\n  - architecture\nprovenance:\n  origin: extracted\n  derived_from:\n    - file:docs/d\n---\n\n# 1. The registry is the one canonical declaration\n\n## Context\n\nWhat forced the decision. Derived from:  file:docs/d.\n\n## Decision\n\nThe registry is the one canonical declaration\n\n## Alternatives rejected\n\nWhat else was considered, and why it was not taken.\n\n## Consequences\n\nWhat this costs, what it forecloses, and what now has to be true.",
+            "output": ".ai/repo/adrs/0001-the-registry-is-the-one-canonical-declaration.md\n\n---\nschema: adr/v1\nid: adr-0001\nkind: adr\ntitle: The registry is the one canonical declaration\nstatus: proposed\nrelated:\n  - rule:majordomus.adr-integrity\n  - file:docs/d\ndate: <date>\ntags:\n  - architecture\nprovenance:\n  origin: extracted\n  derived_from:\n    - file:docs/d\n---\n\n# 1. The registry is the one canonical declaration\n\n## Context\n\nWhat forced the decision. Derived from:  file:docs/d.\n\n## Decision\n\nThe registry is the one canonical declaration\n\n## Alternatives rejected\n\nWhat else was considered, and why it was not taken.\n\n## Consequences\n\nWhat this costs, what it forecloses, and what now has to be true.",
             "assertions": [
               {
                 "kind": "exit",
@@ -7990,6 +8028,78 @@
               {
                 "kind": "stdout_contains",
                 "pattern": "every identity unique",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "what-it-put-in-force",
+            "command": "majordomus adr show adr-0001",
+            "argv": [
+              "adr",
+              "show",
+              "adr-0001"
+            ],
+            "stdin": null,
+            "exit": 0,
+            "expected_exit": 0,
+            "output": ".ai/repo/adrs/0001-the-registry-is-the-one-canonical-declaration.md\n\n---\nschema: adr/v1\nid: adr-0001\nkind: adr\ntitle: The registry is the one canonical declaration\nstatus: proposed\nrelated:\n  - rule:majordomus.adr-integrity\n  - file:docs/d\ndate: <date>\ntags:\n  - architecture\nprovenance:\n  origin: extracted\n  derived_from:\n    - file:docs/d\n---\n\n# 1. The registry is the one canonical declaration\n\n## Context\n\nWhat forced the decision. Derived from:  file:docs/d.\n\n## Decision\n\nThe registry is the one canonical declaration\n\n## Alternatives rejected\n\nWhat else was considered, and why it was not taken.\n\n## Consequences\n\nWhat this costs, what it forecloses, and what now has to be true.",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 0,
+                "observed": 0,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "related:",
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "rule:majordomus.adr-integrity",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "the-graph-reads-it-backwards",
+            "command": "majordomus knowledge edges --type declares",
+            "argv": [
+              "knowledge",
+              "edges",
+              "--type",
+              "declares"
+            ],
+            "stdin": null,
+            "exit": 0,
+            "expected_exit": 0,
+            "output": "declares        adr:adr-0001                                   rule:majordomus.adr-integrity                  .ai/repo/adrs/0001-the-registry-is-the-one-canonical-declaration.md:related.0\nknowledge edges: 1 in scope all, type declares",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 0,
+                "observed": 0,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "adr:adr-0001",
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "rule:majordomus.adr-integrity",
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "related.0",
                 "result": "pass"
               }
             ],
@@ -8059,11 +8169,11 @@
         ]
       },
       "related_ids": [
+        "classify-what-belongs-in-the-context",
         "plan-the-work-as-data",
         "read-back-what-happened",
-        "accept-or-refuse-finished-work",
-        "block-acceptance-on-an-open-question",
-        "capture-the-prompts-that-started-the-work"
+        "extend-what-the-executable-serves",
+        "find-an-object-without-reading-everything"
       ]
     },
     {
@@ -8907,9 +9017,9 @@
       {
         "class": "command",
         "id": "knowledge",
-        "use_cases": 3,
-        "executable": 3,
-        "evidence": 3,
+        "use_cases": 4,
+        "executable": 4,
+        "evidence": 4,
         "status": "covered",
         "policy": "required"
       },
@@ -9600,10 +9710,10 @@
       {
         "class": "claim",
         "id": "adr-traceability",
-        "use_cases": 0,
-        "executable": 0,
-        "evidence": 0,
-        "status": "gap",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
         "policy": "advisory"
       },
       {
@@ -9716,7 +9826,7 @@
       }
     ],
     "total": 111,
-    "covered": 105,
+    "covered": 106,
     "partial": 0,
     "gaps_required": 0
   },

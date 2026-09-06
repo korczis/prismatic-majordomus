@@ -483,6 +483,21 @@ mj_context_docs_list() {
     printf '{"schema":"%s","tree":"%s","documents":[' "$MJ_CTXD_SCHEMA" "$(mj_ctxd_tree)"
     local first=1 k=1
     if [ -s "$tmp" ]; then while IFS="$MJ_CTXD_TAB" read -r _ _ _ i; do [ "$first" = 1 ] || printf ','; mj_ctxd_json_doc "$i" "" "$k"; first=0; k=$((k + 1)); done < <(LC_ALL=C sort -t "$MJ_CTXD_TAB" -k1,1n -k2,2n -k3,3 "$tmp"); fi
+    printf '],"directories":['
+    # every directory of the tree with the verdict coverage reached for it: which document
+    # it carries, whether it owes one, and the contract that decided (ADR 0011)
+    first=1
+    local d doc req gov
+    while IFS="$MJ_CTXD_TAB" read -r d doc req gov; do
+      [ -n "$d" ] || continue
+      [ "$first" = 1 ] || printf ','
+      printf '{"dir":"%s","document":%s,"requires_contract":%s,"governed_by":%s}' \
+        "$(mj_json_esc "$d")" \
+        "$([ "$doc" != - ] && printf '"%s"' "$(mj_ctxd "$doc" id)" || printf null)" \
+        "$req" \
+        "$([ "$gov" != - ] && printf '"%s"' "$(mj_json_esc "$gov")" || printf null)"
+      first=0
+    done < <(mj_ctxd_directories)
     printf '],"problems":['
     first=1
     if mj_ctxd_problems; then while IFS="$MJ_CTXD_TAB" read -r cls subj msg rep; do [ "$first" = 1 ] || printf ','; printf '{"class":"%s","subject":"%s","message":"%s","reproduce":"%s"}' "$cls" "$(mj_json_esc "$subj")" "$(mj_json_esc "$msg")" "$(mj_json_esc "$rep")"; first=0; done < "$MJ_CTXD_PROBLEMS"; fi
