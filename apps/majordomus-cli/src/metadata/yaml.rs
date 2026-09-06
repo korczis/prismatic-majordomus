@@ -746,6 +746,34 @@ mod tests {
         round_trips(json!({ "dec": 1.5, "negdec": -0.25 }));
     }
 
+    /// A sequence whose items are themselves collections: the item opens on its own line
+    /// and its body is indented under the dash. Outside the reader's subset — it flattens
+    /// by dotted path and has no shape for a list of lists — and written correctly anyway,
+    /// because the OpenAPI document has them.
+    #[test]
+    fn sequences_of_collections_open_under_their_dash() {
+        assert_eq!(
+            render(&json!({ "m": [[1, 2], [3]] })),
+            "m:\n  -\n    - 1\n    - 2\n  -\n    - 3\n"
+        );
+        assert_eq!(
+            render(&json!({ "m": [{ "a": [1] }, {}] })),
+            "m:\n  - a:\n      - 1\n  - {}\n"
+        );
+        assert_eq!(render(&json!({ "m": [[], {}] })), "m:\n  - []\n  - {}\n");
+    }
+
+    /// A document that is not a mapping at all: the writer renders the value it was given
+    /// rather than inventing a key to hang it on.
+    #[test]
+    fn a_document_that_is_not_a_mapping_is_still_a_document() {
+        assert_eq!(render(&json!([1, "two"])), "- 1\n- two\n");
+        assert_eq!(render(&json!("bare")), "bare\n");
+        assert_eq!(render(&json!(7)), "7\n");
+        assert_eq!(render(&json!(true)), "true\n");
+        assert_eq!(render(&Value::Null), "null\n");
+    }
+
     /// The one shape the two halves disagree on, stated rather than hidden: an empty
     /// mapping. The reader has no `{}` — an empty document and a key with no children are
     /// both nothing to it — while the writer must emit `{}` or hand a general parser a

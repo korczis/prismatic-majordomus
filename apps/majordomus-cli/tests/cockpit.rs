@@ -302,6 +302,74 @@ fn the_artifacts_page_and_route_report_the_generated_tree_and_say_when_there_is_
         .any(|a| a["path"] == "docs/generated/registry.yaml" && a["state"] == "stale"));
 }
 
+/// What the reading half says when the manifest is not what it should be, and when a file
+/// it names is gone. Both are facts about the tree, reported rather than guessed at.
+#[test]
+fn the_artifacts_capability_reports_a_missing_file_and_refuses_a_manifest_it_cannot_read() {
+    let f = Fixture::new();
+    let (code, _, err) = common::run_in(&f.root(), &["generate"], "");
+    assert_eq!(code, 0, "{err}");
+
+    // a file the manifest names and the tree no longer has
+    std::fs::remove_file(f.path("docs/generated/benchmarks.yaml")).unwrap();
+    let s = Served::start(&f.root(), &[]);
+    let (status, report) = s.get("/api/v1/artifacts?document=benchmarks");
+    assert_eq!(status, 200);
+    assert_eq!(report["tallies"]["missing"], 1, "{report}");
+    assert_eq!(
+        report["tallies"]["documents"], 1,
+        "one document was asked for"
+    );
+    assert!(report["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|a| a["path"] == "docs/generated/benchmarks.yaml" && a["state"] == "missing"));
+    assert!(report["documents"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|d| d["id"] == "benchmarks"));
+    drop(s);
+
+    // a manifest carrying a schema this executable does not read
+    let path = f.path("docs/generated/artifacts.json");
+    let text = std::fs::read_to_string(&path).unwrap();
+    std::fs::write(
+        &path,
+        text.replace(
+            "majordomus/generated-artifacts/v1",
+            "majordomus/generated-artifacts/v99",
+        ),
+    )
+    .unwrap();
+    let s = Served::start(&f.root(), &[]);
+    let (status, body) = s.get("/api/v1/artifacts");
+    assert_eq!(status, 500);
+    assert!(
+        body["error"]["message"].as_str().unwrap().contains("v99"),
+        "{body}"
+    );
+    drop(s);
+
+    // a manifest that is not the document at all
+    std::fs::write(&path, "{\"schema\": 1}\n").unwrap();
+    let s = Served::start(&f.root(), &[]);
+    let (status, body) = s.get("/api/v1/artifacts");
+    assert_eq!(status, 500);
+    assert!(
+        body["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("not the manifest this executable writes"),
+        "{body}"
+    );
+    // and the page says so rather than showing a blank one
+    let (status, page) = html(&s, "/cockpit/artifacts");
+    assert_eq!(status, 500);
+    assert!(page.contains("did not answer"), "{page}");
+}
+
 #[test]
 fn the_health_page_shows_the_verdicts_the_engines_reach() {
     let f = Fixture::new();

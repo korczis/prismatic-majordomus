@@ -1298,23 +1298,16 @@ pub fn violations(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Vec<Vio
         // a region projection owns part of a file it did not write, and a header at the
         // top of it would be a claim over text this generator does not own
         let stamped_elsewhere = a.document.starts_with("providers/");
-        match a.format {
-            ArtifactFormat::Markdown if !stamped_elsewhere => {
-                if !a.content.starts_with(&format!("<!-- {HEADER}")) {
-                    out.push(at(&a.path, "carries no generated-file banner".into()));
-                }
-            }
-            ArtifactFormat::Text => {
-                if !a.content.starts_with(&format!("# {HEADER}")) {
-                    out.push(at(&a.path, "carries no generated-file banner".into()));
-                }
-            }
-            ArtifactFormat::Yaml => {
-                if !a.content.starts_with(&format!("# {HEADER}")) {
-                    out.push(at(&a.path, "carries no generated-file banner".into()));
-                }
-            }
-            _ => {}
+        // the opening an encoding wraps the banner in: an HTML comment in Markdown, a `#`
+        // comment in YAML and in line-oriented text, and nothing here for JSON, which
+        // carries it as members and is checked below
+        let opening = match a.format {
+            ArtifactFormat::Markdown if !stamped_elsewhere => Some(format!("<!-- {HEADER}")),
+            ArtifactFormat::Yaml | ArtifactFormat::Text => Some(format!("# {HEADER}")),
+            _ => None,
+        };
+        if opening.is_some_and(|o| !a.content.starts_with(&o)) {
+            out.push(at(&a.path, "carries no generated-file banner".into()));
         }
         if a.format == ArtifactFormat::Json {
             match serde_json::from_str::<Value>(&a.content) {
@@ -1813,5 +1806,156 @@ fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
         crate::capability::BenchmarkPolicy::Waived { reason } => {
             format!("waived ({})", enum_name(reason))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    /// Every target has a name and every name is distinct: the manifest and the command
+    /// line both address a target by it.
+    #[test]
+    fn every_target_is_named_once() {
+        let names: Vec<&str> = Target::ALL.iter().map(|t| t.name()).collect();
+        let mut unique = names.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        assert_eq!(names.len(), unique.len(), "{names:?}");
+        assert!(names.iter().all(|n| !n.is_empty()));
+        assert_eq!(Target::Manifest.name(), "manifest");
+        assert_eq!(Target::INDEXED.len(), Target::ALL.len() - 1);
+        assert!(!Target::INDEXED.contains(&Target::Manifest));
+    }
+
+    /// The encoding is read from the suffix, and anything the generator does not encode
+    /// structurally is line-oriented text — the shell tool's allow-lists are the case.
+    #[test]
+    fn the_suffix_names_the_encoding() {
+        for (path, format) in [
+            ("docs/generated/registry.json", ArtifactFormat::Json),
+            ("docs/generated/registry.yaml", ArtifactFormat::Yaml),
+            ("a/b.yml", ArtifactFormat::Yaml),
+            ("docs/generated/cli.md", ArtifactFormat::Markdown),
+            ("share/allow/rule.txt", ArtifactFormat::Text),
+            ("AGENTS", ArtifactFormat::Text),
+            ("weird.suffix", ArtifactFormat::Text),
+        ] {
+            assert_eq!(ArtifactFormat::of_path(path), format, "{path}");
+        }
+        assert_eq!(ArtifactFormat::Json.suffix(), "json");
+        assert_eq!(ArtifactFormat::Markdown.suffix(), "md");
+        assert_eq!(ArtifactFormat::Text.suffix(), "txt");
+        assert_eq!(ArtifactFormat::Yaml.suffix(), "yaml");
+    }
+
+    /// A document whose value is not a mapping has nowhere to put members, so it is
+    /// written as it stands rather than silently wrapped.
+    #[test]
+    fn a_value_that_is_not_a_mapping_carries_no_members() {
+        let doc = Document::new("fixture", "x/v1", "a test", json!([1, 2, 3]));
+        assert_eq!(doc.stamped("test"), json!([1, 2, 3]));
+        let arts = doc.artifacts("test");
+        // the YAML encoding still carries the banner, which is a comment and not a member
+        assert!(arts[1].content.starts_with(&format!("# {HEADER}")));
+        assert!(arts[1].content.contains("\n- 1\n"));
+    }
+
+    /// The banner says the same three things in every encoding, and the JSON one names
+    /// the command that rewrites the file.
+    #[test]
+    fn the_banner_is_one_text_in_three_wrappings() {
+        let [a, b, c] = banner_lines("nowhere", "9.9.9");
+        assert_eq!(a, HEADER);
+        assert!(b.starts_with("Source: nowhere;") && b.contains(REGENERATE));
+        assert_eq!(c, "Generator: majordomus-cli 9.9.9");
+        assert_eq!(
+            markdown_banner("nowhere", "9.9.9"),
+            format!("<!-- {a}\n     {b}\n     {c} -->\n")
+        );
+        assert_eq!(
+            comment_banner("nowhere", "9.9.9"),
+            format!("# {a}\n# {b}\n# {c}\n")
+        );
+        assert!(json_banner("nowhere").starts_with(HEADER));
+        assert!(json_banner("nowhere").contains(REGENERATE));
+    }
+
+    /// A schema id nothing publishes is not a failure: the document simply has no
+    /// contract, and saying so is not the same as inventing one.
+    #[test]
+    fn an_unpublished_schema_id_validates_nothing_and_the_set_names_what_it_holds() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("thing.schema.json"),
+            r#"{"type":"object","properties":{"schema":{"const":"x/v1"}},"required":["schema"]}"#,
+        )
+        .unwrap();
+        let schemas = GeneratedSchemas::load(dir.path()).unwrap();
+        assert_eq!(schemas.ids().collect::<Vec<_>>(), ["x/v1"]);
+        assert!(format!("{schemas:?}").contains("x/v1"));
+        assert_eq!(
+            schemas.violations("nobody/v1", &json!({})),
+            Vec::<String>::new()
+        );
+        assert!(!schemas.violations("x/v1", &json!({})).is_empty());
+        assert_eq!(
+            schemas.violations("x/v1", &json!({ "schema": "x/v1" })),
+            Vec::<String>::new()
+        );
+    }
+
+    /// Two schemas pinning one document would make the contract of that document
+    /// ambiguous, so loading refuses rather than picking one.
+    #[test]
+    fn two_contracts_for_one_document_are_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let body = r#"{"type":"object","properties":{"schema":{"const":"x/v1"}}}"#;
+        std::fs::write(dir.path().join("one.schema.json"), body).unwrap();
+        std::fs::write(dir.path().join("two.schema.json"), body).unwrap();
+        let err = GeneratedSchemas::load(dir.path()).unwrap_err().to_string();
+        assert!(err.contains("x/v1") && err.contains("both"), "{err}");
+    }
+
+    /// A violation prints as the artifact it is about, then the reason: the one line the
+    /// command shows.
+    #[test]
+    fn a_violation_names_the_artifact_first() {
+        let v = Violation {
+            path: "docs/generated/x.md".into(),
+            reason: "carries no generated-file banner".into(),
+        };
+        assert_eq!(
+            v.to_string(),
+            "docs/generated/x.md: carries no generated-file banner"
+        );
+    }
+
+    /// The manifest of an empty plan still describes itself, in every encoding it is
+    /// committed in, and none of its own three carries a hash.
+    #[test]
+    fn the_manifest_of_nothing_is_still_the_manifest() {
+        let doc = manifest_document(&[]);
+        let entries = doc["artifacts"].as_array().unwrap();
+        assert_eq!(entries.len(), 3);
+        assert!(entries.iter().all(|e| e["describes_itself"] == true));
+        assert!(entries.iter().all(|e| e.get("sha256").is_none()));
+        let arts = manifest_artifacts(&doc, "test");
+        assert_eq!(
+            arts.iter().map(|a| a.path.as_str()).collect::<Vec<_>>(),
+            manifest_paths()
+        );
+        assert!(arts[2].content.contains("— (this file)"));
+        // and with nothing but itself in the plan, the verifier has nothing to compare
+        let dir = tempfile::tempdir().unwrap();
+        let schemas = GeneratedSchemas::load(dir.path()).unwrap();
+        let manifest_only = violations(&arts, &schemas);
+        assert!(
+            !manifest_only
+                .iter()
+                .any(|v| v.reason.contains("does not list")),
+            "{manifest_only:?}"
+        );
     }
 }
