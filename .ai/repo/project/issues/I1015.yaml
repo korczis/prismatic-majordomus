@@ -29,5 +29,12 @@ evidence_required:
   - both_projections_tested
 risk: "This is the check that quietly rots, because a broken link on a published page fails nothing. The test for it has to run on every build."
 created_at: 2026-09-06
-updated_at: 2026-09-06T17:35:07Z
+updated_at: 2026-09-06T18:17:51Z
 started_at: 2026-09-06T17:35:07Z
+evidence:
+  - covers: availability_drives_exposure
+    type: test
+    command: "cargo test --all-features (29 suites, 0 failed) and majordomus generate"
+    result: "the projection routes resolve from web::discover::native carrying each producer declared availability; the four hand-written copies of the route list are gone; the regenerated document shows /openapi.json both and the other five served-only, /cockpit with its producer words instead of the empty string the jq projection gave it, and /api/v1 which the old list omitted"
+    commit: 8eb2de4bb3d1f03299e1cb129b53f72c767ce103
+    recorded_at: 2026-09-06T18:17:51Z
