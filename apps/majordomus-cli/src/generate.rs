@@ -81,6 +81,10 @@ pub enum Target {
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
     Site,
+    /// Everything derived from the distribution model (see [`crate::distribution`]): the
+    /// release build matrix, the installer, the installation guide, the site's dataset,
+    /// and the public metadata of every recorded release.
+    Distribution,
     /// `docs/generated/artifacts.{json,yaml,md}`: every artifact of every other target,
     /// with its encoding, schema, source and hash. Always planned over the whole set, so
     /// that a manifest naming half the artifacts cannot exist.
@@ -99,7 +103,7 @@ impl Target {
         Target::Allow,
         Target::Providers,
         Target::Site,
-        Target::Manifest,
+        Target::Distribution,
     ];
 
     /// Every target but the manifest: the artifacts the manifest indexes.
@@ -112,6 +116,7 @@ impl Target {
         Target::Documents,
         Target::Providers,
         Target::Site,
+        Target::Distribution,
     ];
 
     /// The name the command line and the manifest use.
@@ -125,6 +130,7 @@ impl Target {
             Target::Documents => "documents",
             Target::Providers => "providers",
             Target::Site => "site",
+            Target::Distribution => "distribution",
             Target::Manifest => "manifest",
         }
     }
@@ -468,6 +474,7 @@ pub fn artifacts(
             | Target::Documents
             | Target::Providers
             | Target::Site
+            | Target::Distribution
             | Target::Manifest => {}
         }
     }
@@ -561,7 +568,121 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             out.extend(crate::site::why_artifacts(&app.context)?);
         }
     }
+    if targets.contains(&Target::Distribution) {
+        out.extend(distribution_artifacts(app)?);
+    }
     Ok(out)
+}
+
+/// Every artifact the distribution model produces. The model is read from the tool's own
+/// data directory, which is the file an installed copy carries; the release records are
+/// read from the repository. Nothing here decides a platform, a name or a URL — it renders
+/// what `share/distribution.yaml` and `.ai/repo/releases/` already say.
+pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
+    use crate::distribution::{release, render, Model, Releases};
+
+    let model = Model::load(&app.share)?;
+    let releases = Releases::load(app.repository.root())?;
+    let findings = releases.findings(&model);
+    if let Some(first) = findings.first() {
+        return Err(Error::InvalidRelease {
+            path: release::DIR.to_string(),
+            reason: if findings.len() == 1 {
+                first.clone()
+            } else {
+                format!("{first} (and {} more)", findings.len() - 1)
+            },
+        });
+    }
+
+    use crate::distribution::render::SOURCE as DIST_SOURCE;
+    let mut out = vec![
+        Artifact::verbatim(
+            format!("{OUT_DIR}/distribution-matrix.json"),
+            "distribution-matrix",
+            ArtifactFormat::Json,
+            None,
+            DIST_SOURCE,
+            render::matrix_json(&model),
+        ),
+        Artifact::verbatim(
+            format!("{SITE_DATA_DIR}/distribution.json"),
+            "site-distribution",
+            ArtifactFormat::Json,
+            None,
+            DIST_SOURCE,
+            render::site_dataset(&model, &releases),
+        ),
+    ];
+
+    let installer_template = read_share(&app.share, crate::distribution::INSTALLER_TEMPLATE)?;
+    out.push(Artifact::verbatim(
+        format!(
+            "{}/{}",
+            crate::distribution::PUBLIC_DIR,
+            model.installer.script
+        ),
+        "installer",
+        ArtifactFormat::Text,
+        None,
+        DIST_SOURCE,
+        render::installer(&model, &installer_template).map_err(|reason| {
+            Error::InvalidDistribution {
+                path: crate::distribution::INSTALLER_TEMPLATE.to_string(),
+                reason,
+            }
+        })?,
+    ));
+
+    let guide_template = read_share(&app.share, crate::distribution::GUIDE_TEMPLATE)?;
+    let guide = render::install_doc(&model, &releases, crate::VERSION, &guide_template).map_err(
+        |reason| Error::InvalidDistribution {
+            path: crate::distribution::GUIDE_TEMPLATE.to_string(),
+            reason,
+        },
+    )?;
+    // The provenance header goes after the title, not before it: the site's documentation
+    // projection strips a document's own first-line heading and would otherwise render two.
+    let (title, rest) = guide.split_once('\n').unwrap_or((guide.as_str(), ""));
+    out.push(Artifact::verbatim(
+        crate::distribution::GUIDE.to_string(),
+        "install-guide",
+        ArtifactFormat::Markdown,
+        None,
+        "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)",
+        format!(
+            "{title}\n<!-- {HEADER}\n     Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);\n     regenerate with `majordomus generate`\n     Generator: majordomus-cli {} -->\n{rest}",
+            crate::VERSION
+        ),
+    ));
+
+    for r in &releases.releases {
+        out.push(Artifact::verbatim(
+            format!("{}/{}.json", release::PUBLIC_DIR, r.tag),
+            format!("release/{}", r.tag),
+            ArtifactFormat::Json,
+            None,
+            format!("the release record {}", r.tag),
+            r.public_json(&model),
+        ));
+    }
+    if let Some(latest) = releases.latest_stable() {
+        out.push(Artifact::verbatim(
+            format!("{}/{}.json", release::PUBLIC_DIR, release::LATEST),
+            "release/latest",
+            ArtifactFormat::Json,
+            None,
+            "the latest stable release record",
+            release::latest_json(latest, &model),
+        ));
+    }
+    Ok(out)
+}
+
+/// A file of the tool's data directory, read as text.
+fn read_share(share: &Share, relative: &str) -> Result<String> {
+    let path = share.dir().join(relative);
+    std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))
 }
 
 /// Every artifact of the selected targets, the benchmark matrix included: what
@@ -1266,6 +1387,26 @@ impl std::fmt::Display for Violation {
     }
 }
 
+/// Does the content open with `banner`, allowing for a first line the format reserves?
+///
+/// Usually the banner is the first thing in the file. Two artifacts cannot put it there,
+/// and neither is cutting a corner: an executable script must open with its `#!` line or
+/// the kernel will not run it, and a Markdown page the site projects must open with its
+/// own title, because the projection strips a document's first heading and a banner above
+/// it would leave the page with none. Both carry the banner on the line after, which is
+/// still the opening of the file and still impossible to miss. Anything further down is a
+/// banner a reader scrolls past, and is refused.
+fn opens_with_banner(content: &str, banner: &str) -> bool {
+    if content.starts_with(banner) {
+        return true;
+    }
+    let Some((first, rest)) = content.split_once('\n') else {
+        return false;
+    };
+    let reserved = first.starts_with("#!") || first.starts_with("# ");
+    reserved && rest.starts_with(banner)
+}
+
 /// Every way a plan can be wrong, checked before a byte is written.
 ///
 /// Three properties, and they are the whole of the enforcement rule
@@ -1311,7 +1452,7 @@ pub fn violations(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Vec<Vio
             ArtifactFormat::Yaml | ArtifactFormat::Text => Some(format!("# {HEADER}")),
             _ => None,
         };
-        if opening.is_some_and(|o| !a.content.starts_with(&o)) {
+        if opening.is_some_and(|o| !opens_with_banner(&a.content, &o)) {
             out.push(at(&a.path, "carries no generated-file banner".into()));
         }
         if a.format == ArtifactFormat::Json {

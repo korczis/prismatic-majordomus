@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.1.0 -->
+     Generator: majordomus-cli 0.2.0 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -14,6 +14,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `continuity` | Continuity | behaviorally_verified | 1 | [`modules/continuity.md`](modules/continuity.md) |
 | `deploy` | Deployment | behaviorally_verified | 3 | [`modules/deploy.md`](modules/deploy.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
+| `distribution` | Distribution | behaviorally_verified | 4 | [`modules/distribution.md`](modules/distribution.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
 | `objects` | Objects | behaviorally_verified | 3 | [`modules/objects.md`](modules/objects.md) |
@@ -34,6 +35,10 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `deploy.get` | `deploy` | query | behaviorally_verified | `majordomus_deployment` | — | `GET /api/v1/deployment` | — | — | required |
 | `deploy.list` | `deploy` | query | behaviorally_verified | `majordomus_deployments` | `majordomus://deployments` | `GET /api/v1/deployments` | — | — | required |
 | `directories.list` | `directories` | query | behaviorally_verified | `majordomus_directories` | `majordomus://directories` | `GET /api/v1/directories` | — | process, 8 entries, 5s | required |
+| `distribution.artifact` | `distribution` | query | behaviorally_verified | `majordomus_artifact` | — | `GET /api/v1/distribution/artifact` | `majordomus distribution artifact` | — | required |
+| `distribution.build` | `distribution` | query | behaviorally_verified | `majordomus_build` | — | `GET /api/v1/distribution/build` | `majordomus distribution build` | — | required |
+| `distribution.model` | `distribution` | query | behaviorally_verified | `majordomus_distribution` | — | `GET /api/v1/distribution` | `majordomus distribution show` | — | required |
+| `distribution.releases` | `distribution` | query | behaviorally_verified | `majordomus_releases` | — | `GET /api/v1/distribution/releases` | `majordomus distribution releases` | — | required |
 | `graph.get` | `graph` | query | behaviorally_verified | `majordomus_graph` | — | `GET /api/v1/graph` | — | process, 16 entries | required |
 | `graph.list` | `graph` | query | behaviorally_verified | `majordomus_graphs` | `majordomus://graphs` | `GET /api/v1/graphs` | — | — | required |
 | `health.live` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/live` | — | — | required |
@@ -57,7 +62,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 ## Declarative resources
 
-Every object of the repository's AI layer is a capability of kind `resource` with the id `<kind>.<identity>` (`rule.majordomus.scope-integrity@1`, `prompt.continue`, `document.docs/CLI.md`), exposed as the MCP resource `majordomus://<kind>/<identity>` and read over HTTP through `objects.get`; its module is its kind. They are not listed here: they are the repository's, not the executable's, and `majordomus capabilities list --kind resource` answers for the repository at hand. Kinds present in this repository at generation: `application`, `area`, `audience`, `claim`, `command`, `context`, `deployment`, `document`, `implementation`, `issue`, `knowledge`, `milestone`, `moment`, `policy`, `profile`, `prompt`, `rule`, `scope`, `session`, `skill`, `taxonomy`, `test`, `use-case`.
+Every object of the repository's AI layer is a capability of kind `resource` with the id `<kind>.<identity>` (`rule.majordomus.scope-integrity@1`, `prompt.continue`, `document.docs/CLI.md`), exposed as the MCP resource `majordomus://<kind>/<identity>` and read over HTTP through `objects.get`; its module is its kind. They are not listed here: they are the repository's, not the executable's, and `majordomus capabilities list --kind resource` answers for the repository at hand. Kinds present in this repository at generation: `application`, `area`, `audience`, `claim`, `command`, `context`, `deployment`, `distribution-model`, `document`, `implementation`, `issue`, `knowledge`, `milestone`, `moment`, `policy`, `profile`, `prompt`, `rule`, `scope`, `session`, `skill`, `taxonomy`, `test`, `use-case`.
 
 ## Infrastructure routes
 

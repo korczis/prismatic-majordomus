@@ -276,6 +276,23 @@ kinds:
       field: schema
       supported: [deployment/v1]
 
+  distribution-model:
+    format: yaml
+    schema: majordomus.distribution/v1
+    identity: []
+    schema_version:
+      field: schema
+      supported: [majordomus-distribution/v1]
+
+  release-record:
+    format: yaml
+    schema: majordomus.release/v1
+    identity: [tag]
+    title: tag
+    schema_version:
+      field: schema
+      supported: [release/v1]
+
   implementation:
     format: text
     identity: []

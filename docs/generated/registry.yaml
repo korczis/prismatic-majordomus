@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.1.0
+# Generator: majordomus-cli 0.2.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.1.0
+generator: majordomus-cli 0.2.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -35,6 +35,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 1
+  - id: distribution
+    title: Distribution
+    description: "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 4
   - id: graph
     title: Graphs
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
@@ -1468,7 +1474,7 @@ capabilities:
             default: null
           status:
             anyOf:
-              - "$ref": "#/$defs/Status"
+              - "$ref": "#/$defs/DeploymentStatus"
               - type: "null"
             description: Where it stands.
             default: null
@@ -1536,7 +1542,7 @@ capabilities:
         description: "One deployment as this process reads it, with where it came from."
         title: DeploymentView
         "$defs":
-          Status:
+          DeploymentStatus:
             oneOf:
               - type: string
                 const: declared
@@ -1547,7 +1553,7 @@ capabilities:
               - type: string
                 const: retired
                 description: "It was, and the object is kept for the record."
-            description: Where a deployment stands.
+            description: "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is."
           Build:
             type: object
             additionalProperties: false
@@ -1887,7 +1893,7 @@ capabilities:
                 default: null
               status:
                 anyOf:
-                  - "$ref": "#/$defs/Status"
+                  - "$ref": "#/$defs/DeploymentStatus"
                   - type: "null"
                 description: Where it stands.
                 default: null
@@ -1953,7 +1959,7 @@ capabilities:
               - region
               - provider
             description: "One deployment as this process reads it, with where it came from."
-          Status:
+          DeploymentStatus:
             oneOf:
               - type: string
                 const: declared
@@ -1964,7 +1970,7 @@ capabilities:
               - type: string
                 const: retired
                 description: "It was, and the object is kept for the record."
-            description: Where a deployment stands.
+            description: "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is."
           Build:
             type: object
             additionalProperties: false
@@ -2559,6 +2565,434 @@ capabilities:
       max_entries: 8
       ttl_seconds: 5
     source_path: apps/majordomus-cli/src/capability/builtin/directories.rs
+  - id: distribution.artifact
+    module: distribution
+    kind: query
+    title: The artifact of a target
+    description: "The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file."
+    input:
+      name: ReleaseArtifactInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          target:
+            type: string
+            description: "A target's id or its Rust target triple."
+          tag:
+            type: string
+            description: "The tag, `v` and a version. `{tag}` asks for the name with the placeholder left in."
+        required:
+          - target
+          - tag
+        description: Which artifact a target and a tag name.
+        title: ReleaseArtifactInput
+    output:
+      name: ReleaseArtifactView
+      schema:
+        type: object
+        properties:
+          target:
+            type: string
+            description: "The target's id in the model."
+          rust_target:
+            type: string
+            description: The Rust target triple.
+          tag:
+            type: string
+            description: The tag the name was derived for.
+          name:
+            type: string
+            description: "The archive's file name."
+          root:
+            type: string
+            description: The directory the archive unpacks into.
+          url:
+            type: string
+            description: "Where a release publishes it, when the tag is a real one."
+        required:
+          - target
+          - rust_target
+          - tag
+          - name
+          - root
+          - url
+        description: "The artifact a target and a tag name, and the directory it unpacks into."
+        title: ReleaseArtifactView
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::distribution
+    exposure:
+      mcp:
+        tool: majordomus_artifact
+      http:
+        method: GET
+        path: /api/v1/distribution/artifact
+      cli:
+        path:
+          - distribution
+          - artifact
+    stability: behaviorally_verified
+    tags:
+      - distribution
+      - release
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/distribution.rs
+  - id: distribution.build
+    module: distribution
+    kind: query
+    title: This build
+    description: "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: BuildReport
+      schema:
+        type: object
+        properties:
+          version:
+            type: string
+            description: The version of the crate this executable was built from.
+          target:
+            type: string
+            description: The Rust target triple it was built for; the model names a target by the same string.
+          profile:
+            type: string
+            description: The cargo profile.
+          commit:
+            type: string
+            description: "The commit, or `unknown` when it was built outside a work tree."
+          distribution_target:
+            type:
+              - string
+              - "null"
+            description: "The target of the model this build matches, when the model declares one for the triple."
+        required:
+          - version
+          - target
+          - profile
+          - commit
+        description: "What this executable is: enough to tell two builds apart without asking a repository."
+        title: BuildReport
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::distribution
+    exposure:
+      mcp:
+        tool: majordomus_build
+      http:
+        method: GET
+        path: /api/v1/distribution/build
+      cli:
+        path:
+          - distribution
+          - build
+    stability: behaviorally_verified
+    tags:
+      - distribution
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/distribution.rs
+  - id: distribution.model
+    module: distribution
+    kind: query
+    title: The distribution model
+    description: "The one-line install command, where an installation goes, and every declared target with the artifact name it derives. This is what the installation page, the landing page's install block and the cockpit's install card render; none of them holds a platform list of its own."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: DistributionReport
+      schema:
+        type: object
+        properties:
+          binary:
+            type: string
+            description: The command a person types after installing.
+          repository:
+            type: string
+            description: "`owner/name`, the only host release assets come from."
+          installer_url:
+            type: string
+            description: "The installer's canonical URL."
+          install_command:
+            type: string
+            description: "The one-line install command, composed from its parts."
+          install_and_init_command:
+            type: string
+            description: "The same, initialising the repository afterwards."
+          next_command:
+            type: string
+            description: What a person runs next.
+          checksum:
+            type: string
+            description: The digest algorithm the installer verifies.
+          install_dir:
+            type: string
+            description: Where the launchers go by default.
+          prefix:
+            type: string
+            description: Where the versioned trees go by default.
+          latest_url:
+            type: string
+            description: Where the stable release metadata is published.
+          supported:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many targets a release builds.
+          targets:
+            type: array
+            items:
+              "$ref": "#/$defs/TargetView"
+            description: "Every declared target, in the model's order."
+        required:
+          - binary
+          - repository
+          - installer_url
+          - install_command
+          - install_and_init_command
+          - next_command
+          - checksum
+          - install_dir
+          - prefix
+          - latest_url
+          - supported
+          - targets
+        description: "The distribution, as a person or a script asks for it."
+        title: DistributionReport
+        "$defs":
+          TargetView:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The target's id in the model."
+              title:
+                type: string
+                description: "How it is written in prose: `Linux x86_64 musl`."
+              os:
+                "$ref": "#/$defs/Os"
+                description: The operating system.
+              arch:
+                "$ref": "#/$defs/Arch"
+                description: The architecture.
+              libc:
+                anyOf:
+                  - "$ref": "#/$defs/Libc"
+                  - type: "null"
+                description: "The C library, on Linux."
+              rust_target:
+                type: string
+                description: The Rust target triple.
+              status:
+                "$ref": "#/$defs/TargetStatus"
+                description: What the project promises about it.
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why, when it is not built."
+              artifact:
+                type: string
+                description: "The artifact name, with `{tag}` where a release's tag goes."
+            required:
+              - id
+              - title
+              - os
+              - arch
+              - rust_target
+              - status
+              - artifact
+            description: "One target, as every projection shows it: what it is, what it is called in prose, and\nthe artifact name the naming function derives for a tag yet to be chosen."
+          Os:
+            oneOf:
+              - type: string
+                const: macos
+                description: "Apple's, detected as `Darwin`."
+              - type: string
+                const: linux
+                description: "Linux, detected as `Linux`, and the only one where the C library matters."
+              - type: string
+                const: windows
+                description: "Windows; representable, and not built today."
+            description: An operating system a target runs on.
+          Arch:
+            oneOf:
+              - type: string
+                const: x86_64
+                description: "64-bit x86, detected as `x86_64` or `amd64`."
+              - type: string
+                const: aarch64
+                description: "64-bit ARM, detected as `aarch64` or `arm64`."
+            description: A processor architecture.
+          Libc:
+            oneOf:
+              - type: string
+                const: gnu
+                description: "GNU libc: the ordinary distributions."
+              - type: string
+                const: musl
+                description: "musl: Alpine, and any statically linked artifact."
+            description: The C library a Linux artifact is linked against.
+          TargetStatus:
+            oneOf:
+              - type: string
+                const: supported
+                description: "Built by every release, offered by the installer, listed as supported. A release\nthat is missing this artifact is not published."
+              - type: string
+                const: experimental
+                description: "Built and offered, and documented as not yet proven."
+              - type: string
+                const: unavailable
+                description: "Documented, never built, refused by the installer with its recorded reason."
+            description: "What the project promises about a target.\n\nSee [`crate::deploy::Status`]: both are `Status` in their own module and neither is in\nthe one component namespace the schema document has."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::distribution
+    exposure:
+      mcp:
+        tool: majordomus_distribution
+      http:
+        method: GET
+        path: /api/v1/distribution
+      cli:
+        path:
+          - distribution
+          - show
+    stability: behaviorally_verified
+    tags:
+      - distribution
+      - install
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/distribution.rs
+  - id: distribution.releases
+    module: distribution
+    kind: query
+    title: Published releases
+    description: "Every release this repository recorded, newest first, and the one an unpinned installation resolves to: the highest version among the stable, unwithdrawn records. The pointer is derived here and never authored anywhere."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ReleasesReport
+      schema:
+        type: object
+        properties:
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many records there are.
+          latest:
+            anyOf:
+              - "$ref": "#/$defs/ReleaseView"
+              - type: "null"
+            description: "The release an unpinned installation resolves to, when there is one."
+          releases:
+            type: array
+            items:
+              "$ref": "#/$defs/ReleaseView"
+            description: "Every record, newest first."
+        required:
+          - count
+          - releases
+        description: "The releases this repository recorded, and the one an unpinned installation resolves to."
+        title: ReleasesReport
+        "$defs":
+          ReleaseView:
+            type: object
+            properties:
+              tag:
+                type: string
+                description: The git tag.
+              version:
+                type: string
+                description: The semantic version.
+              channel:
+                "$ref": "#/$defs/Channel"
+                description: Whether an unpinned installation may resolve it.
+              published_at:
+                type: string
+                description: "When it was published, UTC."
+              commit:
+                type: string
+                description: The commit it was built from.
+              yanked:
+                type: boolean
+                description: True when it has been withdrawn.
+              artifacts:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many artifacts it published.
+              metadata_url:
+                type: string
+                description: Where its public metadata is served.
+            required:
+              - tag
+              - version
+              - channel
+              - published_at
+              - commit
+              - yanked
+              - artifacts
+              - metadata_url
+            description: "One release, as every projection shows it."
+          Channel:
+            oneOf:
+              - type: string
+                const: stable
+                description: "Resolved by `latest`."
+              - type: string
+                const: prerelease
+                description: "Published, addressable by its exact tag, never resolved by default."
+            description: Which releases an unpinned installation may resolve to.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::distribution
+    exposure:
+      mcp:
+        tool: majordomus_releases
+      http:
+        method: GET
+        path: /api/v1/distribution/releases
+      cli:
+        path:
+          - distribution
+          - releases
+    stability: behaviorally_verified
+    tags:
+      - distribution
+      - release
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/distribution.rs
   - id: graph.get
     module: graph
     kind: query
@@ -5969,6 +6403,7 @@ declarative_kinds:
   - command
   - context
   - deployment
+  - distribution-model
   - document
   - implementation
   - issue

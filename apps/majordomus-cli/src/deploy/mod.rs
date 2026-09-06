@@ -243,8 +243,12 @@ pub enum CpuKind {
 }
 
 /// Where a deployment stands.
+///
+/// `Status` is the right name inside this module; the schema component namespace is flat,
+/// and `distribution::Status` answers a different question, so each says which it is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "DeploymentStatus")]
 pub enum Status {
     /// The object exists and nothing is deployed from it yet.
     Declared,

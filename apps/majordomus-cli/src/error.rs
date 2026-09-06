@@ -198,6 +198,22 @@ pub enum Error {
         /// What is wrong, and what to do about it.
         reason: String,
     },
+    /// The distribution model cannot be read, or it breaks an invariant of its own contract.
+    #[error("distribution model {path}: {reason}")]
+    InvalidDistribution {
+        /// Where the model was read from.
+        path: String,
+        /// What is wrong, and what to do about it.
+        reason: String,
+    },
+    /// A release record cannot be read, or it disagrees with the distribution model.
+    #[error("release record {path}: {reason}")]
+    InvalidRelease {
+        /// Where the record was read from.
+        path: String,
+        /// What is wrong, and what to do about it.
+        reason: String,
+    },
     /// `generate --check` found committed projections that differ from the registry, or are missing.
     #[error("generated artifact(s) stale: {} (run: majordomus generate)", files.join(", "))]
     Stale {
@@ -225,6 +241,8 @@ impl Error {
             | Error::InvalidProjection { .. }
             | Error::InvalidSurface { .. }
             | Error::InvalidDeployment { .. }
+            | Error::InvalidDistribution { .. }
+            | Error::InvalidRelease { .. }
             | Error::Stale { .. } => 10,
             Error::CapabilityNotFound { .. }
             | Error::NotFound { .. }

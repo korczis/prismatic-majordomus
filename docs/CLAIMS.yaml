@@ -28,6 +28,42 @@ statuses:
     meaning: Considered and deliberately refused, with the reason recorded.
 
 claims:
+  - id: distribution-canonical-model
+    claim: Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused
+    source: docs/DISTRIBUTION.md
+    implementation: apps/majordomus-cli/src/distribution/mod.rs
+    test: test/cases/84_distribution_model.sh
+    status: guaranteed
+    responsibility: projection
+    note: share/distribution.yaml is the model. The installer's platform table, the release build matrix, the documentation's table, the website's dataset and the public release metadata are generated from it, and `majordomus generate --check` exits 10 naming any that has fallen behind.
+
+  - id: install-command-is-derived
+    claim: The documented one-line install command is composed from the model's parts, and a document that states a different one fails the suite
+    source: docs/INSTALL.md
+    implementation: apps/majordomus-cli/src/distribution/mod.rs
+    test: test/cases/84_distribution_model.sh
+    status: guaranteed
+    responsibility: projection
+    note: The download command, the base URL, the script name and the shell are four fields; the command is their composition. README.md and the installation guide are checked against it rather than trusted.
+
+  - id: installer-verifies-before-installing
+    claim: The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working
+    source: docs/INSTALL.md
+    implementation: share/install/install.sh.in
+    test: test/cases/85_installer.sh
+    status: guaranteed
+    responsibility: doctor
+    note: A wrong digest, a truncated download, an archive that escapes its own directory or carries a link, and an executable that reports another version are each refused by name, before the launcher is replaced. There is no warn-and-continue path and sudo appears nowhere.
+
+  - id: release-is-complete-or-absent
+    claim: A release publishes an artifact for every supported target or it is not published
+    source: docs/DISTRIBUTION.md
+    implementation: scripts/release-record
+    test: test/cases/87_release_pipeline.sh
+    status: guaranteed
+    responsibility: projection
+    note: The build matrix stops at the first failure, publication begins only when every build succeeded, and the recorder refuses to write a record missing a target the model marks supported.
+
   - id: policy-parse
     claim: The canonical policy is parsed and rejected if it contains an unknown key
     source: docs/SCHEMAS.md

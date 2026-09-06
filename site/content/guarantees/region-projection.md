@@ -1,7 +1,7 @@
 +++
 title = "A projection can own only the region between its markers, leaving the rest of the file untouched"
 description = "A projection declared with mode: region owns the text between <!-- majordomus:begin <policy hash> <content hash> --> and <!-- majordomus:end --> and nothing else. Everything outside those two lines belongs to the repository, is never read as input, and is never rewritten. update splices the rendered body into the region; doctor and watch compare the region body with the content hash in its own marker, never the file."
-weight = 21
+weight = 25
 [extra]
 claim_id = "region-projection"
 status = "guaranteed"

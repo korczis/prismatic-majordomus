@@ -137,6 +137,74 @@
       "tool": "majordomus_directories"
     },
     {
+      "api_anchor": "/docs/api/#op-distribution-artifact",
+      "claims": [],
+      "cli": "majordomus distribution artifact",
+      "id": "distribution.artifact",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-artifact/",
+      "slug": "distribution-artifact",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "The artifact of a target",
+      "tool": "majordomus_artifact"
+    },
+    {
+      "api_anchor": "/docs/api/#op-distribution-build",
+      "claims": [],
+      "cli": "majordomus distribution build",
+      "id": "distribution.build",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-build/",
+      "slug": "distribution-build",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "This build",
+      "tool": "majordomus_build"
+    },
+    {
+      "api_anchor": "/docs/api/#op-distribution-model",
+      "claims": [],
+      "cli": "majordomus distribution show",
+      "id": "distribution.model",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-model/",
+      "slug": "distribution-model",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "The distribution model",
+      "tool": "majordomus_distribution"
+    },
+    {
+      "api_anchor": "/docs/api/#op-distribution-releases",
+      "claims": [],
+      "cli": "majordomus distribution releases",
+      "id": "distribution.releases",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-releases/",
+      "slug": "distribution-releases",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "Published releases",
+      "tool": "majordomus_releases"
+    },
+    {
       "api_anchor": "/docs/api/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -527,6 +595,20 @@
     "cli": [],
     "executable": [
       {
+        "id": "distribution-canonical-model",
+        "implementation": "apps/majordomus-cli/src/distribution/mod.rs",
+        "route": "/guarantees/distribution-canonical-model/",
+        "status": "guaranteed",
+        "test": "test/cases/84_distribution_model.sh"
+      },
+      {
+        "id": "install-command-is-derived",
+        "implementation": "apps/majordomus-cli/src/distribution/mod.rs",
+        "route": "/guarantees/install-command-is-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/84_distribution_model.sh"
+      },
+      {
         "id": "mcp-data-driven",
         "implementation": "apps/majordomus-cli/src/index.rs",
         "route": "/guarantees/mcp-data-driven/",
@@ -680,11 +762,11 @@
     ]
   },
   "counts": {
-    "capabilities": 28,
-    "claims": 24,
-    "modules": 12
+    "capabilities": 32,
+    "claims": 26,
+    "modules": 13
   },
-  "generator": "majordomus-cli 0.1.0",
+  "generator": "majordomus-cli 0.2.0",
   "modules": [
     {
       "capabilities": [
@@ -780,6 +862,37 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/directories.rs",
       "title": "Directory contracts"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "distribution.artifact",
+          "route": "/registry/capabilities/distribution-artifact/",
+          "slug": "distribution-artifact"
+        },
+        {
+          "id": "distribution.build",
+          "route": "/registry/capabilities/distribution-build/",
+          "slug": "distribution-build"
+        },
+        {
+          "id": "distribution.model",
+          "route": "/registry/capabilities/distribution-model/",
+          "slug": "distribution-model"
+        },
+        {
+          "id": "distribution.releases",
+          "route": "/registry/capabilities/distribution-releases/",
+          "slug": "distribution-releases"
+        }
+      ],
+      "claims": [],
+      "id": "distribution",
+      "route": "/registry/modules/distribution/",
+      "slug": "distribution",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "title": "Distribution"
     },
     {
       "capabilities": [

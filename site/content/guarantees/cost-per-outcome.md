@@ -1,7 +1,7 @@
 +++
 title = "Cost per accepted outcome will be reported from measured data only"
 description = "**Planned.** The unit that matters is tokens, cost and time per accepted outcome — not per prompt — computed from measured telemetry and the ledger's outcomes. A task run under the right profile may spend more on one prompt and less on the task, because it needed two sessions instead of three and no retry."
-weight = 86
+weight = 90
 [extra]
 claim_id = "cost-per-outcome"
 status = "planned"

@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 28,
-    "schemas": 121,
-    "tags": 12
+    "operations": 32,
+    "schemas": 132,
+    "tags": 13
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -32,7 +32,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://korczis.github.io/prismatic-majordomus/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.1.0",
+  "generated_by": "majordomus-cli 0.2.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -41,7 +41,7 @@
     "license": "MIT",
     "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "infrastructure": [
     {
@@ -280,6 +280,28 @@
         "ResourceView"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "A processor architecture.",
+      "is_enum": true,
+      "name": "Arch",
+      "properties": [],
+      "type": "\"x86_64\" | \"aarch64\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "TargetView"
+      ],
+      "values": [
+        {
+          "description": "64-bit x86, detected as `x86_64` or `amd64`.",
+          "value": "x86_64"
+        },
+        {
+          "description": "64-bit ARM, detected as `aarch64` or `arm64`.",
+          "value": "aarch64"
+        }
+      ],
       "variants": []
     },
     {
@@ -986,6 +1008,55 @@
       "variants": []
     },
     {
+      "description": "What this executable is: enough to tell two builds apart without asking a repository.",
+      "is_enum": false,
+      "name": "BuildReport",
+      "properties": [
+        {
+          "description": "The version of the crate this executable was built from.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The Rust target triple it was built for; the model names a target by the same string.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The cargo profile.",
+          "name": "profile",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit, or `unknown` when it was built outside a work tree.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The target of the model this build matches, when the model declares one for the triple.",
+          "name": "distribution_target",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "distribution.build"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry.",
       "is_enum": false,
       "name": "CachePolicy",
@@ -1571,6 +1642,28 @@
         "Out"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which releases an unpinned installation may resolve to.",
+      "is_enum": true,
+      "name": "Channel",
+      "properties": [],
+      "type": "\"stable\" | \"prerelease\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseView"
+      ],
+      "values": [
+        {
+          "description": "Resolved by `latest`.",
+          "value": "stable"
+        },
+        {
+          "description": "Published, addressable by its exact tag, never resolved by default.",
+          "value": "prerelease"
+        }
+      ],
       "variants": []
     },
     {
@@ -2246,6 +2339,32 @@
       "variants": []
     },
     {
+      "description": "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is.",
+      "is_enum": true,
+      "name": "DeploymentStatus",
+      "properties": [],
+      "type": "\"declared\" | \"active\" | \"retired\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeploymentView"
+      ],
+      "values": [
+        {
+          "description": "The object exists and nothing is deployed from it yet.",
+          "value": "declared"
+        },
+        {
+          "description": "It is deployed.",
+          "value": "active"
+        },
+        {
+          "description": "It was, and the object is kept for the record.",
+          "value": "retired"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One deployment as this process reads it, with where it came from.",
       "is_enum": false,
       "name": "DeploymentView",
@@ -2296,10 +2415,10 @@
           "description": "Where it stands.",
           "name": "status",
           "refs": [
-            "Status"
+            "DeploymentStatus"
           ],
           "required": false,
-          "type": "Status | null"
+          "type": "DeploymentStatus | null"
         },
         {
           "description": "The application's name at the provider.",
@@ -2752,6 +2871,106 @@
       "variants": []
     },
     {
+      "description": "The distribution, as a person or a script asks for it.",
+      "is_enum": false,
+      "name": "DistributionReport",
+      "properties": [
+        {
+          "description": "The command a person types after installing.",
+          "name": "binary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`owner/name`, the only host release assets come from.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The installer's canonical URL.",
+          "name": "installer_url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The one-line install command, composed from its parts.",
+          "name": "install_command",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The same, initialising the repository afterwards.",
+          "name": "install_and_init_command",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What a person runs next.",
+          "name": "next_command",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The digest algorithm the installer verifies.",
+          "name": "checksum",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the launchers go by default.",
+          "name": "install_dir",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the versioned trees go by default.",
+          "name": "prefix",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the stable release metadata is published.",
+          "name": "latest_url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many targets a release builds.",
+          "name": "supported",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every declared target, in the model's order.",
+          "name": "targets",
+          "refs": [
+            "TargetView"
+          ],
+          "required": true,
+          "type": "array of TargetView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "distribution.model"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.",
       "is_enum": true,
       "name": "Divergence",
@@ -2952,6 +3171,10 @@
         "deploy.list",
         "deploy.check",
         "directories.list",
+        "distribution.model",
+        "distribution.artifact",
+        "distribution.build",
+        "distribution.releases",
         "graph.get",
         "graph.list",
         "health.report",
@@ -3903,6 +4126,28 @@
         {
           "description": "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning.",
           "value": "all"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The C library a Linux artifact is linked against.",
+      "is_enum": true,
+      "name": "Libc",
+      "properties": [],
+      "type": "\"gnu\" | \"musl\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "TargetView"
+      ],
+      "values": [
+        {
+          "description": "GNU libc: the ordinary distributions.",
+          "value": "gnu"
+        },
+        {
+          "description": "musl: Alpine, and any statically linked artifact.",
+          "value": "musl"
         }
       ],
       "variants": []
@@ -4868,6 +5113,32 @@
       "variants": []
     },
     {
+      "description": "An operating system a target runs on.",
+      "is_enum": true,
+      "name": "Os",
+      "properties": [],
+      "type": "\"macos\" | \"linux\" | \"windows\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "TargetView"
+      ],
+      "values": [
+        {
+          "description": "Apple's, detected as `Darwin`.",
+          "value": "macos"
+        },
+        {
+          "description": "Linux, detected as `Linux`, and the only one where the C library matters.",
+          "value": "linux"
+        },
+        {
+          "description": "Windows; representable, and not built today.",
+          "value": "windows"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The `out:` mapping: every category optional, each the reason a path is out.",
       "is_enum": false,
       "name": "Out",
@@ -5519,6 +5790,173 @@
       "variants": []
     },
     {
+      "description": "The artifact a target and a tag name, and the directory it unpacks into.",
+      "is_enum": false,
+      "name": "ReleaseArtifactView",
+      "properties": [
+        {
+          "description": "The target's id in the model.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The Rust target triple.",
+          "name": "rust_target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The tag the name was derived for.",
+          "name": "tag",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The archive's file name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The directory the archive unpacks into.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where a release publishes it, when the tag is a real one.",
+          "name": "url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "distribution.artifact"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One release, as every projection shows it.",
+      "is_enum": false,
+      "name": "ReleaseView",
+      "properties": [
+        {
+          "description": "The git tag.",
+          "name": "tag",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The semantic version.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether an unpinned installation may resolve it.",
+          "name": "channel",
+          "refs": [
+            "Channel"
+          ],
+          "required": true,
+          "type": "Channel"
+        },
+        {
+          "description": "When it was published, UTC.",
+          "name": "published_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit it was built from.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True when it has been withdrawn.",
+          "name": "yanked",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many artifacts it published.",
+          "name": "artifacts",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Where its public metadata is served.",
+          "name": "metadata_url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleasesReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The releases this repository recorded, and the one an unpinned installation resolves to.",
+      "is_enum": false,
+      "name": "ReleasesReport",
+      "properties": [
+        {
+          "description": "How many records there are.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The release an unpinned installation resolves to, when there is one.",
+          "name": "latest",
+          "refs": [
+            "ReleaseView"
+          ],
+          "required": false,
+          "type": "ReleaseView | null"
+        },
+        {
+          "description": "Every record, newest first.",
+          "name": "releases",
+          "refs": [
+            "ReleaseView"
+          ],
+          "required": true,
+          "type": "array of ReleaseView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "distribution.releases"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What the index knows about the repository it was built from.",
       "is_enum": false,
       "name": "RepositoryInfo",
@@ -6032,32 +6470,6 @@
       "variants": []
     },
     {
-      "description": "Where a deployment stands.",
-      "is_enum": true,
-      "name": "Status",
-      "properties": [],
-      "type": "\"declared\" | \"active\" | \"retired\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [
-        {
-          "description": "The object exists and nothing is deployed from it yet.",
-          "value": "declared"
-        },
-        {
-          "description": "It is deployed.",
-          "value": "active"
-        },
-        {
-          "description": "It was, and the object is kept for the record.",
-          "value": "retired"
-        }
-      ],
-      "variants": []
-    },
-    {
       "description": "The registry counted: by source, kind, stability and projection.",
       "is_enum": false,
       "name": "Summary",
@@ -6210,6 +6622,117 @@
       "used_by": [],
       "used_by_schemas": [
         "ScopeReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the project promises about a target.\n\nSee [`crate::deploy::Status`]: both are `Status` in their own module and neither is in\nthe one component namespace the schema document has.",
+      "is_enum": true,
+      "name": "TargetStatus",
+      "properties": [],
+      "type": "\"supported\" | \"experimental\" | \"unavailable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "TargetView"
+      ],
+      "values": [
+        {
+          "description": "Built by every release, offered by the installer, listed as supported. A release\nthat is missing this artifact is not published.",
+          "value": "supported"
+        },
+        {
+          "description": "Built and offered, and documented as not yet proven.",
+          "value": "experimental"
+        },
+        {
+          "description": "Documented, never built, refused by the installer with its recorded reason.",
+          "value": "unavailable"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One target, as every projection shows it: what it is, what it is called in prose, and\nthe artifact name the naming function derives for a tag yet to be chosen.",
+      "is_enum": false,
+      "name": "TargetView",
+      "properties": [
+        {
+          "description": "The target's id in the model.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it is written in prose: `Linux x86_64 musl`.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The operating system.",
+          "name": "os",
+          "refs": [
+            "Os"
+          ],
+          "required": true,
+          "type": "Os"
+        },
+        {
+          "description": "The architecture.",
+          "name": "arch",
+          "refs": [
+            "Arch"
+          ],
+          "required": true,
+          "type": "Arch"
+        },
+        {
+          "description": "The C library, on Linux.",
+          "name": "libc",
+          "refs": [
+            "Libc"
+          ],
+          "required": false,
+          "type": "Libc | null"
+        },
+        {
+          "description": "The Rust target triple.",
+          "name": "rust_target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the project promises about it.",
+          "name": "status",
+          "refs": [
+            "TargetStatus"
+          ],
+          "required": true,
+          "type": "TargetStatus"
+        },
+        {
+          "description": "Why, when it is not built.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The artifact name, with `{tag}` where a release's tag goes.",
+          "name": "artifact",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DistributionReport"
       ],
       "values": [],
       "variants": []
@@ -6904,6 +7427,245 @@
           "result_schema": "DirectoryReport",
           "stability": "behaviorally_verified",
           "summary": "The layer's directory contracts"
+        }
+      ]
+    },
+    {
+      "description": "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own.",
+      "name": "distribution",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "distribution show",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/distribution\"",
+          "description": "The one-line install command, where an installation goes, and every declared target with the artifact name it derives. This is what the installation page, the landing page's install block and the cockpit's install card render; none of them holds a platform list of its own.",
+          "id": "distribution.model",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_distribution",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/distribution",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::distribution",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The distribution model: the result.",
+              "schema": "DistributionReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DistributionReport",
+          "stability": "behaviorally_verified",
+          "summary": "The distribution model"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "distribution artifact",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/distribution/artifact?target=aarch64-apple-darwin&tag=v0.0.0\"",
+          "description": "The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file.",
+          "id": "distribution.artifact",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_artifact",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A target's id or its Rust target triple.",
+              "examples": [
+                {
+                  "case": "first-published-target",
+                  "value": "\"aarch64-apple-darwin\""
+                }
+              ],
+              "name": "target",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The tag, `v` and a version. `{tag}` asks for the name with the placeholder left in.",
+              "examples": [
+                {
+                  "case": "first-published-target",
+                  "value": "\"v0.0.0\""
+                }
+              ],
+              "name": "tag",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/distribution/artifact",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::distribution",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The artifact of a target: the result.",
+              "schema": "ReleaseArtifactView",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ReleaseArtifactView",
+          "stability": "behaviorally_verified",
+          "summary": "The artifact of a target"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "distribution build",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/distribution/build\"",
+          "description": "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git.",
+          "id": "distribution.build",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_build",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/distribution/build",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::distribution",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "This build: the result.",
+              "schema": "BuildReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "BuildReport",
+          "stability": "behaviorally_verified",
+          "summary": "This build"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "distribution releases",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/distribution/releases\"",
+          "description": "Every release this repository recorded, newest first, and the one an unpinned installation resolves to: the highest version among the stable, unwithdrawn records. The pointer is derived here and never authored anywhere.",
+          "id": "distribution.releases",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_releases",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/distribution/releases",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::distribution",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Published releases: the result.",
+              "schema": "ReleasesReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ReleasesReport",
+          "stability": "behaviorally_verified",
+          "summary": "Published releases"
         }
       ]
     },

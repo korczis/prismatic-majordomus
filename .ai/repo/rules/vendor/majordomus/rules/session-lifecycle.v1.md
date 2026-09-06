@@ -103,4 +103,4 @@ draws no boundary.
 decides the provider state, both dispatched from `doctor, watch`. The behavioural case
 `test/cases/54_session_lifecycle_hooks.sh` proves the wiring, the idempotence of every event,
 the briefing the start event writes and the silence of the other two; `test/cases/55_session_context.sh` proves the document's
-contract and the findings each mutation of it produces. ADR 0015 records the decision; ADR 0016 records the briefing and the compaction event.
+contract and the findings each mutation of it produces. ADR 0015 records the decision; ADR 0017 records the briefing and the compaction event.

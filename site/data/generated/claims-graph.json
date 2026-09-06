@@ -15,6 +15,42 @@
   },
   "nodes": [
     {
+      "id": "claim:distribution-canonical-model",
+      "kind": "claim",
+      "label": "Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused",
+      "status": "guaranteed",
+      "route": "/guarantees/distribution-canonical-model/",
+      "external": false,
+      "note": "share/distribution.yaml is the model. The installer's platform table, the release build matrix, the documentation's table, the website's dataset and the public release metadata are generated from it, and `majordomus generate --check` exits 10 naming any that has fallen behind."
+    },
+    {
+      "id": "claim:install-command-is-derived",
+      "kind": "claim",
+      "label": "The documented one-line install command is composed from the model's parts, and a document that states a different one fails the suite",
+      "status": "guaranteed",
+      "route": "/guarantees/install-command-is-derived/",
+      "external": false,
+      "note": "The download command, the base URL, the script name and the shell are four fields; the command is their composition. README.md and the installation guide are checked against it rather than trusted."
+    },
+    {
+      "id": "claim:installer-verifies-before-installing",
+      "kind": "claim",
+      "label": "The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working",
+      "status": "guaranteed",
+      "route": "/guarantees/installer-verifies-before-installing/",
+      "external": false,
+      "note": "A wrong digest, a truncated download, an archive that escapes its own directory or carries a link, and an executable that reports another version are each refused by name, before the launcher is replaced. There is no warn-and-continue path and sudo appears nowhere."
+    },
+    {
+      "id": "claim:release-is-complete-or-absent",
+      "kind": "claim",
+      "label": "A release publishes an artifact for every supported target or it is not published",
+      "status": "guaranteed",
+      "route": "/guarantees/release-is-complete-or-absent/",
+      "external": false,
+      "note": "The build matrix stops at the first failure, publication begins only when every build succeeded, and the recorder refuses to write a record missing a target the model marks supported."
+    },
+    {
       "id": "claim:policy-parse",
       "kind": "claim",
       "label": "The canonical policy is parsed and rejected if it contains an unknown key",
@@ -1223,6 +1259,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/distribution/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/distribution/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/generate.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/generate.rs",
@@ -1566,6 +1609,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/release-record",
+      "kind": "implementation",
+      "label": "scripts/release-record",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/rust-check",
       "kind": "implementation",
       "label": "scripts/rust-check",
@@ -1583,6 +1633,13 @@
       "id": "impl:share/commands.yaml",
       "kind": "implementation",
       "label": "share/commands.yaml",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:share/install/install.sh.in",
+      "kind": "implementation",
+      "label": "share/install/install.sh.in",
       "route": null,
       "external": false
     },
@@ -1664,6 +1721,13 @@
       "external": false
     },
     {
+      "id": "source:docs/DISTRIBUTION.md",
+      "kind": "source",
+      "label": "docs/DISTRIBUTION.md",
+      "route": "/docs/distribution/",
+      "external": false
+    },
+    {
       "id": "source:docs/DOCTRINE.md",
       "kind": "source",
       "label": "docs/DOCTRINE.md",
@@ -1689,6 +1753,13 @@
       "kind": "source",
       "label": "docs/GITHUB_PAGES_PERFORMANCE.md",
       "route": "/docs/github-pages-performance/",
+      "external": false
+    },
+    {
+      "id": "source:docs/INSTALL.md",
+      "kind": "source",
+      "label": "docs/INSTALL.md",
+      "route": "/docs/install/",
       "external": false
     },
     {
@@ -2098,6 +2169,27 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/77_rust_evidence.sh"
     },
     {
+      "id": "test:test/cases/84_distribution_model.sh",
+      "kind": "test",
+      "label": "test/cases/84_distribution_model.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/84_distribution_model.sh"
+    },
+    {
+      "id": "test:test/cases/85_installer.sh",
+      "kind": "test",
+      "label": "test/cases/85_installer.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/85_installer.sh"
+    },
+    {
+      "id": "test:test/cases/87_release_pipeline.sh",
+      "kind": "test",
+      "label": "test/cases/87_release_pipeline.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/87_release_pipeline.sh"
+    },
+    {
       "id": "test:test/cases/90_mcp_shared_server.sh",
       "kind": "test",
       "label": "test/cases/90_mcp_shared_server.sh",
@@ -2190,6 +2282,26 @@
     }
   ],
   "edges": [
+    {
+      "source": "claim:distribution-canonical-model",
+      "target": "source:docs/DISTRIBUTION.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:install-command-is-derived",
+      "target": "source:docs/INSTALL.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:installer-verifies-before-installing",
+      "target": "source:docs/INSTALL.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:release-is-complete-or-absent",
+      "target": "source:docs/DISTRIBUTION.md",
+      "kind": "specified_by"
+    },
     {
       "source": "claim:policy-parse",
       "target": "source:docs/SCHEMAS.md",
@@ -2831,6 +2943,26 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:distribution-canonical-model",
+      "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:install-command-is-derived",
+      "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:installer-verifies-before-installing",
+      "target": "impl:share/install/install.sh.in",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:release-is-complete-or-absent",
+      "target": "impl:scripts/release-record",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -3429,6 +3561,26 @@
       "source": "claim:adr-propose",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
+    },
+    {
+      "source": "claim:distribution-canonical-model",
+      "target": "test:test/cases/84_distribution_model.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:install-command-is-derived",
+      "target": "test:test/cases/84_distribution_model.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:installer-verifies-before-installing",
+      "target": "test:test/cases/85_installer.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:release-is-complete-or-absent",
+      "target": "test:test/cases/87_release_pipeline.sh",
+      "kind": "proved_by"
     },
     {
       "source": "claim:policy-parse",
