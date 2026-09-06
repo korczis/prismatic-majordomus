@@ -167,6 +167,10 @@ fn validate(app: &App, format: OutputFormat, out: &mut Out<'_>) -> Result<u8> {
     Ok(if findings.is_empty() { 0 } else { EXIT_INVALID })
 }
 
+/// The archive a target and a tag name, and the directory it unpacks into. Answered from
+/// the model directly rather than through a capability: a repository that declares no
+/// distribution model has no artifact to name, and a benchmark case for a question that
+/// cannot be asked would be a fiction. `scripts/release-package` reads the text form.
 fn artifact(
     app: &App,
     target: &str,
@@ -174,17 +178,52 @@ fn artifact(
     format: OutputFormat,
     out: &mut Out<'_>,
 ) -> Result<u8> {
-    let v = call(
-        app,
-        &["distribution", "artifact"],
-        json!({ "target": target, "tag": tag }),
-    )?;
+    let model = Model::load(&app.share)?;
+    let t = model
+        .targets
+        .iter()
+        .find(|t| t.id == target || t.rust_target == target)
+        .ok_or_else(|| Error::InvalidDistribution {
+            path: crate::distribution::FILE.to_string(),
+            reason: format!("no target `{target}` is declared"),
+        })?;
+    if !t.status.is_published() {
+        return Err(Error::InvalidDistribution {
+            path: crate::distribution::FILE.to_string(),
+            reason: format!(
+                "`{}` is declared and not built: {}",
+                t.id,
+                t.reason.as_deref().unwrap_or("no reason recorded")
+            ),
+        });
+    }
+    if tag != render::TAG_PLACEHOLDER
+        && !(tag.starts_with('v') && tag[1..].starts_with(|c: char| c.is_ascii_digit()))
+    {
+        return Err(Error::InvalidDistribution {
+            path: crate::distribution::FILE.to_string(),
+            reason: format!("`{tag}` is not a tag: a tag is `v` followed by a version"),
+        });
+    }
+    let name = t.artifact_name(&model.project, &model.archive, tag);
+    let root = t.archive_root(&model.project, tag);
+    let url = format!("{}{tag}/{name}", model.project.download_prefix());
     match format {
-        OutputFormat::Json => w(out, pretty(&v))?,
+        OutputFormat::Json => w(
+            out,
+            pretty(&json!({
+                "target": t.id,
+                "rust_target": t.rust_target,
+                "tag": tag,
+                "name": name,
+                "root": root,
+                "url": url,
+            })),
+        )?,
         // two lines, name then root: what `scripts/release-package` reads
         OutputFormat::Text => {
-            w(out, v["name"].as_str().unwrap_or_default().to_string())?;
-            w(out, v["root"].as_str().unwrap_or_default().to_string())?;
+            w(out, name)?;
+            w(out, root)?;
         }
     }
     Ok(0)

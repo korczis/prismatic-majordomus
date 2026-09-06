@@ -8,9 +8,8 @@
 //! HTTP, an assistant over MCP and the cockpit, without any of them restating a fact.
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
@@ -123,52 +122,6 @@ pub struct BuildReport {
     pub distribution_target: Option<String>,
 }
 
-/// Which artifact a target and a tag name.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-pub struct ArtifactInput {
-    /// A target's id or its Rust target triple.
-    pub target: String,
-    /// The tag, `v` and a version. `{tag}` asks for the name with the placeholder left in.
-    pub tag: String,
-}
-
-impl BenchmarkCases for ArtifactInput {
-    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
-        ctx.index
-            .distribution
-            .as_ref()
-            .and_then(|m| m.published().next())
-            .map(|t| {
-                vec![NamedCase::new(
-                    "first-published-target",
-                    ArtifactInput {
-                        target: t.rust_target.clone(),
-                        tag: "v0.0.0".into(),
-                    },
-                )]
-            })
-            .unwrap_or_default()
-    }
-}
-
-/// The artifact a target and a tag name, and the directory it unpacks into.
-#[derive(Debug, Clone, Serialize, JsonSchema)]
-pub struct ArtifactView {
-    /// The target's id in the model.
-    pub target: String,
-    /// The Rust target triple.
-    pub rust_target: String,
-    /// The tag the name was derived for.
-    pub tag: String,
-    /// The archive's file name.
-    pub name: String,
-    /// The directory the archive unpacks into.
-    pub root: String,
-    /// Where a release publishes it, when the tag is a real one.
-    pub url: String,
-}
-
 /// The model this process was started with, or the reason there is none.
 fn model(ctx: &Context) -> Result<&Model, CapabilityError> {
     ctx.index.distribution.as_ref().ok_or_else(|| {
@@ -254,44 +207,6 @@ fn build(ctx: &Context, _: Empty) -> Result<BuildReport, CapabilityError> {
     })
 }
 
-fn artifact(ctx: &Context, input: ArtifactInput) -> Result<ArtifactView, CapabilityError> {
-    let m = model(ctx)?;
-    let t = m
-        .targets
-        .iter()
-        .find(|t| t.id == input.target || t.rust_target == input.target)
-        .ok_or_else(|| {
-            CapabilityError::NotFound(format!(
-                "the distribution model declares no target `{}`",
-                input.target
-            ))
-        })?;
-    if !t.status.is_published() {
-        return Err(CapabilityError::Refused(format!(
-            "`{}` is declared and not built: {}",
-            t.id,
-            t.reason.as_deref().unwrap_or("no reason recorded")
-        )));
-    }
-    let tag = input.tag;
-    if tag != crate::distribution::render::TAG_PLACEHOLDER
-        && !(tag.starts_with('v') && tag[1..].starts_with(|c: char| c.is_ascii_digit()))
-    {
-        return Err(CapabilityError::InvalidInput(format!(
-            "`{tag}` is not a tag: a tag is `v` followed by a version"
-        )));
-    }
-    let name = t.artifact_name(&m.project, &m.archive, &tag);
-    Ok(ArtifactView {
-        target: t.id.clone(),
-        rust_target: t.rust_target.clone(),
-        url: format!("{}{tag}/{name}", m.project.download_prefix()),
-        root: t.archive_root(&m.project, &tag),
-        name,
-        tag,
-    })
-}
-
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -344,21 +259,6 @@ pub fn module() -> ModuleDescriptor {
                 },
                 tags: ["distribution", "introspection"],
                 handler: build,
-            },
-            capability! {
-                id: "distribution.artifact",
-                title: "The artifact of a target",
-                description: "The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file.",
-                input: ArtifactInput,
-                output: ArtifactView,
-                stability: Stability::BehaviorallyVerified,
-                exposure: Exposure {
-                    mcp: mcp("majordomus_artifact"),
-                    http: get("/api/v1/distribution/artifact"),
-                    cli: Some(CliExposure { path: vec!["distribution".into(), "artifact".into()] }),
-                },
-                tags: ["distribution", "release"],
-                handler: artifact,
             },
         ],
     }

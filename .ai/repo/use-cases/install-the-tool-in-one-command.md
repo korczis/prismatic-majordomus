@@ -10,7 +10,7 @@ weight: 2
 actors: [operator, maintainer]
 difficulty: basic
 commands: [version, init, doctor]
-mcp_tools: [majordomus_distribution, majordomus_releases, majordomus_build, majordomus_artifact]
+mcp_tools: [majordomus_distribution, majordomus_releases, majordomus_build]
 doctrines: [majordomus.ai-layout-integrity]
 claims: [distribution-canonical-model, installer-verifies-before-installing, release-is-complete-or-absent, install-command-is-derived]
 responsibilities: [layer, doctor]

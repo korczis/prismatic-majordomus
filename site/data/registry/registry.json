@@ -5,26 +5,26 @@
     "version": "0.2.0"
   },
   "registry": {
-    "fingerprint": "607a591ea368e69565c8cc471a53b16bbb02b06fb7d72105c11dfc0ccad7dd40",
+    "fingerprint": "996bc556d13caa4ea1d923a0f63072c6c349e33e98115948578ae42cd4e89efa",
     "summary": {
-      "total": 711,
-      "builtin": 18,
+      "total": 710,
+      "builtin": 17,
       "declarative": 693,
       "by_kind": {
         "command": 1,
-        "query": 17,
+        "query": 16,
         "resource": 693
       },
       "by_stability": {
-        "behaviorally_verified": 18,
+        "behaviorally_verified": 17,
         "implemented": 693
       },
-      "mcp_tools": 18,
+      "mcp_tools": 17,
       "mcp_resources": 697,
-      "http_routes": 18,
-      "cli_commands": 8,
+      "http_routes": 17,
+      "cli_commands": 7,
       "modules": 26,
-      "benchmark_required": 18,
+      "benchmark_required": 17,
       "benchmark_waived": 0,
       "cached": 4
     },
@@ -1174,109 +1174,6 @@
           "max_entries": 16
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
-      },
-      {
-        "id": "distribution.artifact",
-        "module": "distribution",
-        "kind": "query",
-        "title": "The artifact of a target",
-        "description": "The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file.",
-        "input": {
-          "name": "ArtifactInput",
-          "schema": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "target": {
-                "type": "string",
-                "description": "A target's id or its Rust target triple."
-              },
-              "tag": {
-                "type": "string",
-                "description": "The tag, `v` and a version. `{tag}` asks for the name with the placeholder left in."
-              }
-            },
-            "required": [
-              "target",
-              "tag"
-            ],
-            "description": "Which artifact a target and a tag name.",
-            "title": "ArtifactInput"
-          }
-        },
-        "output": {
-          "name": "ArtifactView",
-          "schema": {
-            "type": "object",
-            "properties": {
-              "target": {
-                "type": "string",
-                "description": "The target's id in the model."
-              },
-              "rust_target": {
-                "type": "string",
-                "description": "The Rust target triple."
-              },
-              "tag": {
-                "type": "string",
-                "description": "The tag the name was derived for."
-              },
-              "name": {
-                "type": "string",
-                "description": "The archive's file name."
-              },
-              "root": {
-                "type": "string",
-                "description": "The directory the archive unpacks into."
-              },
-              "url": {
-                "type": "string",
-                "description": "Where a release publishes it, when the tag is a real one."
-              }
-            },
-            "required": [
-              "target",
-              "rust_target",
-              "tag",
-              "name",
-              "root",
-              "url"
-            ],
-            "description": "The artifact a target and a tag name, and the directory it unpacks into.",
-            "title": "ArtifactView"
-          }
-        },
-        "provenance": {
-          "source": "builtin",
-          "module": "majordomus_cli::capability::builtin::distribution"
-        },
-        "exposure": {
-          "mcp": {
-            "tool": "majordomus_artifact"
-          },
-          "http": {
-            "method": "GET",
-            "path": "/api/v1/distribution/artifact"
-          },
-          "cli": {
-            "path": [
-              "distribution",
-              "artifact"
-            ]
-          }
-        },
-        "stability": "behaviorally_verified",
-        "tags": [
-          "distribution",
-          "release"
-        ],
-        "benchmark": {
-          "policy": "required"
-        },
-        "cache": {
-          "policy": "disabled"
-        },
-        "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs"
       },
       {
         "id": "distribution.build",
@@ -4561,9 +4458,8 @@
         "description": "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 4,
+        "capabilities": 3,
         "capability_ids": [
-          "distribution.artifact",
           "distribution.build",
           "distribution.model",
           "distribution.releases"
@@ -4771,7 +4667,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9a46d4424994d0124f46765e741822678f98f466bd508eca44c205d494a43568",
+    "fingerprint": "8beaac49390d95285f43b031c49f7578e1743a985bad023d5ae2deb04e9e471e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -11659,7 +11555,7 @@
         "path": ".ai/repo/use-cases/install-the-tool-in-one-command.md",
         "section": "use-cases",
         "source_class": "use_case",
-        "bytes": 4099
+        "bytes": 4078
       },
       {
         "uri": "majordomus://use-case/keep-decisions-out-of-the-transcript",
@@ -16286,16 +16182,6 @@
         "output": "CapabilityList"
       },
       {
-        "name": "majordomus_artifact",
-        "id": "distribution.artifact",
-        "title": "The artifact of a target",
-        "description": "The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file.",
-        "kind": "query",
-        "read_only": true,
-        "input": "ArtifactInput",
-        "output": "ArtifactView"
-      },
-      {
         "name": "majordomus_build",
         "id": "distribution.build",
         "title": "This build",
@@ -16494,12 +16380,6 @@
       },
       {
         "method": "GET",
-        "path": "/api/v1/distribution/artifact",
-        "id": "distribution.artifact",
-        "kind": "query"
-      },
-      {
-        "method": "GET",
         "path": "/api/v1/distribution/build",
         "id": "distribution.build",
         "kind": "query"
@@ -16686,35 +16566,6 @@
         "case": "queries",
         "cached": true,
         "route": "GET /api/v1/capabilities"
-      },
-      {
-        "key": "distribution.artifact|direct|first-published-target",
-        "kind": "capability",
-        "transport": "direct",
-        "id": "distribution.artifact",
-        "module": "distribution",
-        "case": "first-published-target",
-        "cached": false
-      },
-      {
-        "key": "distribution.artifact|mcp|first-published-target",
-        "kind": "capability",
-        "transport": "mcp",
-        "id": "distribution.artifact",
-        "module": "distribution",
-        "case": "first-published-target",
-        "cached": false,
-        "tool": "majordomus_artifact"
-      },
-      {
-        "key": "distribution.artifact|http|first-published-target",
-        "kind": "capability",
-        "transport": "http",
-        "id": "distribution.artifact",
-        "module": "distribution",
-        "case": "first-published-target",
-        "cached": false,
-        "route": "GET /api/v1/distribution/artifact"
       },
       {
         "key": "distribution.build|direct|default",
@@ -17601,27 +17452,6 @@
           "cases": 2
         },
         {
-          "subject": "distribution.artifact",
-          "module": "distribution",
-          "transport": "direct",
-          "state": "covered",
-          "cases": 1
-        },
-        {
-          "subject": "distribution.artifact",
-          "module": "distribution",
-          "transport": "mcp",
-          "state": "covered",
-          "cases": 1
-        },
-        {
-          "subject": "distribution.artifact",
-          "module": "distribution",
-          "transport": "http",
-          "state": "covered",
-          "cases": 1
-        },
-        {
           "subject": "distribution.build",
           "module": "distribution",
           "transport": "direct",
@@ -18023,20 +17853,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 18,
-          "covered": 18,
+          "required": 17,
+          "covered": 17,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 18,
-          "covered": 18,
+          "required": 17,
+          "covered": 17,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 18,
-          "covered": 18,
+          "required": 17,
+          "covered": 17,
           "missing": 0,
           "waived": 0
         },
@@ -18047,8 +17877,8 @@
           "waived": 0
         },
         "total": {
-          "required": 66,
-          "covered": 66,
+          "required": 63,
+          "covered": 63,
           "missing": 0,
           "waived": 0
         }

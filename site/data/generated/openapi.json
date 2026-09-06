@@ -1,8 +1,8 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 18,
-    "schemas": 76,
+    "operations": 17,
+    "schemas": 75,
     "tags": 8
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -239,62 +239,6 @@
           "value": "aarch64"
         }
       ],
-      "variants": []
-    },
-    {
-      "description": "The artifact a target and a tag name, and the directory it unpacks into.",
-      "is_enum": false,
-      "name": "ArtifactView",
-      "properties": [
-        {
-          "description": "The target's id in the model.",
-          "name": "target",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The Rust target triple.",
-          "name": "rust_target",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The tag the name was derived for.",
-          "name": "tag",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The archive's file name.",
-          "name": "name",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The directory the archive unpacks into.",
-          "name": "root",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "Where a release publishes it, when the tag is a real one.",
-          "name": "url",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        }
-      ],
-      "type": "object",
-      "used_by": [
-        "distribution.artifact"
-      ],
-      "used_by_schemas": [],
-      "values": [],
       "variants": []
     },
     {
@@ -1406,7 +1350,6 @@
         "capabilities.list",
         "capabilities.describe",
         "distribution.model",
-        "distribution.artifact",
         "distribution.build",
         "distribution.releases",
         "graph.get",
@@ -3892,83 +3835,6 @@
           "result_schema": "DistributionReport",
           "stability": "behaviorally_verified",
           "summary": "The distribution model"
-        },
-        {
-          "benchmark": "required",
-          "benchmark_reason": "",
-          "body_examples": [],
-          "body_schema": "",
-          "cache": "disabled",
-          "cache_detail": "",
-          "cli": "distribution artifact",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/distribution/artifact?target=aarch64-apple-darwin&tag=v0.0.0\"",
-          "description": "The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file.",
-          "id": "distribution.artifact",
-          "kind": "query",
-          "mcp_resource": "",
-          "mcp_tool": "majordomus_artifact",
-          "method": "GET",
-          "parameters": [
-            {
-              "description": "A target's id or its Rust target triple.",
-              "examples": [
-                {
-                  "case": "first-published-target",
-                  "value": "\"aarch64-apple-darwin\""
-                }
-              ],
-              "name": "target",
-              "required": true,
-              "type": "string"
-            },
-            {
-              "description": "The tag, `v` and a version. `{tag}` asks for the name with the placeholder left in.",
-              "examples": [
-                {
-                  "case": "first-published-target",
-                  "value": "\"v0.0.0\""
-                }
-              ],
-              "name": "tag",
-              "required": true,
-              "type": "string"
-            }
-          ],
-          "path": "/api/v1/distribution/artifact",
-          "provenance": {
-            "module": "majordomus_cli::capability::builtin::distribution",
-            "source": "builtin"
-          },
-          "responses": [
-            {
-              "description": "The artifact of a target: the result.",
-              "schema": "ArtifactView",
-              "status": "200"
-            },
-            {
-              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
-              "schema": "ErrorBody",
-              "status": "400"
-            },
-            {
-              "description": "`not_found`: The input names something the repository does not hold.",
-              "schema": "ErrorBody",
-              "status": "404"
-            },
-            {
-              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
-              "schema": "ErrorBody",
-              "status": "500"
-            },
-            {
-              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
-              "schema": "ErrorBody",
-              "status": "default"
-            }
-          ],
-          "result_schema": "ArtifactView",
-          "stability": "behaviorally_verified",
-          "summary": "The artifact of a target"
         },
         {
           "benchmark": "required",
