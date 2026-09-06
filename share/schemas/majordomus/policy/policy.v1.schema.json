@@ -104,6 +104,10 @@
       "description": "What the provider's episode events do beyond drawing the boundary: how much the start event hands the worker, and whether the compaction and end events record anything.",
       "additionalProperties": false,
       "properties": {
+        "briefing_on_start": {
+          "type": "boolean",
+          "description": "Hand the worker a briefing on the start event's standard output, which the provider adds to the context it is about to build. False restores the older silence, in which a continuation record is written and nothing loads it."
+        },
         "briefing_budget_lines": {
           "type": "integer",
           "minimum": 1,

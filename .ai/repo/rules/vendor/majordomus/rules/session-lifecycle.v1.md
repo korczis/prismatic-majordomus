@@ -3,8 +3,8 @@ id: majordomus.session-lifecycle
 version: 1
 kind: rule
 title: The episode boundary is drawn below the model, and its working context is local
-description: Where a provider fires session events, the episode is opened and closed by that provider's hook rather than by the model; the working context each open freezes stays under the ignored half of the layer, carries the declared keys, and never carries a conversation.
-statement: An episode boundary a provider can observe is drawn by that provider's hook, proven by driving a payload through it; every open episode has a working context, and the store of working contexts is ignored, untracked, contract-shaped and free of transcripts.
+description: Where a provider fires session events, the episode is opened and closed by that provider's hook rather than by the model, the start event hands the worker the bounded briefing the policy declares, and the working context each open freezes stays under the ignored half of the layer, carries the declared keys, and never carries a conversation.
+statement: An episode boundary a provider can observe is drawn by that provider's hook, proven by driving a payload through it; the start event hands the worker a briefing bounded by the policy and the other events write nothing to standard output; every open episode has a working context, and the store of working contexts is ignored, untracked, contract-shaped and free of transcripts.
 status: active
 class: blocking
 depends_on: [majordomus.sessions-are-workers@1, majordomus.session-records@1]
@@ -55,11 +55,27 @@ the command. The dry run is what makes that safe to prove: everything on the pat
 except the mutation, because closing somebody's open episode is not a price a diagnostic may
 charge.
 
-Both events are idempotent, because the events themselves are: a start fires again on a
-resume and on a compaction and keeps the open episode rather than opening a second, and an
-end with nothing open writes nothing and is not a failure. Neither writes to standard
-output, because the provider adds a start hook's output to the model's context and nothing
-under the local half of the layer may be loaded into a context implicitly.
+Every event is idempotent, because the events themselves are: a start fires again on a
+resume and keeps the open episode rather than opening a second, an end with nothing open
+writes nothing and is not a failure, and a compaction with no active task records nothing.
+
+Only the start event writes to standard output, and only the briefing the policy declares.
+The provider adds that output to the context it is about to build, which is the one moment
+at which a continuation record can reach a worker without the worker remembering to ask for
+it — and a continuation record nothing loads is a record nobody reads. What it may carry is
+bounded by `session.briefing_budget_lines` and limited to references, divergence labels, the
+blockers that refuse acceptance, and the one section of a handover a resuming worker acts
+on. It may never carry a conversation, and `session.briefing_on_start: false` restores the
+older silence for a repository that wants it. The end and compaction events write nothing to
+standard output: each fires inside a turn that is already under way, where output would
+alter what somebody is doing rather than furnish it.
+
+This is the one exception to the layer's rule that nothing under `local/` is loaded into a
+context implicitly, and it is narrow on purpose. That rule protects three things — no
+transcripts, no unbounded growth, and no fact about a disk becoming a fact about the
+repository — and a bounded, declared, transcript-free briefing at the episode boundary
+defeats none of them. What stays unconditional is the other half: nothing under `local/` is
+published by a generator or served on a public surface, ever.
 
 `session start` writes the working context of the episode and `session close` appends what
 the close knows to the same document; nothing else writes one, and the document is appended
@@ -85,6 +101,6 @@ draws no boundary.
 
 `mj_validate_session_lifecycle` decides the store's invariants and the wiring verifier
 decides the provider state, both dispatched from `doctor, watch`. The behavioural case
-`test/cases/54_session_lifecycle_hooks.sh` proves the wiring, the idempotence of both events
-and the silence of standard output; `test/cases/55_session_context.sh` proves the document's
-contract and the findings each mutation of it produces. ADR 0015 records the decision.
+`test/cases/54_session_lifecycle_hooks.sh` proves the wiring, the idempotence of every event,
+the briefing the start event writes and the silence of the other two; `test/cases/55_session_context.sh` proves the document's
+contract and the findings each mutation of it produces. ADR 0015 records the decision; ADR 0016 records the briefing and the compaction event.

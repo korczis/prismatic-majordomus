@@ -264,6 +264,59 @@ does not decide what a checkpoint should say, and it makes no network call. If y
 model to write your checkpoint, have the worker write it and pipe it in. The tool is
 deterministic infrastructure and stays that way.
 
+## Who runs the lifecycle
+
+Nothing above requires a worker to remember any of it.
+
+Where a provider announces the boundaries of a sitting, its own hooks run the lifecycle.
+The start event opens the episode, freezes the context the builder resolved at that moment,
+and writes a briefing to standard output — which the provider adds to the context it is
+about to build. That is the one moment at which a continuation record reaches a worker
+without the worker asking for it, and it is the difference between a record that is written
+automatically and one that is also read.
+
+```
+provider fires SessionStart
+        |
+        +--> session opens (or the open one is kept)
+        +--> the working context is frozen
+        +--> the briefing goes to stdout: the episode, the resolved handover with its
+        |    divergence label, the blockers, and the one section to act on
+        v
+   work happens
+        |
+provider fires PreCompact
+        +--> a derived checkpoint, because the conversation is about to stop holding it
+        |
+provider fires SessionEnd
+        +--> a derived handover, when the task is still active
+        +--> the episode closes into its envelope of references
+```
+
+The briefing is bounded by `session.briefing_budget_lines` and carries references, labels
+and one section — never a conversation. Each of the three behaviours is a switch in the
+policy, and `session.briefing_on_start: false` restores the older silence.
+
+This is the one route by which anything under `local/` reaches a model's context without
+being asked for. It is narrow on purpose, and the other half of that rule is unconditional:
+nothing under `local/` is ever published by a generator or served on a public surface.
+`.ai/repo/adrs/0016-an-episode-that-opens-is-handed-what-the-last-one-left.md` records why.
+
+A worker with no such provider loses none of the model and all of the automation: every
+command below is the same, and running them is again a matter of remembering.
+
+## Reading it back from somewhere other than a terminal
+
+`continuity.state` in the Rust executable reads this same local half and reports it over
+MCP (`majordomus_continuity`), over HTTP (`GET /api/v1/continuity`) and in the Cockpit's
+Continuity page: the open episode, the active task, the handover and checkpoint that
+resolve here with their divergence labels, and the blockers. It uses the same two tiers and
+the same four labels, and it never writes — the lifecycle has one writer, and a second
+account of events the ledger already holds is what this design refuses.
+
+It is served and never published. Those records name this machine, so no generated document
+and no site page carries one, and a test proves it.
+
 ## Where the lifecycle puts each piece
 
 ```

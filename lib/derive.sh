@@ -90,12 +90,18 @@ mj_derive_count() {
     END { printf "%d", n + 0 }' "$led"
 }
 
-# The unresolved questions, as their own text. The store's line format is machine-written
-# precisely so a reader like this one can rely on it.
+# The unresolved questions, as their own text.
+#
+# Through `mj_question_unresolved_any` and not through an awk of its own, because that is the
+# reader the acceptance gate uses, and a derived record whose blocker list disagreed with the
+# gate's would be worse than one with no blocker list at all. The first version here did have
+# its own awk, and it reported the example line inside the store template's HTML comment as a
+# real blocker in every fresh checkout — a phantom question, in the one section a resuming
+# worker is told to act on before anything else.
 mj_derive_questions() {
   local f; f="$(mj_question_file 2>/dev/null || printf '%s/open-questions.md' "$MJ_STATE_DIR")"
   [ -f "$f" ] || return 0
-  awk '/^- \[unresolved\] /{ s = substr($0, 17); print "- " s }' "$f"
+  mj_question_unresolved_any "$f" | sed -e 's/^[0-9]*:- \[unresolved\] /- /'
 }
 
 # ---------------------------------------------------------------- section writers
