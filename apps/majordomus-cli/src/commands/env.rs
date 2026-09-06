@@ -42,8 +42,14 @@ pub fn run(args: EnvArgs) -> Result<u8> {
     match args.command {
         None | Some(EnvCommand::Status) => status(&args.repo, args.format),
         Some(EnvCommand::Explain { field }) => explain(&args.repo, args.format, field.as_deref()),
-        Some(EnvCommand::Banner { mode, width }) => banner_command(&args.repo, &mode, width),
-        Some(EnvCommand::Export { shell }) => export_command(&args.repo, &shell),
+        Some(EnvCommand::Banner { mode, width }) => {
+            banner_command(&args.repo, mode.as_deref(), width)
+        }
+        Some(EnvCommand::Export {
+            shell,
+            banner,
+            mode,
+        }) => export_command(&args.repo, &shell, banner, mode.as_deref()),
     }
 }
 
@@ -307,10 +313,53 @@ fn explain(repo: &RepoArgs, format: OutputFormat, field: Option<&str>) -> Result
     Ok(0)
 }
 
-fn banner_command(repo: &RepoArgs, mode: &str, width: Option<usize>) -> Result<u8> {
-    let mode = BannerMode::parse(mode).ok_or_else(|| Error::Protocol {
-        reason: format!("'{mode}' is not a banner mode; one of auto, full, compact, off"),
-    })?;
+/// The environment variable a person sets once, in their shell profile or in `.envrc`, to
+/// decide how much the banner says. Named here because it is part of the command's
+/// contract and the documentation renders it from this constant.
+pub const BANNER_ENV: &str = "MAJORDOMUS_BANNER";
+
+/// The mode a caller asked for: the option, then the environment, then `auto`. A person
+/// sets the variable once; a caller that wants a particular rendering says so.
+fn requested_mode(mode: Option<&str>) -> Result<BannerMode> {
+    let requested = match mode {
+        Some(mode) => mode.to_string(),
+        None => std::env::var(BANNER_ENV).unwrap_or_else(|_| "auto".into()),
+    };
+    BannerMode::parse(&requested).ok_or_else(|| Error::Protocol {
+        reason: format!(
+            "'{requested}' is not a banner mode; one of auto, full, compact, off (from {})",
+            match mode {
+                Some(_) => "--mode",
+                None => BANNER_ENV,
+            }
+        ),
+    })
+}
+
+/// Draw a snapshot and remember the digest, so that `auto` can tell a first look from a
+/// return. Never fails: a banner that could not be drawn is one a person does not see, and
+/// taking the shell down with it would be the one unacceptable outcome.
+fn draw(environment: &RepositoryEnvironment, mode: BannerMode, presentation: &Presentation) {
+    let root = std::path::Path::new(&environment.repository.root);
+    let local_half = &environment.repository.local_path;
+    let seen = Cache::load(root, local_half).tiers.last_rendered_digest;
+    let Some(text) = banner(environment, mode, presentation, seen.as_deref()) else {
+        return;
+    };
+    // Standard error: direnv reads standard output as the environment it is applying.
+    eprint!("{text}");
+    let digest = environment.digest();
+    if seen.as_deref() != Some(digest.as_str()) {
+        let mut cache = Cache::load(root, local_half);
+        cache.tiers.last_rendered_digest = Some(digest);
+        if let Err(e) = cache.store(root, local_half) {
+            tracing::debug!(error = %e, "the rendered digest could not be recorded");
+        }
+    }
+}
+
+fn banner_command(repo: &RepoArgs, mode: Option<&str>, width: Option<usize>) -> Result<u8> {
+    let mode = requested_mode(mode)?;
     // Off costs nothing at all: no repository discovery, no git, no cache. A person who
     // turned the banner off should not pay for one that is then thrown away.
     if mode == BannerMode::Off {
@@ -330,39 +379,35 @@ fn banner_command(repo: &RepoArgs, mode: &str, width: Option<usize>) -> Result<u
     }
 
     let (environment, _) = resolve_fast(repo)?;
-    let root = std::path::Path::new(&environment.repository.root);
-    let local_half = &environment.repository.local_path;
-    let seen = Cache::load(root, local_half).tiers.last_rendered_digest;
-
-    let Some(text) = banner(&environment, mode, &presentation, seen.as_deref()) else {
-        return Ok(0);
-    };
-    // Standard error: direnv reads standard output as the environment it is applying.
-    eprint!("{text}");
-
-    let digest = environment.digest();
-    if seen.as_deref() != Some(digest.as_str()) {
-        let mut cache = Cache::load(root, local_half);
-        cache.tiers.last_rendered_digest = Some(digest);
-        if let Err(e) = cache.store(root, local_half) {
-            tracing::debug!(error = %e, "the rendered digest could not be recorded");
-        }
-    }
+    draw(&environment, mode, &presentation);
     Ok(0)
 }
 
-fn export_command(repo: &RepoArgs, shell: &str) -> Result<u8> {
+fn export_command(
+    repo: &RepoArgs,
+    shell: &str,
+    with_banner: bool,
+    mode: Option<&str>,
+) -> Result<u8> {
     let dialect = Dialect::parse(shell).ok_or_else(|| Error::Protocol {
         reason: format!(
             "'{shell}' is not a shell this writes for; one of direnv, bash, zsh, sh, ksh, fish"
         ),
     })?;
+    // Refused before anything is resolved, so a mode nobody can render never costs a
+    // `git status` first.
+    let mode = with_banner.then(|| requested_mode(mode)).transpose()?;
     let (environment, share) = resolve_fast(repo)?;
     let share = share.map(|s| s.dir().display().to_string());
     let script = export(&environment, share.as_deref(), dialect);
     let stdout = std::io::stdout();
     let mut out = stdout.lock();
     write!(out, "{script}").map_err(Error::Transport)?;
+    if let Some(mode) = mode {
+        // The same snapshot, rendered for the other stream. One resolution, two surfaces:
+        // this is the whole reason an adapter makes one call rather than two.
+        draw(&environment, mode, &Presentation::detect());
+    }
     Ok(0)
 }
 
@@ -402,7 +447,7 @@ mod tests {
     #[test]
     fn a_banner_mode_that_is_not_one_is_refused_by_name() {
         let args = RepoArgs::default();
-        match banner_command(&args, "loud", None) {
+        match banner_command(&args, Some("loud"), None) {
             Err(Error::Protocol { reason }) => assert!(reason.contains("loud"), "{reason}"),
             other => panic!("{other:?}"),
         }
@@ -411,7 +456,7 @@ mod tests {
     #[test]
     fn a_shell_this_does_not_write_for_is_refused_by_name() {
         let args = RepoArgs::default();
-        match export_command(&args, "powershell") {
+        match export_command(&args, "powershell", false, None) {
             Err(Error::Protocol { reason }) => assert!(reason.contains("powershell"), "{reason}"),
             other => panic!("{other:?}"),
         }
@@ -428,6 +473,6 @@ mod tests {
             repo: Some("/nonexistent/majordomus/checkout".into()),
             ..RepoArgs::default()
         };
-        assert_eq!(banner_command(&args, "off", None).expect("no work"), 0);
+        assert_eq!(banner_command(&args, Some("off"), None).expect("no work"), 0);
     }
 }

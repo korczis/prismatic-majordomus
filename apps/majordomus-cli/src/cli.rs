@@ -74,9 +74,9 @@ pub enum EnvCommand {
     Status,
     /// Render the snapshot for a terminal. Goes to standard error, never standard output, because direnv reads standard output as the environment it is setting
     Banner {
-        /// How much to show. `auto` is silent when nothing is watching, shows the whole box when the repository has something new to say, and the two-line form when it does not
-        #[arg(long, value_name = "MODE", default_value = "auto")]
-        mode: String,
+        /// How much to show: `auto`, `full`, `compact` or `off`. Without it, MAJORDOMUS_BANNER decides, and without that, `auto` — which is silent when nothing is watching, shows the whole box when the repository has something new to say, and the two-line form when it does not
+        #[arg(long, value_name = "MODE")]
+        mode: Option<String>,
         /// Draw as if the terminal were this wide, whatever it is
         #[arg(long, value_name = "COLUMNS")]
         width: Option<usize>,
@@ -86,6 +86,12 @@ pub enum EnvCommand {
         /// The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`
         #[arg(long = "shell", value_name = "SHELL", default_value = "direnv")]
         shell: String,
+        /// Also draw the banner, to standard error, from the same snapshot. What an adapter asks for: one process on the path a shell takes on every entry, rather than two that each pay for a `git status`
+        #[arg(long)]
+        banner: bool,
+        /// With --banner, how much to show; MAJORDOMUS_BANNER decides without it
+        #[arg(long, value_name = "MODE", requires = "banner")]
+        mode: Option<String>,
     },
     /// Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted
     Explain {
