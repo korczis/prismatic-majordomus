@@ -5,22 +5,22 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "f9b2a9b72560ae164e1a73fc03b77db8e9f72c9dde5cf9c7304c3164cf61a64c",
+    "fingerprint": "dda9e70578652159acedcb495820ee0a2901a55a2eec6704ff1d90e6d929bd26",
     "summary": {
-      "total": 699,
+      "total": 700,
       "builtin": 19,
-      "declarative": 680,
+      "declarative": 681,
       "by_kind": {
         "command": 1,
         "query": 18,
-        "resource": 680
+        "resource": 681
       },
       "by_stability": {
         "behaviorally_verified": 19,
-        "implemented": 680
+        "implemented": 681
       },
       "mcp_tools": 17,
-      "mcp_resources": 685,
+      "mcp_resources": 686,
       "http_routes": 19,
       "cli_commands": 4,
       "modules": 26,
@@ -5677,7 +5677,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 91,
+        "capabilities": 92,
         "capability_ids": []
       },
       {
@@ -5691,7 +5691,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fe36f3fcd5f0a9c98d74bddbb3a404b50496cc5d76e60976804bb9358bc69611",
+    "fingerprint": "4069f7b38e7e37e7c23b26b8cbf2d1908754f83cd1831b07da6a7b14aa63a03f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -5727,7 +5727,7 @@
       "session": 1,
       "skill": 3,
       "taxonomy": 10,
-      "test": 91,
+      "test": 92,
       "use-case": 36
     },
     "diagnostics": {},
@@ -7107,7 +7107,7 @@
         "path": ".ai/repo/deployments/majordomus.yaml",
         "section": "deployments",
         "source_class": "deployment",
-        "bytes": 2420
+        "bytes": 2877
       },
       {
         "uri": "majordomus://document/.ai/repo/knowledge/curated/start-here.md",
@@ -12173,6 +12173,14 @@
         "bytes": 4960
       },
       {
+        "uri": "majordomus://test/test/cases/85_deployment_bind.sh",
+        "kind": "test",
+        "identity": "test/cases/85_deployment_bind.sh",
+        "path": "test/cases/85_deployment_bind.sh",
+        "source_class": "case",
+        "bytes": 4599
+      },
+      {
         "uri": "majordomus://test/test/cases/90_mcp_shared_server.sh",
         "kind": "test",
         "identity": "test/cases/90_mcp_shared_server.sh",
@@ -12851,7 +12859,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 91
+      "objects": 92
     },
     {
       "name": "use-case",
@@ -13909,6 +13917,10 @@
               {
                 "name": "site",
                 "help": "site/data/registry/registry.json, the registry dataset the site renders"
+              },
+              {
+                "name": "deployment",
+                "help": "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects"
               }
             ],
             "defaults": [

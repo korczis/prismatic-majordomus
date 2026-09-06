@@ -20,6 +20,7 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         GenerateTarget::Allow => &[Target::Allow],
         GenerateTarget::Providers => &[Target::Providers],
         GenerateTarget::Site => &[Target::Site],
+        GenerateTarget::Deployment => &[Target::Deployment],
     };
     let artifacts = generate::plan(&app, targets)?;
     let root = args

@@ -48,6 +48,9 @@ pub enum Target {
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
     Site,
+    /// The provider artifacts of every deployment object: `deploy/Dockerfile`,
+    /// `.dockerignore` and `fly.toml` (see [`crate::deploy::render`]).
+    Deployment,
 }
 
 impl Target {
@@ -60,6 +63,7 @@ impl Target {
         Target::Allow,
         Target::Providers,
         Target::Site,
+        Target::Deployment,
     ];
 }
 
@@ -126,7 +130,11 @@ pub fn artifacts(
                 path: format!("{OUT_DIR}/registry.json"),
                 content: registry_manifest(registry, version),
             }),
-            Target::Benchmarks | Target::Allow | Target::Providers | Target::Site => {}
+            Target::Benchmarks
+            | Target::Allow
+            | Target::Providers
+            | Target::Site
+            | Target::Deployment => {}
         }
     }
     Ok(out)
@@ -163,6 +171,24 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
                 path: format!("{SITE_DATA_DIR}/registry.json"),
                 content: crate::site::render(&dataset),
             });
+        }
+    }
+    if targets.contains(&Target::Deployment) {
+        for object in app
+            .context
+            .index
+            .objects
+            .iter()
+            .filter(|o| o.kind == crate::deploy::KIND)
+        {
+            let deployment = crate::deploy::Deployment::parse(object)
+                .map_err(|refusal| Error::InvalidDeployment {
+                    reason: refusal.to_string(),
+                })?;
+            out.extend(crate::deploy::render::artifacts(
+                &deployment,
+                &object.provenance.path,
+            ));
         }
     }
     Ok(out)

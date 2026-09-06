@@ -19,6 +19,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::Object;
 
+pub mod render;
+
 /// The kind a deployment object is discovered as.
 pub const KIND: &str = "deployment";
 

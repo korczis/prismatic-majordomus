@@ -437,6 +437,8 @@ pub enum GenerateTarget {
     Providers,
     /// site/data/registry/registry.json, the registry dataset the site renders
     Site,
+    /// deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects
+    Deployment,
 }
 
 #[derive(Debug, Args)]
