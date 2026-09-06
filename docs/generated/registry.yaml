@@ -89,6 +89,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 6
+  - id: worktree
+    title: Worktree topology
+    description: "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 4
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -6946,6 +6952,1760 @@ capabilities:
       policy: process
       max_entries: 2
     source_path: apps/majordomus-cli/src/capability/builtin/why.rs
+  - id: worktree.inspect
+    module: worktree
+    kind: query
+    title: "One branch: where its worktree belongs and what is there"
+    description: "The canonical path of a branch, derived from its name alone, whether the branch exists, whether something occupies that path, the worktree holding the branch when one does, and what stands in the way of creating or migrating it. The answer for a branch that does not exist yet is the path `worktree create` would use."
+    input:
+      name: InspectInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          branch:
+            type: string
+            description: "The branch, full name (`feature/improve-cli`). It need not exist: the canonical path\nderives from the name alone."
+        required:
+          - branch
+        description: A branch to inspect.
+        title: InspectInput
+    output:
+      name: InspectReport
+      schema:
+        type: object
+        properties:
+          branch:
+            type: string
+            description: The branch asked about.
+          branch_exists:
+            type: boolean
+            description: The branch exists locally.
+          expected_path:
+            type: string
+            description: Where its work tree belongs.
+          destination_exists:
+            type: boolean
+            description: Something exists at that path.
+          worktree:
+            anyOf:
+              - "$ref": "#/$defs/WorktreeState"
+              - type: "null"
+            description: "The work tree that holds the branch, when one does."
+          canonical:
+            type: boolean
+            description: The branch is checked out at its canonical path.
+          diagnostics:
+            type: array
+            items:
+              "$ref": "#/$defs/TopologyDiagnostic"
+            description: "What stands in the way, if anything."
+        required:
+          - branch
+          - branch_exists
+          - expected_path
+          - destination_exists
+          - canonical
+          - diagnostics
+        description: "One branch, inspected: where its work tree belongs and what is there."
+        title: InspectReport
+        "$defs":
+          WorktreeState:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Absolute, as git holds it."
+              kind:
+                "$ref": "#/$defs/WorktreeKind"
+                description: Primary or linked.
+              standing:
+                "$ref": "#/$defs/Standing"
+                description: Where it stands against the topology.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out here, short. Absent when detached."
+              label:
+                type: string
+                description: "The name it is shown under: the branch, or `detached/<short commit>`."
+              head:
+                type:
+                  - string
+                  - "null"
+                description: The commit checked out here.
+              detached:
+                type: boolean
+                description: HEAD is detached here.
+              expected_path:
+                type:
+                  - string
+                  - "null"
+                description: "Where this branch's work tree belongs. Absent when detached, or for the primary\ncheckout on the trunk."
+              exists:
+                type: boolean
+                description: The directory git registered still exists on disk.
+              current:
+                type: boolean
+                description: The call came from inside this work tree.
+              locked:
+                type:
+                  - string
+                  - "null"
+                description: "Locked, with git's reason; an empty string when it recorded none."
+              prunable:
+                type:
+                  - string
+                  - "null"
+                description: "Prunable, with git's reason."
+              dirty:
+                anyOf:
+                  - "$ref": "#/$defs/DirtyState"
+                  - type: "null"
+                description: "Uncommitted work here. Absent when it was not asked for: it costs one subprocess per\nwork tree, and a topology check does not need it."
+              upstream:
+                anyOf:
+                  - "$ref": "#/$defs/UpstreamState"
+                  - type: "null"
+                description: "The branch's upstream and its distance from it."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "The issue this branch provably names: a path component of the branch equal to an\nissue id of `.ai/repo/project/issues/`, or beginning with it and a hyphen. Nothing\nis inferred from similarity."
+              diagnostics:
+                type: array
+                items:
+                  "$ref": "#/$defs/TopologyDiagnostic"
+                description: "What is wrong with this work tree, if anything."
+            required:
+              - path
+              - kind
+              - standing
+              - label
+              - detached
+              - exists
+              - current
+              - diagnostics
+            description: "One work tree, as the topology sees it."
+          WorktreeKind:
+            oneOf:
+              - type: string
+                const: primary
+                description: "The main work tree. It hosts the trunk, is never moved and is never removed."
+              - type: string
+                const: linked
+                description: "A linked work tree. Belongs at its branch's canonical path."
+            description: "Whether a work tree is the repository's own checkout or one linked to it."
+          Standing:
+            oneOf:
+              - type: string
+                const: primary
+                description: "The primary checkout: exempt from the path rule, held to the trunk rule."
+              - type: string
+                const: canonical
+                description: "A linked work tree at exactly its branch's canonical path."
+              - type: string
+                const: misplaced
+                description: A linked work tree somewhere else. Migration brings it home.
+              - type: string
+                const: detached
+                description: A linked work tree with no branch. It has no canonical path and is never moved.
+              - type: string
+                const: ephemeral
+                description: "A linked work tree under the operating system's temporary directory or under the\nprimary checkout's `.claude/worktrees/`: a session's scratch checkout, owned and\nremoved by the harness that made it. Reported; migrated only on request."
+              - type: string
+                const: missing
+                description: A registration whose directory is gone. Repair drops it.
+            description: Where a work tree stands against the topology.
+          DirtyState:
+            type: object
+            properties:
+              staged:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with a change in the index.
+              unstaged:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with a change in the work tree that is not in the index.
+              untracked:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Untracked, not ignored, files."
+              conflicted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with an unresolved merge conflict.
+              clean:
+                type: boolean
+                description: Nothing above is non-zero.
+              in_progress:
+                type:
+                  - string
+                  - "null"
+                description: "A merge, rebase, cherry-pick, revert or bisect is in progress here."
+            required:
+              - staged
+              - unstaged
+              - untracked
+              - conflicted
+              - clean
+            description: "Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses."
+          UpstreamState:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The upstream ref, short (`origin/master`)."
+              ahead:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: Commits here that the upstream lacks.
+              behind:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: Commits upstream that this branch lacks.
+              gone:
+                type: boolean
+                description: The upstream ref no longer exists.
+            required:
+              - name
+              - gone
+            description: "A branch's upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch."
+          TopologyDiagnostic:
+            type: object
+            properties:
+              code:
+                "$ref": "#/$defs/DiagnosticCode"
+                description: The stable code.
+              severity:
+                "$ref": "#/$defs/Severity"
+                description: How serious it is.
+              path:
+                type:
+                  - string
+                  - "null"
+                description: The work tree involved.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch involved.
+              expected:
+                type:
+                  - string
+                  - "null"
+                description: Where the work tree belongs.
+              message:
+                type: string
+                description: "What is wrong, in one line."
+              remedy:
+                type: string
+                description: The command that addresses it.
+            required:
+              - code
+              - severity
+              - message
+              - remedy
+            description: "One thing wrong with, or worth knowing about, the topology."
+          DiagnosticCode:
+            oneOf:
+              - type: string
+                const: worktree.path_mismatch
+                description: "A linked work tree is not at its branch's canonical path."
+              - type: string
+                const: worktree.container_occupied
+                description: A linked work tree occupies the container path itself.
+              - type: string
+                const: worktree.nested
+                description: A linked work tree sits inside the primary checkout or inside another work tree.
+              - type: string
+                const: worktree.destination_conflict
+                description: The canonical path of a branch is occupied by something that is not its work tree.
+              - type: string
+                const: worktree.missing
+                description: "A registered work tree's directory does not exist."
+              - type: string
+                const: worktree.stale_registration
+                description: Git reports the registration as prunable.
+              - type: string
+                const: worktree.branch_already_checked_out
+                description: A branch is checked out somewhere other than its canonical path.
+              - type: string
+                const: worktree.detached
+                description: A linked work tree has no branch.
+              - type: string
+                const: worktree.ephemeral
+                description: "A linked work tree is a session's scratch checkout: under the temporary directory or\nunder the primary checkout's `.claude/worktrees/`."
+              - type: string
+                const: worktree.primary_on_non_trunk
+                description: The primary checkout holds a branch that is not the trunk.
+              - type: string
+                const: worktree.trunk_in_linked_worktree
+                description: The trunk is checked out in a linked work tree rather than the primary checkout.
+              - type: string
+                const: worktree.path_escape
+                description: A derived path would leave the container. Cannot happen for a valid branch name.
+              - type: string
+                const: worktree.invalid_branch_name
+                description: A branch name git accepted that this executable cannot derive a path for.
+              - type: string
+                const: worktree.locked
+                description: "A work tree is locked, so it cannot be moved until it is unlocked."
+              - type: string
+                const: worktree.migration_verification_failed
+                description: A move happened and the fingerprint after it differs from the one before.
+              - type: string
+                const: worktree.trunk_unknown
+                description: The trunk could not be determined.
+              - type: string
+                const: worktree.case_collision
+                description: Two branch names map to one directory on a case-insensitive filesystem.
+              - type: string
+                const: worktree.cross_device
+                description: "A move crossed devices and was made by copy, repair and verification."
+            description: "The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state."
+          Severity:
+            oneOf:
+              - type: string
+                const: info
+                description: Worth knowing; changes nothing.
+              - type: string
+                const: warning
+                description: Something to look at; the object is still served.
+              - type: string
+                const: error
+                description: The file is excluded and the index is degraded.
+            description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::worktree
+    exposure:
+      mcp:
+        tool: majordomus_worktree_inspect
+      http:
+        method: GET
+        path: /api/v1/worktrees/inspect
+      cli:
+        path:
+          - worktree
+          - inspect
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - worktree
+      - git
+      - topology
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/worktree.rs
+  - id: worktree.migration_plan
+    module: worktree
+    kind: query
+    title: What it would take to bring every worktree home
+    description: "One step per misplaced worktree with a branch: where it is, where it belongs, how it would move, the uncommitted work that moves with it, and what blocks it; plus the exceptions the migration cannot address by design — detached worktrees, stale registrations, the primary checkout off the trunk — each with what a person does about it. Planning changes nothing; `majordomus worktree migrate` applies it with a fingerprint taken before and after every move."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: MigrationPlan
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "[`SCHEMA`]."
+          container:
+            type: string
+            description: The container everything moves into.
+          steps:
+            type: array
+            items:
+              "$ref": "#/$defs/MigrationStep"
+            description: "One step per misplaced worktree with a branch, container occupants first."
+          exceptions:
+            type: array
+            items:
+              "$ref": "#/$defs/TopologyDiagnostic"
+            description: "Worktrees the migration cannot address by design: detached, missing, the primary\ncheckout off the trunk. Each says what a person does about it."
+          movable:
+            type: integer
+            format: uint
+            minimum: 0
+            description: Steps that can be carried out as things stand.
+          blocked:
+            type: integer
+            format: uint
+            minimum: 0
+            description: Steps that cannot.
+          moved:
+            type: integer
+            format: uint
+            minimum: 0
+            description: Steps carried out and verified.
+          failed:
+            type: integer
+            format: uint
+            minimum: 0
+            description: Steps attempted and not verified.
+          applied:
+            type: boolean
+            description: Whether anything was changed.
+          moved_current:
+            type:
+              - string
+              - "null"
+            description: "The new path of the worktree the command was run from, when that one moved."
+        required:
+          - schema
+          - container
+          - steps
+          - exceptions
+          - movable
+          - blocked
+          - moved
+          - failed
+          - applied
+        description: "A migration, planned or applied."
+        title: MigrationPlan
+        "$defs":
+          MigrationStep:
+            type: object
+            properties:
+              branch:
+                type: string
+                description: The branch it holds.
+              from:
+                type: string
+                description: Where it is.
+              to:
+                type: string
+                description: Where it belongs.
+              head:
+                type:
+                  - string
+                  - "null"
+                description: The commit checked out.
+              action:
+                "$ref": "#/$defs/MigrationAction"
+                description: How it moves.
+              dirty:
+                "$ref": "#/$defs/DirtyState"
+                description: "Its uncommitted work, which moves with it."
+              blockers:
+                type: array
+                items:
+                  "$ref": "#/$defs/TopologyDiagnostic"
+                description: "Why it cannot move, when it cannot."
+              outcome:
+                "$ref": "#/$defs/StepOutcome"
+                description: What happened.
+              message:
+                type:
+                  - string
+                  - "null"
+                description: "What happened, in words, when it was not simply moved."
+              before:
+                anyOf:
+                  - "$ref": "#/$defs/WorktreeFingerprint"
+                  - type: "null"
+                description: The fingerprint before the move.
+              after:
+                anyOf:
+                  - "$ref": "#/$defs/WorktreeFingerprint"
+                  - type: "null"
+                description: The fingerprint after it.
+              differences:
+                type: array
+                items:
+                  type: string
+                description: What differs between the two; empty when verified.
+            required:
+              - branch
+              - from
+              - to
+              - action
+              - dirty
+              - blockers
+              - outcome
+              - differences
+            description: One worktree to bring home.
+          MigrationAction:
+            oneOf:
+              - type: string
+                const: move
+                description: "One `git worktree move`."
+              - type: string
+                const: move_via_staging
+                description: "The worktree is the container itself: out to a staging path, then into the container."
+              - type: string
+                const: copy_and_repair
+                description: "The move crossed devices: copy, `git worktree repair`, verify, remove the original."
+              - type: string
+                const: none
+                description: "Nothing: the step is blocked."
+            description: How a step moves its worktree.
+          DirtyState:
+            type: object
+            properties:
+              staged:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with a change in the index.
+              unstaged:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with a change in the work tree that is not in the index.
+              untracked:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Untracked, not ignored, files."
+              conflicted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with an unresolved merge conflict.
+              clean:
+                type: boolean
+                description: Nothing above is non-zero.
+              in_progress:
+                type:
+                  - string
+                  - "null"
+                description: "A merge, rebase, cherry-pick, revert or bisect is in progress here."
+            required:
+              - staged
+              - unstaged
+              - untracked
+              - conflicted
+              - clean
+            description: "Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses."
+          TopologyDiagnostic:
+            type: object
+            properties:
+              code:
+                "$ref": "#/$defs/DiagnosticCode"
+                description: The stable code.
+              severity:
+                "$ref": "#/$defs/Severity"
+                description: How serious it is.
+              path:
+                type:
+                  - string
+                  - "null"
+                description: The work tree involved.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch involved.
+              expected:
+                type:
+                  - string
+                  - "null"
+                description: Where the work tree belongs.
+              message:
+                type: string
+                description: "What is wrong, in one line."
+              remedy:
+                type: string
+                description: The command that addresses it.
+            required:
+              - code
+              - severity
+              - message
+              - remedy
+            description: "One thing wrong with, or worth knowing about, the topology."
+          DiagnosticCode:
+            oneOf:
+              - type: string
+                const: worktree.path_mismatch
+                description: "A linked work tree is not at its branch's canonical path."
+              - type: string
+                const: worktree.container_occupied
+                description: A linked work tree occupies the container path itself.
+              - type: string
+                const: worktree.nested
+                description: A linked work tree sits inside the primary checkout or inside another work tree.
+              - type: string
+                const: worktree.destination_conflict
+                description: The canonical path of a branch is occupied by something that is not its work tree.
+              - type: string
+                const: worktree.missing
+                description: "A registered work tree's directory does not exist."
+              - type: string
+                const: worktree.stale_registration
+                description: Git reports the registration as prunable.
+              - type: string
+                const: worktree.branch_already_checked_out
+                description: A branch is checked out somewhere other than its canonical path.
+              - type: string
+                const: worktree.detached
+                description: A linked work tree has no branch.
+              - type: string
+                const: worktree.ephemeral
+                description: "A linked work tree is a session's scratch checkout: under the temporary directory or\nunder the primary checkout's `.claude/worktrees/`."
+              - type: string
+                const: worktree.primary_on_non_trunk
+                description: The primary checkout holds a branch that is not the trunk.
+              - type: string
+                const: worktree.trunk_in_linked_worktree
+                description: The trunk is checked out in a linked work tree rather than the primary checkout.
+              - type: string
+                const: worktree.path_escape
+                description: A derived path would leave the container. Cannot happen for a valid branch name.
+              - type: string
+                const: worktree.invalid_branch_name
+                description: A branch name git accepted that this executable cannot derive a path for.
+              - type: string
+                const: worktree.locked
+                description: "A work tree is locked, so it cannot be moved until it is unlocked."
+              - type: string
+                const: worktree.migration_verification_failed
+                description: A move happened and the fingerprint after it differs from the one before.
+              - type: string
+                const: worktree.trunk_unknown
+                description: The trunk could not be determined.
+              - type: string
+                const: worktree.case_collision
+                description: Two branch names map to one directory on a case-insensitive filesystem.
+              - type: string
+                const: worktree.cross_device
+                description: "A move crossed devices and was made by copy, repair and verification."
+            description: "The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state."
+          Severity:
+            oneOf:
+              - type: string
+                const: info
+                description: Worth knowing; changes nothing.
+              - type: string
+                const: warning
+                description: Something to look at; the object is still served.
+              - type: string
+                const: error
+                description: The file is excluded and the index is degraded.
+            description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+          StepOutcome:
+            oneOf:
+              - type: string
+                const: planned
+                description: Planned and not applied.
+              - type: string
+                const: blocked
+                description: "Not carried out, with the blockers on the step."
+              - type: string
+                const: moved
+                description: "Moved, and the fingerprint after equals the one before."
+              - type: string
+                const: failed
+                description: "Attempted and not completed, or completed and not verified; the message says which."
+            description: What became of a step.
+          WorktreeFingerprint:
+            type: object
+            properties:
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch, or none when detached."
+              head:
+                type:
+                  - string
+                  - "null"
+                description: The commit.
+              index_digest:
+                type: string
+                description: "A digest of the index: every tracked path with its mode, blob and stage."
+              staged_diff_digest:
+                type: string
+                description: A digest of the staged diff against HEAD.
+              unstaged_diff_digest:
+                type: string
+                description: A digest of the unstaged diff against the index.
+              untracked_manifest_digest:
+                type: string
+                description: "A digest of every untracked file: path, kind, size and content."
+              untracked_files:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many untracked files the manifest holds.
+              ignored_manifest_digest:
+                type: string
+                description: "A digest of every ignored entry: path, kind and size, never content."
+              in_progress:
+                type:
+                  - string
+                  - "null"
+                description: "The operation in progress, if any."
+              tree_manifest_digest:
+                type:
+                  - string
+                  - "null"
+                description: "A digest of every entry of the directory tree, ignored included: path, kind, size\nand link target. Taken only for a move made by copying, where the rename guarantee\ndoes not hold."
+            required:
+              - index_digest
+              - staged_diff_digest
+              - unstaged_diff_digest
+              - untracked_manifest_digest
+              - untracked_files
+              - ignored_manifest_digest
+            description: "What a work tree held at one moment, reduced to digests."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::worktree
+    exposure:
+      mcp:
+        tool: majordomus_worktree_migration_plan
+      http:
+        method: GET
+        path: /api/v1/worktrees/migration
+      cli:
+        path:
+          - worktree
+          - migrate
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - worktree
+      - git
+      - topology
+      - migration
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/worktree.rs
+  - id: worktree.status
+    module: worktree
+    kind: query
+    title: "Where this is, and whether that is where it belongs"
+    description: "One worktree — the repository's own, or the one holding the directory the caller names — with its standing, its branch, its canonical path, its uncommitted work counted, whether it is where it belongs, and how many errors the whole topology carries. What an agent reads before it starts, and what the guard decides on."
+    input:
+      name: StatusInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          path:
+            type:
+              - string
+              - "null"
+            description: "A directory inside one of this repository's worktrees; the answer is about that\nworktree. Relative to the primary checkout when relative (`.` is the primary\ncheckout itself). Default: the repository the server was started for. A path in\nanother repository is refused: the topology answers only about its own."
+        description: Where to answer from.
+        title: StatusInput
+    output:
+      name: StatusReport
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "[`SCHEMA`]."
+          repository:
+            "$ref": "#/$defs/RepositoryView"
+            description: The repository.
+          container:
+            "$ref": "#/$defs/ContainerView"
+            description: The container.
+          trunk:
+            "$ref": "#/$defs/TrunkView"
+            description: The trunk.
+          worktree:
+            "$ref": "#/$defs/WorktreeState"
+            description: "The work tree the call came from, with its uncommitted work counted."
+          canonical:
+            type: boolean
+            description: "Whether this work tree is where it belongs: canonical, or the primary checkout on\nthe trunk, or detached."
+          repository_errors:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many error-level diagnostics the whole topology carries.
+        required:
+          - schema
+          - repository
+          - container
+          - trunk
+          - worktree
+          - canonical
+          - repository_errors
+        description: "The answer to \"where am I, and is that where I belong\"."
+        title: StatusReport
+        "$defs":
+          RepositoryView:
+            type: object
+            properties:
+              primary_worktree:
+                type: string
+                description: "The primary checkout: what the container is named after."
+              git_common_dir:
+                type: string
+                description: "The common git directory: the repository's identity."
+              name:
+                type: string
+                description: "The primary checkout's directory name."
+            required:
+              - primary_worktree
+              - git_common_dir
+              - name
+            description: "The repository's identity, as the topology reports it."
+          ContainerView:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The derived path.
+              suffix:
+                type: string
+                description: The suffix it was derived with.
+              exists:
+                type: boolean
+                description: It exists on disk. Created by the first worktree that needs it.
+            required:
+              - path
+              - suffix
+              - exists
+            description: "The container, as the topology reports it."
+          TrunkView:
+            type: object
+            properties:
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch, when known."
+              source:
+                "$ref": "#/$defs/TrunkSource"
+                description: How it was decided.
+              checked_out_at:
+                type:
+                  - string
+                  - "null"
+                description: Where it is checked out.
+            required:
+              - source
+            description: "The trunk, as the topology reports it."
+          TrunkSource:
+            oneOf:
+              - type: string
+                const: remote_head
+                description: "`refs/remotes/<remote>/HEAD`: what the remote calls its default branch."
+              - type: string
+                const: default_branch_config
+                description: "`init.defaultBranch` in the git configuration, and that branch exists locally."
+              - type: string
+                const: conventional_name
+                description: "Exactly one of `main` and `master` exists locally."
+              - type: string
+                const: primary_checkout
+                description: "The branch the primary checkout holds, because nothing else said."
+              - type: string
+                const: unknown
+                description: Nothing said; the trunk is unknown and every check that needs it says so.
+            description: "Where the trunk was learned from, in the order it is looked for."
+          WorktreeState:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Absolute, as git holds it."
+              kind:
+                "$ref": "#/$defs/WorktreeKind"
+                description: Primary or linked.
+              standing:
+                "$ref": "#/$defs/Standing"
+                description: Where it stands against the topology.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out here, short. Absent when detached."
+              label:
+                type: string
+                description: "The name it is shown under: the branch, or `detached/<short commit>`."
+              head:
+                type:
+                  - string
+                  - "null"
+                description: The commit checked out here.
+              detached:
+                type: boolean
+                description: HEAD is detached here.
+              expected_path:
+                type:
+                  - string
+                  - "null"
+                description: "Where this branch's work tree belongs. Absent when detached, or for the primary\ncheckout on the trunk."
+              exists:
+                type: boolean
+                description: The directory git registered still exists on disk.
+              current:
+                type: boolean
+                description: The call came from inside this work tree.
+              locked:
+                type:
+                  - string
+                  - "null"
+                description: "Locked, with git's reason; an empty string when it recorded none."
+              prunable:
+                type:
+                  - string
+                  - "null"
+                description: "Prunable, with git's reason."
+              dirty:
+                anyOf:
+                  - "$ref": "#/$defs/DirtyState"
+                  - type: "null"
+                description: "Uncommitted work here. Absent when it was not asked for: it costs one subprocess per\nwork tree, and a topology check does not need it."
+              upstream:
+                anyOf:
+                  - "$ref": "#/$defs/UpstreamState"
+                  - type: "null"
+                description: "The branch's upstream and its distance from it."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "The issue this branch provably names: a path component of the branch equal to an\nissue id of `.ai/repo/project/issues/`, or beginning with it and a hyphen. Nothing\nis inferred from similarity."
+              diagnostics:
+                type: array
+                items:
+                  "$ref": "#/$defs/TopologyDiagnostic"
+                description: "What is wrong with this work tree, if anything."
+            required:
+              - path
+              - kind
+              - standing
+              - label
+              - detached
+              - exists
+              - current
+              - diagnostics
+            description: "One work tree, as the topology sees it."
+          WorktreeKind:
+            oneOf:
+              - type: string
+                const: primary
+                description: "The main work tree. It hosts the trunk, is never moved and is never removed."
+              - type: string
+                const: linked
+                description: "A linked work tree. Belongs at its branch's canonical path."
+            description: "Whether a work tree is the repository's own checkout or one linked to it."
+          Standing:
+            oneOf:
+              - type: string
+                const: primary
+                description: "The primary checkout: exempt from the path rule, held to the trunk rule."
+              - type: string
+                const: canonical
+                description: "A linked work tree at exactly its branch's canonical path."
+              - type: string
+                const: misplaced
+                description: A linked work tree somewhere else. Migration brings it home.
+              - type: string
+                const: detached
+                description: A linked work tree with no branch. It has no canonical path and is never moved.
+              - type: string
+                const: ephemeral
+                description: "A linked work tree under the operating system's temporary directory or under the\nprimary checkout's `.claude/worktrees/`: a session's scratch checkout, owned and\nremoved by the harness that made it. Reported; migrated only on request."
+              - type: string
+                const: missing
+                description: A registration whose directory is gone. Repair drops it.
+            description: Where a work tree stands against the topology.
+          DirtyState:
+            type: object
+            properties:
+              staged:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with a change in the index.
+              unstaged:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with a change in the work tree that is not in the index.
+              untracked:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Untracked, not ignored, files."
+              conflicted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with an unresolved merge conflict.
+              clean:
+                type: boolean
+                description: Nothing above is non-zero.
+              in_progress:
+                type:
+                  - string
+                  - "null"
+                description: "A merge, rebase, cherry-pick, revert or bisect is in progress here."
+            required:
+              - staged
+              - unstaged
+              - untracked
+              - conflicted
+              - clean
+            description: "Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses."
+          UpstreamState:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The upstream ref, short (`origin/master`)."
+              ahead:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: Commits here that the upstream lacks.
+              behind:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: Commits upstream that this branch lacks.
+              gone:
+                type: boolean
+                description: The upstream ref no longer exists.
+            required:
+              - name
+              - gone
+            description: "A branch's upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch."
+          TopologyDiagnostic:
+            type: object
+            properties:
+              code:
+                "$ref": "#/$defs/DiagnosticCode"
+                description: The stable code.
+              severity:
+                "$ref": "#/$defs/Severity"
+                description: How serious it is.
+              path:
+                type:
+                  - string
+                  - "null"
+                description: The work tree involved.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch involved.
+              expected:
+                type:
+                  - string
+                  - "null"
+                description: Where the work tree belongs.
+              message:
+                type: string
+                description: "What is wrong, in one line."
+              remedy:
+                type: string
+                description: The command that addresses it.
+            required:
+              - code
+              - severity
+              - message
+              - remedy
+            description: "One thing wrong with, or worth knowing about, the topology."
+          DiagnosticCode:
+            oneOf:
+              - type: string
+                const: worktree.path_mismatch
+                description: "A linked work tree is not at its branch's canonical path."
+              - type: string
+                const: worktree.container_occupied
+                description: A linked work tree occupies the container path itself.
+              - type: string
+                const: worktree.nested
+                description: A linked work tree sits inside the primary checkout or inside another work tree.
+              - type: string
+                const: worktree.destination_conflict
+                description: The canonical path of a branch is occupied by something that is not its work tree.
+              - type: string
+                const: worktree.missing
+                description: "A registered work tree's directory does not exist."
+              - type: string
+                const: worktree.stale_registration
+                description: Git reports the registration as prunable.
+              - type: string
+                const: worktree.branch_already_checked_out
+                description: A branch is checked out somewhere other than its canonical path.
+              - type: string
+                const: worktree.detached
+                description: A linked work tree has no branch.
+              - type: string
+                const: worktree.ephemeral
+                description: "A linked work tree is a session's scratch checkout: under the temporary directory or\nunder the primary checkout's `.claude/worktrees/`."
+              - type: string
+                const: worktree.primary_on_non_trunk
+                description: The primary checkout holds a branch that is not the trunk.
+              - type: string
+                const: worktree.trunk_in_linked_worktree
+                description: The trunk is checked out in a linked work tree rather than the primary checkout.
+              - type: string
+                const: worktree.path_escape
+                description: A derived path would leave the container. Cannot happen for a valid branch name.
+              - type: string
+                const: worktree.invalid_branch_name
+                description: A branch name git accepted that this executable cannot derive a path for.
+              - type: string
+                const: worktree.locked
+                description: "A work tree is locked, so it cannot be moved until it is unlocked."
+              - type: string
+                const: worktree.migration_verification_failed
+                description: A move happened and the fingerprint after it differs from the one before.
+              - type: string
+                const: worktree.trunk_unknown
+                description: The trunk could not be determined.
+              - type: string
+                const: worktree.case_collision
+                description: Two branch names map to one directory on a case-insensitive filesystem.
+              - type: string
+                const: worktree.cross_device
+                description: "A move crossed devices and was made by copy, repair and verification."
+            description: "The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state."
+          Severity:
+            oneOf:
+              - type: string
+                const: info
+                description: Worth knowing; changes nothing.
+              - type: string
+                const: warning
+                description: Something to look at; the object is still served.
+              - type: string
+                const: error
+                description: The file is excluded and the index is degraded.
+            description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::worktree
+    exposure:
+      mcp:
+        tool: majordomus_worktree_status
+      http:
+        method: GET
+        path: /api/v1/worktrees/status
+      cli:
+        path:
+          - worktree
+          - status
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - worktree
+      - git
+      - topology
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/worktree.rs
+  - id: worktree.topology
+    module: worktree
+    kind: query
+    title: The whole topology
+    description: "The repository, the container, the trunk and how it was decided, every registered worktree with its standing (primary, canonical, misplaced, detached, missing), its uncommitted work, its upstream distance and the issue its branch provably names, every local branch with or without a worktree and whether it is eligible for cleanup, every diagnostic with its code and remedy, and the tallies. Read from git on every call: the topology changes outside this process."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: RepositoryTopology
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "[`SCHEMA`]."
+          repository:
+            "$ref": "#/$defs/RepositoryView"
+            description: The repository.
+          container:
+            "$ref": "#/$defs/ContainerView"
+            description: The container every linked work tree belongs under.
+          trunk:
+            "$ref": "#/$defs/TrunkView"
+            description: The trunk.
+          observed_from:
+            type: string
+            description: The work tree the call was answered from.
+          worktrees:
+            type: array
+            items:
+              "$ref": "#/$defs/WorktreeState"
+            description: "Every registered work tree, primary first."
+          branches:
+            type: array
+            items:
+              "$ref": "#/$defs/BranchState"
+            description: "Every local branch, by name."
+          diagnostics:
+            type: array
+            items:
+              "$ref": "#/$defs/TopologyDiagnostic"
+            description: "Everything wrong with the topology, work trees first, then repository-wide."
+          tallies:
+            "$ref": "#/$defs/TopologyTallies"
+            description: The counts.
+          valid:
+            type: boolean
+            description: No error-level diagnostic stands.
+        required:
+          - schema
+          - repository
+          - container
+          - trunk
+          - observed_from
+          - worktrees
+          - branches
+          - diagnostics
+          - tallies
+          - valid
+        description: "The whole topology: what `worktree list`, the MCP resource, the HTTP route and the\nCockpit all read."
+        title: RepositoryTopology
+        "$defs":
+          RepositoryView:
+            type: object
+            properties:
+              primary_worktree:
+                type: string
+                description: "The primary checkout: what the container is named after."
+              git_common_dir:
+                type: string
+                description: "The common git directory: the repository's identity."
+              name:
+                type: string
+                description: "The primary checkout's directory name."
+            required:
+              - primary_worktree
+              - git_common_dir
+              - name
+            description: "The repository's identity, as the topology reports it."
+          ContainerView:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The derived path.
+              suffix:
+                type: string
+                description: The suffix it was derived with.
+              exists:
+                type: boolean
+                description: It exists on disk. Created by the first worktree that needs it.
+            required:
+              - path
+              - suffix
+              - exists
+            description: "The container, as the topology reports it."
+          TrunkView:
+            type: object
+            properties:
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch, when known."
+              source:
+                "$ref": "#/$defs/TrunkSource"
+                description: How it was decided.
+              checked_out_at:
+                type:
+                  - string
+                  - "null"
+                description: Where it is checked out.
+            required:
+              - source
+            description: "The trunk, as the topology reports it."
+          TrunkSource:
+            oneOf:
+              - type: string
+                const: remote_head
+                description: "`refs/remotes/<remote>/HEAD`: what the remote calls its default branch."
+              - type: string
+                const: default_branch_config
+                description: "`init.defaultBranch` in the git configuration, and that branch exists locally."
+              - type: string
+                const: conventional_name
+                description: "Exactly one of `main` and `master` exists locally."
+              - type: string
+                const: primary_checkout
+                description: "The branch the primary checkout holds, because nothing else said."
+              - type: string
+                const: unknown
+                description: Nothing said; the trunk is unknown and every check that needs it says so.
+            description: "Where the trunk was learned from, in the order it is looked for."
+          WorktreeState:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Absolute, as git holds it."
+              kind:
+                "$ref": "#/$defs/WorktreeKind"
+                description: Primary or linked.
+              standing:
+                "$ref": "#/$defs/Standing"
+                description: Where it stands against the topology.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out here, short. Absent when detached."
+              label:
+                type: string
+                description: "The name it is shown under: the branch, or `detached/<short commit>`."
+              head:
+                type:
+                  - string
+                  - "null"
+                description: The commit checked out here.
+              detached:
+                type: boolean
+                description: HEAD is detached here.
+              expected_path:
+                type:
+                  - string
+                  - "null"
+                description: "Where this branch's work tree belongs. Absent when detached, or for the primary\ncheckout on the trunk."
+              exists:
+                type: boolean
+                description: The directory git registered still exists on disk.
+              current:
+                type: boolean
+                description: The call came from inside this work tree.
+              locked:
+                type:
+                  - string
+                  - "null"
+                description: "Locked, with git's reason; an empty string when it recorded none."
+              prunable:
+                type:
+                  - string
+                  - "null"
+                description: "Prunable, with git's reason."
+              dirty:
+                anyOf:
+                  - "$ref": "#/$defs/DirtyState"
+                  - type: "null"
+                description: "Uncommitted work here. Absent when it was not asked for: it costs one subprocess per\nwork tree, and a topology check does not need it."
+              upstream:
+                anyOf:
+                  - "$ref": "#/$defs/UpstreamState"
+                  - type: "null"
+                description: "The branch's upstream and its distance from it."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "The issue this branch provably names: a path component of the branch equal to an\nissue id of `.ai/repo/project/issues/`, or beginning with it and a hyphen. Nothing\nis inferred from similarity."
+              diagnostics:
+                type: array
+                items:
+                  "$ref": "#/$defs/TopologyDiagnostic"
+                description: "What is wrong with this work tree, if anything."
+            required:
+              - path
+              - kind
+              - standing
+              - label
+              - detached
+              - exists
+              - current
+              - diagnostics
+            description: "One work tree, as the topology sees it."
+          WorktreeKind:
+            oneOf:
+              - type: string
+                const: primary
+                description: "The main work tree. It hosts the trunk, is never moved and is never removed."
+              - type: string
+                const: linked
+                description: "A linked work tree. Belongs at its branch's canonical path."
+            description: "Whether a work tree is the repository's own checkout or one linked to it."
+          Standing:
+            oneOf:
+              - type: string
+                const: primary
+                description: "The primary checkout: exempt from the path rule, held to the trunk rule."
+              - type: string
+                const: canonical
+                description: "A linked work tree at exactly its branch's canonical path."
+              - type: string
+                const: misplaced
+                description: A linked work tree somewhere else. Migration brings it home.
+              - type: string
+                const: detached
+                description: A linked work tree with no branch. It has no canonical path and is never moved.
+              - type: string
+                const: ephemeral
+                description: "A linked work tree under the operating system's temporary directory or under the\nprimary checkout's `.claude/worktrees/`: a session's scratch checkout, owned and\nremoved by the harness that made it. Reported; migrated only on request."
+              - type: string
+                const: missing
+                description: A registration whose directory is gone. Repair drops it.
+            description: Where a work tree stands against the topology.
+          DirtyState:
+            type: object
+            properties:
+              staged:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with a change in the index.
+              unstaged:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with a change in the work tree that is not in the index.
+              untracked:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Untracked, not ignored, files."
+              conflicted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries with an unresolved merge conflict.
+              clean:
+                type: boolean
+                description: Nothing above is non-zero.
+              in_progress:
+                type:
+                  - string
+                  - "null"
+                description: "A merge, rebase, cherry-pick, revert or bisect is in progress here."
+            required:
+              - staged
+              - unstaged
+              - untracked
+              - conflicted
+              - clean
+            description: "Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses."
+          UpstreamState:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The upstream ref, short (`origin/master`)."
+              ahead:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: Commits here that the upstream lacks.
+              behind:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: Commits upstream that this branch lacks.
+              gone:
+                type: boolean
+                description: The upstream ref no longer exists.
+            required:
+              - name
+              - gone
+            description: "A branch's upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch."
+          TopologyDiagnostic:
+            type: object
+            properties:
+              code:
+                "$ref": "#/$defs/DiagnosticCode"
+                description: The stable code.
+              severity:
+                "$ref": "#/$defs/Severity"
+                description: How serious it is.
+              path:
+                type:
+                  - string
+                  - "null"
+                description: The work tree involved.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch involved.
+              expected:
+                type:
+                  - string
+                  - "null"
+                description: Where the work tree belongs.
+              message:
+                type: string
+                description: "What is wrong, in one line."
+              remedy:
+                type: string
+                description: The command that addresses it.
+            required:
+              - code
+              - severity
+              - message
+              - remedy
+            description: "One thing wrong with, or worth knowing about, the topology."
+          DiagnosticCode:
+            oneOf:
+              - type: string
+                const: worktree.path_mismatch
+                description: "A linked work tree is not at its branch's canonical path."
+              - type: string
+                const: worktree.container_occupied
+                description: A linked work tree occupies the container path itself.
+              - type: string
+                const: worktree.nested
+                description: A linked work tree sits inside the primary checkout or inside another work tree.
+              - type: string
+                const: worktree.destination_conflict
+                description: The canonical path of a branch is occupied by something that is not its work tree.
+              - type: string
+                const: worktree.missing
+                description: "A registered work tree's directory does not exist."
+              - type: string
+                const: worktree.stale_registration
+                description: Git reports the registration as prunable.
+              - type: string
+                const: worktree.branch_already_checked_out
+                description: A branch is checked out somewhere other than its canonical path.
+              - type: string
+                const: worktree.detached
+                description: A linked work tree has no branch.
+              - type: string
+                const: worktree.ephemeral
+                description: "A linked work tree is a session's scratch checkout: under the temporary directory or\nunder the primary checkout's `.claude/worktrees/`."
+              - type: string
+                const: worktree.primary_on_non_trunk
+                description: The primary checkout holds a branch that is not the trunk.
+              - type: string
+                const: worktree.trunk_in_linked_worktree
+                description: The trunk is checked out in a linked work tree rather than the primary checkout.
+              - type: string
+                const: worktree.path_escape
+                description: A derived path would leave the container. Cannot happen for a valid branch name.
+              - type: string
+                const: worktree.invalid_branch_name
+                description: A branch name git accepted that this executable cannot derive a path for.
+              - type: string
+                const: worktree.locked
+                description: "A work tree is locked, so it cannot be moved until it is unlocked."
+              - type: string
+                const: worktree.migration_verification_failed
+                description: A move happened and the fingerprint after it differs from the one before.
+              - type: string
+                const: worktree.trunk_unknown
+                description: The trunk could not be determined.
+              - type: string
+                const: worktree.case_collision
+                description: Two branch names map to one directory on a case-insensitive filesystem.
+              - type: string
+                const: worktree.cross_device
+                description: "A move crossed devices and was made by copy, repair and verification."
+            description: "The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state."
+          Severity:
+            oneOf:
+              - type: string
+                const: info
+                description: Worth knowing; changes nothing.
+              - type: string
+                const: warning
+                description: Something to look at; the object is still served.
+              - type: string
+                const: error
+                description: The file is excluded and the index is degraded.
+            description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+          BranchState:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The branch, short."
+              head:
+                type: string
+                description: The commit it points at.
+              trunk:
+                type: boolean
+                description: This branch is the trunk.
+              expected_path:
+                type:
+                  - string
+                  - "null"
+                description: Where its work tree belongs.
+              worktree:
+                type:
+                  - string
+                  - "null"
+                description: "Where it is checked out, when it is."
+              upstream:
+                anyOf:
+                  - "$ref": "#/$defs/UpstreamState"
+                  - type: "null"
+                description: The upstream and its distance.
+              merged_into_trunk:
+                type:
+                  - boolean
+                  - "null"
+                description: Reachable from the trunk. Absent when the trunk is unknown.
+              cleanup_eligible:
+                type: boolean
+                description: "Merged into the trunk, not the trunk, and either not checked out or checked out in a\nwork tree known to be clean. Derived state, never acted on automatically."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue this branch provably names.
+            required:
+              - name
+              - head
+              - trunk
+              - cleanup_eligible
+            description: "One local branch, with or without a work tree."
+          TopologyTallies:
+            type: object
+            properties:
+              worktrees:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Every registered work tree, primary included."
+              canonical:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Linked work trees at their canonical path.
+              misplaced:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Linked work trees somewhere else.
+              detached:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Linked work trees without a branch.
+              ephemeral:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Scratch checkouts of a session.
+              missing:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Registrations whose directory is gone.
+              locked:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Work trees git reports as locked.
+              dirty:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Work trees with uncommitted work, when it was asked for."
+              branches:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Local branches.
+              branches_without_worktree:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Local branches with no work tree.
+              cleanup_eligible:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Branches eligible for cleanup.
+              errors:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Error-level diagnostics.
+              warnings:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Warning-level diagnostics.
+            required:
+              - worktrees
+              - canonical
+              - misplaced
+              - detached
+              - ephemeral
+              - missing
+              - locked
+              - dirty
+              - branches
+              - branches_without_worktree
+              - cleanup_eligible
+              - errors
+              - warnings
+            description: How many work trees and branches are in each state.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::worktree
+    exposure:
+      mcp:
+        tool: majordomus_worktrees
+        resource:
+          uri: majordomus://worktrees
+          name: worktrees
+      http:
+        method: GET
+        path: /api/v1/worktrees
+      cli:
+        path:
+          - worktree
+          - topology
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - worktree
+      - git
+      - topology
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/worktree.rs
 declarative_kinds:
   - adr
   - application

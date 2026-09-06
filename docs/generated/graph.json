@@ -367,6 +367,42 @@
         "status": "query"
       },
       {
+        "id": "capability:worktree.inspect",
+        "kind": "capability",
+        "label": "worktree.inspect",
+        "summary": "One branch: where its worktree belongs and what is there",
+        "route": "/cockpit/capabilities/worktree.inspect",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:worktree.migration_plan",
+        "kind": "capability",
+        "label": "worktree.migration_plan",
+        "summary": "What it would take to bring every worktree home",
+        "route": "/cockpit/capabilities/worktree.migration_plan",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:worktree.status",
+        "kind": "capability",
+        "label": "worktree.status",
+        "summary": "Where this is, and whether that is where it belongs",
+        "route": "/cockpit/capabilities/worktree.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:worktree.topology",
+        "kind": "capability",
+        "label": "worktree.topology",
+        "summary": "The whole topology",
+        "route": "/cockpit/capabilities/worktree.topology",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
         "id": "command:adr",
         "kind": "command",
         "label": "adr",
@@ -636,6 +672,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "kind": "file",
+        "label": "worktree.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/executor.rs",
         "kind": "file",
         "label": "executor.rs",
@@ -809,6 +853,30 @@
         "label": "why.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/why.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/worktree/migrate.rs",
+        "kind": "file",
+        "label": "migrate.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/worktree/migrate.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/worktree/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/worktree/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/worktree/path.rs",
+        "kind": "file",
+        "label": "path.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/worktree/path.rs",
         "external": true
       },
       {
@@ -1620,6 +1688,36 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0021",
+        "kind": "adr",
+        "label": "adr-0021",
+        "summary": "The branch-to-worktree topology is derived from git identity and enforced everywhere",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0021",
+        "source": ".ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-07",
+          "related": [
+            "rule:project.worktree-topology",
+            "rule:project.interfaces-are-projections",
+            "rule:project.rust-canonical-declaration",
+            "rule:project.no-machine-paths",
+            "file:apps/majordomus-cli/src/worktree/mod.rs",
+            "file:apps/majordomus-cli/src/worktree/path.rs",
+            "file:apps/majordomus-cli/src/worktree/migrate.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/worktree.rs",
+            "file:docs/WORKTREES.md"
+          ],
+          "tags": [
+            "git",
+            "worktree",
+            "filesystem",
+            "agents",
+            "coordination"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -1711,7 +1809,8 @@
             "read-back-what-happened",
             "read-only-the-context-that-fits",
             "carry-a-blocker-across-a-handover",
-            "let-the-provider-draw-the-episode-boundary"
+            "let-the-provider-draw-the-episode-boundary",
+            "work-on-a-branch-in-its-canonical-worktree"
           ],
           "weight": 4
         }
@@ -1754,7 +1853,8 @@
             "trace-a-change-to-the-context-it-affects",
             "follow-a-skill-the-repository-defines",
             "see-what-the-repository-holds-without-reading-it",
-            "say-what-the-tool-is-for"
+            "say-what-the-tool-is-for",
+            "work-on-a-branch-in-its-canonical-worktree"
           ],
           "weight": 5
         }
@@ -4358,6 +4458,21 @@
         }
       },
       {
+        "id": "majordomus://claim/worktree-migration-lossless",
+        "kind": "claim",
+        "label": "worktree-migration-lossless",
+        "summary": "A misplaced worktree is brought to its canonical path with its modified, staged, unstaged and untracked work intact, verified by a fingerprint taken before and after the move, and a step is reported as moved only when the two are equal",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fworktree-migration-lossless",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/worktree/migrate.rs",
+          "responsibility": "none",
+          "source": "docs/WORKTREES.md",
+          "test": "test/cases/96_worktree_topology.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/worktree-ownership",
         "kind": "claim",
         "label": "worktree-ownership",
@@ -4371,6 +4486,21 @@
           "responsibility": "scope",
           "source": "docs/SCHEMAS.md",
           "test": "test/cases/27_foreign_task.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/worktree-topology-derived",
+        "kind": "claim",
+        "label": "worktree-topology-derived",
+        "summary": "A branch's worktree path is derived from git identity and the branch name alone — the primary checkout's sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fworktree-topology-derived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/worktree/path.rs",
+          "responsibility": "none",
+          "source": "docs/WORKTREES.md",
+          "test": "test/cases/96_worktree_topology.sh"
         }
       },
       {
@@ -6426,6 +6556,14 @@
         "source": "docs/WHY.md"
       },
       {
+        "id": "majordomus://document/docs/WORKTREES.md",
+        "kind": "document",
+        "label": "docs/WORKTREES.md",
+        "summary": "Worktrees",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FWORKTREES.md",
+        "source": "docs/WORKTREES.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/adr-catalogue.md",
         "kind": "document",
         "label": "docs/claims/adr-catalogue.md",
@@ -7506,6 +7644,14 @@
         "source": "docs/claims/wiring-reconciliation.md"
       },
       {
+        "id": "majordomus://document/docs/claims/worktree-migration-lossless.md",
+        "kind": "document",
+        "label": "docs/claims/worktree-migration-lossless.md",
+        "summary": "A misplaced worktree migrates with its work intact, and proves it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fworktree-migration-lossless.md",
+        "source": "docs/claims/worktree-migration-lossless.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/worktree-ownership.md",
         "kind": "document",
         "label": "docs/claims/worktree-ownership.md",
@@ -7514,11 +7660,26 @@
         "source": "docs/claims/worktree-ownership.md"
       },
       {
+        "id": "majordomus://document/docs/claims/worktree-topology-derived.md",
+        "kind": "document",
+        "label": "docs/claims/worktree-topology-derived.md",
+        "summary": "A branch's worktree path is derived, never registered",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fworktree-topology-derived.md",
+        "source": "docs/claims/worktree-topology-derived.md"
+      },
+      {
         "id": "majordomus://implementation/bin/majordomus",
         "kind": "implementation",
         "label": "bin/majordomus",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Fbin%2Fmajordomus",
         "source": "bin/majordomus"
+      },
+      {
+        "id": "majordomus://implementation/bin/majordomus-cli",
+        "kind": "implementation",
+        "label": "bin/majordomus-cli",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Fbin%2Fmajordomus-cli",
+        "source": "bin/majordomus-cli"
       },
       {
         "id": "majordomus://implementation/bin/majordomus-mcp",
@@ -15485,14 +15646,18 @@
           ],
           "capabilities": [
             "repository.info",
-            "health.report"
+            "health.report",
+            "worktree.topology",
+            "worktree.migration_plan"
           ],
           "claims": [
             "worktree-ownership",
             "git-identity",
             "divergence-label",
             "handover-record",
-            "drift-watch"
+            "drift-watch",
+            "worktree-topology-derived",
+            "worktree-migration-lossless"
           ],
           "commands": [
             "handover",
@@ -15528,7 +15693,8 @@
           "use_cases": [
             "resume-in-the-right-worktree",
             "hand-work-between-sessions",
-            "find-out-what-drifted"
+            "find-out-what-drifted",
+            "work-on-a-branch-in-its-canonical-worktree"
           ],
           "weight": 140
         }
@@ -20069,6 +20235,31 @@
         }
       },
       {
+        "id": "majordomus://rule/project.worktree-topology@1",
+        "kind": "rule",
+        "label": "project.worktree-topology@1",
+        "summary": "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.worktree-topology%401",
+        "source": ".ai/repo/rules/project/worktree-topology.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.interfaces-are-projections@1",
+            "project.rust-canonical-declaration@1",
+            "project.no-machine-paths@1"
+          ],
+          "tags": [
+            "git",
+            "worktree",
+            "filesystem",
+            "safety",
+            "agents",
+            "coordination"
+          ]
+        }
+      },
+      {
         "id": "majordomus://scope/.ai/repo/scope.yaml",
         "kind": "scope",
         "label": ".ai/repo/scope.yaml",
@@ -21639,6 +21830,13 @@
         "label": "test/cases/96_site_deploy.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F96_site_deploy.sh",
         "source": "test/cases/96_site_deploy.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/96_worktree_topology.sh",
+        "kind": "test",
+        "label": "test/cases/96_worktree_topology.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F96_worktree_topology.sh",
+        "source": "test/cases/96_worktree_topology.sh"
       },
       {
         "id": "majordomus://test/test/cases/97_pages_fast_path.sh",
@@ -23354,6 +23552,52 @@
         }
       },
       {
+        "id": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "kind": "use-case",
+        "label": "work-on-a-branch-in-its-canonical-worktree",
+        "summary": "Work on a branch in the one worktree it belongs to",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fuse-case%2Fwork-on-a-branch-in-its-canonical-worktree",
+        "source": ".ai/repo/use-cases/work-on-a-branch-in-its-canonical-worktree.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "agent",
+            "maintainer"
+          ],
+          "applications": [
+            "long-running-work",
+            "repository-opened-in-ai-clients"
+          ],
+          "category": "workers",
+          "claims": [
+            "worktree-topology-derived",
+            "worktree-migration-lossless",
+            "worktree-ownership"
+          ],
+          "commands": [
+            "doctor",
+            "context"
+          ],
+          "difficulty": "intermediate",
+          "doctrines": [
+            "majordomus.enforcement-wiring",
+            "majordomus.scope-integrity"
+          ],
+          "mcp_tools": [
+            "majordomus_worktrees",
+            "majordomus_worktree_status",
+            "majordomus_worktree_inspect",
+            "majordomus_worktree_migration_plan"
+          ],
+          "responsibilities": [
+            "doctor"
+          ],
+          "summary": "Start a branch without choosing a path, find every checkout of the repository from any of them, and bring a stray one home with its uncommitted work intact.",
+          "target": "guaranteed",
+          "weight": 7
+        }
+      },
+      {
         "id": "module:artifacts",
         "kind": "module",
         "label": "artifacts"
@@ -23422,6 +23666,11 @@
         "id": "module:why",
         "kind": "module",
         "label": "why"
+      },
+      {
+        "id": "module:worktree",
+        "kind": "module",
+        "label": "worktree"
       },
       {
         "id": "projection:cli",
@@ -24028,6 +24277,86 @@
         "kind": "projects"
       },
       {
+        "source": "capability:worktree.inspect",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.inspect",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.inspect",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.inspect",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.migration_plan",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.migration_plan",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.migration_plan",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.migration_plan",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.topology",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.topology",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.topology",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.topology",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "majordomus://adr/adr-0001",
         "target": "kind:adr",
         "kind": "is_a"
@@ -24295,6 +24624,56 @@
       {
         "source": "majordomus://adr/adr-0020",
         "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0021",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0021",
+        "target": "file:apps/majordomus-cli/src/worktree/migrate.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0021",
+        "target": "file:apps/majordomus-cli/src/worktree/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0021",
+        "target": "file:apps/majordomus-cli/src/worktree/path.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0021",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0021",
+        "target": "majordomus://document/docs/WORKTREES.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0021",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0021",
+        "target": "majordomus://rule/project.no-machine-paths@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0021",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0021",
+        "target": "majordomus://rule/project.worktree-topology@1",
         "kind": "put_in_force"
       },
       {
@@ -27103,6 +27482,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/worktree-migration-lossless",
+        "target": "file:apps/majordomus-cli/src/worktree/migrate.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/worktree-migration-lossless",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/worktree-migration-lossless",
+        "target": "majordomus://document/docs/WORKTREES.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/worktree-migration-lossless",
+        "target": "majordomus://test/test/cases/96_worktree_topology.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/worktree-ownership",
         "target": "kind:claim",
         "kind": "is_a"
@@ -27120,6 +27519,26 @@
       {
         "source": "majordomus://claim/worktree-ownership",
         "target": "majordomus://test/test/cases/27_foreign_task.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/worktree-topology-derived",
+        "target": "file:apps/majordomus-cli/src/worktree/path.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/worktree-topology-derived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/worktree-topology-derived",
+        "target": "majordomus://document/docs/WORKTREES.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/worktree-topology-derived",
+        "target": "majordomus://test/test/cases/96_worktree_topology.sh",
         "kind": "tested_by"
       },
       {
@@ -27833,6 +28252,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/WORKTREES.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/adr-catalogue.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -28508,12 +28932,27 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/worktree-migration-lossless.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/worktree-ownership.md",
         "target": "kind:document",
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/worktree-topology-derived.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/bin/majordomus",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/bin/majordomus-cli",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -32468,6 +32907,26 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.worktree-topology@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.worktree-topology@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.worktree-topology@1",
+        "target": "majordomus://rule/project.no-machine-paths@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.worktree-topology@1",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://scope/.ai/repo/scope.yaml",
         "target": "kind:scope",
         "kind": "is_a"
@@ -33099,6 +33558,11 @@
       },
       {
         "source": "majordomus://test/test/cases/96_site_deploy.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/96_worktree_topology.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -35553,6 +36017,76 @@
         "kind": "exercises"
       },
       {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "capability:worktree.inspect",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "capability:worktree.migration_plan",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "capability:worktree.status",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "capability:worktree.topology",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "command:context",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "command:doctor",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "majordomus://application/long-running-work",
+        "kind": "serves"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "majordomus://application/repository-opened-in-ai-clients",
+        "kind": "serves"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "majordomus://claim/worktree-migration-lossless",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "majordomus://claim/worktree-ownership",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "majordomus://claim/worktree-topology-derived",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
+        "target": "majordomus://rule/majordomus.scope-integrity@1",
+        "kind": "exercises"
+      },
+      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -35721,11 +36255,31 @@
         "source": "module:why",
         "target": "capability:why.validate",
         "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
+        "target": "capability:worktree.inspect",
+        "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
+        "target": "capability:worktree.migration_plan",
+        "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
+        "target": "capability:worktree.status",
+        "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
+        "target": "capability:worktree.topology",
+        "kind": "composes"
       }
     ],
     "metadata": {
-      "nodes": 1105,
-      "edges": 2453,
+      "nodes": 1124,
+      "edges": 2514,
       "acyclic": true,
       "truncated": false
     }
