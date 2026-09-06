@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# no-machine-paths — refuses a tree that names the machine it was written on.
+#
+# One definition, three callers: scripts/ci/core-check runs it as a gate,
+# test/cases/58_home_path_gate.sh runs it against fixtures to prove it can fail, and a
+# person runs it directly. The pattern lived in three places before this script existed,
+# which is the shape project.no-machine-paths itself argues against.
+#
+# Usage: no-machine-paths [<repository>]     (default: this repository)
+# Exit:  0 clean, 1 with every match printed as <file>:<line>:<text>.
+set -eu
+root="${1:-$(cd "$(dirname "$0")/../.." && pwd)}"
+
+# `/Users/<name>/` and `/home/<name>/dev/`, the two shapes a developer checkout takes.
+# Deliberately not broadened to every `/home/<name>/`: `docs/CLI.md` documents a command
+# whose sample output is `repository   /home/dev/app`, and a gate that fires on the
+# documentation of its own tool is a gate somebody switches off.
+PATTERN='/Users/[a-z]+/|/home/[a-z]+/dev/'
+
+# Everything tracked, except the two places the pattern is legitimately written down:
+# the fixtures that prove this gate fails, and the gates that quote the pattern.
+hits="$(git -C "$root" grep -n -I -E "$PATTERN" -- \
+          . ':!test/**' ':!scripts/ci/no-machine-paths' ':!scripts/ci/core-check' \
+          ':!scripts/site-check' 2>/dev/null || true)"
+
+[ -z "$hits" ] || {
+  cat >&2 <<'WHY'
+a committed file names a home directory, so this repository does not read the same
+anywhere else. Two different faults share this message:
+
+  - an authored document (.ai/, docs/, site/content-src/, README.md): write what the
+    path means — "a developer's working directory" — rather than an example of one;
+  - a generated artifact (share/, docs/generated/, site/data/, site/content/): the
+    generator wrote its own location into its output. Do not edit the file; find the
+    path helper that fell back to an absolute path. `derive-check` cannot see this,
+    because it regenerates in the same checkout and gets the same answer back.
+
+WHY
+  printf '%s\n' "$hits" >&2
+  exit 1
+}

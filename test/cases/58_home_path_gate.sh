@@ -1,5 +1,5 @@
 # majordomus-covers: none
-# The gate that refuses an authored document naming somebody's home directory.
+# The gate that refuses a tree naming the machine it was written on.
 #
 # `scripts/site-check` already refuses a built site carrying one, and that is the gate that
 # caught this — at the moment of deployment, with the text already on master and the deploy
@@ -8,40 +8,64 @@
 # reached the site, and broke master's deploy. The cost of the late gate is that it bills the
 # person publishing rather than the person writing.
 #
-# So the same pattern runs over the sources, in core-check. What must hold is that it is
-# wired, that this repository passes it, and — the part worth a test — that it actually fails
-# when a document names a home directory. A gate that cannot fail is decoration.
+# The same fault has a second half the site gate never sees: `share/allow/*.txt` was committed
+# twice naming the absolute path of the worktree the generator last ran in. `derive-check` is
+# structurally blind to that — it regenerates in the same checkout and gets the same answer —
+# so the committed tree is read instead.
+#
+# What must hold is that the gate is wired into core-check, that this repository passes it,
+# and — the part worth a test — that it fails on each half. A gate that cannot fail is
+# decoration, so both halves are shown failing against a repository that carries the fault.
 . "$ROOT/test/lib.sh"
 
+GATE="$ROOT/scripts/ci/no-machine-paths"
+
 # ---------------------------------------------------------------- wired, and passing here
-expect_grep 'no authored document names a home directory' "$ROOT/scripts/ci/core-check"
+expect_grep 'scripts/ci/no-machine-paths' "$ROOT/scripts/ci/core-check"
+expect_exit 0 "$GATE" "$ROOT"
 
-hits="$(git -C "$ROOT" grep -n -I -E '/Users/[a-z]+/|/home/[a-z]+/dev/' -- \
-          '.ai/repo/**' 'docs/**' 'site/content-src/**' 'README.md' 2>/dev/null || true)"
-[ -z "$hits" ] || {
-  echo "    an authored document names a home directory:"
-  printf '    | %s\n' "$hits" | head -5
-  exit 1; }
-
-# ---------------------------------------------------------------- and it can fail
-# The check as core-check runs it, against a repository that carries the fault. Extracted by
-# shape rather than by sourcing core-check, which would run every other gate with it.
-R="$T/repo"; mkdir -p "$R/.ai/repo/project/issues"
+# ---------------------------------------------------------------- a fixture repository
+R="$T/repo"; mkdir -p "$R/.ai/repo/project/issues" "$R/share/allow"
 git -C "$R" init -q
 git -C "$R" config user.email t@example.com
 git -C "$R" config user.name Test
-printf 'why: "A Machine has no /Users/somebody/dev."\n' > "$R/.ai/repo/project/issues/I0001.yaml"
-git -C "$R" add -A
-git -C "$R" -c core.hooksPath=/dev/null commit -qm fixture
+commit_fixture() {
+  git -C "$R" add -A
+  git -C "$R" -c core.hooksPath=/dev/null commit -qm "${1:-fixture}"
+}
 
-hits="$(git -C "$R" grep -n -I -E '/Users/[a-z]+/|/home/[a-z]+/dev/' -- \
-          '.ai/repo/**' 'docs/**' 'site/content-src/**' 'README.md' 2>/dev/null || true)"
-[ -n "$hits" ] || { echo "    the check did not notice a home directory in an issue"; exit 1; }
-
-# and the same document, written as what the path means, passes
 printf 'why: "A Machine has no developer'"'"'s checkout."\n' > "$R/.ai/repo/project/issues/I0001.yaml"
-git -C "$R" add -A
-git -C "$R" -c core.hooksPath=/dev/null commit -qm reworded
-hits="$(git -C "$R" grep -n -I -E '/Users/[a-z]+/|/home/[a-z]+/dev/' -- \
-          '.ai/repo/**' 'docs/**' 'site/content-src/**' 'README.md' 2>/dev/null || true)"
-[ -z "$hits" ] || { echo "    the reworded document still trips the check: $hits"; exit 1; }
+printf '# GENERATED FILE — DO NOT EDIT DIRECTLY\n# Source: the document schema `share/schemas/majordomus/rule/rule.v1.proto`\n' \
+  > "$R/share/allow/rule.txt"
+commit_fixture clean
+expect_exit 0 "$GATE" "$R"
+
+# ------------------------------------------------- it fails on an authored document
+printf 'why: "A Machine has no %s/dev."\n' "/Users/somebody" > "$R/.ai/repo/project/issues/I0001.yaml"
+commit_fixture "authored fault"
+expect_exit 1 "$GATE" "$R"
+
+printf 'why: "A Machine has no developer'"'"'s checkout."\n' > "$R/.ai/repo/project/issues/I0001.yaml"
+commit_fixture "authored reworded"
+expect_exit 0 "$GATE" "$R"
+
+# ------------------------------------------------- and on a generated artifact
+# The shape the leak actually had: a banner naming its source schema by the absolute path
+# of the worktree the generator ran in, rather than by a repository-relative one.
+printf '# GENERATED FILE — DO NOT EDIT DIRECTLY\n# Source: the document schema `%s/dev/repo/share/schemas/majordomus/rule/rule.v1.proto`\n' \
+  "/Users/somebody" > "$R/share/allow/rule.txt"
+commit_fixture "generated leak"
+expect_exit 1 "$GATE" "$R"
+
+printf '# GENERATED FILE — DO NOT EDIT DIRECTLY\n# Source: the document schema `share/schemas/majordomus/rule/rule.v1.proto`\n' \
+  > "$R/share/allow/rule.txt"
+commit_fixture "generated relative"
+expect_exit 0 "$GATE" "$R"
+
+# ------------------------------------------------- and where the two pathspecs used to miss
+# site/content/ is derived and was covered by neither of the two steps this gate replaced:
+# a leak there reached publication before anything noticed.
+mkdir -p "$R/site/content/docs"
+printf 'The checkout lives at %s/dev/repo.\n' "/Users/somebody" > "$R/site/content/docs/page.md"
+commit_fixture "derived site content"
+expect_exit 1 "$GATE" "$R"
