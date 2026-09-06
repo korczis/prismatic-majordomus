@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# release-record — write the record of one published release.
+#
+#   scripts/release-record --tag v0.2.0 --dir dist --commit <sha> [--channel stable] \
+#                          [--published-at <UTC>] [--notes-url URL] [--out FILE]
+#
+# The record is this repository's evidence of what was published: for every target the
+# distribution model marks supported, the artifact that exists in --dir, with its name, its
+# URL, its SHA-256 and its size read off the file rather than assumed. It refuses to write a
+# record that is missing a supported target, because a partial release is not a release.
+#
+# The default output is .ai/repo/releases/<tag>.yaml, which is what the release workflow
+# commits; `majordomus generate --target distribution` turns it into the public metadata the
+# installer reads.
+#
+# Exit codes: 0 ok · 2 usage · 10 an artifact is missing or unreadable · 12 prerequisite.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CRATE="$ROOT/apps/majordomus-cli"
+
+die() { printf 'release-record: %s\n' "$*" >&2; exit "${2:-12}"; }
+
+tag=""; dir=""; commit=""; channel="stable"; published=""; notes=""; out=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --tag) tag="${2:-}"; shift 2 ;;
+    --dir) dir="${2:-}"; shift 2 ;;
+    --commit) commit="${2:-}"; shift 2 ;;
+    --channel) channel="${2:-}"; shift 2 ;;
+    --published-at) published="${2:-}"; shift 2 ;;
+    --notes-url) notes="${2:-}"; shift 2 ;;
+    --out) out="${2:-}"; shift 2 ;;
+    -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+    *) die "unknown option: $1" 2 ;;
+  esac
+done
+[ -n "$tag" ] && [ -n "$dir" ] || die "--tag and --dir are required" 2
+case "$tag" in v[0-9]*) ;; *) die "--tag must be v followed by a version" 2 ;; esac
+case "$channel" in stable|prerelease) ;; *) die "--channel is stable or prerelease" 2 ;; esac
+[ -d "$dir" ] || die "no such directory: $dir" 10
+[ -n "$commit" ] || commit="$(cd "$ROOT" && git rev-parse HEAD)"
+case "$commit" in
+  [0-9a-f]*) [ "${#commit}" = 40 ] || die "--commit must be a full 40-character sha" 2 ;;
+  *) die "--commit must be a full 40-character sha" 2 ;;
+esac
+[ -n "$published" ] || published="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+[ -n "$out" ] || out="$ROOT/.ai/repo/releases/$tag.yaml"
+
+mj="${MAJORDOMUS_DIST_BIN:-$CRATE/target/debug/majordomus}"
+[ -x "$mj" ] || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
+
+digest() {
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
+  elif command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | cut -d' ' -f1
+  else openssl dgst -sha256 "$1" | sed 's/.*= //'; fi
+}
+
+# every supported target, from the model; the workflow states no platform of its own
+targets="$("$mj" distribution --repo "$ROOT" targets 2>/dev/null | awk 'NR>1 && ($3=="supported" || $3=="experimental") {print $1}')"
+[ -n "$targets" ] || die "the distribution model publishes no target" 10
+
+body=""
+missing=0
+for id in $targets; do
+  json="$("$mj" distribution --repo "$ROOT" artifact --target "$id" --tag "$tag" --format json 2>/dev/null)" \
+    || { printf 'release-record: the model refuses target %s\n' "$id" >&2; missing=1; continue; }
+  name="$(printf '%s\n' "$json" | sed -n 's/.*"name": "\([^"]*\)".*/\1/p' | head -n 1)"
+  url="$(printf '%s\n' "$json" | sed -n 's/.*"url": "\([^"]*\)".*/\1/p' | head -n 1)"
+  file="$dir/$name"
+  if [ ! -f "$file" ]; then
+    printf 'release-record: FAIL %s has no artifact at %s\n' "$id" "$file" >&2
+    missing=1
+    continue
+  fi
+  sha="$(digest "$file")"
+  size="$(wc -c < "$file" | tr -d ' ')"
+  body="$body  - target: $id
+    name: $name
+    url: $url
+    sha256: $sha
+    size: $size
+"
+  printf 'release-record: OK   %-22s %s (%s bytes)\n' "$id" "$name" "$size"
+done
+[ "$missing" = 0 ] || die "the release is missing an artifact of a supported target; a partial release is not a release" 10
+
+mkdir -p "$(dirname "$out")"
+{
+  printf '# Written by scripts/release-record from the artifacts that were published.\n'
+  printf '# Evidence, not a plan: every digest and size below was read off the file.\n'
+  printf 'schema: release/v1\n'
+  printf 'version: "%s"\n' "${tag#v}"
+  printf 'tag: %s\n' "$tag"
+  printf 'channel: %s\n' "$channel"
+  printf 'commit: %s\n' "$commit"
+  printf 'published_at: "%s"\n' "$published"
+  [ -n "$notes" ] && printf 'notes_url: %s\n' "$notes"
+  printf 'artifacts:\n%s' "$body"
+} > "$out"
+
+# the record must agree with the model before anyone sees it
+"$mj" distribution --repo "$ROOT" metadata --record "$out" >/dev/null 2>&1 \
+  || { "$mj" distribution --repo "$ROOT" metadata --record "$out" >/dev/null; die "the record does not agree with the distribution model" 10; }
+printf 'release-record: %s\n' "$out"

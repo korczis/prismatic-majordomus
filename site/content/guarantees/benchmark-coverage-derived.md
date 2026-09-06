@@ -1,7 +1,7 @@
 +++
 title = "Every externally callable operation of the Rust executable is a benchmark target with a denominator generated from the registry, and a missing case fails the structural check"
 description = "Nobody keeps a list of what to benchmark. Each executable capability with a required policy is a target directly and on every transport its exposure declares, with the cases its input type provides; the transports' own operations (a cold majordomus mcp process, initialize, ping, tools/list, resources/list, resources/read, GET /, /openapi.json, /docs) are targets declared once. majordomus bench coverage reports covered over required, where required is computed from the registry; a capability whose input type produces no case for the repository at hand is missing, and capabilities validate, bench coverage --check and CI fail on it. A waiver is a typed reason on the descriptor, reported and never counted as covered."
-weight = 113
+weight = 118
 [extra]
 claim_id = "benchmark-coverage-derived"
 status = "guaranteed"

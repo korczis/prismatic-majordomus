@@ -1,7 +1,7 @@
 +++
 title = "The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one"
 description = "docs/generated/openapi.json, docs/generated/capabilities.md and share/allow/*.txt are caches of the registry and the schemas, committed so that the interface can be reviewed in a diff. majordomus generate writes them; majordomus generate --check derives them again, compares byte for byte, writes nothing, and exits 10 naming every file that differs or is missing. CI runs the check on every push, so a change to a descriptor or a schema without the regenerated files does not merge."
-weight = 103
+weight = 108
 [extra]
 claim_id = "generated-projections-checked"
 status = "guaranteed"

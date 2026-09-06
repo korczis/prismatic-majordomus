@@ -44,7 +44,7 @@ mj_rule_scan() {
     | awk -v prov="$prov" -v file="$rel" -v path="$f" -v n="$n" -v ns="$MJ_RULES_VENDOR_NS" \
           -v flat="$tmp/$n.flat" -v graph="$tmp/graph.tsv" '
       function fail(m) { print m > "/dev/stderr"; exit 1 }
-      FNR == NR { pat[++np] = $0; next }
+      FNR == NR { if ($0 !~ /^#/ && $0 != "") pat[++np] = $0; next }   # the allow-list banner is comments
       {
         eq = index($0, "="); if (eq == 0) next
         k = substr($0, 1, eq - 1); v = substr($0, eq + 1)

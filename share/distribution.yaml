@@ -1,0 +1,123 @@
+# The distribution model: how Majordomus is packaged, published and installed.
+#
+# This file is the one canonical owner of the distribution facts. Everything below is a
+# projection of it and states nothing of its own:
+#
+#   the release build matrix        docs/generated/distribution-matrix.json
+#   the installer's target table    site/static/install.sh (generated from share/install/install.sh.in)
+#   the installation guide          docs/INSTALL.md (generated from share/install/INSTALL.md.in)
+#   the supported-platform table    the same guide, and the website's install page
+#   the site's install commands     site/data/generated/distribution.json
+#
+# Adding a target is one edit here followed by `just derive`; the gates refuse a tree in
+# which any projection above disagrees with this file (docs/DISTRIBUTION.md).
+#
+# Shipped in share/ rather than under .ai/ for the same reason share/commands.yaml is:
+# it is a statement about how the tool behaves, it travels with an installed copy, and a
+# repository configures Majordomus without redefining it.
+schema: majordomus-distribution/v1
+
+project:
+  binary: majordomus
+  repository: korczis/prismatic-majordomus
+  license: MIT
+
+installer:
+  base_url: https://korczis.github.io/prismatic-majordomus
+  script: install.sh
+  download_command: curl -fsSL
+  shell: sh
+  install_dir: $HOME/.local/bin
+  prefix: $HOME/.local/share/majordomus
+
+archive:
+  format: tar.gz
+  extension: tar.gz
+  name: "{binary}-{tag}-{target}.{extension}"
+  checksum: sha256
+  checksums_file: SHA256SUMS
+
+titles:
+  os:
+    macos: macOS
+    linux: Linux
+    windows: Windows
+  arch:
+    x86_64: x86_64
+    aarch64: ARM64
+  libc:
+    gnu: glibc
+    musl: musl
+
+# Every target the project has an opinion about. `status: supported` is a promise: the
+# release refuses to publish without the artifact, the installer offers it, and the
+# documentation lists it. Nothing is listed here that a release does not build.
+targets:
+  - id: macos-aarch64
+    os: macos
+    arch: aarch64
+    rust_target: aarch64-apple-darwin
+    status: supported
+    build:
+      runner: macos-14
+      native: true
+
+  - id: macos-x86_64
+    os: macos
+    arch: x86_64
+    rust_target: x86_64-apple-darwin
+    status: supported
+    build:
+      runner: macos-13
+      native: true
+
+  - id: linux-x86_64-gnu
+    os: linux
+    arch: x86_64
+    libc: gnu
+    rust_target: x86_64-unknown-linux-gnu
+    status: supported
+    build:
+      runner: ubuntu-24.04
+      native: true
+
+  - id: linux-x86_64-musl
+    os: linux
+    arch: x86_64
+    libc: musl
+    rust_target: x86_64-unknown-linux-musl
+    status: supported
+    build:
+      runner: ubuntu-24.04
+      packages: [musl-tools]
+      native: true
+
+  - id: linux-aarch64-gnu
+    os: linux
+    arch: aarch64
+    libc: gnu
+    rust_target: aarch64-unknown-linux-gnu
+    status: supported
+    build:
+      runner: ubuntu-24.04-arm
+      native: true
+
+  - id: linux-aarch64-musl
+    os: linux
+    arch: aarch64
+    libc: musl
+    rust_target: aarch64-unknown-linux-musl
+    status: supported
+    build:
+      runner: ubuntu-24.04-arm
+      packages: [musl-tools]
+      native: true
+
+  - id: windows-x86_64
+    os: windows
+    arch: x86_64
+    rust_target: x86_64-pc-windows-msvc
+    format: zip
+    binary_suffix: .exe
+    status: unavailable
+    reason: "The command a person runs is bash: bin/majordomus and lib/*.sh are POSIX shell, and the archive carries them beside the executable. Until that half has a Windows answer, publishing a Windows archive would ship an executable nothing can drive."

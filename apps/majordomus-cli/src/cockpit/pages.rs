@@ -10,8 +10,8 @@
 use serde_json::{json, Value};
 
 use crate::capability::builtin::{
-    Continuity, DirectoryReport, DirectoryState, GraphList, Health, HealthStatus, ObjectList,
-    Record, RepositoryReport,
+    ArtifactReport, Continuity, DirectoryReport, DirectoryState, GraphList, Health, HealthStatus,
+    ObjectList, Record, RepositoryReport,
 };
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::generate;
@@ -1897,6 +1897,120 @@ pub fn health(ctx: &Context) -> Page {
     )
     .subtitle("The same verdicts `capabilities validate`, `bench coverage --check` and `generate --check` reach, read through one capability.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Health", None)])
+}
+
+// --------------------------------------------------------------------- artifacts
+
+/// What the generator writes: every document with the encodings it is committed in, and
+/// every file with its contract and its state against the working tree. Read through
+/// `artifacts.list`, which reads the generator's own manifest; this page keeps no list of
+/// generated files and gains one the moment the generator does.
+pub fn artifacts(ctx: &Context) -> Page {
+    let report: ArtifactReport = match ask(ctx, "artifacts.list", json!({})) {
+        Ok(r) => r,
+        Err(e) => return failed(Area::Artifacts, "Artifacts", e),
+    };
+    let t = &report.tallies;
+    let overall = if !report.present {
+        ("warn", "not generated")
+    } else if t.missing > 0 {
+        ("fail", "missing")
+    } else if t.stale > 0 {
+        ("warn", "stale")
+    } else {
+        ("ok", "current")
+    };
+
+    let documents = table(
+        &["document", "encodings", "schema", "source"],
+        report
+            .documents
+            .iter()
+            .map(|d| {
+                row(vec![
+                    cell(mono(d.id.clone())),
+                    cell(
+                        el("span").class("mj-marks").children(
+                            d.formats
+                                .iter()
+                                .map(|f| tag(f.suffix()))
+                                .collect::<Vec<_>>(),
+                        ),
+                    ),
+                    cell(match &d.schema {
+                        Some(s) => mono(s.clone()),
+                        None => el("span").class("mj-note").text("—"),
+                    }),
+                    text_cell(d.source.clone()),
+                ])
+            })
+            .collect(),
+    );
+
+    let files = table(
+        &["path", "document", "format", "bytes", "state"],
+        report
+            .artifacts
+            .iter()
+            .map(|a| {
+                row(vec![
+                    cell(mono(a.path.clone())),
+                    cell(mono(a.document.clone())),
+                    text_cell(a.format.suffix()),
+                    text_cell(a.bytes.map(|b| b.to_string()).unwrap_or_else(|| "—".into())),
+                    cell(badge(a.state.as_str(), a.state.as_str())),
+                ])
+            })
+            .collect(),
+    );
+
+    Page::new(
+        Area::Artifacts,
+        "Artifacts",
+        el("div")
+            .class("mj-grid")
+            .child(card_with(
+                "Where the generated tree stands",
+                badge(overall.0, overall.1),
+                el("div")
+                    .child(
+                        el("div")
+                            .class("mj-stats")
+                            .child(statistic(
+                                t.documents.to_string(),
+                                "documents",
+                                "the manifest",
+                            ))
+                            .child(statistic(
+                                t.artifacts.to_string(),
+                                "files",
+                                "the manifest",
+                            ))
+                            .child(statistic(t.current.to_string(), "current", "sha256"))
+                            .child(statistic(t.stale.to_string(), "stale", "sha256"))
+                            .child(statistic(t.missing.to_string(), "missing", "the tree")),
+                    )
+                    .child(facts(vec![
+                        ("Manifest", Node::Element(mono(report.manifest.clone()))),
+                        ("Schema", Node::Element(mono(report.schema.clone()))),
+                        ("Rewrite", Node::Element(mono(report.regenerate.clone()))),
+                        ("Verify", Node::Element(mono(report.verify.clone()))),
+                    ]))
+                    .when(!report.present, |d| {
+                        d.child(alert(
+                            "warn",
+                            "This repository has no generated tree yet: the manifest is written by `majordomus generate`.",
+                        ))
+                    })
+                    .child(el("p").class("mj-note").text(
+                        "A document is written in every encoding this repository commits it in, from one value: JSON for a program, YAML beside it, Markdown for a reader. The hashes here are the manifest's; `majordomus generate --check` compares every byte, which is the stronger statement.",
+                    )),
+            ))
+            .child(card("Documents", documents))
+            .child(card("Files", files)),
+    )
+    .subtitle("Every file `majordomus generate` writes, from the generator's own manifest.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Artifacts", None)])
 }
 
 // ------------------------------------------------------------------------ api

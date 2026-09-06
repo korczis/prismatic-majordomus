@@ -1,0 +1,37 @@
+{% extends "page.html" %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = get_section(path="why/_index.md") -%}
+{#- The audiences or the areas, whichever this section declares. One template for both:
+    they are the same shape — an entry, its summary, and how many moments name it, which is
+    derived from the moments and never listed in the entry's own file. -#}
+{%- set catalogue = load_data(path="data/registry/why.json") -%}
+{%- set tx = section.extra.taxonomy -%}
+{%- set entries = catalogue.audiences if tx == "audiences" else catalogue.areas -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  {% include "partials/breadcrumb.html" %}
+  <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1>
+  <p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p>
+</div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <ol class="grid gap-5 sm:grid-cols-2" role="list">
+    {%- for e in entries %}{% if e.status != "deprecated" %}
+    <li class="min-w-0">
+      <a href="{{ base }}{{ e.route }}" class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium">
+        <span class="flex items-baseline justify-between gap-3">
+          <span class="text-base font-medium text-heading">{{ e.title }}</span>
+          <span class="shrink-0 font-mono text-xs text-body-subtle">{{ e.count }}</span>
+        </span>
+        <span class="mt-2 min-w-0 break-words text-sm text-body">{{ e.summary }}</span>
+        {%- if e.workflow %}<span class="mt-3 min-w-0 break-words border-t border-default pt-3 text-xs text-body-subtle">{{ e.workflow }}</span>{% endif %}
+      </a>
+    </li>
+    {%- endif %}{% endfor %}
+  </ol>
+  <p class="mt-8 max-w-3xl text-sm text-body-subtle">The number on each card is the moments that name it, counted from the moments themselves. An entry's own file lists none.</p>
+</div>
+{% endblock content %}

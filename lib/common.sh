@@ -107,7 +107,7 @@ export MJ_SHARE_DIR MJ_SKELETON_DIR MJ_ALLOW_DIR MJ_STD_RULES_DIR MJ_PROVIDERS_D
 MJ_LAYOUT=""; MJ_AI_DIR=""; MJ_AI_MANIFEST=""; MJ_AI_REPO_DIR=""; MJ_AI_LOCAL_DIR=""
 MJ_STATE_DIR=""; MJ_POLICY_FILE=""; MJ_SCOPE_FILE=""; MJ_PROFILES_DIR=""; MJ_PROMPTS_DIR=""; MJ_PROJECT_DIR=""
 MJ_RULES_DIR=""; MJ_KNOWLEDGE_DIR=""; MJ_ADRS_DIR=""; MJ_SKILLS_DIR=""; MJ_WORKFLOWS_DIR=""
-MJ_SESSIONS_DIR=""
+MJ_SESSIONS_DIR=""; MJ_DEPLOYMENTS_DIR=""
 MJ_PROVIDERS_DIR=""; MJ_TEMPLATES_DIR=""; MJ_CACHE_DIR=""
 
 # a repository path, relative to the repository root, for messages and records
@@ -141,6 +141,9 @@ mj_resolve_layout() {
     # the sessions section is optional: a layer written before it existed names none, and a
     # closed episode then stays in the checkout-local half where it always was
     MJ_SESSIONS_DIR=""; [ -n "$(mj_man sections.sessions)" ] && MJ_SESSIONS_DIR="$MJ_AI_DIR/$(mj_man sections.sessions)"
+    # the deployments section is optional in the same way: a repository that deploys
+    # nothing declares none, and the variable stays empty
+    MJ_DEPLOYMENTS_DIR=""; [ -n "$(mj_man sections.deployments)" ] && MJ_DEPLOYMENTS_DIR="$MJ_AI_DIR/$(mj_man sections.deployments)"
     MJ_PROJECT_DIR="$MJ_AI_DIR/$(mj_man sections.project)"
     MJ_PROVIDERS_DIR="$MJ_AI_REPO_DIR/providers"
     MJ_TEMPLATES_DIR="$MJ_AI_REPO_DIR/templates"
@@ -160,6 +163,7 @@ mj_resolve_layout() {
     MJ_SKILLS_DIR="$MJ_AI_REPO_DIR/skills"; MJ_WORKFLOWS_DIR="$MJ_AI_REPO_DIR/workflows"
     MJ_KNOWLEDGE_DIR="$MJ_AI_REPO_DIR/knowledge"; MJ_ADRS_DIR="$MJ_AI_REPO_DIR/adrs"
     MJ_PROJECT_DIR="$MJ_AI_REPO_DIR/project"; MJ_PROVIDERS_DIR="$MJ_AI_REPO_DIR/providers"
+    MJ_DEPLOYMENTS_DIR=""
     MJ_TEMPLATES_DIR="$MJ_AI_REPO_DIR/templates"; MJ_STATE_DIR="$MJ_AI_LOCAL_DIR/state"
     MJ_CACHE_DIR="$MJ_AI_LOCAL_DIR/cache"
   fi
@@ -497,8 +501,10 @@ mj_yaml_unknown_keys() {
   # one grep per file, not one per key: the keys are cut out in one pass and the ones no
   # allow-list pattern matches are the unknown ones. On a plan of a hundred records the
   # per-key shape ran thousands of grep processes and was most of plan validate.
+  # the allow-list carries a generated-file banner as `#` comments; every reader of one
+  # strips them, so a comment can never be read as a pattern
   local flat="$1" allow="$2" out
-  out="$(cut -d= -f1 "$flat" | grep -vE -f "$allow" || true)"
+  out="$(cut -d= -f1 "$flat" | grep -vE -f <(grep -v '^#' "$allow") || true)"
   [ -n "$out" ] || return 0
   printf '%s\n' "$out"
   return 1

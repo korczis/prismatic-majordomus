@@ -47,6 +47,9 @@ pub struct Context {
     pub registry: Arc<CapabilityRegistry>,
     /// The peers attached to this process.
     pub peers: Arc<PeerBoard>,
+    /// The Why catalogue, derived from the index once when this context is composed and
+    /// shared by every projection that reads it. A request never rebuilds it.
+    pub why: Arc<crate::why::Catalogue>,
     /// The one execution path: counters, cache, handler dispatch. Shared by every
     /// transport and every session of this process.
     pub executor: Arc<CapabilityExecutor>,
@@ -59,9 +62,11 @@ impl Context {
     /// A context over an index and a registry, with an empty board, a fresh executor and
     /// no caller.
     pub fn new(index: Arc<Index>, registry: Arc<CapabilityRegistry>) -> Self {
+        let why = Arc::new(crate::why::Catalogue::build(&index, &registry));
         Context {
             index,
             registry,
+            why,
             peers: Arc::new(PeerBoard::new()),
             executor: Arc::new(CapabilityExecutor::new()),
             caller: None,
@@ -73,6 +78,7 @@ impl Context {
         Context {
             index: Arc::clone(&self.index),
             registry: Arc::clone(&self.registry),
+            why: Arc::clone(&self.why),
             peers: Arc::clone(&self.peers),
             executor: Arc::clone(&self.executor),
             caller: Some(caller),

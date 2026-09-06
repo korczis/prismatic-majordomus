@@ -1,7 +1,7 @@
 +++
 title = "Prove a rule is actually enforced, not merely written down"
 description = "Answer \"is this rule real?\" with a command rather than a reading of the source."
-weight = 3
+weight = 4
 [extra]
 id = "prove-a-rule-is-enforced"
 source = ".ai/repo/use-cases/prove-a-rule-is-enforced.md"

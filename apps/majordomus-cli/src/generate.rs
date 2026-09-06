@@ -1,11 +1,22 @@
 //! Generated projections that are committed for review: the OpenAPI document, the
-//! capability reference, and the shell tool's key allow-lists derived from the JSON
-//! Schemas. All come through this one pipeline; the committed files are caches of it,
-//! never sources, and `--check` says when they are stale.
+//! capability reference, the benchmark matrix, the registry manifest, and the shell
+//! tool's key allow-lists derived from the JSON Schemas. All come through this one
+//! pipeline; the committed files are caches of it, never sources, and `--check` says when
+//! they are stale.
+//!
+//! Every artifact is *typed*: it declares the document it projects, the encoding it is
+//! written in, the JSON Schema its content satisfies when it has one, and the source it
+//! was derived from. A structured document is written in every encoding this repository
+//! commits it in — JSON for a program, YAML for a person editing configuration beside it,
+//! Markdown for a reader — from one value, so the encodings cannot disagree. Every
+//! artifact carries a provenance header in the form its encoding allows, and
+//! [`manifest_document`] is the index of the whole set, itself generated.
 
 use std::path::{Path, PathBuf};
 
-use serde_json::Value;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
 
 use crate::app::App;
 use crate::bench::{BenchmarkProjection, Coverage, CoverageState, SystemTarget, Transport};
@@ -13,8 +24,8 @@ use crate::capability::registry::ModuleSource;
 use crate::capability::{CapabilityKind, CapabilityRegistry, CaseContext, Context, Provenance};
 use crate::error::{Error, Result};
 use crate::http::openapi;
-use crate::metadata::KindSchema;
-use crate::policy::LoadedPolicy;
+use crate::metadata::{yaml, KindSchema};
+use crate::policy::{sha256_hex, LoadedPolicy};
 use crate::share::Share;
 
 /// Where generated artifacts live, relative to the repository root.
@@ -24,21 +35,39 @@ pub const OUT_DIR: &str = "docs/generated";
 /// executable's, so that no directory has two writers.
 pub const SITE_DATA_DIR: &str = "site/data/registry";
 
-/// The first line of every generated Markdown artifact.
+/// The first thing every generated artifact says about itself, whatever its encoding
+/// wraps it in.
 pub const HEADER: &str = "GENERATED FILE — DO NOT EDIT DIRECTLY";
+
+/// The command that rewrites any of them.
+pub const REGENERATE: &str = "majordomus generate";
+
+/// The schema of `registry.json`.
+pub const REGISTRY_SCHEMA: &str = "majordomus/capability-registry/v1";
+
+/// The schema of `benchmarks.json`.
+pub const BENCHMARKS_SCHEMA: &str = "majordomus/benchmark-matrix/v1";
+
+/// The schema of `artifacts.json`, the manifest of every generated artifact.
+pub const MANIFEST_SCHEMA: &str = "majordomus/generated-artifacts/v1";
+
+/// The schema extension that names the allow-list a schema derives.
+pub const ALLOW_EXTENSION: &str = "x-majordomus-allow";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// What can be generated.
 pub enum Target {
-    /// `docs/generated/openapi.json`.
+    /// `docs/generated/openapi.{json,yaml}`.
     OpenApi,
     /// `docs/generated/capabilities.md` (the index), `docs/generated/modules/<id>.md`,
-    /// `docs/generated/cli.md` and `docs/generated/cli.json` (the command line as clap
-    /// declares it, with the examples declared beside it).
+    /// `docs/generated/cli.md` and `docs/generated/cli.{json,yaml}` (the command line as
+    /// clap declares it, with the examples declared beside it).
     Docs,
-    /// `docs/generated/benchmarks.md`: every benchmark target and the coverage, from the projection.
+    /// `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the
+    /// coverage, from the projection.
     Benchmarks,
-    /// `docs/generated/registry.json`: the builtin registry as data, `majordomus/capability-registry/v1`.
+    /// `docs/generated/registry.{json,yaml}`: the builtin registry as data,
+    /// `majordomus/capability-registry/v1`.
     Registry,
     /// `<share>/allow/<name>.txt` for every schema that carries `x-majordomus-allow`.
     Allow,
@@ -52,35 +81,353 @@ pub enum Target {
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
     Site,
+    /// Everything derived from the distribution model (see [`crate::distribution`]): the
+    /// release build matrix, the installer, the installation guide, the site's dataset,
+    /// and the public metadata of every recorded release.
+    Distribution,
+    /// `docs/generated/artifacts.{json,yaml,md}`: every artifact of every other target,
+    /// with its encoding, schema, source and hash. Always planned over the whole set, so
+    /// that a manifest naming half the artifacts cannot exist.
+    Manifest,
 }
 
 impl Target {
-    /// Every target, in generation order.
+    /// Every target, in generation order. [`Target::Manifest`] is last because it indexes
+    /// the others.
     pub const ALL: &'static [Target] = &[
         Target::OpenApi,
         Target::Docs,
         Target::Benchmarks,
         Target::Registry,
-        Target::Documents,
         Target::Allow,
+        Target::Documents,
         Target::Providers,
         Target::Site,
+        Target::Distribution,
+        Target::Manifest,
     ];
+
+    /// Every target but the manifest: the artifacts the manifest indexes.
+    pub const INDEXED: &'static [Target] = &[
+        Target::OpenApi,
+        Target::Docs,
+        Target::Benchmarks,
+        Target::Registry,
+        Target::Allow,
+        Target::Documents,
+        Target::Providers,
+        Target::Site,
+        Target::Distribution,
+    ];
+
+    /// The name the command line and the manifest use.
+    pub fn name(self) -> &'static str {
+        match self {
+            Target::OpenApi => "openapi",
+            Target::Docs => "docs",
+            Target::Benchmarks => "benchmarks",
+            Target::Registry => "registry",
+            Target::Allow => "allow",
+            Target::Documents => "documents",
+            Target::Providers => "providers",
+            Target::Site => "site",
+            Target::Distribution => "distribution",
+            Target::Manifest => "manifest",
+        }
+    }
 }
 
-/// The schema of `registry.json`.
-pub const REGISTRY_SCHEMA: &str = "majordomus/capability-registry/v1";
+/// The encoding one generated artifact is written in.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum ArtifactFormat {
+    /// A JSON document: pretty-printed, one trailing newline, provenance as members.
+    Json,
+    /// The same document in the layer's YAML, provenance as a comment banner.
+    Yaml,
+    /// Markdown for a reader, provenance as an HTML comment.
+    Markdown,
+    /// Line-oriented text another program reads: the shell tool's allow-lists,
+    /// provenance as `#` comments.
+    Text,
+}
 
-/// The schema extension that names the allow-list a schema derives.
-pub const ALLOW_EXTENSION: &str = "x-majordomus-allow";
+impl ArtifactFormat {
+    /// The file suffix, without the dot.
+    pub fn suffix(self) -> &'static str {
+        match self {
+            ArtifactFormat::Json => "json",
+            ArtifactFormat::Yaml => "yaml",
+            ArtifactFormat::Markdown => "md",
+            ArtifactFormat::Text => "txt",
+        }
+    }
+
+    /// The format a path's suffix declares, `Text` for anything unrecognised.
+    pub fn of_path(path: &str) -> ArtifactFormat {
+        match path.rsplit_once('.').map(|(_, s)| s) {
+            Some("json") => ArtifactFormat::Json,
+            Some("yaml") | Some("yml") => ArtifactFormat::Yaml,
+            Some("md") => ArtifactFormat::Markdown,
+            _ => ArtifactFormat::Text,
+        }
+    }
+}
+
+/// The three lines every provenance header says, whatever the encoding wraps them in.
+pub fn banner_lines(source: &str, version: &str) -> [String; 3] {
+    [
+        HEADER.to_string(),
+        format!("Source: {source}; regenerate with `{REGENERATE}`"),
+        format!("Generator: majordomus-cli {version}"),
+    ]
+}
+
+/// The provenance header of a Markdown artifact: an HTML comment, so it is invisible when
+/// rendered and unmissable in the file.
+pub fn markdown_banner(source: &str, version: &str) -> String {
+    let [a, b, c] = banner_lines(source, version);
+    format!("<!-- {a}\n     {b}\n     {c} -->\n")
+}
+
+/// The provenance header of a YAML or text artifact: `#` comments, which every reader of
+/// both — the layer's YAML parser, `grep -E -f`, awk — skips.
+pub fn comment_banner(source: &str, version: &str) -> String {
+    banner_lines(source, version)
+        .iter()
+        .map(|l| format!("# {l}\n"))
+        .collect()
+}
+
+/// The one line a JSON artifact carries under `generated`.
+pub fn json_banner(source: &str) -> String {
+    format!("{HEADER}; source: {source}; regenerate with `{REGENERATE}`")
+}
+
+/// Where a structured document puts its provenance.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HeaderStyle {
+    /// `schema`, `generated` and `generator` as members: this repository's own documents.
+    Members,
+    /// `x-majordomus-generated` and `x-majordomus-generator`: a document whose own
+    /// specification fixes the member names, so provenance goes in an extension. The
+    /// OpenAPI document is the only one.
+    Extension,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-/// One generated file: where it goes and what it holds.
+/// One generated file: what it projects, how it is encoded, what contract its content
+/// satisfies, where it came from, and the whole file.
 pub struct Artifact {
     /// Repository-relative path.
     pub path: String,
+    /// The document it projects: `registry`, `cli`, `openapi`, `capabilities`, ... Two
+    /// artifacts sharing an id are the same document in two encodings.
+    pub document: String,
+    /// The encoding.
+    pub format: ArtifactFormat,
+    /// The JSON Schema its content satisfies, by schema id, when it declares one.
+    pub schema: Option<String>,
+    /// One line: what it was derived from, as the header says it.
+    pub source: String,
     /// The whole file.
     pub content: String,
+}
+
+impl Artifact {
+    /// A Markdown artifact: the banner, then the body. Nothing writes the banner itself.
+    pub fn markdown(
+        path: impl Into<String>,
+        document: impl Into<String>,
+        source: impl Into<String>,
+        version: &str,
+        body: &str,
+    ) -> Artifact {
+        let source = source.into();
+        Artifact {
+            path: path.into(),
+            document: document.into(),
+            format: ArtifactFormat::Markdown,
+            schema: None,
+            content: markdown_banner(&source, version) + body,
+            source,
+        }
+    }
+
+    /// A text artifact another program reads line by line: the banner as `#` comments,
+    /// then the lines.
+    pub fn text(
+        path: impl Into<String>,
+        document: impl Into<String>,
+        source: impl Into<String>,
+        version: &str,
+        body: &str,
+    ) -> Artifact {
+        let source = source.into();
+        Artifact {
+            path: path.into(),
+            document: document.into(),
+            format: ArtifactFormat::Text,
+            schema: None,
+            content: comment_banner(&source, version) + body,
+            source,
+        }
+    }
+
+    /// A JSON artifact whose own specification fixes its member names — a JSON Schema,
+    /// the OpenAPI document — so its provenance goes in `x-majordomus-` extensions rather
+    /// than in members the specification does not define. Both forms are read back by
+    /// [`violations`]; neither is more generated than the other.
+    pub fn json_extension(
+        path: impl Into<String>,
+        document: impl Into<String>,
+        source: impl Into<String>,
+        version: &str,
+        value: Value,
+    ) -> Artifact {
+        let source = source.into();
+        let stamped = match value {
+            Value::Object(members) => {
+                let mut out = members;
+                out.insert(
+                    "x-majordomus-generated".into(),
+                    Value::String(json_banner(&source)),
+                );
+                out.insert(
+                    "x-majordomus-generator".into(),
+                    Value::String(format!("majordomus-cli {version}")),
+                );
+                Value::Object(out)
+            }
+            other => other,
+        };
+        Artifact {
+            path: path.into(),
+            document: document.into(),
+            format: ArtifactFormat::Json,
+            schema: None,
+            source,
+            content: openapi::render(&stamped),
+        }
+    }
+
+    /// An artifact whose content is taken as it stands: a projection another module
+    /// renders whole and stamps itself (the provider bootstraps, the site dataset).
+    pub fn verbatim(
+        path: impl Into<String>,
+        document: impl Into<String>,
+        format: ArtifactFormat,
+        schema: Option<String>,
+        source: impl Into<String>,
+        content: String,
+    ) -> Artifact {
+        Artifact {
+            path: path.into(),
+            document: document.into(),
+            format,
+            schema,
+            source: source.into(),
+            content,
+        }
+    }
+}
+
+/// One generated *document*: a value with an identity, a schema and a provenance line,
+/// projected into every encoding this repository commits it in. The encodings cannot
+/// disagree because there is one value; adding an encoding is a line in
+/// [`Document::artifacts`], never a second renderer.
+#[derive(Debug, Clone)]
+pub struct Document {
+    /// The document id, which is also the file stem: `registry`, `cli`, `openapi`.
+    pub id: String,
+    /// The directory the encodings are written into, repository-relative.
+    pub dir: String,
+    /// The JSON Schema the value satisfies, when it declares one.
+    pub schema: Option<String>,
+    /// One line: what it was derived from.
+    pub source: String,
+    /// Where the provenance goes.
+    pub style: HeaderStyle,
+    /// The value, before provenance is added.
+    pub value: Value,
+}
+
+impl Document {
+    /// A document of this repository's own, provenance as members.
+    pub fn new(
+        id: impl Into<String>,
+        schema: impl Into<String>,
+        source: impl Into<String>,
+        value: Value,
+    ) -> Document {
+        Document {
+            id: id.into(),
+            dir: OUT_DIR.to_string(),
+            schema: Some(schema.into()),
+            source: source.into(),
+            style: HeaderStyle::Members,
+            value,
+        }
+    }
+
+    /// The value with its provenance in it: what both encodings serialise.
+    pub fn stamped(&self, version: &str) -> Value {
+        let Value::Object(members) = &self.value else {
+            return self.value.clone();
+        };
+        let mut out = Map::new();
+        match self.style {
+            HeaderStyle::Members => {
+                if let Some(schema) = &self.schema {
+                    out.insert("schema".into(), Value::String(schema.clone()));
+                }
+                out.insert("generated".into(), Value::String(json_banner(&self.source)));
+                out.insert(
+                    "generator".into(),
+                    Value::String(format!("majordomus-cli {version}")),
+                );
+                for (k, v) in members {
+                    out.entry(k.clone()).or_insert_with(|| v.clone());
+                }
+            }
+            HeaderStyle::Extension => {
+                for (k, v) in members {
+                    out.insert(k.clone(), v.clone());
+                }
+                out.insert(
+                    "x-majordomus-generated".into(),
+                    Value::String(json_banner(&self.source)),
+                );
+                out.insert(
+                    "x-majordomus-generator".into(),
+                    Value::String(format!("majordomus-cli {version}")),
+                );
+            }
+        }
+        Value::Object(out)
+    }
+
+    /// The document in every encoding it is committed in: JSON, then YAML.
+    pub fn artifacts(&self, version: &str) -> Vec<Artifact> {
+        let stamped = self.stamped(version);
+        let base = |format: ArtifactFormat, content: String| Artifact {
+            path: format!("{}/{}.{}", self.dir, self.id, format.suffix()),
+            document: self.id.clone(),
+            format,
+            schema: self.schema.clone(),
+            source: self.source.clone(),
+            content,
+        };
+        vec![
+            base(ArtifactFormat::Json, openapi::render(&stamped)),
+            base(
+                ArtifactFormat::Yaml,
+                yaml::render_with_banner(&stamped, &banner_lines(&self.source, version).join("\n")),
+            ),
+        ]
+    }
 }
 /// The registry's artifacts of the selected targets: the OpenAPI document, the
 /// reference index with one file per builtin module, and the registry manifest.
@@ -96,46 +443,77 @@ pub fn artifacts(
     let mut out = Vec::new();
     for t in targets {
         match t {
-            Target::OpenApi => out.push(Artifact {
-                path: format!("{OUT_DIR}/openapi.json"),
-                content: openapi::render(
-                    &openapi::document(registry, version, cases)
+            Target::OpenApi => {
+                let doc = Document {
+                    id: "openapi".into(),
+                    dir: OUT_DIR.into(),
+                    // the document's own contract is the OpenAPI specification, named by
+                    // its `openapi` member; it declares no schema of ours
+                    schema: None,
+                    source: "the canonical Majordomus capability registry".into(),
+                    style: HeaderStyle::Extension,
+                    value: openapi::document(registry, version, cases)
                         .map_err(|reason| Error::Http { reason })?,
-                ),
-            }),
+                };
+                out.extend(doc.artifacts(version));
+            }
             Target::Docs => {
-                out.push(Artifact {
-                    path: format!("{OUT_DIR}/capabilities.md"),
-                    content: reference(registry, version),
-                });
+                out.push(Artifact::markdown(
+                    format!("{OUT_DIR}/capabilities.md"),
+                    "capabilities",
+                    "the canonical Majordomus capability registry",
+                    version,
+                    &reference(registry),
+                ));
                 let cli = crate::cli::tree();
-                out.push(Artifact {
-                    path: format!("{OUT_DIR}/cli.md"),
-                    content: cli_reference(&cli, version),
-                });
-                out.push(Artifact {
-                    path: format!("{OUT_DIR}/cli.json"),
-                    content: cli_document(&cli, version),
-                });
+                out.push(Artifact::markdown(
+                    format!("{OUT_DIR}/cli.md"),
+                    "cli",
+                    "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
+                    version,
+                    &cli_reference(&cli),
+                ));
+                out.extend(
+                    Document::new(
+                        "cli",
+                        crate::cli::SCHEMA,
+                        "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
+                        cli_document(&cli, version),
+                    )
+                    .artifacts(version),
+                );
                 for m in registry
                     .modules()
                     .filter(|m| m.source != ModuleSource::Declarative)
                 {
-                    out.push(Artifact {
-                        path: format!("{OUT_DIR}/modules/{}.md", m.id),
-                        content: module_reference(registry, m.id.as_str(), version),
-                    });
+                    out.push(Artifact::markdown(
+                        format!("{OUT_DIR}/modules/{}.md", m.id),
+                        format!("modules/{}", m.id),
+                        format!(
+                            "the `{}` module of the canonical Majordomus capability registry",
+                            m.id
+                        ),
+                        version,
+                        &module_reference(registry, m.id.as_str()),
+                    ));
                 }
             }
-            Target::Registry => out.push(Artifact {
-                path: format!("{OUT_DIR}/registry.json"),
-                content: registry_manifest(registry, version),
-            }),
+            Target::Registry => out.extend(
+                Document::new(
+                    "registry",
+                    REGISTRY_SCHEMA,
+                    "the canonical capability registry",
+                    registry_manifest(registry),
+                )
+                .artifacts(version),
+            ),
             Target::Benchmarks
             | Target::Allow
             | Target::Documents
             | Target::Providers
-            | Target::Site => {}
+            | Target::Site
+            | Target::Distribution
+            | Target::Manifest => {}
         }
     }
     Ok(out)
@@ -147,6 +525,33 @@ pub fn artifacts(
 /// site dataset). This is the one plan `generate` writes and `generate --check` compares;
 /// nothing else assembles artifacts.
 pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
+    // the manifest indexes the artifacts of the plan it belongs to. Asked for alone
+    // (`generate manifest`) that plan is every other target, because a manifest of nothing
+    // but itself would be a lie; asked for beside a subset, it indexes that subset.
+    let wants_manifest = targets.contains(&Target::Manifest);
+    let alone = targets == [Target::Manifest];
+    let indexed: Vec<Target> = if alone {
+        Target::INDEXED.to_vec()
+    } else {
+        targets
+            .iter()
+            .copied()
+            .filter(|t| *t != Target::Manifest)
+            .collect()
+    };
+    let mut out = indexed_plan(app, &indexed)?;
+    if wants_manifest {
+        let manifest = manifest_document(&out);
+        if alone {
+            out.clear();
+        }
+        out.extend(manifest_artifacts(&manifest, crate::VERSION));
+    }
+    Ok(out)
+}
+
+/// Every artifact the manifest indexes: everything but the manifest itself.
+fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     let mut out = context_artifacts(&app.context, crate::VERSION, targets)?;
     if targets.contains(&Target::Documents) || targets.contains(&Target::Allow) {
         let protos = document_schemas(&app.share, app.repository.root())?;
@@ -155,6 +560,7 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
                 &protos,
                 &app.share,
                 app.repository.root(),
+                crate::VERSION,
             )?);
         }
         if targets.contains(&Target::Allow) {
@@ -162,11 +568,13 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
                 &protos,
                 &app.share,
                 app.repository.root(),
+                crate::VERSION,
             )?);
             out.extend(allow_artifacts(
                 &app.schema,
                 &app.share,
                 app.repository.root(),
+                crate::VERSION,
             ));
         }
     }
@@ -183,13 +591,136 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
         if targets.contains(&Target::Site) {
             let dataset =
                 crate::site::dataset(&app.context, &app.schema, &policy, &app.repository)?;
-            out.push(Artifact {
-                path: format!("{SITE_DATA_DIR}/registry.json"),
-                content: crate::site::render(&dataset),
-            });
+            out.push(Artifact::verbatim(
+                format!("{SITE_DATA_DIR}/registry.json"),
+                "site-registry",
+                ArtifactFormat::Json,
+                Some(crate::site::SCHEMA.to_string()),
+                "the capability registry and the index of this repository's layer",
+                crate::site::render(&dataset),
+            ));
+            // The Why catalogue as the site reads it, and the graph of it. Both are
+            // derived from the catalogue alone — never from the index's fingerprint —
+            // so the two `generate` passes of the derivation graph agree byte for byte
+            // even though the pass between them adds documents to the index.
+            out.extend(crate::site::why_artifacts(&app.context)?);
         }
     }
+    if targets.contains(&Target::Distribution) {
+        out.extend(distribution_artifacts(app)?);
+    }
     Ok(out)
+}
+
+/// Every artifact the distribution model produces. The model is read from the tool's own
+/// data directory, which is the file an installed copy carries; the release records are
+/// read from the repository. Nothing here decides a platform, a name or a URL — it renders
+/// what `share/distribution.yaml` and `.ai/repo/releases/` already say.
+pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
+    use crate::distribution::{release, render, Model, Releases};
+
+    let model = Model::load(&app.share)?;
+    let releases = Releases::load(app.repository.root())?;
+    let findings = releases.findings(&model);
+    if let Some(first) = findings.first() {
+        return Err(Error::InvalidRelease {
+            path: release::DIR.to_string(),
+            reason: if findings.len() == 1 {
+                first.clone()
+            } else {
+                format!("{first} (and {} more)", findings.len() - 1)
+            },
+        });
+    }
+
+    use crate::distribution::render::SOURCE as DIST_SOURCE;
+    let mut out = vec![
+        Artifact::verbatim(
+            format!("{OUT_DIR}/distribution-matrix.json"),
+            "distribution-matrix",
+            ArtifactFormat::Json,
+            None,
+            DIST_SOURCE,
+            render::matrix_json(&model),
+        ),
+        Artifact::verbatim(
+            format!("{SITE_DATA_DIR}/distribution.json"),
+            "site-distribution",
+            ArtifactFormat::Json,
+            None,
+            DIST_SOURCE,
+            render::site_dataset(&model, &releases),
+        ),
+    ];
+
+    let installer_template = read_share(&app.share, crate::distribution::INSTALLER_TEMPLATE)?;
+    out.push(Artifact::verbatim(
+        format!(
+            "{}/{}",
+            crate::distribution::PUBLIC_DIR,
+            model.installer.script
+        ),
+        "installer",
+        ArtifactFormat::Text,
+        None,
+        DIST_SOURCE,
+        render::installer(&model, &installer_template).map_err(|reason| {
+            Error::InvalidDistribution {
+                path: crate::distribution::INSTALLER_TEMPLATE.to_string(),
+                reason,
+            }
+        })?,
+    ));
+
+    let guide_template = read_share(&app.share, crate::distribution::GUIDE_TEMPLATE)?;
+    let guide = render::install_doc(&model, &releases, crate::VERSION, &guide_template).map_err(
+        |reason| Error::InvalidDistribution {
+            path: crate::distribution::GUIDE_TEMPLATE.to_string(),
+            reason,
+        },
+    )?;
+    // The provenance header goes after the title, not before it: the site's documentation
+    // projection strips a document's own first-line heading and would otherwise render two.
+    let (title, rest) = guide.split_once('\n').unwrap_or((guide.as_str(), ""));
+    out.push(Artifact::verbatim(
+        crate::distribution::GUIDE.to_string(),
+        "install-guide",
+        ArtifactFormat::Markdown,
+        None,
+        "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)",
+        format!(
+            "{title}\n<!-- {HEADER}\n     Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);\n     regenerate with `majordomus generate`\n     Generator: majordomus-cli {} -->\n{rest}",
+            crate::VERSION
+        ),
+    ));
+
+    for r in &releases.releases {
+        out.push(Artifact::verbatim(
+            format!("{}/{}.json", release::PUBLIC_DIR, r.tag),
+            format!("release/{}", r.tag),
+            ArtifactFormat::Json,
+            None,
+            format!("the release record {}", r.tag),
+            r.public_json(&model),
+        ));
+    }
+    if let Some(latest) = releases.latest_stable() {
+        out.push(Artifact::verbatim(
+            format!("{}/{}.json", release::PUBLIC_DIR, release::LATEST),
+            "release/latest",
+            ArtifactFormat::Json,
+            None,
+            "the latest stable release record",
+            release::latest_json(latest, &model),
+        ));
+    }
+    Ok(out)
+}
+
+/// A file of the tool's data directory, read as text.
+fn read_share(share: &Share, relative: &str) -> Result<String> {
+    let path = share.dir().join(relative);
+    std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))
 }
 
 /// Every artifact of the selected targets, the benchmark matrix included: what
@@ -202,10 +733,23 @@ pub fn context_artifacts(
     let cases = CaseContext { index: &ctx.index };
     let mut out = artifacts(&ctx.registry, version, Some(&cases), targets)?;
     if targets.contains(&Target::Benchmarks) {
-        out.push(Artifact {
-            path: format!("{OUT_DIR}/benchmarks.md"),
-            content: benchmark_matrix(ctx, version),
-        });
+        let source = "the benchmark projection of the canonical capability registry";
+        out.push(Artifact::markdown(
+            format!("{OUT_DIR}/benchmarks.md"),
+            "benchmarks",
+            source,
+            version,
+            &benchmark_matrix(ctx),
+        ));
+        out.extend(
+            Document::new(
+                "benchmarks",
+                BENCHMARKS_SCHEMA,
+                source,
+                benchmark_document(ctx),
+            )
+            .artifacts(version),
+        );
     }
     Ok(out)
 }
@@ -213,7 +757,7 @@ pub fn context_artifacts(
 /// The builtin registry as data: modules, descriptors with their schemas, and the
 /// declarative kinds by name. No fingerprint and no count of declarative objects, so the
 /// file changes when the code changes and not when a document is added.
-pub fn registry_manifest(registry: &CapabilityRegistry, version: &str) -> String {
+pub fn registry_manifest(registry: &CapabilityRegistry) -> Value {
     let modules: Vec<&crate::capability::registry::ModuleInfo> = registry
         .modules()
         .filter(|m| m.source != ModuleSource::Declarative)
@@ -239,24 +783,19 @@ pub fn registry_manifest(registry: &CapabilityRegistry, version: &str) -> String
         .filter(|m| m.source == ModuleSource::Declarative)
         .map(|m| m.id.as_str())
         .collect();
-    let doc = serde_json::json!({
-        "schema": REGISTRY_SCHEMA,
-        "generated": format!("{HEADER}; source: the canonical capability registry; regenerate with `majordomus generate`"),
-        "generator": format!("majordomus-cli {version}"),
+    serde_json::json!({
         "modules": modules,
         "capabilities": capabilities,
         "declarative_kinds": declarative_kinds,
         "system_benchmark_targets": SystemTarget::ALL.iter().map(|s| serde_json::json!({ "key": s.key(), "transport": s.transport(), "description": s.description() })).collect::<Vec<_>>(),
-    });
-    openapi::render(&doc)
+    })
 }
 
 /// Every benchmark target and the coverage, from the projection of this repository.
-pub fn benchmark_matrix(ctx: &Context, version: &str) -> String {
+pub fn benchmark_matrix(ctx: &Context) -> String {
     let projection = BenchmarkProjection::from_context(ctx);
     let coverage = Coverage::compute(ctx, &projection);
     let mut s = String::new();
-    s.push_str(&format!("<!-- {HEADER}\n     Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`\n     Generator: majordomus-cli {version} -->\n"));
     s.push_str("# Benchmark targets and coverage\n\n");
     s.push_str("Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.\n\n");
     s.push_str(
@@ -355,31 +894,47 @@ pub fn document_artifacts(
     protos: &std::collections::BTreeMap<String, crate::proto::ProtoFile>,
     share: &Share,
     root: &Path,
+    version: &str,
 ) -> Result<Vec<Artifact>> {
     let schemas = relative_to(&share.schemas_dir(), root);
     let sections = relative_to(&share.sections_dir(), root);
     let mut out = Vec::new();
     for file in protos.values() {
         let schema = crate::proto::project::to_json_schema(file)?;
-        out.push(Artifact {
-            path: format!(
-                "{schemas}/{}",
-                crate::proto::project::schema_path(&file.schema_id)?
-            ),
-            content: serde_json::to_string_pretty(&schema).map_err(|e| Error::KindSchema {
+        // Relative to the repository, never as this machine found it: the banner is
+        // committed, so an absolute path would make the artifact differ by the directory it
+        // was generated in — every other checkout would then regenerate all of them and
+        // `generate --check` would fail for everyone but the last person to run it.
+        let source = format!(
+            "the document schema `{}`",
+            relative_to(Path::new(&file.source), root)
+        );
+        let path = format!(
+            "{schemas}/{}",
+            crate::proto::project::schema_path(&file.schema_id)?
+        );
+        out.push(Artifact::json_extension(
+            path.clone(),
+            format!("schemas/{}", file.schema_id),
+            source.clone(),
+            version,
+            serde_json::to_value(&schema).map_err(|e| Error::KindSchema {
                 reason: format!("{}: cannot render the projected schema: {e}", file.source),
-            })? + "\n",
-        });
+            })?,
+        ));
         if let Some(name) = &file.allow_list {
             let lines = crate::proto::project::section_lines(file);
-            out.push(Artifact {
-                path: format!("{sections}/{name}.txt"),
-                content: if lines.is_empty() {
+            out.push(Artifact::text(
+                format!("{sections}/{name}.txt"),
+                format!("sections/{name}"),
+                source.clone(),
+                version,
+                &if lines.is_empty() {
                     String::new()
                 } else {
                     lines.join("\n") + "\n"
                 },
-            });
+            ));
         }
     }
     Ok(out)
@@ -391,6 +946,7 @@ pub fn proto_allow_artifacts(
     protos: &std::collections::BTreeMap<String, crate::proto::ProtoFile>,
     share: &Share,
     root: &Path,
+    version: &str,
 ) -> Result<Vec<Artifact>> {
     let dir = relative_to(&share.allow_dir(), root);
     let mut out = Vec::new();
@@ -399,24 +955,310 @@ pub fn proto_allow_artifacts(
             continue;
         };
         let schema = crate::proto::project::to_json_schema(file)?;
-        out.push(Artifact {
-            path: format!("{dir}/{name}.txt"),
-            content: allow_lines(&schema).join("\n") + "\n",
-        });
+        out.push(Artifact::text(
+            format!("{dir}/{name}.txt"),
+            format!("allow/{name}"),
+            format!(
+                "the document schema `{}`",
+                relative_to(Path::new(&file.source), root)
+            ),
+            version,
+            &(allow_lines(&schema).join("\n") + "\n"),
+        ));
     }
     Ok(out)
 }
 
 /// A share subdirectory as the plan names it: repository-relative when the share is inside
 /// the repository, absolute otherwise.
+///
+/// Both sides are resolved before they are compared. `Share::open` canonicalises the share
+/// directory while the repository root arrives as it was discovered, so a share *inside*
+/// the repository failed `strip_prefix` whenever the two spellings differed — a symlinked
+/// or firmlinked component is enough — and the fallback then wrote the generator's own
+/// absolute path into a committed artifact. That made the output depend on which worktree
+/// last ran `majordomus generate`, which is precisely what `derive-check` cannot see.
 fn relative_to(dir: &Path, root: &Path) -> String {
-    dir.strip_prefix(root).unwrap_or(dir).display().to_string()
+    let resolved = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let (dir_resolved, root_resolved) = (resolved(dir), resolved(root));
+    match dir_resolved.strip_prefix(&root_resolved) {
+        Ok(relative) => relative.display().to_string(),
+        Err(_) => dir.display().to_string(),
+    }
+}
+
+/// The benchmark matrix as data: the same projection `benchmark_matrix` renders for a
+/// reader, in the encoding a program reads. One computation, two encodings; a number that
+/// differs between the Markdown and the JSON would be two computations, which is the
+/// defect this exists to make impossible.
+pub fn benchmark_document(ctx: &Context) -> Value {
+    let projection = BenchmarkProjection::from_context(ctx);
+    let coverage = Coverage::compute(ctx, &projection);
+    let coverage_rows: Vec<Value> = coverage
+        .tallies
+        .iter()
+        .map(|(name, t)| {
+            serde_json::json!({
+                "scope": name,
+                "required": t.required,
+                "covered": t.covered,
+                "missing": t.missing,
+                "waived": t.waived,
+            })
+        })
+        .collect();
+    let capabilities: Vec<Value> = ctx
+        .registry
+        .iter()
+        .filter(|c| c.kind.is_executable())
+        .map(|c| {
+            let state = |transport: Transport| -> &'static str {
+                match coverage
+                    .lines
+                    .iter()
+                    .find(|l| l.subject == c.id.as_str() && l.transport == transport)
+                    .map(|l| l.state)
+                {
+                    Some(CoverageState::Covered) => "covered",
+                    Some(CoverageState::Missing) => "missing",
+                    Some(CoverageState::Waived) => "waived",
+                    None => "none",
+                }
+            };
+            let mut cases: Vec<String> = projection
+                .of_capability(c.id.as_str())
+                .filter(|t| t.transport() == Transport::Direct)
+                .filter_map(|t| match &t.kind {
+                    crate::bench::TargetKind::Capability { case, .. } => Some(case.clone()),
+                    _ => None,
+                })
+                .collect();
+            cases.dedup();
+            serde_json::json!({
+                "id": c.id,
+                "module": c.module,
+                "kind": enum_name(c.kind),
+                "cache": cache_cell(c.cache),
+                "direct": state(Transport::Direct),
+                "mcp": state(Transport::Mcp),
+                "http": state(Transport::Http),
+                "cases": cases,
+            })
+        })
+        .collect();
+    serde_json::json!({
+        "coverage": coverage_rows,
+        "capabilities": capabilities,
+        "system_targets": SystemTarget::ALL.iter().map(|s| serde_json::json!({
+            "key": s.key(),
+            "transport": s.transport().name(),
+            "measures": s.description(),
+        })).collect::<Vec<_>>(),
+    })
+}
+
+// ---------------------------------------------------------------- the manifest
+
+/// The document id of the manifest, and the file stem of its encodings.
+pub const MANIFEST_ID: &str = "artifacts";
+
+/// Where the manifest says it came from.
+pub const MANIFEST_SOURCE: &str = "the generation plan itself, over every other target";
+
+/// The three files the manifest is written to, in the order [`manifest_artifacts`]
+/// returns them.
+pub fn manifest_paths() -> [String; 3] {
+    [
+        format!("{OUT_DIR}/{MANIFEST_ID}.json"),
+        format!("{OUT_DIR}/{MANIFEST_ID}.yaml"),
+        format!("{OUT_DIR}/{MANIFEST_ID}.md"),
+    ]
+}
+
+/// The index of every generated artifact: what each one projects, how it is encoded, what
+/// contract it satisfies, where it came from, and its size and hash.
+///
+/// The manifest's own three files are listed with `describes_itself: true` and no hash:
+/// a document that hashed itself would have no fixed point. Their staleness is not
+/// unguarded — `generate --check` compares every artifact including these byte for byte,
+/// which is a stronger statement than a hash the file makes about itself.
+pub fn manifest_document(indexed: &[Artifact]) -> Value {
+    let mut entries: Vec<Value> = indexed
+        .iter()
+        .map(|a| {
+            let mut o = Map::new();
+            o.insert("path".into(), Value::String(a.path.clone()));
+            o.insert("document".into(), Value::String(a.document.clone()));
+            o.insert(
+                "format".into(),
+                serde_json::to_value(a.format).unwrap_or(Value::Null),
+            );
+            if let Some(schema) = &a.schema {
+                o.insert("schema".into(), Value::String(schema.clone()));
+            }
+            o.insert("source".into(), Value::String(a.source.clone()));
+            o.insert("bytes".into(), Value::from(a.content.len()));
+            o.insert("sha256".into(), Value::String(sha256_hex(&a.content)));
+            Value::Object(o)
+        })
+        .collect();
+    for path in manifest_paths() {
+        let mut o = Map::new();
+        o.insert("path".into(), Value::String(path.clone()));
+        o.insert("document".into(), Value::String(MANIFEST_ID.into()));
+        o.insert(
+            "format".into(),
+            serde_json::to_value(ArtifactFormat::of_path(&path)).unwrap_or(Value::Null),
+        );
+        if ArtifactFormat::of_path(&path) != ArtifactFormat::Markdown {
+            o.insert("schema".into(), Value::String(MANIFEST_SCHEMA.into()));
+        }
+        o.insert("source".into(), Value::String(MANIFEST_SOURCE.into()));
+        o.insert("describes_itself".into(), Value::Bool(true));
+        entries.push(Value::Object(o));
+    }
+    entries.sort_by(|a, b| {
+        a.get("path")
+            .and_then(Value::as_str)
+            .cmp(&b.get("path").and_then(Value::as_str))
+    });
+
+    // one row per document: the encodings it is committed in, which is the property a
+    // reader and the enforcement rule actually ask about
+    let mut documents: Vec<Value> = Vec::new();
+    for entry in &entries {
+        let id = entry.get("document").and_then(Value::as_str).unwrap_or("");
+        let format = entry.get("format").cloned().unwrap_or(Value::Null);
+        match documents
+            .iter_mut()
+            .find(|d| d.get("id").and_then(Value::as_str) == Some(id))
+        {
+            Some(Value::Object(d)) => {
+                if let Some(Value::Array(formats)) = d.get_mut("formats") {
+                    if !formats.contains(&format) {
+                        formats.push(format);
+                    }
+                }
+            }
+            _ => {
+                let mut d = Map::new();
+                d.insert("id".into(), Value::String(id.to_string()));
+                if let Some(schema) = entry.get("schema") {
+                    d.insert("schema".into(), schema.clone());
+                }
+                d.insert(
+                    "source".into(),
+                    entry.get("source").cloned().unwrap_or(Value::Null),
+                );
+                d.insert("formats".into(), Value::Array(vec![format]));
+                documents.push(Value::Object(d));
+            }
+        }
+    }
+
+    documents.sort_by(|a, b| {
+        a.get("id")
+            .and_then(Value::as_str)
+            .cmp(&b.get("id").and_then(Value::as_str))
+    });
+    serde_json::json!({
+        "documents": documents,
+        "artifacts": entries,
+    })
+}
+
+/// The manifest in its three encodings: JSON and YAML from the value, Markdown for a
+/// reader. The Markdown is a rendering of the same value and holds nothing of its own.
+pub fn manifest_artifacts(document: &Value, version: &str) -> Vec<Artifact> {
+    let doc = Document::new(
+        MANIFEST_ID,
+        MANIFEST_SCHEMA,
+        MANIFEST_SOURCE,
+        document.clone(),
+    );
+    let mut out = doc.artifacts(version);
+    out.push(Artifact::markdown(
+        format!("{OUT_DIR}/{MANIFEST_ID}.md"),
+        MANIFEST_ID,
+        MANIFEST_SOURCE,
+        version,
+        &manifest_reference(document),
+    ));
+    out
+}
+
+/// The manifest as a reader sees it: the documents with the encodings each is committed
+/// in, then every file with its contract, size and hash.
+fn manifest_reference(document: &Value) -> String {
+    let mut s = String::new();
+    s.push_str("# Generated artifacts\n\n");
+    s.push_str("Every file `majordomus generate` writes, with the document it projects, the encoding it is written in, the JSON Schema its content satisfies, and where it came from. Nothing below is a list kept by hand: it is the generation plan, generated. A file under a path this table does not name is not generated by this repository, and a file this table names that differs from the plan is stale — `majordomus generate --check` says which, byte for byte.\n\n");
+    s.push_str("## Documents\n\n| document | encodings | schema | source |\n|---|---|---|---|\n");
+    for d in document
+        .get("documents")
+        .and_then(Value::as_array)
+        .map(Vec::as_slice)
+        .unwrap_or_default()
+    {
+        let formats: Vec<String> = d
+            .get("formats")
+            .and_then(Value::as_array)
+            .map(|f| {
+                f.iter()
+                    .filter_map(Value::as_str)
+                    .map(|s| format!("`{s}`"))
+                    .collect()
+            })
+            .unwrap_or_default();
+        s.push_str(&format!(
+            "| `{}` | {} | {} | {} |\n",
+            d.get("id").and_then(Value::as_str).unwrap_or(""),
+            formats.join(", "),
+            d.get("schema")
+                .and_then(Value::as_str)
+                .map(|x| format!("`{x}`"))
+                .unwrap_or_else(|| "—".into()),
+            d.get("source").and_then(Value::as_str).unwrap_or(""),
+        ));
+    }
+    s.push_str(
+        "\n## Files\n\n| path | document | format | bytes | sha256 |\n|---|---|---|---|---|\n",
+    );
+    for a in document
+        .get("artifacts")
+        .and_then(Value::as_array)
+        .map(Vec::as_slice)
+        .unwrap_or_default()
+    {
+        let hash = match a.get("sha256").and_then(Value::as_str) {
+            Some(h) => format!("`{}`", &h[..16.min(h.len())]),
+            // the manifest's own encodings: see `manifest_document`
+            None => "— (this file)".to_string(),
+        };
+        s.push_str(&format!(
+            "| `{}` | `{}` | {} | {} | {} |\n",
+            a.get("path").and_then(Value::as_str).unwrap_or(""),
+            a.get("document").and_then(Value::as_str).unwrap_or(""),
+            a.get("format").and_then(Value::as_str).unwrap_or(""),
+            a.get("bytes")
+                .and_then(Value::as_u64)
+                .map(|b| b.to_string())
+                .unwrap_or_else(|| "—".into()),
+            hash,
+        ));
+    }
+    s
 }
 
 /// The shell tool's allow-lists, one per schema that carries `x-majordomus-allow`, under
 /// the share directory: a repository-relative path when the share is inside the
 /// repository, absolute otherwise.
-pub fn allow_artifacts(schema: &KindSchema, share: &Share, root: &Path) -> Vec<Artifact> {
+pub fn allow_artifacts(
+    schema: &KindSchema,
+    share: &Share,
+    root: &Path,
+    version: &str,
+) -> Vec<Artifact> {
     let dir = share.allow_dir();
     let dir = dir
         .strip_prefix(root)
@@ -424,7 +1266,7 @@ pub fn allow_artifacts(schema: &KindSchema, share: &Share, root: &Path) -> Vec<A
         .unwrap_or(dir);
     schema
         .schemas()
-        .filter_map(|(_, sch)| {
+        .filter_map(|(name, sch)| {
             // A schema derived from a `.proto` is projected beside its source, not here;
             // emitting it twice would make the plan disagree with itself.
             if sch
@@ -434,11 +1276,14 @@ pub fn allow_artifacts(schema: &KindSchema, share: &Share, root: &Path) -> Vec<A
             {
                 return None;
             }
-            let name = sch.json.get(ALLOW_EXTENSION).and_then(Value::as_str)?;
-            Some(Artifact {
-                path: format!("{}/{name}.txt", dir.display()),
-                content: allow_lines(&sch.json).join("\n") + "\n",
-            })
+            let list = sch.json.get(ALLOW_EXTENSION).and_then(Value::as_str)?;
+            Some(Artifact::text(
+                format!("{}/{list}.txt", dir.display()),
+                format!("allow/{list}"),
+                format!("the JSON Schema `{name}` of the kind it validates"),
+                version,
+                &(allow_lines(&sch.json).join("\n") + "\n"),
+            ))
         })
         .collect()
 }
@@ -523,6 +1368,266 @@ fn walk_allow(root: &Value, node: &Value, prefix: &str, out: &mut Vec<String>) {
     }
 }
 
+// ---------------------------------------------------------------- the contract
+
+/// The contracts of the generated documents, read from `share/schemas/generated/`, keyed
+/// by the schema id each one pins through the `const` of its `schema` member. A document
+/// says which contract it satisfies; nothing here maps a file name to a file name.
+pub struct GeneratedSchemas {
+    by_id: std::collections::BTreeMap<String, (String, jsonschema::Validator)>,
+}
+
+impl std::fmt::Debug for GeneratedSchemas {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GeneratedSchemas")
+            .field("documents", &self.by_id.keys().collect::<Vec<_>>())
+            .finish()
+    }
+}
+
+impl GeneratedSchemas {
+    /// Load every schema in the directory. A file that pins no schema id is a schema for
+    /// nothing and is refused, because it would silently validate no document.
+    pub fn load(dir: &Path) -> Result<GeneratedSchemas> {
+        let mut by_id = std::collections::BTreeMap::new();
+        for (name, json) in crate::share::read_generated_schema_dir(dir)? {
+            let id = json
+                .pointer("/properties/schema/const")
+                .and_then(Value::as_str)
+                .ok_or_else(|| Error::KindSchema {
+                    reason: format!(
+                        "{}/{name}.schema.json pins no document: a schema of a generated document declares the id it validates as properties.schema.const",
+                        dir.display()
+                    ),
+                })?
+                .to_string();
+            let validator = jsonschema::validator_for(&json).map_err(|e| Error::KindSchema {
+                reason: format!("{}/{name}.schema.json: {e}", dir.display()),
+            })?;
+            if let Some((first, _)) = by_id.insert(id.clone(), (name.clone(), validator)) {
+                return Err(Error::KindSchema {
+                    reason: format!("schema id '{id}' is pinned by both {first} and {name}"),
+                });
+            }
+        }
+        Ok(GeneratedSchemas { by_id })
+    }
+
+    /// The schema ids that have a contract, sorted.
+    pub fn ids(&self) -> impl Iterator<Item = &str> {
+        self.by_id.keys().map(String::as_str)
+    }
+
+    /// Every reason `value` fails the contract of `schema_id`; empty when it passes or
+    /// when no contract is published for that id.
+    pub fn violations(&self, schema_id: &str, value: &Value) -> Vec<String> {
+        let Some((_, validator)) = self.by_id.get(schema_id) else {
+            return Vec::new();
+        };
+        validator
+            .iter_errors(value)
+            .map(|e| format!("{}: {e}", e.instance_path()))
+            .collect()
+    }
+}
+
+/// One thing wrong with a generated artifact, named by its path.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Violation {
+    /// The artifact, repository-relative.
+    pub path: String,
+    /// What is wrong with it.
+    pub reason: String,
+}
+
+impl std::fmt::Display for Violation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.path, self.reason)
+    }
+}
+
+/// Does the content open with `banner`, allowing for a first line the format reserves?
+///
+/// Usually the banner is the first thing in the file. Two artifacts cannot put it there,
+/// and neither is cutting a corner: an executable script must open with its `#!` line or
+/// the kernel will not run it, and a Markdown page the site projects must open with its
+/// own title, because the projection strips a document's first heading and a banner above
+/// it would leave the page with none. Both carry the banner on the line after, which is
+/// still the opening of the file and still impossible to miss. Anything further down is a
+/// banner a reader scrolls past, and is refused.
+pub fn opens_with_banner(content: &str, banner: &str) -> bool {
+    if content.starts_with(banner) {
+        return true;
+    }
+    let Some((first, rest)) = content.split_once('\n') else {
+        return false;
+    };
+    let reserved = first.starts_with("#!") || first.starts_with("# ");
+    reserved && rest.starts_with(banner)
+}
+
+/// Every way a plan can be wrong, checked before a byte is written.
+///
+/// Three properties, and they are the whole of the enforcement rule
+/// `project.generated-artifacts-are-typed@1`:
+///
+/// 1. **Every artifact carries a provenance header** in the form its encoding allows —
+///    members in JSON, a comment banner in YAML and text, an HTML comment in Markdown —
+///    except the provider bootstraps, which stamp themselves with the policy hash they
+///    were rendered from and are checked by `majordomus update` instead.
+/// 2. **Every structured artifact parses**, and a document that declares a schema
+///    satisfies the contract published for it under `share/schemas/generated/`.
+/// 3. **The manifest is the plan**: exactly the artifacts of the plan, each with the
+///    encoding, contract, size and hash it actually has.
+pub fn violations(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Vec<Violation> {
+    let mut out = Vec::new();
+    let at = |path: &str, reason: String| Violation {
+        path: path.to_string(),
+        reason,
+    };
+    for a in artifacts {
+        if a.format != ArtifactFormat::of_path(&a.path) {
+            out.push(at(
+                &a.path,
+                format!(
+                    "declares format {} and its suffix says {}",
+                    a.format.suffix(),
+                    ArtifactFormat::of_path(&a.path).suffix()
+                ),
+            ));
+        }
+        if a.source.trim().is_empty() {
+            out.push(at(&a.path, "names no source".into()));
+        }
+        // the provider bootstraps carry the `majordomus update` stamp, not this banner:
+        // a region projection owns part of a file it did not write, and a header at the
+        // top of it would be a claim over text this generator does not own
+        let stamped_elsewhere = a.document.starts_with("providers/");
+        // the opening an encoding wraps the banner in: an HTML comment in Markdown, a `#`
+        // comment in YAML and in line-oriented text, and nothing here for JSON, which
+        // carries it as members and is checked below
+        let opening = match a.format {
+            ArtifactFormat::Markdown if !stamped_elsewhere => Some(format!("<!-- {HEADER}")),
+            ArtifactFormat::Yaml | ArtifactFormat::Text => Some(format!("# {HEADER}")),
+            _ => None,
+        };
+        if opening.is_some_and(|o| !opens_with_banner(&a.content, &o)) {
+            out.push(at(&a.path, "carries no generated-file banner".into()));
+        }
+        if a.format == ArtifactFormat::Json {
+            match serde_json::from_str::<Value>(&a.content) {
+                Err(e) => out.push(at(&a.path, format!("is not JSON: {e}"))),
+                Ok(value) => {
+                    let banner = value
+                        .get("generated")
+                        .or_else(|| value.get("x-majordomus-generated"))
+                        .and_then(Value::as_str);
+                    match banner {
+                        Some(b) if b.starts_with(HEADER) => {}
+                        _ if stamped_elsewhere => {}
+                        _ => out.push(at(
+                            &a.path,
+                            "carries no `generated` member saying it is generated".into(),
+                        )),
+                    }
+                    if let Some(schema) = &a.schema {
+                        let declared = value.get("schema").and_then(Value::as_str);
+                        if declared.is_some() && declared != Some(schema.as_str()) {
+                            out.push(at(
+                                &a.path,
+                                format!(
+                                    "declares schema '{schema}' and carries '{}'",
+                                    declared.unwrap_or("")
+                                ),
+                            ));
+                        }
+                        for reason in schemas.violations(schema, &value) {
+                            out.push(at(&a.path, format!("does not satisfy {schema} — {reason}")));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- the manifest is the plan. Only when the plan holds the artifacts it indexes:
+    // `generate manifest` writes the manifest alone, and its content was computed from the
+    // whole plan inside `plan`, so there is nothing here to compare it against.
+    let manifest = artifacts
+        .iter()
+        .find(|a| a.document == MANIFEST_ID && a.format == ArtifactFormat::Json)
+        .filter(|_| artifacts.iter().any(|a| a.document != MANIFEST_ID));
+    if let Some(manifest) = manifest {
+        let listed: Vec<Value> = serde_json::from_str::<Value>(&manifest.content)
+            .ok()
+            .and_then(|v| v.get("artifacts").and_then(Value::as_array).cloned())
+            .unwrap_or_default();
+        let mut planned: Vec<&Artifact> = artifacts.iter().collect();
+        planned.sort_by(|a, b| a.path.cmp(&b.path));
+        if listed.len() != planned.len() {
+            out.push(at(
+                &manifest.path,
+                format!(
+                    "lists {} artifacts and the plan has {}",
+                    listed.len(),
+                    planned.len()
+                ),
+            ));
+        }
+        for entry in &listed {
+            let path = entry
+                .get("path")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            let Some(a) = artifacts.iter().find(|a| a.path == path) else {
+                out.push(at(
+                    &manifest.path,
+                    format!("lists {path}, which is not planned"),
+                ));
+                continue;
+            };
+            if entry.get("describes_itself").is_some() {
+                continue;
+            }
+            if entry.get("sha256").and_then(Value::as_str) != Some(sha256_hex(&a.content).as_str())
+            {
+                out.push(at(
+                    &manifest.path,
+                    format!("records a stale hash for {path}"),
+                ));
+            }
+            if entry.get("bytes").and_then(Value::as_u64) != Some(a.content.len() as u64) {
+                out.push(at(
+                    &manifest.path,
+                    format!("records a stale size for {path}"),
+                ));
+            }
+        }
+        for a in &planned {
+            if !listed
+                .iter()
+                .any(|e| e.get("path").and_then(Value::as_str) == Some(a.path.as_str()))
+            {
+                out.push(at(&manifest.path, format!("does not list {}", a.path)));
+            }
+        }
+    }
+    out
+}
+
+/// [`violations`] as an error: nothing, or one `Stale` naming every one of them. This is
+/// what `generate` and `generate --check` refuse on.
+pub fn verify(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Result<()> {
+    let violations = violations(artifacts, schemas);
+    if violations.is_empty() {
+        Ok(())
+    } else {
+        Err(Error::Stale {
+            files: violations.iter().map(Violation::to_string).collect(),
+        })
+    }
+}
+
 /// Write every artifact under `root`, creating the directory. Returns the paths written.
 pub fn write(root: &Path, artifacts: &[Artifact]) -> Result<Vec<PathBuf>> {
     let mut written = Vec::new();
@@ -559,9 +1664,8 @@ pub fn check(root: &Path, artifacts: &[Artifact]) -> Result<()> {
 /// projections, and the declarative kinds by rule. Declarative objects are not enumerated
 /// here because that inventory belongs to the repository's own state, changes with it, and
 /// is answered live by `majordomus capabilities list`.
-fn reference(registry: &CapabilityRegistry, version: &str) -> String {
+fn reference(registry: &CapabilityRegistry) -> String {
     let mut s = String::new();
-    s.push_str(&format!("<!-- {HEADER}\n     Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`\n     Generator: majordomus-cli {version} -->\n"));
     s.push_str("# Capability reference\n\n");
     s.push_str("Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.\n\n");
     s.push_str("## Modules\n\n| module | title | stability | capabilities | reference |\n|---|---|---|---|---|\n");
@@ -646,9 +1750,8 @@ fn reference(registry: &CapabilityRegistry, version: &str) -> String {
 }
 
 /// One module's reference: its metadata and each capability in full.
-fn module_reference(registry: &CapabilityRegistry, module: &str, version: &str) -> String {
+fn module_reference(registry: &CapabilityRegistry, module: &str) -> String {
     let mut s = String::new();
-    s.push_str(&format!("<!-- {HEADER}\n     Source: the canonical Majordomus capability registry, module `{module}`; regenerate with `majordomus generate`\n     Generator: majordomus-cli {version} -->\n"));
     if let Some(m) = registry.module(module) {
         s.push_str(&format!(
             "# Module `{}` — {}\n\n{}\n\n",
@@ -740,9 +1843,8 @@ fn module_reference(registry: &CapabilityRegistry, module: &str, version: &str) 
 /// The native command line as Markdown: every command with its arguments, from the clap
 /// declaration ([`crate::cli::tree`]). The site renders the same tree from the registry
 /// dataset; neither is typed by hand.
-pub fn cli_reference(tree: &crate::cli::CommandDoc, version: &str) -> String {
+pub fn cli_reference(tree: &crate::cli::CommandDoc) -> String {
     let mut s = String::new();
-    s.push_str(&format!("<!-- {HEADER}\n     Source: the clap declaration of the command line and the examples declared with it ({});\n     regenerate with `majordomus generate`\n     Generator: majordomus-cli {version} -->\n", crate::cli::DECLARATION));
     s.push_str("# Command line of the Rust executable\n\n");
     s.push_str(&format!("{}\n\n", tree.about));
     if let Some(long) = &tree.long_about {
@@ -854,11 +1956,8 @@ pub fn cli_reference(tree: &crate::cli::CommandDoc, version: &str) -> String {
 /// `docs/generated/cli.json`: pretty JSON with a trailing newline, the same tree
 /// `cli_reference` renders as Markdown. The website's generator reads this file and never
 /// the Rust source.
-pub fn cli_document(tree: &crate::cli::CommandDoc, version: &str) -> String {
-    let mut s =
-        serde_json::to_string_pretty(&crate::cli::document(tree, version)).unwrap_or_default();
-    s.push('\n');
-    s
+pub fn cli_document(tree: &crate::cli::CommandDoc, version: &str) -> Value {
+    serde_json::to_value(crate::cli::document(tree, version)).unwrap_or(Value::Null)
 }
 
 /// The examples of one command, as the reference prints them: the title, what it does, the
@@ -912,5 +2011,195 @@ fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
         crate::capability::BenchmarkPolicy::Waived { reason } => {
             format!("waived ({})", enum_name(reason))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    /// A share directory inside the repository is named relative to it even when the root
+    /// is spelled differently from the canonical path the share carries. `Share::open`
+    /// canonicalises; the root does not, so the two spellings differ whenever a component
+    /// is a symlink — and the banner then named the generator's own absolute path, making
+    /// the artifact depend on the worktree it was generated in.
+    #[test]
+    #[cfg(unix)]
+    fn a_share_inside_the_repository_is_named_relative_to_it() {
+        let tmp = tempfile::tempdir().unwrap();
+        let real = tmp.path().join("repository");
+        std::fs::create_dir_all(real.join("share").join("schemas")).unwrap();
+
+        let linked = tmp.path().join("by-another-name");
+        std::os::unix::fs::symlink(&real, &linked).unwrap();
+
+        // The share as `Share::open` hands it over: canonical. The root as it was
+        // discovered: through the symlink.
+        let schemas = real.join("share").join("schemas").canonicalize().unwrap();
+        assert_eq!(relative_to(&schemas, &linked), "share/schemas");
+        assert_eq!(relative_to(&schemas, &real), "share/schemas");
+    }
+
+    /// A share genuinely outside the repository keeps its absolute path — that is the
+    /// documented behaviour and the only honest answer.
+    #[test]
+    fn a_share_outside_the_repository_keeps_its_absolute_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("repository");
+        let outside = tmp.path().join("elsewhere").join("share");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::create_dir_all(&outside).unwrap();
+
+        let named = relative_to(&outside, &root);
+        assert!(
+            Path::new(&named).is_absolute(),
+            "a share outside the repository cannot be named relative to it: {named}"
+        );
+    }
+
+    /// Every target has a name and every name is distinct: the manifest and the command
+    /// line both address a target by it.
+    #[test]
+    fn every_target_is_named_once() {
+        let names: Vec<&str> = Target::ALL.iter().map(|t| t.name()).collect();
+        let mut unique = names.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        assert_eq!(names.len(), unique.len(), "{names:?}");
+        assert!(names.iter().all(|n| !n.is_empty()));
+        assert_eq!(Target::Manifest.name(), "manifest");
+        assert_eq!(Target::INDEXED.len(), Target::ALL.len() - 1);
+        assert!(!Target::INDEXED.contains(&Target::Manifest));
+    }
+
+    /// The encoding is read from the suffix, and anything the generator does not encode
+    /// structurally is line-oriented text — the shell tool's allow-lists are the case.
+    #[test]
+    fn the_suffix_names_the_encoding() {
+        for (path, format) in [
+            ("docs/generated/registry.json", ArtifactFormat::Json),
+            ("docs/generated/registry.yaml", ArtifactFormat::Yaml),
+            ("a/b.yml", ArtifactFormat::Yaml),
+            ("docs/generated/cli.md", ArtifactFormat::Markdown),
+            ("share/allow/rule.txt", ArtifactFormat::Text),
+            ("AGENTS", ArtifactFormat::Text),
+            ("weird.suffix", ArtifactFormat::Text),
+        ] {
+            assert_eq!(ArtifactFormat::of_path(path), format, "{path}");
+        }
+        assert_eq!(ArtifactFormat::Json.suffix(), "json");
+        assert_eq!(ArtifactFormat::Markdown.suffix(), "md");
+        assert_eq!(ArtifactFormat::Text.suffix(), "txt");
+        assert_eq!(ArtifactFormat::Yaml.suffix(), "yaml");
+    }
+
+    /// A document whose value is not a mapping has nowhere to put members, so it is
+    /// written as it stands rather than silently wrapped.
+    #[test]
+    fn a_value_that_is_not_a_mapping_carries_no_members() {
+        let doc = Document::new("fixture", "x/v1", "a test", json!([1, 2, 3]));
+        assert_eq!(doc.stamped("test"), json!([1, 2, 3]));
+        let arts = doc.artifacts("test");
+        // the YAML encoding still carries the banner, which is a comment and not a member
+        assert!(arts[1].content.starts_with(&format!("# {HEADER}")));
+        assert!(arts[1].content.contains("\n- 1\n"));
+    }
+
+    /// The banner says the same three things in every encoding, and the JSON one names
+    /// the command that rewrites the file.
+    #[test]
+    fn the_banner_is_one_text_in_three_wrappings() {
+        let [a, b, c] = banner_lines("nowhere", "9.9.9");
+        assert_eq!(a, HEADER);
+        assert!(b.starts_with("Source: nowhere;") && b.contains(REGENERATE));
+        assert_eq!(c, "Generator: majordomus-cli 9.9.9");
+        assert_eq!(
+            markdown_banner("nowhere", "9.9.9"),
+            format!("<!-- {a}\n     {b}\n     {c} -->\n")
+        );
+        assert_eq!(
+            comment_banner("nowhere", "9.9.9"),
+            format!("# {a}\n# {b}\n# {c}\n")
+        );
+        assert!(json_banner("nowhere").starts_with(HEADER));
+        assert!(json_banner("nowhere").contains(REGENERATE));
+    }
+
+    /// A schema id nothing publishes is not a failure: the document simply has no
+    /// contract, and saying so is not the same as inventing one.
+    #[test]
+    fn an_unpublished_schema_id_validates_nothing_and_the_set_names_what_it_holds() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("thing.schema.json"),
+            r#"{"type":"object","properties":{"schema":{"const":"x/v1"}},"required":["schema"]}"#,
+        )
+        .unwrap();
+        let schemas = GeneratedSchemas::load(dir.path()).unwrap();
+        assert_eq!(schemas.ids().collect::<Vec<_>>(), ["x/v1"]);
+        assert!(format!("{schemas:?}").contains("x/v1"));
+        assert_eq!(
+            schemas.violations("nobody/v1", &json!({})),
+            Vec::<String>::new()
+        );
+        assert!(!schemas.violations("x/v1", &json!({})).is_empty());
+        assert_eq!(
+            schemas.violations("x/v1", &json!({ "schema": "x/v1" })),
+            Vec::<String>::new()
+        );
+    }
+
+    /// Two schemas pinning one document would make the contract of that document
+    /// ambiguous, so loading refuses rather than picking one.
+    #[test]
+    fn two_contracts_for_one_document_are_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let body = r#"{"type":"object","properties":{"schema":{"const":"x/v1"}}}"#;
+        std::fs::write(dir.path().join("one.schema.json"), body).unwrap();
+        std::fs::write(dir.path().join("two.schema.json"), body).unwrap();
+        let err = GeneratedSchemas::load(dir.path()).unwrap_err().to_string();
+        assert!(err.contains("x/v1") && err.contains("both"), "{err}");
+    }
+
+    /// A violation prints as the artifact it is about, then the reason: the one line the
+    /// command shows.
+    #[test]
+    fn a_violation_names_the_artifact_first() {
+        let v = Violation {
+            path: "docs/generated/x.md".into(),
+            reason: "carries no generated-file banner".into(),
+        };
+        assert_eq!(
+            v.to_string(),
+            "docs/generated/x.md: carries no generated-file banner"
+        );
+    }
+
+    /// The manifest of an empty plan still describes itself, in every encoding it is
+    /// committed in, and none of its own three carries a hash.
+    #[test]
+    fn the_manifest_of_nothing_is_still_the_manifest() {
+        let doc = manifest_document(&[]);
+        let entries = doc["artifacts"].as_array().unwrap();
+        assert_eq!(entries.len(), 3);
+        assert!(entries.iter().all(|e| e["describes_itself"] == true));
+        assert!(entries.iter().all(|e| e.get("sha256").is_none()));
+        let arts = manifest_artifacts(&doc, "test");
+        assert_eq!(
+            arts.iter().map(|a| a.path.as_str()).collect::<Vec<_>>(),
+            manifest_paths()
+        );
+        assert!(arts[2].content.contains("— (this file)"));
+        // and with nothing but itself in the plan, the verifier has nothing to compare
+        let dir = tempfile::tempdir().unwrap();
+        let schemas = GeneratedSchemas::load(dir.path()).unwrap();
+        let manifest_only = violations(&arts, &schemas);
+        assert!(
+            !manifest_only
+                .iter()
+                .any(|v| v.reason.contains("does not list")),
+            "{manifest_only:?}"
+        );
     }
 }

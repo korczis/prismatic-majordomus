@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the canonical Majordomus capability registry, module `graph`; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.1.0 -->
+     Source: the `graph` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.2.0 -->
 # Module `graph` — Graphs
 
 The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape.

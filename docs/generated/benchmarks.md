@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.1.0 -->
+     Generator: majordomus-cli 0.2.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,22 +9,32 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 16 | 16 | 0 | 0 |
-| http | 16 | 16 | 0 | 0 |
-| mcp | 16 | 16 | 0 | 0 |
+| direct | 32 | 32 | 0 | 0 |
+| http | 32 | 32 | 0 | 0 |
+| mcp | 30 | 30 | 0 | 0 |
 | system | 12 | 12 | 0 | 0 |
-| total | 60 | 60 | 0 | 0 |
+| total | 106 | 106 | 0 | 0 |
 
 ## Capabilities
 
 | capability | module | kind | cache | direct | mcp | http | cases |
 |---|---|---|---|---|---|---|---|
+| `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
 | `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
+| `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
+| `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
 | `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
-| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `composed` |
+| `distribution.artifact` | distribution | query | — | covered | covered | covered | `first-published-target` |
+| `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
+| `distribution.model` | distribution | query | — | covered | covered | covered | `default` |
+| `distribution.releases` | distribution | query | — | covered | covered | covered | `default` |
+| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
+| `health.live` | health | query | — | covered | — | covered | `default` |
+| `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
@@ -35,6 +45,12 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
+| `why.areas` | why | query | process, 4 entries | covered | covered | covered | `default` |
+| `why.audiences` | why | query | process, 4 entries | covered | covered | covered | `default` |
+| `why.diagnose` | why | query | process, 32 entries | covered | covered | covered | `three-moments` |
+| `why.list` | why | query | process, 32 entries | covered | covered | covered | `all`, `by-audience`, `search` |
+| `why.moment` | why | query | process, 64 entries | covered | covered | covered | `first-moment` |
+| `why.validate` | why | query | process, 2 entries | covered | covered | covered | `default` |
 
 ## System targets
 
