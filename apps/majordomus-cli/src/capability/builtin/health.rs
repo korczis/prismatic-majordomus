@@ -455,10 +455,16 @@ mod tests {
     /// canonical state, and the answer is the same whatever the layer holds.
     #[test]
     fn liveness_is_the_same_answer_whatever_the_layer_holds() {
-        let small = SyntheticRepository::new(Shape { rules: 1, ..Shape::default() })
-            .expect("a synthetic repository");
-        let large = SyntheticRepository::new(Shape { rules: 40, ..Shape::default() })
-            .expect("a synthetic repository");
+        let small = SyntheticRepository::new(Shape {
+            rules: 1,
+            ..Shape::default()
+        })
+        .expect("a synthetic repository");
+        let large = SyntheticRepository::new(Shape {
+            rules: 40,
+            ..Shape::default()
+        })
+        .expect("a synthetic repository");
         let a = liveness(&small.context().expect("a context"), Empty {}).expect("alive");
         let b = liveness(&large.context().expect("a context"), Empty {}).expect("alive");
         assert_eq!(a, b);
