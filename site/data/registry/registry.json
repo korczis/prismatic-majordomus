@@ -6,7 +6,7 @@
     "version": "0.2.0"
   },
   "registry": {
-    "fingerprint": "f5239bda34303aababe777c92eaa3160b278b80e554e8e22874636b91602fa44",
+    "fingerprint": "a2d782fbb29921e2888c1ab00667c3bb8f0e68bef9884afe900a400a351f88c0",
     "summary": {
       "total": 940,
       "builtin": 33,
@@ -9683,7 +9683,7 @@
     ]
   },
   "index": {
-    "fingerprint": "85b312535b1e0fe1e7c22598e65d2eadd5c8c79b99ccac53fe9a289f8f5b5bed",
+    "fingerprint": "632c13a249988ad047bbd5291a48013958f41e446381eaa412ce3c69f2acdfef",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -12367,7 +12367,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 34350
+        "bytes": 34700
       },
       {
         "uri": "majordomus://document/docs/README.md",
@@ -13712,7 +13712,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 69274
+        "bytes": 71126
       },
       {
         "uri": "majordomus://implementation/lib/check.sh",
@@ -15078,7 +15078,7 @@
         "path": ".ai/repo/project/issues/I0908.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2360
+        "bytes": 2368
       },
       {
         "uri": "majordomus://issue/I0909",
@@ -15353,7 +15353,7 @@
         "path": ".ai/repo/project/issues/I1001.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2574
+        "bytes": 3552
       },
       {
         "uri": "majordomus://issue/I1002",
@@ -15364,7 +15364,7 @@
         "path": ".ai/repo/project/issues/I1002.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2144
+        "bytes": 3307
       },
       {
         "uri": "majordomus://issue/I1003",
@@ -18385,7 +18385,7 @@
         "identity": "test/cases/29_prompt_capture.sh",
         "path": "test/cases/29_prompt_capture.sh",
         "source_class": "case",
-        "bytes": 22930
+        "bytes": 25884
       },
       {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
@@ -26843,6 +26843,15 @@
         "cached": true
       },
       {
+        "key": "graph.get|direct|composed",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "composed",
+        "cached": true
+      },
+      {
         "key": "graph.get|mcp|registry",
         "kind": "capability",
         "transport": "mcp",
@@ -26903,6 +26912,16 @@
         "tool": "majordomus_graph"
       },
       {
+        "key": "graph.get|mcp|composed",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "composed",
+        "cached": true,
+        "tool": "majordomus_graph"
+      },
+      {
         "key": "graph.get|http|registry",
         "kind": "capability",
         "transport": "http",
@@ -26959,6 +26978,16 @@
         "id": "graph.get",
         "module": "graph",
         "case": "why",
+        "cached": true,
+        "route": "GET /api/v1/graph"
+      },
+      {
+        "key": "graph.get|http|composed",
+        "kind": "capability",
+        "transport": "http",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "composed",
         "cached": true,
         "route": "GET /api/v1/graph"
       },
@@ -28135,21 +28164,21 @@
           "module": "graph",
           "transport": "direct",
           "state": "covered",
-          "cases": 6
+          "cases": 7
         },
         {
           "subject": "graph.get",
           "module": "graph",
           "transport": "mcp",
           "state": "covered",
-          "cases": 6
+          "cases": 7
         },
         {
           "subject": "graph.get",
           "module": "graph",
           "transport": "http",
           "state": "covered",
-          "cases": 6
+          "cases": 7
         },
         {
           "subject": "graph.list",
