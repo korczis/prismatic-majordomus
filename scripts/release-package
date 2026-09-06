@@ -45,7 +45,7 @@ if [ ! -x "$mj" ]; then
   command -v cargo >/dev/null 2>&1 || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
   RUSTFLAGS='' cargo build --quiet --locked --manifest-path "$CRATE/Cargo.toml" 1>&2
 fi
-names="$("$mj" distribution artifact --target "$target" --tag "$tag" --format text 2>/dev/null)" \
+names="$("$mj" distribution --repo "$ROOT" artifact --target "$target" --tag "$tag" --format text 2>/dev/null)" \
   || die "the distribution model does not publish '$target'" 10
 archive="$(printf '%s\n' "$names" | sed -n '1p')"
 rootdir="$(printf '%s\n' "$names" | sed -n '2p')"

@@ -57,13 +57,13 @@ digest() {
 }
 
 # every supported target, from the model; the workflow states no platform of its own
-targets="$("$mj" distribution targets 2>/dev/null | awk 'NR>1 && ($3=="supported" || $3=="experimental") {print $1}')"
+targets="$("$mj" distribution --repo "$ROOT" targets 2>/dev/null | awk 'NR>1 && ($3=="supported" || $3=="experimental") {print $1}')"
 [ -n "$targets" ] || die "the distribution model publishes no target" 10
 
 body=""
 missing=0
 for id in $targets; do
-  json="$("$mj" distribution artifact --target "$id" --tag "$tag" --format json 2>/dev/null)" \
+  json="$("$mj" distribution --repo "$ROOT" artifact --target "$id" --tag "$tag" --format json 2>/dev/null)" \
     || { printf 'release-record: the model refuses target %s\n' "$id" >&2; missing=1; continue; }
   name="$(printf '%s\n' "$json" | sed -n 's/.*"name": "\([^"]*\)".*/\1/p' | head -n 1)"
   url="$(printf '%s\n' "$json" | sed -n 's/.*"url": "\([^"]*\)".*/\1/p' | head -n 1)"
@@ -100,6 +100,6 @@ mkdir -p "$(dirname "$out")"
 } > "$out"
 
 # the record must agree with the model before anyone sees it
-"$mj" distribution metadata --record "$out" >/dev/null 2>&1 \
-  || { "$mj" distribution metadata --record "$out" >/dev/null; die "the record does not agree with the distribution model" 10; }
+"$mj" distribution --repo "$ROOT" metadata --record "$out" >/dev/null 2>&1 \
+  || { "$mj" distribution --repo "$ROOT" metadata --record "$out" >/dev/null; die "the record does not agree with the distribution model" 10; }
 printf 'release-record: %s\n' "$out"

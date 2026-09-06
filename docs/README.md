@@ -17,6 +17,8 @@ Each of these is rendered on the website as well, from this same Markdown.
 | [`PERFORMANCE.md`](PERFORMANCE.md) | contributors, AI workers | where a command's time goes (`MJ_TIMING=1`), what was slow and the shape of every fix, `majordomus bench` and its cold and warm distributions, local runs against the tracked baseline, the regression check and the budgets, and how to work on performance |
 | [`ROADMAP.md`](ROADMAP.md) | everyone | the graph between milestones: identity against version, the gate that makes a dependency real before the next step starts, derived ordering, claim linkage, and how a milestone is added |
 | [`DOGFOODING.md`](DOGFOODING.md) | contributors, AI workers | the one rule: Majordomus cannot recommend a development discipline it does not use itself — and what following it costs |
+| [`INSTALL.md`](INSTALL.md) | everyone | installing the tool: the one-line installer, pinning a version, choosing where it goes, the supported platforms, upgrading, uninstalling, CI use, the security model and troubleshooting |
+| [`DISTRIBUTION.md`](DISTRIBUTION.md) | contributors, AI workers | how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release |
 | [`CATALOGUE.md`](CATALOGUE.md) | everyone | the use-case and application registries: what they are for, how they differ from the why pages, the schema, and how to extend them |
 | [`ADOPTION.md`](ADOPTION.md) | teams | day one, week one, several workers, removal |
 | [`ECONOMICS.md`](ECONOMICS.md) | leads | the claim it refuses to make, what v0.1 controls without measuring, where the cost actually is, what the ledger alone can measure, and what honest measurement would take |

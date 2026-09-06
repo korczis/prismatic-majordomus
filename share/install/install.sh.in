@@ -559,6 +559,17 @@ main() {
   fi
   debug "resolved target $MJ_TARGET ($MJ_TARGET_STATUS)"
 
+  if [ "$MJ_DRY_RUN" = 1 ]; then
+    cat <<PLATFORM
+$MJ_PROGRAM — dry run, nothing will be changed
+
+  operating system    $MJ_OS (uname -s: $(uname -s 2>/dev/null || echo '?'))
+  architecture        $MJ_ARCH (uname -m: $(uname -m 2>/dev/null || echo '?'))
+  C library           $MJ_LIBC
+  target              $MJ_TARGET ($MJ_TARGET_STATUS)
+PLATFORM
+  fi
+
   resolve_base_url
   step "Resolving the release ..."
   resolve_release
@@ -579,12 +590,6 @@ main() {
 
   if [ "$MJ_DRY_RUN" = 1 ]; then
     cat <<REPORT
-$MJ_PROGRAM — dry run, nothing will be changed
-
-  operating system    $MJ_OS (uname -s: $(uname -s 2>/dev/null || echo '?'))
-  architecture        $MJ_ARCH (uname -m: $(uname -m 2>/dev/null || echo '?'))
-  C library           $MJ_LIBC
-  target              $MJ_TARGET ($MJ_TARGET_STATUS)
   release metadata    $MJ_METADATA_URL
   resolved release    $MJ_TAG$( [ "$MJ_PINNED" = 1 ] && echo ' (pinned)' || echo ' (latest stable)')
   artifact            $MJ_ARTIFACT ($MJ_SIZE bytes)
