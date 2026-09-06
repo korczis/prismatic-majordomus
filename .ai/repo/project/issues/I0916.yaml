@@ -1,0 +1,40 @@
+id: I0916
+milestone: fly-deployment
+title: The smoke suite is derived from the route registry, never written twice
+slug: registry-derived-smoke-suite
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Generate the deployment smoke tests from the authoritative route registry, extending route metadata only where smoke testing genuinely needs it, and cover the surfaces that a plain status code cannot verify."
+why: "A hand-written list of endpoints to check is the same defect as a hand-written OpenAPI file: it is complete on the day it is written and wrong afterwards. The registry already knows every route, and web surface discovery under ADR 0013 knows which of them are served."
+current_state: "The registry holds the capability routes and the router serves them. Nothing derives verification from either, and the served topology is being reshaped on other branches."
+desired_state: "The smoke suite enumerates what the registry and the resolved surface topology say is served, verifies each according to its kind, and gains a new route automatically when one is registered."
+scope:
+  - apps/majordomus-cli/src/deploy/smoke.rs
+  - test/cases
+non_scope:
+  - A second list of endpoints in a script, a workflow or a test fixture
+  - Route aliases created to make a test pass
+  - Requiring a paid external provider for a deployment smoke run
+depends_on:
+  - I0905
+  - I0914
+acceptance_criteria:
+  - Every checked route comes from the registry or from the resolved surface topology, and adding a route adds its check with no second edit
+  - Route metadata gains only the fields smoke testing actually needs, and no field that exists to make one test convenient
+  - A websocket route is verified by a real upgrade, a message exchange and a clean close, not by a status code
+  - The MCP transport is verified by a protocol-valid handshake, not by a 200 on its path
+  - An OpenAI-compatible surface, where one is served, is verified for route presence, schema correctness, intentional authentication behaviour and correct rejection of malformed input, without requiring a paid completion
+  - The OpenAPI document is retrieved and parsed, and its consistency with the registry is asserted
+  - Deployment availability and external provider availability remain separate verdicts
+validation:
+  - bash test/run.sh
+  - cargo test --workspace --all-features
+evidence_required:
+  - smoke_derived
+  - ws_upgrade
+  - mcp_handshake
+  - openapi_parsed
+risk: "The served topology is in flight on other branches. Pinning the suite to today's paths would make it stale on arrival; it has to ask the topology rather than name arms."
+created_at: 2026-09-06
+updated_at: 2026-09-06

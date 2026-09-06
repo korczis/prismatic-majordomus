@@ -1,0 +1,34 @@
+id: I0908
+milestone: fly-deployment
+title: A hosted process has no repository, and says so instead of failing
+slug: hosted-capability-boundary
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Separate the local mode that inspects a developer's repository from the hosted mode that serves a packaged layer, and report the capabilities that are unavailable in hosted mode from capability metadata rather than from a hand-written list."
+why: "Majordomus reads a repository checkout. A Machine has no /Users/korczis/dev. Without an explicit boundary the hosted process either panics on the first read or silently serves an empty layer, and a hand-maintained list of what does not work remotely would be one more thing to drift."
+current_state: "The executable resolves a repository from the working directory. Nothing distinguishes a packaged deployment from a local checkout, and no absolute path scan exists."
+desired_state: "The hosted process serves the packaged layer, the documentation, the UI and the API; a capability that genuinely requires a writable local checkout reports itself unavailable with a reason; and no absolute developer path exists anywhere in the image or its configuration."
+scope:
+  - apps/majordomus-cli/src/repository.rs
+  - apps/majordomus-cli/src/share.rs
+non_scope:
+  - Making local-only capabilities work remotely by shipping a checkout
+  - A hand-written list of unavailable capabilities
+depends_on:
+  - I0902
+acceptance_criteria:
+  - The packaged layer is a declared build input of the deployment object, not an implicit copy
+  - A capability unavailable in hosted mode is derived from capability metadata and reported with a reason rather than panicking
+  - The mode is observable through the metadata read, so an operator can tell which one a process is in
+  - A scan proves no absolute developer path — /Users, a home directory, a worktree path — appears in the image, the generated configuration or the served output
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - hosted_mode
+  - capability_boundary
+  - no_local_paths
+risk: "Packaging this repository's own layer into the image makes the public deployment a demonstration of one repository. That is the intent, and it must be stated rather than discovered."
+created_at: 2026-09-06
+updated_at: 2026-09-06

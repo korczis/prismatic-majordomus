@@ -1,0 +1,33 @@
+id: I1027
+milestone: capability-graph
+title: A synthetic capability proves the architecture instead of describing it
+slug: extensibility-proof
+priority: p0
+profile: deep-work
+parallel_safe: false
+objective: "Register a synthetic capability at its authoritative source alone, and prove it reaches the graph, the interface, the search, the navigation and the static projection with no other edit — and that omitting its required evidence fails enforcement."
+why: "Every claim in this milestone reduces to one: adding something requires no edit to any surface. That is either demonstrable or it is marketing, and the demonstration is cheap."
+current_state: "Nothing proves the loop end to end."
+desired_state: "One test registers a synthetic capability, generates, and asserts its appearance everywhere it should appear — and asserts the failure when its required evidence is missing."
+scope:
+  - test/cases
+non_scope:
+  - Leaving the synthetic fixture in the repository as if it were a real capability
+  - Special-casing the fixture anywhere in the implementation
+depends_on:
+  - I1018
+  - I1019
+acceptance_criteria:
+  - The capability is registered only at its authoritative source, and no surface is edited
+  - After generation it appears in the graph, the interface, the search, the navigation and the static projection
+  - Omitting its required documentation or verification fails enforcement with a message naming what is missing
+  - Supplying the evidence makes every check pass
+  - The fixture is removed afterwards, or kept only where test fixtures belong
+validation:
+  - bash test/run.sh
+evidence_required:
+  - synthetic_flows_through
+  - enforcement_fires
+risk: "A fixture that the implementation learns to recognise proves nothing. It has to be ordinary in every respect."
+created_at: 2026-09-06
+updated_at: 2026-09-06

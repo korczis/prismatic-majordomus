@@ -281,6 +281,8 @@ const DERIVATIONS: &[(&str, Derivation)] = &[
     ("rules", rules_graph),
     ("adrs", adrs_graph),
     ("use-cases", use_cases_graph),
+    ("why", why_graph),
+    ("composed", composed_graph),
 ];
 
 /// The ids of every graph, in the order they are listed.
@@ -739,6 +741,488 @@ fn use_cases_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
     b.finish()
 }
 
+/// Everything, composed: the capability registry and every object of the index in one
+/// model, with the node kinds taken from what was actually indexed rather than from a
+/// list written here. Adding a kind to the layer adds it to this graph; adding a
+/// capability module adds its capabilities. Nothing in this derivation names a kind.
+///
+/// The graph holds definitions only. What is true of a running process — whether a
+/// capability answered, what the health of a surface is now — is [`RuntimeState`], laid
+/// over these nodes by a consumer that has a process to ask. Keeping the two apart is
+/// what lets the published site render this graph with no server behind it.
+///
+/// The edges are the point. Beside the structure the registries assert — a module
+/// composes its capabilities, a capability is projected through the transports it
+/// declares, an object is of its kind — every reference the layer's own front matter
+/// already carries becomes a typed edge: a rule to the rules it depends on, a decision to
+/// what it put in force and what it stands in for, a use case to what it runs, exercises
+/// and evidences, a context document to what it tracks, a document to the capability it
+/// documents. The conventions are in [`RELATIONS`] and nowhere else, and
+/// [`unresolved_relations`] is the same resolution read as a verdict: a reference that
+/// names a kind this repository holds and resolves to nothing is a finding, not an edge.
+fn composed_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
+    compose(registry, &index.objects)
+}
+
+/// The composition itself, over the two registries rather than over an index: the same
+/// derivation, testable without a repository on disk.
+fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
+    let mut b = Builder::new(
+        "composed",
+        "Everything, composed",
+        "The capability registry and every object of the layer in one graph: each module with the capabilities it composes, each capability with the transports it is projected through, and every indexed object under the kind that owns it. The node kinds are the kinds that were indexed, so a kind added to the layer appears here without this derivation being edited.",
+        "the capability registry and every object of the index",
+    )
+    .node_kind("module", "a capability module of this executable")
+    .node_kind("capability", "one capability, declared once and projected")
+    .node_kind(
+        "projection",
+        "a transport a capability is projected through",
+    )
+    .node_kind("kind", "one kind of object the layer indexed")
+    .node_kind("file", "a file the layer names and does not hold as an object")
+    .node_kind("test", "a behavioural case the layer names")
+    .node_kind("command", "a command a scenario runs")
+    .node_kind("doctrine", "a doctrine a scenario exercises")
+    .node_kind("claim", "a claim the layer stands behind")
+    .edge_kind("composes", "the module composes the capability")
+    .edge_kind("projects", "the capability is projected through the transport")
+    .edge_kind("is_a", "the object is of that kind")
+    .edge_kind("depends_on", "the rule states it depends on the other")
+    .edge_kind("supersedes", "the decision stands in for the other")
+    .edge_kind("put_in_force", "the decision put the thing in force")
+    .edge_kind("related_to", "the object names the other as related")
+    .edge_kind("runs", "the scenario runs that command")
+    .edge_kind("exercises", "the scenario exercises that doctrine")
+    .edge_kind("evidences", "the object is evidence for that claim")
+    .edge_kind("tracks", "the document tracks that file")
+    .edge_kind("documents", "the document documents that capability");
+
+    // the kinds are read off what was indexed; a kind named here would be a second
+    // declaration of something share/kinds.yaml already owns
+    let kinds: BTreeSet<&str> = objects.iter().map(|o| o.kind.as_str()).collect();
+    for kind in &kinds {
+        b = b.node_kind(kind, &format!("an object of kind `{kind}`"));
+    }
+
+    for kind in &kinds {
+        let id = format!("kind:{kind}");
+        if !b.node(Node {
+            id,
+            kind: "kind".into(),
+            label: (*kind).to_string(),
+            summary: Some(format!("every object of kind `{kind}`")),
+            route: None,
+            source: None,
+            status: None,
+            external: false,
+        }) {
+            break;
+        }
+    }
+
+    for projection in ["mcp", "http", "cli", "cockpit"] {
+        b.node(Node {
+            id: format!("projection:{projection}"),
+            kind: "projection".into(),
+            label: projection.into(),
+            summary: Some(format!("the {projection} projection of the registry")),
+            route: None,
+            source: None,
+            status: None,
+            external: false,
+        });
+    }
+
+    for c in registry.iter() {
+        // the objects of the layer are on this graph as themselves; the resource
+        // capabilities that read them would say the same thing a second time
+        if !matches!(c.provenance, Provenance::Builtin { .. }) {
+            continue;
+        }
+        let module = format!("module:{}", c.module);
+        if !b.has(&module)
+            && !b.node(Node {
+                id: module.clone(),
+                kind: "module".into(),
+                label: c.module.to_string(),
+                summary: None,
+                route: None,
+                source: None,
+                status: None,
+                external: false,
+            })
+        {
+            break;
+        }
+        let id = format!("capability:{}", c.id);
+        if !b.node(Node {
+            id: id.clone(),
+            kind: "capability".into(),
+            label: c.id.to_string(),
+            summary: Some(c.title.clone()),
+            route: Some(capability_route(c.id.as_str())),
+            source: Some(c.provenance.source_path()),
+            status: Some(kind_word(c.kind)),
+            external: false,
+        }) {
+            break;
+        }
+        b.edge(&module, &id, "composes");
+        if c.exposure.mcp.is_some() {
+            b.edge(&id, "projection:mcp", "projects");
+        }
+        if c.exposure.http.is_some() {
+            b.edge(&id, "projection:http", "projects");
+        }
+        if c.exposure.cli.is_some() {
+            b.edge(&id, "projection:cli", "projects");
+        }
+        b.edge(&id, "projection:cockpit", "projects");
+    }
+
+    for o in objects {
+        // the URI is the identity: it survives a retitling, which a label does not
+        if !b.node(Node {
+            id: o.uri.clone(),
+            kind: o.kind.clone(),
+            label: o.identity.clone(),
+            summary: o.title.clone().or_else(|| o.description.clone()),
+            route: Some(object_route(&o.uri)),
+            source: Some(o.provenance.path.clone()),
+            status: metadata_string(&o.metadata, "status"),
+            external: false,
+        }) {
+            break;
+        }
+        b.edge(&o.uri, &format!("kind:{}", o.kind), "is_a");
+    }
+
+    // the references the layer already carries, resolved through the same table the
+    // check reads: an edge appears here exactly when `unresolved_relations` says nothing
+    // about it
+    let resolver = Resolver::new(objects);
+    for o in objects {
+        for rel in RELATIONS {
+            if !rel.kinds.is_empty() && !rel.kinds.contains(&o.kind.as_str()) {
+                continue;
+            }
+            for reference in metadata_strings(&o.metadata, rel.field) {
+                match resolver.resolve(rel, &reference) {
+                    Outcome::Node(target) => b.edge(&o.uri, &target, rel.edge),
+                    Outcome::External(node) => {
+                        let target = node.id.clone();
+                        if !b.has(&target) && !b.node(node) {
+                            break;
+                        }
+                        b.edge(&o.uri, &target, rel.edge);
+                    }
+                    // a reference that resolves to nothing is a finding, and a finding is
+                    // not drawn: an edge to a phantom reads as an answer
+                    Outcome::Missing(_) => {}
+                }
+            }
+        }
+    }
+
+    b.finish()
+}
+
+/// What a front matter field means when an object of some kind declares it: the one place
+/// the layer's reference conventions are written down, read both by the composition that
+/// draws the edges and by the check that refuses the ones that resolve to nothing.
+///
+/// A convention is here exactly when the metadata already carries it. Nothing in this
+/// table asks a contributor to restate a relation the layer implies, and nothing in it
+/// matches on a title or a substring: every reference resolves through a stable identity,
+/// a declared id or a repository-relative path.
+struct Relation {
+    /// The kinds that declare the field; empty means any kind that carries it.
+    kinds: &'static [&'static str],
+    /// The front matter key.
+    field: &'static str,
+    /// The edge the reference asserts.
+    edge: &'static str,
+    /// How the reference names its target.
+    target: Target,
+}
+
+/// How a reference names what it points at.
+#[derive(Clone, Copy)]
+enum Target {
+    /// An object of one kind, by identity; a versioned identity resolves by its stem.
+    Object(&'static str),
+    /// An architecture decision, by the `id` it declares rather than by its file name.
+    DeclaredAdr,
+    /// `<kind>:<name>`, where the kind is one the layer holds or `file` or `test`.
+    Prefixed,
+    /// An object of one kind by identity, or a bare name when the layer holds no such
+    /// object: a doctrine of the vendored package the index did not read.
+    ObjectOrName(&'static str, &'static str),
+    /// A name that stands for something outside the layer: a command, a claim.
+    Name(&'static str),
+    /// A repository-relative path.
+    Path,
+    /// A capability of the registry, by its canonical id.
+    Capability,
+}
+
+const RELATIONS: &[Relation] = &[
+    Relation {
+        kinds: &["rule"],
+        field: "depends_on",
+        edge: "depends_on",
+        target: Target::Object("rule"),
+    },
+    Relation {
+        kinds: &["adr"],
+        field: "supersedes",
+        edge: "supersedes",
+        target: Target::DeclaredAdr,
+    },
+    Relation {
+        kinds: &["adr"],
+        field: "related",
+        edge: "put_in_force",
+        target: Target::Prefixed,
+    },
+    // a skill names its siblings by their bare identity, not as `<kind>:<name>`: the
+    // convention is the layer's, and this table follows it rather than correcting it
+    Relation {
+        kinds: &["skill"],
+        field: "related",
+        edge: "related_to",
+        target: Target::Object("skill"),
+    },
+    Relation {
+        kinds: &["use-case"],
+        field: "commands",
+        edge: "runs",
+        target: Target::Name("command"),
+    },
+    Relation {
+        kinds: &["use-case"],
+        field: "doctrines",
+        edge: "exercises",
+        target: Target::ObjectOrName("rule", "doctrine"),
+    },
+    Relation {
+        kinds: &["use-case"],
+        field: "claims",
+        edge: "evidences",
+        target: Target::Name("claim"),
+    },
+    Relation {
+        kinds: &[],
+        field: "tracks",
+        edge: "tracks",
+        target: Target::Path,
+    },
+    Relation {
+        kinds: &[],
+        field: "capability",
+        edge: "documents",
+        target: Target::Capability,
+    },
+];
+
+/// One reference that names something this repository does not hold.
+///
+/// A reference to a file or a test outside the layer is not one of these: it resolves to
+/// an external node, which is what an edge out of the layer looks like. This is the other
+/// case — a rule, a decision or a capability named by identity that no object and no
+/// declaration answers to, which is a defect in the naming rather than a boundary.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+pub struct Unresolved {
+    /// The repository-relative file that declared it.
+    pub declared_in: String,
+    /// The front matter key it was declared under.
+    pub key: String,
+    /// What was named.
+    pub reference: String,
+    /// What to do about it.
+    pub correction: String,
+}
+
+/// Every reference the layer declares that resolves to nothing this repository holds.
+///
+/// Empty is the healthy answer. A consumer that generates an artifact from the graph
+/// refuses to write one while this is not empty, which is why the finding names the file,
+/// the key and the correction rather than only the missing name.
+pub fn unresolved_relations(objects: &[Object]) -> Vec<Unresolved> {
+    let r = Resolver::new(objects);
+    let mut out = Vec::new();
+    for o in objects {
+        for rel in RELATIONS {
+            if !rel.kinds.is_empty() && !rel.kinds.contains(&o.kind.as_str()) {
+                continue;
+            }
+            for reference in metadata_strings(&o.metadata, rel.field) {
+                if let Outcome::Missing(correction) = r.resolve(rel, &reference) {
+                    out.push(Unresolved {
+                        declared_in: o.provenance.path.clone(),
+                        key: rel.field.into(),
+                        reference,
+                        correction,
+                    });
+                }
+            }
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// What a reference resolved to.
+enum Outcome {
+    /// A node of the graph, by id.
+    Node(String),
+    /// Something outside the layer, drawn as an external node.
+    External(Node),
+    /// Nothing, with what to do about it.
+    Missing(String),
+}
+
+/// The index read once into the lookups every reference needs, so that resolving three
+/// hundred references does not walk eight hundred objects three hundred times.
+struct Resolver<'a> {
+    by_kind_identity: BTreeMap<(&'a str, &'a str), &'a Object>,
+    by_kind_stem: BTreeMap<(&'a str, &'a str), &'a Object>,
+    by_path: BTreeMap<&'a str, &'a Object>,
+    adr_by_declared_id: BTreeMap<String, &'a Object>,
+    kinds: BTreeSet<&'a str>,
+}
+
+impl<'a> Resolver<'a> {
+    fn new(objects: &'a [Object]) -> Self {
+        let mut by_kind_identity = BTreeMap::new();
+        let mut by_kind_stem = BTreeMap::new();
+        let mut by_path = BTreeMap::new();
+        let mut adr_by_declared_id = BTreeMap::new();
+        let mut kinds = BTreeSet::new();
+        for o in objects {
+            kinds.insert(o.kind.as_str());
+            by_kind_identity.insert((o.kind.as_str(), o.identity.as_str()), o);
+            // an identity carries its version (`project.thing@1`); a reference names the
+            // rule, not the version it was written against
+            if let Some((stem, _)) = o.identity.split_once('@') {
+                by_kind_stem.entry((o.kind.as_str(), stem)).or_insert(o);
+            }
+            by_path.insert(o.provenance.path.as_str(), o);
+            if o.kind == "adr" {
+                if let Some(id) = metadata_string(&o.metadata, "id") {
+                    adr_by_declared_id.insert(id, o);
+                }
+            }
+        }
+        Resolver {
+            by_kind_identity,
+            by_kind_stem,
+            by_path,
+            adr_by_declared_id,
+            kinds,
+        }
+    }
+
+    fn object(&self, kind: &str, name: &str) -> Option<&'a Object> {
+        self.by_kind_identity
+            .get(&(kind, name))
+            .or_else(|| self.by_kind_stem.get(&(kind, name)))
+            .copied()
+    }
+
+    fn resolve(&self, rel: &Relation, reference: &str) -> Outcome {
+        match rel.target {
+            Target::Object(kind) => match self.object(kind, reference) {
+                Some(o) => Outcome::Node(o.uri.clone()),
+                None => Outcome::Missing(format!(
+                    "no object of kind `{kind}` has the identity `{reference}`; register it or correct the name"
+                )),
+            },
+            Target::DeclaredAdr => match self.adr_by_declared_id.get(reference) {
+                Some(o) => Outcome::Node(o.uri.clone()),
+                None => Outcome::Missing(format!(
+                    "no decision declares the id `{reference}`; correct the name or record the decision"
+                )),
+            },
+            Target::Prefixed => {
+                let Some((prefix, rest)) = reference.split_once(':') else {
+                    return Outcome::Missing(format!(
+                        "`{reference}` is not `<kind>:<name>`; a reference names what kind of thing it points at"
+                    ));
+                };
+                // a path out of the layer is a boundary, not a defect
+                if prefix == "file" || prefix == "test" {
+                    return match self.by_path.get(rest) {
+                        Some(o) => Outcome::Node(o.uri.clone()),
+                        None => Outcome::External(external_node(prefix, rest, Some(rest))),
+                    };
+                }
+                match self.object(prefix, rest) {
+                    Some(o) => Outcome::Node(o.uri.clone()),
+                    None if !self.kinds.contains(prefix) => {
+                        // a kind this repository holds no objects of at all: the claims of
+                        // docs/CLAIMS.yaml are named this way and are not indexed objects
+                        Outcome::External(external_node(prefix, rest, None))
+                    }
+                    None => Outcome::Missing(format!(
+                        "no object of kind `{prefix}` has the identity `{rest}`; register it or correct the reference"
+                    )),
+                }
+            }
+            Target::ObjectOrName(kind, fallback) => match self.object(kind, reference) {
+                Some(o) => Outcome::Node(o.uri.clone()),
+                None => Outcome::External(external_node(fallback, reference, None)),
+            },
+            Target::Name(kind) => Outcome::External(external_node(kind, reference, None)),
+            Target::Path => match self.by_path.get(reference) {
+                Some(o) => Outcome::Node(o.uri.clone()),
+                None => Outcome::External(external_node("file", reference, Some(reference))),
+            },
+            Target::Capability => Outcome::Node(format!("capability:{reference}")),
+        }
+    }
+}
+
+/// A node for something the graph names and this repository does not hold as an object.
+fn external_node(kind: &str, name: &str, path: Option<&str>) -> Node {
+    Node {
+        id: format!("{kind}:{name}"),
+        kind: kind.into(),
+        label: name.rsplit('/').next().unwrap_or(name).to_string(),
+        summary: Some("named by the layer; not an object of this index".to_string()),
+        route: None,
+        source: path.map(str::to_string),
+        status: None,
+        external: true,
+    }
+}
+
+/// What is true of a node in a running process, and of nothing on a published page.
+///
+/// A graph is definitions: they are the same in a static build and in a server, and they
+/// are what [`compose`] derives. This is the overlay a consumer with a process to ask
+/// lays over them, keyed by node id. It is deliberately not a field of [`Node`]: a node
+/// that could carry runtime state would carry it into the static projection, where it
+/// would be a value nobody can refresh and a reader cannot distinguish from a current
+/// one.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct RuntimeState {
+    /// Node id to what the process says about it now.
+    pub nodes: BTreeMap<String, NodeState>,
+}
+
+/// One node's runtime state: what a process observed, never what a file declared.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct NodeState {
+    /// A status word the observing process defines.
+    pub status: String,
+    /// One line about the observation, when there is something to say.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
 /// A string field of an object's parsed front matter.
 fn metadata_string(metadata: &Value, key: &str) -> Option<String> {
     metadata
@@ -787,6 +1271,99 @@ pub fn routes(object: &Object) -> String {
 /// The Cockpit route of a capability.
 pub fn capability_page(c: &Capability) -> String {
     capability_route(c.id.as_str())
+}
+
+/// The Why catalogue as a graph: every operational moment with the audiences that
+/// recognise it, the areas it falls under, and the mechanisms of this repository it names
+/// — the commands, the capabilities of this executable, the claims, the rules and the use
+/// cases. Read backwards it answers the question a page asks: which moments does this
+/// capability answer, and which does this rule govern.
+///
+/// Derived from the front matter of the moments and from nothing else. No edge here is
+/// authored twice: a moment names an audience, and the audience's membership is this
+/// graph read in the other direction.
+fn why_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
+    let catalogue = crate::why::Catalogue::build(index, registry);
+    let mut b = Builder::new(
+        "why",
+        "The moments, and what answers them",
+        "Every operational moment this tool is a response to, with who recognises it, the operational area it falls under, and the commands, capabilities, claims, rules and use cases that answer it. A moment that named something this repository does not have would fail validation rather than draw an edge to nothing.",
+        "the front matter of every object of kind `moment`",
+    )
+    .node_kind("moment", "one operational failure mode")
+    .node_kind("audience", "who recognises it")
+    .node_kind("area", "the operational area it falls under")
+    .node_kind("command", "a command that answers it")
+    .node_kind("capability", "a capability of this executable that answers it")
+    .node_kind("claim", "a claim that says what is guaranteed here")
+    .node_kind("rule", "a rule of the effective set that governs it")
+    .node_kind("use-case", "a use case that shows the way out")
+    .edge_kind("recognised_by", "that audience recognises this moment")
+    .edge_kind("falls_under", "this moment falls under that area")
+    .edge_kind("answered_by", "that command or capability answers this moment")
+    .edge_kind("backed_by", "that claim says what is guaranteed here")
+    .edge_kind("governed_by", "that rule governs this moment")
+    .edge_kind("resolved_by", "that use case shows the way out")
+    .edge_kind("related_to", "the moment names that one as related");
+
+    'outer: for m in catalogue
+        .all()
+        .iter()
+        .filter(|m| m.status == crate::why::STABLE)
+    {
+        let id = format!("moment:{}", m.id);
+        if !b.node(Node {
+            id: id.clone(),
+            kind: "moment".into(),
+            label: m.label().to_string(),
+            summary: Some(m.summary.clone()),
+            route: Some(m.route.clone()),
+            source: Some(m.source.clone()),
+            status: Some(m.severity.clone()),
+            external: false,
+        }) {
+            break;
+        }
+        for (values, kind, edge) in [
+            (&m.audiences, "audience", "recognised_by"),
+            (&m.areas, "area", "falls_under"),
+            (&m.commands, "command", "answered_by"),
+            (&m.capabilities, "capability", "answered_by"),
+            (&m.claims, "claim", "backed_by"),
+            (&m.doctrines, "rule", "governed_by"),
+            (&m.use_cases, "use-case", "resolved_by"),
+            (&m.related, "moment", "related_to"),
+        ] {
+            for name in values {
+                let target = format!("{kind}:{name}");
+                if !b.has(&target) {
+                    let route = match kind {
+                        "audience" => Some(format!("{}audiences/{name}/", crate::why::ROUTE)),
+                        "area" => Some(format!("{}areas/{name}/", crate::why::ROUTE)),
+                        "moment" => Some(format!("{}{name}/", crate::why::ROUTE)),
+                        "command" => Some(format!("/commands/{name}/")),
+                        "claim" => Some(format!("/guarantees/{name}/")),
+                        "use-case" => Some(format!("/use-cases/{name}/")),
+                        _ => None,
+                    };
+                    if !b.node(Node {
+                        id: target.clone(),
+                        kind: kind.into(),
+                        label: name.clone(),
+                        summary: None,
+                        route,
+                        source: None,
+                        status: None,
+                        external: false,
+                    }) {
+                        break 'outer;
+                    }
+                }
+                b.edge(&id, &target, edge);
+            }
+        }
+    }
+    b.finish()
 }
 
 #[cfg(test)]
@@ -846,5 +1423,328 @@ mod tests {
         assert_eq!(metadata_strings(&v, "b"), ["z"]);
         assert!(metadata_strings(&v, "c").is_empty());
         assert!(metadata_strings(&v, "missing").is_empty());
+    }
+    fn object(kind: &str, identity: &str, title: &str) -> Object {
+        Object {
+            kind: kind.into(),
+            identity: identity.into(),
+            uri: format!("majordomus://{kind}/{identity}"),
+            title: Some(title.into()),
+            description: None,
+            metadata: serde_json::json!({}),
+            body: String::new(),
+            content: String::new(),
+            media_type: "text/markdown",
+            provenance: crate::model::Provenance {
+                path: format!(".ai/repo/{kind}s/{identity}.md"),
+                directory: format!(".ai/repo/{kind}s"),
+                source_class: kind.into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
+        }
+    }
+
+    fn registry() -> CapabilityRegistry {
+        CapabilityRegistry::builder()
+            .with_builtin(crate::capability::builtin::all())
+            .build()
+            .unwrap()
+    }
+
+    #[test]
+    fn a_kind_nobody_wrote_here_is_still_a_kind_of_the_graph() {
+        // the point of the composition: the derivation names no kind, so a kind the layer
+        // gains appears without this file being edited
+        let g = compose(&registry(), &[object("gizmo", "one", "A gizmo")]);
+        assert!(g.node_kinds.contains_key("gizmo"));
+        assert!(g.nodes.iter().any(|n| n.id == "kind:gizmo"));
+        assert!(g
+            .nodes
+            .iter()
+            .any(|n| n.id == "majordomus://gizmo/one" && n.kind == "gizmo"));
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.source == "majordomus://gizmo/one" && e.target == "kind:gizmo"));
+    }
+
+    #[test]
+    fn an_object_is_identified_by_its_uri_and_not_by_its_title() {
+        let before = compose(&registry(), &[object("rule", "one", "The old words")]);
+        let after = compose(&registry(), &[object("rule", "one", "Entirely new words")]);
+        let id = |g: &Graph| {
+            g.nodes
+                .iter()
+                .find(|n| n.kind == "rule")
+                .map(|n| n.id.clone())
+        };
+        assert_eq!(id(&before), id(&after));
+        assert_eq!(id(&before).as_deref(), Some("majordomus://rule/one"));
+    }
+
+    #[test]
+    fn many_objects_of_one_kind_share_the_one_kind_node() {
+        let g = compose(
+            &registry(),
+            &[
+                object("rule", "one", "One"),
+                object("rule", "two", "Two"),
+                object("rule", "three", "Three"),
+            ],
+        );
+        assert_eq!(g.nodes.iter().filter(|n| n.id == "kind:rule").count(), 1);
+        assert_eq!(g.nodes.iter().filter(|n| n.kind == "rule").count(), 3);
+    }
+
+    #[test]
+    fn the_composition_does_not_depend_on_the_order_it_read_things_in() {
+        let r = registry();
+        let forwards = vec![
+            object("rule", "a", "A"),
+            object("adr", "b", "B"),
+            object("skill", "c", "C"),
+        ];
+        let backwards: Vec<Object> = forwards.iter().rev().cloned().collect();
+        assert_eq!(compose(&r, &forwards), compose(&r, &backwards));
+    }
+
+    #[test]
+    fn nodes_and_edges_come_out_sorted() {
+        let g = compose(
+            &registry(),
+            &[object("rule", "z", "Z"), object("rule", "a", "A")],
+        );
+        let mut sorted = g.nodes.clone();
+        sorted.sort();
+        assert_eq!(g.nodes, sorted);
+        let mut edges = g.edges.clone();
+        edges.sort();
+        assert_eq!(g.edges, edges);
+    }
+
+    #[test]
+    fn every_capability_reaches_its_module_and_its_projections() {
+        let g = compose(&registry(), &[]);
+        let c = g
+            .nodes
+            .iter()
+            .find(|n| n.kind == "capability")
+            .expect("the registry composes capabilities");
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.target == c.id && e.kind == "composes"));
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.source == c.id && e.target == "projection:cockpit"));
+    }
+
+    #[test]
+    fn the_graph_holds_definitions_and_the_overlay_holds_what_a_process_saw() {
+        let g = compose(&registry(), &[object("rule", "one", "One")]);
+        let json = serde_json::to_string(&g).unwrap();
+        assert!(!json.contains("\"runtime\""));
+        let mut state = RuntimeState::default();
+        state.nodes.insert(
+            "majordomus://rule/one".into(),
+            NodeState {
+                status: "ok".into(),
+                detail: None,
+            },
+        );
+        assert_eq!(state.nodes.len(), 1);
+    }
+    fn object_with(kind: &str, identity: &str, metadata: serde_json::Value) -> Object {
+        Object {
+            metadata,
+            ..object(kind, identity, "A thing")
+        }
+    }
+
+    #[test]
+    fn a_rule_reaches_the_rule_it_depends_on_across_its_version() {
+        // identities carry a version; a reference names the rule, not the version it was
+        // written against
+        let objects = vec![
+            object_with("rule", "project.first@1", serde_json::json!({})),
+            object_with(
+                "rule",
+                "project.second@1",
+                serde_json::json!({ "depends_on": ["project.first"] }),
+            ),
+        ];
+        let g = compose(&registry(), &objects);
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.source == "majordomus://rule/project.second@1"
+                && e.target == "majordomus://rule/project.first@1"
+                && e.kind == "depends_on"));
+        assert_eq!(unresolved_relations(&objects), vec![]);
+    }
+
+    #[test]
+    fn a_reference_out_of_the_layer_is_a_boundary_and_not_a_finding() {
+        let objects = vec![object_with(
+            "adr",
+            "0001-a-decision",
+            serde_json::json!({ "id": "adr-0001", "related": ["file:docs/COCKPIT.md"] }),
+        )];
+        let g = compose(&registry(), &objects);
+        let node = g
+            .nodes
+            .iter()
+            .find(|n| n.id == "file:docs/COCKPIT.md")
+            .expect("a file the layer names is drawn as an external node");
+        assert!(node.external);
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.target == node.id && e.kind == "put_in_force"));
+        assert_eq!(unresolved_relations(&objects), vec![]);
+    }
+
+    #[test]
+    fn a_reference_to_a_kind_we_hold_that_names_nothing_is_a_finding() {
+        let objects = vec![
+            object_with("rule", "project.real@1", serde_json::json!({})),
+            object_with(
+                "adr",
+                "0001-a-decision",
+                serde_json::json!({ "id": "adr-0001", "related": ["rule:project.imaginary"] }),
+            ),
+        ];
+        let found = unresolved_relations(&objects);
+        assert_eq!(found.len(), 1, "one reference names nothing: {found:?}");
+        let f = &found[0];
+        assert_eq!(f.declared_in, ".ai/repo/adrs/0001-a-decision.md");
+        assert_eq!(f.key, "related");
+        assert_eq!(f.reference, "rule:project.imaginary");
+        assert!(
+            f.correction.contains("project.imaginary") && f.correction.contains("register"),
+            "the correction says what to do: {}",
+            f.correction
+        );
+    }
+
+    #[test]
+    fn a_finding_is_never_drawn_as_an_edge() {
+        let objects = vec![
+            object_with("rule", "project.real@1", serde_json::json!({})),
+            object_with(
+                "adr",
+                "0001-a-decision",
+                serde_json::json!({ "id": "adr-0001", "related": ["rule:project.imaginary"] }),
+            ),
+        ];
+        let g = compose(&registry(), &objects);
+        assert!(
+            !g.nodes.iter().any(|n| n.label == "project.imaginary"),
+            "a reference that resolves to nothing is a finding, not a phantom node"
+        );
+        assert!(!g.edges.iter().any(|e| e.kind == "put_in_force"));
+    }
+
+    #[test]
+    fn a_decision_stands_in_for_the_one_it_names_by_declared_id() {
+        let objects = vec![
+            object_with(
+                "adr",
+                "0001-the-first",
+                serde_json::json!({ "id": "adr-0001" }),
+            ),
+            object_with(
+                "adr",
+                "0002-the-second",
+                serde_json::json!({ "id": "adr-0002", "supersedes": ["adr-0001"] }),
+            ),
+        ];
+        let g = compose(&registry(), &objects);
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.source == "majordomus://adr/0002-the-second"
+                && e.target == "majordomus://adr/0001-the-first"
+                && e.kind == "supersedes"));
+    }
+
+    #[test]
+    fn a_use_case_reaches_what_it_runs_exercises_and_evidences() {
+        let objects = vec![
+            object_with("rule", "majordomus.a-doctrine@1", serde_json::json!({})),
+            object_with(
+                "use-case",
+                "a-scenario",
+                serde_json::json!({
+                    "commands": ["doctor"],
+                    "doctrines": ["majordomus.a-doctrine"],
+                    "claims": ["claim-one"],
+                }),
+            ),
+        ];
+        let g = compose(&registry(), &objects);
+        let from = "majordomus://use-case/a-scenario";
+        let edge = |kind: &str| g.edges.iter().find(|e| e.source == from && e.kind == kind);
+        assert_eq!(
+            edge("runs").map(|e| e.target.as_str()),
+            Some("command:doctor")
+        );
+        assert_eq!(
+            edge("exercises").map(|e| e.target.as_str()),
+            Some("majordomus://rule/majordomus.a-doctrine@1"),
+            "a doctrine the layer holds resolves to the rule itself"
+        );
+        assert_eq!(
+            edge("evidences").map(|e| e.target.as_str()),
+            Some("claim:claim-one")
+        );
+        assert_eq!(unresolved_relations(&objects), vec![]);
+    }
+
+    #[test]
+    fn every_edge_has_both_ends_in_the_graph() {
+        let objects = vec![
+            object_with(
+                "context",
+                "a-document",
+                serde_json::json!({ "tracks": ["lib/session.sh"], "capability": "repository.info" }),
+            ),
+            object_with("rule", "project.real@1", serde_json::json!({})),
+        ];
+        let g = compose(&registry(), &objects);
+        let ids: BTreeSet<&str> = g.nodes.iter().map(|n| n.id.as_str()).collect();
+        for e in &g.edges {
+            assert!(ids.contains(e.source.as_str()), "source missing: {e:?}");
+            assert!(ids.contains(e.target.as_str()), "target missing: {e:?}");
+        }
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.kind == "documents" && e.target == "capability:repository.info"));
+        assert!(g.edges.iter().any(|e| e.kind == "tracks"));
+    }
+    #[test]
+    fn a_skill_names_its_sibling_by_identity_and_that_resolves() {
+        // the convention this test pins was learned from the layer rather than assumed:
+        // read as `<kind>:<name>` these two references were findings, and they were not
+        let objects = vec![
+            object_with("skill", "repo-review", serde_json::json!({})),
+            object_with(
+                "skill",
+                "implement",
+                serde_json::json!({ "related": ["repo-review"] }),
+            ),
+        ];
+        let g = compose(&registry(), &objects);
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.source == "majordomus://skill/implement"
+                && e.target == "majordomus://skill/repo-review"
+                && e.kind == "related_to"));
+        assert_eq!(unresolved_relations(&objects), vec![]);
     }
 }

@@ -85,14 +85,25 @@ command a hook runs. The model is in [`docs/CONTEXT.md`](docs/CONTEXT.md).
 ## Quick start
 
 ```bash
-git clone https://github.com/korczis/prismatic-majordomus ~/majordomus
-export PATH="$HOME/majordomus/bin:$PATH"
+curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+```
 
-cd your-project
+Then, in the repository you want supervised:
+
+```bash
 majordomus init            # .ai/: policy, four profiles, prompts, the vendored rule baseline, workflows
 majordomus update          # CLAUDE.md, AGENTS.md, GEMINI.md generated from the policy
 majordomus doctor          # names the two hook lines you still need to add
 ```
+
+The installer needs no git, no Rust, no Node, no Python and no root; it downloads one
+archive for your machine, verifies its SHA-256 against the release metadata before
+unpacking anything, and installs atomically. Pinning a version, choosing where it goes,
+upgrading, uninstalling, the supported platforms and the security model are in
+[`docs/INSTALL.md`](docs/INSTALL.md); building from a checkout is for contributors and is
+in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Per task
 
 Add the hook lines, run `doctor` again, commit `.ai/repo/` and the generated files.
 `.ai/local/` is this checkout's own state and is ignored; it never travels through git.

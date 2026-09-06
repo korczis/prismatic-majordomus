@@ -1,0 +1,43 @@
+id: I1030
+milestone: capability-graph
+title: The milestone is accepted on its evidence
+slug: capability-graph-acceptance
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Close the milestone: every acceptance criterion carries evidence, the measurements are recorded with their environment, the contributor workflow runs as written, and the remaining gaps are stated."
+why: "A milestone is accepted by its evidence. What a later reader has is the record, not this session."
+current_state: "Open."
+desired_state: "Accepted with evidence against every criterion, with the coverage baseline and the limitations written where they will be found."
+scope:
+  - docs/PLAN_STATUS.md
+  - .ai/repo/project
+non_scope:
+  - Reporting a derived surface as proved without the artifact that proves it
+depends_on:
+  - I1010
+  - I1013
+  - I1017
+  - I1020
+  - I1024
+  - I1026
+  - I1027
+  - I1028
+  - I1029
+acceptance_criteria:
+  - Every acceptance criterion of the milestone has evidence recorded against it
+  - The coverage matrix baseline is recorded as a starting measurement rather than presented as a verdict
+  - The contributor workflow runs exactly as documented on a clean checkout
+  - Pre-existing failures, failures introduced here and failures fixed here are distinguished explicitly
+  - Remaining limitations are stated rather than omitted
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - majordomus generate --check
+evidence_required:
+  - criteria_covered
+  - baseline_recorded
+  - limitations_stated
+risk: "The end of a large milestone is where intent gets recorded as outcome. Anything not demonstrated is written as a limitation."
+created_at: 2026-09-06
+updated_at: 2026-09-06

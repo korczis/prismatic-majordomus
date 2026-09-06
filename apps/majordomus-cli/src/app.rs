@@ -121,6 +121,8 @@ impl App {
         schema: KindSchema,
         index: Index,
     ) -> Result<Self> {
+        let mut index = index;
+        index.distribution = crate::distribution::Model::locate(&share)?;
         let registry = CapabilityRegistry::builder()
             .with_modules(builtin::modules())
             .with_index(&index)

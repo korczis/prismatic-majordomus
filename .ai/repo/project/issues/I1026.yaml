@@ -1,0 +1,33 @@
+id: I1026
+milestone: capability-graph
+title: The architecture explains itself, from inside itself
+slug: capability-graph-documentation
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Document the graph, its sources, its relation model, its two projections and the contributor workflow, and let the interface say how it was generated and from what."
+why: "The whole promise is that a contributor registers a capability in one place and everything follows. That promise is only usable if the one place is written down, and the interface itself is the most reliable location for its own provenance."
+current_state: "The Cockpit has a document. The composed graph, the relation model and the contributor workflow have none."
+desired_state: "One architecture document, reachable from the places a reader starts, and an interface that states its own mode, sources and revision."
+scope:
+  - docs/COCKPIT.md
+non_scope:
+  - Duplicating the ADR's reasoning in prose
+  - Repeating full instructions in every directory document instead of composing them
+depends_on:
+  - I1012
+  - I1025
+acceptance_criteria:
+  - The document explains the sources, the relation model, both projections, the conditional exposure of runtime surfaces, how a new capability appears without an edit, the rules, the skill and how to debug a missing node
+  - The interface states its own mode, its sources, its schema version and its build revision from safe metadata
+  - It is reachable from the root document, the architecture documents and the interface itself, through existing cross-linking rather than a hand-written list
+  - Any new directory this milestone creates carries its context document per the directory contract
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+evidence_required:
+  - architecture_documented
+  - self_documenting
+risk: "A document explaining a derivation goes stale faster than the derivation. Every value it states about the current repository is generated rather than typed."
+created_at: 2026-09-06
+updated_at: 2026-09-06

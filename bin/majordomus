@@ -3,10 +3,14 @@
 # Single entry point. Subcommands live in ../lib/<name>.sh and are sourced.
 set -eu
 
-MJ_VERSION="0.1.0"
+MJ_VERSION="0.2.0"
 MJ_BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
 MJ_LIB_DIR="$MJ_BIN_DIR/../lib"
-export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# The path to write down. An installation puts the tool in a versioned directory and
+# reaches it through a launcher whose path does not move when the version does, and the
+# launcher says so; a checkout has no launcher and this file's own path is the answer.
+MJ_SELF="${MAJORDOMUS_LAUNCHER:-$MJ_BIN_DIR/majordomus}"
+export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR MJ_SELF
 
 # shellcheck source=../lib/common.sh
 . "$MJ_LIB_DIR/common.sh"

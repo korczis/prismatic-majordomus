@@ -1,0 +1,33 @@
+id: I0928
+milestone: fly-deployment
+title: A pull request cannot merge a deployment that would not work
+slug: ci-deployment-gate
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Extend the existing verification workflow so that a pull request runs the deployment validation, the projection drift check, the production image build, the container smoke run, the resource policy assertions and the security checks."
+why: "The gate is where these checks stop being optional. Adding a separate workflow for deployment would fragment a verification story the repository has already unified once."
+current_state: "Two workflows exist: validation and pages. Neither knows anything about a deployment."
+desired_state: "One gate covers the deployment checks alongside everything else, uses the existing caching, and never deploys from a pull request."
+scope:
+  - .github/workflows/validate.yml
+non_scope:
+  - A second overlapping workflow file
+  - Deploying to production from a pull request
+depends_on:
+  - I0919
+  - I0921
+  - I0930
+acceptance_criteria:
+  - The pull request gate runs the tests, the deployment model validation, the projection drift check, the site build, the production image build, the container smoke run, the resource policy assertions and the security checks
+  - No pull request path can deploy to production
+  - Caching is used so the added checks do not make the gate unusable
+  - The added checks belong to the existing verification hierarchy rather than an unconnected script
+validation:
+  - bash test/run.sh
+evidence_required:
+  - pr_gate
+  - gate_green
+risk: "A gate that takes an hour is a gate people bypass. The container build has to be cached well enough that the added time is proportionate."
+created_at: 2026-09-06
+updated_at: 2026-09-06
