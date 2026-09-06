@@ -37,7 +37,12 @@ steps:
     note: 'the envelope: identity, a temporal boundary, references to what the episode produced'
     expect:
       exit: 0
-      stdout_contains: ['^\.ai/local/state/sessions/']
+      stdout_contains: ['^\.ai/repo/sessions/']
+  - id: an-object-of-the-layer
+    run: ['knowledge', 'nodes', '--kind', 'session']
+    note: 'the record is a shared object the moment it is committed: one source class discovers it, and the index, MCP, the object routes, the graph and the site follow without being told'
+    expect:
+      exit: 0
   - id: ledger
     run: ['history']
     note: 'the ledger carries both ends of the episode'
@@ -46,6 +51,7 @@ steps:
       stdout_contains: ['session.started', 'session.closed']
 then:
   - 'a closed session is an envelope, never a transcript'
+  - 'the envelope is a shared object of the layer, discovered rather than registered'
   - 'which work happened together, and in what order, is answerable'
 ```
 

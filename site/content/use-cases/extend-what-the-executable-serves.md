@@ -6,7 +6,7 @@ weight = 10
 id = "extend-what-the-executable-serves"
 source = ".ai/repo/use-cases/extend-what-the-executable-serves.md"
 category = "extension"
-maturity = "executable"
+maturity = "described"
 +++
 
 ## Situation
@@ -18,6 +18,35 @@ A team wants its own kind of object served to its AI clients. With most tools th
 - `init`: writes the layer; kinds and their JSON Schemas are read at run time from the share directory, and a repository may add its own
 - `update`: regenerates the projections (AGENTS.md, CLAUDE.md) from the policy, so the bootstrap every worker reads names the new object
 - `doctor`: validates every declarative object against the schema of its kind and reports a duplicate identity or an unknown key as a diagnostic, never as a crash
+
+## Scenario
+
+```yaml
+setup: installed-wired
+given:
+  - 'the layer installed; the distribution declares the kinds it reads'
+steps:
+  - id: what-is-declared
+    run: ['knowledge', 'sources']
+    note: 'every source class the repository declares, with what it discovered'
+    expect:
+      exit: 0
+      stdout_contains: ['^policy +shared +policy', '^knowledge sources: [0-9]+ file']
+  - id: nothing-to-add
+    run: ['init', '--extend']
+    note: 'a new kind is a declaration under .ai/repo/knowledge, not a change to the tool'
+    expect:
+      exit: 0
+      stdout_contains: ['nothing to add']
+  - id: still-healthy
+    run: ['doctor']
+    note: 'the layer is real after the extension'
+    expect:
+      exit: 0
+      stdout_contains: ['doctor: 0 failure']
+then:
+  - 'a kind added with its schema under .ai/repo/knowledge is served by the executable without a code change'
+```
 
 ## Outcome
 

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://majordomus.dev/schemas/session-record.schema.json",
+  "$id": "https://majordomus.dev/schemas/majordomus/session-record/session-record.v1.schema.json",
   "title": "Session record",
-  "description": "The front matter of a closed execution episode under .ai/repo/sessions/: what the repository can prove about a stretch of work — its identity and times, the branch and the heads it moved between, the commits it produced, the paths it changed, and the outcome. Written by `majordomus session close` from git and the ledger, never from a transcript: the optional body summarises the work, and this contract has no field for a conversation (ADR 0014, project.never-store-transcripts). The open episode's own state file is a different object with its own schema (session).",
+  "description": "The front matter of a closed execution episode under .ai/repo/sessions/: what the repository can prove about a stretch of work \u2014 its identity and times, the branch and the heads it moved between, the commits it produced, the paths it changed, and the outcome. Written by `majordomus session close` from git and the ledger, never from a transcript: the optional body summarises the work, and this contract has no field for a conversation (ADR 0014, project.never-store-transcripts). The open episode's own state file is a different object with its own schema (session).",
   "x-majordomus-allow": "session-record",
   "type": "object",
   "additionalProperties": false,
@@ -173,5 +173,6 @@
         "type": "string"
       }
     }
-  }
+  },
+  "x-majordomus-schema": "majordomus.session-record/v1"
 }

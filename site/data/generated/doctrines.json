@@ -651,8 +651,8 @@
       "title": "Prompt capture is proven, or reported unavailable",
       "class": "blocking",
       "principle": "Sessions are workers, not memory",
-      "statement": "Prompt capture is either wired below the model and proven by execution, or reported as unavailable; the archive is never committed, and a record carries the closed field set and no model output.",
-      "summary": "A repository that declares prompt capture has it wired below the model and proven by running it; the archive stays ignored and untracked, and every record carries the person's prompt and nothing the model said.",
+      "statement": "Prompt capture is either wired below the model and proven by execution, or reported as unavailable; the archive is never committed, every prompt is present as both a JSON record and its Markdown rendering, and the schema every record names resolves to the file that describes it.",
+      "summary": "A repository that declares prompt capture has it wired below the model and proven by running it; the archive stays ignored and untracked, every prompt is present as both a record and a rendering, and neither carries anything the model said.",
       "validator": "prompt_capture",
       "validator_function": "mj_validate_prompt_capture",
       "defined_in": "lib/capture.sh",
@@ -808,6 +808,31 @@
         "majordomus.define-done-first@1"
       ],
       "source": "share/standard/majordomus/rules/rule-package-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.schema-integrity",
+      "slug": "schema-integrity",
+      "title": "Every object has a schema, and the rules resolve in one stated order",
+      "class": "blocking",
+      "principle": "Sessions are workers, not memory",
+      "statement": "The effective rule set resolves in one deterministic order — the vendored baseline in manifest order, then the project's own, as a dependency graph — and every object kind declares a schema, every schema is named by a kind, and every path under .ai/repo/ is claimed by a source mapping.",
+      "summary": "The order the rules apply in is written down rather than left in the code; every kind the tool reads declares a schema, every schema is named by a kind, and every path under the repository's AI layer is claimed by a source so that nothing is carried through unvalidated.",
+      "validator": "schema_integrity",
+      "validator_function": "mj_validate_schema_integrity",
+      "defined_in": "lib/doctor.sh",
+      "category": "schema",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [],
+      "test": "test/cases/32_schema_integrity.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1"
+      ],
+      "source": "share/standard/majordomus/rules/schema-integrity.v1.md"
     },
     {
       "id": "majordomus.scope-integrity",
@@ -1007,8 +1032,8 @@
     }
   ],
   "counts": {
-    "declared": 36,
-    "blocking": 32,
+    "declared": 37,
+    "blocking": 33,
     "advisory": 4
   },
   "index": {
@@ -1041,12 +1066,13 @@
     "majordomus.retention-caps": 26,
     "majordomus.roadmap-integrity": 27,
     "majordomus.rule-package-integrity": 28,
-    "majordomus.scope-integrity": 29,
-    "majordomus.session-records": 30,
-    "majordomus.skill-integrity": 31,
-    "majordomus.state-consistency": 32,
-    "majordomus.task-continuity": 33,
-    "majordomus.use-case-coverage": 34,
-    "majordomus.verification-integrity": 35
+    "majordomus.schema-integrity": 29,
+    "majordomus.scope-integrity": 30,
+    "majordomus.session-records": 31,
+    "majordomus.skill-integrity": 32,
+    "majordomus.state-consistency": 33,
+    "majordomus.task-continuity": 34,
+    "majordomus.use-case-coverage": 35,
+    "majordomus.verification-integrity": 36
   }
 }
