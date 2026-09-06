@@ -2,33 +2,185 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://majordomus.dev/schemas/context.schema.json",
   "title": "Context document",
-  "description": "The front matter of a scoped context document (schema: context/v1): a README under the layer that adds to its ancestors for the directory it sits in.",
+  "description": "The front matter of a scoped context document (schema: context/v1): a README under the layer that adds to its ancestors for the directory it sits in. This schema is the whole contract: the shell tool's allow-list is generated from it and the executable validates against it, so a constraint stated here is the one both halves apply.",
   "x-majordomus-allow": "context",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "id", "kind", "title"],
+  "required": [
+    "schema",
+    "id",
+    "kind",
+    "title",
+    "description",
+    "status",
+    "scope",
+    "composition",
+    "order",
+    "providers"
+  ],
   "properties": {
-    "schema": { "const": "context/v1" },
-    "id": { "type": "string" },
-    "kind": { "const": "context" },
-    "title": { "type": "string" },
-    "description": { "type": "string" },
-    "status": { "enum": ["active", "deprecated"] },
-    "scope": { "enum": ["directory", "subtree", "explicit"] },
-    "composition": { "enum": ["extend", "replace", "final"] },
-    "order": { "type": "integer" },
-    "paths": { "type": "array", "items": { "type": "string" } },
-    "providers": { "type": "array", "items": { "type": "string" } },
-    "audience": { "type": "array", "items": { "type": "string" } },
-    "supersedes": { "type": "array", "items": { "type": "string" } },
-    "tracks": { "type": "array", "items": { "type": "string" } },
+    "schema": {
+      "const": "context/v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$",
+      "description": "The identity, a lower-case dotted name. It survives a move, so it is the id and not the path that other documents supersede and that projections cite."
+    },
+    "kind": {
+      "const": "context"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "deprecated"
+      ]
+    },
+    "scope": {
+      "enum": [
+        "directory",
+        "subtree",
+        "explicit"
+      ]
+    },
+    "composition": {
+      "enum": [
+        "extend",
+        "replace",
+        "final"
+      ]
+    },
+    "order": {
+      "type": "integer"
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "The providers this document is written for; [\"*\"] for every one. A name must be projected by the policy."
+    },
+    "audience": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "human",
+          "agent"
+        ]
+      },
+      "description": "Who the document is for; absent means both."
+    },
+    "supersedes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tracks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "children": {
       "description": "What the directories below this one owe. Subtree documents only; the value nearest a directory applies, and a descendant may raise require_contract to true but never lower an inherited true.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "require_contract": { "type": "boolean" }
+        "require_contract": {
+          "type": "boolean"
+        },
+        "exempt": {
+          "description": "Directories inside this document's scope that owe no contract, and nor does anything below them: a subtree this layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Repository-relative. The exemption is declared by the contract that governs the subtree, so it moves with the tree it describes instead of living in a list at the root.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "title": "paths belong to scope explicit, and to nothing else",
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "explicit"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "required": [
+          "paths"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "paths"
+          ]
+        }
+      }
+    },
+    {
+      "title": "supersedes belongs to composition replace, and to nothing else",
+      "if": {
+        "properties": {
+          "composition": {
+            "const": "replace"
+          }
+        },
+        "required": [
+          "composition"
+        ]
+      },
+      "then": {
+        "required": [
+          "supersedes"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "supersedes"
+          ]
+        }
+      }
+    },
+    {
+      "title": "children states what descendants owe, which only a subtree document may say",
+      "if": {
+        "required": [
+          "children"
+        ]
+      },
+      "then": {
+        "properties": {
+          "scope": {
+            "const": "subtree"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      }
+    }
+  ]
 }

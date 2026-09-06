@@ -5,22 +5,22 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "2682e1f77a989016ddb4fb52fcf0a862e9884d0e09a94d58db902161092751a2",
+    "fingerprint": "21f453d09157b86853a781e5f69a0fb66eabfa45f9c09c48e9a09b7a95af93e8",
     "summary": {
-      "total": 699,
+      "total": 712,
       "builtin": 14,
-      "declarative": 685,
+      "declarative": 698,
       "by_kind": {
         "command": 1,
         "query": 13,
-        "resource": 685
+        "resource": 698
       },
       "by_stability": {
         "behaviorally_verified": 14,
-        "implemented": 685
+        "implemented": 698
       },
       "mcp_tools": 14,
-      "mcp_resources": 689,
+      "mcp_resources": 702,
       "http_routes": 14,
       "cli_commands": 4,
       "modules": 24,
@@ -3953,7 +3953,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 9,
+        "capabilities": 22,
         "capability_ids": []
       },
       {
@@ -4149,7 +4149,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8f397014f76bfd4ce0965539883c3f2f12d1d8867ad4c0ab8885f39e8093e8a0",
+    "fingerprint": "250c64f56bd1547544b1abe812a6875cfd94bfb8f5e4d51bee4eda9d87dfe314",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -4170,7 +4170,7 @@
     "by_kind": {
       "application": 5,
       "claim": 124,
-      "context": 9,
+      "context": 22,
       "document": 173,
       "implementation": 38,
       "issue": 90,
@@ -5466,6 +5466,37 @@
         "bytes": 76877
       },
       {
+        "uri": "majordomus://context/ai.layer",
+        "kind": "context",
+        "identity": "ai.layer",
+        "title": "Repository AI context",
+        "description": "The protocol of the layer: what it holds, who owns which half, how it is discovered, and what outranks what.",
+        "path": ".ai/README.md",
+        "source_class": "context",
+        "bytes": 8308
+      },
+      {
+        "uri": "majordomus://context/ai.repo",
+        "kind": "context",
+        "identity": "ai.repo",
+        "title": "Tracked repository context",
+        "description": "The tracked half of the layer and what each section under it is for.",
+        "path": ".ai/repo/README.md",
+        "source_class": "context",
+        "bytes": 2100
+      },
+      {
+        "uri": "majordomus://context/ai.repo.adrs",
+        "kind": "context",
+        "identity": "ai.repo.adrs",
+        "title": "Architecture decisions",
+        "description": "Accepted, durable decisions about how this repository is built.",
+        "path": ".ai/repo/adrs/README.md",
+        "section": "adrs",
+        "source_class": "context",
+        "bytes": 682
+      },
+      {
         "uri": "majordomus://context/ai.repo.applications",
         "kind": "context",
         "identity": "ai.repo.applications",
@@ -5473,8 +5504,59 @@
         "description": "The contexts the tool suits, when each fits and when it does not, composed from use cases.",
         "path": ".ai/repo/applications/README.md",
         "section": "applications",
-        "source_class": "application",
+        "source_class": "context",
         "bytes": 829
+      },
+      {
+        "uri": "majordomus://context/ai.repo.benchmarks",
+        "kind": "context",
+        "identity": "ai.repo.benchmarks",
+        "title": "Benchmarks",
+        "description": "The recorded baselines a performance claim is compared against, one directory per measured surface.",
+        "path": ".ai/repo/benchmarks/README.md",
+        "source_class": "context",
+        "bytes": 983
+      },
+      {
+        "uri": "majordomus://context/ai.repo.benchmarks.pages",
+        "kind": "context",
+        "identity": "ai.repo.benchmarks.pages",
+        "title": "Publication baselines",
+        "description": "What publishing the site cost on a named platform, kept as the comparison for the next run.",
+        "path": ".ai/repo/benchmarks/pages/README.md",
+        "source_class": "context",
+        "bytes": 846
+      },
+      {
+        "uri": "majordomus://context/ai.repo.benchmarks.rust",
+        "kind": "context",
+        "identity": "ai.repo.benchmarks.rust",
+        "title": "Executable baselines",
+        "description": "Per-platform baselines for the Rust executable's commands, with the policy that decides a regression.",
+        "path": ".ai/repo/benchmarks/rust/README.md",
+        "source_class": "context",
+        "bytes": 1090
+      },
+      {
+        "uri": "majordomus://context/ai.repo.ci",
+        "kind": "context",
+        "identity": "ai.repo.ci",
+        "title": "Continuous integration",
+        "description": "The gates this repository runs, which changed paths select them, and what publication may spend.",
+        "path": ".ai/repo/ci/README.md",
+        "source_class": "context",
+        "bytes": 1779
+      },
+      {
+        "uri": "majordomus://context/ai.repo.knowledge",
+        "kind": "context",
+        "identity": "ai.repo.knowledge",
+        "title": "Knowledge",
+        "description": "How repository knowledge is declared and discovered, never collected.",
+        "path": ".ai/repo/knowledge/README.md",
+        "section": "knowledge",
+        "source_class": "context",
+        "bytes": 1028
       },
       {
         "uri": "majordomus://context/ai.repo.knowledge.curated",
@@ -5484,8 +5566,52 @@
         "description": "What this repository chose to write about itself, discovered as a knowledge source class.",
         "path": ".ai/repo/knowledge/curated/README.md",
         "section": "knowledge",
-        "source_class": "curated",
+        "source_class": "context",
         "bytes": 975
+      },
+      {
+        "uri": "majordomus://context/ai.repo.profiles",
+        "kind": "context",
+        "identity": "ai.repo.profiles",
+        "title": "Profiles",
+        "description": "How much context, effort and ceremony a task gets, declared per working mode.",
+        "path": ".ai/repo/profiles/README.md",
+        "section": "profiles",
+        "source_class": "context",
+        "bytes": 1236
+      },
+      {
+        "uri": "majordomus://context/ai.repo.project",
+        "kind": "context",
+        "identity": "ai.repo.project",
+        "title": "Project model",
+        "description": "Milestones as outcomes, issues as execution contracts, and a dependency graph that decides what is next.",
+        "path": ".ai/repo/project/README.md",
+        "section": "project",
+        "source_class": "context",
+        "bytes": 1424
+      },
+      {
+        "uri": "majordomus://context/ai.repo.project.issues",
+        "kind": "context",
+        "identity": "ai.repo.project.issues",
+        "title": "Issues",
+        "description": "Execution contracts: one bounded change each, with its scope, its dependencies and the evidence it must leave.",
+        "path": ".ai/repo/project/issues/README.md",
+        "section": "project",
+        "source_class": "context",
+        "bytes": 1352
+      },
+      {
+        "uri": "majordomus://context/ai.repo.project.milestones",
+        "kind": "context",
+        "identity": "ai.repo.project.milestones",
+        "title": "Milestones",
+        "description": "One outcome each, written as the problem it ends and the state that proves it ended.",
+        "path": ".ai/repo/project/milestones/README.md",
+        "section": "project",
+        "source_class": "context",
+        "bytes": 1018
       },
       {
         "uri": "majordomus://context/ai.repo.prompts",
@@ -5495,8 +5621,18 @@
         "description": "The provider-neutral prompts the tool renders, with the tokens it fills in.",
         "path": ".ai/repo/prompts/README.md",
         "section": "prompts",
-        "source_class": "prompt",
+        "source_class": "context",
         "bytes": 1206
+      },
+      {
+        "uri": "majordomus://context/ai.repo.providers",
+        "kind": "context",
+        "identity": "ai.repo.providers",
+        "title": "Provider templates",
+        "description": "The one source each provider bootstrap is rendered from; the files at the root are output.",
+        "path": ".ai/repo/providers/README.md",
+        "source_class": "context",
+        "bytes": 1144
       },
       {
         "uri": "majordomus://context/ai.repo.rules",
@@ -5506,8 +5642,8 @@
         "description": "The rule object format, where rules live, how they are loaded and composed.",
         "path": ".ai/repo/rules/README.md",
         "section": "rules",
-        "source_class": "rule",
-        "bytes": 2601
+        "source_class": "context",
+        "bytes": 3095
       },
       {
         "uri": "majordomus://context/ai.repo.rules.project",
@@ -5517,7 +5653,7 @@
         "description": "The rules this repository wrote for itself, one file each, resolved with the vendored baseline.",
         "path": ".ai/repo/rules/project/README.md",
         "section": "rules",
-        "source_class": "rule",
+        "source_class": "context",
         "bytes": 1538
       },
       {
@@ -5528,7 +5664,7 @@
         "description": "One immutable record per closed execution episode, derived from git and the ledger and shared with every surface.",
         "path": ".ai/repo/sessions/README.md",
         "section": "sessions",
-        "source_class": "session",
+        "source_class": "context",
         "bytes": 3237
       },
       {
@@ -5539,7 +5675,7 @@
         "description": "Reusable provider-neutral operational procedures, loaded only when the task is about them.",
         "path": ".ai/repo/skills/README.md",
         "section": "skills",
-        "source_class": "skill_section",
+        "source_class": "context",
         "bytes": 4543
       },
       {
@@ -5550,7 +5686,7 @@
         "description": "The tasks people perform with the tool, each one a file with the commands, rules and claims it names and the scenario that proves it.",
         "path": ".ai/repo/use-cases/README.md",
         "section": "use-cases",
-        "source_class": "use_case",
+        "source_class": "context",
         "bytes": 1727
       },
       {
@@ -5561,7 +5697,7 @@
         "description": "The multi-step processes a worker follows here, and when each applies.",
         "path": ".ai/repo/workflows/README.md",
         "section": "workflows",
-        "source_class": "workflow",
+        "source_class": "context",
         "bytes": 943
       },
       {
@@ -7222,7 +7358,7 @@
         "identity": "lib/context_docs.sh",
         "path": "lib/context_docs.sh",
         "source_class": "library",
-        "bytes": 36841
+        "bytes": 39216
       },
       {
         "uri": "majordomus://implementation/lib/decision.sh",
@@ -11220,7 +11356,7 @@
       "identity": [
         "id"
       ],
-      "objects": 9
+      "objects": 22
     },
     {
       "name": "document",
