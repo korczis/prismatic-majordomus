@@ -6,15 +6,9 @@ title: A command asserts in the file that declares it that it is what it claims,
 description: Every capability module the executable composes carries at least one assertion that runs beside the declaration — an in-file test or an executed doc example — is reached by the root composition rather than by a registration elsewhere, and is held to a declared coverage floor.
 statement: Declare a command in one module, assert in that same file that it is what it claims, and let the composition reach it; a command whose evidence lives somewhere else, or that something must be told about, is not finished.
 status: active
-class: advisory
+class: blocking
 depends_on: [project.no-claim-without-test@1, project.interfaces-are-projections@1]
 tags: [rust, command, testing]
-x-majordomus:
-  validator: rust_command_tested
-  category: rust-command
-  enforced_by: [doctor]
-  exit_code: 10
-  tests: [test/cases/88_rust_command_tested.sh]
 ---
 
 # Rationale
@@ -88,16 +82,23 @@ testing is enough.
 
 # Failure behaviour
 
-`majordomus doctor` dispatches `mj_validate_rust_command_tested`, which reads the composed
-module list from `compose_modules!` itself and reports, per module, a missing file and the
-absence of any assertion that runs; across the tree, a module declared with `module!` that
-the root does not compose; and, once, an undeclared or unreadable coverage floor.
+`scripts/ci/rust-command-check` reads the composed module list from `compose_modules!`
+itself and reports, per module, a missing file, a module that declares no capability, and
+the absence of any assertion that runs; across the tree, a module declared with `module!`
+that the root composes nowhere; and, once, a coverage floor that is undeclared, unreadable,
+or below ninety. The `rust-command` gate in `.ai/repo/ci/gates.yaml` runs it.
 
-It is `advisory` at version 1: the modules it measures do not satisfy it yet, and a
-blocking rule would stop every commit in a repository for a debt it did not create. The
-findings are reported on every `doctor` run so the debt is visible rather than agreed to in
-silence. Promotion to `blocking` belongs in version 2, once the composed modules carry their
-own evidence.
+Enforcement is a ratchet rather than a cliff. The modules that do not satisfy the rule today
+are recorded in `.ai/repo/rust-command-baseline.txt`, written by `--write-baseline` and never
+by hand; the gate fails only when a module that is not on that list is found wanting. So the
+debt can shrink and cannot grow, nothing already broken blocks anybody, and a command added
+without an assertion beside it fails the build on the change that adds it. `--strict` ignores
+the baseline and is what version 2 will run once the list is empty.
+
+The validator does not live in `lib/`. That library belongs to the shipped tool, and
+`scripts/generate-site-data` refuses a `mj_validate_*` function that no shipped doctrine
+declares — rightly, because the site documents the product's doctrines and this rule is this
+repository's own. A project rule that needs a check gets a gate, not a doctrine.
 
 Where there is no Rust crate the doctrine is skipped and says so: the layer installs into
 repositories that carry no executable, and a doctrine that cannot apply is not a violation.
@@ -106,10 +107,11 @@ repositories that carry no executable, and a doctrine that cannot apply is not a
 
 `bash test/run.sh 88_rust_command_tested`, which builds a fixture holding a composed module
 with a test, one with only a doc example, one with neither, and one declared but composed by
-nobody, and asserts that the validator reports exactly the last two; a composed module
-declaring no command, and a floor lowered to sixty, are each required to be reported — so that either form of
-assertion is proved to satisfy the rule rather than only claimed to. It also asserts the skip
-in a repository with no crate, that a composed module with no file is reported, that the
-coverage floor must be declared, and that the module list follows a change to the composition
-rather than living in the validator. `majordomus doctor` reports the state of this
-repository.
+nobody, and asserts that the check reports exactly the last two — so that either form of
+assertion is proved to satisfy the rule rather than only claimed to. It also asserts that a
+composed module declaring no command is reported, that a floor lowered below ninety is
+reported, that a module already on the baseline does not fail the gate while one that is not
+does, and that a repository with no crate is passed over rather than failed.
+
+`scripts/ci/rust-command-check` on this repository reports the modules still owing an
+assertion and exits zero while they are the ones the baseline records.

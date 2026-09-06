@@ -1,58 +1,37 @@
-# The doctrine that holds a command's evidence beside its declaration, exercised against a
-# crate this case builds rather than against the one in the checkout.
+# The gate that holds a command's evidence beside its declaration, exercised against a crate
+# this case builds rather than against the one in the checkout.
 #
-# The subject is text, not Rust: the validator reads the composition and the module files
-# and never compiles anything, so the fixture is a handful of files and the case runs in
-# milliseconds. That is deliberate — a doctrine dispatched from `doctor` runs on every
-# commit through the pre-commit hook, and one that needed cargo would be a doctrine nobody
-# could afford to leave enabled.
+# The subject is text, not Rust: the check reads the composition and the module files and
+# never compiles anything, so the fixture is a handful of files and the case runs fast.
 #
 # What is proved here: the denominator comes from `compose_modules!` and follows a change to
 # it; either accepted form of assertion — an in-file #[test] or a doc example cargo runs —
-# satisfies the rule on its own; a module with neither is reported exactly once, because
-# demanding a particular form would buy a token test beside a real example; a module declared
-# and composed by nobody is reported; a composed module with no file, and one that declares no
-# command at all, are reported; the coverage floor must be declared and must be high; and a repository with no crate is skipped rather than failed,
-# because the layer installs where there is no executable.
+# satisfies the rule on its own; a module with neither is reported once; a module composed by
+# nobody, a composed module with no file, and a composed module declaring no command are each
+# reported; the coverage floor must be declared and must be high; and the ratchet works in
+# both directions — debt already recorded in the baseline does not fail the gate, debt that is
+# not recorded does, and clearing debt is noticed.
 . "$ROOT/test/lib.sh"
-"$MJ" init >/dev/null
+CHECK="$ROOT/scripts/ci/rust-command-check"
+[ -x "$CHECK" ] || { echo "    scripts/ci/rust-command-check is missing or not executable"; exit 1; }
 
-# The rule is this repository's, not the skeleton's, so `init` does not install it. Copying
-# it into the fixture is what puts the whole chain under test — the front matter, the
-# doctrine registry built from the effective set, the dispatch from doctor, and the
-# validator — rather than the validator function alone.
-mkdir -p .ai/repo/rules/project test/cases
-# the whole project set, because the rule declares dependencies on other project rules and
-# a set that does not resolve is not applied at all — which is the loader being fail-closed
-cp "$ROOT"/.ai/repo/rules/project/*.v1.md .ai/repo/rules/project/
-# the wiring check requires the case the rule names to exist in the repository it inspects
-: > test/cases/88_rust_command_tested.sh
+F="$PWD/fixture"; B="$F/apps/majordomus-cli/src/capability/builtin"
+mkdir -p "$B" "$F/scripts" "$F/.ai/repo" "$PWD/empty"
+printf '90\n' > "$F/scripts/rust-coverage-threshold"
+run() { MJ_ROOT="$F" "$CHECK" > out.txt 2>&1; echo $?; }
 
-B=apps/majordomus-cli/src/capability/builtin
-doctor_out() { "$MJ" doctor > doctor.txt 2>&1 || true; }
-
-# a module that satisfies the rule: declared, composed, tested here, documented by example
 good_module() {
   cat > "$B/$1.rs" <<'RS'
-//! A command module.
-//!
-//! ```
-//! assert_eq!(1 + 1, 2);
-//! ```
 module!(demo);
 capability!(demo.thing);
 
 #[cfg(test)]
 mod tests {
     #[test]
-    fn the_command_answers() {
-        assert!(true);
-    }
+    fn the_command_answers() { assert!(true); }
 }
 RS
 }
-# a module whose only assertion is a doc example — cargo runs it, so the rule is satisfied
-# and no #[test] is owed. This is the form the rule must not quietly demand twice.
 doc_only_module() {
   cat > "$B/$1.rs" <<'RS'
 //! A command module documented by an example that runs.
@@ -64,116 +43,97 @@ module!(docs_only);
 capability!(docs_only.thing);
 RS
 }
-# a module with no evidence of its own
 bare_module() { printf 'module!(%s);\ncapability!(%s.thing);\n' "$1" "$1" > "$B/$1.rs"; }
-
-compose() {   # compose <name>...
-  { printf 'pub fn modules() -> Vec<ModuleDescriptor> {\n    compose_modules![\n'
+compose() { { printf 'pub fn modules() -> Vec<ModuleDescriptor> {\n    compose_modules![\n'
     for m in "$@"; do printf '        %s,\n' "$m"; done
-    printf '    ]\n}\n'
-  } > "$B/mod.rs"
-}
+    printf '    ]\n}\n'; } > "$B/mod.rs"; }
 
-# --- a repository with no crate is skipped, and says which subject it could not find
-doctor_out
-grep -q 'rust-command.*carries no Rust capability modules' doctor.txt \
-  || { echo "    a repository with no crate was not skipped"; grep -i rust-command doctor.txt; exit 1; }
-grep -qE '^(FAIL|WARN) *rust-command' doctor.txt \
-  && { echo "    a repository with no crate reported a finding"; grep -i rust-command doctor.txt; exit 1; }
+# --- a tree with no crate is passed over rather than failed
+rc="$(MJ_ROOT="$PWD/empty" "$CHECK" > out.txt 2>&1; echo $?)"
+[ "$rc" = 0 ] || { echo "    a tree with no crate did not pass ($rc)"; cat out.txt; exit 1; }
+grep -q 'nothing to measure' out.txt || { echo "    a tree with no crate did not say so"; cat out.txt; exit 1; }
 
-# --- one good module, one bare, one declared but composed by nobody
-mkdir -p "$B" scripts
-printf '90\n' > scripts/rust-coverage-threshold
+# --- one module per accepted form, one with neither, one composed by nobody
 good_module tested
 doc_only_module documented
 bare_module bare
 bare_module orphan
 compose tested documented bare
-doctor_out
+rc="$(run)"
+grep -q 'rust-command bare .*no assertion that runs' out.txt \
+  || { echo "    a module asserting nothing was not reported"; cat out.txt; exit 1; }
+[ "$(grep -c 'rust-command bare ' out.txt)" = 1 ] \
+  || { echo "    a module asserting nothing produced more than one finding"; cat out.txt; exit 1; }
+grep -q 'rust-command orphan .*composes nowhere' out.txt \
+  || { echo "    a module composed by nobody was not reported"; cat out.txt; exit 1; }
+grep -q 'rust-command tested ' out.txt \
+  && { echo "    a module with its own test was reported anyway"; cat out.txt; exit 1; }
+grep -q 'rust-command documented ' out.txt \
+  && { echo "    a module asserting only through a doc example was reported; either form must count"; cat out.txt; exit 1; }
+[ "$rc" = 10 ] || { echo "    unrecorded debt did not fail the gate ($rc)"; cat out.txt; exit 1; }
 
-grep -q "rust-command bare .*no assertion that runs" doctor.txt \
-  || { echo "    a module asserting nothing was not reported"; grep -i rust-command doctor.txt; exit 1; }
-# one finding, not one per missing form: demanding a particular form buys ceremony
-[ "$(grep -c 'rust-command bare ' doctor.txt)" = 1 ] \
-  || { echo "    a module asserting nothing produced more than one finding"; grep 'rust-command bare ' doctor.txt; exit 1; }
-grep -q "rust-command orphan .*does not compose" doctor.txt \
-  || { echo "    a module composed by nobody was not reported"; grep -i rust-command doctor.txt; exit 1; }
-# the ones that satisfy the rule are silent: their evidence is where the rule wants it, and
-# a doc example alone is enough — cargo runs it, so it is an assertion, not prose
-grep -q 'rust-command tested' doctor.txt \
-  && { echo "    a module with its own test was reported anyway"; grep -i rust-command doctor.txt; exit 1; }
-grep -q 'rust-command documented' doctor.txt \
-  && { echo "    a module asserting only through a doc example was reported; either form must count"; grep -i rust-command doctor.txt; exit 1; }
+# --- the ratchet: recorded debt does not fail, unrecorded debt does
+MJ_ROOT="$F" "$CHECK" --write-baseline > out.txt 2>&1 || { echo "    --write-baseline failed"; cat out.txt; exit 1; }
+grep -q '^bare$' "$F/.ai/repo/rust-command-baseline.txt" \
+  || { echo "    the baseline does not record today's debt"; cat "$F/.ai/repo/rust-command-baseline.txt"; exit 1; }
+rc="$(run)"
+[ "$rc" = 0 ] || { echo "    recorded debt failed the gate ($rc); the ratchet must not block on what it recorded"; cat out.txt; exit 1; }
 
-# --- the denominator is the composition, not a list in the validator
-# composing the orphan makes it measured rather than orphaned, with no edit anywhere else
-compose tested documented bare orphan
-doctor_out
-grep -q "rust-command orphan .*does not compose" doctor.txt \
-  && { echo "    a module was still called uncomposed after being composed"; exit 1; }
-grep -q "rust-command orphan .*no assertion that runs" doctor.txt \
-  || { echo "    composing a module did not bring it into the measurement"; grep -i rust-command doctor.txt; exit 1; }
-# and removing it from the composition takes it back out of the measurement
-compose tested documented bare
-doctor_out
-grep -q "rust-command orphan .*no assertion that runs" doctor.txt \
-  && { echo "    an uncomposed module was still measured as a command"; exit 1; }
+bare_module newcmd
+compose tested documented bare newcmd
+rc="$(run)"
+[ "$rc" = 10 ] || { echo "    a new command with no assertion did not fail the gate ($rc)"; cat out.txt; exit 1; }
+grep -q 'new debt' out.txt || { echo "    the failure does not say the debt is new"; cat out.txt; exit 1; }
+grep -q 'newcmd' out.txt || { echo "    the failure does not name the new module"; cat out.txt; exit 1; }
 
-# --- a module the composition names and the tree does not carry
-compose tested documented bare missing
-doctor_out
-grep -q 'rust-command missing .*has no module file' doctor.txt \
-  || { echo "    a composed module with no file was not reported"; grep -i rust-command doctor.txt; exit 1; }
-compose tested documented bare
-
-# --- a composed module that declares no command is not a command module
-printf 'module!(empty);\n' > "$B/empty.rs"
-compose tested documented bare empty
-doctor_out
-grep -q 'rust-command empty .*declares no capability' doctor.txt \
-  || { echo "    a composed module declaring nothing was not reported"; grep -i rust-command doctor.txt; exit 1; }
-rm -f "$B/empty.rs"; compose tested documented bare
-
-# --- the coverage floor is declared, not assumed
-rm -f scripts/rust-coverage-threshold
-doctor_out
-grep -q 'rust-command coverage .*no coverage floor is declared' doctor.txt \
-  || { echo "    a missing coverage floor was not reported"; grep -i rust-command doctor.txt; exit 1; }
-
-# --- and it is high: lowering the bar is a visible act, not a quiet edit
-printf '60\n' > scripts/rust-coverage-threshold
-doctor_out
-grep -q 'rust-command coverage .*is 60%, below the 90%' doctor.txt \
-  || { echo "    a floor below the rule's minimum was not reported"; grep -i rust-command doctor.txt; exit 1; }
-printf '90\n' > scripts/rust-coverage-threshold
-doctor_out
-grep -q 'rust-command coverage' doctor.txt \
-  && { echo "    a floor at the rule's minimum was still reported"; grep -i rust-command doctor.txt; exit 1; }
-
-# --- a tree where every composed module satisfies the rule reports it once, and passes
+# --- clearing debt is noticed rather than silently accepted
+good_module newcmd
 good_module bare
-rm -f "$B/orphan.rs"          # the uncomposed module was the subject above, not of this one
-doctor_out
-grep -qE '^OK *rust-command' doctor.txt \
-  || { echo "    a compliant tree did not report OK"; grep -i rust-command doctor.txt; exit 1; }
-grep -qE '^(FAIL|WARN) *rust-command' doctor.txt \
-  && { echo "    a compliant tree still reported a finding"; grep -i rust-command doctor.txt; exit 1; }
+rc="$(run)"
+[ "$rc" = 0 ] || { echo "    a tree with no outstanding debt failed the gate ($rc)"; cat out.txt; exit 1; }
+grep -q 'debt cleared' out.txt || { echo "    clearing debt was not reported"; cat out.txt; exit 1; }
 
-# --- the rule is advisory at v1: a violation is a warning, never a blocking failure.
-# The claim is about this doctrine's own level, not about doctor's exit code: a fixture this
-# small fails other doctrines for reasons of its own, and asserting the exit code here would
-# be asserting their state rather than this rule's.
-bare_module bare
-doctor_out
-grep -qE '^WARN *rust-command' doctor.txt \
-  || { echo "    an advisory violation was not reported as a warning"; grep -i rust-command doctor.txt; exit 1; }
-grep -qE '^FAIL *rust-command' doctor.txt \
-  && { echo "    an advisory violation was reported as a blocking failure; v1 must not block"; exit 1; }
+# --- the denominator is the composition, not a list in the script
+bare_module orphan
+compose tested documented bare newcmd orphan
+rc="$(run)"
+grep -q 'rust-command orphan .*composes nowhere' out.txt \
+  && { echo "    a composed module was still called uncomposed"; cat out.txt; exit 1; }
+grep -q 'rust-command orphan .*no assertion that runs' out.txt \
+  || { echo "    composing a module did not bring it into the measurement"; cat out.txt; exit 1; }
+compose tested documented bare newcmd
 
-# --- the rule resolves in this repository and names this case
+# --- a composed module the tree does not carry, and one that declares no command
+compose tested documented bare newcmd missing
+rc="$(run)"
+grep -q 'rust-command missing .*no module file' out.txt \
+  || { echo "    a composed module with no file was not reported"; cat out.txt; exit 1; }
+printf 'module!(empty);\n' > "$B/empty.rs"
+compose tested documented bare newcmd empty
+rc="$(run)"
+grep -q 'rust-command empty .*declares no capability' out.txt \
+  || { echo "    a composed module declaring no command was not reported"; cat out.txt; exit 1; }
+rm -f "$B/empty.rs"; compose tested documented bare newcmd
+
+# --- the coverage floor is declared, and it is high
+rm -f "$F/scripts/rust-coverage-threshold"
+rc="$(run)"
+grep -q 'no coverage floor is declared' out.txt \
+  || { echo "    a missing coverage floor was not reported"; cat out.txt; exit 1; }
+printf '60\n' > "$F/scripts/rust-coverage-threshold"
+rc="$(run)"
+grep -q 'floor is 60%, below the 90%' out.txt \
+  || { echo "    a floor below the rule's minimum was not reported"; cat out.txt; exit 1; }
+printf '90\n' > "$F/scripts/rust-coverage-threshold"
+rc="$(run)"
+grep -q 'coverage floor' out.txt \
+  && { echo "    a floor at the minimum was still reported"; cat out.txt; exit 1; }
+
+# --- the rule exists, is blocking, and names the gate that holds it
 R="$ROOT/.ai/repo/rules/project/rust-command-tested-in-file.v1.md"
 [ -f "$R" ] || { echo "    the rule is missing: $R"; exit 1; }
-grep -q '^  validator: rust_command_tested$' "$R" || { echo "    the rule does not name its validator"; exit 1; }
-grep -q 'test/cases/88_rust_command_tested.sh' "$R" || { echo "    the rule does not name this case"; exit 1; }
+grep -q '^class: blocking$' "$R" || { echo "    the rule is not blocking"; exit 1; }
+grep -q 'scripts/ci/rust-command-check' "$R" || { echo "    the rule does not name the check that holds it"; exit 1; }
+grep -q 'rust-command' "$ROOT/.ai/repo/ci/gates.yaml" || { echo "    no gate runs the check"; exit 1; }
 "$MJ" --repo "$ROOT" rules list | grep -q 'project.rust-command-tested-in-file' \
   || { echo "    the rule does not resolve in this repository's effective set"; exit 1; }
