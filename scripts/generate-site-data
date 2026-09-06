@@ -786,14 +786,17 @@ GEN_T0="$(mj_phase_begin "gen:sessions.json")"
 # The closed execution episodes, from the tool's own listing and the records themselves.
 # Nothing here is a second index: `session list --all --json` reads the section the manifest
 # names, and the body of each record is the only authored part of it (ADR 0014).
+# The listing's `label` is dropped: it is the divergence of the record against the reader's
+# own worktree and branch, so the same record labels itself differently here and on a CI
+# checkout. A published projection may only carry what the record says about itself.
 "$ROOT/bin/majordomus" --repo "$ROOT" session list --all --json > "$STAGE/sessions.raw.json" 2>/dev/null \
   || printf '{"schema":1,"sessions":[]}' > "$STAGE/sessions.raw.json"
 : > "$STAGE/sessions.bodies"
 while IFS="$MJ_TAB" read -r sid path; do
   [ -n "$sid" ] || continue
   body="$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$ROOT/$path")"
-  commits="$(awk '/^commits:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); print; next } c { exit }' "$ROOT/$path" | jq -Rn '[inputs]')"
-  changed="$(awk '/^changed_files:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); print; next } c { exit }' "$ROOT/$path" | jq -Rn '[inputs]')"
+  commits="$(awk '/^commits:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); gsub(/^"|"$/, ""); print; next } c { exit }' "$ROOT/$path" | jq -Rn '[inputs]')"
+  changed="$(awk '/^changed_files:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); gsub(/^"|"$/, ""); print; next } c { exit }' "$ROOT/$path" | jq -Rn '[inputs]')"
   jq -n --arg id "$sid" --rawfile b <(printf '%s' "$body") --argjson commits "$commits" --argjson changed "$changed" \
      '{session_id: $id, summary: ($b | gsub("^\\s+|\\s+$";"")), commits: $commits, changed_files: $changed}' >> "$STAGE/sessions.bodies"
 done < <(jq -r '.sessions[] | [.session_id, .path] | @tsv' "$STAGE/sessions.raw.json")
@@ -805,10 +808,12 @@ jq --slurpfile bodies "$STAGE/sessions.bodies.json" '
    count: (.sessions | length),
    sessions: [ .sessions[] as $s
                | ($bodies[0][] | select(.session_id == $s.session_id)) as $b
-               | $s + {route: ("/sessions/" + $s.session_id + "/"),
-                       summary: ($b.summary // ""),
-                       commits: ($b.commits // []),
-                       changed_files: ($b.changed_files // [])} ]}' \
+               | $s
+               | del(.label)
+               | . + {route: ("/sessions/" + $s.session_id + "/"),
+                      summary: ($b.summary // ""),
+                      commits: ($b.commits // []),
+                      changed_files: ($b.changed_files // [])} ]}' \
   "$STAGE/sessions.raw.json" > "$OUT/sessions.json"
 mj_phase_end "gen:sessions.json" "$GEN_T0"
 
