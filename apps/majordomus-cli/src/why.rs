@@ -152,6 +152,12 @@ pub struct Moment {
     #[serde(default, skip_serializing_if = "String::is_empty")]
     /// The Markdown body, without its front matter.
     pub body: String,
+    #[serde(skip)]
+    /// Derived once, when the catalogue is built: everything a reader might remember about
+    /// this moment, lower-cased. A query matches against this rather than rebuilding it,
+    /// which is what keeps a search over the catalogue independent of how the records are
+    /// shaped (`project.derived-once`).
+    search: String,
 }
 
 /// One audience. Membership is never listed here: it is each moment's `audiences`.
@@ -340,6 +346,7 @@ impl Catalogue {
                         m.route = format!("{ROUTE}{}/", m.id);
                         m.source = path;
                         m.body = o.body.clone();
+                        m.search = m.search_text();
                         c.moments.push(m);
                     }
                 }
@@ -932,9 +939,10 @@ impl Moment {
         s.to_lowercase()
     }
 
-    /// Does the lower-cased needle occur anywhere in the search text?
+    /// Does the lower-cased needle occur anywhere in the search text? The text was built
+    /// once, when the catalogue was; this is a substring test and nothing else.
     pub fn matches(&self, needle: &str) -> bool {
-        self.search_text().contains(needle)
+        self.search.contains(needle)
     }
 
     /// The name a narrow column shows.
