@@ -115,6 +115,33 @@ fn ls_files_with(root: &Path, pathspecs: &[&str]) -> Result<Vec<String>> {
     Ok(files)
 }
 
+/// Is `ancestor` reachable from `descendant`? `None` when git cannot answer at all — a
+/// missing executable, a commit this clone does not have — which is a third answer and not
+/// a `false`: "not an ancestor" and "unknown ancestry" lead a reader to different actions,
+/// and collapsing them is how a record from a rewritten history gets read as current.
+///
+/// Exposed rather than left to `run` because ancestry is the one git question the
+/// divergence label depends on, and a caller that had the whole command runner in order to
+/// ask it could ask anything.
+pub fn is_ancestor(root: &Path, ancestor: &str, descendant: &str) -> Option<bool> {
+    let out = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["merge-base", "--is-ancestor", ancestor, descendant])
+        .output()
+        .ok()?;
+    match out.status.code() {
+        Some(0) => Some(true),
+        // 1 is "no". Anything else git exits with — 128 for an object this clone does not
+        // have, for instance — is also not a yes, and answering `None` there would be
+        // generous in the one direction that costs something: a record naming a commit
+        // this repository has never seen is exactly the record that must not be read as
+        // current. `None` is reserved for git not running at all.
+        Some(_) => Some(false),
+        None => None,
+    }
+}
+
 fn run(root: &Path, args: &[&str]) -> Result<String> {
     let out = Command::new("git")
         .arg("-C")

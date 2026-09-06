@@ -1,6 +1,6 @@
 +++
 title = "Have the session opened and closed without anybody remembering to"
-description = "Wire the provider''s own session events, and the episode opens when the sitting begins, closes when it ends, and leaves behind the context the worker was given at the open."
+description = "Wire the provider''s own session events, and the episode opens when the sitting begins, hands the worker what the last one left, records what a compaction is about to discard, and closes with a continuation record beside its envelope."
 weight = 31
 [extra]
 id = "let-the-provider-draw-the-episode-boundary"
@@ -70,4 +70,8 @@ then:
 
 ## Outcome
 
-The provider's own `SessionStart` and `SessionEnd` events open and close the episode. Both are idempotent, because the events are: a resume keeps the open episode and an end with nothing open writes nothing. The open freezes what the context builder resolved, next to a section for the worker's own notes, and the close appends the outcome and the record it wrote. `doctor` holds the repository to the wiring by driving a payload through the shim, and refuses a working context that carries a conversation.
+The provider's own `SessionStart`, `PreCompact` and `SessionEnd` events run the lifecycle. Each is idempotent, because the events are: a resume keeps the open episode, an end with nothing open writes nothing, and a compaction with no active task records nothing.
+
+The open freezes what the context builder resolved, next to a section for the worker's own notes, and writes a briefing to standard output — which the provider adds to the context it is about to build. That is the step that makes the record readable as well as written: a continuation package nothing loads is one nobody reads. A compaction records a derived checkpoint, because the conversation is about to stop holding what it knows. An end with the task still active writes a derived handover before the envelope closes, so the next worker inherits both an index of the episode and something to act on.
+
+`doctor` holds the repository to the wiring by driving a payload through the shim, and refuses a working context that carries a conversation. `majordomus_continuity` reads the same state back over MCP, over HTTP and in the Cockpit, with the same two tiers and the same four divergence labels — and never writes, because the lifecycle has one writer.

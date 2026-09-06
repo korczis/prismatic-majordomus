@@ -166,12 +166,12 @@ commands:
     requires_installed: true
     requires_task: required
     json: false
-    syntax: majordomus checkpoint < body.md
+    syntax: majordomus checkpoint [--derive] < body.md
     reads: [.ai/repo/policy.yaml, .ai/local/state/current.yaml]
     writes: [.ai/local/state/checkpoints/, .ai/local/state/current.yaml, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: checkpoint-record
-    note: A progress note, not a report. A body over the policy's line cap is refused with the advice to write a handover instead, and identity fields in the body are rejected because they are computed from git.
+    note: A progress note, not a report. A body over the policy's line cap is refused with the advice to write a handover instead, and identity fields in the body are rejected because they are computed from git. --derive composes the body from git and the ledger instead of reading stdin, so a hook can record one without a worker typing it.
 
   - id: handover
     title: handover
@@ -184,12 +184,12 @@ commands:
     requires_installed: true
     requires_task: optional
     json: false
-    syntax: majordomus handover [--close] [--no-task] < body.md
+    syntax: majordomus handover [--derive] [--close] [--no-task] < body.md
     reads: [.ai/repo/policy.yaml, .ai/local/state/current.yaml, .ai/local/state/handovers/, .ai/local/state/ledger.jsonl]
     writes: [.ai/local/state/handovers/, .ai/local/state/current.yaml, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 13]
     demo: handover-transfer
-    note: Resolution is scoped to this worktree and branch and reports absence rather than returning a stale match from elsewhere. The body carries the sections the policy requires and no transcript.
+    note: Resolution is scoped to this worktree and branch and reports absence rather than returning a stale match from elsewhere. The body carries the sections the policy requires and no transcript. --derive composes those sections from the task record, the ledger, git and the open questions, so the record exists whether or not a worker writes one.
 
   - id: check
     title: check

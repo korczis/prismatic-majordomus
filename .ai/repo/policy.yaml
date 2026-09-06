@@ -34,6 +34,19 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+# The provider's episode events do three things beyond drawing the boundary, and each is a
+# switch here rather than a constant in the shim. The start event hands the worker a
+# briefing on standard output, which the provider adds to the context it is about to build;
+# the compaction event records a derived checkpoint, because a compaction discards the
+# conversation while the work continues; the end event writes a derived continuation record
+# when the task is still active, because a closed envelope says what an episode produced and
+# not what the next worker should do.
+session:
+  briefing_on_start: true
+  briefing_budget_lines: 60              # cap on what the start event injects, per episode
+  checkpoint_on_compact: true
+  handover_on_end: true
+
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's
 # p50, p95 and p99; doctor and watch report their own wall time against these budgets
