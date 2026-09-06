@@ -36,3 +36,32 @@ pub fn module() -> ModuleDescriptor {
         ],
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The declaration is the only place the id and the two projection names exist. A
+    /// refactor that dropped an exposure would still compile, and every suite that tests
+    /// the counters themselves would still pass; this is the assertion that would not.
+    #[test]
+    fn the_declaration_yields_the_projections_it_claims() {
+        let m = module();
+        assert_eq!(m.id.as_str(), "perf");
+        let ids: Vec<&str> = m
+            .capabilities
+            .iter()
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        assert_eq!(ids, ["perf.counters"]);
+        let exposure = &m.capabilities[0].capability.exposure;
+        assert_eq!(
+            exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+            Some("majordomus_perf")
+        );
+        assert_eq!(
+            exposure.http.as_ref().map(|h| h.path.as_str()),
+            Some("/api/v1/perf")
+        );
+    }
+}

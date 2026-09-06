@@ -93,4 +93,4 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/skill.txt` | `allow/skill` | text | 309 | `c2f31d65ad1b6a6b` |
 | `share/allow/taxonomy.txt` | `allow/taxonomy` | text | 298 | `7fb8f5496a1677db` |
 | `share/allow/use-case.txt` | `allow/use-case` | text | 1141 | `223bf1e79ba2afad` |
-| `site/data/registry/registry.json` | `site-registry` | json | 687744 | `843abaec059412cf` |
+| `site/data/registry/registry.json` | `site-registry` | json | 687744 | `936b809dc8fb0d56` |
