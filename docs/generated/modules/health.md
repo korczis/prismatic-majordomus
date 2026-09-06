@@ -1,47 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the `health` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.1.0 -->
+     Source: the canonical Majordomus capability registry, module `health`; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.2.0 -->
 # Module `health` — Health
 
 Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.
 
-Stability: behaviorally_verified. Capabilities: 3.
-
-## `health.live` — Liveness
-
-Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say.
-
-| | |
-|---|---|
-| kind | query |
-| stability | behaviorally_verified |
-| HTTP | `GET /api/v1/live` |
-| cache | — |
-| benchmark | required |
-| provenance | builtin majordomus_cli::capability::builtin::health |
-| tags | health, deployment |
-
-Input: none.
-
-Output: `Liveness`.
-
-## `health.ready` — Readiness
-
-Can this process serve traffic: the registry and the index it built at start-up, already resident, and how the layer read. Only local initialisation — never an external provider, a database or another service, because a readiness check that probes a dependency fails a deployment for something that is not this process.
-
-| | |
-|---|---|
-| kind | query |
-| stability | behaviorally_verified |
-| HTTP | `GET /api/v1/ready` |
-| cache | — |
-| benchmark | required |
-| provenance | builtin majordomus_cli::capability::builtin::health |
-| tags | health, deployment |
-
-Input: none.
-
-Output: `Readiness`.
+Stability: behaviorally_verified. Capabilities: 1.
 
 ## `health.report` — Health of this process
 

@@ -35,55 +35,72 @@
       "tool": "majordomus_capabilities"
     },
     {
-      "api_anchor": "/docs/api/#op-deploy-check",
+      "api_anchor": "/docs/api/#op-distribution-artifact",
       "claims": [],
-      "cli": null,
-      "id": "deploy.check",
+      "cli": "majordomus distribution artifact",
+      "id": "distribution.artifact",
       "kind": "query",
-      "module": "deploy",
-      "module_route": "/registry/modules/deploy/",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
       "resource": null,
-      "route": "/registry/capabilities/deploy-check/",
-      "slug": "deploy-check",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "route": "/registry/capabilities/distribution-artifact/",
+      "slug": "distribution-artifact",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "tests": [],
-      "title": "Would these deployments work",
-      "tool": "majordomus_deploy_check"
+      "title": "The artifact of a target",
+      "tool": "majordomus_artifact"
     },
     {
-      "api_anchor": "/docs/api/#op-deploy-get",
+      "api_anchor": "/docs/api/#op-distribution-build",
       "claims": [],
-      "cli": null,
-      "id": "deploy.get",
+      "cli": "majordomus distribution build",
+      "id": "distribution.build",
       "kind": "query",
-      "module": "deploy",
-      "module_route": "/registry/modules/deploy/",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
       "resource": null,
-      "route": "/registry/capabilities/deploy-get/",
-      "slug": "deploy-get",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "route": "/registry/capabilities/distribution-build/",
+      "slug": "distribution-build",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "tests": [],
-      "title": "One deployment",
-      "tool": "majordomus_deployment"
+      "title": "This build",
+      "tool": "majordomus_build"
     },
     {
-      "api_anchor": "/docs/api/#op-deploy-list",
+      "api_anchor": "/docs/api/#op-distribution-model",
       "claims": [],
-      "cli": null,
-      "id": "deploy.list",
+      "cli": "majordomus distribution show",
+      "id": "distribution.model",
       "kind": "query",
-      "module": "deploy",
-      "module_route": "/registry/modules/deploy/",
-      "resource": "majordomus://deployments",
-      "route": "/registry/capabilities/deploy-list/",
-      "slug": "deploy-list",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-model/",
+      "slug": "distribution-model",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "tests": [],
-      "title": "Deployments",
-      "tool": "majordomus_deployments"
+      "title": "The distribution model",
+      "tool": "majordomus_distribution"
+    },
+    {
+      "api_anchor": "/docs/api/#op-distribution-releases",
+      "claims": [],
+      "cli": "majordomus distribution releases",
+      "id": "distribution.releases",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-releases/",
+      "slug": "distribution-releases",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "Published releases",
+      "tool": "majordomus_releases"
     },
     {
       "api_anchor": "/docs/api/#op-graph-get",
@@ -118,40 +135,6 @@
       "tests": [],
       "title": "List graphs",
       "tool": "majordomus_graphs"
-    },
-    {
-      "api_anchor": "/docs/api/#op-health-live",
-      "claims": [],
-      "cli": null,
-      "id": "health.live",
-      "kind": "query",
-      "module": "health",
-      "module_route": "/registry/modules/health/",
-      "resource": null,
-      "route": "/registry/capabilities/health-live/",
-      "slug": "health-live",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
-      "tests": [],
-      "title": "Liveness",
-      "tool": null
-    },
-    {
-      "api_anchor": "/docs/api/#op-health-ready",
-      "claims": [],
-      "cli": null,
-      "id": "health.ready",
-      "kind": "query",
-      "module": "health",
-      "module_route": "/registry/modules/health/",
-      "resource": null,
-      "route": "/registry/capabilities/health-ready/",
-      "slug": "health-ready",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
-      "tests": [],
-      "title": "Readiness",
-      "tool": null
     },
     {
       "api_anchor": "/docs/api/#op-health-report",
@@ -374,6 +357,20 @@
     "cli": [],
     "executable": [
       {
+        "id": "distribution-canonical-model",
+        "implementation": "apps/majordomus-cli/src/distribution/mod.rs",
+        "route": "/guarantees/distribution-canonical-model/",
+        "status": "guaranteed",
+        "test": "test/cases/84_distribution_model.sh"
+      },
+      {
+        "id": "install-command-is-derived",
+        "implementation": "apps/majordomus-cli/src/distribution/mod.rs",
+        "route": "/guarantees/install-command-is-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/84_distribution_model.sh"
+      },
+      {
         "id": "mcp-data-driven",
         "implementation": "apps/majordomus-cli/src/index.rs",
         "route": "/guarantees/mcp-data-driven/",
@@ -499,11 +496,11 @@
     ]
   },
   "counts": {
-    "capabilities": 19,
-    "claims": 20,
+    "capabilities": 18,
+    "claims": 22,
     "modules": 8
   },
-  "generator": "majordomus-cli 0.1.0",
+  "generator": "majordomus-cli 0.2.0",
   "modules": [
     {
       "capabilities": [
@@ -529,28 +526,33 @@
     {
       "capabilities": [
         {
-          "id": "deploy.check",
-          "route": "/registry/capabilities/deploy-check/",
-          "slug": "deploy-check"
+          "id": "distribution.artifact",
+          "route": "/registry/capabilities/distribution-artifact/",
+          "slug": "distribution-artifact"
         },
         {
-          "id": "deploy.get",
-          "route": "/registry/capabilities/deploy-get/",
-          "slug": "deploy-get"
+          "id": "distribution.build",
+          "route": "/registry/capabilities/distribution-build/",
+          "slug": "distribution-build"
         },
         {
-          "id": "deploy.list",
-          "route": "/registry/capabilities/deploy-list/",
-          "slug": "deploy-list"
+          "id": "distribution.model",
+          "route": "/registry/capabilities/distribution-model/",
+          "slug": "distribution-model"
+        },
+        {
+          "id": "distribution.releases",
+          "route": "/registry/capabilities/distribution-releases/",
+          "slug": "distribution-releases"
         }
       ],
       "claims": [],
-      "id": "deploy",
-      "route": "/registry/modules/deploy/",
-      "slug": "deploy",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
-      "title": "Deployment"
+      "id": "distribution",
+      "route": "/registry/modules/distribution/",
+      "slug": "distribution",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "title": "Distribution"
     },
     {
       "capabilities": [
@@ -575,16 +577,6 @@
     },
     {
       "capabilities": [
-        {
-          "id": "health.live",
-          "route": "/registry/capabilities/health-live/",
-          "slug": "health-live"
-        },
-        {
-          "id": "health.ready",
-          "route": "/registry/capabilities/health-ready/",
-          "slug": "health-ready"
-        },
         {
           "id": "health.report",
           "route": "/registry/capabilities/health-report/",

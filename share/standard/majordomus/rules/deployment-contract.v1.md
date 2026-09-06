@@ -41,7 +41,7 @@ refused here.
 # Required behaviour
 
 A deployment is a `*.yaml` object under the layer's deployments section, valid against
-`share/schemas/deployment.schema.json` (`deployment/v1`). It states the application, the
+`share/schemas/majordomus/deployment/deployment.v1.schema.json` (`deployment/v1`). It states the application, the
 package and binary shipped, the port and the interface the process listens on, the
 liveness and readiness routes, the resources, the machine count, the region and the build
 inputs — each exactly once. Facts that mean nothing outside one hosting provider live in

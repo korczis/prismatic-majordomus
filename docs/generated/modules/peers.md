@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the `peers` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.1.0 -->
+     Source: the canonical Majordomus capability registry, module `peers`; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.2.0 -->
 # Module `peers` — Peers
 
 The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.

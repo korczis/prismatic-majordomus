@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the `repository` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.1.0 -->
+     Source: the canonical Majordomus capability registry, module `repository`; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.2.0 -->
 # Module `repository` — Repository
 
 The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads.

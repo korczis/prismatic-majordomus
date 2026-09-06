@@ -546,7 +546,7 @@ impl Deployment {
                 "(the object)",
                 e,
                 "not a deployment this executable can read",
-                "compare it with share/schemas/deployment.schema.json, or run: majordomus doctor",
+                "compare it with share/schemas/majordomus/deployment/deployment.v1.schema.json, or run: majordomus doctor",
             )
         })?;
         if parsed.schema != SCHEMA_VERSION {

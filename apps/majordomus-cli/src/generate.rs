@@ -91,6 +91,10 @@ pub enum Target {
     /// topology reaches the published documentation without the site shelling out to this
     /// executable, and how `generate --check` notices when it has gone stale.
     Web,
+    /// Everything derived from the distribution model (see [`crate::distribution`]): the
+    /// release build matrix, the installer, the installation guide, the site's dataset,
+    /// and the public metadata of every recorded release.
+    Distribution,
 }
 
 impl Target {
@@ -106,21 +110,23 @@ impl Target {
         Target::Providers,
         Target::Site,
         Target::Web,
+        Target::Distribution,
         Target::Manifest,
     ];
 
-    /// Every target but the manifest: the artifacts the manifest indexes.
-    pub const INDEXED: &'static [Target] = &[
-        Target::OpenApi,
-        Target::Docs,
-        Target::Benchmarks,
-        Target::Registry,
-        Target::Allow,
-        Target::Documents,
-        Target::Providers,
-        Target::Site,
-        Target::Web,
-    ];
+    /// Every target but the manifest, in generation order: the artifacts the manifest
+    /// indexes.
+    ///
+    /// Derived from [`Target::ALL`] rather than written beside it. It was a second list by
+    /// hand, and twice a target was appended to `ALL` and forgotten here, which made that
+    /// target's artifacts the only ones the index said nothing about.
+    pub fn indexed() -> Vec<Target> {
+        Target::ALL
+            .iter()
+            .copied()
+            .filter(|t| *t != Target::Manifest)
+            .collect()
+    }
 
     /// The name the command line and the manifest use.
     pub fn name(self) -> &'static str {
@@ -134,6 +140,7 @@ impl Target {
             Target::Providers => "providers",
             Target::Site => "site",
             Target::Web => "web",
+            Target::Distribution => "distribution",
             Target::Manifest => "manifest",
         }
     }
@@ -519,6 +526,7 @@ pub fn artifacts(
             | Target::Site
             | Target::Web
             | Target::Manifest => {}
+            | Target::Distribution => {}
         }
     }
     Ok(out)
@@ -536,7 +544,7 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     let wants_manifest = targets.contains(&Target::Manifest);
     let alone = targets == [Target::Manifest];
     let indexed: Vec<Target> = if alone {
-        Target::INDEXED.to_vec()
+        Target::indexed()
     } else {
         targets
             .iter()
@@ -606,7 +614,117 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             ));
         }
     }
+    if targets.contains(&Target::Distribution) {
+        out.extend(distribution_artifacts(app, crate::VERSION)?);
+    }
     Ok(out)
+}
+
+/// Every artifact the distribution model produces. The model is read from the tool's own
+/// data directory, which is the file an installed copy carries; the release records are
+/// read from the repository. Nothing here decides a platform, a name or a URL — it renders
+/// what `share/distribution.yaml` and `.ai/repo/releases/` already say.
+pub fn distribution_artifacts(app: &App, version: &str) -> Result<Vec<Artifact>> {
+    use crate::distribution::{release, render, Model, Releases};
+
+    let model = Model::load(&app.share)?;
+    let releases = Releases::load(app.repository.root())?;
+    let findings = releases.findings(&model);
+    if let Some(first) = findings.first() {
+        return Err(Error::InvalidRelease {
+            path: release::DIR.to_string(),
+            reason: if findings.len() == 1 {
+                first.clone()
+            } else {
+                format!("{first} (and {} more)", findings.len() - 1)
+            },
+        });
+    }
+
+    let src = "share/distribution.yaml and the release records";
+    let mut out = vec![
+        rendered_json(
+            format!("{OUT_DIR}/distribution-matrix.json"),
+            "distribution-matrix",
+            src,
+            version,
+            render::matrix_json(&model),
+        )?,
+        rendered_json(
+            format!("{SITE_DATA_DIR}/distribution.json"),
+            "distribution-dataset",
+            src,
+            version,
+            render::site_dataset(&model, &releases),
+        )?,
+    ];
+
+    let installer_template = read_share(&app.share, crate::distribution::INSTALLER_TEMPLATE)?;
+    out.push(Artifact::verbatim(
+        format!(
+            "{}/{}",
+            crate::distribution::PUBLIC_DIR,
+            model.installer.script
+        ),
+        "installer",
+        ArtifactFormat::Text,
+        None,
+        src,
+        render::installer(&model, &installer_template).map_err(|reason| {
+            Error::InvalidDistribution {
+                path: crate::distribution::INSTALLER_TEMPLATE.to_string(),
+                reason,
+            }
+        })?,
+    ));
+
+    let guide_template = read_share(&app.share, crate::distribution::GUIDE_TEMPLATE)?;
+    let guide = render::install_doc(&model, &releases, crate::VERSION, &guide_template).map_err(
+        |reason| Error::InvalidDistribution {
+            path: crate::distribution::GUIDE_TEMPLATE.to_string(),
+            reason,
+        },
+    )?;
+    // The provenance header goes after the title, not before it: the site's documentation
+    // projection strips a document's own first-line heading and would otherwise render two.
+    let (title, rest) = guide.split_once('\n').unwrap_or((guide.as_str(), ""));
+    out.push(Artifact::verbatim(
+        crate::distribution::GUIDE.to_string(),
+        "install-guide",
+        ArtifactFormat::Markdown,
+        None,
+        src,
+        format!(
+            "{title}\n<!-- {HEADER}\n     Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);\n     regenerate with `majordomus generate`\n     Generator: majordomus-cli {} -->\n{rest}",
+            crate::VERSION
+        ),
+    ));
+
+    for r in &releases.releases {
+        out.push(rendered_json(
+            format!("{}/{}.json", release::PUBLIC_DIR, r.tag),
+            "release",
+            src,
+            version,
+            r.public_json(&model),
+        )?);
+    }
+    if let Some(latest) = releases.latest_stable() {
+        out.push(rendered_json(
+            format!("{}/{}.json", release::PUBLIC_DIR, release::LATEST),
+            "release-latest",
+            src,
+            version,
+            release::latest_json(latest, &model),
+        )?);
+    }
+    Ok(out)
+}
+
+/// A file of the tool's data directory, read as text.
+fn read_share(share: &Share, relative: &str) -> Result<String> {
+    let path = share.dir().join(relative);
+    std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))
 }
 
 /// Every artifact of the selected targets, the benchmark matrix included: what
@@ -649,6 +767,23 @@ pub fn context_artifacts(
         );
     }
     Ok(out)
+}
+
+/// A JSON artifact another module renders as text. The text is parsed back so that the
+/// provenance goes in as members rather than being spliced into a string, and a renderer
+/// that produced something that is not JSON is a defect reported here rather than a file
+/// nothing can read.
+fn rendered_json(
+    path: String,
+    document: &str,
+    source: &str,
+    version: &str,
+    text: String,
+) -> Result<Artifact> {
+    let value: Value = serde_json::from_str(&text).map_err(|e| Error::KindSchema {
+        reason: format!("{path}: the renderer did not produce JSON: {e}"),
+    })?;
+    Ok(Artifact::json_extension(path, document, source, version, value))
 }
 
 /// The resolved web topology as data: every surface with its mount, category, visibility,
@@ -1404,8 +1539,15 @@ pub fn violations(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Vec<Vio
             ArtifactFormat::Yaml | ArtifactFormat::Text => Some(format!("# {HEADER}")),
             _ => None,
         };
-        if opening.is_some_and(|o| !a.content.starts_with(&o)) {
-            out.push(at(&a.path, "carries no generated-file banner".into()));
+        // The banner is at the top, after at most the one line the format reserves: a
+        // script's first line belongs to its interpreter, and a document whose projection
+        // strips its first heading has to keep that heading first. One line, not a
+        // preamble — a banner further down is a banner a reader has already scrolled past.
+        if let Some(opening) = opening {
+            let top = a.content.splitn(3, '\n').take(2);
+            if !top.map(|l| format!("{l}\n")).any(|l| l.starts_with(&opening)) {
+                out.push(at(&a.path, "carries no generated-file banner".into()));
+            }
         }
         if a.format == ArtifactFormat::Json {
             match serde_json::from_str::<Value>(&a.content) {
@@ -1912,6 +2054,28 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    /// The manifest indexes every target but itself, and it is generated last. Twice a
+    /// target was appended to `ALL` after the manifest, which both delayed the index past
+    /// its own subject and, while the indexed set was a second list, left that target out
+    /// of it. The set is derived now; this is what holds the order.
+    #[test]
+    fn every_target_but_the_manifest_is_indexed_and_the_manifest_is_last() {
+        assert_eq!(
+            Target::ALL.last(),
+            Some(&Target::Manifest),
+            "the manifest indexes the others, so it is generated after them"
+        );
+        assert!(
+            !Target::indexed().contains(&Target::Manifest),
+            "the manifest does not index itself"
+        );
+        assert_eq!(
+            Target::indexed(),
+            Target::ALL[..Target::ALL.len() - 1].to_vec(),
+            "the indexed targets are ALL up to the manifest, in generation order"
+        );
+    }
+
     /// Every target has a name and every name is distinct: the manifest and the command
     /// line both address a target by it.
     #[test]
@@ -1923,8 +2087,7 @@ mod tests {
         assert_eq!(names.len(), unique.len(), "{names:?}");
         assert!(names.iter().all(|n| !n.is_empty()));
         assert_eq!(Target::Manifest.name(), "manifest");
-        assert_eq!(Target::INDEXED.len(), Target::ALL.len() - 1);
-        assert!(!Target::INDEXED.contains(&Target::Manifest));
+        assert_eq!(Target::indexed().len(), Target::ALL.len() - 1);
     }
 
     /// The encoding is read from the suffix, and anything the generator does not encode

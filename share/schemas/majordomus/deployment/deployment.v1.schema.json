@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://majordomus.dev/schemas/deployment.schema.json",
+  "$id": "https://majordomus.dev/schemas/majordomus/deployment/deployment.v1.schema.json",
+  "x-majordomus-schema": "majordomus.deployment/v1",
   "title": "Deployment",
   "description": "A deployment of this repository's executable, under .ai/repo/deployments/: the one place the application identity, the package and binary that are shipped, the address the process listens on, the routes a platform polls, the resources and machine count it is granted, the region it runs in, the inputs its image is built from and the budgets it is held to are stated. Every provider artifact — the container image definition, its ignore file, the provider configuration — is generated from this object and none of them is authoritative. Provider-specific facts live in the named provider block, never mixed through the generic ones.",
   "x-majordomus-allow": "deployment",

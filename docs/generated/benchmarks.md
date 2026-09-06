@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.1.0 -->
+     Generator: majordomus-cli 0.2.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 19 | 19 | 0 | 0 |
-| http | 19 | 19 | 0 | 0 |
-| mcp | 17 | 17 | 0 | 0 |
+| direct | 18 | 18 | 0 | 0 |
+| http | 18 | 18 | 0 | 0 |
+| mcp | 18 | 18 | 0 | 0 |
 | system | 12 | 12 | 0 | 0 |
-| total | 67 | 67 | 0 | 0 |
+| total | 66 | 66 | 0 | 0 |
 
 ## Capabilities
 
@@ -21,13 +21,12 @@ Every externally callable operation is a benchmark target, derived from the regi
 |---|---|---|---|---|---|---|---|
 | `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
-| `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
-| `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
-| `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
+| `distribution.artifact` | distribution | query | — | covered | covered | covered | `first-published-target` |
+| `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
+| `distribution.model` | distribution | query | — | covered | covered | covered | `default` |
+| `distribution.releases` | distribution | query | — | covered | covered | covered | `default` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
-| `health.live` | health | query | — | covered | — | covered | `default` |
-| `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |

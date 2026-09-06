@@ -1,7 +1,7 @@
 +++
 title = "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed"
 description = "A profile may declare effort_escalation: after a stated number of blocked attempts, effort rises to a stated level. Escalation is a declared, visible rule in the profile — not a habit of running everything at maximum — and it appears in the profile table every worker reads."
-weight = 53
+weight = 57
 [extra]
 claim_id = "effort-escalation"
 status = "advisory"

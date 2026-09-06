@@ -1054,7 +1054,7 @@ it. The container image definition, its ignore file and the provider configurati
 (`fly.toml`) are **generated** from this object; each carries a provenance header naming
 this file and the command that regenerates it, and `majordomus generate --check` fails
 when one is edited by hand. Contract:
-[`share/schemas/deployment.schema.json`](../share/schemas/deployment.schema.json)
+[`share/schemas/majordomus/deployment/deployment.v1.schema.json`](../share/schemas/majordomus/deployment/deployment.v1.schema.json)
 (`deployment/v1`); keys are closed by `share/allow/deployment.txt`, generated from it.
 
 ```yaml

@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# release-fixture — a complete, local, disposable release, for testing the installer without
+# publishing anything.
+#
+#   scripts/release-fixture --out DIR --base-url http://127.0.0.1:PORT [--version 0.2.0]
+#
+# It packs one archive per supported target from the tree you are in (all of them carrying
+# this machine's executable — the installer only ever downloads the one for its own target),
+# records them exactly as a real release is recorded, renders the public metadata with the
+# same renderer the site publishes, and rewrites the artifact URLs to point at the local
+# base instead of GitHub. The result is a directory that can be served as-is:
+#
+#   DIR/releases/v<version>.json
+#   DIR/releases/latest.json
+#   DIR/<artifact>...
+#
+# --version writes a release that claims another version, patching the version the packed
+# tool reports so that the installer's own version check still holds. That is how the
+# upgrade and the refuse-to-downgrade paths are tested.
+#
+# Exit codes: 0 ok · 2 usage · 10 the model or a record refuses · 12 prerequisite.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CRATE="$ROOT/apps/majordomus-cli"
+
+die() { printf 'release-fixture: %s\n' "$*" >&2; exit "${2:-12}"; }
+
+out=""; base=""; version=""; channel="stable"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --out) out="${2:-}"; shift 2 ;;
+    --base-url) base="${2:-}"; shift 2 ;;
+    --version) version="${2:-}"; shift 2 ;;
+    --channel) channel="${2:-}"; shift 2 ;;
+    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    *) die "unknown option: $1" 2 ;;
+  esac
+done
+[ -n "$out" ] && [ -n "$base" ] || die "--out and --base-url are required" 2
+[ -n "$version" ] || version="$("$ROOT/scripts/release-version")"
+tag="v$version"
+
+mj="${MAJORDOMUS_DIST_BIN:-$CRATE/target/debug/majordomus}"
+[ -x "$mj" ] || die "the fixture needs the executable; build it or set MAJORDOMUS_DIST_BIN"
+export MAJORDOMUS_DIST_BIN="$mj"
+
+mkdir -p "$out/releases"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT INT TERM HUP
+
+targets="$("$mj" distribution --repo "$ROOT" targets 2>/dev/null | awk 'NR>1 && ($3=="supported" || $3=="experimental") {print $1}')"
+[ -n "$targets" ] || die "the distribution model publishes no target" 10
+
+triple_of() {
+  "$mj" distribution --repo "$ROOT" targets --format json 2>/dev/null \
+    | sed -n "/\"id\": \"$1\"/,/}/p" | sed -n 's/.*"rust_target": "\([^"]*\)".*/\1/p' | head -n 1
+}
+
+# This machine's target is packed for real. The others are copies of it under their own
+# names: the installer downloads exactly one artifact — its own — and a fixture that
+# cross-built five more would be testing cargo rather than the installer. The record still
+# has to name every supported target, which is the invariant being exercised.
+host="$("$mj" distribution --repo "$ROOT" build --format json 2>/dev/null | sed -n 's/.*"target": "\([^"]*\)".*/\1/p' | head -n 1)"
+[ -n "$host" ] || die "the executable does not report its own target"
+host_id=""
+for id in $targets; do
+  [ "$(triple_of "$id")" = "$host" ] && host_id="$id"
+done
+[ -n "$host_id" ] || die "the distribution model does not publish this machine's target ($host)" 10
+
+MAJORDOMUS_BIN="$mj" "$ROOT/scripts/release-package" \
+  --target "$host" --tag "$tag" --out "$out" --no-build >/dev/null \
+  || die "packing $host failed" 10
+host_archive="$out/$("$mj" distribution --repo "$ROOT" artifact --target "$host" --tag "$tag" --format text | sed -n 1p)"
+
+# A fixture that claims another version must be told by the tool it packs, or the
+# installer's own "does this executable report the version I resolved?" check would refuse
+# it — which is the check working, not a fixture problem.
+real="$("$ROOT/scripts/release-version")"
+if [ "$version" != "$real" ]; then
+  rm -rf "${work:?}/repack"; mkdir -p "$work/repack"
+  tar -xzf "$host_archive" -C "$work/repack"
+  entry="$(find "$work/repack" -maxdepth 3 -name majordomus -path '*/bin/*' | head -n 1)"
+  [ -n "$entry" ] || die "the packed archive holds no bin/majordomus" 10
+  sed "s/^MJ_VERSION=\"$real\"/MJ_VERSION=\"$version\"/" "$entry" > "$entry.new"
+  mv "$entry.new" "$entry"; chmod 0755 "$entry"
+  root="$(basename "$(dirname "$(dirname "$entry")")")"
+  ( cd "$work/repack" && tar -czf "$host_archive" "$root" )
+fi
+
+for id in $targets; do
+  [ "$id" = "$host_id" ] && continue
+  name="$("$mj" distribution --repo "$ROOT" artifact --target "$id" --tag "$tag" --format text | sed -n 1p)"
+  cp "$host_archive" "$out/$name"
+done
+
+"$ROOT/scripts/release-record" --tag "$tag" --dir "$out" --channel "$channel" \
+  --commit "$(cd "$ROOT" && git rev-parse HEAD)" --out "$work/$tag.yaml" >/dev/null \
+  || die "the fixture release could not be recorded" 10
+
+prefix="$("$mj" distribution --repo "$ROOT" show --format json 2>/dev/null | sed -n 's/.*"repository": "\([^"]*\)".*/\1/p' | head -n 1)"
+[ -n "$prefix" ] || die "the model states no repository" 10
+"$mj" distribution --repo "$ROOT" metadata --record "$work/$tag.yaml" \
+  | sed "s#https://github.com/$prefix/releases/download/$tag/#$base/#" \
+  > "$out/releases/$tag.json"
+[ "$channel" = stable ] && cp "$out/releases/$tag.json" "$out/releases/latest.json"
+
+printf 'release-fixture: %s at %s (%s)\n' "$tag" "$out" "$base"

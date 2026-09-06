@@ -10,6 +10,7 @@ pub mod capabilities;
 pub mod continuity;
 pub mod directories;
 pub mod deploy;
+pub mod distribution;
 pub mod graph;
 pub mod health;
 pub mod objects;
@@ -34,6 +35,13 @@ pub use directories::{
     DirectoryTallies, EffectiveEntry, DIRECTORIES_URI,
 };
 pub use deploy::{DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI};
+// `ArtifactView` means two different things here: a file the generator writes, and a
+// binary built for a release target. The release one is re-exported under the name that
+// says which it is; inside its own module it keeps the short name.
+pub use distribution::{
+    ArtifactInput, ArtifactView as ReleaseArtifactView, BuildReport, DistributionReport,
+    ReleaseView, ReleasesReport, TargetView,
+};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
@@ -61,7 +69,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         perf,
         artifacts,
         web,
-        directories
+        directories,
+        distribution
     ]
 }
 

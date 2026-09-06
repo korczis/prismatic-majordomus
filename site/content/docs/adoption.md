@@ -1,7 +1,7 @@
 +++
 title = "Adoption"
 description = "day one, week one, several workers, removal"
-weight = 21
+weight = 23
 [extra]
 source = "docs/ADOPTION.md"
 +++
@@ -13,8 +13,7 @@ Majordomus sits around an existing workflow. Nothing is rewritten.
 ## Day one: one repository, one person
 
 ```bash
-git clone <this repository> ~/majordomus
-export PATH="$HOME/majordomus/bin:$PATH"     # or symlink bin/majordomus somewhere on PATH
+curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
 
 cd <your project>
 majordomus init          # .ai/ with the policy, profiles, rules, prompts and workflows

@@ -1,7 +1,7 @@
 +++
 title = "One policy will be shared across repositories and workers"
 description = "**Planned.** One canonical policy distributed to many repositories, with the same projections, the same finish contract and the same drift checks everywhere a team's workers run."
-weight = 88
+weight = 92
 [extra]
 claim_id = "shared-policy"
 status = "planned"

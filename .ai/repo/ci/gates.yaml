@@ -154,6 +154,13 @@ classes:
     paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve]
     gates: [shell-suite, site-basepath, site-build, site-probe]
 
+  # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
+  # and they ask the executable for every name they use, so the crate's registry checks and
+  # the behavioural cases are what decide whether they still work
+  - id: distribution
+    paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture]
+    gates: [shell-suite, rust-integration, macos]
+
   # the MCP client configurations and the launcher they name; case 90 reads them
   - id: clients
     paths: [.mcp.json, .codex/**, .gemini/**]

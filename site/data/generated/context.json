@@ -47,6 +47,28 @@
       "tracks": []
     },
     {
+      "id": "ai.repo.releases",
+      "path": ".ai/repo/releases/README.md",
+      "dir": ".ai/repo/releases",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 75,
+      "status": "active",
+      "title": "Published releases",
+      "description": "One record per published release, written by the release pipeline and read by every projection of the public release metadata.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
       "id": "ai.repo.adrs",
       "path": ".ai/repo/adrs/README.md",
       "dir": ".ai/repo/adrs",
@@ -159,7 +181,7 @@
       ],
       "supersedes": [],
       "tracks": [
-        "share/schemas/deployment.schema.json",
+        "share/schemas/majordomus/deployment/deployment.v1.schema.json",
         "share/kinds.yaml"
       ]
     },
@@ -630,7 +652,7 @@
       "depth": 2,
       "name": "adrs",
       "contract": {
-        "index": 3,
+        "index": 4,
         "id": "ai.repo.adrs",
         "path": ".ai/repo/adrs/README.md",
         "dir": ".ai/repo/adrs",
@@ -663,7 +685,7 @@
       "depth": 2,
       "name": "applications",
       "contract": {
-        "index": 4,
+        "index": 5,
         "id": "ai.repo.applications",
         "path": ".ai/repo/applications/README.md",
         "dir": ".ai/repo/applications",
@@ -696,7 +718,7 @@
       "depth": 2,
       "name": "benchmarks",
       "contract": {
-        "index": 5,
+        "index": 6,
         "id": "ai.repo.benchmarks",
         "path": ".ai/repo/benchmarks/README.md",
         "dir": ".ai/repo/benchmarks",
@@ -800,7 +822,7 @@
       "depth": 2,
       "name": "ci",
       "contract": {
-        "index": 6,
+        "index": 7,
         "id": "ai.repo.ci",
         "path": ".ai/repo/ci/README.md",
         "dir": ".ai/repo/ci",
@@ -858,7 +880,7 @@
         ],
         "supersedes": [],
         "tracks": [
-          "share/schemas/deployment.schema.json",
+          "share/schemas/majordomus/deployment/deployment.v1.schema.json",
           "share/kinds.yaml"
         ],
         "paths": [],
@@ -1147,6 +1169,39 @@
         ],
         "paths": [],
         "sha256": "79ff127a21d016355c89df61ae07b1a732c0df49468746421450a2bb796fb8ea"
+      }
+    },
+    {
+      "dir": ".ai/repo/releases",
+      "document": "ai.repo.releases",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "releases",
+      "contract": {
+        "index": 3,
+        "id": "ai.repo.releases",
+        "path": ".ai/repo/releases/README.md",
+        "dir": ".ai/repo/releases",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 75,
+        "status": "active",
+        "title": "Published releases",
+        "description": "One record per published release, written by the release pipeline and read by every projection of the public release metadata.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "2c168a159ac4e122794adc8a786eee9f4ae40665bc9543914f50d76bddb9adfa"
       }
     },
     {
