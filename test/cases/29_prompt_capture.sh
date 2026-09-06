@@ -163,6 +163,21 @@ expect_grep '0 rendering'
 expect_exit 2 "$MJ" capture render --nonsense
 expect_grep 'unknown option'
 
+# A prompt that ends in a newline renders. The guard that adds a newline when the text does
+# not end in one was the last statement of the block writing the YAML, and written as an
+# `&&` chain: for a text that *does* end in a newline the test is false, the false test is
+# the exit status of the whole block, and the caller read that as a record it could not
+# render. Every commit in a repository whose archive held one was then blocked by doctor.
+ending='{"session_id":"s1","prompt_id":"p-nl","cwd":"/w","hook_event_name":"UserPromptSubmit","prompt_source":"user","prompt_text":"a prompt that ends in a newline\n"}'
+printf '%s' "$ending" | ./.claude/hooks/majordomus-capture
+nl="$(find .ai/local/prompts -maxdepth 1 -name '*-a-prompt-that-ends-in-a-newline*.json')"
+[ -n "$nl" ] || { echo "    the newline-terminated prompt wrote no record"; ls -1 .ai/local/prompts; exit 1; }
+rm -f "${nl%.json}.md" "${nl%.json}.yaml"
+expect_exit 0 "$MJ" capture render
+[ -f "${nl%.json}.yaml" ] \
+  || { echo "    a prompt ending in a newline was reported as one that cannot be rendered"; exit 1; }
+rm -f "$nl" "${nl%.json}.md" "${nl%.json}.yaml"
+
 # idempotent on the provider's own prompt identity: a hook delivered twice writes once
 printf '%s' "$payload" | ./.claude/hooks/majordomus-capture
 [ "$(records)" = 1 ] || { echo "    a repeated prompt_id wrote a second record"; ls -1 .ai/local/prompts; exit 1; }

@@ -420,7 +420,7 @@ mj_capture_render_one() {
     printf '\n## PROMPT\n\n%s\n' "$fence"
     cat "$body"
     # a prompt that does not end in a newline must not put the closing fence on its line
-    [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ] && printf '\n'
+    if [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ]; then printf '\n'; fi
     printf '%s\n' "$fence"
   } > "$tmp" 2>/dev/null || rc=1
   [ "$rc" = 0 ] || { rm -f "$tmp" "$scan" "$body"; return 1; }
@@ -449,7 +449,10 @@ mj_capture_render_one() {
     # form adds; two spaces of indent are outside the scalar and never reach the text.
     printf 'text: |-\n'
     sed 's/^/  /' "$body"
-    [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ] && printf '\n'
+    # `if`, not `&&`: this is the last command of the group, and a prompt that *does* end
+    # in a newline makes the test false — a false test as the last statement is the exit
+    # status of the whole group, and the caller read that as a record it could not render.
+    if [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ]; then printf '\n'; fi
   } > "$tmp" 2>/dev/null || rc=1
   rm -f "$scan" "$body"
   [ "$rc" = 0 ] || { rm -f "$tmp"; return 1; }
@@ -720,9 +723,9 @@ mj_capture_session() {
     payload="$(mktemp "${TMPDIR:-/tmp}/mj.ses.XXXXXX")"; scan="$payload.f"
     cat > "$payload"
     if awk -f "$MJ_LIB_DIR/json_scan.awk" < "$payload" > "$scan" 2>/dev/null; then
-      psession="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 7)")")"
-      source="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 8)")")"
-      reason="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 9)")")"
+      psession="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 7)")")"
+      source="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 8)")")"
+      reason="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 9)")")"
     elif [ -s "$payload" ]; then
       mj_session_context_log "$provider $event payload not understood; the episode boundary was drawn without it"
     fi
@@ -748,7 +751,11 @@ mj_capture_session() {
 
 # The strings the provider sends are its own; nothing here lets one name a path or reach a
 # shell, so they are reduced to the same safe form the prompt archive uses for an identity.
-mj_capture_plain() {
+#
+# Not `mj_capture_plain`: that name already belongs to the reader that takes a scan and a
+# field, and the second definition of it silently replaced the first — every metadata row
+# of every rendering then printed the path of the scan file it had been handed as `$1`.
+mj_capture_safe() {
   local v="$1"
   [ -z "$v" ] && return 0
   [ "$v" = null ] && return 0

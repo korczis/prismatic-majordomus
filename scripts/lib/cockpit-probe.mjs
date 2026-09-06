@@ -222,7 +222,12 @@ async function interactions(context) {
     }
     // filtering, and Enter goes where the entry says
     await page.fill('.mj-palette-input', 'objects.search');
-    await page.waitForTimeout(300);
+    // the palette says when the registry is in; a fixed wait raced it and blamed the
+    // filtering for what was still a fetch
+    await page
+      .waitForSelector('.mj-palette-results[data-state="ready"]', { timeout: 15000 })
+      .catch(() => {});
+    await page.waitForTimeout(100);
     const first = await page.evaluate(
       () => document.querySelector('.mj-palette-results li[data-href]')?.dataset.href || '',
     );
