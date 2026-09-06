@@ -22,6 +22,7 @@ related:
   - file:share/cockpit/src/cockpit.css
   - file:docs/COCKPIT.md
   - test:apps/majordomus-cli/tests/cockpit.rs
+  - file:scripts/cockpit-probe
 provenance:
   origin: authored
 ---
@@ -143,7 +144,9 @@ healthy" was answered by three separate commands (`capabilities validate`, `benc
 
 Adding a capability adds a Cockpit page, a navigation entry, a search entry, a palette
 entry, a generated form, an OpenAPI operation and a benchmark target, with no edit to the
-Cockpit. `apps/majordomus-cli/tests/cockpit.rs` runs that claim: it adds a rule to a
+Cockpit — and one more browser-probed route, because `scripts/cockpit-probe` derives its
+routes from the running server rather than from a list.
+`apps/majordomus-cli/tests/cockpit.rs` runs that claim: it adds a rule to a
 disposable repository and asserts the capability reaches the listing, a page of its own,
 the object explorer, the search and the listing the palette reads.
 

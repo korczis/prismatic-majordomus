@@ -64,6 +64,11 @@ gates:
     runs: scripts/cockpit-assets --check
     summary: the committed Cockpit stylesheet matches the source it is compiled from
 
+  - id: cockpit-probe
+    job: cockpit
+    runs: scripts/cockpit-probe
+    summary: every Cockpit route the server serves answered, and the pages and interactions measured in a real browser
+
   - id: site-build
     job: site
     runs: scripts/site-build && scripts/site-check
@@ -89,7 +94,7 @@ classes:
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-coverage, rust-bench, shell-suite, macos]
+    gates: [rust-check, rust-coverage, rust-bench, shell-suite, macos, cockpit-probe]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
@@ -103,8 +108,8 @@ classes:
   # Declared before `share` so a reader sees the narrower rule first; the planner takes the
   # union of every matching class, so both apply.
   - id: cockpit
-    paths: [share/cockpit/**, scripts/cockpit-assets]
-    gates: [cockpit-assets, rust-check, site-build]
+    paths: [share/cockpit/**, scripts/cockpit-assets, scripts/cockpit-probe, scripts/lib/cockpit-probe.mjs]
+    gates: [cockpit-assets, cockpit-probe, rust-check, site-build]
 
   # the distribution: the skeleton, the schemas, the kinds, the command and event registries;
   # read by both implementations at run time, embedded in the crate at build, and inputs of

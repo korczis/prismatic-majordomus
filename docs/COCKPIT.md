@@ -273,3 +273,63 @@ disposable repository:
 The unit tests in `src/cockpit/` cover the escaping (both contexts), the void elements, the
 status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, and
 the navigation being the registry's rather than a list.
+
+## In a browser
+
+`scripts/cockpit-probe` measures the Cockpit against a running server. Nothing in it lists
+a route: the areas are crawled out of the shell's own navigation — which the server rendered
+from the registry, the index and the graph derivations — and then one route per capability,
+per graph and per object comes from `/api/v1/capabilities`, `/api/v1/graphs` and
+`/api/v1/objects`. A capability, a kind or a graph added to the backend is probed the first
+time it exists.
+
+```sh
+just cockpit-probe                      # both sweeps
+just cockpit-probe --quick              # the status sweep in full, one of each family in the browser
+just cockpit-probe --status             # the status sweep alone; no browser needed
+COCKPIT_PROBE_URL=http://127.0.0.1:8741 scripts/cockpit-probe    # a server that is already running
+```
+
+Two sweeps, because they answer different questions at different prices:
+
+| Sweep | Over | Asserts |
+|---|---|---|
+| status | **every** derived route | 200, `text/html`, and the security headers on the shell |
+| browser | every area plus a sample of each generated family, at 390, 1024 and 1600 px | the shell, the stylesheet applied, no horizontal overflow, no console error, no failed request |
+
+The browser sweep is the part a status code cannot reach:
+
+- **Alpine** started, under a policy with no `unsafe-eval` — which is the whole reason the
+  CSP build is vendored, and the check that catches a regression to the CDN build.
+- **The command palette** opens on `Ctrl`/`Cmd`+K, fills with entries the registry supplied,
+  filters, and navigates where the chosen entry says.
+- **The theme toggle** flips the root class and the choice survives a reload.
+- **The skip link** is the first tab stop and points at `#main`.
+- **The runner** is generated from the schema (the required string, the bounded integer, the
+  disclosure of the capability's own benchmark cases), and submitting it calls the
+  capability's real route and renders the answer — asserted against the request the browser
+  actually made, not against the preview.
+- **The graph** draws over the same nodes the page lists, or says why it cannot.
+- **`frame-ancestors 'none'`** holds: another origin cannot frame the Cockpit.
+- **JavaScript disabled**: every sampled route still carries its navigation and its content.
+
+The probe measures the server the repository's lease names, because one server per
+repository is the rule this tool lives by. When an editor holds the lease with an executable
+older than the Cockpit, the probe says so and names what to do rather than quietly starting
+a second server.
+
+What it has already caught, which is the argument for it existing: Alpine's CSP build
+treating `palette.open` as an expression it will not evaluate — leaving a full-page modal
+backdrop over every click on a page that looked correct in the markup; the CDN build
+starting itself before the component was registered; a topbar eight pixels too wide for a
+390 px viewport on every page; and a table wrapper whose negative margin made the document
+wider than the viewport.
+
+Playwright drives the Chrome that is already installed (`channel: 'chrome'`), so nothing is
+downloaded and CI reuses the browser the site probe already installs. A missing Chrome, a
+missing Playwright or a missing Node is a SKIP of the browser sweep and not a failure — the
+status sweep still runs over every route.
+
+One consequence of reading assets once: a changed stylesheet or script needs the server
+restarted before the probe sees it. That is deliberate — an asset is read from disk once per
+process — and it is why the probe reports the digest it was served.
