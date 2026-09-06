@@ -11,6 +11,11 @@
 # test scratch
 /test/tmp/
 
+# the generated web root: one directory per web surface, written by its producer, plus the
+# resolved manifest and the composed publication. Derived state, reproducible from source,
+# never read as truth (ADR 0013).
+/target/
+
 # site build dependencies (not part of the CLI)
 node_modules
 
