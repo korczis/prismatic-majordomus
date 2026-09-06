@@ -1,0 +1,42 @@
+# Derived artifacts: a merge of two branches is never the answer for them.
+#
+# Every path below is written by `scripts/derive` out of canonical sources that git merges
+# perfectly well. What conflicts is the *fingerprint* the generators stamp into the output —
+# `Generated from canonical inputs <hash>`, `"source_hash": ...` — and that value is a
+# function of the merged tree, so neither side's is right and no textual combination of them
+# is either. Left to the default driver, every branch that touches a canonical file conflicts
+# here, and the resolution is always the same gesture: take a side, run `scripts/derive`,
+# stage the real answer. One branch open today has done it five times.
+#
+# `merge=derived` short-circuits the pretence. The driver (scripts/merge-derived) resolves to
+# ours and exits clean, so the merge completes and the tree carries a *stale* derived file —
+# which is exactly what the `derived-current` gate in .githooks/pre-commit refuses to let you
+# commit (`scripts/pages current`, and `scripts/derive-check` behind it in CI). The staleness
+# is caught by the thing built to catch staleness, one command later, instead of by hand
+# inside a conflict marker.
+#
+# The driver has to be declared per clone — `git config merge.derived.driver ...`, which
+# `just derive-merge-driver` does. Without that declaration git falls back to the default
+# text merge and you get the conflicts you get today: this file makes merging better where it
+# is wired and never worse where it is not.
+
+docs/PLAN_STATUS.md                 merge=derived
+docs/PAGES_STATUS.md                merge=derived
+docs/SITE_CLAIMS.md                 merge=derived
+docs/generated/**                   merge=derived
+site/data/generated/**              merge=derived
+site/data/registry/**               merge=derived
+site/content/docs/pages-status.md   merge=derived
+site/content/docs/plan-status.md    merge=derived
+site/content/docs/site-claims.md    merge=derived
+
+# The site's registry projection: one page per capability and per module, all of them
+# rewritten whenever the registry moves.
+site/content/registry/**            merge=derived
+
+# The schema, allow-list and section projections: `majordomus generate` writes all three out
+# of the kind and capability declarations, and they conflict for the same reason the rest of
+# this file exists — the merged tree's answer appears in neither side.
+share/schemas/**                    merge=derived
+share/allow/**                      merge=derived
+share/sections/**                   merge=derived

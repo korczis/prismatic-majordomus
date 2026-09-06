@@ -326,3 +326,10 @@ derive:
 [group('site')]
 derive-check:
     scripts/derive-check
+
+# Declare the `derived` merge driver this clone needs, so .gitattributes resolves the derived artifacts on merge instead of conflicting on their fingerprints (scripts/merge-derived).
+[group('site')]
+derive-merge-driver:
+    git config merge.derived.name "derived artifacts: resolve to ours, regenerate before committing"
+    git config merge.derived.driver "{{root}}/scripts/merge-derived %O %A %B %P"
+    @echo "merge.derived wired; .gitattributes now resolves the derived artifacts on merge"
