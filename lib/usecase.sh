@@ -477,11 +477,22 @@ mj_uc_cmd_run() {
     fi
     ev="$MJ_UC_EVIDENCE/$id.json"; rc="$(cat "$tmp/$id" 2>/dev/null || echo 13)"
     ran=$((ran+1))
+    # A scenario's verdict is a fact about the run, not about how it is being printed.
+    # Counting failures inside the text branch left `--json` reporting "failed":0 and
+    # exiting 0 however the scenarios went, which made the exit code generate-site-data
+    # relies on to refuse a broken demonstration permanently green.
+    [ "$rc" = 0 ] || fails=$((fails+1))
     [ -z "$outdir" ] || cp "$ev" "$outdir/$id.json"
-    if [ "$json" = 1 ]; then [ "$first" = 1 ] || printf ','; first=0; tr -d '\n' < "$ev"
+    if [ "$json" = 1 ]; then
+      [ "$first" = 1 ] || printf ','; first=0
+      # A scenario killed before it wrote evidence must not vanish from the document: an
+      # absent result reads downstream as "not demonstrated" and silently lowers a
+      # maturity, which is the difference between not knowing and knowing it is bad.
+      if [ -s "$ev" ]; then tr -d '\n' < "$ev"
+      else printf '{"use_case":"%s","result":"fail","reason":"the scenario wrote no evidence (exit %s)"}' "$id" "$rc"; fi
     else
       if [ "$rc" = 0 ]; then printf '%-38s pass  %s step(s)\n' "$id" "$(grep -o '"id":"' "$ev" | wc -l | tr -d ' ')"
-      else fails=$((fails+1)); printf '%-38s FAIL  %s\n' "$id" "$(grep -o '"reason":"[^"]*"' "$ev" | grep -v 'null' | head -1 | cut -d'"' -f4)"
+      else printf '%-38s FAIL  %s\n' "$id" "$(grep -o '"reason":"[^"]*"' "$ev" | grep -v 'null' | head -1 | cut -d'"' -f4)"
         grep -o '"output":"[^"]*"' "$ev" | tail -1 | cut -d'"' -f4 | sed 's/\\n/\n/g' | sed 's/^/      | /' | head -20; fi
     fi
   done
