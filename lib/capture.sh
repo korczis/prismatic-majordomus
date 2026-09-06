@@ -254,9 +254,13 @@ mj_capture_write() {
 # outside the spans, so nothing inside a string is touched — the text of the prompt is the
 # provider's own bytes on either side of this change.
 mj_capture_record() {
-  local i=1 k v
+  local k v
+  # The values arrive as positional parameters, one per declared field, and are consumed in
+  # that order. `shift` rather than an indexed expansion, because the indexed form needs
+  # eval and this repository forbids it (project.no-network-no-eval): nothing read from a
+  # provider's payload may reach a shell that evaluates it.
   for k in $MJ_CAPTURE_FIELDS; do
-    eval "v=\${$i}"; i=$((i + 1))
+    if [ "$#" -gt 0 ]; then v="$1"; shift; else v=null; fi
     printf '%s\t%s\n' "$k" "$v"
   done | mj_capture_emit
 }
