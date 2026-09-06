@@ -339,7 +339,6 @@ fn asked_page(query: &[(String, String)]) -> usize {
         .unwrap_or(1)
 }
 
-
 /// The capability explorer, filtered by whatever the query string says.
 pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
     let get = |name: &str| {
@@ -419,7 +418,11 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
     let browse = chips(
         std::iter::once((
             "All modules".to_string(),
-            href_with("/cockpit/capabilities", query, &[("module", None), ("page", None)]),
+            href_with(
+                "/cockpit/capabilities",
+                query,
+                &[("module", None), ("page", None)],
+            ),
             per_module.values().sum::<usize>(),
             module.is_none(),
         ))

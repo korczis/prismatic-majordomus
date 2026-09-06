@@ -193,28 +193,6 @@ fn no_artifact_reaches_outside_the_repository_the_plan_was_made_for() {
 }
 
 #[test]
-fn no_artifact_reaches_outside_the_repository_the_plan_was_made_for() {
-    // The fixture's share is the distribution beside this crate, which is outside the
-    // fixture. Every artifact path is joined to the repository root by `generate::write`,
-    // so a path that is absolute, or that climbs, is a write into somebody else's tree —
-    // which is what happened to this repository's own share/ until the plan stopped
-    // projecting the schemas of a share it does not contain.
-    let f = common::Fixture::new();
-    for a in plan(&f) {
-        assert!(
-            !std::path::Path::new(&a.path).is_absolute(),
-            "{} is an absolute path",
-            a.path
-        );
-        assert!(
-            !a.path.split('/').any(|c| c == ".."),
-            "{} climbs out of the root",
-            a.path
-        );
-    }
-}
-
-#[test]
 fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document() {
     let f = common::Fixture::new();
     let artifacts = plan(&f);
@@ -222,8 +200,10 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
         .iter()
         .filter(|a| a.format == ArtifactFormat::Json && !a.document.starts_with("providers/"))
         // Documents whose only reader is a program are committed as JSON alone: the three
-        // the website loads, the matrix the release workflow reads, and the public metadata
-        // of each release. A YAML twin of any of them would be a file nobody opens.
+        // the website loads, the matrix the release workflow reads, the public metadata
+        // of each release, and the composed graph with its schema — a megabyte of nodes
+        // and edges the site and the coverage matrix read. A YAML twin of any of them
+        // would be a file nobody opens.
         .filter(|a| {
             !matches!(
                 a.document.as_str(),
@@ -232,6 +212,8 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
                     | "site-why-graph"
                     | "site-distribution"
                     | "distribution-matrix"
+                    | "graph"
+                    | "graph-schema"
             ) && !a.document.starts_with("release/")
         })
         // a projected JSON Schema is JSON by its own contract: `.schema.json` is what a
