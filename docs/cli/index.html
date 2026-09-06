@@ -169,16 +169,16 @@
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">39</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">56</p>
       <p class="mt-1 text-sm text-body-subtle">commands</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">35</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">52</p>
       <p class="mt-1 text-sm text-body-subtle">of them you can run</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">315</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">417</p>
       <p class="mt-1 text-sm text-body-subtle">documented arguments</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">45</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">62</p>
       <p class="mt-1 text-sm text-body-subtle">executed examples</p>
     </div></div>
 
@@ -338,6 +338,74 @@ The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool b
       <span class="break-words font-mono text-sm text-heading">majordomus distribution build</span>
       <span class="break-words text-sm text-body sm:flex-1">What this executable is: version, target triple, profile, commit</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree</span>
+      <span class="break-words text-sm text-body sm:flex-1">The branch-to-worktree topology: where every linked worktree belongs (&lt;repo&gt;-wt/&lt;branch&gt;), where each one is, and the lifecycle — create, migrate, repair, guard</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/status/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree status</span>
+      <span class="break-words text-sm text-body sm:flex-1">Where this call is — branch, worktree, canonical or not, uncommitted work — and how many errors the whole topology carries; exit 10 when this worktree is out of place</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/list/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree list</span>
+      <span class="break-words text-sm text-body sm:flex-1">Every registered worktree with its standing, one line each; exit 10 when the topology has an error</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/topology/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree topology</span>
+      <span class="break-words text-sm text-body sm:flex-1">The whole topology: repository, container, trunk, every worktree, every branch without a worktree, every diagnostic; exit 10 when it has an error</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/root/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree root</span>
+      <span class="break-words text-sm text-body sm:flex-1">Print the container every linked worktree belongs under, and nothing else: `cd &quot;$(majordomus worktree root)&quot;`</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/path/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree path</span>
+      <span class="break-words text-sm text-body sm:flex-1">Print the canonical path of a branch, and nothing else: `cd &quot;$(majordomus worktree path feature/x)&quot;`. Derived from the name; the branch need not exist</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/inspect/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree inspect</span>
+      <span class="break-words text-sm text-body sm:flex-1">One branch: its canonical path, whether it exists, what occupies the path, the worktree holding it, and what stands in the way</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/create/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree create</span>
+      <span class="break-words text-sm text-body sm:flex-1">Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/ensure/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree ensure</span>
+      <span class="break-words text-sm text-body sm:flex-1">The canonical worktree of a branch: created when absent, answered when present, refused when the branch is checked out somewhere else</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/migrate/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree migrate</span>
+      <span class="break-words text-sm text-body sm:flex-1">Bring every misplaced worktree to its canonical path, dirty state included, with a fingerprint taken before and after each move; --plan shows the steps and changes nothing</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/validate/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree validate</span>
+      <span class="break-words text-sm text-body sm:flex-1">Every error of the topology, and nothing else; exit 10 when there is one</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/doctor/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree doctor</span>
+      <span class="break-words text-sm text-body sm:flex-1">Every diagnostic of the topology, errors, warnings and facts, each with its code and remedy; exit 10 when there is an error</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/guard/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree guard</span>
+      <span class="break-words text-sm text-body sm:flex-1">May a mutation proceed from here? Exit 0 in a canonical worktree, in the primary checkout on the trunk, or detached; exit 10 with the reason otherwise. What the pre-commit hook asks</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/repair/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree repair</span>
+      <span class="break-words text-sm text-body sm:flex-1">Drop git&#39;s registrations of worktrees whose directories are gone, and repair the administrative links of the ones that exist. Deletes no directory</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/remove/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree remove</span>
+      <span class="break-words text-sm text-body sm:flex-1">Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/cleanup/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree cleanup</span>
+      <span class="break-words text-sm text-body sm:flex-1">The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/worktree/branches/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus worktree branches</span>
+      <span class="break-words text-sm text-body sm:flex-1">Every local branch, one per line, for a shell completion that wants the live set</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What makes this true</h2>
@@ -359,7 +427,7 @@ The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool b
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4c1884e1b39c0111e01072481de588d82978e499" class="font-mono hover:underline">4c1884e</a> · inputs <span class="font-mono">bde3e43271a3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/12fc0ecb2bd79d46fcfa864d83b4274b13a0f261" class="font-mono hover:underline">12fc0ec</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

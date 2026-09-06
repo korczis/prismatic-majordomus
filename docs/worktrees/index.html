@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worktrees — Prismatic Majordomus</title>
+<meta name="description" content="the branch-to-worktree topology: `&lt;repo&gt;-wt/&lt;branch&gt;` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/docs/worktrees/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Worktrees — Prismatic Majordomus">
+<meta property="og:description" content="the branch-to-worktree topology: `&lt;repo&gt;-wt/&lt;branch&gt;` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/docs/worktrees/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Worktrees</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Worktrees</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">the branch-to-worktree topology: `&lt;repo&gt;-wt/&lt;branch&gt;` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/worktrees/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Worktrees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/WORKTREES.md" class="font-mono hover:underline">docs/WORKTREES.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p>Where every linked git worktree of this repository belongs, how that is decided, and what
+the tool does about one that is somewhere else. Behaviour as implemented and tested; where
+this document and the executable disagree, the document is wrong and changes in the same
+commit. The decision is <a href="../.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md">ADR 21</a>;
+the rule is <code>project.worktree-topology</code>.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>~/dev/prismatic-majordomus                    the primary checkout: hosts the trunk, never moves</span></span>
+<span class="giallo-l"><span>~/dev/prismatic-majordomus-wt/                the container: the checkout&#39;s sibling, name + &quot;-wt&quot;</span></span>
+<span class="giallo-l"><span>~/dev/prismatic-majordomus-wt/feature/x       the one worktree of branch feature/x</span></span>
+<span class="giallo-l"><span>~/dev/prismatic-majordomus-wt/fix/a/b         the one worktree of branch fix/a/b — hierarchy kept</span></span></code></pre>
+<p>The branch name <em>is</em> the relative path. Nothing is flattened (<code>feature-x</code>), hashed
+(<code>feature-x-a93f</code>) or numbered (<code>worktree-1</code>), and nothing is registered anywhere: given the
+repository and a branch, there is exactly one path, and it is derived the same way by every
+surface.</p>
+<h2 id="why"><a class="zola-anchor" href="#why" aria-label="Anchor link for: why">Why</a></h2>
+<p>Several sessions — people and agents — work on one repository at once and each needs its
+own checkout. Git's linked worktree is the mechanism, and git takes the destination as an
+argument, so every caller decides where one goes. Fifty-three of them had decided
+differently here: flat siblings named after nothing, session scratch directories, one
+inside the primary checkout, one occupying the container's own path. The cost was not
+untidiness. It was that "where is branch X" and "where does a new one go" had no answer
+that did not involve looking, guessing or inventing, and a session that has to invent a
+path leaves its work where the next session does not look.</p>
+<p>The topology gives the answer once: feature isolation with no decision, parallel agents
+that cannot collide on a path, a predictable session → branch → worktree mapping that a
+handover can name and a resumed session can navigate back to, cleanup that is a derived
+list rather than an archaeology, and a topology that every surface can show because every
+surface computes it the same way.</p>
+<h2 id="how-the-path-is-derived"><a class="zola-anchor" href="#how-the-path-is-derived" aria-label="Anchor link for: how-the-path-is-derived">How the path is derived</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>git rev-parse --git-common-dir             which repository this is, from any directory of any worktree</span></span>
+<span class="giallo-l"><span>git worktree list --porcelain              its worktrees; the first record is the primary checkout</span></span>
+<span class="giallo-l"><span>parent(primary) / name(primary) + &quot;-wt&quot;    the container</span></span>
+<span class="giallo-l"><span>container / branch name                    the worktree, one directory per component</span></span></code></pre>
+<p>The second line is the one that is easy to get wrong. <code>git rev-parse --show-toplevel</code>
+answers <em>the current worktree</em>, so deriving a container from it inside a linked worktree
+would produce <code>…-wt/feature/x-wt</code>, a container per worktree, nesting for ever. The primary
+checkout is read from git's shared metadata instead, so the answer is identical from the
+primary checkout, from a subdirectory of it, from a linked worktree, and from four
+directories deep inside one.</p>
+<p>A branch name is filesystem-derived input and is treated as such: the name is validated by
+git's own reference rules (no <code>..</code>, no component beginning with <code>.</code>, none ending in
+<code>.lock</code>, no control characters, none of <code>~ ^ : ? * [ \</code>, no <code>@{</code>, no leading <code>-</code>), every
+component of a valid name is an ordinary directory name, and the derived path is proved on
+every call to be strictly below the container. Unicode components are ordinary directory
+names. Two names that differ only by case are reported (<code>worktree.case_collision</code>), because
+one directory holds both on a case-insensitive filesystem.</p>
+<p>The trunk is discovered, never hardcoded: the remote's HEAD (<code>refs/remotes/origin/HEAD</code>),
+then <code>init.defaultBranch</code> when that branch exists, then whichever of <code>main</code> and <code>master</code>
+exists alone, then the primary checkout's own branch. Which one decided is reported.</p>
+<p><code>-wt</code> is written once, as <code>CONTAINER_SUFFIX</code> in <code>apps/majordomus-cli/src/worktree/path.rs</code>.
+There is no configuration: a container that could be configured is a container two
+checkouts of one repository could disagree about.</p>
+<h2 id="the-architecture"><a class="zola-anchor" href="#the-architecture" aria-label="Anchor link for: the-architecture">The architecture</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>   git (common dir · worktree list · for-each-ref · status)</span></span>
+<span class="giallo-l"><span>                        ↓</span></span>
+<span class="giallo-l"><span>   RepositoryIdentity           primary, current, container, trunk — from anywhere inside</span></span>
+<span class="giallo-l"><span>                        ↓</span></span>
+<span class="giallo-l"><span>   path::expected_path()        container / branch, proved to stay inside the container</span></span>
+<span class="giallo-l"><span>                        ↓</span></span>
+<span class="giallo-l"><span>   WorktreeService              topology · status · guard · inspect · create · migrate · repair · remove</span></span>
+<span class="giallo-l"><span>        ↙        ↓        ↘</span></span>
+<span class="giallo-l"><span>   CLI      capability       git hook</span></span>
+<span class="giallo-l"><span>             registry ──── MCP tools + majordomus://worktrees · /api/v1/worktrees* · OpenAPI · Swagger UI</span></span>
+<span class="giallo-l"><span>                       ──── Cockpit /cockpit/worktrees · docs/generated</span></span></code></pre>
+<p>Business logic exists once, in <code>apps/majordomus-cli/src/worktree/</code>. Every surface is an
+adapter that renders or projects what the service answered; none derives a path, decides a
+standing or judges whether a move is safe. The four read-only questions are capabilities
+of the registry (<code>worktree.topology</code>, <code>worktree.status</code>, <code>worktree.inspect</code>,
+<code>worktree.migration_plan</code>), which is what puts them on MCP, HTTP, OpenAPI, the Swagger UI,
+the Cockpit and the generated reference without any of those carrying a route or a schema
+of their own. Creating, migrating, repairing and removing are command-line operations of
+the same service: a capability of the registry never writes to the repository, which is the
+contract the shared MCP server rests on, and the Cockpit names the exact command for each.</p>
+<h2 id="standings-and-diagnostics"><a class="zola-anchor" href="#standings-and-diagnostics" aria-label="Anchor link for: standings-and-diagnostics">Standings and diagnostics</a></h2>
+<p>Every registered worktree has one standing:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>standing</th><th>meaning</th></tr></thead><tbody>
+<tr><td><code>primary</code></td><td>the main worktree; exempt from the path rule, held to the trunk rule</td></tr>
+<tr><td><code>canonical</code></td><td>a linked worktree at exactly its branch's path</td></tr>
+<tr><td><code>misplaced</code></td><td>a linked worktree somewhere else; migration brings it home</td></tr>
+<tr><td><code>detached</code></td><td>no branch, so no canonical path; never moved</td></tr>
+<tr><td><code>ephemeral</code></td><td>a session's scratch checkout, under the temporary directory or <code>&lt;primary&gt;/.claude/worktrees/</code>; reported, refused for commits, moved only on request</td></tr>
+<tr><td><code>missing</code></td><td>a registration whose directory is gone; <code>repair</code> drops it</td></tr>
+</tbody></table>
+</div>
+<p>and every condition has a stable code, the same on every surface, each with a remedy:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>code</th><th>severity</th><th>what it means</th></tr></thead><tbody>
+<tr><td><code>worktree.path_mismatch</code></td><td>error</td><td>a linked worktree is not at its branch's canonical path</td></tr>
+<tr><td><code>worktree.container_occupied</code></td><td>error</td><td>a worktree occupies the container path itself</td></tr>
+<tr><td><code>worktree.nested</code></td><td>warning</td><td>it sits inside the primary checkout or another worktree</td></tr>
+<tr><td><code>worktree.destination_conflict</code></td><td>error</td><td>the canonical path is occupied by something else — a registered worktree of another branch, a foreign checkout, a directory, a file, a symbolic link</td></tr>
+<tr><td><code>worktree.missing</code> / <code>worktree.stale_registration</code></td><td>warning</td><td>the directory is gone</td></tr>
+<tr><td><code>worktree.branch_already_checked_out</code></td><td>error</td><td>the branch is checked out somewhere other than its canonical path</td></tr>
+<tr><td><code>worktree.detached</code></td><td>info</td><td>no branch</td></tr>
+<tr><td><code>worktree.ephemeral</code></td><td>warning</td><td>a session's scratch checkout holding a branch</td></tr>
+<tr><td><code>worktree.primary_on_non_trunk</code></td><td>error</td><td>the primary checkout holds a branch that is not the trunk</td></tr>
+<tr><td><code>worktree.trunk_in_linked_worktree</code></td><td>warning</td><td>the trunk is checked out in a linked worktree</td></tr>
+<tr><td><code>worktree.path_escape</code> / <code>worktree.invalid_branch_name</code></td><td>error</td><td>the name cannot derive a path</td></tr>
+<tr><td><code>worktree.locked</code></td><td>warning</td><td>git will not move it until it is unlocked</td></tr>
+<tr><td><code>worktree.migration_verification_failed</code></td><td>error</td><td>the fingerprint after a move differs from the one before</td></tr>
+<tr><td><code>worktree.trunk_unknown</code></td><td>warning</td><td>nothing said which branch the trunk is</td></tr>
+<tr><td><code>worktree.case_collision</code></td><td>warning</td><td>two branch names derive one directory on a case-insensitive filesystem</td></tr>
+<tr><td><code>worktree.cross_device</code></td><td>info</td><td>a move was made by copy across filesystems</td></tr>
+</tbody></table>
+</div>
+<p>The topology is <em>valid</em> when no error-level diagnostic stands. Detached and ephemeral
+worktrees do not make it invalid; the guard still refuses a commit from an ephemeral one.</p>
+<h2 id="commands"><a class="zola-anchor" href="#commands" aria-label="Anchor link for: commands">Commands</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> where am I, and is that where I belong (exit 10 if not)</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-8 z-d-8"> create</span><span class="z-l-8 z-d-8"> feature/improve-cli</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> start: the path is derived, never given</span></span>
+<span class="giallo-l"><span class="z-l-15 z-d-14">cd</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">$(</span><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-8 z-d-8"> path</span><span class="z-l-8 z-d-8"> feature/improve-cli</span><span class="z-l-8 z-d-8">)</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-8 z-d-8"> list</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every worktree with its standing</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-8 z-d-8"> topology</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-format</span><span class="z-l-8 z-d-8"> json</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the whole document the API and the Cockpit render</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-8 z-d-8"> doctor</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every diagnostic with its code and remedy</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-8 z-d-8"> migrate</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-plan</span><span class="z-l-10 z-l-i z-d-4 z-d-i">             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what would move; changes nothing</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-8 z-d-8"> migrate</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> move, verify, report</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-8 z-d-8"> cleanup</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what is merged and clean; deletes nothing</span></span></code></pre><div class="overflow-x-auto">
+<table><thead><tr><th>command</th><th>what it does</th><th>exit 10 when</th></tr></thead><tbody>
+<tr><td><code>worktree</code> / <code>worktree status</code></td><td>this worktree: branch, standing, canonical path, uncommitted work, upstream, issue</td><td>this worktree is out of place</td></tr>
+<tr><td><code>worktree list</code></td><td>every worktree, one line each</td><td>the topology has an error</td></tr>
+<tr><td><code>worktree topology</code></td><td>repository, container, trunk, worktrees, branches without a worktree, diagnostics, tallies</td><td>the topology has an error</td></tr>
+<tr><td><code>worktree root</code></td><td>the container, one path</td><td></td></tr>
+<tr><td><code>worktree path &lt;branch&gt;</code></td><td>the canonical path of a branch, one path; the branch need not exist</td><td>the name is invalid</td></tr>
+<tr><td><code>worktree inspect &lt;branch&gt;</code></td><td>canonical path, whether the branch exists, what occupies the path, what stands in the way</td><td></td></tr>
+<tr><td><code>worktree create &lt;branch&gt; [--base REF] [--issue ID]</code></td><td>the canonical worktree, the branch created from the trunk when new</td><td>occupied, checked out elsewhere, invalid</td></tr>
+<tr><td><code>worktree ensure &lt;branch&gt;</code></td><td>the same, answering an existing canonical worktree instead of refusing</td><td>checked out elsewhere</td></tr>
+<tr><td><code>worktree migrate [--plan] [--only B]… [--allow-copy] [--include-ephemeral]</code></td><td>bring misplaced worktrees home, fingerprint-verified</td><td>a step was blocked or failed</td></tr>
+<tr><td><code>worktree validate</code> / <code>worktree doctor</code></td><td>the errors, or every diagnostic</td><td>an error stands</td></tr>
+<tr><td><code>worktree guard [--quiet]</code></td><td>may a commit proceed from here</td><td>no</td></tr>
+<tr><td><code>worktree repair [--dry-run]</code></td><td>drop stale registrations, repair git's links; deletes no directory</td><td></td></tr>
+<tr><td><code>worktree remove &lt;branch|path&gt; [--force]</code></td><td>remove one linked worktree; never the primary, never a branch, never dirty work unforced</td><td>refused</td></tr>
+<tr><td><code>worktree cleanup</code></td><td>branches merged into the trunk whose worktree is clean or absent, with the commands that would remove them</td><td></td></tr>
+<tr><td><code>worktree branches [--without-worktree]</code></td><td>every local branch, one per line</td><td></td></tr>
+</tbody></table>
+</div>
+<p><code>wt</code> is an alias for <code>worktree</code>. <code>--format json</code> is available everywhere and is the same
+typed answer the human form renders. A <strong>selector</strong> for <code>remove</code> is exact — a branch name or
+a path — and nothing is matched by prefix or similarity. There is no <code>worktree cd</code>: a child
+process cannot change its parent shell's directory, so <code>path</code> prints one and the shell does
+the rest.</p>
+<p><code>worktree create --issue I0042</code> names the branch <code>feature/I0042-&lt;slug&gt;</code> from the issue's
+own record, and the topology reads the issue back from any branch that carries an issue id
+as a path component (<code>feature/I0042-live-page</code> → <code>I0042</code>). Nothing is inferred from
+similarity: <code>feature/I00420-x</code> names no issue.</p>
+<p>Shell completion of the branch arguments reads the live set rather than a list:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> zsh</span></span>
+<span class="giallo-l"><span class="z-l-14 z-d-18">_mj_wt_branches</span><span>(</span><span>)</span><span> {</span><span class="z-l-1 z-d-3"> compadd</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-</span><span> $</span><span>{</span><span>(</span><span>f</span><span>)</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">$(</span><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-8 z-d-8"> branches</span><span class="z-l-16 z-d-16"> 2</span><span class="z-l-16 z-d-16">&gt;</span><span class="z-l-8 z-d-8">/dev/null</span><span class="z-l-8 z-d-8">)</span><span class="z-l-8 z-d-8">&quot;</span><span>}</span><span class="z-l-8 z-d-8"> }</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">compdef</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">_arguments &quot;1:sub:(status list topology root path inspect create ensure migrate validate doctor guard repair remove cleanup branches)&quot; &quot;2:branch:_mj_wt_branches&quot;</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8"> majordomus-worktree</span></span></code></pre><h2 id="lifecycle"><a class="zola-anchor" href="#lifecycle" aria-label="Anchor link for: lifecycle">Lifecycle</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>issue / task                majordomus plan next</span></span>
+<span class="giallo-l"><span>      ↓</span></span>
+<span class="giallo-l"><span>branch                      feature/&lt;ID&gt;-&lt;slug&gt;, or any name git accepts</span></span>
+<span class="giallo-l"><span>      ↓</span></span>
+<span class="giallo-l"><span>canonical worktree          majordomus worktree create &lt;branch&gt;   → &lt;repo&gt;-wt/&lt;branch&gt;</span></span>
+<span class="giallo-l"><span>      ↓</span></span>
+<span class="giallo-l"><span>session / agent             majordomus context, start, checkpoint, handover — in that worktree</span></span>
+<span class="giallo-l"><span>      ↓</span></span>
+<span class="giallo-l"><span>commit / PR                 the pre-commit hook asks the guard; push and open the PR from there</span></span>
+<span class="giallo-l"><span>      ↓</span></span>
+<span class="giallo-l"><span>cleanup                     majordomus worktree cleanup → worktree remove, git branch -d, by a person</span></span></code></pre>
+<p>A handover records the branch and the worktree; a session resumed elsewhere derives the
+worktree from the branch rather than trusting the recorded path, because the path is
+ephemeral and the branch is not.</p>
+<h2 id="enforcement"><a class="zola-anchor" href="#enforcement" aria-label="Anchor link for: enforcement">Enforcement</a></h2>
+<p>Layered, and honest about what each layer can do:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>layer</th><th>what it does</th></tr></thead><tbody>
+<tr><td>the doctrine</td><td>ADR 21 and <code>project.worktree-topology</code> say what the rule is</td></tr>
+<tr><td>the agent bootstraps</td><td><code>AGENTS.md</code>, <code>CLAUDE.md</code> and the other provider files, generated from the templates, tell every worker to establish the topology before implementing and to correct a mismatch with the tool</td></tr>
+<tr><td>the workflows</td><td><code>.ai/repo/workflows/task-lifecycle.md</code> starts with <code>worktree status</code></td></tr>
+<tr><td>the command line</td><td><code>worktree create</code> is the way a branch's worktree comes into being; a path is never an argument</td></tr>
+<tr><td>the git hook</td><td><code>.githooks/pre-commit</code> asks <code>majordomus worktree guard</code>; a feature branch is committed only from its canonical worktree, the primary checkout only on the trunk</td></tr>
+<tr><td>the wiring check</td><td>the policy's <code>enforcement</code> list declares the guard, so <code>majordomus doctor</code> proves the hook asks it</td></tr>
+<tr><td>the repository entry</td><td><code>.envrc</code> prints <code>worktree status</code> on entry, without building anything</td></tr>
+<tr><td>the surfaces</td><td>the topology is on the command line, MCP, HTTP, the Swagger UI and the Cockpit, so a wrong one is visible everywhere</td></tr>
+<tr><td>the tests</td><td>the crate's suite proves the derivation, the safety and the migration against real git; the shell case proves the wiring</td></tr>
+<tr><td>the CI gate</td><td><code>scripts/ci/worktree-check</code> holds the constant, the hook, the policy, the documents and the case together</td></tr>
+</tbody></table>
+</div>
+<p>A git hook is bypassed with <code>--no-verify</code>, and a CI runner cannot see a contributor's local
+filesystem; the gate therefore measures the rule's machinery, not this machine's
+directories. Within Majordomus-controlled workflows a wrong worktree is refused; outside
+them it is visible on every surface.</p>
+<h2 id="migration"><a class="zola-anchor" href="#migration" aria-label="Anchor link for: migration">Migration</a></h2>
+<p><code>worktree migrate --plan</code> lists every misplaced worktree with a branch: where it is, where
+it belongs, how it would move, the uncommitted work that moves with it, and what blocks it.
+The container's occupant, if any, is first — every other destination is inside the
+container, and while a worktree <em>is</em> the container those destinations would be created
+inside that worktree. Exceptions — detached worktrees, stale registrations, ephemeral
+scratch checkouts, the primary checkout off the trunk — are listed with what a person does
+about each.</p>
+<p><code>worktree migrate</code> recomputes the plan under the repository lock and, for each movable step:</p>
+<ol>
+<li>takes a fingerprint of the worktree: branch, HEAD, the index (every tracked path with
+mode, blob and stage), the staged diff, the unstaged diff, every untracked file with its
+size and content hash, every ignored entry by path and size;</li>
+<li>asks git to move it — <code>git worktree move</code>, one rename, dirty state included; the
+container's occupant goes out to a staging path and then in; a move across filesystems
+is refused unless <code>--allow-copy</code>, and then made by copy, <code>git worktree repair</code>,
+verification against a manifest of every entry of the tree, and only then removal of
+the original;</li>
+<li>takes the fingerprint again at the destination, verifies that git registers it there,
+and reports the step as <code>moved</code> only when the two fingerprints are equal — otherwise
+<code>failed</code>, with what differs, and nothing further is touched;</li>
+<li>names relative symbolic links that no longer resolve from the new path
+(<code>node_modules -&gt; ../sibling/node_modules</code>), which the move did not change and does not
+rewrite.</li>
+</ol>
+<p>Nothing is reset, stashed, cleaned, checked out or deleted. A locked worktree is blocked
+until it is unlocked. A destination that exists — a registered worktree of another branch,
+a foreign git checkout, a directory empty or not, a file, a link — is a conflict named by
+kind and never overwritten. If the command was run from a worktree that moved, the report
+says where to <code>cd</code>.</p>
+<h2 id="failure-modes-and-recovery"><a class="zola-anchor" href="#failure-modes-and-recovery" aria-label="Anchor link for: failure-modes-and-recovery">Failure modes and recovery</a></h2>
+<div class="overflow-x-auto">
+<table><thead><tr><th>situation</th><th>what you see</th><th>what to do</th></tr></thead><tbody>
+<tr><td>a dirty worktree in the wrong place</td><td><code>worktree.path_mismatch</code>, the dirty counts on the plan step</td><td><code>majordomus worktree migrate</code>; the work moves with it</td></tr>
+<tr><td>the canonical path is taken</td><td><code>worktree.destination_conflict</code> naming what is there</td><td>move it aside by hand; nothing overwrites it</td></tr>
+<tr><td>a detached worktree</td><td><code>worktree.detached</code>, standing <code>detached</code></td><td><code>git switch -c &lt;branch&gt;</code> there, then migrate; or leave it</td></tr>
+<tr><td>a missing directory</td><td><code>worktree.missing</code> / <code>worktree.stale_registration</code></td><td><code>majordomus worktree repair</code></td></tr>
+<tr><td>a locked worktree</td><td><code>worktree.locked</code>, the step blocked</td><td><code>git worktree unlock &lt;path&gt;</code>, then migrate</td></tr>
+<tr><td>the wrong branch in a worktree</td><td><code>worktree.branch_already_checked_out</code> on create</td><td>migrate the worktree that holds it, or work there</td></tr>
+<tr><td>the primary checkout on a feature branch</td><td><code>worktree.primary_on_non_trunk</code>; the guard refuses</td><td>when clean, <code>git switch &lt;trunk&gt;</code>; then <code>worktree create &lt;branch&gt;</code></td></tr>
+<tr><td>a scratch checkout of a session on a branch</td><td><code>worktree.ephemeral</code>; the guard refuses</td><td><code>git switch --detach</code> there and continue in the canonical worktree, or <code>migrate --include-ephemeral --only &lt;branch&gt;</code></td></tr>
+<tr><td>a move that crossed devices</td><td><code>worktree.cross_device</code> on the step, or a refusal</td><td><code>migrate --allow-copy</code></td></tr>
+<tr><td>a fingerprint mismatch</td><td><code>worktree.migration_verification_failed</code>, the differences listed</td><td>inspect the worktree where git registers it before touching anything; a rename cannot lose content, so something wrote to it during the move</td></tr>
+</tbody></table>
+</div>
+<h2 id="performance"><a class="zola-anchor" href="#performance" aria-label="Anchor link for: performance">Performance</a></h2>
+<p><code>worktree status</code> and <code>worktree guard</code> read the registrations, the branches and one <code>git status</code> of the current worktree: a handful of subprocesses, no index build, no network, no
+scan. <code>topology</code> and <code>list</code> add one <code>git status</code> per existing worktree and nothing else.
+The migration hashes the content of every modified and untracked file of the worktrees it
+moves, which is the one place that cost is right. Nothing is cached across calls: the
+topology changes outside the process.</p>
+<h2 id="where-things-are"><a class="zola-anchor" href="#where-things-are" aria-label="Anchor link for: where-things-are">Where things are</a></h2>
+<div class="overflow-x-auto">
+<table><thead><tr><th></th><th></th></tr></thead><tbody>
+<tr><td>the constant and the derivation</td><td><code>apps/majordomus-cli/src/worktree/path.rs</code></td></tr>
+<tr><td>identity and trunk</td><td><code>apps/majordomus-cli/src/worktree/identity.rs</code></td></tr>
+<tr><td>the typed topology</td><td><code>apps/majordomus-cli/src/worktree/model.rs</code></td></tr>
+<tr><td>the service</td><td><code>apps/majordomus-cli/src/worktree/service.rs</code></td></tr>
+<tr><td>the migration and fingerprints</td><td><code>apps/majordomus-cli/src/worktree/migrate.rs</code>, <code>fingerprint.rs</code></td></tr>
+<tr><td>the capabilities</td><td><code>apps/majordomus-cli/src/capability/builtin/worktree.rs</code></td></tr>
+<tr><td>the command line</td><td><code>apps/majordomus-cli/src/commands/worktree.rs</code>, declared in <code>src/cli.rs</code></td></tr>
+<tr><td>the Cockpit page</td><td><code>/cockpit/worktrees</code>, <code>apps/majordomus-cli/src/cockpit/pages.rs</code></td></tr>
+<tr><td>the launcher the hook and <code>.envrc</code> use</td><td><code>bin/majordomus-cli</code></td></tr>
+<tr><td>the hook</td><td><code>.githooks/pre-commit</code>; the entry in <code>.ai/repo/policy.yaml</code> <code>enforcement</code></td></tr>
+<tr><td>the gate</td><td><code>scripts/ci/worktree-check</code>, gate <code>worktree-topology</code> in <code>.ai/repo/ci/gates.yaml</code></td></tr>
+<tr><td>the tests</td><td><code>apps/majordomus-cli/tests/worktree.rs</code>, <code>test/cases/96_worktree_topology.sh</code></td></tr>
+<tr><td>the decision and the rule</td><td>ADR 21, <code>.ai/repo/rules/project/worktree-topology.v1.md</code></td></tr>
+</tbody></table>
+</div>
+</article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
+    <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/worktree-topology-derived/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A branch&#39;s worktree path is derived from git identity and the branch name alone — the primary checkout&#39;s sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/worktree-migration-lossless/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A misplaced worktree is brought to its canonical path with its modified, staged, unstaged and untracked work intact, verified by a fingerprint taken before and after the move, and a step is reported as moved only when the two are equal</span></a></li></ul></div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/12fc0ecb2bd79d46fcfa864d83b4274b13a0f261" class="font-mono hover:underline">12fc0ec</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>

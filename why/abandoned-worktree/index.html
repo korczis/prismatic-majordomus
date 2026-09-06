@@ -204,6 +204,13 @@ labels it <code>exact</code>, <code>advanced</code>, <code>diverged</code> or <c
 its own staleness. When a session ends, <code>handover</code> writes objective, current state and next
 action, each required and non-empty. <code>watch</code> reports every drift it can see across the
 records this repository holds.</p>
+<p>The worktrees themselves have one topology: a branch's checkout is at <code>&lt;repo&gt;-wt/&lt;branch&gt;</code>,
+derived from git's identity and never registered, so "where is branch X" is a derivation
+and not a search. <code>worktree.topology</code> gives every checkout a standing — canonical,
+misplaced, detached, ephemeral, missing — and every branch a verdict on cleanup
+eligibility: merged into the trunk, and clean or not checked out. A stray checkout is
+brought home with its uncommitted work, fingerprinted before and after; nothing is deleted
+by the tool, and the list of what could go is derived state for a person to act on.</p>
 <h2 id="before-and-after"><a class="zola-anchor" href="#before-and-after" aria-label="Anchor link for: before-and-after">Before and after</a></h2>
 <pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>before   $ git worktree list</span></span>
 <span class="giallo-l"><span>         ../wt-3  8c31f0e  [fix/auth-2]        ...and then what?</span></span>
@@ -283,6 +290,8 @@ what each worktree says about itself; whether to keep one is a decision it hands
     <ul class="flex flex-wrap gap-2">
       <li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/repository.info/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">repository.info</a></li>
       <li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/health.report/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">health.report</a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/worktree.topology/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">worktree.topology</a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/worktree.migration_plan/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">worktree.migration_plan</a></li>
     </ul>
     <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">what it supervises <span class="normal-case tracking-normal">— derived from the claims below</span></h3>
     <ul class="flex flex-wrap gap-2">
@@ -343,6 +352,26 @@ what each worktree says about itself; whether to keep one is a decision it hands
             <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/07_watch.sh">test/cases/07_watch.sh</a></dd></div>
         </dl>
       </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-start gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/guarantees/worktree-topology-derived/" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">A branch&#39;s worktree path is derived from git identity and the branch name alone — the primary checkout&#39;s sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured</a></p>
+        <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs">
+          <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">defined in</dt>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/WORKTREES.md">docs/WORKTREES.md</a></dd></div><div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">implemented in</dt>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/worktree/path.rs">apps/majordomus-cli/src/worktree/path.rs</a></dd></div><div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">proved by</dt>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/96_worktree_topology.sh">test/cases/96_worktree_topology.sh</a></dd></div>
+        </dl>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-start gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/guarantees/worktree-migration-lossless/" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">A misplaced worktree is brought to its canonical path with its modified, staged, unstaged and untracked work intact, verified by a fingerprint taken before and after the move, and a step is reported as moved only when the two are equal</a></p>
+        <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs">
+          <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">defined in</dt>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/WORKTREES.md">docs/WORKTREES.md</a></dd></div><div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">implemented in</dt>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/worktree/migrate.rs">apps/majordomus-cli/src/worktree/migrate.rs</a></dd></div><div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">proved by</dt>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/96_worktree_topology.sh">test/cases/96_worktree_topology.sh</a></dd></div>
+        </dl>
+      </li>
     </ul>
     <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the rules that govern it</h3>
     <ul class="flex flex-wrap gap-2">
@@ -356,6 +385,7 @@ what each worktree says about itself; whether to keep one is a decision it hands
       <li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/resume-in-the-right-worktree/" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">resume-in-the-right-worktree</a></li>
       <li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/hand-work-between-sessions/" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">hand-work-between-sessions</a></li>
       <li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/find-out-what-drifted/" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">find-out-what-drifted</a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/work-on-a-branch-in-its-canonical-worktree/" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">work-on-a-branch-in-its-canonical-worktree</a></li>
     </ul>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">If this one is familiar, so is the next</h2>
     <p class="mt-2 text-body">What this moment names, what names it, and what shares its area, audience or tags. The second and third are derived; only the first is written down.</p>
@@ -424,7 +454,7 @@ what each worktree says about itself; whether to keep one is a decision it hands
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4c1884e1b39c0111e01072481de588d82978e499" class="font-mono hover:underline">4c1884e</a> · inputs <span class="font-mono">bde3e43271a3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/12fc0ecb2bd79d46fcfa864d83b4274b13a0f261" class="font-mono hover:underline">12fc0ec</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
