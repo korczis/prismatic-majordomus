@@ -1,0 +1,36 @@
+id: I1018
+milestone: capability-graph
+title: The surface rules exist as checks, proved by making them fail
+slug: surface-enforcement-rules
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "State the durable constraints of this architecture as project rules with executable checks: derived surfaces stay synchronised, a public capability is discoverable, a behavioural capability carries verification, a developer-facing capability resolves to documentation, and the two projections stay equal."
+why: "Everything in this milestone decays the moment a change can land without a check noticing. A rule that exists only as a document is a suggestion wearing a uniform."
+current_state: "Project rules exist with checks for derived files, projections, hot paths, benchmark coverage and scope. None concerns UI exposure, capability documentation or verification policy."
+desired_state: "Each rule has a check, each check has a negative test that proves it fires, and CI runs all of them."
+scope:
+  - .ai/repo/rules/project
+non_scope:
+  - A rule with no executable check
+  - Requiring documentation or a test from purely descriptive metadata
+  - Duplicating a constraint an existing rule already enforces
+depends_on:
+  - I1011
+  - I1015
+acceptance_criteria:
+  - A change to an authoritative source that leaves any derived surface stale fails the drift check, and the failure names the source to change
+  - A public or developer-facing capability that is not discoverable through the generated interface fails, unless it declares itself internal
+  - A capability with behaviour carries verification appropriate to its kind, decided by typed policy rather than by one rule for everything
+  - A developer-facing capability resolves to canonical documentation, and the coverage is visible rather than only reported
+  - The static and runtime representations must remain equal after runtime-only fields are removed, enforced by the parity test
+  - Each rule has a negative test that proves the check fires, and CI executes every one
+validation:
+  - bin/majordomus doctor
+  - bash test/run.sh
+evidence_required:
+  - rules_with_checks
+  - negative_tests
+risk: "Five new rules can make ordinary contribution feel like litigation. Each policy is typed by capability kind so that a descriptive object is not asked for a behavioural test."
+created_at: 2026-09-06
+updated_at: 2026-09-06

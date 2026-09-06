@@ -1,0 +1,35 @@
+id: I0929
+milestone: fly-deployment
+title: Production deploys from CI with a token scoped to one application
+slug: ci-deploy-workflow
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Deploy production from CI on the repository's existing branch policy, using an application-scoped deploy token rather than an account-wide one, with concurrency that stops two pushes racing the same application."
+why: "An account-wide token in a CI secret is a key to everything the account owns, held by every workflow that can read the secret. A scoped token limits an incident to one application, and concurrency control keeps two deploys from interleaving on one machine."
+current_state: "No deployment workflow exists and no token has been created."
+desired_state: "The production workflow deploys through the same core the CLI uses, holds only a scoped token, serialises deployments, and its token is installed without ever appearing in a log or a file."
+scope:
+  - .github/workflows
+non_scope:
+  - An account-wide token in CI
+  - A CI-only container build implementation separate from the canonical one
+  - Weakening the token model because a tool was unavailable
+depends_on:
+  - I0918
+  - I0931
+acceptance_criteria:
+  - The deployment token is scoped to the application, has a deliberate expiry and a descriptive name
+  - The token is installed as a repository secret without being echoed, printed or written to any file, or the exact one-time command is provided instead when that cannot be done safely
+  - The workflow deploys through the same deployment core the CLI uses, with no second build implementation
+  - Concurrency is configured deliberately so two pushes cannot deploy the same application at once, and the choice about cancellation is stated
+  - External actions are pinned and the provider tool version is deliberate rather than floating
+validation:
+  - bash test/run.sh
+evidence_required:
+  - deploy_workflow
+  - scoped_token
+  - concurrency
+risk: "Cancelling an in-progress deployment can leave a machine half-updated. Whether cancellation is safe is a decision to make explicitly, not a default to inherit."
+created_at: 2026-09-06
+updated_at: 2026-09-06

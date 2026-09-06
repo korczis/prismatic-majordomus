@@ -1,0 +1,47 @@
+id: I1001
+milestone: capability-graph
+title: One typed graph composes the registries that already own their facts
+slug: federated-capability-graph
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Extend the executable's graph derivation into a typed, deterministic model that composes the existing authoritative registries — capabilities, commands, routes, MCP exposure, skills, rules, decisions, documents, use cases, benchmarks — without any of them ceasing to be authoritative."
+why: "A single source of truth for this repository does not mean one manifest holding everything; it means each subsystem stays authoritative for what it owns and one derivation composes them. Any other arrangement is either a second inventory or a rewrite of nine working registries."
+current_state: "graph.rs derives rule dependencies, decisions and the shape of the layer for the Cockpit and the site. The capability registry knows capabilities. Nothing joins the two, and no node type spans both."
+desired_state: "One typed model holds nodes of every kind the repository already indexes, built by reading the registries through the paths every other caller uses, and producing the same output for the same inputs."
+scope:
+  - apps/majordomus-cli/src/graph.rs
+non_scope:
+  - A new store of anything an existing registry already owns
+  - Reading the index outside the executor, the cache and the counters that every other read passes through
+  - Node kinds invented here rather than taken from the kinds the layer already registers
+depends_on: []
+acceptance_criteria:
+  - Node kinds come from the kinds the layer already registers, and adding a kind does not require a new variant hand-written in the graph
+  - Every source is read through the registry that owns it, never by a second traversal of the filesystem
+  - Generation over identical repository contents produces structurally identical output, with no iteration-order dependence, no random identity and no timestamp inside the canonical data
+  - The model separates a capability's definition from its runtime state, so that the static projection needs no runtime fields
+  - Unit tests cover discovery, normalisation, deduplication and ordering
+validation:
+  - cargo test --workspace --all-features
+evidence_required:
+  - federated_graph
+  - deterministic_output
+risk: "Composing everything invites a model that knows too much and is slower than the hot path allows. It is built on the reads that already happen, and its cost is measured like every other command's."
+created_at: 2026-09-06
+updated_at: 2026-09-06T15:48:16Z
+started_at: 2026-09-06T15:33:09Z
+completed_at: 2026-09-06T15:48:16Z
+evidence:
+  - covers: federated_graph
+    type: test
+    command: "majordomus serve --port 0 && curl -s \"http://127.0.0.1:$PORT/api/v1/graph?id=composed\""
+    result: "the composed graph over this repository: 825 nodes, 846 edges, 22 node kinds, truncated false — the capability registry and every indexed object in one model"
+    commit: 837f146bbe3e1aa1ce2e5aeeeab79e99c061afa8
+    recorded_at: 2026-09-06T15:48:06Z
+  - covers: deterministic_output
+    type: test
+    command: "cargo test --all-features (apps/majordomus-cli)"
+    result: "every suite ok, 0 failed; the composition tests prove the graph does not depend on the order it read objects in, that nodes and edges come out sorted, that one kind node is shared, and that a kind nobody wrote in the derivation still becomes a kind of the graph"
+    commit: 837f146bbe3e1aa1ce2e5aeeeab79e99c061afa8
+    recorded_at: 2026-09-06T15:48:07Z

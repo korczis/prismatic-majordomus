@@ -1,0 +1,32 @@
+id: I1011
+milestone: capability-graph
+title: The coverage matrix reports evidence, and never a green cell without one
+slug: coverage-matrix
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Generate a matrix showing, for every capability, whether it is documented, tested, enforced, benchmarked and exposed, where each cell resolves to an artifact or a relation rather than to a claim."
+why: "This is the view that makes the graph worth building: it turns the question of what is actually finished into something a person can read in one screen. A cell that is green because metadata said so would make it worse than useless."
+current_state: "Benchmark coverage exists for capabilities. Documentation, tests and enforcement have no coverage view at all."
+desired_state: "Each cell resolves to a named artifact — a document, a test, a rule, a benchmark case — and an unresolved claim is reported as missing rather than shown as satisfied."
+scope:
+  - apps/majordomus-cli/src/capability/builtin/health.rs
+non_scope:
+  - A status a contributor can declare without an artifact behind it
+  - Demanding evidence from purely descriptive metadata that has no behaviour to test
+depends_on:
+  - I1002
+acceptance_criteria:
+  - Every filled cell names the artifact that supports it and can be followed to it
+  - A relation that claims evidence but does not resolve is reported as a gap, and the report says which end failed
+  - The policy for what evidence a kind requires is data, not a condition in the renderer, and a descriptive kind is not asked for a behavioural test
+  - The matrix is available in both projections and in machine-readable form
+validation:
+  - cargo test --workspace --all-features
+  - bin/majordomus doctor
+evidence_required:
+  - coverage_matrix
+  - no_false_green
+risk: "A matrix that is mostly empty on the first run will be read as an indictment rather than a baseline. It is a starting measurement, and saying so is part of shipping it."
+created_at: 2026-09-06
+updated_at: 2026-09-06

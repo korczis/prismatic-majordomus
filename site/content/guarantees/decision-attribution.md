@@ -1,7 +1,7 @@
 +++
 title = "A decision record without a task, a head and a reason is reported, and does not block"
 description = ".ai/local/state/decisions.md is where a worker externalises a decision so the next one does not reopen it. An entry that does not say which task made it, at which commit, and why, cannot be found by the worker who needs it. That is reported as a warning; it does not stop a command."
-weight = 26
+weight = 30
 [extra]
 claim_id = "decision-attribution"
 status = "advisory"

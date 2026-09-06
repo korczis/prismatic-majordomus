@@ -10,7 +10,7 @@ providers: ["*"]
 audience: [human, agent]
 composition: extend
 order: 100
-tracks: [share/schemas/deployment.schema.json, share/kinds.yaml]
+tracks: [share/schemas/majordomus/deployment/deployment.v1.schema.json, share/kinds.yaml]
 ---
 
 # Deployments
@@ -44,7 +44,7 @@ under: declared once, projected everywhere (ADR 0004).
 
 ## The contract
 
-`share/schemas/deployment.schema.json` (`deployment/v1`) is the contract, and
+`share/schemas/majordomus/deployment/deployment.v1.schema.json` (`deployment/v1`) is the contract, and
 `share/allow/deployment.txt` — generated from it — is what the shell tool checks keys
 against. An unknown key is refused, never carried.
 

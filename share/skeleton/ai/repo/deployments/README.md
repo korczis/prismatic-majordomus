@@ -35,7 +35,7 @@ generated artifact that was edited by hand.
 
 ## The contract
 
-`share/schemas/deployment.schema.json` (`deployment/v1`) is the contract, and
+`share/schemas/majordomus/deployment/deployment.v1.schema.json` (`deployment/v1`) is the contract, and
 `share/allow/deployment.txt` — generated from it — is what keys are checked against. An
 unknown key is refused, never carried.
 

@@ -1,0 +1,69 @@
+id: capability-graph
+title: One capability graph, two projections, and no second inventory of what this repository can do
+slug: capability-graph
+order: 80
+priority: p1
+problem: "The executable already declares a capability once and projects it into MCP, HTTP, OpenAPI, Swagger, the command line and now the Cockpit (ADR 2, ADR 4, ADR 12). Everything the repository knows that is not a capability is outside that model: the skills, the rules, the decisions, the documents, the use cases, the examples, the benchmarks and the deployment are each authoritative in their own directory and related to the capabilities only in the reader's head. The Cockpit, the landing page, the navigation, the site indexes and the search each therefore assemble their own view of what exists, and every new subsystem costs an edit in each of them. The failure this produces is not visual: a capability with no documentation, no test and no enforcement looks exactly like one that has all three, because nothing resolves the relation."
+outcome: "One typed, deterministic capability graph composes the registries that already own their facts — it does not replace them — and adds typed relations between them that are inferred where a stable convention exists and declared where it does not. Both the running server and the published site render from that one graph: the static projection is the snapshot, the runtime projection is the snapshot plus live state. Navigation, overview, detail, search, the relation view and the coverage matrix are all derived, a dangling relation fails generation rather than rendering as a missing section, and a capability that exists with no documentation, no test or no enforcement is visible as such rather than indistinguishable from one that has them."
+current_state: "The Cockpit is a projection of the registry and the index with its own graph derivation (ADR 12, feature/ai-artifacts). Web surfaces are being made discoverable from their producers (ADR 13, in flight). Skills, rules, decisions, use cases, documents, benchmarks and — after the deployment milestone — deployments are each indexed as kinds, and none of them is related to a capability by anything a machine reads."
+desired_state: "A contributor registers a capability in the subsystem that owns it, runs generation, and the Cockpit, the navigation, the search, the graph, the documentation index, the coverage matrix, the static snapshot and the runtime metadata all change. Nothing else has to be edited, and CI refuses a change that leaves any of them stale."
+scope:
+  - apps/majordomus-cli/src/graph.rs
+  - apps/majordomus-cli/src/capability
+  - apps/majordomus-cli/src/cockpit
+  - apps/majordomus-cli/src/generate.rs
+  - share/cockpit
+  - site
+  - docs
+  - .ai/repo/rules/project
+  - .ai/repo/adrs
+  - .ai/repo/skills
+  - test/cases
+  - .github/workflows
+
+non_scope:
+  - A hand-maintained menu, page list or capability inventory in any format, including a YAML one
+  - Replacing any registry that is already authoritative for what it owns
+  - A client-side application framework; the Cockpit stays server-rendered with progressive enhancement
+  - A layout description language with coordinates, columns or component trees as data
+  - An external search service for a graph this size
+  - Mutating controls in the Cockpit beyond what the existing authorisation architecture already makes safe
+
+acceptance_criteria:
+  - The graph composes the existing authoritative registries and introduces no second store of what they own
+  - Every node has a stable identity that survives a title change, identities are unique, and generation is deterministic over identical inputs
+  - Relations are typed, inferred only from stable conventions, and a relation that does not resolve fails generation with a message naming both ends
+  - The static and the runtime projections come from the same graph, and their representations are equal once runtime-only fields are removed
+  - A surface that requires a running backend is not offered as usable in the static projection, and that decision comes from availability metadata rather than from any check on the page's location
+  - Navigation, overview, detail, search and the coverage matrix are all derived, and adding a capability requires no edit to any of them
+  - The coverage matrix reports documentation, tests, enforcement and benchmarks only where an artifact or a resolved relation supports the claim
+  - The Cockpit is usable on a narrow phone viewport and its core information is present before JavaScript runs
+  - Each enforcement rule introduced here has a check that CI executes, proved by a negative test
+
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+  - scripts/cockpit-probe
+
+evidence_required:
+  - federated_graph
+  - stable_identity
+  - relations_resolve
+  - dual_projection_parity
+  - derived_surfaces
+  - coverage_matrix
+  - mobile_and_baseline
+  - rules_enforced
+  - extensibility_proved
+
+risks:
+  - "Composing eight registries into one model invites a ninth store that holds the composition. The aggregate is derived on every build and committed only as a generated artifact; anything hand-edited in it is a defect."
+  - "Inference from names is fragile the day two subsystems name something the same way. Inference is allowed only over stable identities, and ambiguity is an explicit declaration rather than a heuristic."
+  - "A coverage matrix that reports what metadata claims rather than what exists is worse than no matrix, because it looks like evidence. Every green cell must resolve to an artifact."
+  - "The Cockpit and the web surfaces are being built on other branches right now. This milestone extends them and must land after them rather than beside them."
+  - "A graph view is the part everyone wants to build first and the part that matters least if the model underneath is wrong. The model comes first, and the visualisation reads it."
+
+created_at: 2026-09-06
+updated_at: 2026-09-06

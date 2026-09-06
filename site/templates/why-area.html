@@ -1,0 +1,36 @@
+{% extends "page.html" %}
+{% block body %}
+{#- One entry of the areas taxonomy, with the moments it holds. The membership is
+    `moments.filter(m => m.areas contains this)`, computed by the executable and read here;
+    nothing is listed in the entry's own file. -#}
+{%- set catalogue = load_data(path="data/registry/why.json") -%}
+{%- set e = [x for x in catalogue.areas if x.id == page.extra.id][0] -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto">{{ page.content | safe }}</article>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{{ e.count }} moment{% if e.count != 1 %}s{% endif %}</h2>
+    <p class="mt-2 text-body">Every moment that names this one. Derived from the moments; this page keeps no list.</p>
+    <ol class="mt-4 grid gap-4">
+      {%- for id in e.moments %}{% set m = [x for x in catalogue.moments if x.id == id][0] %}
+      <li class="min-w-0">
+        <a href="{{ base }}{{ m.route }}" class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+          <span class="flex gap-3 text-sm font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0 break-words">{{ m.hook }}</span></span>
+          <span class="mt-2 min-w-0 break-words text-sm text-body">{{ m.summary }}</span>
+        </a>
+      </li>
+      {%- endfor %}
+    </ol>
+  </div>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">read it anywhere</h2>
+      <ul class="space-y-2 font-mono text-xs text-body">
+        <li>majordomus why list --{{ "audience" if "areas" == "audiences" else "area" }} {{ e.id }}</li>
+        <li>GET /api/v1/why?{{ "audience" if "areas" == "audiences" else "area" }}={{ e.id }}</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+{% endblock body %}

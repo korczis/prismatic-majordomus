@@ -2,6 +2,26 @@
 
 Thank you. This project is small on purpose. The best contribution is often a deletion.
 
+## Working from a checkout
+
+A checkout is a development environment, not an installation. If you only want to *use*
+Majordomus, [`docs/INSTALL.md`](docs/INSTALL.md) is one command and this section is not for
+you.
+
+```bash
+git clone https://github.com/korczis/prismatic-majordomus
+cd prismatic-majordomus
+git config core.hooksPath .githooks
+
+bin/majordomus doctor            # the shell tool needs no build at all
+cargo build --release --manifest-path apps/majordomus-cli/Cargo.toml   # the executable
+just                             # every recipe, by group
+```
+
+The shell tool runs from `bin/majordomus` with no build step. The Rust executable, which
+serves MCP and HTTP, is built by `cargo` or by `bin/majordomus-mcp` on demand; a release
+archive ships it prebuilt, which is why an installed copy needs no toolchain.
+
 ## Before you start
 
 Read [`AGENTS.md`](AGENTS.md); it is the operating contract for humans too. Read

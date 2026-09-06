@@ -530,6 +530,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/why",
+      "kind": "artifact",
+      "label": "repo/why",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/sessions}",
       "kind": "artifact",
       "label": "repo/sessions}",
@@ -540,9 +550,9 @@
       "external": false
     },
     {
-      "id": ".ai/repo/deployments/README.md",
+      "id": ".ai/repo/deployments}",
       "kind": "artifact",
-      "label": "repo/deployments/README.md",
+      "label": "repo/deployments}",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1458,7 +1468,7 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/repo/deployments/README.md",
+      "target": ".ai/repo/deployments}",
       "kind": "uses"
     },
     {
@@ -1509,6 +1519,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/use-cases",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/why",
       "kind": "uses"
     },
     {

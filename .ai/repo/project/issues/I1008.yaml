@@ -1,0 +1,29 @@
+id: I1008
+milestone: capability-graph
+title: The two projections are proved to be the same model
+slug: static-runtime-parity
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Test that the static and runtime representations of the graph are equal once runtime-only fields are removed, so the published site and the running server cannot become alternate realities."
+why: "Two renderings of one model diverge silently, and the divergence is discovered by a person who trusted the wrong one. A parity test is the only thing that keeps them honest."
+current_state: "Only one projection exists today, so there is nothing to compare."
+desired_state: "One test builds both, strips the runtime-only fields and asserts equality, and it fails when either projection grows a field the other does not know about."
+scope:
+  - test/cases
+non_scope:
+  - Asserting equality of rendered markup rather than of the model
+depends_on:
+  - I1006
+  - I1007
+acceptance_criteria:
+  - The comparison is over the normalised model, not over HTML
+  - Runtime-only fields are removed by an explicit list that the test owns, so adding one to either side without declaring it fails
+  - The test runs in CI on every change
+validation:
+  - bash test/run.sh
+evidence_required:
+  - parity_tested
+risk: "A parity test that strips too much passes trivially. The stripped list is small, explicit and reviewed."
+created_at: 2026-09-06
+updated_at: 2026-09-06

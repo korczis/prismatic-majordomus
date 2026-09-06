@@ -47,6 +47,28 @@
       "tracks": []
     },
     {
+      "id": "ai.repo.releases",
+      "path": ".ai/repo/releases/README.md",
+      "dir": ".ai/repo/releases",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 75,
+      "status": "active",
+      "title": "Published releases",
+      "description": "One record per published release, written by the release pipeline and read by every projection of the public release metadata.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
       "id": "ai.repo.adrs",
       "path": ".ai/repo/adrs/README.md",
       "dir": ".ai/repo/adrs",
@@ -159,7 +181,7 @@
       ],
       "supersedes": [],
       "tracks": [
-        "share/schemas/deployment.schema.json",
+        "share/schemas/majordomus/deployment/deployment.v1.schema.json",
         "share/kinds.yaml"
       ]
     },
@@ -384,6 +406,31 @@
       ],
       "supersedes": [],
       "tracks": []
+    },
+    {
+      "id": "ai.repo.why",
+      "path": ".ai/repo/why/README.md",
+      "dir": ".ai/repo/why",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Why this tool exists",
+      "description": "The operational moments this tool answers, the audiences that recognise them and the areas they fall under, each one a file that every projection is derived from.",
+      "children_require_contract": false,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "site/templates/why-section.html",
+        "site/templates/why.html"
+      ]
     },
     {
       "id": "ai.repo.workflows",
@@ -630,7 +677,7 @@
       "depth": 2,
       "name": "adrs",
       "contract": {
-        "index": 3,
+        "index": 4,
         "id": "ai.repo.adrs",
         "path": ".ai/repo/adrs/README.md",
         "dir": ".ai/repo/adrs",
@@ -663,7 +710,7 @@
       "depth": 2,
       "name": "applications",
       "contract": {
-        "index": 4,
+        "index": 5,
         "id": "ai.repo.applications",
         "path": ".ai/repo/applications/README.md",
         "dir": ".ai/repo/applications",
@@ -696,7 +743,7 @@
       "depth": 2,
       "name": "benchmarks",
       "contract": {
-        "index": 5,
+        "index": 6,
         "id": "ai.repo.benchmarks",
         "path": ".ai/repo/benchmarks/README.md",
         "dir": ".ai/repo/benchmarks",
@@ -729,7 +776,7 @@
       "depth": 3,
       "name": "pages",
       "contract": {
-        "index": 18,
+        "index": 20,
         "id": "ai.repo.benchmarks.pages",
         "path": ".ai/repo/benchmarks/pages/README.md",
         "dir": ".ai/repo/benchmarks/pages",
@@ -764,7 +811,7 @@
       "depth": 3,
       "name": "rust",
       "contract": {
-        "index": 19,
+        "index": 21,
         "id": "ai.repo.benchmarks.rust",
         "path": ".ai/repo/benchmarks/rust/README.md",
         "dir": ".ai/repo/benchmarks/rust",
@@ -800,7 +847,7 @@
       "depth": 2,
       "name": "ci",
       "contract": {
-        "index": 6,
+        "index": 7,
         "id": "ai.repo.ci",
         "path": ".ai/repo/ci/README.md",
         "dir": ".ai/repo/ci",
@@ -837,7 +884,7 @@
       "depth": 2,
       "name": "deployments",
       "contract": {
-        "index": 7,
+        "index": 8,
         "id": "ai.repo.deployments",
         "path": ".ai/repo/deployments/README.md",
         "dir": ".ai/repo/deployments",
@@ -858,11 +905,11 @@
         ],
         "supersedes": [],
         "tracks": [
-          "share/schemas/deployment.schema.json",
+          "share/schemas/majordomus/deployment/deployment.v1.schema.json",
           "share/kinds.yaml"
         ],
         "paths": [],
-        "sha256": "6cac2d3439fa0edd2394102fb0d987f5ad2b63ae8473fe517cc9473688dc05e7"
+        "sha256": "f00616e0f8d3605a885f09335b7c7bbc6af6246676f4222d6e61421f3f58ffc8"
       }
     },
     {
@@ -873,7 +920,7 @@
       "depth": 2,
       "name": "knowledge",
       "contract": {
-        "index": 8,
+        "index": 9,
         "id": "ai.repo.knowledge",
         "path": ".ai/repo/knowledge/README.md",
         "dir": ".ai/repo/knowledge",
@@ -909,7 +956,7 @@
       "depth": 3,
       "name": "curated",
       "contract": {
-        "index": 20,
+        "index": 22,
         "id": "ai.repo.knowledge.curated",
         "path": ".ai/repo/knowledge/curated/README.md",
         "dir": ".ai/repo/knowledge/curated",
@@ -942,7 +989,7 @@
       "depth": 2,
       "name": "profiles",
       "contract": {
-        "index": 9,
+        "index": 10,
         "id": "ai.repo.profiles",
         "path": ".ai/repo/profiles/README.md",
         "dir": ".ai/repo/profiles",
@@ -978,7 +1025,7 @@
       "depth": 2,
       "name": "project",
       "contract": {
-        "index": 10,
+        "index": 11,
         "id": "ai.repo.project",
         "path": ".ai/repo/project/README.md",
         "dir": ".ai/repo/project",
@@ -1015,7 +1062,7 @@
       "depth": 3,
       "name": "issues",
       "contract": {
-        "index": 21,
+        "index": 23,
         "id": "ai.repo.project.issues",
         "path": ".ai/repo/project/issues/README.md",
         "dir": ".ai/repo/project/issues",
@@ -1050,7 +1097,7 @@
       "depth": 3,
       "name": "milestones",
       "contract": {
-        "index": 22,
+        "index": 24,
         "id": "ai.repo.project.milestones",
         "path": ".ai/repo/project/milestones/README.md",
         "dir": ".ai/repo/project/milestones",
@@ -1085,7 +1132,7 @@
       "depth": 2,
       "name": "prompts",
       "contract": {
-        "index": 11,
+        "index": 12,
         "id": "ai.repo.prompts",
         "path": ".ai/repo/prompts/README.md",
         "dir": ".ai/repo/prompts",
@@ -1121,7 +1168,7 @@
       "depth": 2,
       "name": "providers",
       "contract": {
-        "index": 12,
+        "index": 13,
         "id": "ai.repo.providers",
         "path": ".ai/repo/providers/README.md",
         "dir": ".ai/repo/providers",
@@ -1150,6 +1197,39 @@
       }
     },
     {
+      "dir": ".ai/repo/releases",
+      "document": "ai.repo.releases",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "releases",
+      "contract": {
+        "index": 3,
+        "id": "ai.repo.releases",
+        "path": ".ai/repo/releases/README.md",
+        "dir": ".ai/repo/releases",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 75,
+        "status": "active",
+        "title": "Published releases",
+        "description": "One record per published release, written by the release pipeline and read by every projection of the public release metadata.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "3b37d873fc50c7a0ccfdc843b8f7dc60f5507878ab1ff5a7008ed0b18f7e13da"
+      }
+    },
+    {
       "dir": ".ai/repo/rules",
       "document": "ai.repo.rules",
       "requires_contract": true,
@@ -1157,7 +1237,7 @@
       "depth": 2,
       "name": "rules",
       "contract": {
-        "index": 13,
+        "index": 14,
         "id": "ai.repo.rules",
         "path": ".ai/repo/rules/README.md",
         "dir": ".ai/repo/rules",
@@ -1195,7 +1275,7 @@
       "depth": 3,
       "name": "project",
       "contract": {
-        "index": 23,
+        "index": 25,
         "id": "ai.repo.rules.project",
         "path": ".ai/repo/rules/project/README.md",
         "dir": ".ai/repo/rules/project",
@@ -1228,7 +1308,7 @@
       "depth": 2,
       "name": "sessions",
       "contract": {
-        "index": 14,
+        "index": 15,
         "id": "ai.repo.sessions",
         "path": ".ai/repo/sessions/README.md",
         "dir": ".ai/repo/sessions",
@@ -1264,7 +1344,7 @@
       "depth": 2,
       "name": "skills",
       "contract": {
-        "index": 15,
+        "index": 16,
         "id": "ai.repo.skills",
         "path": ".ai/repo/skills/README.md",
         "dir": ".ai/repo/skills",
@@ -1342,7 +1422,7 @@
       "depth": 2,
       "name": "use-cases",
       "contract": {
-        "index": 16,
+        "index": 17,
         "id": "ai.repo.use-cases",
         "path": ".ai/repo/use-cases/README.md",
         "dir": ".ai/repo/use-cases",
@@ -1368,6 +1448,69 @@
       }
     },
     {
+      "dir": ".ai/repo/why",
+      "document": "ai.repo.why",
+      "requires_contract": false,
+      "governed_by": ".ai/repo/why/README.md",
+      "depth": 2,
+      "name": "why",
+      "contract": {
+        "index": 18,
+        "id": "ai.repo.why",
+        "path": ".ai/repo/why/README.md",
+        "dir": ".ai/repo/why",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Why this tool exists",
+        "description": "The operational moments this tool answers, the audiences that recognise them and the areas they fall under, each one a file that every projection is derived from.",
+        "children_require_contract": false,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "site/templates/why-section.html",
+          "site/templates/why.html"
+        ],
+        "paths": [],
+        "sha256": "959ccc3203c41878f1edc1434aba7ced4994a44b055d89cb25adc21c9841145a"
+      }
+    },
+    {
+      "dir": ".ai/repo/why/areas",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/why/README.md",
+      "depth": 3,
+      "name": "areas",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/why/audiences",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/why/README.md",
+      "depth": 3,
+      "name": "audiences",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/why/moments",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/why/README.md",
+      "depth": 3,
+      "name": "moments",
+      "contract": null
+    },
+    {
       "dir": ".ai/repo/workflows",
       "document": "ai.repo.workflows",
       "requires_contract": true,
@@ -1375,7 +1518,7 @@
       "depth": 2,
       "name": "workflows",
       "contract": {
-        "index": 17,
+        "index": 19,
         "id": "ai.repo.workflows",
         "path": ".ai/repo/workflows/README.md",
         "dir": ".ai/repo/workflows",
@@ -1408,8 +1551,8 @@
     }
   ],
   "counts": {
-    "directories": 28,
-    "documented": 23,
-    "exempt": 5
+    "directories": 33,
+    "documented": 25,
+    "exempt": 8
   }
 }

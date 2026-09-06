@@ -1,0 +1,34 @@
+id: I0912
+milestone: fly-deployment
+title: The image serves the site the canonical pipeline produced
+slug: one-site-build-path
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Build the served documentation and site assets in the container with the same pipeline local development and the Pages deployment already use, and carry exactly those outputs into the runtime stage."
+why: "A second site build inside a Dockerfile is a second source of truth for the documentation, and the two will disagree the day one of them is fixed. The pipeline already exists and already has a check."
+current_state: "One pipeline builds the site and scripts/site-deploy publishes it to Pages. Nothing builds it for a container."
+desired_state: "The container build calls the canonical generation and site build, copies their outputs, and the runtime serves those assets through the existing server architecture with no duplicated content."
+scope:
+  - deploy/fly
+  - scripts
+non_scope:
+  - A second site generator, a second Zola invocation path or a shell reimplementation of the build
+  - Changing how Pages is deployed
+depends_on:
+  - I0909
+acceptance_criteria:
+  - The container build invokes the repository's canonical generation and site build, not a copy of their steps
+  - The runtime stage carries exactly the produced assets and no source of the site
+  - The served assets are byte-identical to what the canonical pipeline produces locally
+  - The contribution of the assets to the image size is measured and reported
+validation:
+  - bash test/run.sh
+  - majordomus generate --check
+evidence_required:
+  - single_site_pipeline
+  - assets_in_image
+  - asset_size
+risk: "The derived site content is gitignored, so a clean checkout has to generate it before it can be built. A container build that skips generation produces an image with no documentation and no error."
+created_at: 2026-09-06
+updated_at: 2026-09-06

@@ -1,0 +1,38 @@
+id: I0901
+milestone: fly-deployment
+title: The deployment description is a kind of the layer, not a provider file
+slug: deployment-kind
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Register `deployment` as a kind of the AI layer — allowed keys, schema, directory contract — and describe this repository's own deployment as one object under .ai/repo/deployments/, so that every later projection reads one file and no provider file is ever authoritative."
+why: "A Dockerfile and a fly.toml written by hand would restate the port, the routes, the resources and the build inputs that the repository already knows. The layer already has a mechanism for canonical facts: a kind, its allowed keys, its schema and its directory contract. Deployment is a kind, and everything downstream is a projection."
+current_state: "No deployment kind, no .ai/repo/deployments directory, no allow file and no schema exist. share/kinds.yaml registers every other kind the layer holds."
+desired_state: "A deployment object is indexed, readable through the same object surface as every other kind, closed by an allow file, described by a schema, and living in a directory that carries its own context document."
+scope:
+  - .ai/repo/deployments
+  - share/kinds.yaml
+  - share/allow/deployment.txt
+  - share/schemas
+non_scope:
+  - Any provider artifact; this issue writes no Dockerfile and no fly.toml
+  - Any Rust; the typed model is I0902
+  - Any secret value, credential name or token
+depends_on: []
+acceptance_criteria:
+  - The object states the generic deployment facts — application identity, package and binary, listen port, health and readiness routes, resources, machine count, region, autostart and autostop, build inputs, budgets — and keeps provider-specific facts in a named provider block rather than mixed through the generic ones
+  - Keys are closed by share/allow/deployment.txt and an unknown key is refused
+  - The directory carries a context README that says what is authoritative, what is generated and how to regenerate it, per ADR 0011
+  - The object is listed and read through the existing object surface with no code that special-cases it
+  - No secret value or credential name appears in the object
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+evidence_required:
+  - kind_registered
+  - keys_closed
+  - directory_contract
+  - object_indexed
+risk: "A schema written for one deployment becomes either a Kubernetes-grade abstraction nobody needs or a Fly file with a different extension. It has to be generic where a second provider would plausibly reuse it and concrete everywhere else."
+created_at: 2026-09-06
+updated_at: 2026-09-06

@@ -20,6 +20,7 @@ pub mod cockpit;
 pub mod commands;
 pub mod deploy;
 pub mod discovery;
+pub mod distribution;
 pub mod error;
 pub mod generate;
 pub mod git;
@@ -43,6 +44,7 @@ pub mod shared;
 pub mod site;
 pub mod synthetic;
 pub mod web;
+pub mod why;
 
 pub use error::Error;
 pub use index::Index;
@@ -51,3 +53,15 @@ pub use repository::Repository;
 
 /// The executable's version, from the crate manifest.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// The Rust target triple this executable was built for, from `build.rs`. The same string
+/// the distribution model names a target by, so that a build can say which artifact it is.
+pub const TARGET: &str = env!("MAJORDOMUS_TARGET");
+
+/// The cargo profile this executable was built with.
+pub const PROFILE: &str = env!("MAJORDOMUS_PROFILE");
+
+/// The commit this executable was built from, or `unknown` outside a work tree. Read at
+/// build time: nothing here shells out to git, and an installed binary needs no repository
+/// in order to say what it is.
+pub const COMMIT: &str = env!("MAJORDOMUS_COMMIT");

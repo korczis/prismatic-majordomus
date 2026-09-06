@@ -108,6 +108,9 @@
       {%- endfor -%}
     </ul>
     {%- endif %}
+
+    {%- set why_key = u.id -%}{%- set why_field = "use_cases" -%}
+    {% include "partials/why-backlinks.html" %}
   </div>
 
   <aside class="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">

@@ -1,0 +1,45 @@
+id: I0931
+milestone: fly-deployment
+title: The application exists, one machine runs it, and the URL answers
+slug: first-production-deployment
+priority: p0
+profile: deep-work
+parallel_safe: false
+objective: "Create or resolve the production application, deploy the cheap profile without accidental redundancy, verify the machine inventory and the resources against the declared policy, run the route-derived smoke suite against the public URL, and write the deployment report."
+why: "Everything before this is preparation. A deployment that has never run is a hypothesis, and an exit code from a deploy command is not evidence that anything is being served."
+current_state: "No application exists at any provider."
+desired_state: "One application, one machine, the declared resources, the declared region, a public HTTPS URL that answers, a smoke suite that passes against it, and a machine-readable report of what was deployed."
+scope:
+  - .ai/repo/deployments
+non_scope:
+  - Creating a new application on any subsequent deploy
+  - Mutating or deleting any unrelated application
+  - Accepting a deploy command's exit code as verification
+depends_on:
+  - I0913
+  - I0914
+  - I0916
+  - I0917
+  - I0918
+  - I0922
+  - I0930
+acceptance_criteria:
+  - The authenticated identity and organisation are inspected before anything is created, and an existing intended application is reused rather than duplicated
+  - The application name is deterministic, and a global collision produces a stable derived name rather than an interactive dead end
+  - The first deployment does not create redundant machines, and the inventory is inspected from machine-readable output rather than assumed
+  - The machine count, CPU class, memory, region, autostart, autostop and minimum running are asserted against the declared cheap profile after the deployment
+  - The public URL answers over HTTPS, redirects behave as intended, and static assets load
+  - The route-derived smoke suite passes against the public URL, including the websocket, MCP and API surfaces that are served
+  - A machine-readable deployment report records the application, the URL, the revision, the image, the region, the resources, the measured sizes and the smoke result, following the repository's artifact conventions
+validation:
+  - majordomus deploy
+  - majordomus deploy status
+  - majordomus deploy doctor
+evidence_required:
+  - app_created
+  - single_machine
+  - remote_smoke
+  - deployment_report
+risk: "This is the issue that spends money and touches a real account. It runs once the container evidence is in, and the inventory assertion is what keeps a mistake from billing indefinitely."
+created_at: 2026-09-06
+updated_at: 2026-09-06
