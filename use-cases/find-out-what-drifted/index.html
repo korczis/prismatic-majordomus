@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -227,6 +227,30 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related use cases</h2>
     <p class="mt-2 text-xs text-body-subtle">Computed from what they share: claims, rules, commands, category, applications. Nobody maintains this list.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/keep-the-bootstrap-thin-and-within-budget/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Keep every provider bootstrap thin, generated and within budget</span><span class="text-sm text-body">Regenerate AGENTS.md, CLAUDE.md and the other provider files from one policy and prove they are stamped, point at the layer, stay under the line budget and resolve every reference.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/adopt-an-existing-repository/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Adopt a repository that already has its own rules</span><span class="text-sm text-body">Install the supervisory layer into a repository with a hand-written CLAUDE.md, without the tool taking ownership of a file somebody else wrote.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/read-back-what-happened/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Read back what happened, and keep the ledger within its cap</span><span class="text-sm text-body">Read the append-only ledger as operational history, filtered by task and event, validate every line, and rotate the oldest lines into an archive rather than deleting them.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/extend-what-the-executable-serves/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Extend what the executable serves by adding a file, never by rebuilding it</span><span class="text-sm text-body">Add a rule, a prompt or a knowledge node to .ai/ and have it appear as an MCP resource, an HTTP route and a reference entry, with the same binary.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/keep-decisions-out-of-the-transcript/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Record a decision so the next worker can find it</span><span class="text-sm text-body">Write down what was decided and why as state, then find it again without reading a conversation.</span></a></li></ul>
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The moments this answers</h2>
+<ul class="mt-4 space-y-3">
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Each provider reads its own hand-edited file, nothing relates them, and which contract applies depends on which tool is open.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found a task &quot;in progress&quot; that nobody had touched for three weeks</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A status that was authored rather than computed is true at the moment of writing and decays silently from then on.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/abandoned-worktree/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found five worktrees and could not say which of them still mattered</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Isolation is cheap to create and expensive to reason about: nothing records what a worktree was for or whether its work landed.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/policy-changed-projection-stale/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">changed a policy in one place and found the old one still in force in three others</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A decision is updated at its source and the generated copies keep serving the previous version, with nothing reporting the difference.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/generated-artifacts-stale/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">had a green pipeline over generated files that no longer matched their sources</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Tests exercise the code and say nothing about the committed outputs derived from it, so the build is green and the artifacts are wrong.</span></span></a></li>
+</ul>
+
   </div>
 
   <aside class="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
@@ -271,7 +295,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e5b673c343386b41e8202612a17bff2070926274" class="font-mono hover:underline">e5b673c</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -166,9 +166,9 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
   <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Directories in the tree</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">27</dd></div>
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Carrying a contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">22</dd></div>
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Exempt, by their governing contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">5</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Directories in the tree</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">33</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Carrying a contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">25</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Exempt, by their governing contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">8</dd></div>
   </dl><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The tree</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Each row is a directory of <code class="font-mono">.ai</code>. A directory carries its own contract, or the contract that governs its subtree exempts it — instances of a kind, such as a skill and its examples, owe no contract of their own. What applies to a path is <code class="font-mono">majordomus context resolve &lt;path&gt;</code>; this page is the shape that resolution walks.</p>
 
@@ -231,6 +231,14 @@
       <p class="mt-2 text-sm text-heading"><code class="font-mono text-xs text-fg-brand">ai.repo.ci</code> — Continuous integration</p>
       <p class="mt-1 text-sm leading-relaxed text-body">The gates this repository runs, which changed paths select them, and what publication may spend.</p>
       <p class="mt-2 text-xs text-body-subtle">tracks <code class="font-mono">scripts/ci-plan</code>, <code class="font-mono">scripts/pages</code>, <code class="font-mono">.github/workflows/validate.yml</code></p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-6">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">deployments/</code>
+        <span class="font-mono text-xs text-body-subtle">.ai/repo/deployments</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">subtree</span>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">extend</span></div>
+      <p class="mt-2 text-sm text-heading"><code class="font-mono text-xs text-fg-brand">ai.repo.deployments</code> — Deployments</p>
+      <p class="mt-1 text-sm leading-relaxed text-body">One canonical object per deployment of this repository&#39;s executable; every container and provider artifact is generated from it and none of them is authoritative.</p>
+      <p class="mt-2 text-xs text-body-subtle">tracks <code class="font-mono">share/schemas/majordomus/deployment/deployment.v1.schema.json</code>, <code class="font-mono">share/kinds.yaml</code></p>
     </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-6">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <code class="font-mono text-sm font-medium text-heading">knowledge/</code>
@@ -296,6 +304,13 @@
       <p class="mt-2 text-xs text-body-subtle">tracks <code class="font-mono">lib/update.sh</code>, <code class="font-mono">.ai/repo/policy.yaml</code></p>
     </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-6">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">releases/</code>
+        <span class="font-mono text-xs text-body-subtle">.ai/repo/releases</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">subtree</span>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">extend</span></div>
+      <p class="mt-2 text-sm text-heading"><code class="font-mono text-xs text-fg-brand">ai.repo.releases</code> — Published releases</p>
+      <p class="mt-1 text-sm leading-relaxed text-body">One record per published release, written by the release pipeline and read by every projection of the public release metadata.</p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-6">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <code class="font-mono text-sm font-medium text-heading">rules/</code>
         <span class="font-mono text-xs text-body-subtle">.ai/repo/rules</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">subtree</span>
         <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">extend</span><span class="rounded bg-brand-softer px-1.5 py-0.5 font-mono text-xs text-fg-brand-strong">children required</span></div>
@@ -358,6 +373,29 @@
       <p class="mt-1 text-sm leading-relaxed text-body">The tasks people perform with the tool, each one a file with the commands, rules and claims it names and the scenario section that proves it.</p>
     </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-6">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">why/</code>
+        <span class="font-mono text-xs text-body-subtle">.ai/repo/why</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">subtree</span>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">extend</span><span class="rounded bg-brand-softer px-1.5 py-0.5 font-mono text-xs text-fg-brand-strong">children exempt</span></div>
+      <p class="mt-2 text-sm text-heading"><code class="font-mono text-xs text-fg-brand">ai.repo.why</code> — Why this tool exists</p>
+      <p class="mt-1 text-sm leading-relaxed text-body">The operational moments this tool answers, the audiences that recognise them and the areas they fall under, each one a file that every projection is derived from.</p>
+      <p class="mt-2 text-xs text-body-subtle">tracks <code class="font-mono">site/templates/why-section.html</code>, <code class="font-mono">site/templates/why.html</code></p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-9">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">areas/</code>
+        <span class="font-mono text-xs text-body-subtle">.ai/repo/why/areas</span></div>
+      <p class="mt-2 text-sm text-body">No contract of its own; <code class="font-mono text-xs">.ai/repo/why/README.md</code> exempts the directories below it.</p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-9">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">audiences/</code>
+        <span class="font-mono text-xs text-body-subtle">.ai/repo/why/audiences</span></div>
+      <p class="mt-2 text-sm text-body">No contract of its own; <code class="font-mono text-xs">.ai/repo/why/README.md</code> exempts the directories below it.</p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-9">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">moments/</code>
+        <span class="font-mono text-xs text-body-subtle">.ai/repo/why/moments</span></div>
+      <p class="mt-2 text-sm text-body">No contract of its own; <code class="font-mono text-xs">.ai/repo/why/README.md</code> exempts the directories below it.</p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-6">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <code class="font-mono text-sm font-medium text-heading">workflows/</code>
         <span class="font-mono text-xs text-body-subtle">.ai/repo/workflows</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">subtree</span>
         <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">extend</span></div>
@@ -384,7 +422,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e5b673c343386b41e8202612a17bff2070926274" class="font-mono hover:underline">e5b673c</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -226,6 +226,22 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related use cases</h2>
     <p class="mt-2 text-xs text-body-subtle">Computed from what they share: claims, rules, commands, category, applications. Nobody maintains this list.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/serve-the-layer-to-ai-clients/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Serve the repository&#39;s AI layer to every AI client through one shared server</span><span class="text-sm text-body">Open the repository in Claude Code, Codex or Gemini CLI and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/resume-from-a-prompt-asset/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Start a session from a rendered framing, not a pasted transcript</span><span class="text-sm text-body">List the prompt assets the repository ships, render one against the durable state, and read the context it embeds.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/see-what-the-repository-holds-without-reading-it/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">See what the repository holds, and run one of its capabilities, without reading a file</span><span class="text-sm text-body">Open the shared server in a browser and get the whole layer as pages: what exists, where each thing came from, what depends on what, what is failing, and a form that runs any capability.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/classify-what-belongs-in-the-context/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Decide what belongs in the AI context, as data</span><span class="text-sm text-body">Read the repository’s declared scope policy, see which paths are in and out of the index, and let doctor and the knowledge index apply it rather than a hardcoded list.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/extend-what-the-executable-serves/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Extend what the executable serves by adding a file, never by rebuilding it</span><span class="text-sm text-body">Add a rule, a prompt or a knowledge node to .ai/ and have it appear as an MCP resource, an HTTP route and a reference entry, with the same binary.</span></a></li></ul>
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The moments this answers</h2>
+<ul class="mt-4 space-y-3">
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">asked what the workers did last night and had only transcripts to grep</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A conversation log records what was said, not what happened, so the operational question has to be answered by a person reading prose.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/discovery-never-becomes-knowledge/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">spent an hour discovering something the repository already knew, twice</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A worker learns something expensive about the codebase, uses it once, and it dies with the session because nothing turned it into a durable record.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/same-dead-end-explored-twice/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">watched a worker spend a day on an approach that had already been ruled out</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Negative results are the majority of experimental output and the part nobody records, so the search space is re-explored.</span></span></a></li>
+</ul>
+
   </div>
 
   <aside class="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
@@ -270,7 +286,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e5b673c343386b41e8202612a17bff2070926274" class="font-mono hover:underline">e5b673c</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

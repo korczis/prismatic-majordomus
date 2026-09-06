@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -223,6 +223,22 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related use cases</h2>
     <p class="mt-2 text-xs text-body-subtle">Computed from what they share: claims, rules, commands, category, applications. Nobody maintains this list.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/gate-ci-on-the-tool-itself/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Gate CI on the tool itself, with an exit code that is a contract</span><span class="text-sm text-body">Run the checks CI runs, read every finding with the command that reproduces it, and rely on exit codes that mean one thing each: no code means warn and continue.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/trust-the-policy-before-reading-it/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Trust the policy and the profiles only after they are validated</span><span class="text-sm text-body">Prove that the canonical policy parses with every key it needs declared, that every profile parses and the default exists, and that what the policy declares as enforced is what actually runs.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/read-the-rules-the-tool-applies/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">See which rules apply here and what enforces them</span><span class="text-sm text-body">List the effective rule set, read one rule as the tool reads it, and see which of them the tool enforces and from where.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/adopt-an-existing-repository/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Adopt a repository that already has its own rules</span><span class="text-sm text-body">Install the supervisory layer into a repository with a hand-written CLAUDE.md, without the tool taking ownership of a file somebody else wrote.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/prove-performance-with-benchmarks/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Prove the tool is fast, not assume it, and refuse a regression</span><span class="text-sm text-body">Measure every public command and every capability of the executable against a committed baseline, and let the check fail on a regression rather than a reviewer noticing later.</span></a></li></ul>
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The moments this answers</h2>
+<ul class="mt-4 space-y-3">
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/enforcement-nothing-invokes/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found a rule everyone believed was enforced and nothing ever invoked</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Every artefact of enforcement exists — the rule, the script, the test — and no path connects them, so the control is fiction.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/feature-without-a-test/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">read a promise in the README that no test stood behind</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A sentence describing what the software does is written once and never connected to anything that would fail if it stopped being true.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/site-claims-nothing-proves/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">published a page that promised more than any test could support</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Public material is written by a different act from the code, so it drifts ahead of the behaviour and nothing brings it back.</span></span></a></li>
+</ul>
+
   </div>
 
   <aside class="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
@@ -267,7 +283,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e5b673c343386b41e8202612a17bff2070926274" class="font-mono hover:underline">e5b673c</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

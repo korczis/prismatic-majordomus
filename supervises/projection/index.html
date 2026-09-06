@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -250,6 +250,12 @@ git add . &amp;&amp; git commit -qm base</pre></div>
       </a></li></ul><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What is guaranteed</h2>
     <ul class="mt-4 space-y-3"><li class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <span class="flex flex-wrap items-center gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/guarantees/distribution-canonical-model/" class="text-sm text-heading hover:underline">Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused</a></span><span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/84_distribution_model.sh" class="break-all font-mono text-fg-brand hover:underline">test/cases/84_distribution_model.sh</a></span></li><li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <span class="flex flex-wrap items-center gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/guarantees/install-command-is-derived/" class="text-sm text-heading hover:underline">The documented one-line install command is composed from the model&#39;s parts, and a document that states a different one fails the suite</a></span><span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/84_distribution_model.sh" class="break-all font-mono text-fg-brand hover:underline">test/cases/84_distribution_model.sh</a></span></li><li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <span class="flex flex-wrap items-center gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/guarantees/release-is-complete-or-absent/" class="text-sm text-heading hover:underline">A release publishes an artifact for every supported target or it is not published</a></span><span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/87_release_pipeline.sh" class="break-all font-mono text-fg-brand hover:underline">test/cases/87_release_pipeline.sh</a></span></li><li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <span class="flex flex-wrap items-center gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
           <a href="https://korczis.github.io/prismatic-majordomus/guarantees/projection-generation/" class="text-sm text-heading hover:underline">Provider instruction files are generated from the one policy, deterministically</a></span><span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/03_update.sh" class="break-all font-mono text-fg-brand hover:underline">test/cases/03_update.sh</a></span></li><li class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <span class="flex flex-wrap items-center gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
           <a href="https://korczis.github.io/prismatic-majordomus/guarantees/projection-fingerprint/" class="text-sm text-heading hover:underline">Every generated instruction file carries its own stamp, and a hand edit is detected</a></span><span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/03_update.sh" class="break-all font-mono text-fg-brand hover:underline">test/cases/03_update.sh</a></span></li><li class="rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -268,7 +274,31 @@ git add . &amp;&amp; git commit -qm base</pre></div>
   <li><a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
     <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</span>
-    <span class="mt-1 block break-words text-xs text-body-subtle">Why CLAUDE.md and AGENTS.md drift apart, and how one policy generates every instruction file with its own stamp.</span></span></a></li>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Each provider reads its own hand-edited file, nothing relates them, and which contract applies depends on which tool is open.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/context-budget-blown/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">watched the always-loaded instruction file grow past a thousand lines</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Everything important gets appended to the always-loaded file, so every session pays for every rule and reads none of them carefully.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/policy-changed-projection-stale/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">changed a policy in one place and found the old one still in force in three others</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A decision is updated at its source and the generated copies keep serving the previous version, with nothing reporting the difference.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/generated-artifacts-stale/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">had a green pipeline over generated files that no longer matched their sources</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Tests exercise the code and say nothing about the committed outputs derived from it, so the build is green and the artifacts are wrong.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/three-copies-of-one-explanation/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found the same thing explained three times, slightly differently</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Every hand-maintained copy of a fact drifts on its own schedule, and a reader cannot tell which copy is the current one.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/first-hour-in-an-unfamiliar-repository/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">spent the first hour in an unfamiliar repository working out what was normal here</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">What is conventional in a codebase is knowledge held by its regulars, so every arrival — human or machine — pays for it again.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/who-did-this-and-under-what-policy/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">was asked who made a change and under what policy, and had only a commit</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Attribution stops at the commit, so what authorised a change, what verified it and what governed it are unrecoverable.</span></span></a></li>
 </ul>
 
   </div>
@@ -292,7 +322,7 @@ git add . &amp;&amp; git commit -qm base</pre></div>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e5b673c343386b41e8202612a17bff2070926274" class="font-mono hover:underline">e5b673c</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -283,23 +283,55 @@ echo work &gt;&gt; lib/a</pre></div>
   <li><a href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
     <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">re-explained the same context to a brand-new session</span>
-    <span class="mt-1 block break-words text-xs text-body-subtle">Why every fresh session starts from zero, and how durable state and handovers replace the transcript.</span></span></a></li>
-  <li><a href="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found two agents fixing the same bug in two branches</span>
-    <span class="mt-1 block break-words text-xs text-body-subtle">Why isolation alone defers the collision, and how declared scope and overlap reports prevent duplicated work.</span></span></a></li>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Repository knowledge that only ever existed in a conversation has to be re-transmitted by hand to every worker that follows.</span></span></a></li>
   <li><a href="https://korczis.github.io/prismatic-majordomus/why/re-arguing-a-settled-decision/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
     <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">watched a session undo last week&#39;s decision, for the reason it was made</span>
-    <span class="mt-1 block break-words text-xs text-body-subtle">Why a decision that lives only in a transcript is reopened by the next session, and how a recorded reason and an explicit open question replace the argument.</span></span></a></li>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A decision whose reason lived in a conversation cannot be reviewed, only re-argued — by a worker with less information than the first one had.</span></span></a></li>
   <li><a href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
     <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found a task &quot;in progress&quot; that nobody had touched for three weeks</span>
-    <span class="mt-1 block break-words text-xs text-body-subtle">Why an abandoned task looks active, and how computed identity, checkpoint intervals and drift reports tell a live task from a dead one.</span></span></a></li>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A status that was authored rather than computed is true at the moment of writing and decays silently from then on.</span></span></a></li>
   <li><a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
     <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">asked what the workers did last night and had only transcripts to grep</span>
-    <span class="mt-1 block break-words text-xs text-body-subtle">Why a conversation log cannot answer an operational question, and how an append-only ledger with a closed vocabulary can.</span></span></a></li>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A conversation log records what was said, not what happened, so the operational question has to be answered by a person reading prose.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/discovery-never-becomes-knowledge/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">spent an hour discovering something the repository already knew, twice</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A worker learns something expensive about the codebase, uses it once, and it dies with the session because nothing turned it into a durable record.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/one-agent-undoes-another/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">watched one worker revert another worker&#39;s change, on purpose</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A worker sees an unexplained change in its path, judges it wrong, and removes it — correctly, on the evidence it had.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/abandoned-worktree/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found five worktrees and could not say which of them still mattered</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Isolation is cheap to create and expensive to reason about: nothing records what a worktree was for or whether its work landed.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/decision-only-in-a-transcript/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">went looking for why we chose this and found a chat log</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A decision that was reached in a session is stored where only that session can read it, so it is neither reviewable nor discoverable.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/code-without-an-issue/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found a substantial change that no issue, ticket or plan ever asked for</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Work arrives with no bounded contract behind it, so its scope, its acceptance criteria and its ownership are all decided after the fact.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/weak-model-on-architecture/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">let a fast, cheap session make a decision the whole codebase now lives with</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Capability is dialled down for cost and nothing distinguishes the tasks where that is prudent from the ones where it is expensive.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/failure-disappears-between-sessions/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">lost a failure a worker had already reproduced, because the session ended</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A failure observed inside a session is described in that session and nowhere else, so the next one starts from the report rather than the evidence.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/same-dead-end-explored-twice/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">watched a worker spend a day on an approach that had already been ruled out</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Negative results are the majority of experimental output and the part nobody records, so the search space is re-explored.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/who-did-this-and-under-what-policy/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">was asked who made a change and under what policy, and had only a commit</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Attribution stops at the commit, so what authorised a change, what verified it and what governed it are unrecoverable.</span></span></a></li>
 </ul>
 
   </div>
@@ -323,7 +355,7 @@ echo work &gt;&gt; lib/a</pre></div>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e5b673c343386b41e8202612a17bff2070926274" class="font-mono hover:underline">e5b673c</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distribution — Prismatic Majordomus</title>
+<meta name="description" content="how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/docs/distribution/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Distribution — Prismatic Majordomus">
+<meta property="og:description" content="how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/docs/distribution/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Distribution</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Distribution</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/distribution/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Distribution</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/DISTRIBUTION.md" class="font-mono hover:underline">docs/DISTRIBUTION.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p>How Majordomus is packaged, published and installed, and why the answer is one file.</p>
+<p>The user-facing half is <a href="https://korczis.github.io/prismatic-majordomus/docs/install/"><code>INSTALL.md</code></a>, which is generated. This document is
+for whoever changes how the tool is shipped: what the canonical model is, what derives from
+it, what the trust path is, how a release happens, and how to add a platform.</p>
+<h2 id="the-rule"><a class="zola-anchor" href="#the-rule" aria-label="Anchor link for: the-rule">The rule</a></h2>
+<blockquote>
+<p>Distribution has one canonical machine-readable model. Supported targets, release
+artifacts, installer resolution, documentation, release automation and the exposed
+UI/API metadata derive from that model or are mechanically validated against it.</p>
+</blockquote>
+<p>The model is <a href="../share/distribution.yaml"><code>share/distribution.yaml</code></a>, contract
+<code>majordomus-distribution/v1</code>, schema
+<a href="../share/schemas/majordomus/distribution/distribution.v1.schema.json"><code>share/schemas/majordomus/distribution/distribution.v1.schema.json</code></a>. It
+declares the binary, the repository releases are published from, the installer's canonical
+URL and defaults, how an archive is named, and every target the project has an opinion
+about — supported, experimental, or unavailable with the reason.</p>
+<p>It is in <code>share/</code> rather than under <code>.ai/</code> for the reason <code>share/commands.yaml</code> is: it is a
+statement about how the tool behaves, not context for a worker, and it travels with an
+installed copy so that an installed executable can answer the same questions a checkout can.</p>
+<h2 id="what-derives-from-it"><a class="zola-anchor" href="#what-derives-from-it" aria-label="Anchor link for: what-derives-from-it">What derives from it</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>share/distribution.yaml</span></span>
+<span class="giallo-l"><span>  |</span></span>
+<span class="giallo-l"><span>  |-- majordomus generate --target distribution</span></span>
+<span class="giallo-l"><span>  |     |-- docs/generated/distribution-matrix.json   the release build matrix</span></span>
+<span class="giallo-l"><span>  |     |-- site/static/install.sh                    the installer, with its platform table</span></span>
+<span class="giallo-l"><span>  |     |-- docs/INSTALL.md                           the guide, with its platform table</span></span>
+<span class="giallo-l"><span>  |     |-- site/data/registry/distribution.json      what the website renders</span></span>
+<span class="giallo-l"><span>  |     `-- site/static/releases/*.json               from .ai/repo/releases/*.yaml</span></span>
+<span class="giallo-l"><span>  |</span></span>
+<span class="giallo-l"><span>  |-- the `distribution` capability module            CLI, HTTP, OpenAPI, MCP, cockpit</span></span>
+<span class="giallo-l"><span>  `-- scripts/release-*                               packaging, verification, recording</span></span></code></pre>
+<p>Nothing in that list states a platform, a file name or a URL of its own. The scripts ask
+<code>majordomus distribution artifact</code> for a name rather than composing one; the release
+workflow reads the generated matrix rather than listing runners; the installer's platform
+table is a generated region inside a hand-written script; the documentation's platform
+table is generated into a hand-written guide.</p>
+<p><code>majordomus generate --check</code> — reached by <code>just derive-check</code>, by the <code>site</code> job and by
+the release pipeline's first phase — refuses a tree in which any of them disagrees.</p>
+<h2 id="adding-a-platform"><a class="zola-anchor" href="#adding-a-platform" aria-label="Anchor link for: adding-a-platform">Adding a platform</a></h2>
+<p>One edit, then one command:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span>$</span><span>EDITOR</span><span> share/distribution.yaml</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> add a target: id, os, arch, libc, rust_target, status, build</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">just</span><span class="z-l-8 z-d-8"> derive</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> regenerate every projection</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">bash</span><span class="z-l-8 z-d-8"> test/run.sh</span><span class="z-l-8 z-d-8"> 84_distribution_model</span></span></code></pre>
+<p>The installer offers it, the release builds it on the runner the model named, the guide
+lists it, the website lists it, the matrix carries it, and the completeness invariant now
+requires an artifact for it in every future release. Nothing else is edited.</p>
+<p>A genuinely new <em>concept</em> — another operating system, another archive format, another libc
+— is the one case that also changes Rust: the vocabularies are enums in
+<code>apps/majordomus-cli/src/distribution/mod.rs</code> so that an impossible target cannot be
+written down. Adding a value there is a deliberate widening of the model, not a
+synchronisation chore.</p>
+<h2 id="the-two-versions-and-why-there-are-two"><a class="zola-anchor" href="#the-two-versions-and-why-there-are-two" aria-label="Anchor link for: the-two-versions-and-why-there-are-two">The two versions, and why there are two</a></h2>
+<p>One release has one version, stated in two places because two programs ship from one tree
+and each must say what it is without reading the other:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>apps/majordomus-cli/Cargo.toml   the crate&#39;s version — the authority</span></span>
+<span class="giallo-l"><span>bin/majordomus                   MJ_VERSION, which `majordomus version` prints</span></span></code></pre>
+<p>Neither can derive the other at run time: an installed tree has no <code>Cargo.toml</code>, and the
+crate is compiled before the shell tool exists. So they are checked instead, by
+<code>scripts/release-version --check</code>, in CI and again as the first thing a release does —
+together with the tag, which must be <code>v</code> followed by that version. A mistyped tag costs
+thirty seconds rather than a published release.</p>
+<h2 id="the-trust-path"><a class="zola-anchor" href="#the-trust-path" aria-label="Anchor link for: the-trust-path">The trust path</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>share/distribution.yaml            the model: platforms, names, the installer&#39;s URL</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>release build (one runner per target, the model names which)</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>release-verify                     the archive is what the model says it is</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>release-record                     digests and sizes read off the files that exist</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>.ai/repo/releases/&lt;tag&gt;.yaml       the repository&#39;s evidence of what was published</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>majordomus generate                site/static/releases/&lt;tag&gt;.json and latest.json</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>GitHub Pages                       the metadata the installer reads, over HTTPS</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>install.sh                         verifies the digest before unpacking anything</span></span>
+<span class="giallo-l"><span>        |</span></span>
+<span class="giallo-l"><span>        v</span></span>
+<span class="giallo-l"><span>~/.local/share/majordomus/versions/&lt;version&gt;/, then the launcher, by rename</span></span></code></pre>
+<p>Each arrow is checked by the step after it. The installer never reads GitHub's API or HTML;
+it reads two JSON documents that this repository generates, so a change in GitHub's pages
+cannot break an installation.</p>
+<h2 id="what-is-protected-and-what-is-trusted"><a class="zola-anchor" href="#what-is-protected-and-what-is-trusted" aria-label="Anchor link for: what-is-protected-and-what-is-trusted">What is protected, and what is trusted</a></h2>
+<p>Protected:</p>
+<ul>
+<li><strong>transport</strong> — HTTPS only, redirects restricted to HTTPS; a non-HTTPS metadata base is
+refused unless two explicit environment variables say otherwise, which exists so the
+installer's own tests can serve fixtures;</li>
+<li><strong>integrity</strong> — every artifact carries a SHA-256 and a size in the metadata, both checked
+before extraction; a mismatch discards the download and stops, with no "warn and
+continue";</li>
+<li><strong>provenance of the URL</strong> — the artifact URL must be this project's own release download
+prefix, derived from the model, and is checked before anything is fetched from it;</li>
+<li><strong>the shape of every value</strong> — every field read out of the metadata is matched against a
+literal character class before use, so nothing read over the network can reach a command
+line, a path or the shell as anything but data;</li>
+<li><strong>extraction</strong> — absolute paths, <code>..</code> traversal, symbolic and hard links, devices and any
+entry outside the archive's own directory are refused by name, and nothing is unpacked;</li>
+<li><strong>the executable itself</strong> — the unpacked tool is run once, from a temporary location, and
+must report the version that was resolved; this is what catches a release built from the
+wrong tree;</li>
+<li><strong>the existing installation</strong> — the new tree is unpacked beside the old one and the
+launcher is replaced by a rename, so any failure before that leaves the previous
+installation exactly as it was;</li>
+<li><strong>privilege</strong> — <code>sudo</code> appears nowhere; an unwritable destination is named, not elevated.</li>
+</ul>
+<p>Trusted: GitHub Pages serving the metadata, GitHub Releases serving the artifacts, and the
+pipeline that produced both. Checksums bind an artifact to its metadata; they do not, by
+themselves, prove who wrote the metadata.</p>
+<p>Deferred, deliberately: signed provenance (GitHub artifact attestations, Sigstore). It is
+worth adding and it is not claimed here, because a security document that describes
+protections it does not have is worse than one that is short.</p>
+<h2 id="releasing"><a class="zola-anchor" href="#releasing" aria-label="Anchor link for: releasing">Releasing</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> 1. bump the version, in both places, and commit</span></span>
+<span class="giallo-l"><span>$</span><span>EDITOR</span><span> apps/majordomus-cli/Cargo.toml bin/majordomus</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/release-version</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-tag</span><span class="z-l-8 z-d-8"> v0.3.0</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> 2. tag, and push the tag</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">git</span><span class="z-l-8 z-d-8"> tag</span><span class="z-l-8 z-d-8"> v0.3.0</span><span class="z-l-6 z-d-9"> &amp;&amp;</span><span class="z-l-1 z-d-3"> git</span><span class="z-l-8 z-d-8"> push</span><span class="z-l-8 z-d-8"> origin</span><span class="z-l-8 z-d-8"> v0.3.0</span></span></code></pre>
+<p>The pipeline is <a href="../.github/workflows/release.yml"><code>.github/workflows/release.yml</code></a>, an
+adapter over <a href="../.ai/repo/ci/release.yaml"><code>.ai/repo/ci/release.yaml</code></a> and the generated
+matrix:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>plan     the tag, the crate and the shell tool state one version; the model and every</span></span>
+<span class="giallo-l"><span>         recorded release hold their invariants; the matrix is emitted</span></span>
+<span class="giallo-l"><span>build    one archive per supported target, on the runner the model names, verified where</span></span>
+<span class="giallo-l"><span>         it was built (fail-fast: a release missing a platform is not a release)</span></span>
+<span class="giallo-l"><span>publish  digests, the GitHub release, the record written from what was uploaded, the</span></span>
+<span class="giallo-l"><span>         public metadata regenerated from that record, both committed to the default branch</span></span>
+<span class="giallo-l"><span>smoke    the published installer, from its published URL, installing the release that was</span></span>
+<span class="giallo-l"><span>         just published, on every runner whose target it was built for</span></span></code></pre>
+<p>Only <code>publish</code> has <code>contents: write</code>. Nothing else in the run can write anything.</p>
+<h3 id="testing-it-without-publishing"><a class="zola-anchor" href="#testing-it-without-publishing" aria-label="Anchor link for: testing-it-without-publishing">Testing it without publishing</a></h3>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/release-fixture</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-out</span><span class="z-l-8 z-d-8"> /tmp/rel</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-base-url</span><span class="z-l-8 z-d-8"> http://127.0.0.1:8099</span></span>
+<span class="giallo-l"><span>(</span><span class="z-l-15 z-d-14">cd</span><span class="z-l-8 z-d-8"> /tmp/rel</span><span class="z-l-6 z-d-9"> &amp;&amp;</span><span class="z-l-1 z-d-3"> python3</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">m</span><span class="z-l-8 z-d-8"> http.server</span><span class="z-l-9 z-d-11"> 8099</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-bind</span><span class="z-l-9 z-d-11"> 127.0.0.1</span><span>)</span><span class="z-l-6 z-d-9"> &amp;</span></span>
+<span class="giallo-l"><span>MAJORDOMUS_RELEASE_BASE_URL</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">h</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">p</span><span class="z-l-8 z-d-8">:</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">1</span><span class="z-l-8 z-d-8">2</span><span class="z-l-8 z-d-8">7</span><span class="z-l-8 z-d-8">.</span><span class="z-l-8 z-d-8">0</span><span class="z-l-8 z-d-8">.</span><span class="z-l-8 z-d-8">0</span><span class="z-l-8 z-d-8">.</span><span class="z-l-8 z-d-8">1</span><span class="z-l-8 z-d-8">:</span><span class="z-l-8 z-d-8">8</span><span class="z-l-8 z-d-8">0</span><span class="z-l-8 z-d-8">9</span><span class="z-l-8 z-d-8">9</span><span> MAJORDOMUS_INSECURE_BASE_URL</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">1</span><span class="z-l-1 z-d-3"> \</span></span>
+<span class="giallo-l"><span class="z-l-8 z-d-8">  sh</span><span class="z-l-8 z-d-8"> site/static/install.sh</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-dry-run</span></span></code></pre>
+<p>That is what <code>test/cases/85_installer.sh</code> does, and it is the whole stack: a real archive
+built from the tree you are in, real metadata rendered by the renderer the site publishes,
+a real HTTP download, a real digest check, a real atomic install.</p>
+<h3 id="recovering-from-a-bad-release"><a class="zola-anchor" href="#recovering-from-a-bad-release" aria-label="Anchor link for: recovering-from-a-bad-release">Recovering from a bad release</a></h3>
+<p>A published release is immutable: its artifacts and its versioned metadata stay exactly as
+they were, because someone may have pinned them. Withdrawing one is an edit to its record:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> .ai/repo/releases/v0.3.0.yaml</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">y</span><span class="z-l-4 z-d-1">anked</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span></span></code></pre>
+<p>then <code>just derive</code> and commit. <code>latest.json</code> is derived on every generation as the highest
+version among the stable, unwithdrawn records, so the stable pointer moves back on its own
+and <code>--version v0.3.0</code> still resolves for anyone who wants exactly that. Nothing is deleted
+and no URL stops working.</p>
+<h2 id="reproducibility"><a class="zola-anchor" href="#reproducibility" aria-label="Anchor link for: reproducibility">Reproducibility</a></h2>
+<p>The inputs to an artifact are recorded rather than claimed: the tag, the target triple, the
+commit and the build time go into <code>RELEASE.json</code> inside every archive, and the commit is
+compiled into the executable by <code>build.rs</code>. The archive itself is packed with entries in
+sorted order.</p>
+<p>Bit-identical rebuilds are not claimed: that needs a reproducible compiler invocation
+(<code>SOURCE_DATE_EPOCH</code>, a pinned toolchain version, no absolute paths in debug info), and the
+toolchain here is <code>stable</code> rather than a pin. What is guaranteed is that two people
+building the same tag get functionally identical archives, and that the archive says which
+commit and target it came from.</p>
+<h2 id="self-update"><a class="zola-anchor" href="#self-update" aria-label="Anchor link for: self-update">Self-update</a></h2>
+<p>There is no <code>majordomus self update</code>, and when there is one it will not be a second update
+protocol. Everything it needs already exists and is typed:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="rust"><span class="giallo-l"><span class="z-l-1 z-d-3">Model</span><span class="z-l-16 z-d-16">::</span><span class="z-l-14 z-d-18">load</span><span>(</span><span>share</span><span>)</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          //</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> this installation&#39;s own model, shipped in share/</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">Model</span><span class="z-l-16 z-d-16">::</span><span class="z-l-14 z-d-18">release_url</span><span>(</span><span>tag</span><span>)</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     //</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> where the metadata for a tag or `latest` lives</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">Releases</span><span class="z-l-16 z-d-16">::</span><span class="z-l-14 z-d-18">latest_stable</span><span>(</span><span>)</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   //</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> which release an unpinned update resolves to</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">Release</span><span class="z-l-16 z-d-16">::</span><span class="z-l-14 z-d-18">artifact</span><span>(</span><span>target</span><span>)</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   //</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the artifact, its digest and its size</span></span>
+<span class="giallo-l"><span class="z-l-17 z-d-17">crate</span><span class="z-l-16 z-d-16">::</span><span class="z-l-3 z-d-7">TARGET</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               //</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the triple this build was made for, compiled in</span></span></code></pre>
+<p>An installed copy carries <code>share/distribution.yaml</code>, so <code>majordomus distribution show</code> and
+<code>majordomus distribution build</code> answer from an installation exactly as they answer from a
+checkout — which is the property a self-update would be built on. The remaining work is the
+download, the verification and the swap, and the installer already does all three; the
+open design question is whether to reimplement them in Rust or to have the command re-run
+the published installer with <code>--version</code>, which would keep one implementation of the risky
+part rather than two.</p>
+<p><code>test/cases/85_installer.sh</code> covers that risky part today, and whichever way the command is
+built it will resolve releases through the same records and the same stable pointer as the
+installer does.</p>
+<h2 id="package-managers"><a class="zola-anchor" href="#package-managers" aria-label="Anchor link for: package-managers">Package managers</a></h2>
+<p>The release model is the primary contract and it is package-manager neutral: an archive per
+target with a digest, and a machine-readable index. A Homebrew formula, an APT repository,
+a Nix derivation or a container image would each read that index rather than replacing it,
+and none of them is implemented. Nothing in the model prevents one.</p>
+<p>Windows is representable — the schema carries <code>zip</code>, a <code>binary_suffix</code> and a <code>windows</code>
+operating system — and is declared <code>unavailable</code> with its reason: the command a person runs
+is <code>bash</code>, and until that half has a Windows answer, publishing a Windows archive would
+ship an executable nothing can drive.</p>
+<h2 id="where-things-are"><a class="zola-anchor" href="#where-things-are" aria-label="Anchor link for: where-things-are">Where things are</a></h2>
+<div class="overflow-x-auto">
+<table><thead><tr><th>What</th><th>Where</th></tr></thead><tbody>
+<tr><td>the model</td><td><code>share/distribution.yaml</code></td></tr>
+<tr><td>its contract</td><td><code>share/schemas/majordomus/distribution/distribution.v1.schema.json</code></td></tr>
+<tr><td>a release record's contract</td><td><code>share/schemas/majordomus/release/release.v1.schema.json</code></td></tr>
+<tr><td>the records</td><td><code>.ai/repo/releases/</code>, one per published release</td></tr>
+<tr><td>the semantics</td><td><code>apps/majordomus-cli/src/distribution/</code></td></tr>
+<tr><td>the capability module</td><td><code>apps/majordomus-cli/src/capability/builtin/distribution.rs</code></td></tr>
+<tr><td>the installer's behaviour</td><td><code>share/install/install.sh.in</code></td></tr>
+<tr><td>the guide's prose</td><td><code>share/install/INSTALL.md.in</code></td></tr>
+<tr><td>packaging and verification</td><td><code>scripts/release-{version,package,verify,record,fixture}</code></td></tr>
+<tr><td>the pipeline's model</td><td><code>.ai/repo/ci/release.yaml</code></td></tr>
+<tr><td>the pipeline</td><td><code>.github/workflows/release.yml</code></td></tr>
+<tr><td>the behavioural cases</td><td><code>test/cases/84_distribution_model.sh</code>, <code>85_installer.sh</code>, <code>86_installer_platform.sh</code>, <code>87_release_pipeline.sh</code></td></tr>
+<tr><td>the rule</td><td><code>.ai/repo/rules/project/distribution-canonical.v1.md</code></td></tr>
+</tbody></table>
+</div>
+</article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
+    <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/distribution-canonical-model/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/release-is-complete-or-absent/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A release publishes an artifact for every supported target or it is not published</span></a></li></ul></div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>

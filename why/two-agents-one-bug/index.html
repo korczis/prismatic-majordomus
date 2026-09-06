@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Two agents fixing the same bug in two branches — Prismatic Majordomus</title>
-<meta name="description" content="Why isolation alone defers the collision, and how declared scope and overlap reports prevent duplicated work.">
+<meta name="description" content="Two workers spend a day each on one defect because ownership was implicit and neither could see the other.">
 <link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="Two agents fixing the same bug in two branches — Prismatic Majordomus">
-<meta property="og:description" content="Why isolation alone defers the collision, and how declared scope and overlap reports prevent duplicated work.">
+<meta property="og:description" content="Two workers spend a day each on one defect because ownership was implicit and neither could see the other.">
 <meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/">
 <meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -166,60 +166,137 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Two agents fixing the same bug in two branches</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Why isolation alone defers the collision, and how declared scope and overlap reports prevent duplicated work.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Two workers spend a day each on one defect because ownership was implicit and neither could see the other.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
     <p class="mb-6 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base font-medium text-fg-brand-strong">→ found two agents fixing the same bug in two branches</p>
+
+    <dl class="mb-6 flex flex-wrap gap-x-6 gap-y-2 border-y border-default py-3 text-xs">
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">cost when it happens</dt><dd class="text-heading">high</dd></div>
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">how often</dt><dd class="text-heading">common</dd></div>
+      <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">area</dt><dd><a href="https://korczis.github.io/prismatic-majordomus/why/areas/coordination/" class="text-fg-brand hover:underline">coordination</a></dd><dd><a href="https://korczis.github.io/prismatic-majordomus/why/areas/work-tracking/" class="text-fg-brand hover:underline">work-tracking</a></dd></div>
+      <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">recognised by</dt><dd><a href="https://korczis.github.io/prismatic-majordomus/why/audiences/ai-native-team/" class="text-fg-brand hover:underline">ai-native-team</a></dd><dd><a href="https://korczis.github.io/prismatic-majordomus/why/audiences/engineering-lead/" class="text-fg-brand hover:underline">engineering-lead</a></dd><dd><a href="https://korczis.github.io/prismatic-majordomus/why/audiences/solo-builder/" class="text-fg-brand hover:underline">solo-builder</a></dd><dd><a href="https://korczis.github.io/prismatic-majordomus/why/audiences/platform-team/" class="text-fg-brand hover:underline">platform-team</a></dd></div>
+    </dl>
+
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto"><h2 id="the-moment"><a class="zola-anchor" href="#the-moment" aria-label="Anchor link for: the-moment">The moment</a></h2>
 <p>Two sessions, two branches, the same failing test. Both find the cause, both fix it, both
 open a change. One is wasted, and merging the other now conflicts with it.</p>
 <h2 id="why-it-happens"><a class="zola-anchor" href="#why-it-happens" aria-label="Anchor link for: why-it-happens">Why it happens</a></h2>
 <p>Each worker knew its task and nothing about the other's. Giving every worker its own git
 worktree feels like the fix, and it does stop them overwriting each other's files. It does
-not stop them doing the same work. In the environment this tool comes from, forty fully
-isolated worktrees still produced several thousand concurrently modified files and dozens
-of duplicated patches; nine of eighty ever merged. Isolation converted immediate overwrites
-into deferred, larger conflicts. The mechanism that actually prevents duplication is a
-declared scope that the other worker can see — and there, the declaration was optional,
-matched by exact string equality, and enforced by hooks that never ran.</p>
+not stop them doing the same work. In the environment this tool was distilled from, forty
+fully isolated worktrees still produced several thousand concurrently modified files and
+dozens of duplicated patches; nine of eighty ever merged. Isolation converted immediate
+overwrites into deferred, larger conflicts.</p>
+<h2 id="why-a-better-model-does-not-fix-it"><a class="zola-anchor" href="#why-a-better-model-does-not-fix-it" aria-label="Anchor link for: why-a-better-model-does-not-fix-it">Why a better model does not fix it</a></h2>
+<p>Neither worker made a mistake. Each solved the problem it was given, correctly, with the
+information available to it — and the information that would have prevented the waste was
+never written anywhere either of them could read. A more capable model on both sides
+produces two better duplicate fixes, faster.</p>
+<h2 id="what-it-costs"><a class="zola-anchor" href="#what-it-costs" aria-label="Anchor link for: what-it-costs">What it costs</a></h2>
+<p>The obvious cost is the discarded day. The larger one is the conflict: two independent
+fixes to one subsystem are harder to reconcile than one fix, so the waste is paid twice,
+once in the writing and once in the merge. Where the duplicated work reaches review, it
+also costs a reviewer's attention on a change that should never have existed.</p>
 <h2 id="what-majordomus-does"><a class="zola-anchor" href="#what-majordomus-does" aria-label="Anchor link for: what-majordomus-does">What Majordomus does</a></h2>
-<p><code>majordomus start</code> requires a scope: the paths this task may touch. It is normalised at the
-time of declaration and stored in the task record. Every other worktree of the repository is
-read straight from <code>git worktree list</code>; if one has an active task whose scope contains or is
-contained by yours, <code>start</code> says so, naming the worktree and the path. <code>majordomus check</code>
-and <code>majordomus finish</code> fail on any touched file outside the scope. One task is active per
-checkout; a second <code>start</code> is refused until the first is handed over or finished.</p>
-<p>While this site was being built, two sessions shared one checkout. The tool refused the
-second writer's push until scopes were declared, and the two sessions moved to separate
-worktrees — which is what the design asks for.</p>
+<p><code>majordomus start</code> requires a scope: the paths this task may touch, normalised at the time
+of declaration and stored in the task record. Every other worktree of the repository is read
+straight from <code>git worktree list</code>; if one has an active task whose scope contains or is
+contained by yours, <code>start</code> says so and names the worktree and the path. <code>check</code> and
+<code>finish</code> fail on any touched file outside the scope. One task is active per checkout, so a
+second <code>start</code> is refused until the first is handed over or finished.</p>
+<h2 id="before-and-after"><a class="zola-anchor" href="#before-and-after" aria-label="Anchor link for: before-and-after">Before and after</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>before   worker A: fix flaky auth test    (branch a, no declaration)</span></span>
+<span class="giallo-l"><span>         worker B: fix flaky auth test    (branch b, no declaration)</span></span>
+<span class="giallo-l"><span>         merge:    two fixes, one conflict</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>after    worker A: start --scope lib/auth,test/auth</span></span>
+<span class="giallo-l"><span>         worker B: start --scope lib/auth</span></span>
+<span class="giallo-l"><span>                   OVERLAP ../checkout-a holds lib/auth (task t-0091, active)</span></span></code></pre><h2 id="how-to-verify-it"><a class="zola-anchor" href="#how-to-verify-it" aria-label="Anchor link for: how-to-verify-it">How to verify it</a></h2>
+<p>Declare a scope in one worktree, then start an overlapping task in another and read what it
+says. The overlap is reported with the worktree and the path, and <code>check</code> refuses a file
+outside the declared scope.</p>
 <h2 id="what-it-does-not-do"><a class="zola-anchor" href="#what-it-does-not-do" aria-label="Anchor link for: what-it-does-not-do">What it does not do</a></h2>
-<p>Overlap is reported, never blocked: whether two people should work on overlapping paths is a
-coordination decision, not a rule. It sees worktrees of one repository on one machine, not
-other clones. It does not merge anything and emits no merge commands.</p>
-<h2 id="try-it"><a class="zola-anchor" href="#try-it" aria-label="Anchor link for: try-it">Try it</a></h2>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> start</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">fix flaky auth test</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-scope</span><span class="z-l-8 z-d-8"> lib/auth,test/auth</span></span>
-<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-overlap</span></span></code></pre></article><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this lives in the tool</h2>
-    <p class="mt-2 text-body">Everything below is read out of this page's own front matter and resolved against the repository. A name here that did not exist would fail the build.</p>
-
+<p>Overlap is reported, never blocked: whether two people should work on overlapping paths is
+a coordination decision, not a rule. It sees worktrees of one repository on one machine,
+not other clones. It does not merge anything and emits no merge commands.</p>
+</article><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What this looks like</h2>
+    <p class="mt-2 text-body">Concrete situations, one per audience. Each is declared in the moment's front matter, so the before and the after are data rather than prose a page could drift from.</p>
+    <ol class="mt-4 space-y-4">
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <span class="text-sm font-medium text-heading">Two coding agents, one failing test</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/why/audiences/ai-native-team/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">ai-native-team</a>
+        </p>
+        <dl class="mt-3 grid gap-3 sm:grid-cols-2">
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">before</dt><dd class="mt-1 break-words text-sm text-body">Both find the cause, both write a fix, both open a change; one is discarded and merging the other now conflicts with it.</dd></div>
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">after</dt><dd class="mt-1 break-words text-sm text-body">The second start reports that another worktree already holds a task whose scope contains that path, and names the worktree.</dd></div>
+        </dl>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <span class="text-sm font-medium text-heading">Two windows, one afternoon</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/why/audiences/solo-builder/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">solo-builder</a>
+        </p>
+        <dl class="mt-3 grid gap-3 sm:grid-cols-2">
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">before</dt><dd class="mt-1 break-words text-sm text-body">A session started in the morning is still open in another window; the afternoon session re-derives the same fix from the same failing test.</dd></div>
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">after</dt><dd class="mt-1 break-words text-sm text-body">One task is active per checkout, so the second start is refused until the first is handed over or finished.</dd></div>
+        </dl>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <span class="text-sm font-medium text-heading">An overnight run nobody read</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/why/audiences/engineering-lead/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">engineering-lead</a>
+        </p>
+        <dl class="mt-3 grid gap-3 sm:grid-cols-2">
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">before</dt><dd class="mt-1 break-words text-sm text-body">A developer spends the morning on a defect an overnight worker already fixed in a branch that was never merged or mentioned.</dd></div>
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">after</dt><dd class="mt-1 break-words text-sm text-body">The overnight worker left a handover record naming the branch, the head and the changed files, and the morning session resolves it before starting.</dd></div>
+        </dl>
+      </li>
+    </ol><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">How you would know</h2>
+    <p class="mt-2 text-body">The observable symptoms this moment declares. They are the questionnaire on <a href="https://korczis.github.io/prismatic-majordomus/why/#diagnose" class="text-fg-brand hover:underline">the index</a> and the input of <code class="font-mono text-heading">majordomus why diagnose</code>; nothing else defines them.</p>
+    <ul class="mt-4 space-y-2">
+      <li class="flex min-w-0 items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3">
+        <span aria-hidden="true" class="font-mono text-fg-brand">◻</span>
+        <span class="min-w-0"><span class="block break-words text-sm text-body">Two workers changed the same subsystem this week without either knowing about the other.</span>
+        <code class="mt-1 block font-mono text-xs text-body-subtle">same-subsystem-twice</code></span>
+      </li>
+      <li class="flex min-w-0 items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3">
+        <span aria-hidden="true" class="font-mono text-fg-brand">◻</span>
+        <span class="min-w-0"><span class="block break-words text-sm text-body">Nobody could name the owner of a piece of work that was already under way.</span>
+        <code class="mt-1 block font-mono text-xs text-body-subtle">no-named-owner</code></span>
+      </li>
+      <li class="flex min-w-0 items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3">
+        <span aria-hidden="true" class="font-mono text-fg-brand">◻</span>
+        <span class="min-w-0"><span class="block break-words text-sm text-body">More than one worktree or branch existed for one unresolved defect.</span>
+        <code class="mt-1 block font-mono text-xs text-body-subtle">worktrees-same-defect</code></span>
+      </li>
+    </ul><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this lives in the tool</h2>
+    <p class="mt-2 text-body">Everything below is read out of this moment's own front matter and resolved against the repository. A name here that did not exist would fail validation.</p>
     <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the commands that answer it</h3>
     <ul class="grid gap-3 sm:grid-cols-2">
       <li><a href="https://korczis.github.io/prismatic-majordomus/commands/start/" class="flex h-full min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span class="flex flex-wrap items-center gap-2"><span class="font-mono text-sm font-medium text-fg-brand">majordomus start</span></span>
-        <span class="min-w-0 break-words text-sm text-body">begin a scoped task under a profile</span></a></li>
+        <span class="min-w-0 break-words text-sm text-body">Begin one scoped task under a profile, and refuse while another is active.</span></a></li>
       <li><a href="https://korczis.github.io/prismatic-majordomus/commands/check/" class="flex h-full min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span class="flex flex-wrap items-center gap-2"><span class="font-mono text-sm font-medium text-fg-brand">majordomus check</span><span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span></span>
-        <span class="min-w-0 break-words text-sm text-body">is the current task consistent with policy, scope, state?</span></a></li>
+        <span class="min-w-0 break-words text-sm text-body">Is the current task still consistent with its policy, its scope and this checkout?</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/commands/finish/" class="flex h-full min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="flex flex-wrap items-center gap-2"><span class="font-mono text-sm font-medium text-fg-brand">majordomus finish</span></span>
+        <span class="min-w-0 break-words text-sm text-body">Evaluate the finish contract and refuse the outcome if any line of it is unmet.</span></a></li>
     </ul>
-
-    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">what it supervises</h3>
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the capabilities of the executable that answer it</h3>
+    <ul class="flex flex-wrap gap-2">
+      <li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/repository.scope/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">repository.scope</a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/repository.scope_classify/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">repository.scope_classify</a></li>
+    </ul>
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">what it supervises <span class="normal-case tracking-normal">— derived from the claims below</span></h3>
     <ul class="flex flex-wrap gap-2">
       <li><a href="https://korczis.github.io/prismatic-majordomus/supervises/scope/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">Scope</a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/supervises/state/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">State</a></li>
     </ul>
-
     <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the claims that back this page, and the evidence behind each</h3>
     <ul class="space-y-3">
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -253,39 +330,66 @@ other clones. It does not merge anything and emits no merge commands.</p>
         </dl>
       </li>
     </ul>
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the rules that govern it</h3>
+    <ul class="flex flex-wrap gap-2">
+      <li><span class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-xs text-heading">majordomus.scope-integrity</span></li>
+      <li><span class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-xs text-heading">majordomus.one-worker-one-scope</span></li>
+      <li><span class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-xs text-heading">majordomus.isolated-parallelism</span></li>
+    </ul>
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the use cases that show the way out</h3>
+    <ul class="grid gap-3 sm:grid-cols-2">
+      <li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/run-several-workers-at-once/" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">run-several-workers-at-once</a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/resume-in-the-right-worktree/" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">resume-in-the-right-worktree</a></li>
+    </ul>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">If this one is familiar, so is the next</h2>
+    <p class="mt-2 text-body">What this moment names, what names it, and what shares its area, audience or tags. The second and third are derived; only the first is written down.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">re-explained the same context to a brand-new session</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/strongest-model-renames-a-variable/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">watched the strongest model, at maximum effort, rename a variable</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">accepted &quot;done&quot; because the model said so, and paid for it the next morning</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/re-arguing-a-settled-decision/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">watched a session undo last week&#39;s decision, for the reason it was made</span></a></li>
       <li><a href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
         <span class="min-w-0 break-words text-sm text-heading">found a task &quot;in progress&quot; that nobody had touched for three weeks</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/one-agent-undoes-another/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">asked what the workers did last night and had only transcripts to grep</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/rule-in-a-readme-nobody-loaded/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="min-w-0 break-words text-sm text-heading">watched one worker revert another worker&#39;s change, on purpose</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/worker-output-never-integrated/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">found the rule for that directory in a README no session ever loaded</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/three-roadmaps-none-of-them-true/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="min-w-0 break-words text-sm text-heading">found finished work on a branch that nobody ever merged</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/abandoned-worktree/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">read three roadmaps for one project and believed none of them</span></a></li>
+        <span class="min-w-0 break-words text-sm text-heading">found five worktrees and could not say which of them still mattered</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/second-session-same-checkout/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">had two sessions writing into one checkout without either knowing</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/code-without-an-issue/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">found a substantial change that no issue, ticket or plan ever asked for</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/issue-says-done-tests-disagree/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">closed an issue whose acceptance criteria nothing had actually checked</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">re-explained the same context to a brand-new session</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">accepted &quot;done&quot; because the model said so, and paid for it the next morning</span></a></li>
     </ul>
-    <p class="mt-4 text-sm"><a href="https://korczis.github.io/prismatic-majordomus/why/" class="font-medium text-fg-brand hover:underline">All 10, and how they connect to the tool &rarr;</a></p>
+    <p class="mt-6 text-sm"><a href="https://korczis.github.io/prismatic-majordomus/why/" class="font-medium text-fg-brand hover:underline">All 38, and how they connect to the tool &rarr;</a></p>
   </div>
-  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the 10 moments</h2><ol class="space-y-2 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">re-explained the same context to a brand-new session</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">found two agents fixing the same bug in two branches</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/strongest-model-renames-a-variable/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched the strongest model, at maximum effort, rename a variable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">accepted &quot;done&quot; because the model said so, and paid for it the next morning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/re-arguing-a-settled-decision/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched a session undo last week&#39;s decision, for the reason it was made</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found a task &quot;in progress&quot; that nobody had touched for three weeks</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">asked what the workers did last night and had only transcripts to grep</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/rule-in-a-readme-nobody-loaded/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found the rule for that directory in a README no session ever loaded</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/three-roadmaps-none-of-them-true/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">read three roadmaps for one project and believed none of them</a></li></ol></div></aside>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start space-y-5">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">read it anywhere</h2>
+      <ul class="space-y-2 font-mono text-xs text-body">
+        <li>majordomus why show two-agents-one-bug</li>
+        <li>GET /api/v1/why/moment?id=two-agents-one-bug</li>
+        <li>majordomus://moment/two-agents-one-bug</li>
+      </ul>
+      <p class="mt-3 border-t border-default pt-3 text-xs text-body-subtle">One record, four readers. The page you are on is the fourth.</p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the 38 moments</h2>
+      <ol class="space-y-2 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">re-explained the same context to a brand-new session</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">found two agents fixing the same bug in two branches</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/strongest-model-renames-a-variable/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched the strongest model, at maximum effort, rename a variable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">accepted &quot;done&quot; because the model said so, and paid for it the next morning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/re-arguing-a-settled-decision/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched a session undo last week&#39;s decision, for the reason it was made</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found a task &quot;in progress&quot; that nobody had touched for three weeks</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">asked what the workers did last night and had only transcripts to grep</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/rule-in-a-readme-nobody-loaded/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found the rule for that directory in a README no session ever loaded</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/three-roadmaps-none-of-them-true/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">read three roadmaps for one project and believed none of them</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/discovery-never-becomes-knowledge/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">spent an hour discovering something the repository already knew, twice</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/context-budget-blown/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched the always-loaded instruction file grow past a thousand lines</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/one-agent-undoes-another/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched one worker revert another worker&#39;s change, on purpose</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/abandoned-worktree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found five worktrees and could not say which of them still mattered</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/worker-output-never-integrated/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found finished work on a branch that nobody ever merged</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/second-session-same-checkout/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">had two sessions writing into one checkout without either knowing</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/policy-changed-projection-stale/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">changed a policy in one place and found the old one still in force in three others</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/enforcement-nothing-invokes/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found a rule everyone believed was enforced and nothing ever invoked</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/decision-only-in-a-transcript/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">went looking for why we chose this and found a chat log</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/implementation-contradicts-the-decision/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found code that contradicted a decision the repository had written down</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/code-without-an-issue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found a substantial change that no issue, ticket or plan ever asked for</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/issue-says-done-tests-disagree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">closed an issue whose acceptance criteria nothing had actually checked</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/milestone-status-unreconstructable/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">was asked how far the milestone had got and had to go and ask four people</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/feature-without-a-test/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">read a promise in the README that no test stood behind</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/api-changed-contract-did-not/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">shipped an interface change whose contract document still described the old one</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/documented-command-no-longer-works/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">pasted a command from the documentation and watched it fail</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/generated-artifacts-stale/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">had a green pipeline over generated files that no longer matched their sources</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/weak-model-on-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">let a fast, cheap session make a decision the whole codebase now lives with</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/no-record-why-this-model/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">could not say why one provider was used for that work and another for this</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/spend-not-tied-to-outcomes/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">looked at the bill and could not say which of it produced anything</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/failure-disappears-between-sessions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">lost a failure a worker had already reproduced, because the session ended</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/three-copies-of-one-explanation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found the same thing explained three times, slightly differently</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/site-claims-nothing-proves/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">published a page that promised more than any test could support</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/first-hour-in-an-unfamiliar-repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">spent the first hour in an unfamiliar repository working out what was normal here</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/contribution-that-could-not-have-known/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">reviewed a well-written contribution that broke a convention it had no way to discover</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/same-dead-end-explored-twice/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched a worker spend a day on an approach that had already been ruled out</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/result-cannot-be-reproduced/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">could not reproduce a result because nothing recorded the state it came from</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/who-did-this-and-under-what-policy/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">was asked who made a change and under what policy, and had only a commit</a></li></ol>
+    </div>
+  </aside>
 </div>
 
 </div>
@@ -304,7 +408,7 @@ other clones. It does not merge anything and emits no merge commands.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e5b673c343386b41e8202612a17bff2070926274" class="font-mono hover:underline">e5b673c</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

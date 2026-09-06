@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -228,6 +228,30 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related use cases</h2>
     <p class="mt-2 text-xs text-body-subtle">Computed from what they share: claims, rules, commands, category, applications. Nobody maintains this list.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/block-acceptance-on-an-open-question/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Block acceptance on a question nobody has answered</span><span class="text-sm text-body">Open a question against the task, watch finish refuse completion while it is unresolved, resolve it with the answer, and only then complete.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/carry-a-blocker-across-a-handover/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Hand work over with a question still open, and keep it blocking</span><span class="text-sm text-body">Close a task into a handover while a question is unresolved, start the follow-up task, and see the same question still refuse acceptance there.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/checkpoint-long-work/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Checkpoint long work so a stop costs minutes, not the day</span><span class="text-sm text-body">Record compact progress inside the active task at the profile interval, so a session that ends without warning leaves the next one a place to start.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/complete-an-issue-only-with-its-evidence/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Complete an issue only when its evidence exists</span><span class="text-sm text-body">See an issue refuse completion while a required piece of evidence is missing, read the roadmap the milestone state derives, and keep the GitHub projection a projection.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/hand-work-between-sessions/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Hand unfinished work to the next session</span><span class="text-sm text-body">Stop mid-task and leave the next worker something to act on that is not a transcript.</span></a></li></ul>
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The moments this answers</h2>
+<ul class="mt-4 space-y-3">
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">accepted &quot;done&quot; because the model said so, and paid for it the next morning</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A fluent completion claim is accepted as evidence because nothing wrote down, beforehand, what would have to be true.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/worker-output-never-integrated/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found finished work on a branch that nobody ever merged</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Workers produce far more than integration absorbs, and nothing distinguishes work that is done from work that is done and landed.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/code-without-an-issue/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found a substantial change that no issue, ticket or plan ever asked for</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Work arrives with no bounded contract behind it, so its scope, its acceptance criteria and its ownership are all decided after the fact.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/issue-says-done-tests-disagree/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">closed an issue whose acceptance criteria nothing had actually checked</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Completion is recorded as a state change in a tracker rather than as evidence in the repository, so the two drift immediately.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/spend-not-tied-to-outcomes/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">looked at the bill and could not say which of it produced anything</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Consumption is measured per account and outcomes are recorded per person, so the two can never be joined.</span></span></a></li>
+</ul>
+
   </div>
 
   <aside class="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
@@ -272,7 +296,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e5b673c343386b41e8202612a17bff2070926274" class="font-mono hover:underline">e5b673c</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

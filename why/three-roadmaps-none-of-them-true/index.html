@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Three roadmaps, and none of them true — Prismatic Majordomus</title>
-<meta name="description" content="Why a plan kept in prose disagrees with itself the first time anything changes, and how a dependency graph with derived status replaces it.">
+<meta name="description" content="A plan kept in prose is a snapshot, and every copy of it drifts on its own schedule; stored status is an assertion that stays true after the world moves.">
 <link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/why/three-roadmaps-none-of-them-true/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="Three roadmaps, and none of them true — Prismatic Majordomus">
-<meta property="og:description" content="Why a plan kept in prose disagrees with itself the first time anything changes, and how a dependency graph with derived status replaces it.">
+<meta property="og:description" content="A plan kept in prose is a snapshot, and every copy of it drifts on its own schedule; stored status is an assertion that stays true after the world moves.">
 <meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/why/three-roadmaps-none-of-them-true/">
 <meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -166,13 +166,21 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Three roadmaps, and none of them true</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Why a plan kept in prose disagrees with itself the first time anything changes, and how a dependency graph with derived status replaces it.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">A plan kept in prose is a snapshot, and every copy of it drifts on its own schedule; stored status is an assertion that stays true after the world moves.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
     <p class="mb-6 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base font-medium text-fg-brand-strong">→ read three roadmaps for one project and believed none of them</p>
+
+    <dl class="mb-6 flex flex-wrap gap-x-6 gap-y-2 border-y border-default py-3 text-xs">
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">cost when it happens</dt><dd class="text-heading">medium</dd></div>
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">how often</dt><dd class="text-heading">common</dd></div>
+      <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">area</dt><dd><a href="https://korczis.github.io/prismatic-majordomus/why/areas/work-tracking/" class="text-fg-brand hover:underline">work-tracking</a></dd><dd><a href="https://korczis.github.io/prismatic-majordomus/why/areas/documentation/" class="text-fg-brand hover:underline">documentation</a></dd></div>
+      <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">recognised by</dt><dd><a href="https://korczis.github.io/prismatic-majordomus/why/audiences/engineering-lead/" class="text-fg-brand hover:underline">engineering-lead</a></dd><dd><a href="https://korczis.github.io/prismatic-majordomus/why/audiences/platform-team/" class="text-fg-brand hover:underline">platform-team</a></dd><dd><a href="https://korczis.github.io/prismatic-majordomus/why/audiences/open-source-maintainer/" class="text-fg-brand hover:underline">open-source-maintainer</a></dd><dd><a href="https://korczis.github.io/prismatic-majordomus/why/audiences/enterprise/" class="text-fg-brand hover:underline">enterprise</a></dd></div>
+    </dl>
+
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto"><h2 id="the-moment"><a class="zola-anchor" href="#the-moment" aria-label="Anchor link for: the-moment">The moment</a></h2>
 <p>The README has a roadmap. GitHub has milestones. A planning document has a diagram. They
 were the same plan in June. Today an issue is closed on GitHub, open in the document and
@@ -183,6 +191,15 @@ on its own schedule. Status is the worst of it: "done" typed into a field is an 
 not an observation, and it stays true in that field after the world has moved on. Work is
 then picked from memory rather than from a dependency order, so something starts before the
 thing it needs, and the diagrams are redrawn by hand until someone stops redrawing them.</p>
+<h2 id="why-a-better-model-does-not-fix-it"><a class="zola-anchor" href="#why-a-better-model-does-not-fix-it" aria-label="Anchor link for: why-a-better-model-does-not-fix-it">Why a better model does not fix it</a></h2>
+<p>A worker asked to pick the next task reads whichever copy it was pointed at. It cannot know
+that two other copies exist, and it certainly cannot know which of the three is least stale.
+Handing it all three produces a worker that has to guess, which is what the humans were
+doing.</p>
+<h2 id="what-it-costs"><a class="zola-anchor" href="#what-it-costs" aria-label="Anchor link for: what-it-costs">What it costs</a></h2>
+<p>Work started out of order, which shows up much later as a rewrite. Planning meetings spent
+reconciling documents rather than deciding anything. And the slow abandonment of all three
+copies, after which the plan lives in a few people's heads.</p>
 <h2 id="what-majordomus-does"><a class="zola-anchor" href="#what-majordomus-does" aria-label="Anchor link for: what-majordomus-does">What Majordomus does</a></h2>
 <p>The plan is two kinds of canonical file, checked against an allowlist where a key nobody
 reads is an error. A milestone is an executable specification of an outcome. An issue is a
@@ -194,35 +211,95 @@ field is an unknown key.</p>
 <p><code>plan validate</code> refuses a cycle, a self-dependency and a dependency on an issue that does
 not exist, each by name. <code>plan waves</code> computes the execution order from the graph and
 reports issues in one wave that touch the same paths as serialised. <code>plan start</code> refuses an
-issue that is not ready, naming what it waits on; <code>plan evidence</code> refuses narrative — it
-needs a command or an artifact; <code>plan done</code> refuses while any declared evidence is
-uncovered or a dependency is not done. The roadmap on this site and the milestones on GitHub
-are projections of the same files, and a hand-edited generated region on GitHub is reported
-rather than overwritten.</p>
+issue that is not ready, naming what it waits on; <code>plan done</code> refuses while any declared
+evidence is uncovered or a dependency is not done. The roadmap on this site and the
+milestones on GitHub are projections of the same files.</p>
+<h2 id="before-and-after"><a class="zola-anchor" href="#before-and-after" aria-label="Anchor link for: before-and-after">Before and after</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>before   README roadmap | GitHub milestones | planning doc     three snapshots</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>after    $ majordomus plan next</span></span>
+<span class="giallo-l"><span>         I0813  READY   session-knowledge-integration   (deps I0806, I0812 done)</span></span>
+<span class="giallo-l"><span>         $ majordomus plan done I0042</span></span>
+<span class="giallo-l"><span>         refused: evidence &#39;gap_reproduced&#39; is uncovered</span></span></code></pre><h2 id="how-to-verify-it"><a class="zola-anchor" href="#how-to-verify-it" aria-label="Anchor link for: how-to-verify-it">How to verify it</a></h2>
+<p>Add a dependency edge and run <code>plan next</code>: the ready set changes without any status being
+edited. Introduce a cycle and <code>plan validate</code> names it. Nothing anywhere carries a status
+field, because the allowlist refuses one.</p>
 <h2 id="what-it-does-not-do"><a class="zola-anchor" href="#what-it-does-not-do" aria-label="Anchor link for: what-it-does-not-do">What it does not do</a></h2>
 <p>It does not estimate, schedule or prioritise; it orders by dependency and reports what is
 ready. The model is opt-in: a repository without one is skipped by <code>doctor</code>, not failed. The
 projection runs one way — GitHub is written from the files, and nothing written on GitHub
 is ever copied back into them.</p>
-<h2 id="try-it"><a class="zola-anchor" href="#try-it" aria-label="Anchor link for: try-it">Try it</a></h2>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> plan</span><span class="z-l-8 z-d-8"> validate</span></span>
-<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> plan</span><span class="z-l-8 z-d-8"> next</span><span class="z-l-10 z-l-i z-d-4 z-d-i">        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the one issue a worker should take now</span></span>
-<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> plan</span><span class="z-l-8 z-d-8"> waves</span></span>
-<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> plan</span><span class="z-l-8 z-d-8"> done</span><span class="z-l-8 z-d-8"> I0042</span><span class="z-l-10 z-l-i z-d-4 z-d-i">  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> refused while evidence is missing or a dependency is not done</span></span></code></pre></article><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this lives in the tool</h2>
-    <p class="mt-2 text-body">Everything below is read out of this page's own front matter and resolved against the repository. A name here that did not exist would fail the build.</p>
-
+</article><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What this looks like</h2>
+    <p class="mt-2 text-body">Concrete situations, one per audience. Each is declared in the moment's front matter, so the before and the after are data rather than prose a page could drift from.</p>
+    <ol class="mt-4 space-y-4">
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <span class="text-sm font-medium text-heading">README, milestones, planning document</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/why/audiences/engineering-lead/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">engineering-lead</a>
+        </p>
+        <dl class="mt-3 grid gap-3 sm:grid-cols-2">
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">before</dt><dd class="mt-1 break-words text-sm text-body">An issue is closed on GitHub, open in the document and absent from the README, and somebody has just started the work that depends on it.</dd></div>
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">after</dt><dd class="mt-1 break-words text-sm text-body">One canonical model; the roadmap and the GitHub milestones are projections of it, written one way.</dd></div>
+        </dl>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <span class="text-sm font-medium text-heading">A status field nobody could keep true</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/why/audiences/platform-team/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">platform-team</a>
+        </p>
+        <dl class="mt-3 grid gap-3 sm:grid-cols-2">
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">before</dt><dd class="mt-1 break-words text-sm text-body">&quot;Done&quot; typed into a field stays true after the dependency it relied on was reverted.</dd></div>
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">after</dt><dd class="mt-1 break-words text-sm text-body">No status is stored: READY, BLOCKED, ACTIVE, VERIFY and DONE are derived from recorded events and the dependency graph, every time.</dd></div>
+        </dl>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <span class="text-sm font-medium text-heading">A public roadmap that stopped being true</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/why/audiences/open-source-maintainer/" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">open-source-maintainer</a>
+        </p>
+        <dl class="mt-3 grid gap-3 sm:grid-cols-2">
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">before</dt><dd class="mt-1 break-words text-sm text-body">The published roadmap is a hand-maintained list that nobody updates once the first item slips.</dd></div>
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">after</dt><dd class="mt-1 break-words text-sm text-body">The roadmap page is generated from the plan; there is no second list to update.</dd></div>
+        </dl>
+      </li>
+    </ol><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">How you would know</h2>
+    <p class="mt-2 text-body">The observable symptoms this moment declares. They are the questionnaire on <a href="https://korczis.github.io/prismatic-majordomus/why/#diagnose" class="text-fg-brand hover:underline">the index</a> and the input of <code class="font-mono text-heading">majordomus why diagnose</code>; nothing else defines them.</p>
+    <ul class="mt-4 space-y-2">
+      <li class="flex min-w-0 items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3">
+        <span aria-hidden="true" class="font-mono text-fg-brand">◻</span>
+        <span class="min-w-0"><span class="block break-words text-sm text-body">More than one document describes the plan, and they do not agree.</span>
+        <code class="mt-1 block font-mono text-xs text-body-subtle">copies-disagree</code></span>
+      </li>
+      <li class="flex min-w-0 items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3">
+        <span aria-hidden="true" class="font-mono text-fg-brand">◻</span>
+        <span class="min-w-0"><span class="block break-words text-sm text-body">Status is a field somebody typed rather than something derived from what happened.</span>
+        <code class="mt-1 block font-mono text-xs text-body-subtle">status-is-typed</code></span>
+      </li>
+      <li class="flex min-w-0 items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3">
+        <span aria-hidden="true" class="font-mono text-fg-brand">◻</span>
+        <span class="min-w-0"><span class="block break-words text-sm text-body">Work started on something whose prerequisite was not finished.</span>
+        <code class="mt-1 block font-mono text-xs text-body-subtle">started-out-of-order</code></span>
+      </li>
+    </ul><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this lives in the tool</h2>
+    <p class="mt-2 text-body">Everything below is read out of this moment's own front matter and resolved against the repository. A name here that did not exist would fail validation.</p>
     <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the commands that answer it</h3>
     <ul class="grid gap-3 sm:grid-cols-2">
       <li><a href="https://korczis.github.io/prismatic-majordomus/commands/plan/" class="flex h-full min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span class="flex flex-wrap items-center gap-2"><span class="font-mono text-sm font-medium text-fg-brand">majordomus plan</span></span>
-        <span class="min-w-0 break-words text-sm text-body">the milestone and issue model: validate, read, and move an issue</span></a></li>
+        <span class="min-w-0 break-words text-sm text-body">The milestone and issue model — validate it, read it, and move one issue through it.</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctor/" class="flex h-full min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="flex flex-wrap items-center gap-2"><span class="font-mono text-sm font-medium text-fg-brand">majordomus doctor</span><span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span></span>
+        <span class="min-w-0 break-words text-sm text-body">Is Majordomus itself healthy, and is every enforcement it declares actually wired here?</span></a></li>
     </ul>
-
-    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">what it supervises</h3>
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the capabilities of the executable that answer it</h3>
+    <ul class="flex flex-wrap gap-2">
+      <li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/graph.get/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">graph.get</a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/graph.list/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">graph.list</a></li>
+    </ul>
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">what it supervises <span class="normal-case tracking-normal">— derived from the claims below</span></h3>
     <ul class="flex flex-wrap gap-2">
       <li><a href="https://korczis.github.io/prismatic-majordomus/supervises/plan/" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">Plan</a></li>
     </ul>
-
     <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the claims that back this page, and the evidence behind each</h3>
     <ul class="space-y-3">
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -296,39 +373,71 @@ is ever copied back into them.</p>
         </dl>
       </li>
     </ul>
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the rules that govern it</h3>
+    <ul class="flex flex-wrap gap-2">
+      <li><span class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-xs text-heading">majordomus.project-integrity</span></li>
+      <li><span class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-xs text-heading">majordomus.dag-integrity</span></li>
+      <li><span class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-xs text-heading">majordomus.roadmap-integrity</span></li>
+      <li><span class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-xs text-heading">project.derived-files-regenerated</span></li>
+    </ul>
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the use cases that show the way out</h3>
+    <ul class="grid gap-3 sm:grid-cols-2">
+      <li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/plan-the-work-as-data/" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">plan-the-work-as-data</a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/deliver-issues-in-waves/" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">deliver-issues-in-waves</a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/complete-an-issue-only-with-its-evidence/" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">complete-an-issue-only-with-its-evidence</a></li>
+    </ul>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">If this one is familiar, so is the next</h2>
+    <p class="mt-2 text-body">What this moment names, what names it, and what shares its area, audience or tags. The second and third are derived; only the first is written down.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/milestone-status-unreconstructable/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">re-explained the same context to a brand-new session</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="min-w-0 break-words text-sm text-heading">was asked how far the milestone had got and had to go and ask four people</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/code-without-an-issue/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">found two agents fixing the same bug in two branches</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/strongest-model-renames-a-variable/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="min-w-0 break-words text-sm text-heading">found a substantial change that no issue, ticket or plan ever asked for</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/three-copies-of-one-explanation/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">watched the strongest model, at maximum effort, rename a variable</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="min-w-0 break-words text-sm text-heading">found the same thing explained three times, slightly differently</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/issue-says-done-tests-disagree/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">accepted &quot;done&quot; because the model said so, and paid for it the next morning</span></a></li>
+        <span class="min-w-0 break-words text-sm text-heading">closed an issue whose acceptance criteria nothing had actually checked</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/policy-changed-projection-stale/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">changed a policy in one place and found the old one still in force in three others</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/feature-without-a-test/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">read a promise in the README that no test stood behind</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/api-changed-contract-did-not/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">shipped an interface change whose contract document still described the old one</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/generated-artifacts-stale/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">had a green pipeline over generated files that no longer matched their sources</span></a></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/why/site-claims-nothing-proves/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+        <span class="min-w-0 break-words text-sm text-heading">published a page that promised more than any test could support</span></a></li>
       <li><a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
         <span class="min-w-0 break-words text-sm text-heading">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/re-arguing-a-settled-decision/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">watched a session undo last week&#39;s decision, for the reason it was made</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">found a task &quot;in progress&quot; that nobody had touched for three weeks</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">asked what the workers did last night and had only transcripts to grep</span></a></li>
-      <li><a href="https://korczis.github.io/prismatic-majordomus/why/rule-in-a-readme-nobody-loaded/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
-        <span class="min-w-0 break-words text-sm text-heading">found the rule for that directory in a README no session ever loaded</span></a></li>
     </ul>
-    <p class="mt-4 text-sm"><a href="https://korczis.github.io/prismatic-majordomus/why/" class="font-medium text-fg-brand hover:underline">All 10, and how they connect to the tool &rarr;</a></p>
+    <p class="mt-6 text-sm"><a href="https://korczis.github.io/prismatic-majordomus/why/" class="font-medium text-fg-brand hover:underline">All 38, and how they connect to the tool &rarr;</a></p>
   </div>
-  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the 10 moments</h2><ol class="space-y-2 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">re-explained the same context to a brand-new session</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found two agents fixing the same bug in two branches</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/strongest-model-renames-a-variable/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched the strongest model, at maximum effort, rename a variable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">accepted &quot;done&quot; because the model said so, and paid for it the next morning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/re-arguing-a-settled-decision/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched a session undo last week&#39;s decision, for the reason it was made</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found a task &quot;in progress&quot; that nobody had touched for three weeks</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">asked what the workers did last night and had only transcripts to grep</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/rule-in-a-readme-nobody-loaded/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found the rule for that directory in a README no session ever loaded</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/three-roadmaps-none-of-them-true/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">read three roadmaps for one project and believed none of them</a></li></ol></div></aside>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start space-y-5">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">read it anywhere</h2>
+      <ul class="space-y-2 font-mono text-xs text-body">
+        <li>majordomus why show three-roadmaps-none-of-them-true</li>
+        <li>GET /api/v1/why/moment?id=three-roadmaps-none-of-them-true</li>
+        <li>majordomus://moment/three-roadmaps-none-of-them-true</li>
+      </ul>
+      <p class="mt-3 border-t border-default pt-3 text-xs text-body-subtle">One record, four readers. The page you are on is the fourth.</p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the 38 moments</h2>
+      <ol class="space-y-2 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/why/re-explaining-context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">re-explained the same context to a brand-new session</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/two-agents-one-bug/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found two agents fixing the same bug in two branches</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/strongest-model-renames-a-variable/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched the strongest model, at maximum effort, rename a variable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/done-because-the-model-said-so/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">accepted &quot;done&quot; because the model said so, and paid for it the next morning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/re-arguing-a-settled-decision/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched a session undo last week&#39;s decision, for the reason it was made</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/task-in-progress-for-three-weeks/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found a task &quot;in progress&quot; that nobody had touched for three weeks</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">asked what the workers did last night and had only transcripts to grep</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/rule-in-a-readme-nobody-loaded/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found the rule for that directory in a README no session ever loaded</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/three-roadmaps-none-of-them-true/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">read three roadmaps for one project and believed none of them</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/discovery-never-becomes-knowledge/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">spent an hour discovering something the repository already knew, twice</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/context-budget-blown/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched the always-loaded instruction file grow past a thousand lines</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/one-agent-undoes-another/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched one worker revert another worker&#39;s change, on purpose</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/abandoned-worktree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found five worktrees and could not say which of them still mattered</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/worker-output-never-integrated/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found finished work on a branch that nobody ever merged</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/second-session-same-checkout/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">had two sessions writing into one checkout without either knowing</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/policy-changed-projection-stale/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">changed a policy in one place and found the old one still in force in three others</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/enforcement-nothing-invokes/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found a rule everyone believed was enforced and nothing ever invoked</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/decision-only-in-a-transcript/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">went looking for why we chose this and found a chat log</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/implementation-contradicts-the-decision/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found code that contradicted a decision the repository had written down</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/code-without-an-issue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found a substantial change that no issue, ticket or plan ever asked for</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/issue-says-done-tests-disagree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">closed an issue whose acceptance criteria nothing had actually checked</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/milestone-status-unreconstructable/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">was asked how far the milestone had got and had to go and ask four people</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/feature-without-a-test/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">read a promise in the README that no test stood behind</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/api-changed-contract-did-not/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">shipped an interface change whose contract document still described the old one</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/documented-command-no-longer-works/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">pasted a command from the documentation and watched it fail</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/generated-artifacts-stale/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">had a green pipeline over generated files that no longer matched their sources</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/weak-model-on-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">let a fast, cheap session make a decision the whole codebase now lives with</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/no-record-why-this-model/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">could not say why one provider was used for that work and another for this</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/spend-not-tied-to-outcomes/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">looked at the bill and could not say which of it produced anything</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/failure-disappears-between-sessions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">lost a failure a worker had already reproduced, because the session ended</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/three-copies-of-one-explanation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">found the same thing explained three times, slightly differently</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/site-claims-nothing-proves/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">published a page that promised more than any test could support</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/first-hour-in-an-unfamiliar-repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">spent the first hour in an unfamiliar repository working out what was normal here</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/contribution-that-could-not-have-known/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">reviewed a well-written contribution that broke a convention it had no way to discover</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/same-dead-end-explored-twice/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">watched a worker spend a day on an approach that had already been ruled out</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/result-cannot-be-reproduced/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">could not reproduce a result because nothing recorded the state it came from</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/why/who-did-this-and-under-what-policy/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">was asked who made a change and under what policy, and had only a commit</a></li></ol>
+    </div>
+  </aside>
 </div>
 
 </div>
@@ -347,7 +456,7 @@ is ever copied back into them.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e5b673c343386b41e8202612a17bff2070926274" class="font-mono hover:underline">e5b673c</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

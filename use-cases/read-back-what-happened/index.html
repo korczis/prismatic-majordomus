@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -238,6 +238,42 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related use cases</h2>
     <p class="mt-2 text-xs text-body-subtle">Computed from what they share: claims, rules, commands, category, applications. Nobody maintains this list.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/keep-decisions-out-of-the-transcript/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Record a decision so the next worker can find it</span><span class="text-sm text-body">Write down what was decided and why as state, then find it again without reading a conversation.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/open-and-close-a-session/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Record what one worker did in one sitting</span><span class="text-sm text-body">Open a session, do the work under whatever tasks it touches, and close it into an envelope that references what it produced and copies nothing.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/find-out-what-drifted/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Find out what has drifted since anyone last looked</span><span class="text-sm text-body">Ask what has moved, rather than whether anything is wrong.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/find-an-object-without-reading-everything/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Find an object of the layer without reading everything</span><span class="text-sm text-body">Search durable records literally across kinds from the shell, and ask the shared server the same question over MCP with majordomus_search and majordomus_get.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/carry-a-blocker-across-a-handover/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Hand work over with a question still open, and keep it blocking</span><span class="text-sm text-body">Close a task into a handover while a question is unresolved, start the follow-up task, and see the same question still refuse acceptance there.</span></a></li></ul>
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The moments this answers</h2>
+<ul class="mt-4 space-y-3">
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/what-the-workers-did-last-night/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">asked what the workers did last night and had only transcripts to grep</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A conversation log records what was said, not what happened, so the operational question has to be answered by a person reading prose.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/worker-output-never-integrated/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">found finished work on a branch that nobody ever merged</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Workers produce far more than integration absorbs, and nothing distinguishes work that is done from work that is done and landed.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/decision-only-in-a-transcript/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">went looking for why we chose this and found a chat log</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A decision that was reached in a session is stored where only that session can read it, so it is neither reviewable nor discoverable.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/milestone-status-unreconstructable/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">was asked how far the milestone had got and had to go and ask four people</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Progress is an aggregate that exists only in people, because the parts it aggregates were never recorded in a form anything can add up.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/no-record-why-this-model/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">could not say why one provider was used for that work and another for this</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Provider and model selection is made implicitly, per session, and recorded nowhere, so it cannot be reviewed or repeated.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/spend-not-tied-to-outcomes/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">looked at the bill and could not say which of it produced anything</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Consumption is measured per account and outcomes are recorded per person, so the two can never be joined.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/failure-disappears-between-sessions/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">lost a failure a worker had already reproduced, because the session ended</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">A failure observed inside a session is described in that session and nowhere else, so the next one starts from the report rather than the evidence.</span></span></a></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/why/who-did-this-and-under-what-policy/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
+    <span class="min-w-0"><span class="block break-words text-sm font-medium text-heading">was asked who made a change and under what policy, and had only a commit</span>
+    <span class="mt-1 block break-words text-xs text-body-subtle">Attribution stops at the commit, so what authorised a change, what verified it and what governed it are unrecoverable.</span></span></a></li>
+</ul>
+
   </div>
 
   <aside class="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
@@ -282,7 +318,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e5b673c343386b41e8202612a17bff2070926274" class="font-mono hover:underline">e5b673c</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/86beb483a9d9c2bdceeee71acc373cc3724233d9" class="font-mono hover:underline">86beb48</a> · inputs <span class="font-mono">cff221230694</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
