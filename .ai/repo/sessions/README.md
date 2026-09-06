@@ -61,8 +61,30 @@ majordomus session show <id>         # one record, whole
 majordomus session latest --path     # the newest that resolves in this worktree
 ```
 
+## The other half of an episode
+
+A record here says what the episode **produced**. What it was **given** is a different
+object, and a local one: `session start` freezes the context the builder resolved into
+`.ai/local/session-contexts/<stamp>--<session-id>.md`, over a section for the worker's own
+notes, and `session close` appends the outcome and the path of the record it wrote here. The
+two share a `session_id` and answer opposite questions.
+
+That half stays local for two reasons that are not the same one. It names one machine — the
+worktree, the checkpoint that happened to be newest there — and it is a snapshot of a
+projection, so re-resolving it later produces a different document and no surface can
+reproduce it. Publishing it would publish something nothing can check (ADR 0017). Its
+contract is `majordomus.session-context/v1`; `majordomus session context` prints the path of
+the open episode's, and prints the path rather than the document, because local evidence is
+not poured into a terminal where a context can pick it up.
+
+Neither half is a transcript. This one carries what git and the ledger can prove; that one
+carries the builder's output and a summary of the work. A key naming a conversation is
+refused in both, which is how `project.never-store-transcripts` is kept mechanically.
+
 ## Retention
 
 None. A record is history, it is small, and it is tracked: git keeps it, and every surface
-can query it. The checkout-local half — the open session, the ledger — keeps its own caps in
-the policy, because those grow without bound and nothing reads them after the fact.
+can query it. The checkout-local half — the open session, the working contexts, the ledger —
+keeps its own caps in the policy where it has them, because those grow without bound and
+nothing reads them after the fact. The working contexts have no cap for the same reason the
+prompt archive has none: nothing else can reconstruct one.

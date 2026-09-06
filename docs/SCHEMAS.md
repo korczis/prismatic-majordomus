@@ -153,7 +153,7 @@ The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
 The repository scope: what a worker reads and what it never reads. Named by the
 manifest's `scope` section; a manifest naming none means the distribution's default
 applies (`share/skeleton/ai/repo/scope.yaml`). The schema is
-`share/schemas/scope.schema.json`; the shell tool's allow-list is generated from it.
+`share/schemas/majordomus/scope/scope.v1.schema.json`; the shell tool's allow-list is generated from it.
 [`SCOPE.md`](SCOPE.md) explains the judgement.
 
 ```yaml
@@ -983,7 +983,7 @@ itself, which the budget then pays for twice.
 ## `.ai/repo/skills/<id>/SKILL.md`
 
 A skill: a provider-neutral procedure for one bounded kind of work. Front matter is
-authored, validated against `share/schemas/skill.schema.json` (the allow-list
+authored, validated against `share/schemas/majordomus/skill/skill.v1.schema.json` (the allow-list
 `share/allow/skill.txt` is generated from it); the body is the procedure. The skill's
 identity is the `id`, which must equal the directory name, and its MCP URI is
 `majordomus://skill/<id>`. Discovery is the source class `skill` in
@@ -1034,7 +1034,7 @@ heading. See [`CLI.md`](CLI.md) for `majordomus skills`.
 ## `.ai/repo/adrs/<NNNN>-<slug>.md`
 
 An architecture decision: what was decided, why, and what it costs. Front matter is
-authored or proposed by the tool, validated against `share/schemas/adr.schema.json` (the
+authored or proposed by the tool, validated against `share/schemas/majordomus/adr/adr.v1.schema.json` (the
 allow-list `share/allow/adr.txt` is generated from it); the body is the narrative. The
 identity is `adr-NNNN`, allocated once, never reused, and it fixes the file-name prefix, so
 a retitle moves the slug and never the number. Discovery is the source class `adr` in
