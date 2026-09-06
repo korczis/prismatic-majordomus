@@ -9,7 +9,9 @@
 
 use serde_json::{json, Value};
 
-use crate::capability::builtin::{GraphList, Health, HealthStatus, ObjectList, RepositoryReport};
+use crate::capability::builtin::{
+    Continuity, GraphList, Health, HealthStatus, ObjectList, Record, RepositoryReport,
+};
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::generate;
 use crate::graph::Graph;
@@ -1404,6 +1406,214 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
         (&g.id, None),
     ])
     .script("graph.js")
+}
+
+// --------------------------------------------------------------------- continuity
+
+/// One resolved record: where it is, how far its commit is from this one, and the section
+/// a resuming worker acts on.
+///
+/// The divergence label is a badge and a word, never a colour alone, because the difference
+/// between `advanced` and `diverged` is the difference between "some of this is already
+/// done" and "this describes a history that no longer exists".
+fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
+    let Some(r) = r else {
+        return card(title, nothing(empty_note));
+    };
+    let level = match r.divergence.as_str() {
+        "exact" => "ok",
+        "advanced" => "info",
+        "unknown" => "warn",
+        _ => "fail",
+    };
+    card_with(
+        title,
+        badge(level, r.divergence.as_str()),
+        el("div")
+            .child(facts(vec![
+                ("Path", Node::Element(mono(r.path.clone()))),
+                ("Written", Node::Element(el("span").text(&r.created_at))),
+                ("Task", Node::Element(mono(r.task_id.clone()))),
+                (
+                    "At",
+                    Node::Element(mono(r.head[..7.min(r.head.len())].to_string())),
+                ),
+                (
+                    "Matched",
+                    Node::Element(el("span").text(word(&r.matched))),
+                ),
+                (
+                    "Working tree then",
+                    Node::Element(el("span").text(&r.working_tree)),
+                ),
+            ]))
+            .when(!r.divergence.trustworthy(), |d| {
+                d.child(alert(
+                    "fail",
+                    "The commit this record was written at is not in this history. Trust git over anything it says.",
+                ))
+            })
+            .when(!r.next_action.is_empty(), |d| {
+                d.child(el("h3").class("mj-card-title").text("Next action"))
+                    .child(pre(r.next_action.clone()))
+            }),
+    )
+}
+
+/// What this checkout's lifecycle is holding.
+///
+/// This is the only page that shows the local half of the layer, and it is the reason the
+/// Cockpit is bound to the loopback interface. Nothing here is projected into the static
+/// site: these records name this machine, and a site that published them would publish the
+/// one part of the layer no other clone can reproduce.
+pub fn continuity(ctx: &Context) -> Page {
+    let c: Continuity = match ask(ctx, "continuity.state", json!({})) {
+        Ok(c) => c,
+        Err(e) => return failed(Area::Continuity, "Continuity", e),
+    };
+
+    let episode = match &c.session {
+        Some(s) => card_with(
+            "Open episode",
+            badge(if s.foreign { "fail" } else { "ok" }, if s.foreign { "foreign" } else { "open" }),
+            el("div")
+                .child(facts(vec![
+                    ("Episode", Node::Element(mono(s.session_id.clone()))),
+                    ("Opened", Node::Element(el("span").text(&s.started_at))),
+                    ("Owner", Node::Element(el("span").text(&s.owner))),
+                    ("Worker", Node::Element(el("span").text(if s.worker.is_empty() { "(not recorded)" } else { &s.worker }))),
+                    ("Provider", Node::Element(el("span").text(if s.provider.is_empty() { "(not recorded)" } else { &s.provider }))),
+                    ("Branch", Node::Element(mono(s.branch.clone()))),
+                ]))
+                .when(s.foreign, |d| {
+                    d.child(alert(
+                        "fail",
+                        "This open record belongs to another checkout. Nothing about it is about the work here.",
+                    ))
+                }),
+        ),
+        None => card(
+            "Open episode",
+            nothing(
+                "No episode is open in this worktree. The provider's start event opens one; `majordomus session start` opens one by hand.",
+            ),
+        ),
+    };
+
+    let task = match &c.task {
+        Some(t) => card_with(
+            "Active task",
+            badge(if t.outcome == "active" { "ok" } else { "info" }, t.outcome.clone()),
+            el("div")
+                .child(el("p").class("mj-prose").text(&t.task))
+                .child(facts(vec![
+                    ("Id", Node::Element(mono(t.id.clone()))),
+                    ("Profile", Node::Element(el("span").text(&t.profile))),
+                    ("Started", Node::Element(el("span").text(&t.started_at))),
+                ]))
+                .child(
+                    el("div")
+                        .class("mj-marks")
+                        .children(t.scope.iter().map(|p| mono(p.clone())).collect::<Vec<_>>()),
+                ),
+        ),
+        None => card(
+            "Active task",
+            nothing(
+                "No task is active here. Work outside a task is permitted; it records nothing a task would, and no checkpoint can be written against it.",
+            ),
+        ),
+    };
+
+    let blockers = if c.blockers.is_empty() {
+        card(
+            "Blockers",
+            nothing("Nothing on this branch is refusing completion."),
+        )
+    } else {
+        card_with(
+            "Blockers",
+            badge("fail", format!("{} open", c.blockers.len())),
+            el("div")
+                .child(el("p").class("mj-prose").text(
+                    "Every unresolved question on this branch refuses `majordomus finish --outcome completed`, whichever task opened it.",
+                ))
+                .child(
+                    el("ul")
+                        .class("mj-list")
+                        .children(c.blockers.iter().map(|b| el("li").text(b)).collect::<Vec<_>>()),
+                ),
+        )
+    };
+
+    let where_ = card(
+        "This checkout",
+        el("div")
+            .child(facts(vec![
+                ("Worktree", Node::Element(mono(c.worktree.clone()))),
+                ("Branch", Node::Element(mono(c.branch.clone()))),
+                (
+                    "HEAD",
+                    Node::Element(mono(c.head[..7.min(c.head.len())].to_string())),
+                ),
+                (
+                    "Working tree",
+                    Node::Element(el("span").text(&c.working_tree)),
+                ),
+            ]))
+            .child(
+                el("div").class("mj-stats").children(
+                    c.tallies
+                        .iter()
+                        .map(|(k, n)| statistic(n.to_string(), k.clone(), ".ai/local/state"))
+                        .collect::<Vec<_>>(),
+                ),
+            )
+            .when(!c.present, |d| {
+                d.child(alert(
+                    "info",
+                    "This checkout has no local state yet. That is a fresh clone, not a fault: the first command that writes a record creates it.",
+                ))
+            }),
+    );
+
+    let findings = if c.findings.is_empty() {
+        empty()
+    } else {
+        Node::Element(card(
+            "Before you trust the above",
+            el("div").children(
+                c.findings
+                    .iter()
+                    .map(|f| alert("warn", f.clone()))
+                    .collect::<Vec<_>>(),
+            ),
+        ))
+    };
+
+    Page::new(
+        Area::Continuity,
+        "Continuity",
+        el("div")
+            .class("mj-grid")
+            .child(where_)
+            .child(episode)
+            .child(task)
+            .child(record_card(
+                "Resume from",
+                c.handover.as_ref(),
+                "No relevant handover for this worktree and branch. That is an answer, not a gap: a record from another branch is never offered, because a briefing quietly about somebody else is worse than none.",
+            ))
+            .child(record_card(
+                "Newest progress note",
+                c.checkpoint.as_ref(),
+                "No checkpoint resolves here yet.",
+            ))
+            .child(blockers)
+            .node(findings),
+    )
+    .subtitle("What this checkout's lifecycle is holding. Local to this machine, served here and published nowhere.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Continuity", None)])
 }
 
 // --------------------------------------------------------------------- health

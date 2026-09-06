@@ -31,6 +31,10 @@
       "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
     },
     {
+      "name": "continuity",
+      "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
+    },
+    {
       "name": "graph",
       "description": "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
     },
@@ -254,6 +258,91 @@
           "tool": "majordomus_capability"
         },
         "x-majordomus-cli": "capabilities describe"
+      }
+    },
+    "/api/v1/continuity": {
+      "get": {
+        "operationId": "continuity.state",
+        "summary": "What the lifecycle is holding",
+        "description": "The open episode, the active task, the handover and checkpoint that resolve for this worktree and branch, each with its divergence label, the unresolved questions that refuse completion, and the record tallies. Selection is two-tiered and never repository-wide: a record from an unrelated worktree or branch is not offered, because a briefing that is quietly about somebody else is worse than none. Absence is reported as absence.",
+        "tags": [
+          "continuity"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "What the lifecycle is holding: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Continuity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "continuity.state",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::continuity"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 2,
+          "ttl_seconds": 2
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_continuity",
+          "resource": {
+            "uri": "majordomus://continuity",
+            "name": "continuity"
+          }
+        }
       }
     },
     "/api/v1/graph": {
@@ -1399,6 +1488,49 @@
   },
   "components": {
     "schemas": {
+      "ActiveTask": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The task id."
+          },
+          "task": {
+            "type": "string",
+            "description": "What is being worked on."
+          },
+          "profile": {
+            "type": "string",
+            "description": "The execution profile it runs under."
+          },
+          "outcome": {
+            "type": "string",
+            "description": "Its typed outcome so far: `active`, `handed_over`, or a finished one."
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The paths it claims."
+          },
+          "started_at": {
+            "type": "string",
+            "description": "When it started."
+          },
+          "head": {
+            "type": "string",
+            "description": "The commit it started at."
+          }
+        },
+        "required": [
+          "id",
+          "task",
+          "profile",
+          "outcome"
+        ],
+        "description": "The active task of this checkout, when there is one."
+      },
       "AnnounceInput": {
         "type": "object",
         "additionalProperties": false,
@@ -1989,6 +2121,105 @@
         ],
         "description": "What a client said about itself in `initialize`."
       },
+      "Continuity": {
+        "type": "object",
+        "properties": {
+          "present": {
+            "type": "boolean",
+            "description": "Whether this checkout's lifecycle has ever run: a ledger line, a task, an episode or\na record. False in a fresh clone, which is not a fault.\n\nIt is not \"the directory exists\". Several things create that directory before\nanything has been recorded in it, so a reader that took its presence for evidence\nwould be told the lifecycle had run in a checkout where it never had."
+          },
+          "worktree": {
+            "type": "string",
+            "description": "The worktree this answer is about. Every selection below is scoped to it."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The branch, or `DETACHED`."
+          },
+          "head": {
+            "type": "string",
+            "description": "The commit this checkout is on."
+          },
+          "working_tree": {
+            "type": "string",
+            "description": "`clean` or `dirty`."
+          },
+          "session": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenSession"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The open episode, or `None`."
+          },
+          "task": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActiveTask"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The active task, or `None`."
+          },
+          "handover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Record"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The record the next worker would resume from, or `None` when nothing resolves here."
+          },
+          "checkpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Record"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The newest progress note for this worktree and branch, or `None`."
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Unresolved questions on this branch. Every one refuses `finish --outcome completed`,\nwhichever task opened it."
+          },
+          "tallies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many records of each kind this checkout holds, against the policy's caps."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What a reader should know before trusting any of the above: a diverged record, a\nforeign open session, a malformed file that was skipped. Empty is the good case."
+          }
+        },
+        "required": [
+          "present",
+          "worktree",
+          "branch",
+          "tallies"
+        ],
+        "description": "What the lifecycle of this checkout is holding."
+      },
       "CounterSnapshot": {
         "type": "object",
         "properties": {
@@ -2154,6 +2385,36 @@
           "message"
         ],
         "description": "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
+      },
+      "Divergence": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "exact",
+            "description": "Written at this commit. Trust it."
+          },
+          {
+            "type": "string",
+            "const": "advanced",
+            "description": "Git has moved forward since. Trust it, and expect some of it to be done."
+          },
+          {
+            "type": "string",
+            "const": "diverged",
+            "description": "The recorded commit is not an ancestor: history was rewritten. Trust git, not this."
+          },
+          {
+            "type": "string",
+            "const": "different_context",
+            "description": "Another branch or another worktree. This record is not about your work."
+          },
+          {
+            "type": "string",
+            "const": "unknown",
+            "description": "Git could not answer, so this process says so rather than guessing `exact`."
+          }
+        ],
+        "description": "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice."
       },
       "Edge": {
         "type": "object",
@@ -2633,6 +2894,21 @@
         ],
         "description": "The HTTP methods a capability may be bound to."
       },
+      "Match": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "same_worktree_same_branch",
+            "description": "Same repository, same worktree, same branch."
+          },
+          {
+            "type": "string",
+            "const": "same_branch",
+            "description": "Same repository, same branch, another worktree of it."
+          }
+        ],
+        "description": "Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered."
+      },
       "McpExposure": {
         "type": "object",
         "properties": {
@@ -2908,6 +3184,49 @@
           "content"
         ],
         "description": "One declarative object of the repository's layer, as a client reads it."
+      },
+      "OpenSession": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "The episode's id."
+          },
+          "started_at": {
+            "type": "string",
+            "description": "When it opened."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Who opened it."
+          },
+          "worker": {
+            "type": "string",
+            "description": "The worker identity, when one was supplied. Never inferred."
+          },
+          "provider": {
+            "type": "string",
+            "description": "The provider whose event opened it, when one did."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The branch it opened on."
+          },
+          "start_head": {
+            "type": "string",
+            "description": "The commit it opened at."
+          },
+          "foreign": {
+            "type": "boolean",
+            "description": "True when the open record here belongs to another checkout. Such a record is\nreported and never treated as this checkout's episode."
+          }
+        },
+        "required": [
+          "session_id",
+          "started_at",
+          "foreign"
+        ],
+        "description": "The open episode of this worktree, when there is one."
       },
       "Origin": {
         "oneOf": [
@@ -3236,6 +3555,58 @@
           }
         ],
         "description": "Why a path is out. The order is the order the rules decide in."
+      },
+      "Record": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Repository-relative path. The body is at the path; it is not copied here."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When the record says it was written."
+          },
+          "task_id": {
+            "type": "string",
+            "description": "The task it belongs to, or `none`."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The branch it was written on."
+          },
+          "head": {
+            "type": "string",
+            "description": "The commit it was written at."
+          },
+          "working_tree": {
+            "type": "string",
+            "description": "Whether the working tree was clean or dirty then."
+          },
+          "matched": {
+            "$ref": "#/components/schemas/Match",
+            "description": "Which tier of the resolution rule matched."
+          },
+          "divergence": {
+            "$ref": "#/components/schemas/Divergence",
+            "description": "How far its commit is from this one."
+          },
+          "next_action": {
+            "type": "string",
+            "description": "The section a resuming worker acts on, when the record has one. A handover's `Next\nAction`; empty for a record that carries no sections."
+          }
+        },
+        "required": [
+          "path",
+          "created_at",
+          "task_id",
+          "branch",
+          "head",
+          "working_tree",
+          "matched",
+          "divergence"
+        ],
+        "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file."
       },
       "RepositoryInfo": {
         "type": "object",

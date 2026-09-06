@@ -1100,13 +1100,13 @@ claims:
     note: The record lives under the manifest's sessions section. Every field is derived - times from the clock, heads and commits from git, the reference lists from the ledger's events for the episode - and the body is the only authored part. The repository is named by its remote and the working copy by a hash, so the resolver can tell one checkout's records from another's without disclosing a path. One source class discovers them; the index, MCP, the object routes, the graph and the site follow.
 
   - id: session-lifecycle
-    claim: A provider hook opens and closes the execution episode below the model, and the context resolved at the open is frozen beside it
+    claim: A provider hook opens the episode below the model and hands the worker what the last one left, records what a compaction is about to discard, and closes the episode with a continuation record beside its envelope
     source: docs/DOCTRINE.md
     implementation: lib/session_context.sh
     test: test/cases/54_session_lifecycle_hooks.sh
     status: guaranteed
     responsibility: policy
-    note: The provider's own SessionStart and SessionEnd events draw the boundary; both are idempotent because the events are, neither writes to stdout because a start hook's output reaches the model's context, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation.
+    note: The provider's own SessionStart, PreCompact and SessionEnd events draw the boundary and drive the lifecycle; each is idempotent because the events are, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The start event writes the policy's briefing to stdout, which is how a continuation record reaches a worker who did not ask for one; the other two write none, because they fire inside a turn already under way. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation.
 
   - id: adr-catalogue
     claim: An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving
@@ -1134,3 +1134,12 @@ claims:
     status: guaranteed
     responsibility: layer
     note: Acceptance is the person's act — a tool that can write `accepted` turns its own inference into repository truth and a later reader cannot tell which, so propose has no flag for it and an extracted record claiming it is a finding. An extracted record must name its evidence in provenance.derived_from, whose references are typed and whose file and test references must resolve; it may still be superseded, because that is something a later record did to it. The identity is allocated under a lock over the section directory, and the case proves it with real concurrent processes, because this repository shipped two 0005s and two 0007s before anything checked.
+
+  - id: cli-documentation-executable
+    claim: Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable
+    source: .ai/repo/rules/project/rust-cli-evidence.v1.md
+    implementation: apps/majordomus-cli/src/cli.rs
+    test: apps/majordomus-cli/tests/cli_docs.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown.
