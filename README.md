@@ -360,8 +360,9 @@ ordering, the gate and the claim linkage are derived.
 The Rust executable under [`apps/majordomus-cli/`](apps/majordomus-cli/) exposes the same
 `.ai/` layer to programs, read-only, through several interfaces that are all derived from
 one capability registry: a capability is defined once, in a typed descriptor or in a
-declarative file with its JSON Schema, and MCP, HTTP, OpenAPI, Swagger UI, the command line
-and the generated reference are projections of it, so nothing is maintained twice.
+declarative file with its JSON Schema, and MCP, HTTP, OpenAPI, Swagger UI, the Cockpit, the
+command line and the generated reference are projections of it, so nothing is maintained
+twice.
 
 Every generated file in the repository comes out of the same executable: `majordomus
 generate` writes `docs/generated/`, `share/allow/`, the provider bootstraps `AGENTS.md`
@@ -381,7 +382,9 @@ and the benchmarks — is rendered from that dataset and from nothing typed by h
 ```bash
 just build                      # cargo build of apps/majordomus-cli (or: cargo build --manifest-path apps/majordomus-cli/Cargo.toml)
 just mcp                        # MCP on stdio for the client that spawned it; the first one in a repository is the shared server
-just serve                      # the shared server alone: http://127.0.0.1:8741, Swagger UI at /docs, /openapi.json, /mcp
+just serve                      # the shared server alone: the Cockpit at /cockpit, Swagger UI at /docs, /openapi.json, /mcp
+just cockpit                    # open the running server's Cockpit in a browser
+just cockpit-assets             # build the Cockpit's stylesheet and vendor its pinned libraries (needs npm ci)
 just capabilities               # every capability and its projections
 just derive                     # every derived file of the repository, in dependency order
 just derive-check               # every committed derived file is current; exit 10 naming the stale ones
@@ -391,8 +394,8 @@ just bench-run                  # time every operation: directly, over MCP (a re
 
 **Declare once, derive everything.** A capability is one `capability!` block in its
 module's file; modules compose capabilities with `module!`, the root composes modules
-with `compose_modules!`, and MCP, HTTP, OpenAPI, Swagger UI, the command line, the
-benchmark targets, the cache behaviour and the generated reference are derived from the
+with `compose_modules!`, and MCP, HTTP, OpenAPI, Swagger UI, the Cockpit, the command line,
+the benchmark targets, the cache behaviour and the generated reference are derived from the
 registry those blocks build. Adding a capability is: define the typed input and output
 (with the input's benchmark cases), write the handler, add the block to its module, run
 `just derive` and `just validate`. There is no step that edits an MCP registry, an
@@ -402,9 +405,19 @@ its rows on the module, MCP, API and benchmark pages and its links come out of t
 benchmarked through the real transports and every claim about speed is a recorded
 measurement ([`docs/CAPABILITIES.md`](docs/CAPABILITIES.md), ADR 4).
 
+**A control plane for a person.** The same server renders the registry as pages at
+`/cockpit`: what this repository holds, which capabilities exist and where each came from,
+a form generated from every capability's own input schema that calls its real route, the
+graphs the layer already implies (rule dependencies, decisions and what they put in force,
+the shape of `.ai/`), and one health report whose every check names the engine that decided
+it. It is a projection, not a second application: adding a capability adds its page, its
+navigation entry, its search entry and its benchmark target with no edit to the Cockpit
+([`docs/COCKPIT.md`](docs/COCKPIT.md),
+[ADR 12](.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md)).
+
 **One server per repository.** The first `majordomus mcp` binds the loopback HTTP
-projection beside its stdio session and logs the URL (Swagger UI at `/docs`, the OpenAPI
-document, MCP over HTTP at `/mcp`); every later `majordomus mcp` in the same repository
+projection beside its stdio session and logs the URL (the Cockpit at `/cockpit`, Swagger UI
+at `/docs`, the OpenAPI document, MCP over HTTP at `/mcp`); every later `majordomus mcp` in the same repository
 attaches to it instead of starting another, and the server ends when its last client
 leaves. It writes one file, a lease under `.ai/local/state/mcp/`, and nothing under the
 tracked tree.

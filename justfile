@@ -2,7 +2,7 @@
 #
 # Two executables share the name `majordomus`: the shell tool `bin/majordomus` (the task
 # lifecycle: init, start, check, finish, doctor, update, ...) and the Rust executable under
-# apps/majordomus-cli (the read-only interfaces: MCP, HTTP, OpenAPI, Swagger UI,
+# apps/majordomus-cli (the read-only interfaces: MCP, HTTP, OpenAPI, Swagger UI, the Cockpit,
 # introspection, generation). Everything the Rust executable can do is routed to it here;
 # the shell tool keeps what only it does. Every recipe is a thin call: the source of truth
 # for what a step does is the script or the command it names, never this file.
@@ -68,6 +68,22 @@ mcp-status:
 docs-ui:
     @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
     url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/docs"; (command -v open >/dev/null && open "$url/docs") || xdg-open "$url/docs"
+
+# Open the Cockpit of the running shared server in the browser (macOS `open`, else xdg-open).
+[group('serve')]
+cockpit:
+    @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
+    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/cockpit"; (command -v open >/dev/null && open "$url/cockpit") || xdg-open "$url/cockpit"
+
+# Build the Cockpit's static assets: compile share/cockpit/cockpit.css, vendor the pinned libraries (needs npm ci).
+[group('serve')]
+cockpit-assets:
+    scripts/cockpit-assets
+
+# The committed Cockpit stylesheet matches its source; exit 10 when it is stale.
+[group('serve')]
+cockpit-assets-check:
+    scripts/cockpit-assets --check
 
 # ---------------------------------------------------------------- registry (Rust executable)
 
