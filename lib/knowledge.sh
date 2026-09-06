@@ -249,6 +249,10 @@ mj_knowledge_rows() {
   while IFS="$tab" read -r cls scope kind hash path; do
     [ -n "$path" ] || continue
     abs="$MJ_ROOT/$path"
+    # A section's README declares itself a context document, whatever class discovered it
+    # (share/kinds.yaml: `declared: [context]`). It is read as the kind it declares, not as
+    # an instance of the kind that lives beside it, which would be a node nobody meant.
+    if mj_is_context_doc "$abs"; then kind=document; fi
     printf 'S\t%s\t%s\t%s\t%s\t%s\n' "$cls" "$scope" "$kind" "$hash" "$path"
     case "$kind" in
       decision|question) printf '%s\n' "$abs" >> "$tmp/lines" ;;

@@ -167,6 +167,14 @@ pub enum Error {
         /// What is wrong.
         reason: String,
     },
+    /// A web surface's declaration cannot be read, or the topology it would join is not valid.
+    #[error("web surface {surface}: {reason}")]
+    InvalidSurface {
+        /// The surface's id, or the declaration's path when the id is what is wrong.
+        surface: String,
+        /// What is wrong, and what to do about it.
+        reason: String,
+    },
     /// `generate --check` found committed projections that differ from the registry, or are missing.
     #[error("generated artifact(s) stale: {} (run: majordomus generate)", files.join(", "))]
     Stale {
@@ -192,6 +200,7 @@ impl Error {
             | Error::Registry { .. }
             | Error::InvalidPolicy { .. }
             | Error::InvalidProjection { .. }
+            | Error::InvalidSurface { .. }
             | Error::Stale { .. } => 10,
             Error::CapabilityNotFound { .. } => 12,
             Error::Git { .. }

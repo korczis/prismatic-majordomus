@@ -40,6 +40,12 @@
           "command": "majordomus scope",
           "name": "scope",
           "route": "/docs/cli/scope/"
+        },
+        {
+          "about": "The repository's web surfaces: what is exposed, where it is mounted, what produced it, and whether the topology is valid",
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
         }
       ],
       "command": "majordomus",
@@ -2103,13 +2109,1514 @@
       ],
       "route": "/docs/cli/scope/",
       "usage": "majordomus scope [OPTIONS] [PATHS]"
+    },
+    {
+      "about": "The repository's web surfaces: what is exposed, where it is mounted, what produced it, and whether the topology is valid",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [
+        {
+          "about": "Every discovered surface: id, kind, mount, producer",
+          "command": "majordomus web list",
+          "name": "list",
+          "route": "/docs/cli/web/list/"
+        },
+        {
+          "about": "Why each surface exists and where each of its values came from",
+          "command": "majordomus web explain",
+          "name": "explain",
+          "route": "/docs/cli/web/explain/"
+        },
+        {
+          "about": "Check the topology's invariants; exit 10 on any error finding",
+          "command": "majordomus web validate",
+          "name": "validate",
+          "route": "/docs/cli/web/validate/"
+        },
+        {
+          "about": "Write the resolved topology to the generated manifest",
+          "command": "majordomus web manifest",
+          "name": "manifest",
+          "route": "/docs/cli/web/manifest/"
+        },
+        {
+          "about": "Render a generated report into its own surface under the generated web root",
+          "command": "majordomus web report",
+          "name": "report",
+          "route": "/docs/cli/web/report/"
+        },
+        {
+          "about": "Compose every published surface into one publishable tree",
+          "command": "majordomus web compose",
+          "name": "compose",
+          "route": "/docs/cli/web/compose/"
+        }
+      ],
+      "command": "majordomus web",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "web"
+          ],
+          "command": "majordomus web",
+          "description": "`web` with nothing after it lists, because listing is what a person wants when they ask what this repository exposes.",
+          "expectation": "exits 0; prints ID, MOUNT",
+          "id": "web-topology",
+          "setup": [],
+          "title": "The topology, from the command with no subcommand"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "web",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "web"
+      ],
+      "route": "/docs/cli/web/",
+      "usage": "majordomus web [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "Every discovered surface: id, kind, mount, producer",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web list",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "list"
+          ],
+          "command": "majordomus web list",
+          "description": "The resolved topology, in route-precedence order: the routes the executable answers itself, the application's site, and every generated report that declared itself under the generated web root. Nothing is registered anywhere; each line was discovered.",
+          "expectation": "exits 0; prints MOUNT, /api/v1, /docs",
+          "id": "web-list",
+          "setup": [],
+          "title": "Every web surface this repository exposes"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "list",
+      "parent_route": "/docs/cli/web/",
+      "path": [
+        "majordomus",
+        "web",
+        "list"
+      ],
+      "route": "/docs/cli/web/list/",
+      "usage": "majordomus web list [OPTIONS]"
+    },
+    {
+      "about": "Why each surface exists and where each of its values came from",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this surface; none explains every one",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web explain",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "explain",
+            "swagger"
+          ],
+          "command": "majordomus web explain swagger",
+          "description": "For each field a reader could be surprised by — the mount, the kind, the directory — the source that decided it: a producer's own declaration, the site configuration, the capability registry, or the model's documented default.",
+          "expectation": "exits 0; prints swagger, came from",
+          "id": "web-explain",
+          "setup": [],
+          "title": "Why a surface exists and where each of its values came from"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "explain",
+      "parent_route": "/docs/cli/web/",
+      "path": [
+        "majordomus",
+        "web",
+        "explain"
+      ],
+      "route": "/docs/cli/web/explain/",
+      "usage": "majordomus web explain [OPTIONS] [ID]"
+    },
+    {
+      "about": "Check the topology's invariants; exit 10 on any error finding",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Also require every static surface's directory and index to exist",
+          "long": "artifacts",
+          "name": "artifacts",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ARTIFACTS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web validate",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "validate"
+          ],
+          "command": "majordomus web validate",
+          "description": "Two surfaces claiming one path, a surface nested inside another's subtree, a directory outside the generated root or one that walks out of the repository: each is a named finding with the surface, the value, its source and the fix. Exit 10 on any error finding. `--artifacts` also requires every static surface's directory and index to exist, which is what serving and publishing need.",
+          "expectation": "exits 0; prints no conflict",
+          "id": "web-validate",
+          "setup": [],
+          "title": "Check the topology before anything serves or publishes it"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "validate",
+      "parent_route": "/docs/cli/web/",
+      "path": [
+        "majordomus",
+        "web",
+        "validate"
+      ],
+      "route": "/docs/cli/web/validate/",
+      "usage": "majordomus web validate [OPTIONS]"
+    },
+    {
+      "about": "Write the resolved topology to the generated manifest",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web manifest",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "manifest"
+          ],
+          "command": "majordomus web manifest",
+          "description": "The manifest under the generated web root is derived state: a publisher or a CI job may read it instead of resolving the topology again, and nothing may edit it, because the next run overwrites it from the same discovery.",
+          "expectation": "exits 0; prints web manifest, surface",
+          "id": "web-manifest",
+          "setup": [],
+          "title": "Write the resolved topology down for another tool to read"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "manifest",
+      "parent_route": "/docs/cli/web/",
+      "path": [
+        "majordomus",
+        "web",
+        "manifest"
+      ],
+      "route": "/docs/cli/web/manifest/",
+      "usage": "majordomus web manifest [OPTIONS]"
+    },
+    {
+      "about": "Render a generated report into its own surface under the generated web root",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [
+        {
+          "about": "The test run: the behavioural cases' report, and the crate's own totals",
+          "command": "majordomus web report tests",
+          "name": "tests",
+          "route": "/docs/cli/web/report/tests/"
+        },
+        {
+          "about": "The benchmark run: a results document, or the accepted baseline",
+          "command": "majordomus web report benchmarks",
+          "name": "benchmarks",
+          "route": "/docs/cli/web/report/benchmarks/"
+        }
+      ],
+      "command": "majordomus web report",
+      "depth": 2,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "report",
+      "parent_route": "/docs/cli/web/",
+      "path": [
+        "majordomus",
+        "web",
+        "report"
+      ],
+      "route": "/docs/cli/web/report/",
+      "usage": "majordomus web report [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "The test run: the behavioural cases' report, and the crate's own totals",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        },
+        {
+          "command": "majordomus web report",
+          "name": "report",
+          "route": "/docs/cli/web/report/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh)",
+          "long": "suite",
+          "name": "suite",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "SUITE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The output of `cargo test`, for its totals",
+          "long": "crate-output",
+          "name": "crate_output",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CRATE_OUTPUT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web report tests",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "report",
+            "tests",
+            "--suite",
+            "target/web/run.tsv"
+          ],
+          "command": "majordomus web report tests --suite target/web/run.tsv",
+          "description": "The runner writes its report with `MJ_TEST_REPORT=<file> bash test/run.sh`; this renders it, keeps the machine-readable results beside the page, and declares the directory so discovery finds it. Without that file there is nothing to render and the command says so rather than publishing an empty page.",
+          "expectation": "exits 13",
+          "id": "web-report-tests",
+          "setup": [],
+          "title": "Render the suite's own results into the /tests surface"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "tests",
+      "parent_route": "/docs/cli/web/report/",
+      "path": [
+        "majordomus",
+        "web",
+        "report",
+        "tests"
+      ],
+      "route": "/docs/cli/web/report/tests/",
+      "usage": "majordomus web report tests [OPTIONS]"
+    },
+    {
+      "about": "The benchmark run: a results document, or the accepted baseline",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        },
+        {
+          "command": "majordomus web report",
+          "name": "report",
+          "route": "/docs/cli/web/report/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A results document from `majordomus bench`, or a baseline under the layer",
+          "long": "from",
+          "name": "from",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "FROM"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web report benchmarks",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "report",
+            "benchmarks",
+            "--from",
+            ".ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json"
+          ],
+          "command": "majordomus web report benchmarks --from .ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json",
+          "description": "Reads a results document — a run's own output, or an accepted baseline under the layer's benchmarks section, which have the same shape — and renders every measured target ordered by median. It measures nothing itself: a figure on the page is a figure a run produced.",
+          "expectation": "exits 13",
+          "id": "web-report-benchmarks",
+          "setup": [],
+          "title": "Render a benchmark run into the /benchmarks surface"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "benchmarks",
+      "parent_route": "/docs/cli/web/report/",
+      "path": [
+        "majordomus",
+        "web",
+        "report",
+        "benchmarks"
+      ],
+      "route": "/docs/cli/web/report/benchmarks/",
+      "usage": "majordomus web report benchmarks [OPTIONS]"
+    },
+    {
+      "about": "Compose every published surface into one publishable tree",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Where to write it; the default is target/site",
+          "long": "destination",
+          "name": "destination",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DESTINATION"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web compose",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "compose",
+            "--destination",
+            "target/site"
+          ],
+          "command": "majordomus web compose --destination target/site",
+          "description": "Each producer owns its own output directory; publication needs one tree, and the mapping is the resolved mount and nothing else. A surface that is discovered is published without a copy step being written anywhere, and a repository with nothing generated yet composes an empty tree rather than an error. Where a surface exists and its directory does not, composition refuses and names the producer to run.",
+          "expectation": "exits 0",
+          "id": "web-compose",
+          "setup": [],
+          "title": "Compose every published surface into one publishable tree"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "compose",
+      "parent_route": "/docs/cli/web/",
+      "path": [
+        "majordomus",
+        "web",
+        "compose"
+      ],
+      "route": "/docs/cli/web/compose/",
+      "usage": "majordomus web compose [OPTIONS]"
     }
   ],
   "counts": {
-    "arguments": 83,
-    "commands": 14,
-    "examples": 18,
-    "runnable": 11
+    "arguments": 152,
+    "commands": 23,
+    "examples": 26,
+    "runnable": 19
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.1.0",

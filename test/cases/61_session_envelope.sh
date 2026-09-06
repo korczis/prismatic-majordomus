@@ -15,7 +15,9 @@
 # init adds the local-state ignore line; commit it so the task that follows starts from a clean tree
 git add .gitignore >/dev/null 2>&1; git commit -qm "ignore local ai state" >/dev/null 2>&1 || true
 LED=.ai/local/state/ledger.jsonl
-SES=.ai/local/state/sessions
+# A closed episode is a shared object of the layer, in the section the manifest names
+# (ADR 0014); the open episode's own state stays in the checkout-local half.
+SES=.ai/repo/sessions
 
 # --- closing with nothing open is a missing artifact, not a silent success
 expect_exit 12 "$MJ" session close
@@ -105,11 +107,15 @@ expect_exit 10 sh -c 'printf "head: 0000000\n" | "$0" session close' "$MJ"
 expect_grep 'must not contain identity fields'
 [ -f .ai/local/state/session-current.yaml ] || { echo "    a refused close still removed the open record"; exit 1; }
 
-# --- the record is private and the store is append-only in practice: closing again writes
-#     a new file and never touches the last one
+# --- the store is append-only in practice: closing again writes a new file and never
+#     touches the last one. The records are readable rather than private: they are shared
+#     objects now, tracked and published, and a mode of 600 would be a claim otherwise.
 before="$(cksum < "$rec4")"
 "$MJ" session close >/dev/null
 [ "$(cksum < "$rec4")" = "$before" ] || { echo "    closing a session rewrote an earlier record"; exit 1; }
 for f in "$SES"/*.md; do
-  [ "$(file_mode "$f")" = 600 ] || { echo "    $f is $(file_mode "$f"), expected 600"; exit 1; }
+  case "$(file_mode "$f")" in
+    6[04][04]) ;;
+    *) echo "    $f is $(file_mode "$f"), expected a readable regular mode"; exit 1 ;;
+  esac
 done

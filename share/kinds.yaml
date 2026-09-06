@@ -124,6 +124,18 @@ kinds:
       field: schema
       supported: [context/v1]
 
+  session:
+    format: markdown
+    front_matter: required
+    without_front_matter: document
+    schema: session-record
+    identity: [session_id]
+    title: title
+    description: title
+    schema_version:
+      field: schema
+      supported: ["session/v1"]
+
   adr:
     format: markdown
     front_matter: required

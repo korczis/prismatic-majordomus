@@ -839,6 +839,34 @@
       "source": "share/standard/majordomus/rules/scope-integrity.v1.md"
     },
     {
+      "id": "majordomus.session-records",
+      "slug": "session-records",
+      "title": "Session records are shared objects with a closed field set",
+      "class": "blocking",
+      "principle": "Sessions are workers, not memory",
+      "statement": "A closed session is a shared object of the layer: written by the tool from git and the ledger, valid against the session record contract, carrying no conversation and no fact about the machine that ran it, and discovered like every other kind rather than registered anywhere.",
+      "summary": "A closed execution episode is written once, into the layer's sessions section, against a schema that admits what the repository can prove and nothing else.",
+      "validator": "session_records",
+      "validator_function": "mj_validate_session_records",
+      "defined_in": "lib/session.sh",
+      "category": "session",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "session-records"
+      ],
+      "test": "test/cases/63_session_records.sh",
+      "depends_on": [
+        "majordomus.sessions-are-workers@1",
+        "majordomus.externalise-decisions@1"
+      ],
+      "source": "share/standard/majordomus/rules/session-records.v1.md"
+    },
+    {
       "id": "majordomus.skill-integrity",
       "slug": "skill-integrity",
       "title": "Skill integrity",
@@ -979,8 +1007,8 @@
     }
   ],
   "counts": {
-    "declared": 35,
-    "blocking": 31,
+    "declared": 36,
+    "blocking": 32,
     "advisory": 4
   },
   "index": {
@@ -1014,10 +1042,11 @@
     "majordomus.roadmap-integrity": 27,
     "majordomus.rule-package-integrity": 28,
     "majordomus.scope-integrity": 29,
-    "majordomus.skill-integrity": 30,
-    "majordomus.state-consistency": 31,
-    "majordomus.task-continuity": 32,
-    "majordomus.use-case-coverage": 33,
-    "majordomus.verification-integrity": 34
+    "majordomus.session-records": 30,
+    "majordomus.skill-integrity": 31,
+    "majordomus.state-consistency": 32,
+    "majordomus.task-continuity": 33,
+    "majordomus.use-case-coverage": 34,
+    "majordomus.verification-integrity": 35
   }
 }

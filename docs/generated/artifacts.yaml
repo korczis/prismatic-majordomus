@@ -65,6 +65,10 @@ documents:
     source: "the JSON Schema `session` of the kind it validates"
     formats:
       - text
+  - id: allow/session-record
+    source: "the JSON Schema `session-record` of the kind it validates"
+    formats:
+      - text
   - id: allow/skill
     source: "the JSON Schema `skill` of the kind it validates"
     formats:
@@ -212,28 +216,28 @@ artifacts:
     document: capabilities
     format: markdown
     source: the canonical Majordomus capability registry
-    bytes: 5098
-    sha256: bc017d2033b89c43a348683b4cd880e6bc3b1811a8cb4dcf1650e672a93c6850
+    bytes: 5109
+    sha256: 19e5706d98571a2e712b9dd34410c49db5e285308ccb1c8e41dc3b7e6be81c24
   - path: docs/generated/cli.json
     document: cli
     format: json
     schema: majordomus/cli/v1
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 66263
-    sha256: 20737ad0a73599488a70b2254d1be50284deb3db28ffb44d1016be5f285004f6
+    bytes: 115255
+    sha256: 3a057e24bdcbb6ecc46810efc6c8df7daf803d0d897cdd31194bf1d88bf16c48
   - path: docs/generated/cli.md
     document: cli
     format: markdown
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 29539
-    sha256: be769b6a2ae03133145ec6709c70e312a27a5f8407ad961ed71cc1af3e66e009
+    bytes: 48741
+    sha256: fd65dffe1b130f78a084266f65ad8cc1847c5a68560855d178de0ddc135af488
   - path: docs/generated/cli.yaml
     document: cli
     format: yaml
     schema: majordomus/cli/v1
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 51692
-    sha256: 4c1e9842b2b733a389d76a1033df50e8173c64080b4ce73e8a6de119f412e56a
+    bytes: 89643
+    sha256: bfdf3200beed7421e1d47b6091a01885ff4a7f3d8fa631559205f25d445d8845
   - path: docs/generated/modules/artifacts.md
     document: modules/artifacts
     format: markdown
@@ -299,15 +303,15 @@ artifacts:
     format: json
     schema: majordomus/capability-registry/v1
     source: the canonical capability registry
-    bytes: 155752
-    sha256: a5edae07468b24a73739c9df0d3ae9607916535bf6de810ca5b959b90bdd2e7f
+    bytes: 155767
+    sha256: 1ef6688aa80660c9f428a474515e37ed1e31e86c2dde11a586af4a17a930cf9f
   - path: docs/generated/registry.yaml
     document: registry
     format: yaml
     schema: majordomus/capability-registry/v1
     source: the canonical capability registry
-    bytes: 118261
-    sha256: 299e0b047d013ae517d1efacde7f8ba62c8fae629d19106b56dfb6dabc1e5bd0
+    bytes: 118273
+    sha256: a7f922eb3272aced965d8522087fa54a5a7d73086b702583d4f4883673b83e34
   - path: share/allow/adr.txt
     document: allow/adr
     format: text
@@ -348,8 +352,8 @@ artifacts:
     document: allow/manifest
     format: text
     source: "the JSON Schema `manifest` of the kind it validates"
-    bytes: 531
-    sha256: 7c9fa102b31a36fd0f6f859c0b32b98c249bbd7163073aceb75090dbf6767082
+    bytes: 552
+    sha256: 0c8a45c5f42b74b6638466a062c1e97cf189aaa643ec46328e6ddd0d57d396ef
   - path: share/allow/milestone.txt
     document: allow/milestone
     format: text
@@ -392,6 +396,12 @@ artifacts:
     source: "the JSON Schema `scope` of the kind it validates"
     bytes: 810
     sha256: 7cf8444288587e773059b515518c82caf675effc6925b9de8affe23560176b82
+  - path: share/allow/session-record.txt
+    document: allow/session-record
+    format: text
+    source: "the JSON Schema `session-record` of the kind it validates"
+    bytes: 636
+    sha256: be1bf94f67f2d882bb79755cc3d96987696dbde36d1d1f0e169167980d4015cf
   - path: share/allow/session.txt
     document: allow/session
     format: text
@@ -421,5 +431,5 @@ artifacts:
     format: json
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
-    bytes: 627328
-    sha256: 7d8b29ba2be60cd21b8697e4e08ec4e7df20f2c966757a74386490cddcccd9ad
+    bytes: 682066
+    sha256: 0713e703f16a5b144ef8db0bc829007eebf0a7f639b860ff84ce64ab8aaf7e91

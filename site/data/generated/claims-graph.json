@@ -1095,6 +1095,15 @@
       "note": "site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds."
     },
     {
+      "id": "claim:session-records",
+      "kind": "claim",
+      "label": "A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered",
+      "status": "guaranteed",
+      "route": "/guarantees/session-records/",
+      "external": false,
+      "note": "The record lives under the manifest's sessions section. Every field is derived - times from the clock, heads and commits from git, the reference lists from the ledger's events for the episode - and the body is the only authored part. The repository is named by its remote and the working copy by a hash, so the resolver can tell one checkout's records from another's without disclosing a path. One source class discovers them; the index, MCP, the object routes, the graph and the site follow."
+    },
+    {
       "id": "claim:adr-catalogue",
       "kind": "claim",
       "label": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
@@ -1419,6 +1428,13 @@
       "id": "impl:lib/search.sh",
       "kind": "implementation",
       "label": "lib/search.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/session.sh",
+      "kind": "implementation",
+      "label": "lib/session.sh",
       "route": null,
       "external": false
     },
@@ -1946,6 +1962,13 @@
       "label": "test/cases/52_generated_artifact_typing.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/52_generated_artifact_typing.sh"
+    },
+    {
+      "id": "test:test/cases/63_session_records.sh",
+      "kind": "test",
+      "label": "test/cases/63_session_records.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/63_session_records.sh"
     },
     {
       "id": "test:test/cases/65_tool_root_independence.sh",
@@ -2690,6 +2713,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:session-records",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -3265,6 +3293,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:session-records",
+      "target": "impl:lib/session.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
@@ -3837,6 +3870,11 @@
     {
       "source": "claim:skill-site-projection",
       "target": "test:test/cases/95_skills.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:session-records",
+      "target": "test:test/cases/63_session_records.sh",
       "kind": "proved_by"
     },
     {

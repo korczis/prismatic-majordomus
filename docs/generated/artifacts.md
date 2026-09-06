@@ -24,6 +24,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `allow/rule` | `text` | — | the JSON Schema `rule` of the kind it validates |
 | `allow/scope` | `text` | — | the JSON Schema `scope` of the kind it validates |
 | `allow/session` | `text` | — | the JSON Schema `session` of the kind it validates |
+| `allow/session-record` | `text` | — | the JSON Schema `session-record` of the kind it validates |
 | `allow/skill` | `text` | — | the JSON Schema `skill` of the kind it validates |
 | `allow/taxonomy` | `text` | — | the JSON Schema `taxonomy` of the kind it validates |
 | `allow/use-case` | `text` | — | the JSON Schema `use-case` of the kind it validates |
@@ -57,10 +58,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/benchmarks.json` | `benchmarks` | json | 6463 | `f160e5e24eca4e8b` |
 | `docs/generated/benchmarks.md` | `benchmarks` | markdown | 3903 | `ee783ff8a63f3eb5` |
 | `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 4836 | `b43398f3eee03885` |
-| `docs/generated/capabilities.md` | `capabilities` | markdown | 5098 | `bc017d2033b89c43` |
-| `docs/generated/cli.json` | `cli` | json | 66263 | `20737ad0a7359948` |
-| `docs/generated/cli.md` | `cli` | markdown | 29539 | `be769b6a2ae03133` |
-| `docs/generated/cli.yaml` | `cli` | yaml | 51692 | `4c1e9842b2b733a3` |
+| `docs/generated/capabilities.md` | `capabilities` | markdown | 5109 | `19e5706d98571a2e` |
+| `docs/generated/cli.json` | `cli` | json | 115255 | `3a057e24bdcbb6ec` |
+| `docs/generated/cli.md` | `cli` | markdown | 48741 | `fd65dffe1b130f78` |
+| `docs/generated/cli.yaml` | `cli` | yaml | 89643 | `bfdf3200beed7421` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `3491dec853808fd0` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 2074 | `418698b86cc6843f` |
 | `docs/generated/modules/graph.md` | `modules/graph` | markdown | 1797 | `d8734049ab541598` |
@@ -71,15 +72,15 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/repository.md` | `modules/repository` | markdown | 2522 | `9ea2e1c3be8311b0` |
 | `docs/generated/openapi.json` | `openapi` | json | 140292 | `1ec1dd8f89dafcc8` |
 | `docs/generated/openapi.yaml` | `openapi` | yaml | 108354 | `d56f3155b4123fe7` |
-| `docs/generated/registry.json` | `registry` | json | 155752 | `a5edae07468b24a7` |
-| `docs/generated/registry.yaml` | `registry` | yaml | 118261 | `299e0b047d013ae5` |
+| `docs/generated/registry.json` | `registry` | json | 155767 | `1ef6688aa80660c9` |
+| `docs/generated/registry.yaml` | `registry` | yaml | 118273 | `a7f922eb3272aced` |
 | `share/allow/adr.txt` | `allow/adr` | text | 355 | `14fbdc41fd4e25d3` |
 | `share/allow/application.txt` | `allow/application` | text | 358 | `70d81f38b4e5741a` |
 | `share/allow/context.txt` | `allow/context` | text | 395 | `893d51c5a61fff9f` |
 | `share/allow/current.txt` | `allow/current` | text | 311 | `6c4648aaf4a85465` |
 | `share/allow/issue.txt` | `allow/issue` | text | 774 | `4d25e79d4681dcb7` |
 | `share/allow/knowledge.txt` | `allow/knowledge` | text | 405 | `fd921142429a4bc5` |
-| `share/allow/manifest.txt` | `allow/manifest` | text | 531 | `7c9fa102b31a36fd` |
+| `share/allow/manifest.txt` | `allow/manifest` | text | 552 | `0c8a45c5f42b74b6` |
 | `share/allow/milestone.txt` | `allow/milestone` | text | 745 | `f18e2a93df35cad6` |
 | `share/allow/policy.txt` | `allow/policy` | text | 1204 | `951b8989c587de19` |
 | `share/allow/profile.txt` | `allow/profile` | text | 663 | `8f6342672de25cc9` |
@@ -87,8 +88,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/prompt.txt` | `allow/prompt` | text | 206 | `03523c548996d3ec` |
 | `share/allow/rule.txt` | `allow/rule` | text | 498 | `a8572ffd9555d695` |
 | `share/allow/scope.txt` | `allow/scope` | text | 810 | `7cf8444288587e77` |
+| `share/allow/session-record.txt` | `allow/session-record` | text | 636 | `be1bf94f67f2d882` |
 | `share/allow/session.txt` | `allow/session` | text | 289 | `8c8fb91df2c685f9` |
 | `share/allow/skill.txt` | `allow/skill` | text | 309 | `c2f31d65ad1b6a6b` |
 | `share/allow/taxonomy.txt` | `allow/taxonomy` | text | 298 | `7fb8f5496a1677db` |
 | `share/allow/use-case.txt` | `allow/use-case` | text | 1141 | `223bf1e79ba2afad` |
-| `site/data/registry/registry.json` | `site-registry` | json | 627328 | `7d8b29ba2be60cd2` |
+| `site/data/registry/registry.json` | `site-registry` | json | 682066 | `0713e703f16a5b14` |
