@@ -624,6 +624,74 @@
       "tests": [],
       "title": "Validate the catalogue",
       "tool": "majordomus_why_validate"
+    },
+    {
+      "api_anchor": "/docs/api/#op-worktree-inspect",
+      "claims": [],
+      "cli": "majordomus worktree inspect",
+      "id": "worktree.inspect",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-inspect/",
+      "slug": "worktree-inspect",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "One branch: where its worktree belongs and what is there",
+      "tool": "majordomus_worktree_inspect"
+    },
+    {
+      "api_anchor": "/docs/api/#op-worktree-migration_plan",
+      "claims": [],
+      "cli": "majordomus worktree migrate",
+      "id": "worktree.migration_plan",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-migration-plan/",
+      "slug": "worktree-migration-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "What it would take to bring every worktree home",
+      "tool": "majordomus_worktree_migration_plan"
+    },
+    {
+      "api_anchor": "/docs/api/#op-worktree-status",
+      "claims": [],
+      "cli": "majordomus worktree status",
+      "id": "worktree.status",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-status/",
+      "slug": "worktree-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "Where this is, and whether that is where it belongs",
+      "tool": "majordomus_worktree_status"
+    },
+    {
+      "api_anchor": "/docs/api/#op-worktree-topology",
+      "claims": [],
+      "cli": "majordomus worktree topology",
+      "id": "worktree.topology",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": "majordomus://worktrees",
+      "route": "/registry/capabilities/worktree-topology/",
+      "slug": "worktree-topology",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "The whole topology",
+      "tool": "majordomus_worktrees"
     }
   ],
   "claims": {
@@ -785,6 +853,20 @@
         "route": "/guarantees/web-namespaces-reserved/",
         "status": "guaranteed",
         "test": "test/cases/89_web_surface.sh"
+      },
+      {
+        "id": "worktree-topology-derived",
+        "implementation": "apps/majordomus-cli/src/worktree/path.rs",
+        "route": "/guarantees/worktree-topology-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/96_worktree_topology.sh"
+      },
+      {
+        "id": "worktree-migration-lossless",
+        "implementation": "apps/majordomus-cli/src/worktree/migrate.rs",
+        "route": "/guarantees/worktree-migration-lossless/",
+        "status": "guaranteed",
+        "test": "test/cases/96_worktree_topology.sh"
       }
     ],
     "http": [
@@ -835,9 +917,9 @@
     ]
   },
   "counts": {
-    "capabilities": 35,
-    "claims": 29,
-    "modules": 15
+    "capabilities": 39,
+    "claims": 31,
+    "modules": 16
   },
   "generator": "majordomus-cli 0.2.0",
   "modules": [
@@ -1188,6 +1270,37 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
       "title": "Why"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "worktree.inspect",
+          "route": "/registry/capabilities/worktree-inspect/",
+          "slug": "worktree-inspect"
+        },
+        {
+          "id": "worktree.migration_plan",
+          "route": "/registry/capabilities/worktree-migration-plan/",
+          "slug": "worktree-migration-plan"
+        },
+        {
+          "id": "worktree.status",
+          "route": "/registry/capabilities/worktree-status/",
+          "slug": "worktree-status"
+        },
+        {
+          "id": "worktree.topology",
+          "route": "/registry/capabilities/worktree-topology/",
+          "slug": "worktree-topology"
+        }
+      ],
+      "claims": [],
+      "id": "worktree",
+      "route": "/registry/modules/worktree/",
+      "slug": "worktree",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "title": "Worktree topology"
     }
   ],
   "registry_schema": "majordomus/capability-registry/v1",

@@ -21,6 +21,22 @@ pub enum Severity {
     Error,
 }
 
+impl Severity {
+    /// The word as serialised.
+    ///
+    /// ```
+    /// use majordomus_cli::Severity;
+    /// assert_eq!(Severity::Warning.as_str(), "warning");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Severity::Info => "info",
+            Severity::Warning => "warning",
+            Severity::Error => "error",
+        }
+    }
+}
+
 /// One finding about the declarative state, named by a stable code, tied to a path where
 /// there is one, and carrying the command that reproduces it where there is one.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

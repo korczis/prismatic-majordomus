@@ -17,6 +17,10 @@ use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context,
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
+use crate::worktree::{
+    BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
+    WorktreeState,
+};
 
 use super::html::{el, empty, El, Node};
 use super::nav::Area;
@@ -2439,6 +2443,382 @@ pub fn activity(ctx: &Context) -> Page {
     .subtitle("Measured by this process, not written down anywhere.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Activity", None)])
     .script("activity.js")
+}
+
+// ------------------------------------------------------------------ worktrees
+
+/// The word a standing is coloured by. Shown as well as coloured, never colour alone.
+fn standing_status(standing: Standing) -> &'static str {
+    match standing {
+        Standing::Primary | Standing::Canonical => "ok",
+        Standing::Misplaced | Standing::Missing => "fail",
+        Standing::Ephemeral => "warn",
+        Standing::Detached => "info",
+    }
+}
+
+fn severity_status(severity: crate::model::Severity) -> &'static str {
+    match severity {
+        crate::model::Severity::Error => "fail",
+        crate::model::Severity::Warning => "warn",
+        crate::model::Severity::Info => "info",
+    }
+}
+
+fn short_head(head: &Option<String>) -> String {
+    head.as_deref()
+        .map(|h| h[..12.min(h.len())].to_string())
+        .unwrap_or_else(|| "-".into())
+}
+
+fn dirty_cell(w: &WorktreeState) -> El {
+    match &w.dirty {
+        None => text_cell("-"),
+        Some(d) if d.clean => cell(badge("ok", "clean")),
+        Some(d) => cell(el("span").child(badge("warn", "dirty")).text(format!(
+                    " {} staged · {} unstaged · {} untracked{}",
+                    d.staged,
+                    d.unstaged,
+                    d.untracked,
+                    d.in_progress
+                        .as_deref()
+                        .map(|op| format!(" · {op} in progress"))
+                        .unwrap_or_default()
+                ))),
+    }
+}
+
+fn upstream_cell(w: &WorktreeState) -> El {
+    match &w.upstream {
+        None => text_cell("-"),
+        Some(u) if u.gone => cell(el("span").child(mono(&u.name)).text(" (gone)")),
+        Some(u) => text_cell(format!(
+            "{} +{} −{}",
+            u.name,
+            u.ahead.unwrap_or(0),
+            u.behind.unwrap_or(0)
+        )),
+    }
+}
+
+fn diagnostics_table(diagnostics: &[TopologyDiagnostic]) -> El {
+    table(
+        &["Severity", "Code", "Where", "What", "Remedy"],
+        diagnostics
+            .iter()
+            .map(|d| {
+                row(vec![
+                    cell(badge(severity_status(d.severity), d.severity.as_str())),
+                    cell(mono(d.code.as_str())),
+                    cell(
+                        el("span")
+                            .child(mono(d.path.clone().unwrap_or_else(|| "-".into())))
+                            .when(d.expected.is_some(), |e| {
+                                e.child(el("br"))
+                                    .text("belongs at ")
+                                    .child(mono(d.expected.clone().unwrap_or_default()))
+                            }),
+                    ),
+                    text_cell(&d.message),
+                    cell(mono(&d.remedy)),
+                ])
+            })
+            .collect(),
+    )
+}
+
+/// The branch-to-worktree topology: every worktree with its standing, every branch without
+/// one, every diagnostic with its remedy, and the migration plan with the command that
+/// applies it. Rendered from `worktree.topology` and `worktree.migration_plan`; the page
+/// reloads itself when the topology changes.
+pub fn worktrees(ctx: &Context) -> Page {
+    let t: RepositoryTopology = match ask(ctx, "worktree.topology", json!({})) {
+        Ok(t) => t,
+        Err(e) => return failed(Area::Worktrees, "Worktrees", e),
+    };
+    let plan: Option<MigrationPlan> = ask(ctx, "worktree.migration_plan", json!({})).ok();
+
+    let identity = card(
+        "This repository",
+        facts(vec![
+            ("Primary checkout", Node::Element(mono(&t.repository.primary_worktree))),
+            (
+                "Container",
+                Node::Element(
+                    el("span")
+                        .child(mono(&t.container.path))
+                        .text(if t.container.exists { "" } else { " (not created yet)" }),
+                ),
+            ),
+            (
+                "Trunk",
+                Node::Element(
+                    el("span")
+                        .child(mono(t.trunk.branch.clone().unwrap_or_else(|| "(unknown)".into())))
+                        .text(format!(" — decided by {}", word(&t.trunk.source).replace('_', " "))),
+                ),
+            ),
+            ("Rule", Node::Element(el("span").text("<repo>").child(mono(&t.container.suffix)).text("/<branch>: the branch name is the path, hierarchy kept, derived from git and registered nowhere"))),
+            (
+                "Topology",
+                Node::Element(if t.valid {
+                    badge("ok", "valid")
+                } else {
+                    badge("fail", format!("{} error(s)", t.tallies.errors))
+                }),
+            ),
+        ]),
+    );
+
+    let ta = &t.tallies;
+    let statistics = el("div")
+        .class("mj-stats")
+        .child(statistic(
+            ta.worktrees.to_string(),
+            "worktrees",
+            "worktree.topology",
+        ))
+        .child(statistic(
+            ta.canonical.to_string(),
+            "canonical",
+            "worktree.topology",
+        ))
+        .child(statistic(
+            ta.misplaced.to_string(),
+            "misplaced",
+            "worktree.topology",
+        ))
+        .child(statistic(
+            ta.ephemeral.to_string(),
+            "ephemeral",
+            "worktree.topology",
+        ))
+        .child(statistic(
+            ta.detached.to_string(),
+            "detached",
+            "worktree.topology",
+        ))
+        .child(statistic(
+            ta.dirty.to_string(),
+            "with uncommitted work",
+            "git status, one per worktree",
+        ))
+        .child(statistic(
+            ta.branches_without_worktree.to_string(),
+            "branches without a worktree",
+            "for-each-ref",
+        ))
+        .child(statistic(
+            ta.cleanup_eligible.to_string(),
+            "cleanup-eligible branches",
+            "merged into the trunk, clean or absent",
+        ));
+
+    let worktree_rows: Vec<El> = t
+        .worktrees
+        .iter()
+        .map(|w| {
+            row(vec![
+                cell(badge(standing_status(w.standing), w.standing.as_str())),
+                cell(
+                    el("span")
+                        .child(mono(&w.label))
+                        .when(w.current, |e| e.text(" ").child(tag("here")))
+                        .when(w.issue.is_some(), |e| {
+                            e.text(" ").child(tag(w.issue.clone().unwrap_or_default()))
+                        }),
+                ),
+                cell(
+                    el("span")
+                        .child(mono(&w.path))
+                        .when(
+                            w.expected_path.is_some() && !matches!(w.standing, Standing::Canonical),
+                            |e| {
+                                e.child(el("br"))
+                                    .text("belongs at ")
+                                    .child(mono(w.expected_path.clone().unwrap_or_default()))
+                            },
+                        )
+                        .when(w.locked.is_some(), |e| e.text(" ").child(tag("locked"))),
+                ),
+                cell(mono(short_head(&w.head))),
+                dirty_cell(w),
+                upstream_cell(w),
+            ])
+        })
+        .collect();
+    let worktrees_card = card_with(
+        "Worktrees",
+        link(
+            "/cockpit/capabilities/worktree.topology",
+            "worktree.topology",
+        ),
+        table(
+            &[
+                "Standing",
+                "Branch",
+                "Path",
+                "HEAD",
+                "Uncommitted work",
+                "Upstream",
+            ],
+            worktree_rows,
+        ),
+    );
+
+    let without: Vec<&BranchState> = t.branches.iter().filter(|b| b.worktree.is_none()).collect();
+    let branches_card = if without.is_empty() {
+        card(
+            "Branches without a worktree",
+            nothing("Every local branch is checked out somewhere."),
+        )
+    } else {
+        card(
+            "Branches without a worktree",
+            table(
+                &[
+                    "Branch",
+                    "HEAD",
+                    "Merged into the trunk",
+                    "Would go to",
+                    "Start",
+                ],
+                without
+                    .iter()
+                    .map(|b| {
+                        row(vec![
+                            cell(
+                                el("span")
+                                    .child(mono(&b.name))
+                                    .when(b.issue.is_some(), |e| {
+                                        e.text(" ").child(tag(b.issue.clone().unwrap_or_default()))
+                                    }),
+                            ),
+                            cell(mono(short_head(&Some(b.head.clone())))),
+                            cell(match b.merged_into_trunk {
+                                Some(true) if b.cleanup_eligible => {
+                                    badge("ok", "merged, cleanup-eligible")
+                                }
+                                Some(true) => badge("ok", "merged"),
+                                Some(false) => badge("info", "unmerged"),
+                                None => badge("unknown", "trunk unknown"),
+                            }),
+                            cell(mono(b.expected_path.clone().unwrap_or_else(|| "-".into()))),
+                            cell(mono(format!("majordomus worktree create {}", b.name))),
+                        ])
+                    })
+                    .collect(),
+            ),
+        )
+    };
+
+    let diagnostics_card = if t.diagnostics.is_empty() {
+        card(
+            "Diagnostics",
+            nothing("Every worktree is where it belongs. Nothing to report."),
+        )
+    } else {
+        card_with(
+            "Diagnostics",
+            badge(
+                if t.valid { "ok" } else { "fail" },
+                format!("{} error(s), {} warning(s)", ta.errors, ta.warnings),
+            ),
+            diagnostics_table(&t.diagnostics),
+        )
+    };
+
+    let migration_card = match &plan {
+        None => card("Migration", nothing("The migration plan could not be computed.")),
+        Some(p) if p.steps.is_empty() => card_with(
+            "Migration",
+            link("/cockpit/capabilities/worktree.migration_plan", "worktree.migration_plan"),
+            el("div")
+                .child(nothing("Nothing to migrate: every worktree with a branch is at its canonical path."))
+                .when(!p.exceptions.is_empty(), |d| {
+                    d.child(el("p").class("mj-note").text(format!(
+                        "{} worktree(s) are not migrated by design — detached, ephemeral, or the primary checkout — and are listed under diagnostics.",
+                        p.exceptions.len()
+                    )))
+                }),
+        ),
+        Some(p) => card_with(
+            "Migration",
+            badge("warn", format!("{} movable, {} blocked", p.movable, p.blocked)),
+            el("div")
+                .child(el("p").class("mj-prose").text(
+                    "Each step moves one worktree with git, uncommitted work included, fingerprinted before and after; a step is reported as moved only when the two fingerprints are equal. Nothing here changes anything: the commands below do, from a terminal.",
+                ))
+                .child(table(
+                    &["Branch", "From", "To", "Uncommitted work", "Action", "Blocked by"],
+                    p.steps
+                        .iter()
+                        .map(|s| {
+                            row(vec![
+                                cell(mono(&s.branch)),
+                                cell(mono(&s.from)),
+                                cell(mono(&s.to)),
+                                text_cell(s.dirty.summary()),
+                                cell(match s.outcome {
+                                    StepOutcome::Planned => badge("ok", word(&s.action).replace('_', " ")),
+                                    StepOutcome::Blocked => badge("fail", "blocked"),
+                                    StepOutcome::Moved => badge("ok", "moved"),
+                                    StepOutcome::Failed => badge("fail", "failed"),
+                                }),
+                                cell(el("span").children(
+                                    s.blockers
+                                        .iter()
+                                        .map(|b| el("div").child(mono(b.code.as_str())).text(format!(" {}", b.message)))
+                                        .collect::<Vec<_>>(),
+                                )),
+                            ])
+                        })
+                        .collect(),
+                ))
+                .child(pre(format!(
+                    "majordomus worktree migrate --plan   # the same plan, from a terminal\nmajordomus worktree migrate          # apply the {} movable step(s), verified\n{}",
+                    p.movable,
+                    if p.blocked > 0 { "# blocked steps say what to do; nothing is overwritten or forced\n" } else { "" }
+                ))),
+        ),
+    };
+
+    let actions = card(
+        "Commands",
+        el("div")
+            .child(el("p").class("mj-prose").text(
+                "The Cockpit reads; the command line changes things. Every command below is the same service this page renders, and none of them takes a path — the path is derived.",
+            ))
+            .child(pre(
+                "majordomus worktree                          # where am I, and is that where I belong\nmajordomus worktree create <branch>          # start work: the branch from the trunk, the worktree at its path\ncd \"$(majordomus worktree path <branch>)\"\nmajordomus worktree migrate --plan           # what would move; nothing changes\nmajordomus worktree migrate                  # move, verify, report\nmajordomus worktree repair                   # drop stale registrations; deletes no directory\nmajordomus worktree cleanup                  # merged and clean: what could go, and how; deletes nothing\nmajordomus worktree remove <branch>          # one linked worktree; never dirty work unforced, never a branch",
+            )),
+    );
+
+    let live = el("section")
+        .class("mj-card")
+        .attr("data-mj-worktrees", "/api/v1/worktrees")
+        .child(el("h2").class("mj-card-title").text("Live"))
+        .child(el("p").class("mj-note").attr("data-mj-worktrees-note", "").text(
+            "While this page is visible it asks /api/v1/worktrees every few seconds and reloads when a worktree is created, moved or removed, so what you see is what git holds now.",
+        ));
+
+    Page::new(
+        Area::Worktrees,
+        "Worktrees",
+        el("div")
+            .class("mj-grid")
+            .child(statistics)
+            .child(identity)
+            .child(worktrees_card)
+            .child(diagnostics_card)
+            .child(migration_card)
+            .child(branches_card)
+            .child(actions)
+            .child(live),
+    )
+    .subtitle("Where every branch's worktree belongs and where each one is: <repo>-wt/<branch>, derived from git and registered nowhere.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Worktrees", None)])
+    .script("worktrees.js")
 }
 
 // ------------------------------------------------------------------ not found

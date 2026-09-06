@@ -63,6 +63,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
+| `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
 | `/cockpit/activity` | this process's counters and phases, and a running plot of them | `perf.counters` |
 | `/cockpit/assets/<file>` | the stylesheet, the scripts, the vendored libraries | `share/cockpit/` |
 
