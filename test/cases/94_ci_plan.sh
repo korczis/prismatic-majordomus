@@ -146,4 +146,20 @@ rc=0; MAJORDOMUS_BIN="$T/no-such-file" rust_bin >/dev/null 2>&1 || rc=$?
 [ "$rc" = 1 ] || { echo "    rust_bin accepted a MAJORDOMUS_BIN that is not executable (rc $rc)"; exit 1; }
 rc=0; MAJORDOMUS_BIN='' PATH="/usr/bin:/bin" rust_bin >/dev/null 2>&1 || rc=$?
 [ "$rc" = 3 ] || { echo "    rust_bin with neither cargo nor MAJORDOMUS_BIN returned $rc, not the skip code 3"; exit 1; }
+# --- a job gated on a plan output the plan job does not expose is a gate that never runs.
+#     The plan step emits one output per gate, but a workflow job reads them through the
+#     `outputs:` block, and GitHub does not complain about a property that is not there — the
+#     condition is simply false for ever. `cockpit-assets` was skipped that way, silently, by
+#     every run. Nothing derives that block, so this is what keeps it honest.
+#     $ROOT and not $H: the harness above is a synthetic checkout with no workflow in it,
+#     and a loop over a file that does not exist finds nothing missing and passes.
+W="$ROOT/.github/workflows/validate.yml"
+[ -f "$W" ] || { echo "    the workflow this check is about is not at $W"; exit 1; }
+grep -q 'needs\.plan\.outputs\.' "$W" || { echo "    no job reads a plan output; this check has stopped checking anything"; exit 1; }
+missing=""
+for ref in $(grep -oE 'needs\.plan\.outputs\.[a-z_]+' "$W" | sed 's/.*\.//' | sort -u); do
+  grep -qE "^      $ref: \\\$\{\{ steps\.plan\.outputs\.$ref \}\}" "$W" || missing="$missing $ref"
+done
+[ -z "$missing" ] || { echo "    job(s) gated on plan output(s) the plan job never exposes:$missing"; exit 1; }
+
 echo "    the plan follows the model, the verdict follows the plan, the runner keeps its semantics"

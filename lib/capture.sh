@@ -767,17 +767,37 @@ mj_capture_failures() {
 # none of the model's half of the exchange. One awk pass over the archive, batched by find,
 # so the cost is the archive's size and not a process per record.
 mj_capture_records() {
-  local dir="$1" rel="$2" n out model shape
+  local dir="$1" rel="$2" n out model shape key
   n="$(find "$dir" -maxdepth 1 -name '*.json' 2>/dev/null | wc -l | tr -d ' ')"
   [ "$n" -gt 0 ] || { mj_doctrine_ok capture "$rel" "no records yet; the archive is empty"; return 0; }
-  out="$(find "$dir" -maxdepth 1 -name '*.json' -exec awk '
+  # The key scan reads only the head of a record — everything before `"text":`, which the
+  # declared field order puts last. That half is written by this tool and contains no
+  # user text, so a key found there is a real key and not a fragment of somebody's prompt
+  # that happened to look like one.
+  out="$(find "$dir" -maxdepth 1 -name '*.json' -exec awk -v allowed=" $MJ_CAPTURE_FIELDS " '
     FNR == 1 { if ($0 !~ /^\{"schema":"majordomus\.prompt\/v1",/ || $0 !~ /\}$/) print "SHAPE " FILENAME }
     FNR > 1  { if (!s[FILENAME]++) print "SHAPE " FILENAME }
     /"(response|completion|transcript|messages|reply|assistant)":/ { if (!m[FILENAME]++) print "MODEL " FILENAME }
+    FNR == 1 {
+      head = $0
+      i = index(head, "\"text\":")
+      if (i > 0) head = substr(head, 1, i - 1)
+      while (match(head, /"[A-Za-z_][A-Za-z0-9_]*":/)) {
+        k = substr(head, RSTART + 1, RLENGTH - 3)
+        head = substr(head, RSTART + RLENGTH)
+        if (index(allowed, " " k " ") == 0 && !u[FILENAME]++) print "KEY " FILENAME " " k
+      }
+    }
   ' {} + 2>/dev/null)"
   model="$(printf '%s' "$out" | grep -c '^MODEL ' || true)"
   shape="$(printf '%s' "$out" | grep -c '^SHAPE ' || true)"
-  if [ "$model" != 0 ]; then
+  key="$(printf '%s' "$out" | grep -c '^KEY ' || true)"
+  if [ "$key" != 0 ]; then
+    # A field outside the declared set is how a transcript arrives one key at a time: under
+    # a name the model-half pattern above has never seen, in a record that otherwise passes.
+    # The set is closed, so the check is what the set is for.
+    mj_doctrine_fail capture "$rel" "$key record(s) carry a field outside $MJ_CAPTURE_SCHEMA: $(printf '%s' "$out" | awk '/^KEY /{ n = split($2, p, "/"); printf "%s (%s) ", p[n], $3 }' | head -c 200)" "head -n 1 $rel/*.json"
+  elif [ "$model" != 0 ]; then
     mj_doctrine_fail capture "$rel" "$model record(s) carry the model's half of the exchange: $(printf '%s' "$out" | sed -n 's/^MODEL .*\///p' | head -n 3 | tr '\n' ' ')" "grep -lE '\"(response|completion|transcript|messages|reply|assistant)\":' $rel/*.json"
   elif [ "$shape" != 0 ]; then
     mj_doctrine_fail capture "$rel" "$shape record(s) are not one line of $MJ_CAPTURE_SCHEMA: $(printf '%s' "$out" | sed -n 's/^SHAPE .*\///p' | head -n 3 | tr '\n' ' ')" "head -n 2 $rel/*.json"
