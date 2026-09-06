@@ -1,7 +1,7 @@
 +++
 title = "What a worker reads of the repository is declared once in .ai/repo/scope.yaml, out wins over in, and the Rust executable discovers, indexes and serves nothing outside it"
 description = "A repository says, in one tracked file, which paths a worker reads (in: pathspecs such"
-weight = 124
+weight = 125
 [extra]
 claim_id = "scope-declared"
 status = "guaranteed"
