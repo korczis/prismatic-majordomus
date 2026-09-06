@@ -43,6 +43,56 @@ pub enum Command {
     Scope(ScopeArgs),
     /// The repository's web surfaces: what is exposed, where it is mounted, what produced it, and whether the topology is valid
     Web(WebArgs),
+    /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
+    Distribution(DistributionArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus distribution`.
+pub struct DistributionArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to ask of the model; none shows it.
+    pub command: Option<DistributionCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus distribution`.
+pub enum DistributionCommand {
+    /// The model: the install command, where an installation goes, and every declared target
+    Show,
+    /// Every invariant of the model and of the release records; exit 10 with each violation named
+    Validate,
+    /// Every declared target, one line each, with the artifact name it derives
+    Targets,
+    /// The release build matrix, as the release workflow reads it
+    Matrix,
+    /// The archive name and root directory a target and a tag derive
+    Artifact {
+        /// A target's id or its Rust target triple
+        #[arg(long, value_name = "TARGET")]
+        target: String,
+        /// The tag, `v` and a version
+        #[arg(long, value_name = "TAG")]
+        tag: String,
+    },
+    /// Every recorded release, newest first, and the one an unpinned installation resolves to
+    Releases,
+    /// The public metadata one release record publishes, rendered from the record alone
+    Metadata {
+        /// A release record; the file the release pipeline writes under .ai/repo/releases/
+        #[arg(long, value_name = "FILE")]
+        record: PathBuf,
+    },
+    /// What this executable is: version, target triple, profile, commit
+    Build,
 }
 
 #[derive(Debug, Args)]
@@ -431,6 +481,9 @@ pub enum GenerateTarget {
     Providers,
     /// site/data/registry/registry.json, the registry dataset the site renders
     Site,
+    /// The installer, the installation guide, the release build matrix and the public
+    /// release metadata, from share/distribution.yaml and .ai/repo/releases/
+    Distribution,
 }
 
 #[derive(Debug, Args)]
@@ -557,6 +610,105 @@ pub struct CommandExamples {
 /// disposable repository. Adding a command without adding its example does not pass
 /// `cli::validate`, and therefore does not pass the crate's tests or CI.
 pub const EXAMPLES: &[CommandExamples] = &[
+    CommandExamples {
+        command: "distribution",
+        examples: &[ExampleDoc {
+            id: "distribution-show-default",
+            title: "How this project is installed",
+            description: "`distribution` with nothing after it shows the model: the one-line install command, where an installation goes, and how many platforms a release builds. Every value comes from share/distribution.yaml, which is the only place any of them is written.",
+            argv: &["distribution"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["binary", "install", "targets"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution show",
+        examples: &[ExampleDoc {
+            id: "distribution-show-json",
+            title: "The distribution model as one JSON document",
+            description: "The same answer as a document a script can read: the install command, the default locations, and every declared target with the artifact name the naming function derives for it. This is what the website's install block and the cockpit's install card render.",
+            argv: &["distribution", "show", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/install_command", "/targets"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution targets",
+        examples: &[ExampleDoc {
+            id: "distribution-targets",
+            title: "Every platform, and whether a release builds it",
+            description: "One line per declared target: its id, its Rust target triple, whether it is supported, experimental or unavailable, and how it is written in prose. The supported-platform table in the documentation and the installer's own refusal message are rendered from these same rows.",
+            argv: &["distribution", "targets"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["RUST TARGET", "supported"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution validate",
+        examples: &[ExampleDoc {
+            id: "distribution-validate",
+            title: "Every invariant of the model and of the release records",
+            description: "Refuses a duplicate target id or triple, two targets deriving one artifact name, a Linux target with no C library, a published target with nothing to build it on, an unbuilt target with no recorded reason, a base URL that is not HTTPS, and a release record that misses a supported target, renames an artifact or serves one from another host. Exits 10 with each violation named.",
+            argv: &["distribution", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["distribution"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution matrix",
+        examples: &[ExampleDoc {
+            id: "distribution-matrix",
+            title: "The release build matrix the workflow runs",
+            description: "One entry per published target, with the runner it is built on, the packages that runner needs, and the artifact name with `{tag}` where a release's tag goes. The release workflow reads this and states no platform of its own; adding a target to the model adds a build here and nowhere else.",
+            argv: &["distribution", "matrix"],
+            setup: &[],
+            expect: Expect::Json(&["/include", "/binary"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution artifact",
+        examples: &[ExampleDoc {
+            id: "distribution-artifact",
+            title: "What one target and one tag are called",
+            description: "The one naming function, asked directly: the archive's name, the directory it unpacks into, and where a release publishes it. `scripts/release-package` asks this rather than composing a name, so a change to the naming function reaches the packaging without an edit.",
+            argv: &["distribution", "artifact", "--target", "aarch64-apple-darwin", "--tag", "v0.2.0", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/name", "/root", "/url"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution releases",
+        examples: &[ExampleDoc {
+            id: "distribution-releases",
+            title: "What has been published, and what an unpinned install resolves to",
+            description: "Every release record this repository holds, newest first, and which of them the stable pointer names: the highest version among the stable, unwithdrawn records. The pointer is derived on every read and is authored nowhere.",
+            argv: &["distribution", "releases"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "distribution metadata",
+        examples: &[ExampleDoc {
+            id: "distribution-metadata",
+            title: "What one release record publishes",
+            description: "The public metadata a record turns into, rendered from the record and the model alone: the release pipeline prints this before it commits anything, and the installer's own tests serve it as a release that never existed. Shown here in a repository that has published nothing, where the record does not exist and the command says which file it wanted and exits 10 rather than inventing one.",
+            argv: &["distribution", "metadata", "--record", ".ai/repo/releases/v0.2.0.yaml"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "distribution build",
+        examples: &[ExampleDoc {
+            id: "distribution-build",
+            title: "What this executable is",
+            description: "The crate version, the Rust target triple, the profile and the commit, all compiled in at build time. An installed binary answers this without a repository, a toolchain or git, which is what makes a support question answerable.",
+            argv: &["distribution", "build"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["version", "target", "commit"]),
+        }],
+    },
     CommandExamples {
         command: "mcp",
         examples: &[

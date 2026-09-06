@@ -3,6 +3,7 @@
 
 pub mod bench;
 pub mod capabilities;
+pub mod distribution;
 pub mod generate;
 pub mod mcp;
 pub mod scope;
@@ -22,5 +23,6 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Bench(args) => bench::run(args),
         Command::Scope(args) => scope::run(args),
         Command::Web(args) => web::run(args),
+        Command::Distribution(args) => distribution::run(args),
     }
 }

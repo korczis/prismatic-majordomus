@@ -48,6 +48,10 @@ pub enum Target {
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
     Site,
+    /// Everything derived from the distribution model (see [`crate::distribution`]): the
+    /// release build matrix, the installer, the installation guide, the site's dataset,
+    /// and the public metadata of every recorded release.
+    Distribution,
 }
 
 impl Target {
@@ -60,6 +64,7 @@ impl Target {
         Target::Allow,
         Target::Providers,
         Target::Site,
+        Target::Distribution,
     ];
 }
 
@@ -126,7 +131,11 @@ pub fn artifacts(
                 path: format!("{OUT_DIR}/registry.json"),
                 content: registry_manifest(registry, version),
             }),
-            Target::Benchmarks | Target::Allow | Target::Providers | Target::Site => {}
+            Target::Benchmarks
+            | Target::Allow
+            | Target::Providers
+            | Target::Site
+            | Target::Distribution => {}
         }
     }
     Ok(out)
@@ -165,7 +174,93 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             });
         }
     }
+    if targets.contains(&Target::Distribution) {
+        out.extend(distribution_artifacts(app)?);
+    }
     Ok(out)
+}
+
+/// Every artifact the distribution model produces. The model is read from the tool's own
+/// data directory, which is the file an installed copy carries; the release records are
+/// read from the repository. Nothing here decides a platform, a name or a URL — it renders
+/// what `share/distribution.yaml` and `.ai/repo/releases/` already say.
+pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
+    use crate::distribution::{release, render, Model, Releases};
+
+    let model = Model::load(&app.share)?;
+    let releases = Releases::load(app.repository.root())?;
+    let findings = releases.findings(&model);
+    if let Some(first) = findings.first() {
+        return Err(Error::InvalidRelease {
+            path: release::DIR.to_string(),
+            reason: if findings.len() == 1 {
+                first.clone()
+            } else {
+                format!("{first} (and {} more)", findings.len() - 1)
+            },
+        });
+    }
+
+    let mut out = vec![
+        Artifact {
+            path: format!("{OUT_DIR}/distribution-matrix.json"),
+            content: render::matrix_json(&model),
+        },
+        Artifact {
+            path: format!("{SITE_DATA_DIR}/distribution.json"),
+            content: render::site_dataset(&model, &releases),
+        },
+    ];
+
+    let installer_template = read_share(&app.share, crate::distribution::INSTALLER_TEMPLATE)?;
+    out.push(Artifact {
+        path: format!(
+            "{}/{}",
+            crate::distribution::PUBLIC_DIR,
+            model.installer.script
+        ),
+        content: render::installer(&model, &installer_template).map_err(|reason| {
+            Error::InvalidDistribution {
+                path: crate::distribution::INSTALLER_TEMPLATE.to_string(),
+                reason,
+            }
+        })?,
+    });
+
+    let guide_template = read_share(&app.share, crate::distribution::GUIDE_TEMPLATE)?;
+    let guide = render::install_doc(&model, &releases, crate::VERSION, &guide_template).map_err(
+        |reason| Error::InvalidDistribution {
+            path: crate::distribution::GUIDE_TEMPLATE.to_string(),
+            reason,
+        },
+    )?;
+    out.push(Artifact {
+        path: crate::distribution::GUIDE.to_string(),
+        content: format!(
+            "<!-- {HEADER}\n     Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);\n     regenerate with `majordomus generate`\n     Generator: majordomus-cli {} -->\n{guide}",
+            crate::VERSION
+        ),
+    });
+
+    for r in &releases.releases {
+        out.push(Artifact {
+            path: format!("{}/{}.json", release::PUBLIC_DIR, r.tag),
+            content: r.public_json(&model),
+        });
+    }
+    if let Some(latest) = releases.latest_stable() {
+        out.push(Artifact {
+            path: format!("{}/{}.json", release::PUBLIC_DIR, release::LATEST),
+            content: release::latest_json(latest, &model),
+        });
+    }
+    Ok(out)
+}
+
+/// A file of the tool's data directory, read as text.
+fn read_share(share: &Share, relative: &str) -> Result<String> {
+    let path = share.dir().join(relative);
+    std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))
 }
 
 /// Every artifact of the selected targets, the benchmark matrix included: what

@@ -6,6 +6,7 @@
 //! benchmark target and generated document follows from the descriptor.
 
 pub mod capabilities;
+pub mod distribution;
 pub mod graph;
 pub mod health;
 pub mod objects;
@@ -22,6 +23,10 @@ use super::model::{HttpExposure, HttpMethod, McpExposure};
 use super::module::ModuleDescriptor;
 
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
+pub use distribution::{
+    ArtifactInput, ArtifactView, BuildReport, DistributionReport, ReleaseView, ReleasesReport,
+    TargetView,
+};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
@@ -43,7 +48,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         graph,
         health,
         peers,
-        perf
+        perf,
+        distribution
     ]
 }
 

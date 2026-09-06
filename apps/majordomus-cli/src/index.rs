@@ -75,6 +75,11 @@ pub struct Index {
     pub fingerprint: String,
     /// The scope the index was built under, with every tracked file tallied against it.
     pub scoped: Scoped,
+    /// The distribution model the tool was run with, when it carries one: how this project
+    /// is packaged, published and installed. Read from the tool's data directory beside the
+    /// kinds and the schemas, not discovered in the repository, so that an installed copy
+    /// answers the same questions a checkout does.
+    pub distribution: Option<crate::distribution::Model>,
 }
 
 impl Index {
@@ -175,6 +180,7 @@ impl Index {
             state,
             fingerprint,
             scoped: Scoped { scope, tally },
+            distribution: None,
         })
     }
 

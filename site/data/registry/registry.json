@@ -2,29 +2,29 @@
   "schema": "majordomus-site-registry/v2",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "registry": {
-    "fingerprint": "41ceef4870b3449fffcdb6f9b4c4d128700a4123bff7e02204bea3de74b48f07",
+    "fingerprint": "f293b7013e8f014385d991068a6ef20b8af7cc9307adc961b5be7f5d0304244d",
     "summary": {
-      "total": 690,
-      "builtin": 14,
+      "total": 694,
+      "builtin": 18,
       "declarative": 676,
       "by_kind": {
         "command": 1,
-        "query": 13,
+        "query": 17,
         "resource": 676
       },
       "by_stability": {
-        "behaviorally_verified": 14,
+        "behaviorally_verified": 18,
         "implemented": 676
       },
-      "mcp_tools": 14,
+      "mcp_tools": 18,
       "mcp_resources": 680,
-      "http_routes": 14,
-      "cli_commands": 4,
-      "modules": 24,
-      "benchmark_required": 14,
+      "http_routes": 18,
+      "cli_commands": 8,
+      "modules": 25,
+      "benchmark_required": 18,
       "benchmark_waived": 0,
       "cached": 4
     },
@@ -1174,6 +1174,605 @@
           "max_entries": 16
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
+      },
+      {
+        "id": "distribution.artifact",
+        "module": "distribution",
+        "kind": "query",
+        "title": "The artifact of a target",
+        "description": "The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file.",
+        "input": {
+          "name": "ArtifactInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "target": {
+                "type": "string",
+                "description": "A target's id or its Rust target triple."
+              },
+              "tag": {
+                "type": "string",
+                "description": "The tag, `v` and a version. `{tag}` asks for the name with the placeholder left in."
+              }
+            },
+            "required": [
+              "target",
+              "tag"
+            ],
+            "description": "Which artifact a target and a tag name.",
+            "title": "ArtifactInput"
+          }
+        },
+        "output": {
+          "name": "ArtifactView",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "target": {
+                "type": "string",
+                "description": "The target's id in the model."
+              },
+              "rust_target": {
+                "type": "string",
+                "description": "The Rust target triple."
+              },
+              "tag": {
+                "type": "string",
+                "description": "The tag the name was derived for."
+              },
+              "name": {
+                "type": "string",
+                "description": "The archive's file name."
+              },
+              "root": {
+                "type": "string",
+                "description": "The directory the archive unpacks into."
+              },
+              "url": {
+                "type": "string",
+                "description": "Where a release publishes it, when the tag is a real one."
+              }
+            },
+            "required": [
+              "target",
+              "rust_target",
+              "tag",
+              "name",
+              "root",
+              "url"
+            ],
+            "description": "The artifact a target and a tag name, and the directory it unpacks into.",
+            "title": "ArtifactView"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::distribution"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_artifact"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/distribution/artifact"
+          },
+          "cli": {
+            "path": [
+              "distribution",
+              "artifact"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "distribution",
+          "release"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs"
+      },
+      {
+        "id": "distribution.build",
+        "module": "distribution",
+        "kind": "query",
+        "title": "This build",
+        "description": "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "BuildReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "string",
+                "description": "The version of the crate this executable was built from."
+              },
+              "target": {
+                "type": "string",
+                "description": "The Rust target triple it was built for; the model names a target by the same string."
+              },
+              "profile": {
+                "type": "string",
+                "description": "The cargo profile."
+              },
+              "commit": {
+                "type": "string",
+                "description": "The commit, or `unknown` when it was built outside a work tree."
+              },
+              "distribution_target": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The target of the model this build matches, when the model declares one for the triple."
+              }
+            },
+            "required": [
+              "version",
+              "target",
+              "profile",
+              "commit"
+            ],
+            "description": "What this executable is: enough to tell two builds apart without asking a repository.",
+            "title": "BuildReport"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::distribution"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_build"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/distribution/build"
+          },
+          "cli": {
+            "path": [
+              "distribution",
+              "build"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "distribution",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs"
+      },
+      {
+        "id": "distribution.model",
+        "module": "distribution",
+        "kind": "query",
+        "title": "The distribution model",
+        "description": "The one-line install command, where an installation goes, and every declared target with the artifact name it derives. This is what the installation page, the landing page's install block and the cockpit's install card render; none of them holds a platform list of its own.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "DistributionReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "binary": {
+                "type": "string",
+                "description": "The command a person types after installing."
+              },
+              "repository": {
+                "type": "string",
+                "description": "`owner/name`, the only host release assets come from."
+              },
+              "installer_url": {
+                "type": "string",
+                "description": "The installer's canonical URL."
+              },
+              "install_command": {
+                "type": "string",
+                "description": "The one-line install command, composed from its parts."
+              },
+              "install_and_init_command": {
+                "type": "string",
+                "description": "The same, initialising the repository afterwards."
+              },
+              "next_command": {
+                "type": "string",
+                "description": "What a person runs next."
+              },
+              "checksum": {
+                "type": "string",
+                "description": "The digest algorithm the installer verifies."
+              },
+              "install_dir": {
+                "type": "string",
+                "description": "Where the launchers go by default."
+              },
+              "prefix": {
+                "type": "string",
+                "description": "Where the versioned trees go by default."
+              },
+              "latest_url": {
+                "type": "string",
+                "description": "Where the stable release metadata is published."
+              },
+              "supported": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many targets a release builds."
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/TargetView"
+                },
+                "description": "Every declared target, in the model's order."
+              }
+            },
+            "required": [
+              "binary",
+              "repository",
+              "installer_url",
+              "install_command",
+              "install_and_init_command",
+              "next_command",
+              "checksum",
+              "install_dir",
+              "prefix",
+              "latest_url",
+              "supported",
+              "targets"
+            ],
+            "description": "The distribution, as a person or a script asks for it.",
+            "title": "DistributionReport",
+            "$defs": {
+              "TargetView": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The target's id in the model."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "How it is written in prose: `Linux x86_64 musl`."
+                  },
+                  "os": {
+                    "$ref": "#/$defs/Os",
+                    "description": "The operating system."
+                  },
+                  "arch": {
+                    "$ref": "#/$defs/Arch",
+                    "description": "The architecture."
+                  },
+                  "libc": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Libc"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The C library, on Linux."
+                  },
+                  "rust_target": {
+                    "type": "string",
+                    "description": "The Rust target triple."
+                  },
+                  "status": {
+                    "$ref": "#/$defs/Status",
+                    "description": "What the project promises about it."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why, when it is not built."
+                  },
+                  "artifact": {
+                    "type": "string",
+                    "description": "The artifact name, with `{tag}` where a release's tag goes."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "os",
+                  "arch",
+                  "rust_target",
+                  "status",
+                  "artifact"
+                ],
+                "description": "One target, as every projection shows it: what it is, what it is called in prose, and\nthe artifact name the naming function derives for a tag yet to be chosen."
+              },
+              "Os": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "macos",
+                    "description": "Apple's, detected as `Darwin`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "linux",
+                    "description": "Linux, detected as `Linux`, and the only one where the C library matters."
+                  },
+                  {
+                    "type": "string",
+                    "const": "windows",
+                    "description": "Windows; representable, and not built today."
+                  }
+                ],
+                "description": "An operating system a target runs on."
+              },
+              "Arch": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "x86_64",
+                    "description": "64-bit x86, detected as `x86_64` or `amd64`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "aarch64",
+                    "description": "64-bit ARM, detected as `aarch64` or `arm64`."
+                  }
+                ],
+                "description": "A processor architecture."
+              },
+              "Libc": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "gnu",
+                    "description": "GNU libc: the ordinary distributions."
+                  },
+                  {
+                    "type": "string",
+                    "const": "musl",
+                    "description": "musl: Alpine, and any statically linked artifact."
+                  }
+                ],
+                "description": "The C library a Linux artifact is linked against."
+              },
+              "Status": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "supported",
+                    "description": "Built by every release, offered by the installer, listed as supported. A release\nthat is missing this artifact is not published."
+                  },
+                  {
+                    "type": "string",
+                    "const": "experimental",
+                    "description": "Built and offered, and documented as not yet proven."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unavailable",
+                    "description": "Documented, never built, refused by the installer with its recorded reason."
+                  }
+                ],
+                "description": "What the project promises about a target."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::distribution"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_distribution"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/distribution"
+          },
+          "cli": {
+            "path": [
+              "distribution",
+              "show"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "distribution",
+          "install",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs"
+      },
+      {
+        "id": "distribution.releases",
+        "module": "distribution",
+        "kind": "query",
+        "title": "Published releases",
+        "description": "Every release this repository recorded, newest first, and the one an unpinned installation resolves to: the highest version among the stable, unwithdrawn records. The pointer is derived here and never authored anywhere.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "ReleasesReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many records there are."
+              },
+              "latest": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ReleaseView"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The release an unpinned installation resolves to, when there is one."
+              },
+              "releases": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReleaseView"
+                },
+                "description": "Every record, newest first."
+              }
+            },
+            "required": [
+              "count",
+              "releases"
+            ],
+            "description": "The releases this repository recorded, and the one an unpinned installation resolves to.",
+            "title": "ReleasesReport",
+            "$defs": {
+              "ReleaseView": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string",
+                    "description": "The git tag."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "The semantic version."
+                  },
+                  "channel": {
+                    "$ref": "#/$defs/Channel",
+                    "description": "Whether an unpinned installation may resolve it."
+                  },
+                  "published_at": {
+                    "type": "string",
+                    "description": "When it was published, UTC."
+                  },
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit it was built from."
+                  },
+                  "yanked": {
+                    "type": "boolean",
+                    "description": "True when it has been withdrawn."
+                  },
+                  "artifacts": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many artifacts it published."
+                  },
+                  "metadata_url": {
+                    "type": "string",
+                    "description": "Where its public metadata is served."
+                  }
+                },
+                "required": [
+                  "tag",
+                  "version",
+                  "channel",
+                  "published_at",
+                  "commit",
+                  "yanked",
+                  "artifacts",
+                  "metadata_url"
+                ],
+                "description": "One release, as every projection shows it."
+              },
+              "Channel": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "stable",
+                    "description": "Resolved by `latest`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "prerelease",
+                    "description": "Published, addressable by its exact tag, never resolved by default."
+                  }
+                ],
+                "description": "Which releases an unpinned installation may resolve to."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::distribution"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_releases"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/distribution/releases"
+          },
+          "cli": {
+            "path": [
+              "distribution",
+              "releases"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "distribution",
+          "release"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs"
       },
       {
         "id": "graph.get",
@@ -3957,6 +4556,21 @@
         "capability_ids": []
       },
       {
+        "id": "distribution",
+        "title": "Distribution",
+        "description": "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 4,
+        "capability_ids": [
+          "distribution.artifact",
+          "distribution.build",
+          "distribution.model",
+          "distribution.releases"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs"
+      },
+      {
         "id": "document",
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
@@ -4149,7 +4763,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6d63cb37e03ee053fbf469a91fec82f6843b5d52e103f84ff19cfe10a1a1fbf8",
+    "fingerprint": "064a8613eeb1d05e7b0c3d35ab6a20e54ac5f768ff877cd5094e392262fddf93",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -4160,6 +4774,7 @@
       "profiles": ".ai/repo/profiles",
       "project": ".ai/repo/project",
       "prompts": ".ai/repo/prompts",
+      "releases": ".ai/repo/releases",
       "rules": ".ai/repo/rules",
       "scope": ".ai/repo/scope.yaml",
       "sessions": ".ai/repo/sessions",
@@ -7123,7 +7738,7 @@
         "identity": "bin/majordomus",
         "path": "bin/majordomus",
         "source_class": "entrypoint",
-        "bytes": 4451
+        "bytes": 4776
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-mcp",
@@ -7131,7 +7746,7 @@
         "identity": "bin/majordomus-mcp",
         "path": "bin/majordomus-mcp",
         "source_class": "entrypoint",
-        "bytes": 2880
+        "bytes": 3299
       },
       {
         "uri": "majordomus://implementation/lib/adr.sh",
@@ -7259,7 +7874,7 @@
         "identity": "lib/init.sh",
         "path": "lib/init.sh",
         "source_class": "library",
-        "bytes": 7701
+        "bytes": 7702
       },
       {
         "uri": "majordomus://implementation/lib/json_scan.awk",
@@ -7403,7 +8018,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 45013
+        "bytes": 45774
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -10639,7 +11254,7 @@
         "identity": "test/cases/94_use_cases.sh",
         "path": "test/cases/94_use_cases.sh",
         "source_class": "case",
-        "bytes": 12776
+        "bytes": 14419
       },
       {
         "uri": "majordomus://test/test/cases/95_executable_reference.sh",
@@ -11129,6 +11744,14 @@
       "objects": 9
     },
     {
+      "name": "distribution",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "distribution",
+      "identity": [],
+      "objects": 0
+    },
+    {
       "name": "document",
       "format": "markdown",
       "front_matter": "optional",
@@ -11199,6 +11822,16 @@
         "name"
       ],
       "objects": 4
+    },
+    {
+      "name": "release",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "release",
+      "identity": [
+        "tag"
+      ],
+      "objects": 0
     },
     {
       "name": "rule",
@@ -12300,6 +12933,10 @@
               {
                 "name": "site",
                 "help": "site/data/registry/registry.json, the registry dataset the site renders"
+              },
+              {
+                "name": "distribution",
+                "help": "The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/"
               }
             ],
             "defaults": [
@@ -14394,6 +15031,1059 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "distribution"
+        ],
+        "route": "/docs/cli/distribution/",
+        "executable": true,
+        "usage": "majordomus distribution [OPTIONS] [COMMAND]",
+        "about": "How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "distribution-show-default",
+            "title": "How this project is installed",
+            "description": "`distribution` with nothing after it shows the model: the one-line install command, where an installation goes, and how many platforms a release builds. Every value comes from share/distribution.yaml, which is the only place any of them is written.",
+            "argv": [
+              "distribution"
+            ],
+            "command": "majordomus distribution",
+            "setup": [],
+            "expectation": "exits 0; prints binary, install, targets"
+          }
+        ],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "distribution",
+              "show"
+            ],
+            "route": "/docs/cli/distribution/show/",
+            "executable": true,
+            "usage": "majordomus distribution show [OPTIONS]",
+            "about": "The model: the install command, where an installation goes, and every declared target",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "distribution-show-json",
+                "title": "The distribution model as one JSON document",
+                "description": "The same answer as a document a script can read: the install command, the default locations, and every declared target with the artifact name the naming function derives for it. This is what the website's install block and the cockpit's install card render.",
+                "argv": [
+                  "distribution",
+                  "show",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus distribution show --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /install_command, /targets"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "distribution",
+              "validate"
+            ],
+            "route": "/docs/cli/distribution/validate/",
+            "executable": true,
+            "usage": "majordomus distribution validate [OPTIONS]",
+            "about": "Every invariant of the model and of the release records; exit 10 with each violation named",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "distribution-validate",
+                "title": "Every invariant of the model and of the release records",
+                "description": "Refuses a duplicate target id or triple, two targets deriving one artifact name, a Linux target with no C library, a published target with nothing to build it on, an unbuilt target with no recorded reason, a base URL that is not HTTPS, and a release record that misses a supported target, renames an artifact or serves one from another host. Exits 10 with each violation named.",
+                "argv": [
+                  "distribution",
+                  "validate"
+                ],
+                "command": "majordomus distribution validate",
+                "setup": [],
+                "expectation": "exits 0; prints distribution"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "distribution",
+              "targets"
+            ],
+            "route": "/docs/cli/distribution/targets/",
+            "executable": true,
+            "usage": "majordomus distribution targets [OPTIONS]",
+            "about": "Every declared target, one line each, with the artifact name it derives",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "distribution-targets",
+                "title": "Every platform, and whether a release builds it",
+                "description": "One line per declared target: its id, its Rust target triple, whether it is supported, experimental or unavailable, and how it is written in prose. The supported-platform table in the documentation and the installer's own refusal message are rendered from these same rows.",
+                "argv": [
+                  "distribution",
+                  "targets"
+                ],
+                "command": "majordomus distribution targets",
+                "setup": [],
+                "expectation": "exits 0; prints RUST TARGET, supported"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "distribution",
+              "matrix"
+            ],
+            "route": "/docs/cli/distribution/matrix/",
+            "executable": true,
+            "usage": "majordomus distribution matrix [OPTIONS]",
+            "about": "The release build matrix, as the release workflow reads it",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "distribution-matrix",
+                "title": "The release build matrix the workflow runs",
+                "description": "One entry per published target, with the runner it is built on, the packages that runner needs, and the artifact name with `{tag}` where a release's tag goes. The release workflow reads this and states no platform of its own; adding a target to the model adds a build here and nowhere else.",
+                "argv": [
+                  "distribution",
+                  "matrix"
+                ],
+                "command": "majordomus distribution matrix",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /include, /binary"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "distribution",
+              "artifact"
+            ],
+            "route": "/docs/cli/distribution/artifact/",
+            "executable": true,
+            "usage": "majordomus distribution artifact [OPTIONS]",
+            "about": "The archive name and root directory a target and a tag derive",
+            "args": [
+              {
+                "name": "target",
+                "long": "target",
+                "positional": false,
+                "help": "A target's id or its Rust target triple",
+                "value_name": "TARGET",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "tag",
+                "long": "tag",
+                "positional": false,
+                "help": "The tag, `v` and a version",
+                "value_name": "TAG",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "distribution-artifact",
+                "title": "What one target and one tag are called",
+                "description": "The one naming function, asked directly: the archive's name, the directory it unpacks into, and where a release publishes it. `scripts/release-package` asks this rather than composing a name, so a change to the naming function reaches the packaging without an edit.",
+                "argv": [
+                  "distribution",
+                  "artifact",
+                  "--target",
+                  "aarch64-apple-darwin",
+                  "--tag",
+                  "v0.2.0",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus distribution artifact --target aarch64-apple-darwin --tag v0.2.0 --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /name, /root, /url"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "distribution",
+              "releases"
+            ],
+            "route": "/docs/cli/distribution/releases/",
+            "executable": true,
+            "usage": "majordomus distribution releases [OPTIONS]",
+            "about": "Every recorded release, newest first, and the one an unpinned installation resolves to",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "distribution-releases",
+                "title": "What has been published, and what an unpinned install resolves to",
+                "description": "Every release record this repository holds, newest first, and which of them the stable pointer names: the highest version among the stable, unwithdrawn records. The pointer is derived on every read and is authored nowhere.",
+                "argv": [
+                  "distribution",
+                  "releases"
+                ],
+                "command": "majordomus distribution releases",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "distribution",
+              "metadata"
+            ],
+            "route": "/docs/cli/distribution/metadata/",
+            "executable": true,
+            "usage": "majordomus distribution metadata [OPTIONS]",
+            "about": "The public metadata one release record publishes, rendered from the record alone",
+            "args": [
+              {
+                "name": "record",
+                "long": "record",
+                "positional": false,
+                "help": "A release record; the file the release pipeline writes under .ai/repo/releases/",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "distribution-metadata",
+                "title": "What one release record publishes",
+                "description": "The public metadata a record turns into, rendered from the record and the model alone: the release pipeline prints this before it commits anything, and the installer's own tests serve it as a release that never existed. Shown here in a repository that has published nothing, where the record does not exist and the command says which file it wanted and exits 10 rather than inventing one.",
+                "argv": [
+                  "distribution",
+                  "metadata",
+                  "--record",
+                  ".ai/repo/releases/v0.2.0.yaml"
+                ],
+                "command": "majordomus distribution metadata --record .ai/repo/releases/v0.2.0.yaml",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "distribution",
+              "build"
+            ],
+            "route": "/docs/cli/distribution/build/",
+            "executable": true,
+            "usage": "majordomus distribution build [OPTIONS]",
+            "about": "What this executable is: version, target triple, profile, commit",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "distribution-build",
+                "title": "What this executable is",
+                "description": "The crate version, the Rust target triple, the profile and the commit, all compiled in at build time. An installed binary answers this without a repository, a toolchain or git, which is what makes a support question answerable.",
+                "argv": [
+                  "distribution",
+                  "build"
+                ],
+                "command": "majordomus distribution build",
+                "setup": [],
+                "expectation": "exits 0; prints version, target, commit"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -14424,6 +16114,46 @@
         "read_only": true,
         "input": "CapabilitiesInput",
         "output": "CapabilityList"
+      },
+      {
+        "name": "majordomus_artifact",
+        "id": "distribution.artifact",
+        "title": "The artifact of a target",
+        "description": "The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file.",
+        "kind": "query",
+        "read_only": true,
+        "input": "ArtifactInput",
+        "output": "ArtifactView"
+      },
+      {
+        "name": "majordomus_build",
+        "id": "distribution.build",
+        "title": "This build",
+        "description": "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "BuildReport"
+      },
+      {
+        "name": "majordomus_distribution",
+        "id": "distribution.model",
+        "title": "The distribution model",
+        "description": "The one-line install command, where an installation goes, and every declared target with the artifact name it derives. This is what the installation page, the landing page's install block and the cockpit's install card render; none of them holds a platform list of its own.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "DistributionReport"
+      },
+      {
+        "name": "majordomus_releases",
+        "id": "distribution.releases",
+        "title": "Published releases",
+        "description": "Every release this repository recorded, newest first, and the one an unpinned installation resolves to: the highest version among the stable, unwithdrawn records. The pointer is derived here and never authored anywhere.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "ReleasesReport"
       },
       {
         "name": "majordomus_graph",
@@ -14590,6 +16320,30 @@
         "method": "GET",
         "path": "/api/v1/capabilities",
         "id": "capabilities.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/distribution/artifact",
+        "id": "distribution.artifact",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/distribution/build",
+        "id": "distribution.build",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/distribution",
+        "id": "distribution.model",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/distribution/releases",
+        "id": "distribution.releases",
         "kind": "query"
       },
       {
@@ -14762,6 +16516,122 @@
         "case": "queries",
         "cached": true,
         "route": "GET /api/v1/capabilities"
+      },
+      {
+        "key": "distribution.artifact|direct|first-published-target",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "distribution.artifact",
+        "module": "distribution",
+        "case": "first-published-target",
+        "cached": false
+      },
+      {
+        "key": "distribution.artifact|mcp|first-published-target",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "distribution.artifact",
+        "module": "distribution",
+        "case": "first-published-target",
+        "cached": false,
+        "tool": "majordomus_artifact"
+      },
+      {
+        "key": "distribution.artifact|http|first-published-target",
+        "kind": "capability",
+        "transport": "http",
+        "id": "distribution.artifact",
+        "module": "distribution",
+        "case": "first-published-target",
+        "cached": false,
+        "route": "GET /api/v1/distribution/artifact"
+      },
+      {
+        "key": "distribution.build|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "distribution.build",
+        "module": "distribution",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "distribution.build|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "distribution.build",
+        "module": "distribution",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_build"
+      },
+      {
+        "key": "distribution.build|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "distribution.build",
+        "module": "distribution",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/distribution/build"
+      },
+      {
+        "key": "distribution.model|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "distribution.model",
+        "module": "distribution",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "distribution.model|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "distribution.model",
+        "module": "distribution",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_distribution"
+      },
+      {
+        "key": "distribution.model|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "distribution.model",
+        "module": "distribution",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/distribution"
+      },
+      {
+        "key": "distribution.releases|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "distribution.releases",
+        "module": "distribution",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "distribution.releases|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "distribution.releases",
+        "module": "distribution",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_releases"
+      },
+      {
+        "key": "distribution.releases|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "distribution.releases",
+        "module": "distribution",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/distribution/releases"
       },
       {
         "key": "graph.get|direct|registry",
@@ -15561,6 +17431,90 @@
           "cases": 2
         },
         {
+          "subject": "distribution.artifact",
+          "module": "distribution",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.artifact",
+          "module": "distribution",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.artifact",
+          "module": "distribution",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.build",
+          "module": "distribution",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.build",
+          "module": "distribution",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.build",
+          "module": "distribution",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.model",
+          "module": "distribution",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.model",
+          "module": "distribution",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.model",
+          "module": "distribution",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.releases",
+          "module": "distribution",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.releases",
+          "module": "distribution",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "distribution.releases",
+          "module": "distribution",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "graph.get",
           "module": "graph",
           "transport": "direct",
@@ -15899,20 +17853,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 14,
-          "covered": 14,
+          "required": 18,
+          "covered": 18,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 14,
-          "covered": 14,
+          "required": 18,
+          "covered": 18,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 14,
-          "covered": 14,
+          "required": 18,
+          "covered": 18,
           "missing": 0,
           "waived": 0
         },
@@ -15923,8 +17877,8 @@
           "waived": 0
         },
         "total": {
-          "required": 54,
-          "covered": 54,
+          "required": 66,
+          "covered": 66,
           "missing": 0,
           "waived": 0
         }

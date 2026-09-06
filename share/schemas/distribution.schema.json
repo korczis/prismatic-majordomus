@@ -1,0 +1,339 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/distribution.schema.json",
+  "title": "Distribution",
+  "description": "The distribution model: how Majordomus is packaged, published and installed. One file, share/distribution.yaml, is authority for the binary's name, the repository it is published from, the installer's canonical URL and defaults, how an archive is named, and every target that may be built. The release build matrix, the installer's target table, the supported-platform documentation and the site's install commands are projections of this file; none of them may state a target, a name or a URL of its own.",
+  "x-majordomus-allow": "distribution",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "project",
+    "installer",
+    "archive",
+    "titles",
+    "targets"
+  ],
+  "properties": {
+    "schema": {
+      "const": "majordomus-distribution/v1",
+      "description": "The contract this file follows."
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binary",
+        "repository",
+        "license"
+      ],
+      "properties": {
+        "binary": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "The command a person types after installing; also the stem of every archive name."
+        },
+        "repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
+          "description": "owner/name on GitHub. Release assets are served from this repository and the installer accepts a download host derived from it and from nowhere else."
+        },
+        "license": {
+          "type": "string",
+          "description": "The SPDX identifier of the licence file every archive carries."
+        }
+      }
+    },
+    "installer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base_url",
+        "script",
+        "download_command",
+        "shell",
+        "install_dir",
+        "prefix"
+      ],
+      "properties": {
+        "base_url": {
+          "type": "string",
+          "pattern": "^https://[A-Za-z0-9.-]+(/[A-Za-z0-9._~-]+)*$",
+          "description": "The published root of the release metadata and of the installer itself. HTTPS only, no trailing slash."
+        },
+        "script": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]+$",
+          "description": "The installer's file name under base_url."
+        },
+        "download_command": {
+          "type": "string",
+          "description": "The command the documented one-liner pipes from, rendered before the installer URL."
+        },
+        "shell": {
+          "type": "string",
+          "pattern": "^[a-z]+$",
+          "description": "The shell the documented one-liner pipes into."
+        },
+        "install_dir": {
+          "type": "string",
+          "description": "Where the launchers are written by default, written with a literal $HOME."
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Where the versioned trees live by default, written with a literal $HOME."
+        }
+      }
+    },
+    "archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "extension",
+        "name",
+        "checksum",
+        "checksums_file"
+      ],
+      "properties": {
+        "format": {
+          "enum": [
+            "tar.gz",
+            "zip"
+          ],
+          "description": "The default packaging format; a target may override it."
+        },
+        "extension": {
+          "type": "string",
+          "pattern": "^[a-z0-9.]+$",
+          "description": "The default file extension, without a leading dot."
+        },
+        "name": {
+          "const": "{binary}-{tag}-{target}.{extension}",
+          "description": "The one naming function. Written here so that the shape is reviewable; the substitution is implemented once, in the executable, and every other surface reads the result."
+        },
+        "checksum": {
+          "const": "sha256",
+          "description": "The digest algorithm every artifact carries and the installer verifies before anything is extracted."
+        },
+        "checksums_file": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]+$",
+          "description": "The conventional aggregate digest file published beside the artifacts."
+        }
+      }
+    },
+    "titles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "arch",
+        "libc"
+      ],
+      "description": "How each vocabulary term is written in prose. Documentation and the installer's unsupported-platform message read these; neither spells a platform name of its own.",
+      "properties": {
+        "os": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "macos",
+            "linux",
+            "windows"
+          ],
+          "properties": {
+            "macos": {
+              "type": "string"
+            },
+            "linux": {
+              "type": "string"
+            },
+            "windows": {
+              "type": "string"
+            }
+          }
+        },
+        "arch": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x86_64",
+            "aarch64"
+          ],
+          "properties": {
+            "x86_64": {
+              "type": "string"
+            },
+            "aarch64": {
+              "type": "string"
+            }
+          }
+        },
+        "libc": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "gnu",
+            "musl"
+          ],
+          "properties": {
+            "gnu": {
+              "type": "string"
+            },
+            "musl": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Every target the project has an opinion about, supported or not. A target absent here does not exist for the release build, the installer, the documentation or the site.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "os",
+          "arch",
+          "rust_target",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9_]+)+$",
+            "description": "Identity, unique; the key every projection uses."
+          },
+          "os": {
+            "enum": [
+              "macos",
+              "linux",
+              "windows"
+            ]
+          },
+          "arch": {
+            "enum": [
+              "x86_64",
+              "aarch64"
+            ]
+          },
+          "libc": {
+            "enum": [
+              "gnu",
+              "musl"
+            ],
+            "description": "Required on linux, forbidden elsewhere: the C library the artifact is linked against, and the thing the installer detects on the machine."
+          },
+          "rust_target": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+-[a-z0-9_]+-[a-z0-9_]+(-[a-z0-9_]+)?$",
+            "description": "The Rust target triple the executable is built for; unique across targets."
+          },
+          "format": {
+            "enum": [
+              "tar.gz",
+              "zip"
+            ],
+            "description": "Overrides archive.format for this target."
+          },
+          "binary_suffix": {
+            "type": "string",
+            "pattern": "^\\.[a-z0-9]+$",
+            "description": "Appended to the executable's file name inside the archive; for the platforms that need one."
+          },
+          "status": {
+            "enum": [
+              "supported",
+              "experimental",
+              "unavailable"
+            ],
+            "description": "supported is built by every release and offered by the installer; experimental is built and offered, and says so; unavailable is documented, never built, and refused by the installer with its reason."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Required when status is not supported: why, in one sentence, in the words a person needs."
+          },
+          "build": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "runner"
+            ],
+            "description": "How a release builds this target. The release workflow's matrix is generated from these fields and states none of its own.",
+            "properties": {
+              "runner": {
+                "type": "string",
+                "description": "The GitHub-hosted runner label the artifact is built on."
+              },
+              "packages": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "apt packages the runner needs before the build."
+              },
+              "native": {
+                "type": "boolean",
+                "description": "True when the runner's own architecture and operating system are the target's, so the built artifact can be executed and smoke-tested where it was built."
+              }
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "os": {
+                  "const": "linux"
+                }
+              },
+              "required": [
+                "os"
+              ]
+            },
+            "then": {
+              "required": [
+                "libc"
+              ]
+            },
+            "else": {
+              "not": {
+                "required": [
+                  "libc"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "supported",
+                    "experimental"
+                  ]
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "required": [
+                "build"
+              ]
+            },
+            "else": {
+              "required": [
+                "reason"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
