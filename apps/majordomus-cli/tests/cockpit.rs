@@ -249,7 +249,10 @@ fn the_continuity_page_shows_what_the_lifecycle_is_holding_and_labels_what_not_t
     let root = f.root();
     let root_s = root.to_string_lossy().to_string();
     let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
-    let branch = f.git(&["symbolic-ref", "--short", "HEAD"]).trim().to_string();
+    let branch = f
+        .git(&["symbolic-ref", "--short", "HEAD"])
+        .trim()
+        .to_string();
 
     let record = |created: &str, task: &str, at: &str| {
         format!(
@@ -299,14 +302,17 @@ fn the_continuity_page_shows_what_the_lifecycle_is_holding_and_labels_what_not_t
     assert_eq!(status, 200);
 
     for text in [
-        "s-here",                 // the open episode
-        "claude-code",            // the provider that opened it
-        "Do the thing",           // the active task
-        "Finish the thing.",      // the section a resuming worker acts on
-        "Which budget applies?",  // the blocker
-        "diverged",               // the label on the handover
+        "s-here",                // the open episode
+        "claude-code",           // the provider that opened it
+        "Do the thing",          // the active task
+        "Finish the thing.",     // the section a resuming worker acts on
+        "Which budget applies?", // the blocker
+        "diverged",              // the label on the handover
     ] {
-        assert!(page.contains(text), "the continuity page lacks '{text}':\n{page}");
+        assert!(
+            page.contains(text),
+            "the continuity page lacks '{text}':\n{page}"
+        );
     }
     assert!(
         page.contains("Trust git over anything it says"),
