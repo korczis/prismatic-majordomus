@@ -13,6 +13,21 @@ majordomus handover < note.md # to continue in another session, or
 majordomus finish --outcome <completed|partial|blocked|no_match|failed> --verify-command "<cmd>"
 ```
 
+Before `start`, establish where you are. A branch's work happens in its canonical
+worktree — `<repo>-wt/<branch>`, derived from git and never chosen — and the trunk's in
+the primary checkout:
+
+```
+majordomus worktree                          # branch, worktree, canonical or not, uncommitted work
+majordomus worktree create <branch>          # new work: the branch from the trunk, the worktree at its path
+cd "$(majordomus worktree path <branch>)"
+majordomus worktree migrate --plan           # out of place: what would move; `migrate` moves it, work included
+```
+
+The pre-commit hook asks `majordomus worktree guard` and refuses a feature branch committed
+from anywhere else. A mismatch is corrected with these commands, never by continuing in the
+primary checkout; `docs/WORKTREES.md` and rule `project.worktree-topology` say why.
+
 `start` refuses while a task is active here: hand it over or finish it first. `check`
 and `finish` fail on a touched file outside the claimed scope. `finish --outcome
 completed` evaluates every line of the finish contract the policy selects and writes

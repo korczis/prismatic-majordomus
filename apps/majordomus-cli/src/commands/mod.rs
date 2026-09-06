@@ -10,6 +10,7 @@ pub mod scope;
 pub mod serve;
 pub mod web;
 pub mod why;
+pub mod worktree;
 
 use crate::cli::{Cli, Command};
 use crate::error::Result;
@@ -26,5 +27,6 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Web(args) => web::run(args),
         Command::Why(args) => why::run(args),
         Command::Distribution(args) => distribution::run(args),
+        Command::Worktree(args) => worktree::run(args),
     }
 }

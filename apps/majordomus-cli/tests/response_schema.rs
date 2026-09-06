@@ -56,7 +56,9 @@ fn every_answer_satisfies_the_schema_its_capability_publishes() {
         let validator = match jsonschema::validator_for(&schema) {
             Ok(v) => v,
             Err(e) => {
-                violations.push(format!("{id}: its published output schema does not compile: {e}"));
+                violations.push(format!(
+                    "{id}: its published output schema does not compile: {e}"
+                ));
                 continue;
             }
         };
@@ -89,7 +91,10 @@ fn every_answer_satisfies_the_schema_its_capability_publishes() {
         checked > 0,
         "no answer was produced, so nothing was actually checked"
     );
-    eprintln!("{checked} answer(s) across {} executable(s)", executables.len());
+    eprintln!(
+        "{checked} answer(s) across {} executable(s)",
+        executables.len()
+    );
 }
 
 /// The check above passes today, so this proves it is capable of failing. It takes a real

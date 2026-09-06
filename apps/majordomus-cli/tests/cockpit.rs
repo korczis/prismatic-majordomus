@@ -693,6 +693,48 @@ fn a_page_costs_no_rebuild_of_anything_canonical() {
     }
 }
 
+#[test]
+fn a_listing_is_read_a_page_at_a_time_and_entered_by_its_parts() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+
+    // every listing of the layer says what window of it is being shown
+    for page in ["/cockpit/capabilities", "/cockpit/objects"] {
+        let (status, body) = html(&s, page);
+        assert_eq!(status, 200, "{page}");
+        assert!(
+            body.contains("mj-pagination-summary"),
+            "{page} does not say what part of the listing it is showing"
+        );
+        assert!(
+            body.contains("mj-chips"),
+            "{page} offers no way in but scrolling"
+        );
+    }
+
+    // a filter chip carries the filters already in force and drops the page number: a
+    // reader on page 4 of a search who picks a module lands on that module's first page
+    let (_, body) = html(&s, "/cockpit/capabilities?q=repository&page=2");
+    let chip = body
+        .split(r#"mj-chip" href=""#)
+        .nth(1)
+        .and_then(|rest| rest.split('"').next())
+        .expect("a module chip");
+    assert!(
+        chip.contains("q=repository"),
+        "the chip dropped the filter: {chip}"
+    );
+    assert!(
+        !chip.contains("page="),
+        "the chip kept a page number: {chip}"
+    );
+
+    // a page number past the end is a page that exists, not an error and not a panic
+    let (status, body) = html(&s, "/cockpit/objects?page=99999");
+    assert_eq!(status, 200);
+    assert!(body.contains("mj-pagination-summary"), "{body}");
+}
+
 fn urlencode(s: &str) -> String {
     majordomus_cli::http::router::percent_encode(s)
 }

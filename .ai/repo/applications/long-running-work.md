@@ -12,7 +12,7 @@ fits_when:
 does_not_fit_when:
   - 'The work is a single sitting and nothing needs to be recalled afterwards'
   - 'You want a knowledge base; this keeps operational state, not documentation'
-use_cases: [record-a-decision-before-it-is-forgotten, capture-the-prompts-that-started-the-work, hand-work-between-sessions, find-out-what-drifted, accept-or-refuse-finished-work, keep-decisions-out-of-the-transcript, open-and-close-a-session, plan-the-work-as-data, resume-from-a-prompt-asset, block-acceptance-on-an-open-question, checkpoint-long-work, complete-an-issue-only-with-its-evidence, deliver-issues-in-waves, read-back-what-happened, read-only-the-context-that-fits, carry-a-blocker-across-a-handover, let-the-provider-draw-the-episode-boundary]
+use_cases: [record-a-decision-before-it-is-forgotten, capture-the-prompts-that-started-the-work, hand-work-between-sessions, find-out-what-drifted, accept-or-refuse-finished-work, keep-decisions-out-of-the-transcript, open-and-close-a-session, plan-the-work-as-data, resume-from-a-prompt-asset, block-acceptance-on-an-open-question, checkpoint-long-work, complete-an-issue-only-with-its-evidence, deliver-issues-in-waves, read-back-what-happened, read-only-the-context-that-fits, carry-a-blocker-across-a-handover, let-the-provider-draw-the-episode-boundary, work-on-a-branch-in-its-canonical-worktree]
 doctrines: [majordomus.adr-integrity, majordomus.prompt-capture, majordomus.ledger-integrity, majordomus.decision-records, majordomus.blocker-resolution, majordomus.task-continuity]
 responsibilities: [state, handover, finish]
 ---

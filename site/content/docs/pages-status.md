@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance status"
 description = "the current numbers behind that document: the controlled budgets, the paths that start a publication, and the last measured build-and-check path per platform. Generated from `.ai/repo/ci/pages.yaml` and `.ai/repo/benchmarks/pages/`; never edited"
-weight = 38
+weight = 39
 [extra]
 source = "docs/PAGES_STATUS.md"
 +++
@@ -13,7 +13,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](@/docs/github-pages-performance.md).
 
-Generated from canonical inputs `738ab526054d`.
+Generated from canonical inputs `a42f88c071e0`.
 
 ## Controlled budget
 
@@ -45,6 +45,7 @@ publication path itself. `scripts/pages paths` prints this list and the workflow
 held to it.
 
 - `.ai/**`
+- `.envrc`
 - `.githooks/**`
 - `.github/workflows/pages.yml`
 - `.nojekyll`

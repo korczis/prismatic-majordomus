@@ -196,6 +196,16 @@
       "label": "repository.scope_classify"
     },
     {
+      "id": "capability:worktree.migration_plan",
+      "kind": "capability",
+      "label": "worktree.migration_plan"
+    },
+    {
+      "id": "capability:worktree.topology",
+      "kind": "capability",
+      "label": "worktree.topology"
+    },
+    {
       "id": "claim:adr-catalogue",
       "kind": "claim",
       "label": "adr-catalogue",
@@ -694,10 +704,22 @@
       "route": "/guarantees/wiring-reconciliation/"
     },
     {
+      "id": "claim:worktree-migration-lossless",
+      "kind": "claim",
+      "label": "worktree-migration-lossless",
+      "route": "/guarantees/worktree-migration-lossless/"
+    },
+    {
       "id": "claim:worktree-ownership",
       "kind": "claim",
       "label": "worktree-ownership",
       "route": "/guarantees/worktree-ownership/"
+    },
+    {
+      "id": "claim:worktree-topology-derived",
+      "kind": "claim",
+      "label": "worktree-topology-derived",
+      "route": "/guarantees/worktree-topology-derived/"
     },
     {
       "id": "command:adr",
@@ -1545,6 +1567,12 @@
       "kind": "use-case",
       "label": "trust-the-policy-before-reading-it",
       "route": "/use-cases/trust-the-policy-before-reading-it/"
+    },
+    {
+      "id": "use-case:work-on-a-branch-in-its-canonical-worktree",
+      "kind": "use-case",
+      "label": "work-on-a-branch-in-its-canonical-worktree",
+      "route": "/use-cases/work-on-a-branch-in-its-canonical-worktree/"
     }
   ],
   "edges": [
@@ -1585,6 +1613,16 @@
     },
     {
       "source": "moment:abandoned-worktree",
+      "target": "capability:worktree.migration_plan",
+      "kind": "answered_by"
+    },
+    {
+      "source": "moment:abandoned-worktree",
+      "target": "capability:worktree.topology",
+      "kind": "answered_by"
+    },
+    {
+      "source": "moment:abandoned-worktree",
       "target": "claim:divergence-label",
       "kind": "backed_by"
     },
@@ -1605,7 +1643,17 @@
     },
     {
       "source": "moment:abandoned-worktree",
+      "target": "claim:worktree-migration-lossless",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:abandoned-worktree",
       "target": "claim:worktree-ownership",
+      "kind": "backed_by"
+    },
+    {
+      "source": "moment:abandoned-worktree",
+      "target": "claim:worktree-topology-derived",
       "kind": "backed_by"
     },
     {
@@ -1671,6 +1719,11 @@
     {
       "source": "moment:abandoned-worktree",
       "target": "use-case:resume-in-the-right-worktree",
+      "kind": "resolved_by"
+    },
+    {
+      "source": "moment:abandoned-worktree",
+      "target": "use-case:work-on-a-branch-in-its-canonical-worktree",
       "kind": "resolved_by"
     },
     {
@@ -6220,8 +6273,8 @@
     }
   ],
   "metadata": {
-    "nodes": 261,
-    "edges": 934,
+    "nodes": 266,
+    "edges": 939,
     "acyclic": false,
     "truncated": false
   },

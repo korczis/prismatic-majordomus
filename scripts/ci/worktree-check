@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# worktree-check — the gate of project.worktree-topology: the pieces that make the
+# branch-to-worktree topology one rule agree with each other.
+#
+# A CI runner's checkout is a normal checkout in a normal directory, so the topology of
+# *this* machine is not what the gate measures: what it can hold together is that the rule
+# has one constant, that the hook asks the guard, that the doctrine names the same
+# convention, and that the behavioural case proves the executable does what the rule says.
+#
+#   - `-wt` is written once in the crate: the constant in src/worktree/path.rs, and in no
+#     other source file (a second literal is a second derivation waiting to disagree)
+#   - the pre-commit hook invokes `majordomus-cli worktree guard`, and the policy's
+#     enforcement list declares it, so doctor verifies the wiring on every install
+#   - the ADR, the rule, the provider templates and docs/WORKTREES.md name the container
+#     with the constant's suffix (a document that names another convention is wrong)
+#   - test/cases/96_worktree_topology.sh passes (skipped, not failed, without cargo)
+#
+#   scripts/ci/worktree-check                report every finding, exit 10 on any
+#   MJ_ROOT=<dir> scripts/ci/worktree-check  measure another tree (the case does)
+#   scripts/ci/worktree-check --no-suite     the structural findings only
+#
+# Exit: 0 clean, 10 findings, 12 unusable.
+set -eu
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+SUITE=1
+while [ $# -gt 0 ]; do case "$1" in
+  --no-suite) SUITE=0; shift ;;
+  *) echo "worktree-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+CONST_FILE="apps/majordomus-cli/src/worktree/path.rs"
+[ -f "$CONST_FILE" ] || { echo "worktree-check: $CONST_FILE is missing; nothing to hold the rule to" >&2; exit 12; }
+suffix="$(sed -n 's/^pub const CONTAINER_SUFFIX: &str = "\(.*\)";$/\1/p' "$CONST_FILE")"
+[ -n "$suffix" ] || { echo "worktree-check: CONTAINER_SUFFIX is not declared in $CONST_FILE" >&2; exit 12; }
+
+findings=0
+fail() { printf 'FAIL worktree-check  %s\n' "$*"; findings=$((findings+1)); }
+ok()   { printf 'OK   worktree-check  %s\n' "$*"; }
+
+# 1. one constant, one derivation: the literal in code, outside the constant, is a second
+#    derivation waiting to disagree. A comment that explains the convention is not, and
+#    neither is an example beside the clap declaration that asserts what the command
+#    prints — an expectation about the output is not a derivation of it.
+others="$(grep -rn --include='*.rs' -- "\"$suffix\"" apps/majordomus-cli/src \
+  | grep -v "^$CONST_FILE:" \
+  | grep -v '^apps/majordomus-cli/src/cli.rs:' \
+  | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true)"
+if [ -n "$others" ]; then fail "\"$suffix\" is written in code outside $CONST_FILE: $(printf '%s' "$others" | cut -d: -f1,2 | tr '\n' ' ')"
+else ok "\"$suffix\" is written once in code, in $CONST_FILE"; fi
+
+# 2. the hook asks the guard, and the policy declares it so doctor verifies the wiring
+if grep -qE 'majordomus-cli[[:space:]]+worktree[[:space:]]+guard' .githooks/pre-commit 2>/dev/null; then ok ".githooks/pre-commit asks the guard"
+else fail ".githooks/pre-commit does not invoke 'majordomus-cli worktree guard'"; fi
+if grep -qE 'args: \[worktree, guard\]' .ai/repo/policy.yaml 2>/dev/null; then ok "the policy's enforcement list declares the guard"
+else fail ".ai/repo/policy.yaml declares no enforcement entry for 'worktree guard'"; fi
+
+# 3. the doctrine and the documents name the constant's convention
+for f in .ai/repo/rules/project/worktree-topology.v1.md docs/WORKTREES.md \
+         .ai/repo/providers/agents.tmpl .ai/repo/providers/claude-code.tmpl \
+         share/providers/agents.tmpl share/providers/claude-code.tmpl share/providers/codex.tmpl \
+         share/providers/gemini.tmpl share/providers/generic.tmpl; do
+  [ -f "$f" ] || { fail "$f is missing"; continue; }
+  if grep -q -- "$suffix/" "$f"; then ok "$f names the container with $suffix"
+  else fail "$f does not name the container with the suffix $suffix"; fi
+done
+if ls .ai/repo/adrs/*.md >/dev/null 2>&1 && grep -lq -- "$suffix\"" .ai/repo/adrs/*.md; then ok "an ADR records the $suffix convention"
+else fail "no ADR under .ai/repo/adrs names the $suffix convention"; fi
+
+# 4. the behavioural case, through the built executable
+if [ "$SUITE" = 1 ]; then
+  if [ -f test/cases/96_worktree_topology.sh ]; then
+    if bash test/run.sh 96_worktree_topology; then ok "test/cases/96_worktree_topology.sh passes"
+    else fail "test/cases/96_worktree_topology.sh fails"; fi
+  else fail "test/cases/96_worktree_topology.sh is missing"; fi
+fi
+
+if [ "$findings" -gt 0 ]; then
+  echo "worktree-check: $findings finding(s); the rule is project.worktree-topology" >&2
+  exit 10
+fi
+echo "worktree-check: the topology rule has one constant, one guard, one convention in every document"

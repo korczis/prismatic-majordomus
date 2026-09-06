@@ -53,11 +53,33 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
+| `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
 | `/cockpit/activity` | this process's counters and phases, and a running plot of them | `perf.counters` |
 | `/cockpit/assets/<file>` | the stylesheet, the scripts, the vendored libraries | `share/cockpit/` |
 
 Every route is a deep link: the filters are query parameters, a refresh loses nothing, and
 a page can be sent to somebody.
+
+## How a listing of the whole layer is read
+
+The two listings that hold everything — nine hundred capabilities, nine hundred objects —
+are read a page at a time and entered by their parts:
+
+- **A page is fifty rows.** `?page=` says which; a number past the end is the last page
+  and never an error. The control under the table says which rows are being shown, and
+  offers the first page, the last, the neighbours of this one, and a gap for the rest.
+- **Above the table are the listing's own parts** — the registry's modules on
+  `/cockpit/capabilities`, the index's kinds on `/cockpit/objects` — each with how many
+  it holds *under the filters in force*. They are the same catalogues the sidebar shows,
+  put where the listing is: a set of nine hundred rows is entered by its module or its
+  kind rather than scrolled.
+- **A link never loses a filter and never keeps a page number.** Paging carries every
+  filter with it; picking a part starts that part at its first page.
+
+A **detail** page pages nothing. A graph's nodes and edges, and the artifact manifest, are
+listed whole: the drawing is an enhancement over those lists, a reader without JavaScript
+has only them, and a reader checking whether a path is in the manifest must be able to
+find it with the browser's own search.
 
 ## What makes it a projection and not a dashboard
 

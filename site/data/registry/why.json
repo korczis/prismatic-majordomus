@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.2.0"
   },
-  "fingerprint": "175b46f03655cf1cfc775924d65a505049ebe7bfc4e0cfb610d01068705bae4b",
+  "fingerprint": "c67f2c6ebc74fc1a66ed60b042b6ab267867de9358678b4a77fd414780e177ae",
   "route": "/why/",
   "counts": {
     "moments": 38,
@@ -657,6 +657,16 @@
       {
         "value": "peers.announce",
         "label": "peers.announce",
+        "count": 1
+      },
+      {
+        "value": "worktree.migration_plan",
+        "label": "worktree.migration_plan",
+        "count": 1
+      },
+      {
+        "value": "worktree.topology",
+        "label": "worktree.topology",
         "count": 1
       }
     ],
@@ -4909,14 +4919,18 @@
       ],
       "capabilities": [
         "repository.info",
-        "health.report"
+        "health.report",
+        "worktree.topology",
+        "worktree.migration_plan"
       ],
       "claims": [
         "worktree-ownership",
         "git-identity",
         "divergence-label",
         "handover-record",
-        "drift-watch"
+        "drift-watch",
+        "worktree-topology-derived",
+        "worktree-migration-lossless"
       ],
       "doctrines": [
         "majordomus.handover-integrity",
@@ -4927,7 +4941,8 @@
       "use_cases": [
         "resume-in-the-right-worktree",
         "hand-work-between-sessions",
-        "find-out-what-drifted"
+        "find-out-what-drifted",
+        "work-on-a-branch-in-its-canonical-worktree"
       ],
       "related": [
         "task-in-progress-for-three-weeks",
