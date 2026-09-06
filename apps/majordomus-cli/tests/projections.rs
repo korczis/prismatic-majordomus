@@ -9,9 +9,9 @@ use std::collections::BTreeSet;
 
 use majordomus_cli::capability::handler::handler;
 use majordomus_cli::capability::{
-    BenchmarkPolicy, CachePolicy, CanonicalSchema, Capability, CapabilityId, CapabilityKind,
-    CapabilityRegistry, CaseContext, Executable, Exposure, HttpExposure, HttpMethod, McpExposure,
-    ModuleId, Provenance, Stability,
+    Availability, BenchmarkPolicy, CachePolicy, CanonicalSchema, Capability, CapabilityId,
+    CapabilityKind, CapabilityRegistry, CaseContext, Executable, Exposure, HttpExposure,
+    HttpMethod, McpExposure, ModuleId, Provenance, Stability, Visibility,
 };
 use majordomus_cli::generate::{artifacts, Target};
 use majordomus_cli::http::openapi;
@@ -153,11 +153,23 @@ fn echo<I: serde::de::DeserializeOwned + 'static>(
     schema: CanonicalSchema,
     http: bool,
 ) -> Executable {
+    let kind = CapabilityKind::Query;
+    let exposure = Exposure {
+        mcp: Some(McpExposure {
+            tool: Some("fixture_echo".into()),
+            resource: None,
+        }),
+        http: http.then(|| HttpExposure {
+            method: HttpMethod::Get,
+            path: "/api/v1/echo".into(),
+        }),
+        cli: None,
+    };
     Executable {
         capability: Capability {
             id: CapabilityId::parse("fixture.echo").unwrap(),
             module: ModuleId::unchecked("fixture"),
-            kind: CapabilityKind::Query,
+            kind,
             title: "Echo".into(),
             description: description.into(),
             input: schema,
@@ -165,17 +177,9 @@ fn echo<I: serde::de::DeserializeOwned + 'static>(
             provenance: Provenance::Builtin {
                 module: "fixture".into(),
             },
-            exposure: Exposure {
-                mcp: Some(McpExposure {
-                    tool: Some("fixture_echo".into()),
-                    resource: None,
-                }),
-                http: http.then(|| HttpExposure {
-                    method: HttpMethod::Get,
-                    path: "/api/v1/echo".into(),
-                }),
-                cli: None,
-            },
+            availability: Availability::classify(kind, &exposure),
+            visibility: Visibility::classify(&exposure),
+            exposure,
             stability: Stability::Experimental,
             tags: vec![],
             benchmark: BenchmarkPolicy::Required,
@@ -629,7 +633,7 @@ fn the_site_dataset_carries_every_surface_and_follows_a_descriptor_mutation() {
     let paths: BTreeSet<String> = doc["paths"].as_object().unwrap().keys().cloned().collect();
     let ds_paths: BTreeSet<String> = ds.http.routes.iter().map(|r| r.path.clone()).collect();
     assert_eq!(paths, ds_paths);
-    assert!(ds.http.infrastructure.contains(&"/openapi.json"));
+    assert!(ds.http.infrastructure.iter().any(|r| r == "/openapi.json"));
 
     // the registry: every builtin descriptor in full, with the file it was composed in;
     // every module's ids are descriptors of the dataset

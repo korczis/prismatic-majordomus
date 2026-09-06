@@ -19,7 +19,7 @@ provenance:
   origin: authored
 ---
 
-# 15. Operational moments are objects of the layer, not pages of the site
+# 18. Operational moments are objects of the layer, not pages of the site
 
 ## Context
 

@@ -203,6 +203,34 @@ fn is_legacy_layout(dir: &Path) -> bool {
     mj.is_dir() && !mj.join("bin/majordomus").is_file()
 }
 
+/// A repository's identity over the wire: a digest of its absolute root.
+///
+/// A server on a loopback socket has to be able to say *which* repository it serves, so
+/// that a second process can tell a live server for this repository from one for another.
+/// The root itself would answer that and would also tell whoever reached the socket where
+/// the checkout sits on the host, which is of no use to them and of some use to somebody
+/// else. A digest answers the question and discloses nothing: a process that already knows
+/// the root can compute it and compare, and a process that does not cannot invert it.
+///
+/// Two repositories at one path are one repository, which is exactly the identity a lease
+/// needs. A repository that moves is a different one, which is also right: the lease of the
+/// old path names a server that is no longer serving that path.
+///
+/// ```
+/// use majordomus_cli::repository::identity;
+/// use std::path::Path;
+/// assert_eq!(identity(Path::new("/a/b")), identity(Path::new("/a/b")));
+/// assert_ne!(identity(Path::new("/a/b")), identity(Path::new("/a/c")));
+/// assert_eq!(identity(Path::new("/a/b")).len(), 32);
+/// assert!(!identity(Path::new("/a/b")).contains('/'));
+/// ```
+pub fn identity(root: &Path) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(root.as_os_str().as_encoded_bytes());
+    format!("{:x}", hasher.finalize())[..32].to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
