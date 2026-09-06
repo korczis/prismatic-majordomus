@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::bench::{BenchmarkProjection, Coverage};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{CapabilityKind, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::CachePolicy;
 use crate::generate;
@@ -33,6 +33,9 @@ use super::{get, Empty};
 
 /// The URI under which `system.health` is read as an MCP resource.
 pub const HEALTH_URI: &str = "majordomus://health";
+
+/// The URI under which the coverage matrix is read as an MCP resource.
+pub const COVERAGE_URI: &str = "majordomus://coverage";
 
 /// Where one dimension of the system stands. Ordered by severity, so the worst check
 /// decides the whole.
@@ -324,6 +327,384 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     })
 }
 
+/// One dimension of evidence a capability can carry.
+///
+/// The dimensions are what a reader wants to know before trusting a capability: is it
+/// reachable, is it timed, does anything explain it, does anything hold it to a rule, does
+/// anything prove it runs. Each is decided by an engine that already owns the answer, and
+/// each cell names the artifact it was decided from.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum Dimension {
+    /// A document, a decision or a directory contract names the file it is declared in.
+    Documented,
+    /// A behavioural case is named over the file it is declared in.
+    Tested,
+    /// A rule is in force over the file it is declared in.
+    Enforced,
+    /// The benchmark projection's coverage counts a case for it.
+    Benchmarked,
+    /// It is reachable through a transport a caller can use.
+    Exposed,
+}
+
+impl Dimension {
+    /// The word as serialised.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::health::Dimension;
+    /// assert_eq!(Dimension::Benchmarked.as_str(), "benchmarked");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Dimension::Documented => "documented",
+            Dimension::Tested => "tested",
+            Dimension::Enforced => "enforced",
+            Dimension::Benchmarked => "benchmarked",
+            Dimension::Exposed => "exposed",
+        }
+    }
+
+    /// Every dimension, in the order the matrix reports them.
+    pub const ALL: &'static [Dimension] = &[
+        Dimension::Documented,
+        Dimension::Tested,
+        Dimension::Enforced,
+        Dimension::Benchmarked,
+        Dimension::Exposed,
+    ];
+}
+
+/// What a capability of one kind owes, as data rather than as a condition inside the
+/// renderer.
+///
+/// A `Resource` is declarative content the repository holds and nothing executes; asking
+/// it for a benchmark or a behavioural case would be asking a paragraph to prove it runs.
+/// What an executable capability owes is what a caller depends on: a way to reach it and a
+/// measured cost.
+const POLICY: &[(CapabilityKind, &[Dimension])] = &[
+    (
+        CapabilityKind::Query,
+        &[Dimension::Exposed, Dimension::Benchmarked],
+    ),
+    (
+        CapabilityKind::Command,
+        &[Dimension::Exposed, Dimension::Benchmarked],
+    ),
+    (CapabilityKind::Resource, &[]),
+];
+
+/// What the policy asks of this capability. A declaration that claims a behavioural test
+/// owes one: `BehaviorallyVerified` is the claim, and the matrix is where it is checked
+/// against something that exists.
+fn required_of(kind: CapabilityKind, stability: Stability) -> Vec<Dimension> {
+    let mut required: Vec<Dimension> = POLICY
+        .iter()
+        .find(|(k, _)| *k == kind)
+        .map(|(_, d)| d.to_vec())
+        .unwrap_or_default();
+    if stability == Stability::BehaviorallyVerified && !required.contains(&Dimension::Tested) {
+        required.push(Dimension::Tested);
+    }
+    required.sort();
+    required
+}
+
+/// One cell: a dimension and the artifacts that satisfy it. An empty cell is an empty
+/// cell; nothing here is filled from a claim.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct CoverageCell {
+    /// Which dimension.
+    pub dimension: Dimension,
+    /// The artifacts behind it, each nameable and followable.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub evidence: Vec<String>,
+}
+
+/// One capability's row.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct CapabilityCoverage {
+    /// The canonical id.
+    pub id: String,
+    /// The module that composes it.
+    pub module: String,
+    /// Where it is declared, so every cell can be traced to the same place they were
+    /// resolved from.
+    pub source: String,
+    /// What the policy asks of it.
+    pub required: Vec<Dimension>,
+    /// Every dimension with what backs it.
+    pub cells: Vec<CoverageCell>,
+    /// Required dimensions nothing backs.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub missing: Vec<Dimension>,
+}
+
+/// The matrix: what is actually finished, read from artifacts rather than from claims.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct CoverageMatrix {
+    /// `majordomus/capability-coverage/v1`.
+    pub schema: String,
+    /// How many capabilities carry each dimension, by dimension word, plus `total`.
+    pub tallies: BTreeMap<String, usize>,
+    /// One row per capability, by id.
+    pub capabilities: Vec<CapabilityCoverage>,
+    /// Every gap: a required dimension with nothing behind it, and every reference the
+    /// layer declares that resolves to nothing, each naming which end failed.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub gaps: Vec<String>,
+}
+
+/// Every file node id the layer could name this path by: the file itself and every
+/// directory above it, because a directory contract tracks the directory and a decision
+/// names the file.
+fn file_nodes(path: &str) -> Vec<String> {
+    let mut out = vec![format!("file:{path}"), format!("test:{path}")];
+    let mut rest = path;
+    while let Some((parent, _)) = rest.rsplit_once('/') {
+        out.push(format!("file:{parent}"));
+        rest = parent;
+    }
+    out
+}
+
+/// What the layer says about one file, read off the composed graph.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+struct FileEvidence {
+    /// Documents, contracts and decisions that name the file.
+    documented: Vec<String>,
+    /// Cases named over it.
+    tested: Vec<String>,
+    /// Rules in force over it.
+    enforced: Vec<String>,
+}
+
+/// The composed graph read once into the lookups the walk needs. Built per call, not per
+/// capability: eight hundred capabilities against a thousand edges is a product nobody
+/// should pay twice.
+struct Chain<'a> {
+    nodes: BTreeMap<&'a str, &'a crate::graph::Node>,
+    into: BTreeMap<&'a str, Vec<&'a crate::graph::Edge>>,
+    out_of: BTreeMap<&'a str, Vec<&'a crate::graph::Edge>>,
+}
+
+impl<'a> Chain<'a> {
+    fn new(graph: &'a crate::graph::Graph) -> Self {
+        let nodes = graph.nodes.iter().map(|n| (n.id.as_str(), n)).collect();
+        let mut into: BTreeMap<&str, Vec<&crate::graph::Edge>> = BTreeMap::new();
+        let mut out_of: BTreeMap<&str, Vec<&crate::graph::Edge>> = BTreeMap::new();
+        for e in &graph.edges {
+            into.entry(e.target.as_str()).or_default().push(e);
+            out_of.entry(e.source.as_str()).or_default().push(e);
+        }
+        Chain {
+            nodes,
+            into,
+            out_of,
+        }
+    }
+
+    /// The path a node is followed by, so a cell names an artifact rather than a node id.
+    fn label(&self, id: &str) -> String {
+        self.nodes
+            .get(id)
+            .map(|n| n.source.clone().unwrap_or_else(|| n.label.clone()))
+            .unwrap_or_else(|| id.to_string())
+    }
+
+    /// What the layer says about the file this capability is declared in, and about every
+    /// directory above it, because a directory contract tracks the directory while a
+    /// decision and a claim name the file.
+    fn evidence(&self, source: &str) -> FileEvidence {
+        let mut out = FileEvidence::default();
+        for candidate in file_nodes(source) {
+            for e in self.into.get(candidate.as_str()).into_iter().flatten() {
+                // what names this file: a directory contract that tracks it, a decision
+                // that put something in force over it, a claim that says it implements it
+                if !matches!(
+                    e.kind.as_str(),
+                    "tracks" | "put_in_force" | "related_to" | "implemented_by"
+                ) {
+                    continue;
+                }
+                if e.kind != "implemented_by" {
+                    out.documented
+                        .push(format!("{} ({})", self.label(&e.source), e.kind));
+                }
+                // whatever named this file also named the rest of the chain: the decision
+                // names the rules and cases it put in force, the claim names the document
+                // that defines it and the case that proves it
+                for sibling in self.out_of.get(e.source.as_str()).into_iter().flatten() {
+                    let target = sibling.target.as_str();
+                    let is_rule = target.starts_with("majordomus://rule/")
+                        || target.starts_with("rule:")
+                        || self.nodes.get(target).is_some_and(|n| n.kind == "rule");
+                    let is_test = target.starts_with("test:")
+                        || self.nodes.get(target).is_some_and(|n| n.kind == "test");
+                    let via = format!("{} via {}", self.label(target), self.label(&e.source));
+                    match sibling.kind.as_str() {
+                        "put_in_force" if is_rule => out.enforced.push(via),
+                        "put_in_force" if is_test => out.tested.push(via),
+                        "proved_by" => out.tested.push(via),
+                        "defined_in" => out.documented.push(via),
+                        _ => {}
+                    }
+                }
+            }
+        }
+        out
+    }
+}
+
+fn coverage_matrix(ctx: &Context, _: Empty) -> Result<CoverageMatrix, CapabilityError> {
+    // the graph already resolved every reference the layer carries; recomputing them here
+    // would be a second opinion of the same front matter
+    let graph = crate::graph::derive("composed", &ctx.registry, &ctx.index).ok_or_else(|| {
+        CapabilityError::Internal("the composed graph is not derived by this executable".into())
+    })?;
+    let chain = Chain::new(&graph);
+
+    // the benchmark projection decides what is timed; `bench coverage --check` reads the
+    // same lines
+    let projection = BenchmarkProjection::from_context(ctx);
+    let coverage = Coverage::compute(ctx, &projection);
+    let mut benchmarked: BTreeMap<&str, Vec<String>> = BTreeMap::new();
+    for line in &coverage.lines {
+        if matches!(line.state, crate::bench::CoverageState::Covered) {
+            benchmarked
+                .entry(line.subject.as_str())
+                .or_default()
+                .push(format!(
+                    "{} case(s) on {}",
+                    line.cases,
+                    line.transport.name()
+                ));
+        }
+    }
+
+    let mut rows = Vec::new();
+    let mut gaps = Vec::new();
+    for c in ctx.registry.iter() {
+        let source = c.provenance.source_path();
+        let FileEvidence {
+            documented,
+            tested,
+            enforced,
+        } = chain.evidence(&source);
+
+        let mut exposed = Vec::new();
+        if let Some(mcp) = &c.exposure.mcp {
+            if let Some(tool) = &mcp.tool {
+                exposed.push(format!("mcp tool {tool}"));
+            }
+            if let Some(resource) = &mcp.resource {
+                exposed.push(format!("mcp resource {}", resource.uri));
+            }
+        }
+        if let Some(http) = &c.exposure.http {
+            exposed.push(format!("{} {}", http.method.as_str(), http.path));
+        }
+        if let Some(cli) = &c.exposure.cli {
+            exposed.push(format!("majordomus {}", cli.path.join(" ")));
+        }
+
+        let mut cells = Vec::new();
+        for dimension in Dimension::ALL {
+            let evidence = match dimension {
+                Dimension::Documented => documented.clone(),
+                Dimension::Tested => tested.clone(),
+                Dimension::Enforced => enforced.clone(),
+                Dimension::Benchmarked => {
+                    benchmarked.get(c.id.as_str()).cloned().unwrap_or_default()
+                }
+                Dimension::Exposed => exposed.clone(),
+            };
+            let mut evidence = evidence;
+            evidence.sort();
+            evidence.dedup();
+            cells.push(CoverageCell {
+                dimension: *dimension,
+                evidence,
+            });
+        }
+
+        let required = required_of(c.kind, c.stability);
+        let missing: Vec<Dimension> = required
+            .iter()
+            .copied()
+            .filter(|d| {
+                cells
+                    .iter()
+                    .find(|cell| cell.dimension == *d)
+                    .is_some_and(|cell| cell.evidence.is_empty())
+            })
+            .collect();
+        for d in &missing {
+            gaps.push(match d {
+                Dimension::Tested => format!(
+                    "{}: the declaration claims a behavioural test and nothing in the layer names one over {source}",
+                    c.id
+                ),
+                other => format!(
+                    "{}: {} is required of a {} capability and nothing backs it over {source}",
+                    c.id,
+                    other.as_str(),
+                    kind_word(c.kind)
+                ),
+            });
+        }
+        rows.push(CapabilityCoverage {
+            id: c.id.to_string(),
+            module: c.module.to_string(),
+            source,
+            required,
+            cells,
+            missing,
+        });
+    }
+
+    // a reference that claims evidence and resolves to nothing is the other kind of gap,
+    // and the resolution that found it names both ends
+    for u in crate::graph::unresolved_relations(&ctx.index.objects) {
+        gaps.push(format!(
+            "{} [{}] -> {}: {}",
+            u.declared_in, u.key, u.reference, u.correction
+        ));
+    }
+
+    rows.sort_by(|a, b| a.id.cmp(&b.id));
+    let mut tallies: BTreeMap<String, usize> = BTreeMap::new();
+    tallies.insert("total".into(), rows.len());
+    for d in Dimension::ALL {
+        let n = rows
+            .iter()
+            .filter(|r| {
+                r.cells
+                    .iter()
+                    .any(|c| c.dimension == *d && !c.evidence.is_empty())
+            })
+            .count();
+        tallies.insert(d.as_str().into(), n);
+    }
+    Ok(CoverageMatrix {
+        schema: "majordomus/capability-coverage/v1".into(),
+        tallies,
+        capabilities: rows,
+        gaps,
+    })
+}
+
+/// The word for a capability kind, as the matrix reports it.
+fn kind_word(kind: CapabilityKind) -> &'static str {
+    match kind {
+        CapabilityKind::Query => "query",
+        CapabilityKind::Command => "command",
+        CapabilityKind::Resource => "resource",
+    }
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -351,6 +732,170 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Process { max_entries: 4, ttl_seconds: Some(5) },
                 handler: health,
             },
+            capability! {
+                id: "health.coverage",
+                title: "What backs every capability",
+                description: "For every capability, what documents it, what tests it, what rule is in force over it, what times it and what reaches it — each cell naming the artifact it was resolved from, and every required dimension with nothing behind it reported as a gap. Resolved from the composed graph and the benchmark projection, so nothing here is a second opinion and nothing is filled from a claim.",
+                input: Empty,
+                output: CoverageMatrix,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_coverage".into()),
+                        resource: Some(McpResource { uri: COVERAGE_URI.into(), name: "coverage".into() }),
+                    }),
+                    http: get("/api/v1/coverage"),
+                    cli: None,
+                },
+                tags: ["health", "introspection", "capabilities"],
+                cache: CachePolicy::Process { max_entries: 2, ttl_seconds: Some(5) },
+                handler: coverage_matrix,
+            },
         ],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::graph::{Builder, Node};
+
+    fn node(id: &str, kind: &str, source: Option<&str>) -> Node {
+        Node {
+            id: id.into(),
+            kind: kind.into(),
+            label: id.rsplit('/').next().unwrap_or(id).into(),
+            summary: None,
+            route: None,
+            source: source.map(str::to_string),
+            status: None,
+            external: false,
+        }
+    }
+
+    /// A layer that says of one file exactly what this repository's own claim chain says:
+    /// a claim implements it, is defined by a document and is proved by a case.
+    fn claim_chain() -> crate::graph::Graph {
+        let mut b = Builder::new("t", "T", "d", "s");
+        b.node(node(
+            "file:apps/majordomus-cli/src/capability/builtin/objects.rs",
+            "file",
+            Some("apps/majordomus-cli/src/capability/builtin/objects.rs"),
+        ));
+        b.node(node(
+            "majordomus://claim/object-read",
+            "claim",
+            Some("docs/CLAIMS.yaml"),
+        ));
+        b.node(node(
+            "majordomus://document/docs/MCP.md",
+            "document",
+            Some("docs/MCP.md"),
+        ));
+        b.node(node(
+            "majordomus://test/test/cases/72_rust_mcp.sh",
+            "test",
+            Some("test/cases/72_rust_mcp.sh"),
+        ));
+        b.edge(
+            "majordomus://claim/object-read",
+            "file:apps/majordomus-cli/src/capability/builtin/objects.rs",
+            "implemented_by",
+        );
+        b.edge(
+            "majordomus://claim/object-read",
+            "majordomus://document/docs/MCP.md",
+            "defined_in",
+        );
+        b.edge(
+            "majordomus://claim/object-read",
+            "majordomus://test/test/cases/72_rust_mcp.sh",
+            "proved_by",
+        );
+        b.finish()
+    }
+
+    #[test]
+    fn a_cell_names_the_artifact_it_was_resolved_from() {
+        let g = claim_chain();
+        let e = Chain::new(&g).evidence("apps/majordomus-cli/src/capability/builtin/objects.rs");
+        assert!(
+            e.tested
+                .iter()
+                .any(|t| t.contains("test/cases/72_rust_mcp.sh") && t.contains("docs/CLAIMS.yaml")),
+            "the cell names the case and what named it: {:?}",
+            e.tested
+        );
+        assert!(
+            e.documented.iter().any(|d| d.contains("docs/MCP.md")),
+            "the cell names the document: {:?}",
+            e.documented
+        );
+    }
+
+    #[test]
+    fn a_file_nothing_names_carries_nothing() {
+        let g = claim_chain();
+        let e = Chain::new(&g).evidence("apps/majordomus-cli/src/http/server.rs");
+        assert_eq!(e, FileEvidence::default(), "no claim, no cell");
+    }
+
+    #[test]
+    fn a_directory_contract_covers_the_files_under_it() {
+        // a contract tracks the directory; the capability is declared in a file inside it
+        let mut b = Builder::new("t", "T", "d", "s");
+        b.node(node(
+            "file:apps/majordomus-cli/src/bench",
+            "file",
+            Some("apps/majordomus-cli/src/bench"),
+        ));
+        b.node(node(
+            "majordomus://context/ai.repo.benchmarks",
+            "context",
+            Some(".ai/repo/benchmarks/README.md"),
+        ));
+        b.edge(
+            "majordomus://context/ai.repo.benchmarks",
+            "file:apps/majordomus-cli/src/bench",
+            "tracks",
+        );
+        let g = b.finish();
+        let e = Chain::new(&g).evidence("apps/majordomus-cli/src/bench/coverage.rs");
+        assert!(
+            e.documented
+                .iter()
+                .any(|d| d.contains(".ai/repo/benchmarks/README.md")),
+            "the directory contract covers the file under it: {:?}",
+            e.documented
+        );
+    }
+
+    #[test]
+    fn the_policy_is_data_and_a_resource_is_not_asked_to_prove_it_runs() {
+        let resource = required_of(CapabilityKind::Resource, Stability::BehaviorallyVerified);
+        assert!(
+            !resource.contains(&Dimension::Benchmarked),
+            "declarative content is read, never executed: {resource:?}"
+        );
+        let query = required_of(CapabilityKind::Query, Stability::BehaviorallyVerified);
+        assert!(query.contains(&Dimension::Exposed) && query.contains(&Dimension::Benchmarked));
+    }
+
+    #[test]
+    fn a_declaration_that_claims_a_test_owes_one() {
+        // the stability word is a claim; the matrix is where it is asked for an artifact
+        let claimed = required_of(CapabilityKind::Query, Stability::BehaviorallyVerified);
+        let unclaimed = required_of(CapabilityKind::Query, Stability::Implemented);
+        assert!(claimed.contains(&Dimension::Tested));
+        assert!(!unclaimed.contains(&Dimension::Tested));
+    }
+
+    #[test]
+    fn every_ancestor_of_a_path_is_a_way_the_layer_could_name_it() {
+        let nodes = file_nodes("apps/majordomus-cli/src/graph.rs");
+        assert!(nodes.contains(&"file:apps/majordomus-cli/src/graph.rs".to_string()));
+        assert!(nodes.contains(&"file:apps/majordomus-cli/src".to_string()));
+        assert!(nodes.contains(&"file:apps".to_string()));
+        assert!(nodes.contains(&"test:apps/majordomus-cli/src/graph.rs".to_string()));
     }
 }

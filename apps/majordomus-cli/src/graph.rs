@@ -795,7 +795,10 @@ fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
     .edge_kind("exercises", "the scenario exercises that doctrine")
     .edge_kind("evidences", "the object is evidence for that claim")
     .edge_kind("tracks", "the document tracks that file")
-    .edge_kind("documents", "the document documents that capability");
+    .edge_kind("documents", "the document documents that capability")
+    .edge_kind("defined_in", "the claim is defined by that document")
+    .edge_kind("implemented_by", "the claim is implemented by that file")
+    .edge_kind("proved_by", "the claim is proved by that case");
 
     // the kinds are read off what was indexed; a kind named here would be a second
     // declaration of something share/kinds.yaml already owns
@@ -918,7 +921,7 @@ fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
                     }
                     // a reference that resolves to nothing is a finding, and a finding is
                     // not drawn: an edge to a phantom reads as an answer
-                    Outcome::Missing(_) => {}
+                    Outcome::Missing(_) | Outcome::Nothing => {}
                 }
             }
         }
@@ -1017,6 +1020,27 @@ const RELATIONS: &[Relation] = &[
         edge: "tracks",
         target: Target::Path,
     },
+    // the chain docs/CLAIMS.yaml already declares, and the reason the `implementation` and
+    // `test` source classes exist at all: a claim names the document that defines it, the
+    // file that implements it and the case that proves it, and a dash where nothing does
+    Relation {
+        kinds: &["claim"],
+        field: "source",
+        edge: "defined_in",
+        target: Target::Path,
+    },
+    Relation {
+        kinds: &["claim"],
+        field: "implementation",
+        edge: "implemented_by",
+        target: Target::Path,
+    },
+    Relation {
+        kinds: &["claim"],
+        field: "test",
+        edge: "proved_by",
+        target: Target::Path,
+    },
     Relation {
         kinds: &[],
         field: "capability",
@@ -1075,6 +1099,9 @@ pub fn unresolved_relations(objects: &[Object]) -> Vec<Unresolved> {
 
 /// What a reference resolved to.
 enum Outcome {
+    /// The layer wrote the reference down and said there is nothing at the other end: a
+    /// dash in a claim's implementation or test. Neither an edge nor a finding.
+    Nothing,
     /// A node of the graph, by id.
     Node(String),
     /// Something outside the layer, drawn as an external node.
@@ -1175,6 +1202,7 @@ impl<'a> Resolver<'a> {
                 None => Outcome::External(external_node(fallback, reference, None)),
             },
             Target::Name(kind) => Outcome::External(external_node(kind, reference, None)),
+            Target::Path if reference == "-" || reference.is_empty() => Outcome::Nothing,
             Target::Path => match self.by_path.get(reference) {
                 Some(o) => Outcome::Node(o.uri.clone()),
                 None => Outcome::External(external_node("file", reference, Some(reference))),

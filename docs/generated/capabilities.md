@@ -13,7 +13,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `continuity` | Continuity | behaviorally_verified | 1 | [`modules/continuity.md`](modules/continuity.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
-| `health` | Health | behaviorally_verified | 1 | [`modules/health.md`](modules/health.md) |
+| `health` | Health | behaviorally_verified | 2 | [`modules/health.md`](modules/health.md) |
 | `objects` | Objects | behaviorally_verified | 3 | [`modules/objects.md`](modules/objects.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
@@ -29,6 +29,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `directories.list` | `directories` | query | behaviorally_verified | `majordomus_directories` | `majordomus://directories` | `GET /api/v1/directories` | — | process, 8 entries, 5s | required |
 | `graph.get` | `graph` | query | behaviorally_verified | `majordomus_graph` | — | `GET /api/v1/graph` | — | process, 16 entries | required |
 | `graph.list` | `graph` | query | behaviorally_verified | `majordomus_graphs` | `majordomus://graphs` | `GET /api/v1/graphs` | — | — | required |
+| `health.coverage` | `health` | query | behaviorally_verified | `majordomus_coverage` | `majordomus://coverage` | `GET /api/v1/coverage` | — | process, 2 entries, 5s | required |
 | `health.report` | `health` | query | behaviorally_verified | `majordomus_health` | `majordomus://health` | `GET /api/v1/health` | — | process, 4 entries, 5s | required |
 | `objects.get` | `objects` | query | behaviorally_verified | `majordomus_get` | — | `GET /api/v1/object` | — | — | required |
 | `objects.list` | `objects` | query | behaviorally_verified | `majordomus_list` | — | `GET /api/v1/objects` | — | — | required |

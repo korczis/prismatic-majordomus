@@ -1,8 +1,8 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 16,
-    "schemas": 77,
+    "operations": 17,
+    "schemas": 81,
     "tags": 9
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -537,6 +537,68 @@
         "capabilities.describe"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One capability's row.",
+      "is_enum": false,
+      "name": "CapabilityCoverage",
+      "properties": [
+        {
+          "description": "The canonical id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The module that composes it.",
+          "name": "module",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it is declared, so every cell can be traced to the same place they were\nresolved from.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the policy asks of it.",
+          "name": "required",
+          "refs": [
+            "Dimension"
+          ],
+          "required": true,
+          "type": "array of Dimension"
+        },
+        {
+          "description": "Every dimension with what backs it.",
+          "name": "cells",
+          "refs": [
+            "CoverageCell"
+          ],
+          "required": true,
+          "type": "array of CoverageCell"
+        },
+        {
+          "description": "Required dimensions nothing backs.",
+          "name": "missing",
+          "refs": [
+            "Dimension"
+          ],
+          "required": false,
+          "type": "array of Dimension"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CoverageMatrix"
+      ],
       "values": [],
       "variants": []
     },
@@ -1296,6 +1358,80 @@
       "variants": []
     },
     {
+      "description": "One cell: a dimension and the artifacts that satisfy it. An empty cell is an empty\ncell; nothing here is filled from a claim.",
+      "is_enum": false,
+      "name": "CoverageCell",
+      "properties": [
+        {
+          "description": "Which dimension.",
+          "name": "dimension",
+          "refs": [
+            "Dimension"
+          ],
+          "required": true,
+          "type": "Dimension"
+        },
+        {
+          "description": "The artifacts behind it, each nameable and followable.",
+          "name": "evidence",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CapabilityCoverage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The matrix: what is actually finished, read from artifacts rather than from claims.",
+      "is_enum": false,
+      "name": "CoverageMatrix",
+      "properties": [
+        {
+          "description": "`majordomus/capability-coverage/v1`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many capabilities carry each dimension, by dimension word, plus `total`.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "One row per capability, by id.",
+          "name": "capabilities",
+          "refs": [
+            "CapabilityCoverage"
+          ],
+          "required": true,
+          "type": "array of CapabilityCoverage"
+        },
+        {
+          "description": "Every gap: a required dimension with nothing behind it, and every reference the\nlayer declares that resolves to nothing, each naming which end failed.",
+          "name": "gaps",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "health.coverage"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "`scope.yaml`, typed. Unknown keys are refused by the type and by the `scope` schema.",
       "is_enum": false,
       "name": "Declaration",
@@ -1374,6 +1510,41 @@
         "RepositoryReport"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "One dimension of evidence a capability can carry.\n\nThe dimensions are what a reader wants to know before trusting a capability: is it\nreachable, is it timed, does anything explain it, does anything hold it to a rule, does\nanything prove it runs. Each is decided by an engine that already owns the answer, and\neach cell names the artifact it was decided from.",
+      "is_enum": true,
+      "name": "Dimension",
+      "properties": [],
+      "type": "\"documented\" | \"tested\" | \"enforced\" | \"benchmarked\" | \"exposed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CapabilityCoverage",
+        "CoverageCell"
+      ],
+      "values": [
+        {
+          "description": "A document, a decision or a directory contract names the file it is declared in.",
+          "value": "documented"
+        },
+        {
+          "description": "A behavioural case is named over the file it is declared in.",
+          "value": "tested"
+        },
+        {
+          "description": "A rule is in force over the file it is declared in.",
+          "value": "enforced"
+        },
+        {
+          "description": "The benchmark projection's coverage counts a case for it.",
+          "value": "benchmarked"
+        },
+        {
+          "description": "It is reachable through a transport a caller can use.",
+          "value": "exposed"
+        }
+      ],
       "variants": []
     },
     {
@@ -1734,6 +1905,7 @@
         "capabilities.list",
         "capabilities.describe",
         "continuity.state",
+        "health.coverage",
         "directories.list",
         "graph.get",
         "graph.list",
@@ -4375,6 +4547,61 @@
       "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
       "name": "health",
       "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/coverage\"",
+          "description": "For every capability, what documents it, what tests it, what rule is in force over it, what times it and what reaches it — each cell naming the artifact it was resolved from, and every required dimension with nothing behind it reported as a gap. Resolved from the composed graph and the benchmark projection, so nothing here is a second opinion and nothing is filled from a claim.",
+          "id": "health.coverage",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "coverage",
+            "uri": "majordomus://coverage"
+          },
+          "mcp_tool": "majordomus_coverage",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/coverage",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::health",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What backs every capability: the result.",
+              "schema": "CoverageMatrix",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CoverageMatrix",
+          "stability": "behaviorally_verified",
+          "summary": "What backs every capability"
+        },
         {
           "benchmark": "required",
           "benchmark_reason": "",

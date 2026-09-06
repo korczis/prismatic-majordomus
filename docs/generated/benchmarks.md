@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 16 | 16 | 0 | 0 |
-| http | 16 | 16 | 0 | 0 |
-| mcp | 16 | 16 | 0 | 0 |
+| direct | 17 | 17 | 0 | 0 |
+| http | 17 | 17 | 0 | 0 |
+| mcp | 17 | 17 | 0 | 0 |
 | system | 12 | 12 | 0 | 0 |
-| total | 60 | 60 | 0 | 0 |
+| total | 63 | 63 | 0 | 0 |
 
 ## Capabilities
 
@@ -25,6 +25,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
+| `health.coverage` | health | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
