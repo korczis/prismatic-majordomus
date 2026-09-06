@@ -1,0 +1,35 @@
+id: I0919
+milestone: fly-deployment
+title: Nothing secret and nothing local leaves in the image
+slug: secret-and-path-scans
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Automate the verification that no credential material and no developer path appears in the image, its metadata, the generated artifacts, the site output, the API documents or the deployment report."
+why: "Every one of those surfaces has published a secret for somebody at some point. A scan that runs in CI is the only version of this promise that stays true."
+current_state: "No image exists and no scan exists."
+desired_state: "A check inspects the image, its history and environment, the generated files and the published output, reports what it found by location and kind, and never prints a secret value."
+scope:
+  - test/cases
+  - apps/majordomus-cli/src/deploy/scan.rs
+non_scope:
+  - Printing any secret value, in any output, for any reason
+  - A general-purpose secret scanner competing with existing repository tooling
+depends_on:
+  - I0909
+acceptance_criteria:
+  - The image, its layer history and its environment are inspected, and the extracted filesystem too where that is feasible
+  - The generated artifacts, the site output, the API document and the deployment report are inspected
+  - Known credential variable names and credential-shaped values are both detected
+  - Absolute developer paths are detected as their own class of finding
+  - A finding names the location and the kind and never the value, and the check runs in CI
+validation:
+  - bash test/run.sh
+  - majordomus deploy doctor
+evidence_required:
+  - image_scan
+  - generated_scan
+  - path_scan
+risk: "A scan that never fires is indistinguishable from a scan that cannot fire. It needs a negative test that plants a synthetic marker and proves the check finds it."
+created_at: 2026-09-06
+updated_at: 2026-09-06

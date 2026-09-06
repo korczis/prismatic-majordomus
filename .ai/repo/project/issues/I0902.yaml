@@ -1,0 +1,35 @@
+id: I0902
+milestone: fly-deployment
+title: The deployment object becomes typed Rust that refuses nonsense
+slug: typed-deployment-model
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Parse the canonical deployment object into strongly typed Rust — enums and newtypes rather than strings — and validate it so that a deployment that cannot work is refused before anything is built."
+why: "Generation from an unvalidated document produces a valid-looking Dockerfile pointing at a binary that does not exist. The validation is the point at which a deployment mistake costs a test failure instead of a failed production rollout."
+current_state: "Nothing in apps/majordomus-cli reads a deployment object."
+desired_state: "A deploy module parses the object into typed structures, validates every invariant that can be decided locally, and reports a failure that names the file, the key, what was wrong and what to do."
+scope:
+  - apps/majordomus-cli/src/deploy
+non_scope:
+  - Provider projection; that is I0913
+  - Any network call, any process spawn, any Fly API access
+  - A generic multi-provider trait hierarchy for a single provider
+depends_on:
+  - I0901
+acceptance_criteria:
+  - Ports, memory, CPU class, machine counts and routes are typed rather than strings, and an invalid value cannot be constructed
+  - Validation refuses zero memory, an invalid port, a health or readiness route that no capability registers, a package or binary the workspace does not contain, a build input that does not resolve, and a minimum running count above the machine count
+  - Every refusal names the source file, the key, the observed value and the correction
+  - Property tests cover the invariants that must hold for any accepted object, not merely the examples in the repository
+  - Unit tests cover each refusal
+validation:
+  - cargo test --workspace --all-features
+  - cargo clippy --workspace --all-targets --all-features -- -D warnings
+evidence_required:
+  - typed_parse
+  - validation_refuses
+  - property_invariants
+risk: "Route validation needs the capability registry, which makes the deployment model depend on the index. Reading the registry that already exists is correct; building a second route list to avoid the dependency is not."
+created_at: 2026-09-06
+updated_at: 2026-09-06

@@ -1,0 +1,35 @@
+id: I0921
+milestone: fly-deployment
+title: Size is measured first and budgeted second
+slug: size-budgets
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Measure the binary, the assets, the image and the build context, declare budgets with headroom over the measured baseline, and gate unexplained growth."
+why: "A budget invented before a measurement is a number somebody will disable. A budget derived from a measured baseline with stated headroom is a regression detector."
+current_state: "Nothing is measured because nothing is built."
+desired_state: "The baselines live where the benchmark infrastructure already keeps such things, the budgets are policy data, the gate fails on unexplained growth, and the documentation and UI can show both numbers without either being retyped."
+scope:
+  - .ai/repo/benchmarks/rust
+  - .ai/repo/policy.yaml
+non_scope:
+  - An arbitrary size target chosen before the first build
+  - A second place where a size number is written by hand
+depends_on:
+  - I0910
+  - I0911
+acceptance_criteria:
+  - Binary bytes, generated asset bytes, image size, compressed size where obtainable and the layer breakdown are all measured and recorded
+  - The budgets are declared with stated headroom over the measured baseline and live as policy data
+  - CI fails on growth beyond the budget and names what grew
+  - The documentation and the UI read the baseline and the budget from the recorded data rather than from prose
+validation:
+  - majordomus bench --check
+  - bash test/run.sh
+evidence_required:
+  - sizes_measured
+  - budget_declared
+  - ci_gate
+risk: "A budget with no headroom fails on an unrelated dependency bump and trains everybody to raise it without looking."
+created_at: 2026-09-06
+updated_at: 2026-09-06

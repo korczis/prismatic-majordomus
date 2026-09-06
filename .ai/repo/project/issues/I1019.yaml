@@ -1,0 +1,32 @@
+id: I1019
+milestone: capability-graph
+title: One skill runs the whole loop, and is itself in the graph
+slug: capability-automation-skill
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Provide a skill that discovers capabilities, validates the graph, reports what is missing documentation, tests, exposure or enforcement, regenerates the projections and reports drift — registered, documented, tested and visible like any other."
+why: "The loop this milestone creates should be runnable by a worker without knowing which command does which part. And a repository that models skills as data should have its own automation as one of them."
+current_state: "Skills are a registered kind with a contract. None covers this loop."
+desired_state: "One skill does the whole loop, follows the existing skill contract, and appears in the graph, the interface and the search like everything else."
+scope:
+  - .ai/repo/skills
+non_scope:
+  - Several thin skills where one is enough
+  - A skill that reimplements what the commands already do rather than sequencing them
+depends_on:
+  - I1018
+acceptance_criteria:
+  - The skill sequences the existing commands rather than reimplementing their behaviour
+  - It follows the existing skill contract and needs no special-casing to be registered
+  - It appears in the graph, the interface and the search through the ordinary derivation
+  - It is tested behaviourally, on a repository state where something is genuinely missing
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+evidence_required:
+  - skill_registered
+  - skill_tested
+risk: "A skill that wraps commands adds a layer that can drift from them. It sequences and reports; it does not decide anything the commands do not."
+created_at: 2026-09-06
+updated_at: 2026-09-06
