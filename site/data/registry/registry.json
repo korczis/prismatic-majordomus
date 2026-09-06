@@ -5,28 +5,28 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "19f8ac7f4fb49ea325b0cd037f76074e9b4781512db8dd2fa5ff7c7509c60cf8",
+    "fingerprint": "1551c3403b2d7d5b0fa7abcef3ba067d8ad52b442b293504ed585ebfd7bc1d93",
     "summary": {
-      "total": 696,
-      "builtin": 16,
+      "total": 699,
+      "builtin": 19,
       "declarative": 680,
       "by_kind": {
         "command": 1,
-        "query": 15,
+        "query": 18,
         "resource": 680
       },
       "by_stability": {
-        "behaviorally_verified": 16,
+        "behaviorally_verified": 19,
         "implemented": 680
       },
-      "mcp_tools": 14,
-      "mcp_resources": 684,
-      "http_routes": 16,
+      "mcp_tools": 17,
+      "mcp_resources": 685,
+      "http_routes": 19,
       "cli_commands": 4,
-      "modules": 25,
-      "benchmark_required": 16,
+      "modules": 26,
+      "benchmark_required": 19,
       "benchmark_waived": 0,
-      "cached": 4
+      "cached": 5
     },
     "builtin": [
       {
@@ -1174,6 +1174,1358 @@
           "max_entries": 16
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
+      },
+      {
+        "id": "deploy.check",
+        "module": "deploy",
+        "kind": "query",
+        "title": "Would these deployments work",
+        "description": "Every refusal the declared deployments earn locally: a health route no capability registers, a package or binary the workspace does not produce, a build input that does not resolve, more machines running than exist, a hosted process that would bind loopback. Each names the file, the key, the value observed and the correction. Nothing here contacts the provider.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "DeploymentCheck",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean",
+                "description": "True when no deployment earned a refusal."
+              },
+              "decided": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many deployments were decided."
+              },
+              "refusals": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Refusal"
+                },
+                "description": "Every refusal, in the order the objects and their keys appear."
+              }
+            },
+            "required": [
+              "ok",
+              "decided",
+              "refusals"
+            ],
+            "description": "Whether the deployments this repository declares would work, decided locally: against\nthe capability registry this process built and the workspace it sits in.",
+            "title": "DeploymentCheck",
+            "$defs": {
+              "Refusal": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "The repository-relative file the value came from."
+                  },
+                  "key": {
+                    "type": "string",
+                    "description": "The key path within it, as the contract names it."
+                  },
+                  "found": {
+                    "type": "string",
+                    "description": "The value observed, rendered as it was read."
+                  },
+                  "problem": {
+                    "type": "string",
+                    "description": "What is wrong with it, in one line."
+                  },
+                  "correction": {
+                    "type": "string",
+                    "description": "What to do instead."
+                  }
+                },
+                "required": [
+                  "file",
+                  "key",
+                  "found",
+                  "problem",
+                  "correction"
+                ],
+                "description": "Why a deployment object is refused: what was read, where, and what to do about it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::deploy"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_deploy_check"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/deployments/check"
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "deployment",
+          "diagnostics"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 2,
+          "ttl_seconds": 5
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+      },
+      {
+        "id": "deploy.get",
+        "module": "deploy",
+        "kind": "query",
+        "title": "One deployment",
+        "description": "One deployment by its identity, typed, with the repository-relative file it was read from.",
+        "input": {
+          "name": "GetDeploymentInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The deployment's `id`."
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "description": "The input of `deploy.get`: which deployment.",
+            "title": "GetDeploymentInput"
+          }
+        },
+        "output": {
+          "name": "DeploymentView",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string",
+                "description": "The repository-relative file the object lives in."
+              },
+              "schema": {
+                "type": "string",
+                "description": "The format version; a version this executable does not read is refused."
+              },
+              "kind": {
+                "type": "string",
+                "description": "Always `deployment`."
+              },
+              "id": {
+                "type": "string",
+                "description": "The identity within the repository."
+              },
+              "title": {
+                "type": "string",
+                "description": "One line naming it."
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "One line: what it serves and to whom.",
+                "default": null
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Status"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Where it stands.",
+                "default": null
+              },
+              "application": {
+                "type": "string",
+                "description": "The application's name at the provider."
+              },
+              "build": {
+                "$ref": "#/$defs/Build",
+                "description": "What is shipped and what it is built from."
+              },
+              "listen": {
+                "$ref": "#/$defs/Listen",
+                "description": "The address the process listens on."
+              },
+              "health": {
+                "$ref": "#/$defs/HealthRoutes",
+                "description": "The routes a platform polls."
+              },
+              "resources": {
+                "$ref": "#/$defs/Resources",
+                "description": "What one machine is granted."
+              },
+              "machines": {
+                "$ref": "#/$defs/Machines",
+                "description": "How many machines run."
+              },
+              "region": {
+                "type": "string",
+                "description": "The region they run in."
+              },
+              "budgets": {
+                "$ref": "#/$defs/Budgets",
+                "description": "The measured figures it is held to.",
+                "default": {
+                  "image_bytes": null,
+                  "binary_bytes": null,
+                  "build_context_bytes": null,
+                  "cold_start_ms": null,
+                  "resident_memory_mb": null,
+                  "blocking_check_ms": null,
+                  "request_p99_ms": null
+                }
+              },
+              "provider": {
+                "$ref": "#/$defs/Provider",
+                "description": "The provider and its own facts."
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When the object was written.",
+                "default": null
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When it was last changed.",
+                "default": null
+              }
+            },
+            "required": [
+              "file",
+              "schema",
+              "kind",
+              "id",
+              "title",
+              "application",
+              "build",
+              "listen",
+              "health",
+              "resources",
+              "machines",
+              "region",
+              "provider"
+            ],
+            "description": "One deployment as this process reads it, with where it came from.",
+            "title": "DeploymentView",
+            "$defs": {
+              "Status": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "declared",
+                    "description": "The object exists and nothing is deployed from it yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "It is deployed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "retired",
+                    "description": "It was, and the object is kept for the record."
+                  }
+                ],
+                "description": "Where a deployment stands."
+              },
+              "Build": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "package": {
+                    "type": "string",
+                    "description": "The Cargo package that is built."
+                  },
+                  "binary": {
+                    "type": "string",
+                    "description": "The binary target the image runs."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The Cargo profile the image is built under."
+                  },
+                  "inputs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository-relative paths the build context carries, and the only ones."
+                  },
+                  "site": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The directory the canonical site pipeline writes; absent means the image serves no\nsite.",
+                    "default": null
+                  }
+                },
+                "required": [
+                  "package",
+                  "binary",
+                  "profile",
+                  "inputs"
+                ],
+                "description": "What is shipped and what it is built from."
+              },
+              "Listen": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "port": {
+                    "$ref": "#/$defs/Port",
+                    "description": "The port, stated once for the process, the image and the provider configuration."
+                  },
+                  "interface": {
+                    "$ref": "#/$defs/Interface",
+                    "description": "Which interface."
+                  }
+                },
+                "required": [
+                  "port",
+                  "interface"
+                ],
+                "description": "The address the process listens on."
+              },
+              "Port": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0,
+                "maximum": 65535,
+                "description": "A TCP port a deployed process may bind. Privileged ports are not among them: the\nprocess runs as a non-root user and could not bind one."
+              },
+              "Interface": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "loopback",
+                    "description": "Reachable from this host alone: the local default, and what every local invocation\nkeeps."
+                  },
+                  {
+                    "type": "string",
+                    "const": "all",
+                    "description": "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
+                  }
+                ],
+                "description": "Which interface a process listens on."
+              },
+              "HealthRoutes": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "liveness": {
+                    "$ref": "#/$defs/Route",
+                    "description": "Is this process alive."
+                  },
+                  "readiness": {
+                    "$ref": "#/$defs/Route",
+                    "description": "Can this process serve traffic."
+                  },
+                  "grace_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "How long the platform waits before the first check counts.",
+                    "default": null
+                  },
+                  "interval_seconds": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "How often the platform polls liveness.",
+                    "default": null
+                  },
+                  "timeout_seconds": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "How long one check may take before it counts as failed.",
+                    "default": null
+                  }
+                },
+                "required": [
+                  "liveness",
+                  "readiness"
+                ],
+                "description": "The routes a platform polls, and how often."
+              },
+              "Route": {
+                "type": "string",
+                "description": "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state."
+              },
+              "Positive": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused\nwherever zero would mean \"a deployment that cannot run\"."
+              },
+              "Resources": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "cpu_kind": {
+                    "$ref": "#/$defs/CpuKind",
+                    "description": "Shared or dedicated."
+                  },
+                  "cpus": {
+                    "$ref": "#/$defs/Positive",
+                    "description": "How many CPUs one machine has."
+                  },
+                  "memory_mb": {
+                    "$ref": "#/$defs/Positive",
+                    "description": "Memory per machine, in megabytes."
+                  }
+                },
+                "required": [
+                  "cpu_kind",
+                  "cpus",
+                  "memory_mb"
+                ],
+                "description": "What one machine is granted."
+              },
+              "CpuKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "shared",
+                    "description": "A fraction of a core: the cheap profile."
+                  },
+                  {
+                    "type": "string",
+                    "const": "performance",
+                    "description": "A dedicated one."
+                  }
+                ],
+                "description": "What a machine's CPU is."
+              },
+              "Machines": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "$ref": "#/$defs/Positive",
+                    "description": "How many machines the application has."
+                  },
+                  "min_running": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "How many stay running when idle."
+                  },
+                  "autostart": {
+                    "type": "boolean",
+                    "description": "Whether a request to a stopped machine starts it."
+                  },
+                  "autostop": {
+                    "type": "boolean",
+                    "description": "Whether an idle machine is stopped."
+                  }
+                },
+                "required": [
+                  "count",
+                  "min_running",
+                  "autostart",
+                  "autostop"
+                ],
+                "description": "How many machines run, and whether the platform may stop them."
+              },
+              "Budgets": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "image_bytes": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Largest accepted compressed image size.",
+                    "default": null
+                  },
+                  "binary_bytes": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Largest accepted stripped binary size.",
+                    "default": null
+                  },
+                  "build_context_bytes": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Largest accepted build context.",
+                    "default": null
+                  },
+                  "cold_start_ms": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Longest accepted time from a stopped machine to a served response.",
+                    "default": null
+                  },
+                  "resident_memory_mb": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Largest accepted resident set under load.",
+                    "default": null
+                  },
+                  "blocking_check_ms": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Longest accepted time for one liveness or readiness check.",
+                    "default": null
+                  },
+                  "request_p99_ms": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Longest accepted p99 for a served request.",
+                    "default": null
+                  }
+                },
+                "description": "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
+              },
+              "Provider": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "$ref": "#/$defs/ProviderName",
+                    "description": "Which provider."
+                  },
+                  "fly": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Fly"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Fly's own block, when the provider is Fly.",
+                    "default": null
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "description": "The provider and the facts that belong to it alone."
+              },
+              "ProviderName": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "fly",
+                    "description": "Fly.io."
+                  }
+                ],
+                "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
+              },
+              "Fly": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "org": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The organisation the application belongs to.",
+                    "default": null
+                  },
+                  "force_https": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Whether the edge redirects plain HTTP to HTTPS.",
+                    "default": null
+                  },
+                  "concurrency": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Concurrency"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "When the edge considers a machine loaded.",
+                    "default": null
+                  }
+                },
+                "description": "Fly.io's own facts: what has no meaning for any other provider."
+              },
+              "Concurrency": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "soft_limit": {
+                    "$ref": "#/$defs/Positive",
+                    "description": "Where the edge starts preferring another machine."
+                  },
+                  "hard_limit": {
+                    "$ref": "#/$defs/Positive",
+                    "description": "Where it stops sending requests to this one."
+                  }
+                },
+                "required": [
+                  "soft_limit",
+                  "hard_limit"
+                ],
+                "description": "When the edge considers a machine loaded, in requests."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::deploy"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_deployment"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/deployment"
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "deployment"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+      },
+      {
+        "id": "deploy.list",
+        "module": "deploy",
+        "kind": "query",
+        "title": "Deployments",
+        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "DeploymentList",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many."
+              },
+              "deployments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DeploymentView"
+                },
+                "description": "Each, in identity order."
+              },
+              "unreadable": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Refusal"
+                },
+                "description": "Objects of the deployment kind this executable could not read, with why. A\nmalformed object is reported here rather than hidden by being skipped."
+              }
+            },
+            "required": [
+              "count",
+              "deployments"
+            ],
+            "description": "Every deployment the layer declares.",
+            "title": "DeploymentList",
+            "$defs": {
+              "DeploymentView": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "The repository-relative file the object lives in."
+                  },
+                  "schema": {
+                    "type": "string",
+                    "description": "The format version; a version this executable does not read is refused."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "Always `deployment`."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "The identity within the repository."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming it."
+                  },
+                  "description": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "One line: what it serves and to whom.",
+                    "default": null
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Status"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Where it stands.",
+                    "default": null
+                  },
+                  "application": {
+                    "type": "string",
+                    "description": "The application's name at the provider."
+                  },
+                  "build": {
+                    "$ref": "#/$defs/Build",
+                    "description": "What is shipped and what it is built from."
+                  },
+                  "listen": {
+                    "$ref": "#/$defs/Listen",
+                    "description": "The address the process listens on."
+                  },
+                  "health": {
+                    "$ref": "#/$defs/HealthRoutes",
+                    "description": "The routes a platform polls."
+                  },
+                  "resources": {
+                    "$ref": "#/$defs/Resources",
+                    "description": "What one machine is granted."
+                  },
+                  "machines": {
+                    "$ref": "#/$defs/Machines",
+                    "description": "How many machines run."
+                  },
+                  "region": {
+                    "type": "string",
+                    "description": "The region they run in."
+                  },
+                  "budgets": {
+                    "$ref": "#/$defs/Budgets",
+                    "description": "The measured figures it is held to.",
+                    "default": {
+                      "image_bytes": null,
+                      "binary_bytes": null,
+                      "build_context_bytes": null,
+                      "cold_start_ms": null,
+                      "resident_memory_mb": null,
+                      "blocking_check_ms": null,
+                      "request_p99_ms": null
+                    }
+                  },
+                  "provider": {
+                    "$ref": "#/$defs/Provider",
+                    "description": "The provider and its own facts."
+                  },
+                  "created_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the object was written.",
+                    "default": null
+                  },
+                  "updated_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it was last changed.",
+                    "default": null
+                  }
+                },
+                "required": [
+                  "file",
+                  "schema",
+                  "kind",
+                  "id",
+                  "title",
+                  "application",
+                  "build",
+                  "listen",
+                  "health",
+                  "resources",
+                  "machines",
+                  "region",
+                  "provider"
+                ],
+                "description": "One deployment as this process reads it, with where it came from."
+              },
+              "Status": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "declared",
+                    "description": "The object exists and nothing is deployed from it yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "It is deployed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "retired",
+                    "description": "It was, and the object is kept for the record."
+                  }
+                ],
+                "description": "Where a deployment stands."
+              },
+              "Build": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "package": {
+                    "type": "string",
+                    "description": "The Cargo package that is built."
+                  },
+                  "binary": {
+                    "type": "string",
+                    "description": "The binary target the image runs."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The Cargo profile the image is built under."
+                  },
+                  "inputs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository-relative paths the build context carries, and the only ones."
+                  },
+                  "site": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The directory the canonical site pipeline writes; absent means the image serves no\nsite.",
+                    "default": null
+                  }
+                },
+                "required": [
+                  "package",
+                  "binary",
+                  "profile",
+                  "inputs"
+                ],
+                "description": "What is shipped and what it is built from."
+              },
+              "Listen": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "port": {
+                    "$ref": "#/$defs/Port",
+                    "description": "The port, stated once for the process, the image and the provider configuration."
+                  },
+                  "interface": {
+                    "$ref": "#/$defs/Interface",
+                    "description": "Which interface."
+                  }
+                },
+                "required": [
+                  "port",
+                  "interface"
+                ],
+                "description": "The address the process listens on."
+              },
+              "Port": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0,
+                "maximum": 65535,
+                "description": "A TCP port a deployed process may bind. Privileged ports are not among them: the\nprocess runs as a non-root user and could not bind one."
+              },
+              "Interface": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "loopback",
+                    "description": "Reachable from this host alone: the local default, and what every local invocation\nkeeps."
+                  },
+                  {
+                    "type": "string",
+                    "const": "all",
+                    "description": "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
+                  }
+                ],
+                "description": "Which interface a process listens on."
+              },
+              "HealthRoutes": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "liveness": {
+                    "$ref": "#/$defs/Route",
+                    "description": "Is this process alive."
+                  },
+                  "readiness": {
+                    "$ref": "#/$defs/Route",
+                    "description": "Can this process serve traffic."
+                  },
+                  "grace_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "How long the platform waits before the first check counts.",
+                    "default": null
+                  },
+                  "interval_seconds": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "How often the platform polls liveness.",
+                    "default": null
+                  },
+                  "timeout_seconds": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "How long one check may take before it counts as failed.",
+                    "default": null
+                  }
+                },
+                "required": [
+                  "liveness",
+                  "readiness"
+                ],
+                "description": "The routes a platform polls, and how often."
+              },
+              "Route": {
+                "type": "string",
+                "description": "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state."
+              },
+              "Positive": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused\nwherever zero would mean \"a deployment that cannot run\"."
+              },
+              "Resources": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "cpu_kind": {
+                    "$ref": "#/$defs/CpuKind",
+                    "description": "Shared or dedicated."
+                  },
+                  "cpus": {
+                    "$ref": "#/$defs/Positive",
+                    "description": "How many CPUs one machine has."
+                  },
+                  "memory_mb": {
+                    "$ref": "#/$defs/Positive",
+                    "description": "Memory per machine, in megabytes."
+                  }
+                },
+                "required": [
+                  "cpu_kind",
+                  "cpus",
+                  "memory_mb"
+                ],
+                "description": "What one machine is granted."
+              },
+              "CpuKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "shared",
+                    "description": "A fraction of a core: the cheap profile."
+                  },
+                  {
+                    "type": "string",
+                    "const": "performance",
+                    "description": "A dedicated one."
+                  }
+                ],
+                "description": "What a machine's CPU is."
+              },
+              "Machines": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "$ref": "#/$defs/Positive",
+                    "description": "How many machines the application has."
+                  },
+                  "min_running": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "How many stay running when idle."
+                  },
+                  "autostart": {
+                    "type": "boolean",
+                    "description": "Whether a request to a stopped machine starts it."
+                  },
+                  "autostop": {
+                    "type": "boolean",
+                    "description": "Whether an idle machine is stopped."
+                  }
+                },
+                "required": [
+                  "count",
+                  "min_running",
+                  "autostart",
+                  "autostop"
+                ],
+                "description": "How many machines run, and whether the platform may stop them."
+              },
+              "Budgets": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "image_bytes": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Largest accepted compressed image size.",
+                    "default": null
+                  },
+                  "binary_bytes": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Largest accepted stripped binary size.",
+                    "default": null
+                  },
+                  "build_context_bytes": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Largest accepted build context.",
+                    "default": null
+                  },
+                  "cold_start_ms": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Longest accepted time from a stopped machine to a served response.",
+                    "default": null
+                  },
+                  "resident_memory_mb": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Largest accepted resident set under load.",
+                    "default": null
+                  },
+                  "blocking_check_ms": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Longest accepted time for one liveness or readiness check.",
+                    "default": null
+                  },
+                  "request_p99_ms": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Positive"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Longest accepted p99 for a served request.",
+                    "default": null
+                  }
+                },
+                "description": "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
+              },
+              "Provider": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "$ref": "#/$defs/ProviderName",
+                    "description": "Which provider."
+                  },
+                  "fly": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Fly"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Fly's own block, when the provider is Fly.",
+                    "default": null
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "description": "The provider and the facts that belong to it alone."
+              },
+              "ProviderName": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "fly",
+                    "description": "Fly.io."
+                  }
+                ],
+                "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
+              },
+              "Fly": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "org": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The organisation the application belongs to.",
+                    "default": null
+                  },
+                  "force_https": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Whether the edge redirects plain HTTP to HTTPS.",
+                    "default": null
+                  },
+                  "concurrency": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Concurrency"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "When the edge considers a machine loaded.",
+                    "default": null
+                  }
+                },
+                "description": "Fly.io's own facts: what has no meaning for any other provider."
+              },
+              "Concurrency": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "soft_limit": {
+                    "$ref": "#/$defs/Positive",
+                    "description": "Where the edge starts preferring another machine."
+                  },
+                  "hard_limit": {
+                    "$ref": "#/$defs/Positive",
+                    "description": "Where it stops sending requests to this one."
+                  }
+                },
+                "required": [
+                  "soft_limit",
+                  "hard_limit"
+                ],
+                "description": "When the edge considers a machine loaded, in requests."
+              },
+              "Refusal": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "The repository-relative file the value came from."
+                  },
+                  "key": {
+                    "type": "string",
+                    "description": "The key path within it, as the contract names it."
+                  },
+                  "found": {
+                    "type": "string",
+                    "description": "The value observed, rendered as it was read."
+                  },
+                  "problem": {
+                    "type": "string",
+                    "description": "What is wrong with it, in one line."
+                  },
+                  "correction": {
+                    "type": "string",
+                    "description": "What to do instead."
+                  }
+                },
+                "required": [
+                  "file",
+                  "key",
+                  "found",
+                  "problem",
+                  "correction"
+                ],
+                "description": "Why a deployment object is refused: what was read, where, and what to do about it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::deploy"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_deployments",
+            "resource": {
+              "uri": "majordomus://deployments",
+              "name": "deployments"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/deployments"
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "deployment"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
       },
       {
         "id": "graph.get",
@@ -4123,6 +5475,20 @@
         "capability_ids": []
       },
       {
+        "id": "deploy",
+        "title": "Deployment",
+        "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 3,
+        "capability_ids": [
+          "deploy.check",
+          "deploy.get",
+          "deploy.list"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+      },
+      {
         "id": "deployment",
         "title": "deployment",
         "description": "Declarative objects of kind 'deployment' from the repository's AI layer.",
@@ -4325,7 +5691,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6961f7359e6932bff35ef03884de33125c90874c54d0379d927ee53ca515f3ea",
+    "fingerprint": "3232699b540218be0e774fcc3abbdacfe85ecc2c1f01ed258118e85094c6cfa4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -5741,7 +7107,7 @@
         "path": ".ai/repo/deployments/majordomus.yaml",
         "section": "deployments",
         "source_class": "deployment",
-        "bytes": 2454
+        "bytes": 2420
       },
       {
         "uri": "majordomus://document/.ai/repo/knowledge/curated/start-here.md",
@@ -14657,6 +16023,36 @@
         "output": "CapabilityList"
       },
       {
+        "name": "majordomus_deploy_check",
+        "id": "deploy.check",
+        "title": "Would these deployments work",
+        "description": "Every refusal the declared deployments earn locally: a health route no capability registers, a package or binary the workspace does not produce, a build input that does not resolve, more machines running than exist, a hosted process that would bind loopback. Each names the file, the key, the value observed and the correction. Nothing here contacts the provider.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "DeploymentCheck"
+      },
+      {
+        "name": "majordomus_deployment",
+        "id": "deploy.get",
+        "title": "One deployment",
+        "description": "One deployment by its identity, typed, with the repository-relative file it was read from.",
+        "kind": "query",
+        "read_only": true,
+        "input": "GetDeploymentInput",
+        "output": "DeploymentView"
+      },
+      {
+        "name": "majordomus_deployments",
+        "id": "deploy.list",
+        "title": "Deployments",
+        "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "DeploymentList"
+      },
+      {
         "name": "majordomus_graph",
         "id": "graph.get",
         "title": "Derive one graph",
@@ -14779,6 +16175,13 @@
     ],
     "resources": [
       {
+        "uri": "majordomus://deployments",
+        "name": "deployments",
+        "id": "deploy.list",
+        "title": "Deployments",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://graphs",
         "name": "graphs",
         "id": "graph.list",
@@ -14821,6 +16224,24 @@
         "method": "GET",
         "path": "/api/v1/capabilities",
         "id": "capabilities.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/deployments/check",
+        "id": "deploy.check",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/deployment",
+        "id": "deploy.get",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/deployments",
+        "id": "deploy.list",
         "kind": "query"
       },
       {
@@ -15005,6 +16426,93 @@
         "case": "queries",
         "cached": true,
         "route": "GET /api/v1/capabilities"
+      },
+      {
+        "key": "deploy.check|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "deploy.check",
+        "module": "deploy",
+        "case": "default",
+        "cached": true
+      },
+      {
+        "key": "deploy.check|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "deploy.check",
+        "module": "deploy",
+        "case": "default",
+        "cached": true,
+        "tool": "majordomus_deploy_check"
+      },
+      {
+        "key": "deploy.check|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "deploy.check",
+        "module": "deploy",
+        "case": "default",
+        "cached": true,
+        "route": "GET /api/v1/deployments/check"
+      },
+      {
+        "key": "deploy.get|direct|first-deployment",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "deploy.get",
+        "module": "deploy",
+        "case": "first-deployment",
+        "cached": false
+      },
+      {
+        "key": "deploy.get|mcp|first-deployment",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "deploy.get",
+        "module": "deploy",
+        "case": "first-deployment",
+        "cached": false,
+        "tool": "majordomus_deployment"
+      },
+      {
+        "key": "deploy.get|http|first-deployment",
+        "kind": "capability",
+        "transport": "http",
+        "id": "deploy.get",
+        "module": "deploy",
+        "case": "first-deployment",
+        "cached": false,
+        "route": "GET /api/v1/deployment"
+      },
+      {
+        "key": "deploy.list|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "deploy.list",
+        "module": "deploy",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "deploy.list|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "deploy.list",
+        "module": "deploy",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_deployments"
+      },
+      {
+        "key": "deploy.list|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "deploy.list",
+        "module": "deploy",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/deployments"
       },
       {
         "key": "graph.get|direct|registry",
@@ -15842,6 +17350,69 @@
           "cases": 2
         },
         {
+          "subject": "deploy.check",
+          "module": "deploy",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "deploy.check",
+          "module": "deploy",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "deploy.check",
+          "module": "deploy",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "deploy.get",
+          "module": "deploy",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "deploy.get",
+          "module": "deploy",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "deploy.get",
+          "module": "deploy",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "deploy.list",
+          "module": "deploy",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "deploy.list",
+          "module": "deploy",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "deploy.list",
+          "module": "deploy",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "graph.get",
           "module": "graph",
           "transport": "direct",
@@ -16208,20 +17779,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 16,
-          "covered": 16,
+          "required": 19,
+          "covered": 19,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 16,
-          "covered": 16,
+          "required": 19,
+          "covered": 19,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 14,
-          "covered": 14,
+          "required": 17,
+          "covered": 17,
           "missing": 0,
           "waived": 0
         },
@@ -16232,8 +17803,8 @@
           "waived": 0
         },
         "total": {
-          "required": 58,
-          "covered": 58,
+          "required": 67,
+          "covered": 67,
           "missing": 0,
           "waived": 0
         }

@@ -309,7 +309,7 @@ impl Listen {
 /// The routes a platform polls, and how often.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct Health {
+pub struct HealthRoutes {
     /// Is this process alive.
     pub liveness: Route,
     /// Can this process serve traffic.
@@ -440,7 +440,7 @@ pub struct Deployment {
     /// The address the process listens on.
     pub listen: Listen,
     /// The routes a platform polls.
-    pub health: Health,
+    pub health: HealthRoutes,
     /// What one machine is granted.
     pub resources: Resources,
     /// How many machines run.
@@ -947,6 +947,71 @@ mod tests {
                 assert!(!r.problem.is_empty(), "a refusal with no problem: {r}");
                 assert!(!r.correction.is_empty(), "a refusal with no correction: {r}");
             }
+        }
+    }
+
+    mod workspace {
+        use super::super::*;
+
+        /// The workspace reads the packages it actually has, with the binaries each
+        /// declares — the two facts a build specification can be wrong about, taken from
+        /// the manifests rather than assumed.
+        #[test]
+        fn the_packages_are_read_from_the_manifests() {
+            let d = tempfile::tempdir().expect("a temporary root");
+            let a = d.path().join("apps/one");
+            let b = d.path().join("apps/two");
+            std::fs::create_dir_all(&a).expect("a package dir");
+            std::fs::create_dir_all(&b).expect("a package dir");
+            std::fs::write(
+                a.join("Cargo.toml"),
+                "[package]\nname = \"one-cli\"\nversion = \"0.1.0\"\n\n[[bin]]\nname = \"one\"\npath = \"src/main.rs\"\n\n[dependencies]\nserde = \"1\"\n",
+            )
+            .expect("a manifest");
+            // no [[bin]]: the package's own name is the binary it produces
+            std::fs::write(
+                b.join("Cargo.toml"),
+                "[package]\nname = \"two\"\nversion = \"0.1.0\"\n",
+            )
+            .expect("a manifest");
+
+            let ws = Workspace::read(d.path(), Default::default());
+            assert_eq!(
+                ws.packages,
+                vec![
+                    ("one-cli".to_string(), vec!["one".to_string()]),
+                    ("two".to_string(), vec!["two".to_string()]),
+                ]
+            );
+        }
+
+        /// A repository with no packages is read as one, not as a failure: the refusal
+        /// then names what the workspace has, which is nothing, rather than crashing on
+        /// the way to saying so.
+        #[test]
+        fn a_tree_with_no_packages_reads_as_none() {
+            let d = tempfile::tempdir().expect("a temporary root");
+            assert!(Workspace::read(d.path(), Default::default())
+                .packages
+                .is_empty());
+        }
+
+        /// A refusal renders as one line naming all four things, so a log or a terminal
+        /// carries the whole of it.
+        #[test]
+        fn a_refusal_renders_as_one_line() {
+            let d = tempfile::tempdir().expect("a temporary root");
+            let mut v = super::object_text();
+            v["machines"]["min_running"] = serde_json::json!(4);
+            let dep: Deployment = serde_json::from_value(v).expect("parses");
+            let out = dep.check("the-file.yaml", &Workspace::read(d.path(), Default::default()));
+            let line = out
+                .iter()
+                .find(|r| r.key == "machines.min_running")
+                .expect("the refusal")
+                .to_string();
+            assert!(line.starts_with("the-file.yaml: machines.min_running is 4:"), "{line}");
+            assert!(line.contains("lower min_running"), "{line}");
         }
     }
 

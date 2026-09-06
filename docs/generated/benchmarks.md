@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 16 | 16 | 0 | 0 |
-| http | 16 | 16 | 0 | 0 |
-| mcp | 14 | 14 | 0 | 0 |
+| direct | 19 | 19 | 0 | 0 |
+| http | 19 | 19 | 0 | 0 |
+| mcp | 17 | 17 | 0 | 0 |
 | system | 12 | 12 | 0 | 0 |
-| total | 58 | 58 | 0 | 0 |
+| total | 67 | 67 | 0 | 0 |
 
 ## Capabilities
 
@@ -21,6 +21,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 |---|---|---|---|---|---|---|---|
 | `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
+| `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
+| `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
+| `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `health.live` | health | query | — | covered | — | covered | `default` |

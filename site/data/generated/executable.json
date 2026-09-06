@@ -35,6 +35,57 @@
       "tool": "majordomus_capabilities"
     },
     {
+      "api_anchor": "/docs/api/#op-deploy-check",
+      "claims": [],
+      "cli": null,
+      "id": "deploy.check",
+      "kind": "query",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-check/",
+      "slug": "deploy-check",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "Would these deployments work",
+      "tool": "majordomus_deploy_check"
+    },
+    {
+      "api_anchor": "/docs/api/#op-deploy-get",
+      "claims": [],
+      "cli": null,
+      "id": "deploy.get",
+      "kind": "query",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-get/",
+      "slug": "deploy-get",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "One deployment",
+      "tool": "majordomus_deployment"
+    },
+    {
+      "api_anchor": "/docs/api/#op-deploy-list",
+      "claims": [],
+      "cli": null,
+      "id": "deploy.list",
+      "kind": "query",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": "majordomus://deployments",
+      "route": "/registry/capabilities/deploy-list/",
+      "slug": "deploy-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "Deployments",
+      "tool": "majordomus_deployments"
+    },
+    {
       "api_anchor": "/docs/api/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -448,9 +499,9 @@
     ]
   },
   "counts": {
-    "capabilities": 16,
+    "capabilities": 19,
     "claims": 20,
-    "modules": 7
+    "modules": 8
   },
   "generator": "majordomus-cli 0.1.0",
   "modules": [
@@ -474,6 +525,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "title": "Capabilities"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "deploy.check",
+          "route": "/registry/capabilities/deploy-check/",
+          "slug": "deploy-check"
+        },
+        {
+          "id": "deploy.get",
+          "route": "/registry/capabilities/deploy-get/",
+          "slug": "deploy-get"
+        },
+        {
+          "id": "deploy.list",
+          "route": "/registry/capabilities/deploy-list/",
+          "slug": "deploy-list"
+        }
+      ],
+      "claims": [],
+      "id": "deploy",
+      "route": "/registry/modules/deploy/",
+      "slug": "deploy",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "title": "Deployment"
     },
     {
       "capabilities": [
