@@ -26,6 +26,9 @@ pub const SOURCES_VERSION: u64 = 1;
 /// The prefix every pathspec carries: `*` never crosses a directory separator.
 pub const GLOB_PREFIX: &str = ":(glob)";
 
+/// The kind whose class the manifest's `context.documents` names are reserved for.
+pub const CONTEXT_KIND: &str = "context";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 /// How a class enumerates its files; `vcs` is the only discovery the contract knows.
@@ -233,6 +236,16 @@ fn walk(
 
 /// Run every class of `sources` through `source`, in declared class order, each class's
 /// files sorted by path. A file two classes both match is kept under the first and reported.
+///
+/// One precedence rule stands above class order, and the manifest states it rather than
+/// this function: a file name listed under `context.documents` carries the context
+/// contract *wherever it appears* under the layer, so it belongs to the class that
+/// produces context documents and to no other. Without it a directory's contract would be
+/// discovered only where some unrelated class's pathspec happened to reach — `.ai/repo/rules/README.md`
+/// through the rule class, `.ai/repo/ci/README.md` through nothing at all — which is
+/// discovery by accident, and it left the root of the hierarchy invisible to every
+/// projection. The rule applies only when a class declares the kind, so a layer that
+/// declares no context class is read exactly as before.
 pub fn discover(
     repo: &Repository,
     sources: &Sources,
@@ -243,6 +256,26 @@ pub fn discover(
     let mut diagnostics = Vec::new();
     let mut claimed = std::collections::BTreeMap::<String, String>::new();
     let local = repo.local_path();
+    // The manifest's context conventions, and the class that produces them. Both must be
+    // present for the precedence rule to mean anything.
+    let context_class = sources
+        .sources
+        .iter()
+        .find(|c| c.kind == CONTEXT_KIND)
+        .map(|c| c.id.clone());
+    let context_names: Vec<&str> = match (&context_class, repo.manifest().context.as_ref()) {
+        (Some(_), Some(conventions)) => {
+            conventions.documents.iter().map(String::as_str).collect()
+        }
+        _ => Vec::new(),
+    };
+    let is_context_document = |rel: &str| -> bool {
+        if context_names.is_empty() || !rel.starts_with(".ai/") {
+            return false;
+        }
+        let name = rel.rsplit('/').next().unwrap_or(rel);
+        context_names.iter().any(|d| *d == name)
+    };
     for class in &sources.sources {
         let mut paths = source.enumerate(repo.root(), &class.pathspec)?;
         paths.sort();
@@ -250,6 +283,12 @@ pub fn discover(
         let mut count = 0;
         for rel in paths {
             if rel == local || rel.starts_with(&format!("{local}/")) {
+                continue;
+            }
+            // The manifest says this name is a context document wherever it appears, so
+            // no other class may claim it. This is precedence, not a collision: reporting
+            // it as claimed_twice would name the layer's own contract a conflict.
+            if is_context_document(&rel) && context_class.as_deref() != Some(class.id.as_str()) {
                 continue;
             }
             if let Some(first) = claimed.get(&rel) {
