@@ -1408,7 +1408,6 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
     .script("graph.js")
 }
 
-
 // --------------------------------------------------------------------- continuity
 
 /// One resolved record: where it is, how far its commit is from this one, and the section
