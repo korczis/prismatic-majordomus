@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/session-context/session-context.v1.schema.json",
+  "title": "Session working context",
+  "description": "The front matter of `.ai/local/session-contexts/<stamp>--<session-id>.md`: the bounded working context of one execution episode, written by `majordomus session start` and appended to by `session close`. It holds the one fact its neighbours do not — the closed record says what the episode produced, the prompt archive holds the person's half of the exchange, and this says what the worker was told when it began. The body is the context builder's output, verbatim, then a section for the worker's own notes about the repository. It is local and stays local, for two reasons that are not the same one: it names this machine, and it is a snapshot of a projection that re-resolving would not reproduce (ADR 0015). It is never a transcript — this contract has no field for a conversation, and a key naming one is refused (project.never-store-transcripts).",
+  "x-majordomus-allow": "session-context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "kind",
+    "session_id",
+    "opened_at",
+    "opened_by",
+    "branch",
+    "head",
+    "task_id",
+    "profile"
+  ],
+  "properties": {
+    "schema": {
+      "description": "The format version of this document. A version the tool does not know is refused, never guessed.",
+      "const": "session-context/v1"
+    },
+    "kind": {
+      "const": "session-context"
+    },
+    "session_id": {
+      "description": "The episode this context belongs to: the identity `session start` allocated, which the file name repeats so the store can be read by listing it.",
+      "type": "string",
+      "minLength": 1
+    },
+    "opened_at": {
+      "description": "When the context was frozen, UTC, RFC 3339. The same moment the episode opened, not when the document was last touched — the close appends to the body and leaves the front matter alone.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "opened_by": {
+      "description": "hook: a provider's session event opened the episode, below the model. hand: somebody ran `session start`. It is `hook` exactly when the open named the provider that delivered the event, which only something running inside that provider's hook can do — so this is a fact rather than a claim.",
+      "enum": [
+        "hook",
+        "hand"
+      ]
+    },
+    "provider": {
+      "description": "The provider whose event opened the episode. Absent when a person opened it; never inferred, because an inferred provider is indistinguishable from a recorded one the moment it is written down.",
+      "type": "string",
+      "minLength": 1
+    },
+    "provider_session": {
+      "description": "The provider's own session identity, as it sent it. This is what ties the episode to the prompt archive, whose records carry the same string; it is reduced to a safe form on the way in, since it is the provider's string and not this tool's.",
+      "type": "string"
+    },
+    "branch": {
+      "description": "The branch the episode opened on, from git at write time.",
+      "type": "string",
+      "minLength": 1
+    },
+    "head": {
+      "description": "The commit it opened at, in full, from git at write time.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "task_id": {
+      "description": "The active task when the episode opened, or `none`. A session may cross several tasks; this records only which one was current at the open.",
+      "type": "string",
+      "minLength": 1
+    },
+    "profile": {
+      "description": "The profile that task named, or `none`. It decides which sections the builder assembled, so the body cannot be read without it.",
+      "type": "string",
+      "minLength": 1
+    },
+    "worker": {
+      "description": "The worker identity, recorded only when one was supplied. An unrecorded worker stays unrecorded.",
+      "type": "string"
+    }
+  }
+}
