@@ -76,10 +76,11 @@ H
   mj_init_tree "$skel/ai/repo/use-cases" "$MJ_AI_REPO_DIR/use-cases" '*'
   mj_init_tree "$skel/ai/repo/applications" "$MJ_AI_REPO_DIR/applications" '*'
   mkdir -p "$MJ_PROJECT_DIR"
-  if [ -n "${MJ_SESSIONS_DIR:-}" ]; then
-    mkdir -p "$MJ_SESSIONS_DIR"
-    mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$MJ_SESSIONS_DIR/README.md"
-  fi
+  # The sessions section, by the path the skeleton's manifest names: the resolved variable
+  # is empty on the first run, because the manifest that names the section is being seeded
+  # in this same pass, and a second run would then report a file the first should have made.
+  mkdir -p "$MJ_AI_REPO_DIR/sessions"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$MJ_AI_REPO_DIR/sessions/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
