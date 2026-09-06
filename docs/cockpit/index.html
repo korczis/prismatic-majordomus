@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Cockpit — Prismatic Majordomus</title>
+<meta name="description" content="the Cockpit: the registry rendered as pages for a person, what makes it a projection rather than a dashboard, the graph and health models, the browser layer and what happens without it, the security decisions, the asset pipeline">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/docs/cockpit/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="The Cockpit — Prismatic Majordomus">
+<meta property="og:description" content="the Cockpit: the registry rendered as pages for a person, what makes it a projection rather than a dashboard, the graph and health models, the browser layer and what happens without it, the security decisions, the asset pipeline">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/docs/cockpit/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">The Cockpit</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">The Cockpit</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">the Cockpit: the registry rendered as pages for a person, what makes it a projection rather than a dashboard, the graph and health models, the browser layer and what happens without it, the security decisions, the asset pipeline</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cockpit/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">The Cockpit</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/COCKPIT.md" class="font-mono hover:underline">docs/COCKPIT.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p><code>majordomus serve</code> and <code>majordomus mcp</code> bind one shared server per repository. That server
+already answers machines: MCP tools and resources, HTTP routes under <code>/api/v1/</code>, an OpenAPI
+document and a Swagger UI over it. The Cockpit is the same server answering a person, at
+<code>/cockpit</code>.</p>
+<p>It is a <strong>projection</strong>, in this repository's sense of the word: one more thing derived from
+the canonical capability declarations and the index, holding no model, no catalogue and no
+verdict of its own. The decision is
+<a href="../.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md">ADR 12</a>; the rules
+it is bound by are <code>project.interfaces-are-projections</code>,
+<code>project.rust-canonical-declaration</code>, <code>project.rust-benchmark-coverage</code> and
+<code>project.rust-hot-path</code>. Behaviour as implemented and tested; where this document and the
+executable disagree, the document is wrong and changes in the same commit.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>ONE CANONICAL DECLARATION   capability! { id, title, description, input, output,</span></span>
+<span class="giallo-l"><span>                                          stability, exposure, tags, cache?, handler }</span></span>
+<span class="giallo-l"><span>        ↓</span></span>
+<span class="giallo-l"><span>CAPABILITY REGISTRY         + every declarative object of the layer</span></span>
+<span class="giallo-l"><span>        ↓</span></span>
+<span class="giallo-l"><span>DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · benchmark targets</span></span>
+<span class="giallo-l"><span>                            · docs/generated/* · the website&#39;s /registry/ pages</span></span>
+<span class="giallo-l"><span>                            · THE COCKPIT — pages, navigation, search, palette, runner, graphs</span></span></code></pre><h2 id="getting-there"><a class="zola-anchor" href="#getting-there" aria-label="Anchor link for: getting-there">Getting there</a></h2>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> serve</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> or `majordomus mcp`, which binds the same shared server</span></span></code></pre>
+<p>The server logs the URL it bound. Open that URL: a browser is redirected to <code>/cockpit</code>, and
+a client that does not ask for HTML gets the JSON index it has always got. Both are on the
+same port; there is no second process and no second command.</p>
+<p>Nothing needs building for it to work. If <code>share/cockpit/</code> has no compiled stylesheet the
+pages still render, say so, and remain fully usable.</p>
+<h2 id="what-is-on-it"><a class="zola-anchor" href="#what-is-on-it" aria-label="Anchor link for: what-is-on-it">What is on it</a></h2>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Route</th><th>What it shows</th><th>Derived from</th></tr></thead><tbody>
+<tr><td><code>/cockpit</code></td><td>repository identity, git state, index state, the registry counted, every diagnostic, the health summary</td><td><code>repository.info</code>, <code>health.report</code></td></tr>
+<tr><td><code>/cockpit/capabilities</code></td><td>every capability, filtered by module, kind, source or text</td><td>the registry</td></tr>
+<tr><td><code>/cockpit/capabilities/&lt;id&gt;</code></td><td>one descriptor in full: schemas, projections, cache and benchmark policy, provenance, examples, and a form that runs it</td><td>the descriptor and its <code>BenchmarkCases</code></td></tr>
+<tr><td><code>/cockpit/objects</code></td><td>the declarative objects of the layer, by kind</td><td><code>objects.list</code></td></tr>
+<tr><td><code>/cockpit/object?uri=</code></td><td>one object: front matter, provenance, content as it is</td><td><code>objects.get</code></td></tr>
+<tr><td><code>/cockpit/graphs</code></td><td>every graph this executable derives</td><td><code>graph.list</code></td></tr>
+<tr><td><code>/cockpit/graphs/&lt;id&gt;</code></td><td>one graph: the drawing, the vocabularies, and every node and edge as tables</td><td><code>graph.get</code></td></tr>
+<tr><td><code>/cockpit/graphs/topology</code></td><td>the registry graph in three dimensions — optional</td><td><code>graph.get</code> (<code>registry</code>)</td></tr>
+<tr><td><code>/cockpit/health</code></td><td>one check per dimension, each with the engine that decided it and the command that reproduces it</td><td><code>health.report</code></td></tr>
+<tr><td><code>/cockpit/api</code></td><td>every HTTP route the registry projects, and the projection's own</td><td>the registry</td></tr>
+<tr><td><code>/cockpit/search</code></td><td>capabilities and objects matching one query</td><td>the registry, <code>objects.search</code></td></tr>
+<tr><td><code>/cockpit/activity</code></td><td>this process's counters and phases, and a running plot of them</td><td><code>perf.counters</code></td></tr>
+<tr><td><code>/cockpit/assets/&lt;file&gt;</code></td><td>the stylesheet, the scripts, the vendored libraries</td><td><code>share/cockpit/</code></td></tr>
+</tbody></table>
+</div>
+<p>Every route is a deep link: the filters are query parameters, a refresh loses nothing, and
+a page can be sent to somebody.</p>
+<h2 id="what-makes-it-a-projection-and-not-a-dashboard"><a class="zola-anchor" href="#what-makes-it-a-projection-and-not-a-dashboard" aria-label="Anchor link for: what-makes-it-a-projection-and-not-a-dashboard">What makes it a projection and not a dashboard</a></h2>
+<p><strong>Every page asks a capability.</strong> A page calls <code>Context::execute</code>, which is the call MCP and
+the HTTP routes make. It is counted in the same perf counters, answered from the same cache
+and bound by the same validation. <code>tests/cockpit.rs</code> asserts that serving every page moves
+none of the counters that must only move at startup.</p>
+<p><strong>Nothing in it is a list.</strong> The sidebar's catalogues are the registry's modules, the
+index's kinds and the graph derivation table. The capability explorer is the registry
+filtered. The palette reads <code>/api/v1/capabilities</code>, <code>/api/v1/graphs</code> and <code>/api/v1/objects</code>,
+and takes the Cockpit's own pages out of the navigation the server already rendered.</p>
+<p><strong>The runner is generic.</strong> A capability's form is generated from its input schema: the
+control follows the JSON type (string, integer, number, boolean, enumeration, or a JSON
+textarea for anything structured), the description is the property's own doc comment, and
+requiredness is the schema's. Submitting sends the request the capability's own binding
+expects — a query string for a <code>GET</code>, a JSON body for a <code>POST</code> — to the capability's real
+route. There is no runner endpoint, no proxy and no second validation.</p>
+<p><strong>The examples are the benchmark cases.</strong> The inputs shown on a capability's page and the
+"load into the runner" buttons are <code>BenchmarkCases</code>, the same inputs the benchmark runs and
+the OpenAPI document shows.</p>
+<p>The behavioural claim is one test:
+<code>tests/cockpit.rs::a_capability_the_repository_adds_reaches_every_cockpit_surface</code> writes a
+rule into a disposable repository and asserts it reaches the capability listing, a page of
+its own, the object explorer, the search and the listing the palette reads — with no line
+of the Cockpit written for it.</p>
+<h2 id="graphs"><a class="zola-anchor" href="#graphs" aria-label="Anchor link for: graphs">Graphs</a></h2>
+<p>Graphs are canonical in Rust (<code>src/graph.rs</code>): a <code>Graph</code> is an id, its words, a node-kind
+and an edge-kind vocabulary that say what each shape means, sorted nodes and edges, and the
+metadata a reader needs before drawing — counts, whether the result is acyclic, and whether
+the derivation stopped at its node limit.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Graph</th><th>What it shows</th><th>Derived from</th></tr></thead><tbody>
+<tr><td><code>registry</code></td><td>modules, the capabilities they compose, the file each was declared in, and the MCP / HTTP / CLI projections</td><td>the registry</td></tr>
+<tr><td><code>layer</code></td><td>every directory an object was discovered in, nested, with the kinds each holds</td><td>object provenance</td></tr>
+<tr><td><code>rules</code></td><td>every rule and the rules it declares it depends on</td><td><code>depends_on</code> front matter</td></tr>
+<tr><td><code>adrs</code></td><td>every decision, what it supersedes, and the rules, claims, files and tests it put in force</td><td>ADR front matter</td></tr>
+<tr><td><code>use-cases</code></td><td>every use case and the commands, doctrines and claims it names</td><td>use-case front matter</td></tr>
+</tbody></table>
+</div>
+<p>Adding one is a function and one line in <code>graph::DERIVATIONS</code>. It then appears in
+<code>graph.list</code>, at <code>/api/v1/graph</code>, as an MCP tool answer, in the Cockpit's navigation, on a
+page of its own, and as a benchmark case — because <code>GraphInput::benchmark_cases</code> is
+<code>graph::ids()</code>.</p>
+<p>Invariants the property and unit suites hold: node ids are unique, no edge references a
+node the graph does not hold, and the same tree and executable produce the same bytes (no
+clock, no absolute path, no discovery order).</p>
+<p>A drawing library is a consumer. The translation to Cytoscape's element shape is one
+function in <code>share/cockpit/graph.js</code>; a projection to Mermaid, Graphviz or a terminal would
+rebuild no semantics.</p>
+<h2 id="health"><a class="zola-anchor" href="#health" aria-label="Anchor link for: health">Health</a></h2>
+<p><code>health.report</code> reports one check per dimension. Every check carries <strong>who decided it</strong> and
+<strong>what reproduces it</strong>, because a health report that decides things itself is a fourth
+opinion:</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>Check</th><th>Decided by</th></tr></thead><tbody>
+<tr><td>the layer as it was read</td><td>the index's own diagnostics</td></tr>
+<tr><td>the capability registry</td><td>the registry builder, which refuses to build on a duplicate or a malformed exposure</td></tr>
+<tr><td>the declared scope</td><td>the scope declaration the index was built under</td></tr>
+<tr><td>version control</td><td>git, asked once at startup</td></tr>
+<tr><td>benchmark coverage</td><td>the benchmark projection's coverage — the same one <code>bench coverage --check</code> reads</td></tr>
+<tr><td>committed projections</td><td>the same rendering <code>majordomus generate</code> writes, compared with what is committed</td></tr>
+</tbody></table>
+</div>
+<p>It deliberately does <strong>not</strong> re-render every committed projection on each call: that would
+rebuild canonical state per request. It compares the one artifact derived from code alone
+(<code>docs/generated/registry.json</code>) and names <code>majordomus generate --check</code> as the complete
+answer.</p>
+<p>It is also not <code>majordomus doctor</code>. The shell tool's doctor decides whether Majordomus is
+<em>wired into this repository</em>; these checks decide whether what this process <em>serves</em> is
+sound. Different subjects, and the Rust server dispatches no shell.</p>
+<h2 id="the-browser-layer"><a class="zola-anchor" href="#the-browser-layer" aria-label="Anchor link for: the-browser-layer">The browser layer</a></h2>
+<p>Progressive enhancement in the strict sense. Every page is complete HTML before any script
+runs; the graph pages carry every node and edge as tables, and the optional views say where
+the same facts are as text.</p>
+<div class="overflow-x-auto">
+<table><thead><tr><th>File</th><th>What it adds</th><th>Needs</th></tr></thead><tbody>
+<tr><td><code>cockpit.js</code></td><td>the one Alpine component (theme, palette state), the shared helpers</td><td><code>vendor/alpine.csp.min.js</code></td></tr>
+<tr><td><code>palette.js</code></td><td>the command palette (<code>Ctrl</code>/<code>Cmd</code> + <code>K</code>), entries from the registry</td><td>—</td></tr>
+<tr><td><code>runner.js</code></td><td>the generic capability runner</td><td>—</td></tr>
+<tr><td><code>graph.js</code></td><td>the Cytoscape view: pan, zoom, fit, search, neighbourhood focus, a details drawer</td><td><code>vendor/cytoscape.min.js</code></td></tr>
+<tr><td><code>topology.js</code></td><td>the registry graph in three dimensions</td><td><code>vendor/three.module.min.js</code></td></tr>
+<tr><td><code>activity.js</code></td><td>a running plot of the execution and cache counters</td><td><code>vendor/p5.min.js</code></td></tr>
+</tbody></table>
+</div>
+<p>If a vendored library is absent the frame says so and the page keeps working. None of them
+is on the critical path, each is fetched only by the page that uses it, and the two visual
+ones respect <code>prefers-reduced-motion</code>, pause when the tab is hidden and dispose what they
+allocate.</p>
+<p>Why Three.js is there at all: the registry graph is layered — modules compose capabilities,
+capabilities are declared in files and project onto three interfaces — and a flat drawing
+must choose between showing the layers and showing the fan-out. One plane per layer shows
+both. Why p5 is there: the counters are already a table, and a table cannot show whether
+the executions arriving now are being answered from the cache. Both are optional views of
+data the page also prints.</p>
+<h2 id="security"><a class="zola-anchor" href="#security" aria-label="Anchor link for: security">Security</a></h2>
+<ul>
+<li><strong>Escaping by construction.</strong> Markup is a tree of <code>El</code> values; the only way text reaches
+the output is a method that escapes it. There is no template string, and the tests render
+a rule whose title is a script tag.</li>
+<li><strong>A strict content-security policy.</strong> <code>default-src 'none'; script-src 'self' 'sha256-…'</code>
+— no <code>unsafe-inline</code>, no <code>unsafe-eval</code>, no remote origin, <code>frame-ancestors 'none'</code>. The
+one inline script is the pre-paint theme bootstrap, allowed by the digest of its own
+bytes, computed from the constant itself so the two cannot drift. This is why Alpine's
+<strong>CSP build</strong> is what is vendored and why every <code>x-</code> attribute names a property or a
+method rather than an expression.</li>
+<li><strong>Browser mutation protection.</strong> A request that carries an <code>Origin</code> header came from a
+page in a browser. For anything but <code>GET</code> and <code>HEAD</code>, that origin must be this server's
+own; otherwise it is refused with 403 before a handler runs. A client that is not a
+browser sends no <code>Origin</code> and is unaffected. Reads are already contained: this server
+sends no CORS headers, so a cross-origin page cannot read an answer. There is no session
+and no cookie, so there is no token to add — a token bound to nothing defends nothing.</li>
+<li><strong>No state change through <code>GET</code>.</strong> The Cockpit's own routes answer <code>GET</code> only; a command
+is <code>POST</code> to its own route, and the runner marks it as one.</li>
+<li><strong>Path handling.</strong> An asset name is refused before the filesystem is touched if it holds
+anything but <code>[A-Za-z0-9._-/]</code>, an empty segment, <code>.</code> or <code>..</code>; the resolved path is then
+checked to be inside the asset directory, which closes the door a symlink would open.
+Only a closed set of text media types is served.</li>
+<li><strong>Loopback by default.</strong> <code>serve</code> binds <code>127.0.0.1</code>; binding anything else logs what it
+means.</li>
+<li><strong>Nothing writes.</strong> Every capability the Cockpit can reach is a query, or the one command
+that changes this process's own memory. Nothing in it writes to the repository.</li>
+</ul>
+<h2 id="assets"><a class="zola-anchor" href="#assets" aria-label="Anchor link for: assets">Assets</a></h2>
+<p><code>share/cockpit/</code> is where this tool keeps the Cockpit's files, the way <code>share/kinds.yaml</code>
+and <code>share/schemas/</code> are where it keeps its kinds. They are read from disk, once, and
+served from memory with the digest of their bytes in the URL — so a changed file is a
+changed URL, and a versioned asset is answered <code>immutable</code> for a year.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/cockpit-assets</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> compile the stylesheet, vendor the pinned libraries</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/cockpit-assets</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> fail if the committed stylesheet differs from its source</span></span></code></pre><div class="overflow-x-auto">
+<table><thead><tr><th>File</th><th>Committed?</th><th>Why</th></tr></thead><tbody>
+<tr><td><code>cockpit.css</code></td><td>yes</td><td>a generated artifact, compiled from <code>src/cockpit.css</code> with Tailwind and Flowbite's theme; drift-checked</td></tr>
+<tr><td><code>src/cockpit.css</code></td><td>yes</td><td>the source: design tokens and one semantic class per component</td></tr>
+<tr><td><code>*.js</code>, <code>favicon.svg</code></td><td>yes</td><td>written by hand, no build step</td></tr>
+<tr><td><code>vendor/alpine.csp.min.js</code></td><td>yes</td><td>the interaction depends on it and it is 70 kB</td></tr>
+<tr><td><code>vendor/{cytoscape,three.module,three.core,p5}.min.js</code></td><td>no</td><td>~2 MB, lazy, optional, every page complete without them</td></tr>
+</tbody></table>
+</div>
+<p>There are no utility classes in the Rust that renders the pages. Everything the markup
+names is defined in <code>src/cockpit.css</code> as a composition of Tailwind utilities, which keeps
+the design readable in one file and makes the compiled stylesheet a function of that file
+and the pinned versions alone — which is what makes <code>--check</code> exact.</p>
+<p>Node is a <strong>build</strong> dependency. The Rust executable serves these files from disk and has no
+idea they were built.</p>
+<h2 id="performance"><a class="zola-anchor" href="#performance" aria-label="Anchor link for: performance">Performance</a></h2>
+<p>The pages are benchmark targets, declared beside <code>GET /</code> and <code>GET /docs</code>, so
+<code>bench coverage --check</code> counts them and a baseline can regress on them:
+<code>system.http.cockpit_overview</code>, <code>system.http.cockpit_capabilities</code>,
+<code>system.http.cockpit_graph</code>.</p>
+<p>What the numbers are on any given machine is measured, never written here — the evidence
+lives under <code>.ai/repo/benchmarks/rust/</code> and <code>docs/generated/benchmarks.md</code>. What is
+guaranteed is structural: no page rebuilds canonical state, an asset is read from disk once
+per process, a graph is cached by the executor, and no library that a page does not use is
+fetched.</p>
+<h2 id="adding-to-it"><a class="zola-anchor" href="#adding-to-it" aria-label="Anchor link for: adding-to-it">Adding to it</a></h2>
+<p><strong>A capability.</strong> Write the <code>capability!</code> block and run <code>majordomus generate</code>. It appears in
+the Cockpit's listing, on a page of its own with a generated form, in the search, in the
+palette, in the registry graph and as a benchmark target. Nothing in <code>src/cockpit/</code> is
+edited.</p>
+<p><strong>A graph.</strong> Write the derivation and add one line to <code>graph::DERIVATIONS</code>. It appears in
+<code>graph.list</code>, at <code>/api/v1/graph</code>, in the navigation, on a page, and as a benchmark case.</p>
+<p><strong>A page.</strong> That is the one thing that is a Cockpit edit, because a page is the Cockpit's
+own shape: a function in <code>pages.rs</code> returning a <code>Page</code>, and one arm in <code>Cockpit::route</code>. A
+page that needs a script names it with <code>.script("name.js")</code>, which is what keeps a graph
+library off the landing page.</p>
+<p><strong>A component.</strong> One class in <code>share/cockpit/src/cockpit.css</code> and one function in <code>view.rs</code>.
+Never a utility class in the Rust.</p>
+<h2 id="testing"><a class="zola-anchor" href="#testing" aria-label="Anchor link for: testing">Testing</a></h2>
+<p><code>apps/majordomus-cli/tests/cockpit.rs</code> runs a real server over a real socket against a
+disposable repository:</p>
+<ul>
+<li>every page renders complete HTML with the shell and the security headers,</li>
+<li>a capability added to the repository reaches every Cockpit surface,</li>
+<li>the runner form is generated from the input schema,</li>
+<li>a graph page lists every node and edge before any library loads,</li>
+<li>the health page shows the verdicts the engines reach,</li>
+<li>assets are immutable by digest and no traversal escapes the directory,</li>
+<li>a state-changing request from another origin is refused and a read is not,</li>
+<li>the index answers JSON to a client and points a browser at the Cockpit,</li>
+<li>repository content reaches the page as text and never as markup,</li>
+<li>serving every page rebuilds nothing canonical.</li>
+</ul>
+<p>The unit tests in <code>src/cockpit/</code> cover the escaping (both contexts), the void elements, the
+status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, and
+the navigation being the registry's rather than a list.</p>
+</article></div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/092fa19f13dcded36de53dfb947a0402d858e254" class="font-mono hover:underline">092fa19</a> · inputs <span class="font-mono">fd6dc83cdcf6</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>
