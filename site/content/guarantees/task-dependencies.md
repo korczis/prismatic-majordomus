@@ -1,7 +1,7 @@
 +++
 title = "A task record has no dependencies; sequencing between sessions is not represented"
 description = "**Rejected, and narrowly.** A task is the record of one session's work — what a worker"
-weight = 89
+weight = 93
 [extra]
 claim_id = "task-dependencies"
 status = "rejected"

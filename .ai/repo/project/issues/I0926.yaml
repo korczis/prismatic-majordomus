@@ -1,0 +1,38 @@
+id: I0926
+milestone: fly-deployment
+title: The deployment documentation is generated and reachable
+slug: deployment-documentation
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Produce the deployment documentation from the canonical object and the implementation — architecture, container, resources, workflow, CI, security, cost, troubleshooting and scaling — and make it reachable from the surfaces that are already generated."
+why: "Deployment values retyped into prose are wrong the first time the region or the memory changes. The repository already generates its references from data; this is the same mechanism applied to one more subsystem."
+current_state: "The site is generated from the registry and the documentation index. No deployment page exists and no navigation entry points at one."
+desired_state: "The tables and reference sections come from the canonical object and the registry, the prose explains what data cannot, and the page is reachable from the landing surface and the navigation without anyone editing a list."
+scope:
+  - docs/DEPLOYMENT.md
+  - site
+non_scope:
+  - Deployment values retyped into prose
+  - A hand-written navigation entry or landing card
+  - Currency prices stated as permanent facts
+depends_on:
+  - I0903
+  - I0913
+  - I0924
+acceptance_criteria:
+  - Every deployment value shown — region, port, resources, machine count, autostop, budgets, base image — is derived from the canonical object or the recorded measurements
+  - The page covers the architecture and why this provider, the container and its runtime, the resources, the developer workflow with real commands, CI and rollback, security, cost, troubleshooting drawn from failures actually met, and how to scale by changing one file
+  - Any price or provider fact that changes over time is marked with the date it was observed and is not stated as a guarantee
+  - The page is reachable from the landing surface and the navigation through the existing generated mechanism, with no hand-written entry
+  - Internal links resolve in the built site
+validation:
+  - bash test/run.sh
+  - majordomus generate --check
+evidence_required:
+  - docs_generated
+  - links_resolve
+  - landing_registered
+risk: "Troubleshooting written before anything has failed is fiction. It is filled from the failures the implementation actually hits."
+created_at: 2026-09-06
+updated_at: 2026-09-06

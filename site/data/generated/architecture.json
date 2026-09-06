@@ -330,6 +330,16 @@
       "external": false
     },
     {
+      "id": "lib/deployment.sh",
+      "kind": "module",
+      "label": "deployment",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/doctor.sh",
       "kind": "module",
       "label": "doctor",
@@ -520,9 +530,29 @@
       "external": false
     },
     {
+      "id": ".ai/repo/why",
+      "kind": "artifact",
+      "label": "repo/why",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/sessions}",
       "kind": "artifact",
       "label": "repo/sessions}",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/deployments}",
+      "kind": "artifact",
+      "label": "repo/deployments}",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1143,6 +1173,11 @@
     },
     {
       "source": "lib/doctor.sh",
+      "target": "lib/deployment.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
       "target": "lib/doctrine.sh",
       "kind": "sources"
     },
@@ -1433,6 +1468,11 @@
     },
     {
       "source": "lib/init.sh",
+      "target": ".ai/repo/deployments}",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
       "target": ".ai/repo/knowledge/curated/README.md",
       "kind": "uses"
     },
@@ -1479,6 +1519,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/use-cases",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/why",
       "kind": "uses"
     },
     {

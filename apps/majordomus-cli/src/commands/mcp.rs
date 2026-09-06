@@ -174,6 +174,7 @@ impl Session {
             &args.http_host,
             args.http_port,
             true,
+            None,
             lease,
             Some(app.share.dir()),
         )?;

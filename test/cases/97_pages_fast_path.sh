@@ -68,11 +68,24 @@ grep -qF "$(sed -n 's/^  publish: //p' "$MODEL")" "$W" || { echo "    pages.yml 
 awk '/scripts\/pages (build|check)/,/^      - /' "$W" | grep -qE '\|\|[[:space:]]*true' \
   && { echo "    a gating step of pages.yml swallows failure"; exit 1; }
 
-# 6. exactly the two workflows, with the split the architecture states: one decides whether a
-#    change may merge, the other what the public site shows
-[ "$(ls "$ROOT"/.github/workflows/*.yml | wc -l | tr -d ' ')" = 2 ] \
-  || { echo "    there are not exactly two workflows (validate.yml and pages.yml):"; ls "$ROOT"/.github/workflows/; exit 1; }
-grep -qE 'scripts/site-deploy' "$V" && { echo "    validate.yml still deploys; publication belongs to pages.yml alone"; exit 1; }
+# 6. every workflow is a pipeline this repository declares a model for, and exactly one of
+#    them publishes. The count is not the invariant — a count would be a mirror of the
+#    directory (docs/DYNAMICITY.md); the invariant is that no workflow exists whose
+#    behaviour is decided in the workflow file rather than under .ai/repo/ci/, and that
+#    publication belongs to pages.yml alone.
+for w in "$ROOT"/.github/workflows/*.yml; do
+  n="$(basename "$w" .yml)"
+  # validate.yml's model is gates.yaml; it was named before the convention
+  [ "$n" = validate ] && n=gates
+  [ -f "$ROOT/.ai/repo/ci/$n.yaml" ] \
+    || { echo "    .github/workflows/$(basename "$w") has no model under .ai/repo/ci/; a workflow that decides its own behaviour is what this directory exists to prevent"; exit 1; }
+done
+for w in "$ROOT"/.github/workflows/*.yml; do
+  [ "$(basename "$w")" = pages.yml ] && continue
+  grep -qE 'scripts/site-deploy' "$w" \
+    && { echo "    $(basename "$w") deploys the site; publication belongs to pages.yml alone"; exit 1; }
+  :
+done
 
 # 7. the fingerprint is the generator's own value, not a second hash of the same files
 have="$("$ROOT/scripts/generate-site-data" --fingerprint)"

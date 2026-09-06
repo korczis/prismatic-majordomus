@@ -1,0 +1,35 @@
+id: I0927
+milestone: fly-deployment
+title: The cockpit shows the deployment from the same data
+slug: cockpit-deployment-view
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a deployment view to the existing cockpit that reads static policy from the canonical object and live facts from the running process, using the projection the cockpit already is."
+why: "The cockpit exists to project what the registry knows. A deployment that is invisible there is a subsystem outside the model, and a deployment view fed by its own data source would be a second inventory."
+current_state: "The cockpit renders pages, navigation and views derived from the registry and the index, under ADR 0012, and is under active development on another branch."
+desired_state: "One view shows the provider, the application, the deployed revision, the region, the machine, the runtime profile and the health, drawing static facts from the canonical object and live facts from the metadata read."
+scope:
+  - apps/majordomus-cli/src/cockpit/pages.rs
+non_scope:
+  - A second frontend, a second design language or a second data source
+  - Any credential reaching the browser
+  - Mutating deployment controls
+depends_on:
+  - I0903
+acceptance_criteria:
+  - Static deployment policy comes from the canonical object and live facts from the same metadata read the API serves
+  - No credential of any kind reaches the client, and a test proves it
+  - The view carries no mutating control
+  - The view appears through the cockpit's existing navigation derivation rather than a hardcoded entry
+  - Absent live data renders as absent rather than as a broken or empty card
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - cockpit_view
+  - data_from_model
+  - no_credentials_client
+risk: "The cockpit is being rebuilt on another branch. This view has to be written against its projection model rather than against its current markup, and landed after it."
+created_at: 2026-09-06
+updated_at: 2026-09-06

@@ -1,7 +1,7 @@
 +++
 title = "Run several workers in one repository without them colliding"
 description = "Give each worker a declared scope, and find out immediately when two of them claim the same paths."
-weight = 4
+weight = 5
 [extra]
 id = "run-several-workers-at-once"
 source = ".ai/repo/use-cases/run-several-workers-at-once.md"

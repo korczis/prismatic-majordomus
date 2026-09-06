@@ -1,7 +1,7 @@
 +++
 title = "Provider instruction files are generated from the one policy, deterministically"
 description = "CLAUDE.md, AGENTS.md, GEMINI.md and any other target the policy names are not written by hand. majordomus update generates them from one canonical policy, the profiles, and one shared body text, through a small template per provider. Running it twice with the same inputs produces byte-identical files."
-weight = 19
+weight = 23
 [extra]
 claim_id = "projection-generation"
 status = "guaranteed"

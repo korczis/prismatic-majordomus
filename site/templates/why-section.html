@@ -5,68 +5,240 @@
 {% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
 {% block content %}
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
-{%- set why = load_data(path="data/generated/why.json") -%}
-{%- set graph = load_data(path="data/generated/why-graph.json") -%}
-{%- set graph_id = "why" -%}
-{%- set graph_rings = "moment,command,claim" -%}
-{%- set graph_label = "Each moment, the commands that answer it, the responsibility it falls under, and the claims that say what is guaranteed. Generated from the pages themselves — a moment that named something that did not exist would fail the build." -%}
+{#- Everything on this page is read from the catalogue the executable derived from
+    .ai/repo/why/. There is no list of moments, no list of filter values and no mapping
+    from a symptom to a recommendation anywhere in this template or in any script: adding
+    one file under the layer changes every part of what follows. -#}
+{%- set catalogue = load_data(path="data/registry/why.json") -%}
+{%- set public = [m for m in catalogue.moments if m.status == "stable"] -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
 
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"
-     x-data="{ cmd: '' }">
-  {#- Filtering is a progressive enhancement: without Alpine every moment is shown, which is
-      the correct default. x-cloak hides the control until Alpine can drive it. -#}
-  <div class="mb-6 flex flex-wrap items-center gap-2" x-cloak>
-    <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">show moments answered by</span>
-    <button type="button" x-on:click="cmd = ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any command</button>
-    {%- for name, slugs in why.by_command %}
-    <button type="button" x-on:click="cmd = (cmd === '{{ name }}' ? '' : '{{ name }}')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="cmd === '{{ name }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ name }} <span class="text-body-subtle">{{ slugs | length }}</span></button>
-    {%- endfor %}
-  </div>
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  {% include "partials/breadcrumb.html" %}
+  <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">You need this if, this week, you have…</h1>
+  <p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p>
+  <p class="mt-4 max-w-3xl text-base font-medium text-heading">None of these are model problems. They are operations problems, and operations is what Majordomus does.</p>
+  <nav aria-label="Ways into the catalogue" class="mt-6 flex flex-wrap gap-2 text-sm">
+    <a href="#moments" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Browse {{ public | length }} problems</a>
+    <a href="{{ get_url(path='/why/audiences/', trailing_slash=true) }}" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Browse by who you are</a>
+    <a href="{{ get_url(path='/why/areas/', trailing_slash=true) }}" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Browse by operational area</a>
+    <a href="#diagnose" class="rounded-base border border-brand bg-brand-softer px-3 py-1.5 font-medium text-fg-brand-strong hover:bg-neutral-secondary-medium">Diagnose your week</a>
+  </nav>
+</div></div>
 
-  <ol class="grid gap-5 lg:grid-cols-2">
-    {%- for m in why.moments %}
-    <li class="min-w-0" x-show="cmd === '' || {{ m.commands | json_encode() }}.includes(cmd)">
-      <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
-        <a href="{{ base }}{{ m.route }}" class="group">
-          <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">{{ m.hook }}</span></p>
-        </a>
-        <p class="mt-3 min-w-0 text-sm text-body">{{ m.description }}</p>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
-        <dl class="mt-4 space-y-3 border-t border-default pt-4 text-sm">
-          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">answered by</dt>
-            {%- for c in m.command_detail %}
-            <dd><a href="{{ get_url(path='/commands/' ~ c.name ~ '/', trailing_slash=true) }}" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">{{ c.name }}</a></dd>
-            {%- endfor %}
-          </div>
-          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">supervises</dt>
-            {%- for r in m.responsibility_detail %}
-            <dd><a href="{{ get_url(path='/supervises/' ~ r.slug ~ '/', trailing_slash=true) }}" class="text-xs text-fg-brand hover:underline">{{ r.title }}</a></dd>
-            {%- endfor %}
-          </div>
-          <div>
-            <dt class="mb-1.5 font-mono text-xs uppercase tracking-wide text-body-subtle">backed by {{ m.claim_detail | length }} claims</dt>
-            <dd><ul class="space-y-1">
-              {%- for c in m.claim_detail %}
-              <li class="flex min-w-0 items-start gap-2"><span class="shrink-0">{{ <badge status={c.status} /> }}</span><a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-xs text-body hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>
-              {%- endfor %}
-            </ul></dd>
-          </div>
-        </dl>
-        <p class="mt-4 pt-1"><a href="{{ base }}{{ m.route }}" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
-      </article>
-    </li>
-    {%- endfor %}
-  </ol>
+  {#- ------------------------------------------------------------------ diagnosis -#}
+  <section id="diagnose" class="scroll-mt-24" x-data="whyDiagnosis()">
+    <h2 class="text-2xl font-bold tracking-tight text-heading">Which of these happened to you this week?</h2>
+    <p class="mt-2 max-w-3xl text-body">Every line below is a signal one of the moments declares. Tick what you recognise; the profile that appears is counted from the metadata of the moments you picked, not scored by anything.</p>
+    <noscript><p class="mt-3 max-w-3xl rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-body">This questionnaire needs JavaScript to add up. The same answer, without it: <code class="font-mono text-heading">majordomus why diagnose --signal &lt;id&gt;</code>, or read the moments below.</p></noscript>
 
-  <p class="mt-8 max-w-3xl text-base font-medium text-heading">{{ section.content | striptags | trim }}</p>
+    <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <fieldset class="min-w-0">
+        <legend class="sr-only">Signals you recognise</legend>
+        <ul class="space-y-1.5">
+          {%- for m in public %}{% for s in m.signals %}
+          <li>
+            <label for="sig-{{ s.id }}" class="flex cursor-pointer items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3 text-sm hover:bg-neutral-secondary-medium has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand">
+              <input id="sig-{{ s.id }}" type="checkbox" value="{{ s.id }}" x-model="picked"
+                     class="mt-0.5 size-4 shrink-0 rounded border-default text-brand focus:ring-brand">
+              <span class="min-w-0 break-words text-body">{{ s.text }}</span>
+            </label>
+          </li>
+          {%- endfor %}{% endfor %}
+        </ul>
+      </fieldset>
 
-  <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">How the {{ why.moments | length }} connect to the tool</h2>
-  <p class="mt-2 max-w-3xl text-body">Every arrow below is read out of the pages themselves. Nothing on this page is a second list.</p>
-  {% include "partials/graph.html" %}
+      <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start" aria-live="polite">
+        <div class="rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+          <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">your operational pain profile</h3>
+          <template x-if="picked.length === 0">
+            <p class="mt-3 text-sm text-body">Nothing ticked yet. Tick a line and this fills in.</p>
+          </template>
+          <template x-if="picked.length > 0">
+            <div>
+              <p class="mt-3 text-sm text-body"><span class="font-medium text-heading" x-text="matched.length"></span> matched moment<span x-show="matched.length !== 1">s</span>.</p>
+              <h4 class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">by operational area</h4>
+              <dl class="mt-2 space-y-1 text-sm">
+                <template x-for="row in tally('areas')" :key="row.id">
+                  <div class="flex items-baseline justify-between gap-3">
+                    <dt class="min-w-0 break-words text-body" x-text="label(row.id)"></dt>
+                    <dd class="shrink-0 font-mono text-heading" x-text="row.n"></dd>
+                  </div>
+                </template>
+              </dl>
+              <h4 class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">this looks like</h4>
+              <ul class="mt-2 space-y-1 text-sm">
+                <template x-for="row in tally('audiences').slice(0, 3)" :key="row.id">
+                  <li><a :href="base + '/why/audiences/' + row.id + '/'" class="text-fg-brand hover:underline" x-text="label(row.id)"></a></li>
+                </template>
+              </ul>
+              <h4 class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">what answers it</h4>
+              <ul class="mt-2 space-y-1.5 text-sm">
+                <template x-for="row in tally('commands').slice(0, 5)" :key="row.id">
+                  <li><a :href="base + '/commands/' + row.id + '/'" class="font-mono text-fg-brand hover:underline" x-text="'majordomus ' + row.id"></a>
+                    <span class="text-body-subtle" x-text="'— from ' + row.why.join(', ')"></span></li>
+                </template>
+              </ul>
+              <h4 class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">read next</h4>
+              <ul class="mt-2 space-y-1 text-sm">
+                <template x-for="id in matched" :key="id">
+                  <li><a :href="base + '/why/' + id + '/'" class="text-fg-brand hover:underline" x-text="hook(id)"></a></li>
+                </template>
+              </ul>
+              <div class="mt-5 flex flex-wrap gap-2">
+                <button type="button" x-on:click="picked = []" class="rounded-base border border-default px-2.5 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium">reset</button>
+                <a :href="'#diagnose?signals=' + picked.join(',')" x-on:click="share()" class="rounded-base border border-default px-2.5 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium">copy a link to this</a>
+              </div>
+              <p class="mt-4 border-t border-default pt-3 font-mono text-xs text-body-subtle">the same answer in a terminal:<br><span x-text="'majordomus why diagnose ' + picked.map(s => '--signal ' + s).join(' ')"></span></p>
+            </div>
+          </template>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  {#- ------------------------------------------------------------------ the moments -#}
+  <section id="moments" class="mt-14 scroll-mt-24" x-data="whyFilter()">
+    <h2 class="text-2xl font-bold tracking-tight text-heading">The moments</h2>
+    <p class="mt-2 max-w-3xl text-body">Every filter below is a value some moment declares, counted over the catalogue. Nothing here is a list somebody keeps.</p>
+
+    {#- Filtering is a progressive enhancement: without Alpine every moment is shown, which
+        is the correct default. x-cloak hides the controls until Alpine can drive them. -#}
+    <div class="mt-6 space-y-3" x-cloak>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <label for="why-q" class="sr-only">Filter the moments</label>
+        <input id="why-q" type="search" x-model="q" placeholder="Filter by anything on the card"
+               class="w-full max-w-sm rounded-base border border-default bg-neutral-primary px-3 py-1.5 text-sm text-heading placeholder:text-body-subtle focus:border-brand focus:ring-brand">
+        <button type="button" x-on:click="reset()" x-show="q || audience || area || severity"
+                class="rounded-base border border-default px-2.5 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium">clear</button>
+        <span class="font-mono text-xs text-body-subtle" role="status" aria-live="polite" x-text="count + ' of {{ public | length }} shown'"></span>
+      </div>
+      {#- One row per facet. The values are the catalogue's, counted; only the three
+          bound names differ, which is why the rows are written out rather than looped. -#}
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">who</span>
+        <button type="button" x-on:click="audience = ''" :aria-pressed="audience === ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="audience === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
+        {%- for v in catalogue.facets.audiences %}
+        <button type="button" x-on:click="audience = (audience === '{{ v.value }}' ? '' : '{{ v.value }}')" :aria-pressed="audience === '{{ v.value }}'" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="audience === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
+        {%- endfor %}
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">area</span>
+        <button type="button" x-on:click="area = ''" :aria-pressed="area === ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="area === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
+        {%- for v in catalogue.facets.areas %}
+        <button type="button" x-on:click="area = (area === '{{ v.value }}' ? '' : '{{ v.value }}')" :aria-pressed="area === '{{ v.value }}'" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="area === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
+        {%- endfor %}
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">cost</span>
+        <button type="button" x-on:click="severity = ''" :aria-pressed="severity === ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="severity === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
+        {%- for v in catalogue.facets.severities %}
+        <button type="button" x-on:click="severity = (severity === '{{ v.value }}' ? '' : '{{ v.value }}')" :aria-pressed="severity === '{{ v.value }}'" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="severity === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
+        {%- endfor %}
+      </div>
+    </div>
+
+    <ol class="mt-6 grid gap-5 lg:grid-cols-2">
+      {%- for m in public %}
+      <li class="min-w-0"
+          data-why-id="{{ m.id }}"
+          data-why-audiences="{{ m.audiences | join(sep=' ') }}"
+          data-why-areas="{{ m.areas | join(sep=' ') }}"
+          data-why-severity="{{ m.severity }}"
+          data-why-text="{{ m.id }} {{ m.title }} {{ m.hook }} {{ m.summary }} {{ m.tags | join(sep=' ') }} {{ m.audiences | join(sep=' ') }} {{ m.areas | join(sep=' ') }}"
+          x-show="shows($el)">
+        <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
+          <a href="{{ base }}{{ m.route }}" class="group">
+            <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">{{ m.hook }}</span></p>
+          </a>
+          <p class="mt-3 min-w-0 break-words text-sm text-body">{{ m.summary }}</p>
+          <dl class="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-default pt-3 text-xs">
+            <div class="flex flex-wrap items-baseline gap-x-2">
+              <dt class="font-mono uppercase tracking-wide text-body-subtle">area</dt>
+              {%- for a in m.areas %}<dd><a href="{{ get_url(path='/why/areas/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ a }}</a></dd>{% endfor %}
+            </div>
+            <div class="flex flex-wrap items-baseline gap-x-2">
+              <dt class="font-mono uppercase tracking-wide text-body-subtle">cost</dt><dd class="text-body">{{ m.severity }}</dd>
+              <dt class="font-mono uppercase tracking-wide text-body-subtle">how often</dt><dd class="text-body">{{ m.frequency }}</dd>
+            </div>
+          </dl>
+          <p class="mt-4 pt-1"><a href="{{ base }}{{ m.route }}" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
+        </article>
+      </li>
+      {%- endfor %}
+    </ol>
+    <template x-if="count === 0"><p class="mt-6 text-sm text-body-subtle">Nothing matches that. <button type="button" x-on:click="reset()" class="font-medium text-fg-brand hover:underline">Clear the filters</button>.</p></template>
+  </section>
+
+  <section class="mt-14">
+    <h2 class="text-2xl font-bold tracking-tight text-heading">How the moments connect to the tool</h2>
+    <p class="mt-2 max-w-3xl text-body">Every moment, who recognises it, the area it falls under, and the commands, capabilities, claims, rules and use cases that answer it — one graph, derived from the moments themselves. Nothing on this site is a second list.</p>
+    <p class="mt-4"><a href="{{ get_url(path='/why/graph/', trailing_slash=true) }}" class="inline-flex items-center rounded-base border border-brand-subtle bg-neutral-primary-soft px-4 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium">Open the map &rarr;</a></p>
+  </section>
 </div>
 {% endblock content %}
-{% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}
+{% block scripts %}
+{#- The questionnaire's arithmetic. The data is the catalogue, projected at build time;
+    there is no mapping from a symptom to a recommendation written in JavaScript. -#}
+<script id="why-data" type="application/json">{{ {
+  "base": base,
+  "signals": catalogue.signals,
+  "moments": [ {"id": m.id, "hook": m.hook, "areas": m.areas, "audiences": m.audiences,
+                "commands": m.commands, "capabilities": m.capabilities} for m in public ],
+  "areas": catalogue.facets.areas,
+  "audiences": catalogue.facets.audiences
+} | json_encode() | safe }}</script>
+<script>
+function whyDiagnosis() {
+  const data = JSON.parse(document.getElementById('why-data').textContent);
+  const owner = Object.fromEntries(data.signals.map(s => [s.id, s.moment]));
+  const byId = Object.fromEntries(data.moments.map(m => [m.id, m]));
+  const labels = Object.fromEntries([...data.areas, ...data.audiences].map(f => [f.value, f.label]));
+  const fromUrl = new URLSearchParams(location.hash.split('?')[1] || '').get('signals');
+  let initial = [];
+  try { initial = fromUrl ? fromUrl.split(',') : JSON.parse(localStorage.getItem('why.picked') || '[]'); } catch (e) { initial = []; }
+  return {
+    base: data.base,
+    picked: initial.filter(id => id in owner),
+    init() { this.$watch('picked', v => { try { localStorage.setItem('why.picked', JSON.stringify(v)); } catch (e) {} }); },
+    get matched() { return [...new Set(this.picked.map(s => owner[s]).filter(Boolean))]; },
+    label(id) { return labels[id] || id; },
+    hook(id) { return (byId[id] || {}).hook || id; },
+    // counting, not scoring: a value's number is how many of the matched moments name it,
+    // and every row carries the moments it came from
+    tally(field) {
+      const by = {};
+      for (const id of this.matched) for (const v of (byId[id] || {})[field] || []) (by[v] = by[v] || []).push(id);
+      return Object.entries(by).map(([id, why]) => ({ id, n: why.length, why }))
+        .sort((a, b) => b.n - a.n || a.id.localeCompare(b.id));
+    },
+    share() {
+      const url = location.origin + location.pathname + '#diagnose?signals=' + this.picked.join(',');
+      if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+    },
+  };
+}
+function whyFilter() {
+  return {
+    q: '', audience: '', area: '', severity: '', count: 0,
+    init() { this.$nextTick(() => this.recount()); this.$watch('q', () => this.recount());
+             this.$watch('audience', () => this.recount()); this.$watch('area', () => this.recount());
+             this.$watch('severity', () => this.recount()); },
+    reset() { this.q = ''; this.audience = ''; this.area = ''; this.severity = ''; },
+    shows(el) {
+      const d = el.dataset;
+      const ok = (this.audience === '' || d.whyAudiences.split(' ').includes(this.audience))
+        && (this.area === '' || d.whyAreas.split(' ').includes(this.area))
+        && (this.severity === '' || d.whySeverity === this.severity)
+        && (this.q === '' || d.whyText.toLowerCase().includes(this.q.toLowerCase()));
+      return ok;
+    },
+    recount() {
+      this.count = [...document.querySelectorAll('[data-why-id]')].filter(el => this.shows(el)).length;
+    },
+  };
+}
+</script>
+{% endblock scripts %}
