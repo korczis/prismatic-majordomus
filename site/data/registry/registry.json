@@ -5,22 +5,22 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "39004b75e83d5228715e520591262086161d157f2e5d54ca71fa9650ebfe8dcd",
+    "fingerprint": "0940aa0ebbb0888b18e6f4bd4ad06e09357026af390ae8ff590c1d5386b1f49e",
     "summary": {
-      "total": 704,
+      "total": 706,
       "builtin": 15,
-      "declarative": 689,
+      "declarative": 691,
       "by_kind": {
         "command": 1,
         "query": 14,
-        "resource": 689
+        "resource": 691
       },
       "by_stability": {
         "behaviorally_verified": 15,
-        "implemented": 689
+        "implemented": 691
       },
       "mcp_tools": 15,
-      "mcp_resources": 694,
+      "mcp_resources": 696,
       "http_routes": 15,
       "cli_commands": 4,
       "modules": 25,
@@ -4443,7 +4443,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 80,
+        "capabilities": 81,
         "capability_ids": []
       },
       {
@@ -4483,7 +4483,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 92,
+        "capabilities": 93,
         "capability_ids": []
       },
       {
@@ -4497,7 +4497,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3f0ddf15e334a9e7a6291f7ba5a45b85c9e2ab0b2e1b5ae9eb00c6773be2eb85",
+    "fingerprint": "7d45ffde19f7fcfdb6f4d14c71f2f0d201b15facaca74a6b6e44c3e35bd5e52f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -4526,12 +4526,12 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "rule": 80,
+      "rule": 81,
       "scope": 1,
       "session": 6,
       "skill": 3,
       "taxonomy": 10,
-      "test": 92,
+      "test": 93,
       "use-case": 37
     },
     "diagnostics": {},
@@ -6150,7 +6150,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 88481
+        "bytes": 88474
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -6168,7 +6168,7 @@
         "title": "Concepts",
         "path": "docs/CONCEPTS.md",
         "source_class": "document",
-        "bytes": 11685
+        "bytes": 11671
       },
       {
         "uri": "majordomus://document/docs/CONTEXT.md",
@@ -6186,7 +6186,7 @@
         "title": "Continuity — how work survives the session that was doing it",
         "path": "docs/CONTINUITY.md",
         "source_class": "document",
-        "bytes": 19423
+        "bytes": 19442
       },
       {
         "uri": "majordomus://document/docs/DESIGN.md",
@@ -6330,7 +6330,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 53736
+        "bytes": 53729
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -7522,7 +7522,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 47319
+        "bytes": 47527
       },
       {
         "uri": "majordomus://implementation/lib/check.sh",
@@ -7546,7 +7546,7 @@
         "identity": "lib/commands.sh",
         "path": "lib/commands.sh",
         "source_class": "library",
-        "bytes": 6327
+        "bytes": 6734
       },
       {
         "uri": "majordomus://implementation/lib/common.sh",
@@ -7634,7 +7634,7 @@
         "identity": "lib/init.sh",
         "path": "lib/init.sh",
         "source_class": "library",
-        "bytes": 7701
+        "bytes": 8016
       },
       {
         "uri": "majordomus://implementation/lib/json_scan.awk",
@@ -7786,7 +7786,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 45774
+        "bytes": 47013
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -10098,6 +10098,22 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.rust-command-tested-in-file@1",
+        "kind": "rule",
+        "identity": "project.rust-command-tested-in-file@1",
+        "title": "A command asserts in the file that declares it that it is what it claims, and is composed rather than registered",
+        "description": "Every capability module the executable composes carries at least one assertion that runs beside the declaration — an in-file test or an executed doc example — is reached by the root composition rather than by a registration elsewhere, and is held to a declared coverage floor.",
+        "path": ".ai/repo/rules/project/rust-command-tested-in-file.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 7825,
+        "tags": [
+          "rust",
+          "command",
+          "testing"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.rust-hot-path@1",
         "kind": "rule",
         "identity": "project.rust-hot-path@1",
@@ -11056,6 +11072,14 @@
         "bytes": 2470
       },
       {
+        "uri": "majordomus://test/test/cases/88_rust_command_tested.sh",
+        "kind": "test",
+        "identity": "test/cases/88_rust_command_tested.sh",
+        "path": "test/cases/88_rust_command_tested.sh",
+        "source_class": "case",
+        "bytes": 7080
+      },
+      {
         "uri": "majordomus://test/test/cases/90_mcp_shared_server.sh",
         "kind": "test",
         "identity": "test/cases/90_mcp_shared_server.sh",
@@ -11690,7 +11714,7 @@
         "id",
         "version"
       ],
-      "objects": 80
+      "objects": 81
     },
     {
       "name": "scope",
@@ -11735,7 +11759,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 92
+      "objects": 93
     },
     {
       "name": "use-case",
@@ -14422,7 +14446,7 @@
                     "name": "suite",
                     "long": "suite",
                     "positional": false,
-                    "help": "The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh)",
+                    "help": "The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`)",
                     "value_name": "SUITE",
                     "takes_value": true,
                     "required": true,
