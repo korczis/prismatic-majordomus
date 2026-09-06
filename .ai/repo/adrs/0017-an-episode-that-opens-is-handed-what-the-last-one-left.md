@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0016
+id: adr-0017
 kind: adr
 title: An episode that opens is handed what the last one left
 status: proposed
@@ -19,7 +19,7 @@ provenance:
     - file:apps/majordomus-cli/src/capability/builtin/continuity.rs
 ---
 
-# 16. An episode that opens is handed what the last one left
+# 17. An episode that opens is handed what the last one left
 
 ## Context
 

@@ -1,7 +1,7 @@
 +++
 title = "A provider hook opens the episode below the model and hands the worker what the last one left, records what a compaction is about to discard, and closes the episode with a continuation record beside its envelope"
 description = "Where a provider fires session events, the episode boundary is drawn by that provider's own hook rather than by the model working inside it. SessionStart opens the episode and hands the worker the briefing the policy declares, PreCompact records what the conversation is about to stop holding, SessionEnd writes a continuation record and closes the episode into the shared record under .ai/repo/sessions/, and none of it depends on a worker remembering to run a command. At the open, the context the builder resolved is written to .ai/local/session-contexts/ and kept for the episode, so what the worker was told is evidence rather than recollection."
-weight = 135
+weight = 136
 [extra]
 claim_id = "session-lifecycle"
 status = "guaranteed"
@@ -52,5 +52,5 @@ It is not a transcript and cannot become one. The derived half is the builder's 
 
 ## Why it exists
 
-`.ai/local/session-contexts/` was named by the layer from the beginning and had no producer: `init` created the directory, one sentence of prose described it, and nothing ever wrote a file into it. A directory the skeleton creates and nothing fills is a promise the layer does not keep, and a reader cannot tell an empty store from an unimplemented one. Giving it a producer meant answering where the episode's boundary comes from, and the answer was the one ADR 0009 had already given for prompts: below the model, in the provider's hook, where running it is the proof that it works. `.ai/repo/adrs/0015-the-episode-boundary-is-drawn-by-the-provider-not-by-the-mod.md` records that decision, and `.ai/repo/adrs/0016-an-episode-that-opens-is-handed-what-the-last-one-left.md` records the briefing, the compaction event and the continuation record that follow from it.
+`.ai/local/session-contexts/` was named by the layer from the beginning and had no producer: `init` created the directory, one sentence of prose described it, and nothing ever wrote a file into it. A directory the skeleton creates and nothing fills is a promise the layer does not keep, and a reader cannot tell an empty store from an unimplemented one. Giving it a producer meant answering where the episode's boundary comes from, and the answer was the one ADR 0009 had already given for prompts: below the model, in the provider's hook, where running it is the proof that it works. `.ai/repo/adrs/0015-the-episode-boundary-is-drawn-by-the-provider-not-by-the-mod.md` records that decision, and `.ai/repo/adrs/0017-an-episode-that-opens-is-handed-what-the-last-one-left.md` records the briefing, the compaction event and the continuation record that follow from it.
 {% endraw %}
