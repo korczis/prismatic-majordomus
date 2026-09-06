@@ -13,37 +13,41 @@ doctrines: [majordomus.ai-layout-integrity, majordomus.layout-integrity]
 claims: [legacy-migration, ai-layer-manifest]
 responsibilities: [layer, doctor]
 applications: [repository-with-authored-governance]
-scenario:
-  setup: legacy-layout
-  given:
-    - 'project data under .majordomus/, the pre-.ai layout, and no manifest'
-  steps:
-    - id: plan-it
-      run: ['migrate', '--dry-run']
-      note: 'every move named, nothing written'
-      expect:
-        exit: 0
-        stdout_contains: ['^migrate: \.majordomus/ \(pre-\.ai layout\) -> \.ai/', 'move  \.majordomus/policy\.yaml -> \.ai/repo/policy\.yaml']
-    - id: do-it
-      run: ['migrate']
-      note: 'the files move, the old directory is backed up, the manifest is written'
-      expect:
-        exit: 0
-        stdout_contains: ['^migrated: \.ai/ is the layout']
-    - id: nothing-left
-      run: ['migrate']
-      note: 'a second migration says the layer is already there and moves nothing'
-      expect:
-        exit: 0
-        stdout_contains: ['^already migrated: \.ai/manifest\.yaml is present']
-  then:
-    - 'the migration is explicit, dry-runnable and backed up'
-    - 'afterwards every command reads the layer and refuses the old path by name'
 ---
 
 # Situation
 
 A repository installed Majordomus before the `.ai/` layer existed and keeps its policy under `.majordomus/`. Every command refuses to read it, and the maintainer wants to know what will move before anything does.
+
+# Scenario
+
+```yaml
+setup: legacy-layout
+given:
+  - 'project data under .majordomus/, the pre-.ai layout, and no manifest'
+steps:
+  - id: plan-it
+    run: ['migrate', '--dry-run']
+    note: 'every move named, nothing written'
+    expect:
+      exit: 0
+      stdout_contains: ['^migrate: \.majordomus/ \(pre-\.ai layout\) -> \.ai/', 'move  \.majordomus/policy\.yaml -> \.ai/repo/policy\.yaml']
+  - id: do-it
+    run: ['migrate']
+    note: 'the files move, the old directory is backed up, the manifest is written'
+    expect:
+      exit: 0
+      stdout_contains: ['^migrated: \.ai/ is the layout']
+  - id: nothing-left
+    run: ['migrate']
+    note: 'a second migration says the layer is already there and moves nothing'
+    expect:
+      exit: 0
+      stdout_contains: ['^already migrated: \.ai/manifest\.yaml is present']
+then:
+  - 'the migration is explicit, dry-runnable and backed up'
+  - 'afterwards every command reads the layer and refuses the old path by name'
+```
 
 # Outcome
 

@@ -22,12 +22,13 @@ ONE CANONICAL DECLARATION   capability! { id, kind?, title, description, input, 
         ↓
 MODULE COMPOSITION          module! { id, title, description, stability, capabilities: [...] }
         ↓
-ROOT COMPOSITION            compose_modules![repository, objects, capabilities, peers, perf]
+ROOT COMPOSITION            compose_modules![repository, objects, capabilities, graph, health, peers, perf]
         ↓
 CAPABILITY REGISTRY         + every declarative object of the layer, validated, frozen, fingerprinted
         ↓
-DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · benchmark targets and coverage
-                            · cache policy · perf counters · docs/generated/*
+DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · the Cockpit
+                            · benchmark targets and coverage · cache policy · perf counters
+                            · docs/generated/* · the website's /registry/ pages
 ```
 
 A contributor adding one capability edits one `capability!` block (with its typed input
@@ -42,12 +43,15 @@ capability! blocks, one per module file     MCP tools and resources        examp
   builtin/<module>.rs, composed by          OpenAPI document               the committed snapshots
   module! and compose_modules!              Swagger UI configuration         under docs/generated/
 declarative objects of the layer            capabilities list/describe       (caches of the registry)
-  .ai/** as sources.yaml maps them          benchmark targets, coverage    a latency number in prose
-how each kind is read and validated         cache behaviour (executor)       (evidence lives under
-  share/kinds.yaml, share/schemas/*.json    perf counters                    .ai/local/benchmarks/ and
-  .ai/repo/knowledge/kinds.yaml, schemas/   docs/generated/*                 .ai/repo/benchmarks/rust/)
-the regression policy                       share/allow/*.txt (shell tool)
-  .ai/repo/benchmarks/rust/policy.yaml
+  .ai/** as sources.yaml maps them          the Cockpit's pages,           a latency number in prose
+how each kind is read and validated           navigation, search, palette,   (evidence lives under
+  share/kinds.yaml, share/schemas/*.json      runner form and graphs         .ai/local/benchmarks/ and
+  .ai/repo/knowledge/kinds.yaml, schemas/   benchmark targets, coverage      .ai/repo/benchmarks/rust/)
+the regression policy                       cache behaviour (executor)     the Cockpit's own markup
+  .ai/repo/benchmarks/rust/policy.yaml      perf counters                    (a projection, never a
+the graph derivations                       docs/generated/*                  place a fact is stated)
+  graph::DERIVATIONS, from the registry     share/allow/*.txt (shell tool)
+  and the index                             the website's /registry/ pages
 ```
 
 ```mermaid
@@ -59,12 +63,20 @@ flowchart TD
   R --> H[HTTP routes]
   R --> O[OpenAPI document] --> S[Swagger UI]
   R --> C[capabilities list / describe]
-  R --> G[docs/generated]
+  R --> K2[the Cockpit<br/>pages, navigation, runner, graphs]
+  R --> G[docs/generated] --> W[the website's /registry/ pages]
   K --> A[share/allow/*.txt]
 ```
 
 A change to one descriptor, one declarative file, one kind or one schema reaches every
 projection on the next start or the next `majordomus generate`; nothing is edited twice.
+
+The Cockpit ([`COCKPIT.md`](COCKPIT.md), ADR 12) is the projection a person reads. It is on
+this list rather than beside it: its pages are laid out from what a capability answered
+through the same executor every other transport calls, its navigation catalogues are the
+registry's modules and the index's kinds, its runner's form is generated from the input
+schema, and its examples are the capability's own benchmark cases. Nothing in it names a
+capability, a kind, a route or a graph.
 
 ## The model
 

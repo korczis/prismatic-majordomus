@@ -5,7 +5,7 @@ response to. Every entry in it is a declarative object of the layer, and every l
 route, filter, count, backlink, API answer, MCP resource and diagnosis is derived from
 those objects. Behaviour as implemented and tested; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-[ADR 15](../.ai/repo/adrs/0015-operational-moments-are-objects-of-the-layer-not-pages-of-th.md);
+[ADR 17](../.ai/repo/adrs/0017-operational-moments-are-objects-of-the-layer-not-pages-of-th.md);
 the rule is `project.why-catalogue-is-canonical`; the directory's own contract is
 [`.ai/repo/why/README.md`](../.ai/repo/why/README.md).
 

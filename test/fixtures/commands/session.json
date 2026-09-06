@@ -58,10 +58,10 @@
       "expect": {
         "exit": 0,
         "stdout_contains": [
-          "^.ai/local/state/sessions/"
+          "^\\.ai/repo/sessions/"
         ]
       },
-      "explain": "The closed record names the tasks, checkpoints, handovers, decisions and questions of the episode and copies none of them. The path printed is the record."
+      "explain": "The closed record names the tasks, checkpoints, handovers, decisions and questions of the episode and copies none of them. The path printed is the record, under the layer's tracked sessions section: a closed episode is a shared object (ADR 0014)."
     },
     {
       "id": "close-none",
@@ -81,6 +81,25 @@
         ]
       },
       "explain": "Absence is reported as a missing artifact, exit 12, and never as a silent success."
+    },
+    {
+      "id": "working-context",
+      "title": "Where the episode's working context is",
+      "given": {
+        "session open": true
+      },
+      "setup": "session-open",
+      "run": [
+        "session",
+        "context"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "^\\.ai/local/session-contexts/"
+        ]
+      },
+      "explain": "`start` freezes what the context builder resolved into the local working-context store, and this prints the path rather than the document: local evidence is never poured into a terminal where a context can pick it up."
     }
   ]
 }

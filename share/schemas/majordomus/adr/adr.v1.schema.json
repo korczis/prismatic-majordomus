@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/adr/adr.v1.schema.json",
+  "x-majordomus-schema": "majordomus.adr/v1",
+  "x-majordomus-derived-from": "majordomus/adr/adr.v1.proto",
+  "x-majordomus-allow": "adr",
+  "description": "The whole record: the YAML front matter, then the Markdown body.",
+  "title": "adr",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "body"
+  ],
+  "properties": {
+    "header": {
+      "$ref": "#/$defs/Header"
+    },
+    "body": {
+      "$ref": "#/$defs/Body"
+    }
+  },
+  "$defs": {
+    "Header": {
+      "description": "The front matter. Every field here is read by `majordomus adr`, by the adr-integrity doctrine, or by both; none is decoration.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "id",
+        "kind",
+        "title",
+        "status",
+        "date"
+      ],
+      "properties": {
+        "schema": {
+          "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+          "const": "adr/v1"
+        },
+        "id": {
+          "description": "The identity, adr-NNNN, allocated once and never reused. It fixes the file name prefix and survives a retitle.",
+          "type": "string",
+          "pattern": "^adr-[0-9]{4}$"
+        },
+        "kind": {
+          "const": "adr"
+        },
+        "title": {
+          "description": "One line, the decision itself rather than the topic.",
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "proposed",
+            "accepted",
+            "superseded",
+            "rejected"
+          ]
+        },
+        "date": {
+          "description": "The day the record reached its current status, YYYY-MM-DD.",
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
+        },
+        "supersedes": {
+          "description": "The decisions this one stands in for. Each must resolve to a record here, and that record must name this one in superseded_by.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^adr-[0-9]{4}$"
+          }
+        },
+        "superseded_by": {
+          "description": "The decision that replaced this one. Present exactly when the status is superseded.",
+          "type": "string",
+          "pattern": "^adr-[0-9]{4}$"
+        },
+        "related": {
+          "description": "What the decision put in force, as typed references: `rule:<id>` a rule of the effective set, `claim:<id>` a claim of docs/CLAIMS.yaml, `file:<path>` a document or an implementation, `test:<path>` a behavioural case. Every reference is validated, and the knowledge graph turns each into an edge, so the reverse index is derived, not authored twice.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(rule|claim|file|test):.+$"
+          }
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        }
+      }
+    },
+    "Provenance": {
+      "description": "Where the record came from. A record with origin `extracted` was proposed by the tool from a durable local record and may not be `accepted` in the same act that created it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin"
+      ],
+      "properties": {
+        "origin": {
+          "enum": [
+            "authored",
+            "extracted"
+          ]
+        },
+        "derived_from": {
+          "description": "Typed references to what the record was derived from: `decision:<task-id>`, `session:<id>`, `commit:<sha>`, `issue:<id>`, `file:<repository-relative path>`, `test:<repository-relative path>`. The reference type is validated; a file or test reference must resolve.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(decision|session|commit|issue|file|test):.+$"
+          }
+        }
+      }
+    },
+    "Section": {
+      "description": "One section of the body, as the reader flattens it.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "heading": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "empty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Body": {
+      "description": "The Markdown body: the narrative a reader comes for, months after the decision.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sections"
+      ],
+      "properties": {
+        "sections": {
+          "description": "Every heading of the body, in document order, as the reader flattens it.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Section"
+          }
+        }
+      },
+      "x-majordomus-sections": [
+        {
+          "heading": "Context",
+          "level": 2,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Alternatives rejected",
+          "level": 2,
+          "required": false,
+          "non_empty": false,
+          "description": "Optional, and worth writing: the reader who disagrees with the decision is looking for this section first."
+        }
+      ]
+    }
+  }
+}

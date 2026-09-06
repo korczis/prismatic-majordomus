@@ -473,16 +473,36 @@ contains the other, which is why they are two records rather than one field.
 Sessions are optional. A worker that never opens one loses the episode boundary and
 nothing else; every other record is written exactly as before.
 
-- `start [--owner <who>] [--worker <id>]` opens the episode. One open session per
-  worktree: a second `start` is refused rather than replacing the first. `--worker` is a
+- `start [--owner <who>] [--worker <id>] [--if-open refuse|keep]` opens the episode. One
+  open session per worktree: a second `start` is refused rather than replacing the first,
+  unless `--if-open keep` says to keep what is open — which is what a provider hook passes,
+  because its start event fires again on a resume and on a compaction. `--worker` is a
   free-form identity string, recorded only when supplied — an unrecorded worker stays
   unrecorded, because a guessed one is indistinguishable from a recorded one the moment it
-  is written down.
+  is written down. `--provider` and `--provider-session` record which provider's event
+  opened the episode and that provider's own session identity; only something running
+  inside that provider's hook can supply them, which is what makes `opened_by: hook` in the
+  working context a fact rather than a claim.
 - `status` prints the open session with the divergence label of the commit it opened at,
   or reports that there is none. Read-only. Absence is an answer, not a failure.
-- `close [--outcome closed|interrupted]` closes the episode into an immutable record under
-  `state/sessions/` and removes the open one. An authored summary may arrive on stdin and
-  is optional; identity fields in it are refused, as they are in a checkpoint.
+- `close [--outcome closed|interrupted] [--if-none refuse|ignore]` closes the episode into
+  an immutable record under the layer's sessions section and removes the open one. An
+  authored summary may arrive on stdin and is optional; identity fields in it are refused,
+  as they are in a checkpoint. `--if-none ignore` makes "nothing was open" the normal case
+  rather than a failure, which is what a provider's end event passes.
+- `context [<session-id>]` prints the path of an episode's working context. Read-only, and
+  it prints the path rather than the document: the document is local evidence, and a command
+  that pours it into a terminal invites it into somebody's context.
+
+**The open freezes the context it was given.** `start` writes
+`.ai/local/session-contexts/<stamp>--<session-id>.md` — the front matter of the episode, the
+context builder's output verbatim, and a `## Notes` section for the worker — and `close`
+appends a `## Close` section naming the outcome and the record. The document is appended to
+and never rewritten, so what a worker typed into it survives. The store is local: it names
+this machine and it is a snapshot of a projection, so it is never published and never loaded
+into a context on its own, and `doctor` refuses a document that carries a conversation. See
+`capture session` for the hooks that make the boundary independent of anybody remembering
+to draw it.
 
 **The closed record is an envelope of references.** It names the tasks, issues, milestones,
 checkpoints, handovers, decisions, questions and evidence of the episode, and copies the
@@ -565,7 +585,7 @@ majordomus: session s-20260904153733-fc51 is open here since 2026-09-04T15:37:33
 $ majordomus session close <<'EOF'
 The extraction boundary and the session schema landed; the compiler's discovery stage is next.
 EOF
-.ai/local/state/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
+.ai/repo/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
 ```
 
 ## `majordomus checkpoint`
@@ -767,8 +787,9 @@ skills: 1 discovered, 1 valid; examples: 5; references: 5 checked; failures: 0
 
 ## `majordomus capture`
 
-Record the person's raw prompts from a provider hook, install that hook, and report what
-each provider actually does in this repository.
+Record the person's raw prompts from a provider hook — as a JSON record with a Markdown
+and a YAML rendering of it — draw the episode boundary from the provider's own lifecycle
+hooks, install those hooks, and report what each provider actually does in this repository.
 
 **Why a hook and not an instruction.** A worker cannot be asked to record its own prompts.
 It never sees the bytes the person typed, only what the provider assembled from them, and a
@@ -778,13 +799,16 @@ was busy doing what it was asked. A line in `AGENTS.md` is a request, not a mech
 no behavioural test can prove a request was honoured. So capture happens below the model,
 in the provider's own hook, where running it is the proof that it works.
 
-`capture install` writes two things and refuses to overwrite either: a shim at
-`.claude/hooks/majordomus-capture`, and the hook entry in `.claude/settings.json`. When the
-configuration exists and names something else, the command prints the entry to add and
-exits 15 rather than rewriting a file it did not write. The shim finds the repository from
-its own location: the provider substitutes its project directory into the command string
-textually, so nothing in the environment names the repository, and the working directory a
-hook runs in is not contracted.
+`capture install` writes a shim per event and the matching entries in
+`.claude/settings.json`, and refuses to overwrite any of them: `majordomus-capture` for
+`UserPromptSubmit`, `majordomus-session-start` for `SessionStart` and
+`majordomus-session-end` for `SessionEnd`. When the configuration exists and does not name
+one of them — including a configuration this tool wrote before it knew about the lifecycle
+events — the command prints the entries to add, one per missing event, and exits 15 rather
+than rewriting a file it did not write. A shim finds the repository from its own location:
+the provider substitutes its project directory into the command string textually, so nothing
+in the environment names the repository, and the working directory a hook runs in is not
+contracted.
 
 `capture prompt` reads one JSON payload on stdin and writes one record. **It never exits
 2**, because in `UserPromptSubmit` that exit code rejects the person's prompt, and a broken
@@ -797,14 +821,106 @@ making. Read the log and delete it; it is a diagnostic, and unlike a record, not
 by removing it. The prompt text itself is the raw span from the payload, copied through
 still escaped, so no decode and re-encode step can lose a character.
 
-**One prompt is one file**, `.ai/local/prompts/YYYYMMDDHHMMSS-<slug>.json`, where the slug
-is the opening of the prompt itself:
+**One prompt is two files under one stem**, `.ai/local/prompts/YYYYMMDDHHMMSS-<slug>.json`
+and `.md`, where the slug is the opening of the prompt itself:
 
 ```
 .ai/local/prompts/
   20260905113342-why-arent-prompts-saved-automatically.json
+  20260905113342-why-arent-prompts-saved-automatically.md
   20260905114501-make-it-a-file-per-prompt.json
+  20260905114501-make-it-a-file-per-prompt.md
 ```
+
+**Both formats, always, and they are not alternatives.** The `.json` is the record: the
+provider's own spans, still escaped, pretty printed one member per line — what everything
+else is derived from and what capture must not lose. A record is read by people too, and a
+single forty-kilobyte line is not something any editor or diff shows usefully; the
+indentation lies outside the string spans, so the prompt's bytes are untouched by it. The `.md` is that record rendered for a person, in one shape
+every rendering has: the fields as YAML front matter, the same fields again as a table, and
+the prompt last under `## PROMPT`, decoded and fenced.
+
+````markdown
+---
+schema: 'majordomus.capture/v1'
+ts: '2026-09-05T12:48:55Z'
+provider: 'claude-code'
+event: 'UserPromptSubmit'
+id: 'bb6f8c96'
+session: '5b13785c-728f'
+source: 'user'
+cwd: '~/src/your-repo'
+repository: '~/src/your-repo'
+branch: 'feature/prompt-capture-markdown'
+head: 'a0ccbc9e25d6ec7f6bb754f3515affb9b1cc4014'
+record: '20260905124855-make-it-a-file-per-prompt.json'
+---
+
+# Prompt — 2026-09-05 12:48:55 UTC
+
+| | |
+|---|---|
+| **Started** | `2026-09-05T12:48:55Z` |
+| **Provider** | `claude-code` · `UserPromptSubmit` |
+| **Session** | `5b13785c-728f` |
+| **Prompt** | `bb6f8c96` |
+| **Source** | `user` |
+| **Repository** | `~/src/your-repo` |
+| **Branch** | `feature/prompt-capture-markdown` · `a0ccbc9` |
+| **Directory** | `~/src/your-repo` |
+| **Schema** | `majordomus.capture/v1` · `share/schemas/majordomus/capture/capture.v1.proto` |
+| **Record** | `20260905124855-make-it-a-file-per-prompt.json` |
+
+## PROMPT
+
+```
+make it a file per prompt
+```
+````
+
+The fields appear twice because the two readers are different: front matter is what a tool
+parses, the table is what a person reads, and one function writes both out of one record in
+one pass, so they cannot drift. A row is omitted rather than printed as `null`, because a
+row reading `null` tells a person less than an absent row does.
+
+**The schema identifier is the path to the file that describes it.** `<namespace>.<name>/<version>`
+is `share/schemas/<vendor>/<name>/<name>.v<n>.proto`, so `majordomus.capture/v1` resolves
+to `share/schemas/majordomus/capture/capture.v1.proto` with no registry in between — a reader
+holding a record holds the way to read it, and there is nothing that can fall out of step
+with the records it claims to describe. That file is protobuf used as a schema language and
+not as a wire format: nothing serialises these messages, and it is the one place the record's
+fields and the document's sections are defined, so the two projections cannot disagree.
+`majordomus update` installs it; `doctor` fails if the identifier names a file that is not
+there.
+
+**Some header fields are absent, and absent means not observed.** The hook runs before the
+model is invoked, so when a record is written the turn has not happened: `finished_at`,
+`duration_ms`, `model`, `effort` and `tokens` are not knowable from it, and a conforming
+writer leaves them out rather than writing null — an absent field says "not observed", a null
+one would claim it was observed to be nothing. The renderer omits the row rather than
+printing a placeholder, so a record the hook wrote shows `Started` and no `Finished`. When
+something that can observe the turn fills them in, the rows appear with no change to the
+shape. The same holds for the `## CONTEXT` and `## OUTPUT` sections, which the schema
+declares and the renderer emits exactly when the record carries the field behind them.
+
+`## OUTPUT` is the model's half of the exchange, which a prompt record may not carry — the
+doctrine fails a record naming a response or a transcript. A conforming writer puts it in a
+separate after-the-turn record whose `meta.parent` names the prompt record, and the rendering
+joins the two.
+
+**The fence is sized to the prompt**, never fixed at three backticks. Prompts quote code,
+and a prompt that opens a fence of its own would end the block early and spill the rest of
+itself into the document; the renderer measures the longest run of backticks inside and
+opens with one longer, which is how the prompt is quoted verbatim without a byte of it
+being touched.
+
+The direction between them is what makes the pair safe to enforce: a rendering can be
+rebuilt from a record and a record can never be rebuilt from a rendering. So `doctor` fails
+on a record with no rendering and names `capture render` as the repair, and fails on a
+rendering with no record without offering one, because there is none — that half is reported
+for a person to delete. `capture render` walks the archive, writes the renderings that are
+missing, touches nothing that already has one, and never writes a record; `--force` rewrites
+them all, which is for a change to the rendering itself and not for anything a hook does.
 
 A record is immutable once written, two hooks cannot interleave inside one file, the name
 sorts chronologically, and the directory listing is already a readable history. The slug is
@@ -848,7 +964,7 @@ discovering that the hook meant to keep their prompts had been discarding them.
 | `unconfigured` | an adapter exists, but this repository does not wire it |
 | `named` | the configuration declares the hook, but not the shim this tool wrote |
 | `wired` | the shim is in place and executable, but a payload through it produced no record |
-| `verified` | a synthetic payload driven through the shim produced a record |
+| `verified` | a synthetic payload driven through the shim produced a record and its rendering |
 
 A repository holds itself to this by declaring an `enforcement` entry with
 `wired_by: provider-hook:<provider>`; `doctor` then fails unless the state is `verified`,
@@ -857,12 +973,60 @@ Only Claude Code has an adapter today. Codex and Gemini are reported `unsupporte
 than assumed, and no other surface — the web, the desktop app, another machine — is
 observable from here at all.
 
+### `capture session` — the episode boundary
+
+**The same argument, applied to the other thing a worker cannot do for itself: say where its
+own sitting began and ended.** A model told to open a session opens one when it remembers
+to, which is never the episode that mattered — the one that ended in a crash, a compaction,
+or somebody closing the window. The provider fires an event at both edges whether or not a
+model is in a position to notice, so `SessionStart` opens the episode and `SessionEnd`
+closes it into the shared record under `.ai/repo/sessions/` (ADR 0015).
+
+**Both directions are idempotent, because the events are.** `SessionStart` fires again on a
+resume and on a compaction, so the start passes `--if-open keep` and the open episode is
+kept rather than replaced; `SessionEnd` fires whether or not anything was opened, so the
+close passes `--if-none ignore` and writes nothing when there is nothing to close. The
+event's reason decides the outcome: one the adapter lists as deliberate closes the episode
+as `closed`, and anything else — a crash, a name the table has not seen — closes it as
+`interrupted`, because calling a cut-short episode complete is the worse of the two
+mistakes.
+
+**Neither hook writes to standard output.** Claude Code adds a `SessionStart` hook's output
+to the model's context, and nothing under the local half of the layer may be loaded into a
+context implicitly. Diagnostics go to stderr, and `capture session` never exits 2, for the
+reason `capture prompt` never does.
+
+**The open freezes the context it was given.** `session start` writes
+`.ai/local/session-contexts/<stamp>--<session-id>.md`: front matter carrying
+`schema: session-context/v1`, the episode's identity, the provider and the provider's own
+session id — the same string the prompt records carry — then the context builder's output
+verbatim, then a `## Notes` section for the worker. `session close` appends a `## Close`
+section naming the outcome and the record it wrote. The document is appended to and never
+rewritten, so what a worker typed into it survives the close; `majordomus session context`
+prints its path.
+
+That store is local and stays local. It names this machine, and it is a snapshot of a
+projection — re-resolving it later gives a different document — so it is never published,
+never indexed, and never loaded into a context on its own. It is also never a transcript:
+the derived half is the builder's output, the authored half summarises the work, and a front
+matter key naming a message list, a completion or a model's reply is a blocking failure.
+
+The wiring is declared as `wired_by: provider-hook:<provider>:session` and `doctor` proves
+it the same way, with one thing left out: the synthetic payload is driven through the end
+shim with the mutation disabled, because closing somebody's open episode is not a price a
+diagnostic may charge. Everything else on the path runs exactly as it does in a real event.
+
 ```
 $ majordomus capture install
 INFO  capture  .claude/hooks/majordomus-capture  written and made executable
-INFO  capture  .claude/settings.json  written with the UserPromptSubmit hook
+INFO  capture  .claude/hooks/majordomus-session-start  written and made executable
+INFO  capture  .claude/hooks/majordomus-session-end  written and made executable
+INFO  capture  .claude/settings.json  written with the UserPromptSubmit, SessionStart, SessionEnd hook(s)
 $ majordomus capture status
-claude-code    verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record
+claude-code            verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its renderings
+claude-code:session    verified     .claude/hooks/majordomus-session-start and .claude/hooks/majordomus-session-end are wired, and a synthetic payload through the end shim reached the command
+$ majordomus capture render
+0 rendering(s) written into .ai/local/prompts
 ```
 
 

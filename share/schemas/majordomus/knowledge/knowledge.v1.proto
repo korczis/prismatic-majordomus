@@ -1,0 +1,150 @@
+// A curated knowledge record under .ai/repo/knowledge/curated/.
+//
+// One durable statement this repository holds about itself: what class of statement it is,
+// how it is known, how far it has been confirmed, and what it was derived from. Memory is
+// not a second store: a fact worth carrying into the next session's context is this record
+// with class `memory`.
+//
+// Canonical. `majordomus generate` projects this file into share/allow/knowledge.txt,
+// share/sections/knowledge.txt and knowledge.v1.schema.json beside it.
+
+syntax = "proto3";
+
+package majordomus.knowledge.v1;
+
+import "majordomus/options.proto";
+
+option (majordomus.schema_id) = "majordomus.knowledge/v1";
+option (majordomus.allow_list) = "knowledge";
+option (majordomus.document_format) = "markdown";
+
+// The whole record: the front matter, then the statement and its evidence in prose.
+message Document {
+  Header header = 1 [(majordomus.required) = true];
+  Body body = 2 [(majordomus.required) = true];
+}
+
+message Header {
+  option (majordomus.closed) = true;
+
+  // The format version of this record. A version the tool does not know is refused, never
+  // guessed.
+  string schema = 1 [(majordomus.required) = true, (majordomus.const) = "knowledge/v1"];
+
+  // The identity, lower-case letters, digits and hyphens. It fixes the file name and
+  // survives a retitle.
+  string id = 2 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  string kind = 3 [(majordomus.required) = true, (majordomus.const) = "knowledge"];
+
+  Class class = 4 [(majordomus.required) = true];
+
+  // The statement itself, in one line, as an assertion rather than a topic.
+  string title = 5 [(majordomus.required) = true, (majordomus.min_length) = 1];
+
+  // One line saying what the statement is for or when it applies.
+  string description = 6 [(majordomus.required) = true, (majordomus.min_length) = 1];
+
+  Status status = 7 [(majordomus.required) = true];
+
+  Epistemics epistemics = 8 [(majordomus.required) = true];
+
+  // The day the record reached its current status, YYYY-MM-DD.
+  string date = 9 [(majordomus.required) = true, (majordomus.pattern) = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"];
+
+  repeated string tags = 10 [(majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  // The record that replaced this one. Present exactly when the status is superseded.
+  string superseded_by = 11 [(majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  Provenance provenance = 12;
+
+  repeated Relation relations = 13;
+}
+
+// fact: something true of this repository now. convention: how it is done here.
+// constraint: something outside the repository that limits it. memory: a fact worth
+// carrying into the next session's context, which `context` may draw on. lesson: what an
+// earlier attempt cost.
+enum Class {
+  CLASS_UNSPECIFIED = 0;
+  CLASS_FACT = 1 [(majordomus.value) = "fact"];
+  CLASS_CONVENTION = 2 [(majordomus.value) = "convention"];
+  CLASS_CONSTRAINT = 3 [(majordomus.value) = "constraint"];
+  CLASS_MEMORY = 4 [(majordomus.value) = "memory"];
+  CLASS_LESSON = 5 [(majordomus.value) = "lesson"];
+}
+
+// candidate: written, not confirmed; machine extraction produces this and nothing else.
+// verified: confirmed against evidence that provenance.derived_from names. superseded:
+// replaced by the record named in superseded_by.
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_CANDIDATE = 1 [(majordomus.value) = "candidate"];
+  STATUS_VERIFIED = 2 [(majordomus.value) = "verified"];
+  STATUS_SUPERSEDED = 3 [(majordomus.value) = "superseded"];
+}
+
+// How the statement is known. observed: read off the repository or a command's output.
+// inferred: concluded, not read. decided: it is true because a decision made it true, and
+// relations names that decision.
+enum Epistemics {
+  EPISTEMICS_UNSPECIFIED = 0;
+  EPISTEMICS_OBSERVED = 1 [(majordomus.value) = "observed"];
+  EPISTEMICS_INFERRED = 2 [(majordomus.value) = "inferred"];
+  EPISTEMICS_DECIDED = 3 [(majordomus.value) = "decided"];
+}
+
+// Where the statement came from. Required for `verified`: nothing is confirmed by having
+// been written down.
+message Provenance {
+  option (majordomus.closed) = true;
+
+  Origin origin = 1 [(majordomus.required) = true];
+
+  // Typed references to the evidence: `decision:<task-id>`, `session:<id>`,
+  // `commit:<sha>`, `issue:<id>`, `file:<repository-relative path>`,
+  // `test:<repository-relative path>`. A file or test reference must resolve.
+  repeated string derived_from = 2 [(majordomus.pattern) = "^(decision|session|commit|issue|file|test):.+$"];
+}
+
+// authored: a person wrote it. extracted: `majordomus knowledge propose` derived it from a
+// local record, which derived_from names.
+enum Origin {
+  ORIGIN_UNSPECIFIED = 0;
+  ORIGIN_AUTHORED = 1 [(majordomus.value) = "authored"];
+  ORIGIN_EXTRACTED = 2 [(majordomus.value) = "extracted"];
+}
+
+// A typed link to another record of this layer. A target that looks like an identity of
+// this layer must resolve.
+message Relation {
+  option (majordomus.closed) = true;
+
+  RelationType type = 1 [(majordomus.required) = true];
+  string target = 2 [(majordomus.required) = true, (majordomus.min_length) = 1];
+}
+
+enum RelationType {
+  RELATION_TYPE_UNSPECIFIED = 0;
+  RELATION_TYPE_RELATES_TO = 1 [(majordomus.value) = "relates_to"];
+  RELATION_TYPE_DEPENDS_ON = 2 [(majordomus.value) = "depends_on"];
+  RELATION_TYPE_DOCUMENTS = 3 [(majordomus.value) = "documents"];
+  RELATION_TYPE_SUPPORTS = 4 [(majordomus.value) = "supports"];
+  RELATION_TYPE_CONTRADICTS = 5 [(majordomus.value) = "contradicts"];
+  RELATION_TYPE_SUPERSEDES = 6 [(majordomus.value) = "supersedes"];
+  RELATION_TYPE_DERIVED_FROM = 7 [(majordomus.value) = "derived_from"];
+}
+
+// The body carries the statement and, where it helps, the evidence in prose. No section is
+// required: the title is already the statement, and a record whose evidence is one
+// sentence should be one sentence.
+message Body {
+  option (majordomus.body) = true;
+}
+
+message Section {
+  string heading = 1;
+  uint32 level = 2;
+  bool empty = 3;
+}

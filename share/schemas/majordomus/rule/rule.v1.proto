@@ -1,0 +1,121 @@
+// A rule object under .ai/repo/rules/**.
+//
+// Canonical. `majordomus generate` projects this file into share/allow/rule.txt,
+// share/sections/rule.txt and rule.v1.schema.json beside it; none of those is written by
+// hand.
+
+syntax = "proto3";
+
+package majordomus.rule.v1;
+
+import "majordomus/options.proto";
+
+option (majordomus.schema_id) = "majordomus.rule/v1";
+option (majordomus.allow_list) = "rule";
+option (majordomus.document_format) = "markdown";
+
+// The whole rule: the front matter is the machine side, the body the human side.
+message Document {
+  Header header = 1 [(majordomus.required) = true];
+  Body body = 2 [(majordomus.required) = true];
+}
+
+message Header {
+  option (majordomus.closed) = true;
+
+  // Identity, namespaced by origin (project.example, majordomus.scope-integrity).
+  string id = 1 [(majordomus.required) = true];
+
+  // An exact integer; id@version is the identity.
+  uint32 version = 2 [(majordomus.required) = true, (majordomus.minimum) = 1];
+
+  string kind = 3 [(majordomus.required) = true, (majordomus.const) = "rule"];
+
+  string title = 4 [(majordomus.required) = true];
+
+  // What the rule requires, in one sentence.
+  string description = 5 [(majordomus.required) = true];
+
+  // The normative sentence a worker follows.
+  string statement = 6 [(majordomus.required) = true];
+
+  Status status = 7 [(majordomus.required) = true];
+
+  Class class = 8 [(majordomus.required) = true];
+
+  // An exact reference, id@version.
+  repeated string depends_on = 9;
+
+  repeated string tags = 10;
+
+  Enforcement x_majordomus = 11 [(majordomus.key) = "x-majordomus"];
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_ACTIVE = 1 [(majordomus.value) = "active"];
+  STATUS_DEPRECATED = 2 [(majordomus.value) = "deprecated"];
+}
+
+// Blocking stops the command that enforces the rule; advisory reports.
+enum Class {
+  CLASS_UNSPECIFIED = 0;
+  CLASS_BLOCKING = 1 [(majordomus.value) = "blocking"];
+  CLASS_ADVISORY = 2 [(majordomus.value) = "advisory"];
+}
+
+// Present only on a rule the tool enforces. The key is written `x-majordomus`; the field
+// name here is the proto spelling of it.
+message Enforcement {
+  option (majordomus.closed) = true;
+
+  // The function mj_validate_<validator>.
+  string validator = 1;
+  // The finding category the validator reports under.
+  string category = 2;
+  string policy_key = 3;
+  int64 exit_code = 4;
+  // The commands that dispatch it.
+  repeated string enforced_by = 5;
+  // Ids in docs/CLAIMS.yaml.
+  repeated string claims = 6;
+  // The behavioural cases that prove it.
+  repeated string tests = 7;
+}
+
+// The body: why the rule exists, what it requires, what happens when it is broken, and
+// what proves it. A rule whose body is missing a half is a rule nobody can act on.
+message Body {
+  option (majordomus.body) = true;
+
+  Section rationale = 1 [
+    (majordomus.heading) = "Rationale",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  Section required_behaviour = 2 [
+    (majordomus.heading) = "Required behaviour",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  Section failure_behaviour = 3 [
+    (majordomus.heading) = "Failure behaviour",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  Section verification = 4 [
+    (majordomus.heading) = "Verification",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+}
+
+message Section {
+  string heading = 1;
+  uint32 level = 2;
+  bool empty = 3;
+}

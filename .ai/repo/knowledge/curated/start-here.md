@@ -1,3 +1,29 @@
+---
+schema: knowledge/v1
+id: start-here
+kind: knowledge
+class: convention
+title: The documents that explain this repository are read in a fixed order
+description: What to read before changing this repository, and which document answers which question.
+status: verified
+epistemics: decided
+date: 2026-09-05
+tags:
+  - onboarding
+  - documentation
+provenance:
+  origin: authored
+  derived_from:
+    - file:docs/DESIGN.md
+    - file:docs/CLI.md
+    - file:docs/SCHEMAS.md
+    - file:docs/EXTRACTION_REPORT.md
+    - file:docs/DOCTRINE.md
+relations:
+  - type: documents
+    target: file:docs/CLAIMS.yaml
+---
+
 # Start here
 
 What to read before changing this repository, in order:

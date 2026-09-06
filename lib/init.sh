@@ -79,12 +79,15 @@ H
   # moment is one file and nothing has to be registered for it
   mj_init_tree "$skel/ai/repo/why" "$MJ_AI_REPO_DIR/why" '*'
   mkdir -p "$MJ_PROJECT_DIR"
-  # MJ_SESSIONS_DIR is read from the manifest, which does not exist yet on a first init, so
-  # seeding by that variable seeded nothing and `init --extend` then had a file to add on a
-  # tree init had just written. The section's path is the manifest's default, like every
-  # other section here.
-  mkdir -p "${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}"
-  mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}/README.md"
+  # The sessions section, at the path the manifest names — or, on the first init, at the
+  # path the skeleton's manifest is about to name. The resolved variable is empty on that
+  # first run, because the manifest that names the section is being seeded in the same pass,
+  # so reading it alone would seed nothing here and seed it on the next --extend: a
+  # repository that reports work to do forever. The variable is still preferred when it does
+  # resolve, so a layer whose manifest names another path is honoured rather than overruled.
+  local sessions_dir="${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}"
+  mkdir -p "$sessions_dir"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$sessions_dir/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.

@@ -10,7 +10,7 @@ providers: ["*"]
 audience: [human, agent]
 composition: extend
 order: 100
-tracks: [lib/session.sh, share/schemas/session-record.schema.json]
+tracks: [lib/session.sh, share/schemas/majordomus/session-record/session-record.v1.schema.json]
 ---
 
 # Session records
@@ -39,7 +39,7 @@ absolute path stays in the ledger, which is local. ADR 0014 records that decisio
 
 ## The contract
 
-The front matter satisfies `share/schemas/session-record.schema.json`; the allow-list under
+The front matter satisfies `share/schemas/majordomus/session-record/session-record.v1.schema.json`; the allow-list under
 `share/allow/session-record.txt` is generated from it, and an unknown key is an error.
 `schema: session/v1` identifies the format, and a version this executable does not read is
 refused rather than guessed at.
