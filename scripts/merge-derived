@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# merge-derived — the merge driver for the derived artifacts .gitattributes marks.
+#
+# git calls it as `merge-derived %O %A %B %P`: the base, ours, theirs, and the path the
+# result belongs at. %A is both the input and the output — git takes the file left at that
+# path as the merged content when the driver exits 0.
+#
+# The answer is ours, unchanged, and that is not a preference between two branches. A derived
+# file carries a fingerprint of the tree it was generated from; after a merge that tree is
+# neither side's, so both fingerprints are wrong and the right value appears in neither input.
+# It comes from running the generator. Resolving to ours leaves a file that is wrong in a way
+# this repository already detects: `scripts/pages current` in the pre-commit hook refuses the
+# commit and names the command that repairs it, and `scripts/derive-check` refuses it again in
+# CI. Conflict markers only made a person perform that repair by hand, once per merge.
+#
+# Exits 0 always: a non-zero exit marks the path conflicted, which is the state this exists to
+# leave behind.
+set -eu
+
+ours="${2:-}"
+path="${4:-${2:-a derived file}}"
+
+if [ -z "$ours" ]; then
+  echo "merge-derived: git named no output file; leaving the path conflicted" >&2
+  exit 1
+fi
+
+printf 'merge-derived: %s resolved to ours and is now stale — run `just derive` before committing\n' "$path" >&2
+exit 0
