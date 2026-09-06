@@ -148,7 +148,7 @@ fn hundreds_of_http_requests_rebuild_nothing_and_openapi_is_built_once() {
     let f = Fixture::new();
     let s = Served::start(&f.root(), &[]);
     let _ = s.get("/openapi.json");
-    let (_, _, docs) = s.request("GET", "/docs", None);
+    let (_, _, docs) = s.request("GET", "/swagger", None);
     assert!(docs.contains("swagger-ui"));
     let (_, before) = s.get("/api/v1/perf");
     let baseline = startup_work(&before);
@@ -156,7 +156,7 @@ fn hundreds_of_http_requests_rebuild_nothing_and_openapi_is_built_once() {
     assert_eq!(before["http_projection_builds"], 1);
     let paths = [
         "/openapi.json",
-        "/docs",
+        "/swagger",
         "/api/v1/capabilities",
         "/api/v1/search?query=fixture",
         "/api/v1/objects?kind=rule",

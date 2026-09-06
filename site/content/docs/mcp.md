@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 29
+weight = 30
 [extra]
 source = "docs/MCP.md"
 +++
@@ -20,7 +20,7 @@ option, the kind schema) is in the application's own
 A process the client starts, speaking the Model Context Protocol on its stdin and stdout,
 serving the repository's AI layer read-only, and joining the repository's one shared
 server: the first such process in a repository binds the loopback HTTP projection beside
-its stdio session (Swagger UI, the OpenAPI document, every capability route, MCP over
+its stdio session (a home page listing every surface, this repository's documentation, Swagger UI, the OpenAPI document, every capability route, MCP over
 HTTP) and says where; every later one attaches to it.
 
 ```bash
@@ -34,7 +34,7 @@ bin/majordomus-mcp                                           # the same, built f
 The log on stderr names it the moment it is up:
 
 ```
-shared server listening on http://127.0.0.1:8741 (swagger ui http://127.0.0.1:8741/docs, openapi http://127.0.0.1:8741/openapi.json, mcp over http http://127.0.0.1:8741/mcp); the one server for this repository ...
+shared server listening on http://127.0.0.1:8741 — 7 surface(s): api http://127.0.0.1:8741/api/v1, cockpit http://127.0.0.1:8741/cockpit, docs http://127.0.0.1:8741/docs, home http://127.0.0.1:8741/, mcp http://127.0.0.1:8741/mcp, openapi http://127.0.0.1:8741/openapi.json, swagger http://127.0.0.1:8741/swagger; the one server for this repository ...
 ```
 
 It is not a daemon: nothing starts it but a client, nothing keeps it alive but clients,

@@ -15,7 +15,11 @@ pub const SWAGGER_UI_VERSION: &str = "5.17.14";
 pub const SPEC_PATH: &str = "/openapi.json";
 
 /// The path the page is served at.
-pub const DOCS_PATH: &str = "/docs";
+///
+/// It is `/swagger` and not `/docs`: `/docs` is where this repository's own documentation
+/// is served, and a viewer for the API is not the documentation. The rule that holds the
+/// two apart is `project.web-surface-declared-once`.
+pub const SWAGGER_PATH: &str = "/swagger";
 
 static PAGE: LazyLock<String> = LazyLock::new(|| {
     format!(

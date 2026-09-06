@@ -312,7 +312,7 @@ fn direct_http_and_mcp_answer_the_same_data_or_fail_the_same_way() {
                         match &direct {
                             Ok(v) => {
                                 prop_assert_eq!(response.status, 200, "{} {}: {}", id, target, response.body);
-                                let body: Value = serde_json::from_str(&response.body).unwrap();
+                                let body: Value = serde_json::from_str(&response.body.text()).unwrap();
                                 prop_assert_eq!(&body, v, "{}: HTTP equals direct", id);
                             }
                             Err(e) => {

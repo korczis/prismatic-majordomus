@@ -31,7 +31,7 @@ pub struct Cli {
 pub enum Command {
     /// Serve the repository's AI layer to an MCP client over stdio (read-only)
     Mcp(McpArgs),
-    /// Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)
+    /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
     Serve(ServeArgs),
     /// Introspect the capability registry: what exists, where it came from, how it is exposed
     Capabilities(CapabilitiesArgs),
@@ -434,6 +434,9 @@ pub enum GenerateTarget {
     Site,
     /// docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact
     Manifest,
+    /// `docs/generated/web.json`: the resolved web topology the site's route reference renders
+    Web,
+>>>>>>> origin/feature/web-surface-serving
 }
 
 #[derive(Debug, Args)]
@@ -597,7 +600,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
             description: "The resolved topology, in route-precedence order: the routes the executable answers itself, the application's site, and every generated report that declared itself under the generated web root. Nothing is registered anywhere; each line was discovered.",
             argv: &["web", "list"],
             setup: &[],
-            expect: Expect::StdoutContains(&["MOUNT", "/api/v1", "/docs"]),
+            expect: Expect::StdoutContains(&["MOUNT", "/api/v1", "/swagger"]),
         }],
     },
     CommandExamples {
@@ -685,7 +688,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "serve-ephemeral-port",
             title: "Serve the same capabilities over HTTP on a free port",
-            description: "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
+            description: "Port 0 asks the operating system for a free port; the address is logged on stderr. `/` is the home page, generated from the surfaces this process resolved; the document at /openapi.json is the same one `majordomus generate` commits; /swagger is the Swagger UI over it; /docs/ is this repository's documentation when it has been built for that mount.",
             argv: &["serve", "--port", "0"],
             setup: &[],
             expect: Expect::HttpReady("/openapi.json"),

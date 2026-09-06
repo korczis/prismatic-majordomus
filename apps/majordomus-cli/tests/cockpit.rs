@@ -581,20 +581,30 @@ fn a_state_changing_request_from_another_origin_is_refused_and_a_read_is_not() {
 }
 
 #[test]
-fn the_index_answers_json_to_a_client_and_points_a_browser_at_the_cockpit() {
+fn the_index_answers_the_topology_to_a_client_and_the_home_page_to_a_browser() {
     let f = Fixture::new();
     let s = Served::start(&f.root(), &[]);
 
     let (status, index) = s.get("/");
     assert_eq!(status, 200);
-    assert_eq!(index["cockpit"], "/cockpit");
-    assert_eq!(index["openapi"], "/openapi.json");
+    let surfaces = index["surfaces"]
+        .as_array()
+        .expect("the index lists the surfaces this process serves");
+    let mount = |id: &str| {
+        surfaces
+            .iter()
+            .find(|s| s["id"] == id)
+            .map(|s| s["path"].as_str().unwrap_or_default().to_string())
+    };
+    assert_eq!(mount("cockpit").as_deref(), Some("/cockpit"));
+    assert_eq!(mount("openapi").as_deref(), Some("/openapi.json"));
+    assert_eq!(mount("swagger").as_deref(), Some("/swagger"));
 
-    let (status, headers, _) = s.request_with("GET", "/", None, &[("Accept", "text/html")]);
-    assert_eq!(status, 303);
-    assert!(headers
-        .iter()
-        .any(|(k, v)| k == "location" && v == "/cockpit"));
+    let (status, _, body) = s.request_with("GET", "/", None, &[("Accept", "text/html")]);
+    assert_eq!(status, 200);
+    assert!(body.contains("Majordomus"), "{body}");
+    assert!(body.contains("/cockpit"), "{body}");
+    assert!(body.contains("/swagger"), "{body}");
 }
 
 #[test]

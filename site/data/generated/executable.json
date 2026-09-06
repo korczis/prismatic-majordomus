@@ -284,6 +284,23 @@
       "tests": [],
       "title": "Judge a path against the scope",
       "tool": "majordomus_scope_classify"
+    },
+    {
+      "api_anchor": "/docs/api/#op-web-surfaces",
+      "claims": [],
+      "cli": null,
+      "id": "web.surfaces",
+      "kind": "query",
+      "module": "web",
+      "module_route": "/registry/modules/web/",
+      "resource": "majordomus://web",
+      "route": "/registry/capabilities/web-surfaces/",
+      "slug": "web-surfaces",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/web.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/web.rs",
+      "tests": [],
+      "title": "Every web surface, resolved",
+      "tool": "majordomus_web_surfaces"
     }
   ],
   "claims": {
@@ -396,6 +413,20 @@
         "route": "/guarantees/scope-declared/",
         "status": "guaranteed",
         "test": "test/cases/93_scope_policy.sh"
+      },
+      {
+        "id": "web-surface-declared-once",
+        "implementation": "apps/majordomus-cli/src/web/model.rs",
+        "route": "/guarantees/web-surface-declared-once/",
+        "status": "guaranteed",
+        "test": "test/cases/89_web_surface.sh"
+      },
+      {
+        "id": "web-namespaces-reserved",
+        "implementation": "apps/majordomus-cli/src/web/discover.rs",
+        "route": "/guarantees/web-namespaces-reserved/",
+        "status": "guaranteed",
+        "test": "test/cases/89_web_surface.sh"
       }
     ],
     "http": [
@@ -622,6 +653,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "web.surfaces",
+          "route": "/registry/capabilities/web-surfaces/",
+          "slug": "web-surfaces"
+        }
+      ],
+      "claims": [],
+      "id": "web",
+      "route": "/registry/modules/web/",
+      "slug": "web",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/web.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/web.rs",
+      "title": "Web surfaces"
     }
   ],
   "registry_schema": "majordomus/capability-registry/v1",

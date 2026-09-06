@@ -1,5 +1,6 @@
-//! The shared server: one per repository, holding the lease, serving the HTTP projection
-//! (the Cockpit, Swagger UI, OpenAPI, the capability routes) and MCP over HTTP for every
+//! The shared server: one per repository, holding the lease, serving every web surface the
+//! process resolved — the home page, the Cockpit, Swagger UI, OpenAPI, the capability
+//! routes, the documentation and every generated report — and MCP over HTTP for every
 //! peer that attaches. It is started by the first `majordomus mcp` or `serve` in a repository and
 //! ends when its owner's session is over and the last peer has left.
 
@@ -43,40 +44,22 @@ impl SharedServer {
         };
         let url = bound.url();
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&ctx), version, url.clone()));
-        // The static surfaces of the repository, resolved once at startup: whatever the
-        // producers have generated is served from its own directory, and nothing here names
-        // one of them (ADR 0013). A repository with none mounts none.
-        let root = ctx.index.repository.root.clone();
-        let surfaces = crate::web::discover::discover(
-            std::path::Path::new(&root),
-            crate::web::discover::Runtime::full(),
-        )
-        .map(|topology| {
-            Arc::new(crate::web::serve::StaticSurfaces::new(
-                &topology,
-                std::path::Path::new(&root),
-            ))
-        })
-        .ok();
-        let mounted: Vec<String> = surfaces
-            .as_ref()
-            .map(|s| s.ids().into_iter().map(str::to_string).collect())
-            .unwrap_or_default();
-        let mut router = Router::new(ctx, version)
+        let router = Router::new(ctx, version)
             .with_mcp(Arc::clone(&endpoint))
             .with_cockpit(share_dir);
-        if let Some(surfaces) = surfaces {
-            if !surfaces.is_empty() {
-                router = router.with_surfaces(surfaces);
-            }
-        }
         lease.publish(&url)?;
+        // what it serves is read off the resolution, so this line cannot name a route the
+        // process does not have or miss one it does
+        let surfaces = match router.served() {
+            Ok(served) => served.summary(&url),
+            Err(e) => return Err(e),
+        };
         let running = bound.start(router);
         tracing::info!(
             url = %url,
             lease = %lease.path().display(),
-            surfaces = %if mounted.is_empty() { "none".to_string() } else { mounted.join(", ") },
-            "shared server listening on {url} (cockpit {url}/cockpit, swagger ui {url}/docs, openapi {url}/openapi.json, mcp over http {url}/mcp); the one server for this repository: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
+            surfaces = %surfaces,
+            "shared server listening on {url} — {surfaces}; the one server for this repository: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
         );
         Ok(SharedServer {
             running,

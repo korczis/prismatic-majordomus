@@ -12,7 +12,7 @@
           "route": "/docs/cli/mcp/"
         },
         {
-          "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
+          "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
           "command": "majordomus serve",
           "name": "serve",
           "route": "/docs/cli/serve/"
@@ -286,7 +286,7 @@
       "usage": "majordomus mcp [OPTIONS]"
     },
     {
-      "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
+      "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
       "ancestors": [
         {
           "command": "majordomus",
@@ -396,7 +396,7 @@
             "0"
           ],
           "command": "majordomus serve --port 0",
-          "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
+          "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. `/` is the home page, generated from the surfaces this process resolved; the document at /openapi.json is the same one `majordomus generate` commits; /swagger is the Swagger UI over it; /docs/ is this repository's documentation when it has been built for that mount.",
           "expectation": "binds a port, answers GET /openapi.json, exits 0 when stopped",
           "id": "serve-ephemeral-port",
           "setup": [],
@@ -1170,19 +1170,19 @@
               "name": "all"
             },
             {
-              "help": "`docs/generated/openapi.{json,yaml}`",
+              "help": "`docs/generated/openapi.json`",
               "name": "openapi"
             },
             {
-              "help": "`docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and `docs/generated/cli.{md,json,yaml}`",
+              "help": "`docs/generated/capabilities.md` and `docs/generated/modules/<id>.md`",
               "name": "docs"
             },
             {
-              "help": "`docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage",
+              "help": "`docs/generated/benchmarks.md`: every benchmark target and the coverage",
               "name": "benchmarks"
             },
             {
-              "help": "`docs/generated/registry.{json,yaml}`: the builtin registry as data",
+              "help": "`docs/generated/registry.json`: the builtin registry as data",
               "name": "registry"
             },
             {
@@ -1198,8 +1198,8 @@
               "name": "site"
             },
             {
-              "help": "docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact",
-              "name": "manifest"
+              "help": "`docs/generated/web.json`: the resolved web topology the site's route reference renders",
+              "name": "web"
             }
           ],
           "required": false,
@@ -2428,7 +2428,7 @@
           ],
           "command": "majordomus web list",
           "description": "The resolved topology, in route-precedence order: the routes the executable answers itself, the application's site, and every generated report that declared itself under the generated web root. Nothing is registered anywhere; each line was discovered.",
-          "expectation": "exits 0; prints MOUNT, /api/v1, /docs",
+          "expectation": "exits 0; prints MOUNT, /api/v1, /swagger",
           "id": "web-list",
           "setup": [],
           "title": "Every web surface this repository exposes"

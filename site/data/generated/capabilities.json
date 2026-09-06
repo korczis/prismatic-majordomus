@@ -183,7 +183,7 @@
       "implementation": "lib/capture.sh",
       "test": "test/cases/29_prompt_capture.sh",
       "status": "guaranteed",
-      "note": "Covers the five states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, a record set that cannot carry model output, the record-and-rendering pair every prompt is kept as, and the schema identifier resolving to the two files that describe both halves.",
+      "note": "Covers the four states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, and a record set that cannot carry model output.",
       "responsibility": "policy",
       "source_route": "/docs/doctrine/",
       "command": "capture",
@@ -1152,19 +1152,6 @@
       "test_case": "76_capabilities_projections"
     },
     {
-      "id": "generated-artifacts-typed",
-      "claim": "Every generated artifact declares the document it projects, the encoding it is written in, the schema its content satisfies and its source, and a structured document is written in every encoding it is committed in from one value",
-      "source": "docs/CAPABILITIES.md",
-      "implementation": "apps/majordomus-cli/src/generate.rs",
-      "test": "test/cases/52_generated_artifact_typing.sh",
-      "status": "guaranteed",
-      "note": "JSON, YAML and Markdown of a document are renderings of one value, so they cannot disagree; each carries a provenance header in the form its encoding allows; the index of the whole set, docs/generated/artifacts.json, is itself generated and is read back by artifacts.list.",
-      "responsibility": "none",
-      "source_route": "/docs/capabilities/",
-      "command": null,
-      "test_case": "52_generated_artifact_typing"
-    },
-    {
       "id": "generated-projections-checked",
       "claim": "The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one",
       "source": "docs/CAPABILITIES.md",
@@ -1503,19 +1490,6 @@
       "test_case": "96_site_deploy"
     },
     {
-      "id": "derived-data-current",
-      "claim": "A commit whose derived data is behind its canonical inputs is refused before it exists, and a repository that unwires that gate is a doctor failure",
-      "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
-      "implementation": "scripts/pages",
-      "test": "test/cases/56_derived_current_gate.sh",
-      "status": "guaranteed",
-      "note": "The generator records the input hash in site/data/generated/source.json, so `pages current` answers \"must this be regenerated?\" in a fifth of a second without generating anything, which is what lets it run on every commit rather than only in CI. It is declared in the policy's enforcement list as derived-current, wired by git-hook:pre-commit, and doctor verifies that wiring the way it verifies the others - so the gate refuses the stale commit and the doctrine refuses the repository that removes the gate. Before this, staleness surfaced only after a merge, and the person it stopped was never the person who caused it.",
-      "responsibility": "policy",
-      "source_route": "/docs/github-pages-architecture/",
-      "command": null,
-      "test_case": "56_derived_current_gate"
-    },
-    {
       "id": "executable-reference-derived",
       "claim": "The site's pages about the Rust executable (one per module, one per capability, the command line, the MCP surface, the benchmarks, the executable's own narrative) are derived from the registry manifest and the registry dataset the executable generates, nothing names a capability by hand, and a capability that joins or leaves the registry gains or loses its page, its index entries and its links from the generators alone",
       "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
@@ -1594,19 +1568,6 @@
       "test_case": "63_session_records"
     },
     {
-      "id": "session-lifecycle",
-      "claim": "A provider hook opens the episode below the model and hands the worker what the last one left, records what a compaction is about to discard, and closes the episode with a continuation record beside its envelope",
-      "source": "docs/DOCTRINE.md",
-      "implementation": "lib/session_context.sh",
-      "test": "test/cases/54_session_lifecycle_hooks.sh",
-      "status": "guaranteed",
-      "note": "The provider's own SessionStart, PreCompact and SessionEnd events draw the boundary and drive the lifecycle; each is idempotent because the events are, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The start event writes the policy's briefing to stdout, which is how a continuation record reaches a worker who did not ask for one; the other two write none, because they fire inside a turn already under way. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation.",
-      "responsibility": "policy",
-      "source_route": "/docs/doctrine/",
-      "command": null,
-      "test_case": "54_session_lifecycle_hooks"
-    },
-    {
       "id": "adr-catalogue",
       "claim": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
       "source": "docs/SCHEMAS.md",
@@ -1646,17 +1607,30 @@
       "test_case": "99_adr"
     },
     {
-      "id": "cli-documentation-executable",
-      "claim": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
-      "source": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
-      "implementation": "apps/majordomus-cli/src/cli.rs",
-      "test": "apps/majordomus-cli/tests/cli_docs.rs",
+      "id": "web-surface-declared-once",
+      "claim": "Every web surface is declared once at its producer and resolved into one topology, from which the router, the landing page and the machine-readable index are each projected",
+      "source": ".ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
+      "implementation": "apps/majordomus-cli/src/web/model.rs",
+      "test": "test/cases/89_web_surface.sh",
       "status": "guaranteed",
-      "note": "The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown.",
+      "note": "A surface is a mount, a producer, a kind, a category, a visibility and the provenance of each; the routes the executable answers come from the capability declarations that already exist, a generated directory declares itself beside its output, and the application's site is read from the site generator's configuration. There is no central list. The case asks the page and the index independently and requires the same set of public mounts, so a link written into the page by hand fails it.",
       "responsibility": "none",
       "source_route": null,
       "command": null,
-      "test_case": "apps/majordomus-cli/tests/cli_docs.rs"
+      "test_case": "89_web_surface"
+    },
+    {
+      "id": "web-namespaces-reserved",
+      "claim": "/docs serves this repository's documentation and /swagger serves the Swagger UI, and neither may take the other's mount",
+      "source": ".ai/repo/rules/project/web-surface-declared-once.v1.md",
+      "implementation": "apps/majordomus-cli/src/web/discover.rs",
+      "test": "test/cases/89_web_surface.sh",
+      "status": "guaranteed",
+      "note": "The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there.",
+      "responsibility": "none",
+      "source_route": null,
+      "command": null,
+      "test_case": "89_web_surface"
     }
   ]
 }

@@ -60,6 +60,7 @@ docs/RESPONSIBILITIES.yaml
 docs/generated/openapi.json
 docs/generated/registry.json
 docs/generated/cli.json
+docs/generated/web.json
 apps/majordomus-cli/README.md
 site/config.toml
 README.md
@@ -1229,6 +1230,58 @@ page_template = "docs-page.html"
 ' > "$CONTENT/_index.md"
 
 mj_phase_end "gen:derived_Zola_content_site_co" "$GEN_T0"
+# ---------------------------------------------------------------- web.json (the web surface)
+GEN_T0="$(mj_phase_begin "gen:web.json_the_web_surface")"
+# Everything this repository exposes over HTTP, resolved by the executable from the producers
+# that declare it and committed as docs/generated/web.json by `majordomus generate`. The site
+# neither discovers surfaces nor lists them: it renders the same resolution the router serves
+# from, so the published route reference cannot describe a topology the process does not have.
+# The rule is project.web-surface-declared-once; the decision is ADR 0013.
+WEB="$ROOT/docs/generated/web.json"
+[ -f "$WEB" ] || { echo "generate-site-data: docs/generated/web.json is missing (run: majordomus generate)" >&2; exit 10; }
+jq -e '.schema == "majordomus/web-topology/v1"' "$WEB" >/dev/null 2>&1 \
+  || { echo "generate-site-data: docs/generated/web.json is not a majordomus/web-topology/v1 document" >&2; exit 10; }
+# every surface carries the fields the page groups and describes by; a missing one would
+# render as an empty cell rather than as the error it is
+BAD="$(jq -r '[.surfaces[] | select((.id|not) or (.title|not) or (.mount|not) or (.category|not) or (.visibility|not) or (.kind|not) or (.availability|not)) | .id // "(no id)"] | join(", ")' "$WEB")"
+[ -z "$BAD" ] || { echo "generate-site-data: web surfaces missing required fields: $BAD" >&2; exit 10; }
+# the reserved names are read from the document rather than repeated here: the page states
+# the reservation from the same value the executable enforces it from
+jq -e '.reserved.documentation == "/docs" and .reserved.swagger == "/swagger"' "$WEB" >/dev/null 2>&1 \
+  || { echo "generate-site-data: docs/generated/web.json does not reserve /docs for documentation and /swagger for the Swagger UI" >&2; exit 10; }
+jq '{schema, generated_root, reserved,
+     surfaces: [.surfaces[] | {id, title, mount, category, visibility, kind, producer, availability,
+                               artifact: (.artifact // null), feature: (.feature // null),
+                               provenance: (.provenance // {})}],
+     categories: [.surfaces[] | .category] | unique,
+     counts: {surfaces: (.surfaces | length),
+              public: ([.surfaces[] | select(.visibility == "public")] | length),
+              served: ([.surfaces[] | select(.availability != "published-only")] | length),
+              published: ([.surfaces[] | select(.availability != "served-only")] | length)}}' \
+  "$WEB" > "$OUT/web.json"
+
+# the page: prose the repository wrote, wrapped around tables nobody maintains
+{ printf -- '+++
+title = "Web surface"
+description = "Every surface this repository exposes over HTTP, and the names that are reserved."
+weight = 95
+[extra]
+source = "docs/generated/web.json"
++++
+
+'
+  printf 'Everything below is derived from the resolved web topology that the executable\nserves from. A surface is declared once, where its producer is; the router, the landing\npage, the machine-readable index and this table are projections of that one resolution.\nAdding a surface here is not a step — it is what happens.\n\n'
+  printf '## Reserved names\n\n'
+  printf 'These paths mean one thing. `/docs` served the Swagger UI once, and the day real\ndocumentation arrived the name meant two things; the rule\n`project.web-surface-declared-once` exists so that cannot recur.\n\n'
+  printf '| Role | Path |\n|---|---|\n'
+  jq -r '.reserved | to_entries[] | "| \(.key) | `\(.value)` |"' "$WEB"
+  printf '\n## Surfaces\n\n'
+  printf '| Surface | Path | Kind | Category | Offered to | Availability | Producer |\n|---|---|---|---|---|---|---|\n'
+  jq -r '.surfaces[] | "| \(.title) | `\(.mount)` | \(.kind) | \(.category) | \(.visibility) | \(.availability) | `\(.producer)` |"' "$WEB"
+  printf '\n*Availability* says which world a surface belongs to: `served-only` is answered by a\nrunning process, `published-only` is uploaded as files, `both` is each. *Offered to* is\nwhether a person is shown it on the landing page; an `internal` surface is still served and\nstill introspectable, because hiding a route from its maintainers hides it from nobody else.\n\n'
+  printf 'Ask a running process the same thing at `/api/v1/web/surfaces`, or the repository at\n`majordomus web list`; `majordomus web explain` says where each value came from.\n'
+} > "$CONTENT/web-surface.md"
+mj_phase_end "gen:web.json_the_web_surface" "$GEN_T0"
 # ---------------------------------------------------------------- plan.json (the execution model)
 GEN_T0="$(mj_phase_begin "gen:plan.json_the_execution_mode")"
 # The canonical project model, projected for the website. Every value here comes from
