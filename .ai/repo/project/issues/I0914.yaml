@@ -1,0 +1,39 @@
+id: I0914
+milestone: fly-deployment
+title: One deployment core, one command, and a dry run that mutates nothing
+slug: deployment-core-and-command
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Implement the deployment operations — validate, plan, generate, build, status, deploy, smoke — once in the typed core, expose them through thin adapters, and provide one ergonomic command that performs the whole sequence safely and can be asked to change nothing."
+why: "Deployment logic spread across a script, a workflow, a Makefile target and an entrypoint means four places each knowing half the truth. One core with thin adapters is the same rule the capability registry already enforces for everything else."
+current_state: "Nothing performs any deployment step. Every operation named here does not exist."
+desired_state: "The core owns the semantics, the CLI is an adapter, CI calls the same core, and a dry run reports exactly what a real run would do without touching the provider."
+scope:
+  - apps/majordomus-cli/src/deploy/core.rs
+  - apps/majordomus-cli/src/commands/deploy.rs
+non_scope:
+  - Deployment logic in a shell script beyond thin adaptation
+  - Interactive prompts in a non-interactive path
+  - Creating a new application on every invocation
+depends_on:
+  - I0903
+  - I0909
+  - I0913
+acceptance_criteria:
+  - The sequence is validate, verify projections, preflight credentials and configuration, build, deploy, wait for health, assert the machine inventory, run the smoke suite, publish a summary — and a failure at any step stops the ones after it
+  - A dry run performs no mutation and reports the same plan the real run would execute
+  - Plan and doctor are read-only, and repeated runs without a source change converge rather than creating new resources
+  - Failures name the source of truth, the observed state and the command that repairs it, rather than reporting that deployment failed
+  - No token value can appear in any output, including verbose and error paths
+validation:
+  - cargo test --workspace --all-features
+  - majordomus deploy --dry-run
+evidence_required:
+  - core_operations
+  - dry_run
+  - one_command
+  - actionable_failures
+risk: "A single command that does everything is also a single command that does something unintended. The dry run and the read-only operations are what make it safe to run without reading its source first."
+created_at: 2026-09-06
+updated_at: 2026-09-06
