@@ -781,6 +781,37 @@ jq '{schema: 1,
 
 
 mj_phase_end "gen:why.json_the_moments_as" "$GEN_T0"
+# ---------------------------------------------------------------- sessions.json (the layer's own memory)
+GEN_T0="$(mj_phase_begin "gen:sessions.json")"
+# The closed execution episodes, from the tool's own listing and the records themselves.
+# Nothing here is a second index: `session list --all --json` reads the section the manifest
+# names, and the body of each record is the only authored part of it (ADR 0014).
+"$ROOT/bin/majordomus" --repo "$ROOT" session list --all --json > "$STAGE/sessions.raw.json" 2>/dev/null \
+  || printf '{"schema":1,"sessions":[]}' > "$STAGE/sessions.raw.json"
+: > "$STAGE/sessions.bodies"
+while IFS="$MJ_TAB" read -r sid path; do
+  [ -n "$sid" ] || continue
+  body="$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$ROOT/$path")"
+  commits="$(awk '/^commits:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); print; next } c { exit }' "$ROOT/$path" | jq -Rn '[inputs]')"
+  changed="$(awk '/^changed_files:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); print; next } c { exit }' "$ROOT/$path" | jq -Rn '[inputs]')"
+  jq -n --arg id "$sid" --rawfile b <(printf '%s' "$body") --argjson commits "$commits" --argjson changed "$changed" \
+     '{session_id: $id, summary: ($b | gsub("^\\s+|\\s+$";"")), commits: $commits, changed_files: $changed}' >> "$STAGE/sessions.bodies"
+done < <(jq -r '.sessions[] | [.session_id, .path] | @tsv' "$STAGE/sessions.raw.json")
+jq -s '.' "$STAGE/sessions.bodies" > "$STAGE/sessions.bodies.json"
+jq --slurpfile bodies "$STAGE/sessions.bodies.json" '
+  {schema: 1,
+   source: ".ai/repo/sessions/",
+   contract: "share/schemas/session-record.schema.json",
+   count: (.sessions | length),
+   sessions: [ .sessions[] as $s
+               | ($bodies[0][] | select(.session_id == $s.session_id)) as $b
+               | $s + {route: ("/sessions/" + $s.session_id + "/"),
+                       summary: ($b.summary // ""),
+                       commits: ($b.commits // []),
+                       changed_files: ($b.changed_files // [])} ]}' \
+  "$STAGE/sessions.raw.json" > "$OUT/sessions.json"
+mj_phase_end "gen:sessions.json" "$GEN_T0"
+
 # ---------------------------------------------------------------- context.json (the directory contracts)
 GEN_T0="$(mj_phase_begin "gen:context.json")"
 # The layer's directory contracts, as the tool resolves them: `context list --json` loads
@@ -1324,7 +1355,7 @@ mk_section() { # dir, title, description, section template, page template, weigh
 }
 CONTENT_ROOT="$STAGE/content"
 rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/use-cases" "$CONTENT_ROOT/applications" "$CONTENT_ROOT/plan" "$CONTENT_ROOT/skills"
-rm -rf "$CONTENT_ROOT/context"
+rm -rf "$CONTENT_ROOT/context" "$CONTENT_ROOT/sessions"
 mk_section profiles "Execution profiles" "Capability class, reasoning effort, output verbosity, presentation, context toggles and verification are independent fields. Rendered from the profile files a fresh install writes." profiles.html profile.html 30
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jline)" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
@@ -1343,6 +1374,10 @@ jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | whi
 mk_section supervises "What Majordomus supervises" "$(jq -r '.does | length' "$OUT/readme.json") responsibilities, one layer. Each is a file under .ai/ and a subcommand that reads it." supervises-section.html responsibility.html 20
 i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while IFS="$MJ_TAB" read -r slug title text; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$text" | sed -E 's/`([^`]*)`/\1/g' | jline)" "$i" "$(jstr "$slug")" > "$CONTENT_ROOT/supervises/$slug.md"; done
+mk_section sessions "Sessions" "Every closed execution episode this repository holds: what it started from, what it produced, and how it ended. Written by the tool from git and the ledger, never from a conversation." sessions-section.html session.html 24
+i=0; jq -r '.sessions[] | [.session_id, .closed_at, .outcome, .branch] | @tsv' "$OUT/sessions.json" | while IFS="$MJ_TAB" read -r sid closed outcome branch; do i=$((i+1))
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nsession_id = %s\n+++\n' \
+    "$(jstr "$sid")" "$(jstr "$outcome on $branch, closed $closed")" "$i" "$(jstr "$sid")" > "$CONTENT_ROOT/sessions/$sid.md"; done
 mk_section context "Directory contracts" "Every directory of the layer says what it is for, in a README that composes with its ancestors. The tree below is the one the resolver reads, with the verdict validation reached for each directory." context.html page.html 23
 mk_section doctrines "Doctrine" "A rule is enforced when it is declared, implemented, wired, executed, failure-propagating, tested and CI-blocking. Each one below shows its whole chain." doctrines-section.html doctrine.html 22
 i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrines.json" | while IFS="$MJ_TAB" read -r id slug title summary; do i=$((i+1))

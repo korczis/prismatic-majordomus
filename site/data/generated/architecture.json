@@ -510,6 +510,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/sessions/README.md",
+      "kind": "artifact",
+      "label": "repo/sessions/README.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/project/README.md",
       "kind": "artifact",
       "label": "repo/project/README.md",
@@ -1353,6 +1363,11 @@
     },
     {
       "source": "lib/init.sh",
+      "target": ".ai/repo/sessions/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
       "target": ".ai/repo/skills",
       "kind": "uses"
     },
@@ -1439,6 +1454,11 @@
     {
       "source": "lib/migrate.sh",
       "target": ".ai/repo/scope.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/migrate.sh",
+      "target": ".ai/repo/sessions/README.md",
       "kind": "uses"
     },
     {
