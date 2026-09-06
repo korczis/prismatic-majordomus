@@ -20,6 +20,11 @@ pub const SCHEMAS_DIR: &str = "schemas";
 /// schemas.
 pub const ALLOW_DIR: &str = "allow";
 
+/// The directory of the shell tool's body-section lists, which `generate documents`
+/// derives from the `.proto` document schemas. The allow-list is the header half of a
+/// contract and this is the body half; a shell cannot read either out of a schema.
+pub const SECTIONS_DIR: &str = "sections";
+
 /// The suffix of a schema file: `<name>.schema.json`.
 pub const SCHEMA_SUFFIX: &str = ".schema.json";
 
@@ -98,30 +103,93 @@ impl Share {
     pub fn allow_dir(&self) -> PathBuf {
         self.dir.join(ALLOW_DIR)
     }
+
+    /// `<share>/sections`.
+    pub fn sections_dir(&self) -> PathBuf {
+        self.dir.join(SECTIONS_DIR)
+    }
 }
 
-/// Every `<name>.schema.json` under a schema directory, parsed, sorted by name. A directory
-/// that does not exist yields nothing; that is the repository's case when it adds none.
+/// Every `<vendor>/<name>/<name>.v<n>.schema.json` under a schema root, parsed, keyed by
+/// the schema identity its path derives (`majordomus.adr/v1`) and sorted by it. A root that
+/// does not exist yields nothing; that is the repository's case when it adds no schema of
+/// its own.
+///
+/// The identity and the path fix each other, so a schema can be found from a `kinds.yaml`
+/// entry without a directory scan and a file cannot quietly answer to a name it does not
+/// declare. A file whose path does not have the shape is refused by name rather than
+/// skipped, because a schema nobody loads validates nothing and says so nowhere.
 pub fn read_schema_dir(dir: &Path) -> Result<Vec<(String, serde_json::Value)>> {
-    if !dir.is_dir() {
-        return Ok(Vec::new());
-    }
     let mut schemas = Vec::new();
+    read_schema_tree(dir, dir, &mut schemas)?;
+    schemas.sort_by(|a, b| a.0.cmp(&b.0));
+    Ok(schemas)
+}
+
+fn read_schema_tree(
+    root: &Path,
+    dir: &Path,
+    out: &mut Vec<(String, serde_json::Value)>,
+) -> Result<()> {
+    if !dir.is_dir() {
+        return Ok(());
+    }
     for entry in std::fs::read_dir(dir).map_err(|e| Error::io(dir, e))? {
         let path = entry.map_err(|e| Error::io(dir, e))?.path();
+        if path.is_dir() {
+            read_schema_tree(root, &path, out)?;
+            continue;
+        }
         let Some(file) = path.file_name().and_then(|f| f.to_str()) else {
             continue;
         };
-        let Some(name) = file.strip_suffix(SCHEMA_SUFFIX) else {
+        if !file.ends_with(SCHEMA_SUFFIX) {
             continue;
-        };
+        }
+        let relative = path
+            .strip_prefix(root)
+            .map(|p| p.to_string_lossy().replace('\\', "/"))
+            .unwrap_or_else(|_| file.to_string());
+        let identity = schema_identity(&relative).ok_or_else(|| Error::KindSchema {
+            reason: format!(
+                "{}: a schema's path is <vendor>/<name>/<name>.v<n>{SCHEMA_SUFFIX}, which this is not",
+                path.display()
+            ),
+        })?;
         let text = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
         let json: serde_json::Value =
             serde_json::from_str(&text).map_err(|e| Error::KindSchema {
                 reason: format!("{}: not JSON: {e}", path.display()),
             })?;
-        schemas.push((name.to_string(), json));
+        out.push((identity, json));
     }
-    schemas.sort_by(|a, b| a.0.cmp(&b.0));
-    Ok(schemas)
+    Ok(())
+}
+
+/// The identity a schema path carries: `majordomus/adr/adr.v1.schema.json` is
+/// `majordomus.adr/v1`. A path of another shape yields nothing.
+///
+/// ```
+/// use majordomus_cli::share::schema_identity;
+/// assert_eq!(
+///     schema_identity("majordomus/adr/adr.v1.schema.json").as_deref(),
+///     Some("majordomus.adr/v1")
+/// );
+/// assert_eq!(schema_identity("adr.schema.json"), None);
+/// assert_eq!(schema_identity("majordomus/adr/other.v1.schema.json"), None);
+/// ```
+pub fn schema_identity(relative: &str) -> Option<String> {
+    let stem = relative.strip_suffix(SCHEMA_SUFFIX)?;
+    let mut parts = stem.split('/');
+    let vendor = parts.next()?;
+    let name = parts.next()?;
+    let file = parts.next()?;
+    if parts.next().is_some() || vendor.is_empty() || name.is_empty() {
+        return None;
+    }
+    let version = file.strip_prefix(&format!("{name}."))?;
+    if !version.starts_with('v') || version.len() < 2 {
+        return None;
+    }
+    Some(format!("{vendor}.{name}/{version}"))
 }

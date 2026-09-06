@@ -6,7 +6,7 @@ weight = 20
 id = "document-every-directory-of-the-layer"
 source = ".ai/repo/use-cases/document-every-directory-of-the-layer.md"
 category = "knowledge"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
@@ -18,6 +18,38 @@ Somebody adds a directory under `.ai/` — a new section, a place for data, a su
 - `context validate`: the whole tree, with `missing-contract` naming every directory that owes a document
 - `context resolve <path>`: refuses while the tree is broken, rather than answering from the part that happens to be fine
 - `doctor`: the same check through `majordomus.context-integrity`, which the pre-commit hook runs
+
+## Scenario
+
+```yaml
+setup: undocumented-directory
+given:
+  - 'a repository with Majordomus installed, a new section that carries its contract, and one directory below it that carries none'
+steps:
+  - id: validate
+    run: ['context', 'validate']
+    note: 'the directory with no document is named, and the one that has its contract is not'
+    expect:
+      exit: 10
+      stdout_contains: ['missing-contract', 'zones/deep']
+      stdout_not_contains: ['zones — missing-contract']
+  - id: resolve
+    run: ['context', 'resolve', '.ai/repo/zones']
+    note: 'nothing resolves against a tree that does not validate, not even the part that is correct'
+    expect:
+      exit: 10
+      stdout_contains: ['does not validate']
+  - id: doctor
+    run: ['doctor']
+    note: 'the same finding through the rule majordomus.context-integrity, which the pre-commit hook runs'
+    expect:
+      exit: 10
+      stdout_contains: ['missing-contract']
+then:
+  - 'a directory of the layer with no context document is a named failure, not a silence'
+  - 'the finding names the directory, so the fix is one file in one place'
+  - 'the tree refuses to resolve until it is fixed, so nobody reads a half-documented layer'
+```
 
 ## Outcome
 

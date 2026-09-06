@@ -1,6 +1,6 @@
 +++
 title = "majordomus capture"
-description = "Record the person's raw prompts and draw the episode boundary from the provider's own hooks, install those hooks, and report what each provider actually does here."
+description = "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here."
 weight = 16
 [extra]
 name = "capture"

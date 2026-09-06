@@ -167,7 +167,11 @@ function storeTheme(value) {
  */
 export function component() {
   return {
-    palette: { open: false, query: '', results: [], active: 0, loaded: false },
+    // flat, deliberately: Alpine's CSP build resolves a property name and treats
+    // `palette.open` as an expression it will not evaluate, which leaves x-show inert and
+    // the palette's backdrop covering the page. The browser probe holds this shut.
+    paletteOpen: false,
+    paletteQuery: '',
 
     init() {
       window.addEventListener('keydown', (event) => {
@@ -185,7 +189,7 @@ export function component() {
     },
 
     openPalette() {
-      this.palette.open = true;
+      this.paletteOpen = true;
       this.$nextTick(() => {
         if (this.$refs.paletteInput) this.$refs.paletteInput.focus();
       });
@@ -193,12 +197,12 @@ export function component() {
     },
 
     closePalette() {
-      this.palette.open = false;
+      this.paletteOpen = false;
     },
 
     paletteFilter() {
       window.dispatchEvent(
-        new CustomEvent('mj:palette-query', { detail: this.palette.query }),
+        new CustomEvent('mj:palette-query', { detail: this.paletteQuery }),
       );
     },
 
@@ -226,8 +230,15 @@ if (!storedTheme()) {
     });
 }
 
-vendor('alpine.csp.min.js', 'Alpine')
-  .then((Alpine) => {
+// the ES module build: it exports Alpine and starts nothing, so the component is
+// registered before the first element is initialised. The CDN build starts itself on a
+// microtask, which is earlier than this module runs, and every attribute then names a
+// variable that does not exist yet.
+vendorModule('alpine.csp.min.js')
+  .then((module) => {
+    const Alpine = module.default || module.Alpine;
+    if (!Alpine) throw new Error('alpine.csp.min.js exported no Alpine');
+    window.Alpine = Alpine;
     Alpine.data('cockpit', component);
     Alpine.start();
   })
