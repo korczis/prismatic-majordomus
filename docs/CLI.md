@@ -585,7 +585,7 @@ majordomus: session s-20260904153733-fc51 is open here since 2026-09-04T15:37:33
 $ majordomus session close <<'EOF'
 The extraction boundary and the session schema landed; the compiler's discovery stage is next.
 EOF
-.ai/local/state/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
+.ai/repo/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
 ```
 
 ## `majordomus checkpoint`

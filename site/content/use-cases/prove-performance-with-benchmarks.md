@@ -6,7 +6,7 @@ weight = 9
 id = "prove-performance-with-benchmarks"
 source = ".ai/repo/use-cases/prove-performance-with-benchmarks.md"
 category = "performance"
-maturity = "guaranteed"
+maturity = "executable"
 +++
 
 ## Situation

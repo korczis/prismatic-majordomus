@@ -43,7 +43,10 @@
 
 MJ_CAPTURE_SCHEMA="majordomus.prompt/v1"
 # the closed set of fields a record carries, in order; a reader may rely on it, and a field
-# outside it is a defect the prompt_capture doctrine reports
+# outside it is a defect the prompt_capture doctrine reports. Declared rather than used: it
+# is the contract this file's writer implements and the documentation quotes, and a reader
+# who wants to know what a record may hold reads it here.
+# shellcheck disable=SC2034
 MJ_CAPTURE_FIELDS="schema ts provider event id session source cwd repository branch head text"
 
 # ---------------------------------------------------------------- provider adapters
@@ -662,7 +665,8 @@ mj_validate_prompt_capture() {
 # clears by being deleted, deliberately, once a person has read it: it is a diagnostic, and
 # unlike a record, nothing is lost by removing it.
 mj_capture_failures() {
-  local dir="$1" rel="$2" log="$dir/.capture.log" n
+  local dir="$1" rel="$2" n
+  local log="$dir/.capture.log"
   [ -s "$log" ] || return 0
   n="$(grep -c . "$log" 2>/dev/null || true)"
   mj_doctrine_fail capture "$rel/.capture.log" \

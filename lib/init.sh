@@ -76,10 +76,13 @@ H
   mj_init_tree "$skel/ai/repo/use-cases" "$MJ_AI_REPO_DIR/use-cases" '*'
   mj_init_tree "$skel/ai/repo/applications" "$MJ_AI_REPO_DIR/applications" '*'
   mkdir -p "$MJ_PROJECT_DIR"
-  if [ -n "${MJ_SESSIONS_DIR:-}" ]; then
-    mkdir -p "$MJ_SESSIONS_DIR"
-    mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$MJ_SESSIONS_DIR/README.md"
-  fi
+  # the sessions section, at the path the manifest names — or, on the first init, at the
+  # path the skeleton's manifest is about to name. The layout variables were resolved
+  # before that manifest existed, so reading them alone would seed nothing here and then
+  # seed it on the next --extend, which is a repository that reports work to do forever.
+  local sessions_dir="${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}"
+  mkdir -p "$sessions_dir"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$sessions_dir/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.

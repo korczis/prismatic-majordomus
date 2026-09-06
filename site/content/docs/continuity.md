@@ -83,7 +83,7 @@ that is exactly the causal thread a later reader is trying to pick up.
 
 | Record | Answers | Mutability | Where |
 |---|---|---|---|
-| **session** | what one execution episode did, between which commits, producing which records | one open per worktree, then immutable | `state/session-current.yaml`, then `state/sessions/` |
+| **session** | what one execution episode did, between which commits, producing which records | one open per worktree, then immutable | `local/state/session-current.yaml`, then the layer’s `repo/sessions/` |
 
 </div>
 
