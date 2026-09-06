@@ -84,3 +84,27 @@ if git -C "$R" merge theirs >/dev/null 2>&1; then
   echo "    an unwired clone merged the marked file anyway; the resolution must not be silent"; exit 1
 fi
 git -C "$R" merge --abort 2>/dev/null || true
+
+# ---------------------------------------------------------------- the list cannot fall behind
+# A merge driver that covers some of the generated files is the failure this case exists to
+# prevent, dressed as a success: the merge completes, a handful of paths resolve, and every
+# artifact nobody thought of still conflicts. The coverage is therefore not read from
+# .gitattributes but asked of git, path by path, over the generator's own inventory — so
+# adding a generate target without a rule for it fails here rather than in somebody's merge.
+python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+sys.stdout.write("\n".join(a["path"] for a in d["artifacts"]))
+' "$ROOT/docs/generated/artifacts.json" > "$T/artifacts.txt" \
+  || { echo "    docs/generated/artifacts.json does not list artifacts"; exit 1; }
+[ -s "$T/artifacts.txt" ] || { echo "    the artifacts inventory is empty; the check would pass vacuously"; exit 1; }
+uncovered="$(xargs git -C "$ROOT" check-attr merge -- < "$T/artifacts.txt" | grep -v 'merge: derived' | sed 's/: merge:.*//')"
+[ -z "$uncovered" ] || {
+  echo "    $(printf '%s\n' "$uncovered" | wc -l | tr -d ' ') generated artifact(s) carry no merge=derived rule, so they conflict on every merge:"
+  printf '%s\n' "$uncovered" | head -10 | sed 's/^/    | /'
+  echo "    add a pattern to .gitattributes that covers them"
+  exit 1; }
+
+# and the enforcement entry is declared, so doctor refuses a clone that never wired the driver
+grep -q 'wired_by: git-config:merge.derived.driver' "$ROOT/.ai/repo/policy.yaml" || {
+  echo "    the driver is not declared in the policy's enforcement list, so doctor cannot require it"; exit 1; }
