@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 33,
-    "schemas": 146,
-    "tags": 14
+    "operations": 35,
+    "schemas": 168,
+    "tags": 15
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1896,6 +1896,32 @@
       "variants": []
     },
     {
+      "description": "How far a resolved value can be trusted.",
+      "is_enum": true,
+      "name": "Confidence",
+      "properties": [],
+      "type": "\"exact\" | \"cached\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FieldSource"
+      ],
+      "values": [
+        {
+          "description": "Read from its canonical source during this resolution.",
+          "value": "exact"
+        },
+        {
+          "description": "Read from a cache whose fingerprint still matches its inputs.",
+          "value": "cached"
+        },
+        {
+          "description": "Not resolved.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "What the lifecycle of this checkout is holding.",
       "is_enum": false,
       "name": "Continuity",
@@ -2733,6 +2759,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "RepositoryEnvironment",
         "RepositoryReport"
       ],
       "values": [],
@@ -3221,6 +3248,38 @@
       "variants": []
     },
     {
+      "description": "Where the values of one snapshot came from.",
+      "is_enum": false,
+      "name": "EnvironmentProvenance",
+      "properties": [
+        {
+          "description": "How the snapshot behind these entries was resolved.",
+          "name": "resolution",
+          "refs": [
+            "Resolution"
+          ],
+          "required": true,
+          "type": "Resolution"
+        },
+        {
+          "description": "One entry per field, in the order the resolver produced them.",
+          "name": "fields",
+          "refs": [
+            "FieldSource"
+          ],
+          "required": true,
+          "type": "array of FieldSource"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "environment.explain"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The body of every error response.",
       "is_enum": false,
       "name": "ErrorBody",
@@ -3249,6 +3308,8 @@
         "distribution.artifact",
         "distribution.build",
         "distribution.releases",
+        "environment.status",
+        "environment.explain",
         "graph.get",
         "graph.list",
         "health.report",
@@ -3551,6 +3612,58 @@
       "variants": []
     },
     {
+      "description": "Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \"why does it say that\"\nis answered by the tool rather than by reading its source.",
+      "is_enum": false,
+      "name": "FieldSource",
+      "properties": [
+        {
+          "description": "The field, in dotted form: `services.cockpit.url`, `vcs.branch`.",
+          "name": "field",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The value as it appears in the snapshot, rendered for a person; absent for a field\nthat resolved to nothing.",
+          "name": "value",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What decided it: a file, a command, a compile-time constant, the cache.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The part of this executable that read it.",
+          "name": "resolver",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How certain the value is.",
+          "name": "confidence",
+          "refs": [
+            "Confidence"
+          ],
+          "required": true,
+          "type": "Confidence"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EnvironmentProvenance",
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One thing wrong with the catalogue, named where it is, with the nearest candidate when\nthere is one. A finding always carries enough to fix it without searching.",
       "is_enum": false,
       "name": "Finding",
@@ -3775,6 +3888,104 @@
           "type": "object"
         }
       ]
+    },
+    {
+      "description": "The state of one work tree, as porcelain v2 reports it.",
+      "is_enum": false,
+      "name": "GitWorkingTree",
+      "properties": [
+        {
+          "description": "The commit HEAD names, or `None` in a repository with no commits yet.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch, or `None` when HEAD is detached or unborn.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether HEAD names a commit directly rather than a branch.",
+          "name": "detached",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The upstream the branch tracks, when it tracks one.",
+          "name": "upstream",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Commits this branch has that its upstream does not; `None` without an upstream.",
+          "name": "ahead",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Commits the upstream has that this branch does not; `None` without an upstream.",
+          "name": "behind",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Tracked files with staged changes.",
+          "name": "staged",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Tracked files changed in the work tree and not staged.",
+          "name": "modified",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Files git does not track and is not ignoring.",
+          "name": "untracked",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Files with an unresolved merge.",
+          "name": "conflicted",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Whether nothing at all is staged, modified, untracked or conflicted.",
+          "name": "clean",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Every path that is not clean, repository-relative, in git's order. Used to decide\nwhether the cached tier is still valid, and shown to nobody.",
+          "name": "changed_paths",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "VcsState"
+      ],
+      "values": [],
+      "variants": []
     },
     {
       "description": "A derived graph: what it is, where it came from, what its vocabularies mean, and the\nnodes and edges themselves.",
@@ -4238,6 +4449,94 @@
           "value": "all"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "How many valid objects of one kind the layer holds.",
+      "is_enum": false,
+      "name": "KindCount",
+      "properties": [
+        {
+          "description": "The kind, as `share/kinds.yaml` declares it.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many objects of it the index holds.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LayerSummary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the layer holds, counted per kind, plus the registry the executable composes.\nEvery number here comes from the index — the same objects every other surface serves —\nand never from counting files that match a pattern: a file that does not parse is not\na rule, and a count that says otherwise is a lie a person acts on.",
+      "is_enum": false,
+      "name": "LayerSummary",
+      "properties": [
+        {
+          "description": "Where these numbers came from.",
+          "name": "state",
+          "refs": [
+            "TierState"
+          ],
+          "required": true,
+          "type": "TierState"
+        },
+        {
+          "description": "One entry per kind present, sorted by kind.",
+          "name": "kinds",
+          "refs": [
+            "KindCount"
+          ],
+          "required": false,
+          "type": "array of KindCount"
+        },
+        {
+          "description": "How many objects the index holds.",
+          "name": "objects",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How many capabilities the registry holds.",
+          "name": "capabilities",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How many files the layer declared that did not become objects.",
+          "name": "invalid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Whether the layer read cleanly.",
+          "name": "degraded",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -5592,6 +5891,106 @@
       "variants": []
     },
     {
+      "description": "What the project is, from the crate manifest and the prose written once in\n[`crate::about`]. Every field here is a compile-time constant of this executable: there\nis no file to read, nothing to parse, and nothing that can disagree with the binary\nthat answers.",
+      "is_enum": false,
+      "name": "ProjectIdentity",
+      "properties": [
+        {
+          "description": "The product name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version of this executable, from the crate manifest.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One sentence: what this is.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The SPDX licence identifier.",
+          "name": "license",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The source repository.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The Rust target triple this executable was built for.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The cargo profile it was built with.",
+          "name": "profile",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit it was built from, or `unknown` outside a work tree.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where one provider projection stands against its policy.",
+      "is_enum": true,
+      "name": "ProjectionState",
+      "properties": [],
+      "type": "\"current\" | \"stale\" | \"absent\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProviderState"
+      ],
+      "values": [
+        {
+          "description": "The file matches the rendering byte for byte.",
+          "value": "current"
+        },
+        {
+          "description": "The file differs: it was hand-edited, or the policy moved under it.",
+          "value": "stale"
+        },
+        {
+          "description": "The file is not there.",
+          "value": "absent"
+        },
+        {
+          "description": "It could not be rendered, so nothing can be said.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\"why is this mounted here?\" without anybody reading the discovery code.",
       "is_enum": false,
       "name": "Provenance",
@@ -5739,6 +6138,50 @@
           "value": "fly"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One provider projection the policy declares, and whether the file on disk still matches\nwhat the policy renders.",
+      "is_enum": false,
+      "name": "ProviderState",
+      "properties": [
+        {
+          "description": "The provider id, as the policy names it: `agents`, `claude-code`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The repository-relative file it renders to.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the file matches what the policy renders now.",
+          "name": "state",
+          "refs": [
+            "ProjectionState"
+          ],
+          "required": true,
+          "type": "ProjectionState"
+        },
+        {
+          "description": "Whether the provider loads this file into every context.",
+          "name": "always_loaded",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -6189,6 +6632,189 @@
       "variants": []
     },
     {
+      "description": "The snapshot: what this checkout is, right now.\n\nEvery surface that reports any of this renders this value. Collections are in a\ndocumented, stable order — kinds and workflows by name, services and providers in the\norder their canonical source declares them, diagnostics in the order they were found —\nso that two snapshots of the same repository serialise identically apart from\n[`RepositoryEnvironment::generated_at`].",
+      "is_enum": false,
+      "name": "RepositoryEnvironment",
+      "properties": [
+        {
+          "description": "The contract this document follows, `majordomus/repository-environment/v1`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it was taken, RFC 3339 in UTC.",
+          "name": "generated_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How completely it was resolved.",
+          "name": "resolution",
+          "refs": [
+            "Resolution"
+          ],
+          "required": true,
+          "type": "Resolution"
+        },
+        {
+          "description": "What the project is.",
+          "name": "project",
+          "refs": [
+            "ProjectIdentity"
+          ],
+          "required": true,
+          "type": "ProjectIdentity"
+        },
+        {
+          "description": "What the checkout is.",
+          "name": "repository",
+          "refs": [
+            "RepositoryIdentity"
+          ],
+          "required": true,
+          "type": "RepositoryIdentity"
+        },
+        {
+          "description": "What version control says.",
+          "name": "vcs",
+          "refs": [
+            "VcsState"
+          ],
+          "required": true,
+          "type": "VcsState"
+        },
+        {
+          "description": "The toolchains the repository declares, sorted by id.",
+          "name": "toolchains",
+          "refs": [
+            "ToolchainState"
+          ],
+          "required": true,
+          "type": "array of ToolchainState"
+        },
+        {
+          "description": "What the layer holds.",
+          "name": "layer",
+          "refs": [
+            "LayerSummary"
+          ],
+          "required": true,
+          "type": "LayerSummary"
+        },
+        {
+          "description": "The workflows a person can run.",
+          "name": "workflows",
+          "refs": [
+            "WorkflowCatalogue"
+          ],
+          "required": true,
+          "type": "WorkflowCatalogue"
+        },
+        {
+          "description": "The provider projections the policy declares, in the policy's order.",
+          "name": "providers",
+          "refs": [
+            "ProviderState"
+          ],
+          "required": true,
+          "type": "array of ProviderState"
+        },
+        {
+          "description": "The local services, in the order the service table declares them.",
+          "name": "services",
+          "refs": [
+            "ServiceState"
+          ],
+          "required": true,
+          "type": "array of ServiceState"
+        },
+        {
+          "description": "Everything that went wrong or is worth knowing, in the order it was found.",
+          "name": "diagnostics",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": true,
+          "type": "array of Diagnostic"
+        },
+        {
+          "description": "Where every field came from.",
+          "name": "provenance",
+          "refs": [
+            "FieldSource"
+          ],
+          "required": true,
+          "type": "array of FieldSource"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "environment.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The checkout this snapshot is of.",
+      "is_enum": false,
+      "name": "RepositoryIdentity",
+      "properties": [
+        {
+          "description": "The name a person calls it: the base name of the root directory.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The root, absolute. The same value `repository.info` reports.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The manifest's `schema`, `ai-repository/v1`.",
+          "name": "layer_schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Section name to repository-relative path, as the manifest declares them.",
+          "name": "sections",
+          "refs": [],
+          "required": true,
+          "type": "map of string"
+        },
+        {
+          "description": "The checkout-local half of the layer, repository-relative. Never tracked, and\nwhere anything this checkout alone knows — the server's lease, this snapshot's\ncache — is kept.",
+          "name": "local_path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether this checkout is a linked work tree rather than the main one.",
+          "name": "linked_worktree",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What the index knows about the repository it was built from.",
       "is_enum": false,
       "name": "RepositoryInfo",
@@ -6331,6 +6957,29 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \"there is no server running\" from \"nobody looked\".",
+      "is_enum": true,
+      "name": "Resolution",
+      "properties": [],
+      "type": "\"fast\" | \"full\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "EnvironmentProvenance",
+        "RepositoryEnvironment"
+      ],
+      "values": [
+        {
+          "description": "Only what is cheap enough for a shell prompt; the rest from the cache.",
+          "value": "fast"
+        },
+        {
+          "description": "Everything, including the index. Writes the cache.",
+          "value": "full"
+        }
+      ],
       "variants": []
     },
     {
@@ -6586,6 +7235,83 @@
         "objects.search"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions.",
+      "is_enum": true,
+      "name": "ServiceAvailability",
+      "properties": [],
+      "type": "\"available\" | \"not_running\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServiceState"
+      ],
+      "values": [
+        {
+          "description": "The address accepted a connection.",
+          "value": "available"
+        },
+        {
+          "description": "No server holds the repository's lease, or the address refused the connection.",
+          "value": "not_running"
+        },
+        {
+          "description": "The probe did not finish in its budget, or this resolution did not probe.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One local service of this repository: what it is, where it is, and whether anything\nanswers there. The path is the one the router serves; the URL exists only while a\nserver does.",
+      "is_enum": false,
+      "name": "ServiceState",
+      "properties": [
+        {
+          "description": "A stable id, `[a-z][a-z0-9-]*`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short name a person reads.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The absolute path the router serves it under.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The full URL, when a server is running and published its address.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether anything answers there.",
+          "name": "availability",
+          "refs": [
+            "ServiceAvailability"
+          ],
+          "required": true,
+          "type": "ServiceAvailability"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
       "values": [],
       "variants": []
     },
@@ -7323,6 +8049,117 @@
       "variants": []
     },
     {
+      "description": "Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n[`TierState::Unavailable`] with the reason, and its values are absent rather than zero.",
+      "is_enum": true,
+      "name": "TierState",
+      "properties": [],
+      "type": "\"resolved\" | \"cached\" | \"unavailable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LayerSummary",
+        "WorkflowCatalogue"
+      ],
+      "values": [
+        {
+          "description": "Read from its canonical source during this resolution.",
+          "value": "resolved"
+        },
+        {
+          "description": "Taken from the cache written by an earlier full resolution.",
+          "value": "cached"
+        },
+        {
+          "description": "Neither available; the values are absent and the reason is a diagnostic.",
+          "value": "unavailable"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Whether a declared toolchain is usable here.",
+      "is_enum": true,
+      "name": "ToolchainAvailability",
+      "properties": [],
+      "type": "\"installed\" | \"missing\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ToolchainState"
+      ],
+      "values": [
+        {
+          "description": "Installed, and its version answered.",
+          "value": "installed"
+        },
+        {
+          "description": "The executable is not on the path.",
+          "value": "missing"
+        },
+        {
+          "description": "Nobody asked: this resolution may not run a subprocess for it, and no cache held it.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A toolchain the repository declares, and what is installed for it. The three are kept\napart on purpose: a repository can declare a version nobody has, and a machine can have\na version no repository asked for, and reporting either as the other is how a version\nmismatch stays invisible for a week.",
+      "is_enum": false,
+      "name": "ToolchainState",
+      "properties": [
+        {
+          "description": "A stable id, `[a-z][a-z0-9-]*`: `rust`, `node`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short name a person reads.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version the repository declares, when it declares one.",
+          "name": "declared",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The repository-relative file that declares it.",
+          "name": "declared_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version installed here, when it could be asked and the answer is not stale.",
+          "name": "installed",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where the installed version stands.",
+          "name": "availability",
+          "refs": [
+            "ToolchainAvailability"
+          ],
+          "required": true,
+          "type": "ToolchainAvailability"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How a peer reached the server.",
       "is_enum": true,
       "name": "Transport",
@@ -7398,6 +8235,53 @@
       "variants": []
     },
     {
+      "description": "What version control says about the checkout, or why it could not be asked.",
+      "is_enum": false,
+      "name": "VcsState",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "`git` answered.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"git\""
+            }
+          ],
+          "type": "GitWorkingTree"
+        },
+        {
+          "description": "`git` could not be asked, or this is not a work tree.",
+          "properties": [
+            {
+              "description": "What went wrong.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"unavailable\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
       "description": "In or out.",
       "is_enum": true,
       "name": "Verdict",
@@ -7443,6 +8327,196 @@
           "value": "external_dependency"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The workflows a person can run here, as the workflow runner itself describes them.",
+      "is_enum": false,
+      "name": "WorkflowCatalogue",
+      "properties": [
+        {
+          "description": "Where these came from.",
+          "name": "state",
+          "refs": [
+            "TierState"
+          ],
+          "required": true,
+          "type": "TierState"
+        },
+        {
+          "description": "The command that produced them, when one did.",
+          "name": "source",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every public workflow, sorted by name.",
+          "name": "workflows",
+          "refs": [
+            "WorkflowDescriptor"
+          ],
+          "required": false,
+          "type": "array of WorkflowDescriptor"
+        },
+        {
+          "description": "The entry point of each group, in the order the groups are declared: what a person\nnew to the repository runs first. Derived, never listed anywhere.",
+          "name": "entrypoints",
+          "refs": [
+            "WorkflowEntrypoint"
+          ],
+          "required": false,
+          "type": "array of WorkflowEntrypoint"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One workflow: a recipe of the repository's `justfile`, as `just` describes it.",
+      "is_enum": false,
+      "name": "WorkflowDescriptor",
+      "properties": [
+        {
+          "description": "The name a person types after `just`.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The module path, for a recipe in an imported module; empty at the root.",
+          "name": "namespace",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The recipe's doc comment, when it has one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The `[group(...)]` it belongs to, when it declares one.",
+          "name": "group",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its parameters, in declaration order.",
+          "name": "parameters",
+          "refs": [
+            "WorkflowParameter"
+          ],
+          "required": false,
+          "type": "array of WorkflowParameter"
+        },
+        {
+          "description": "The recipes it runs first, in order.",
+          "name": "dependencies",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether it asks before it runs (`[confirm]`).",
+          "name": "confirm",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WorkflowCatalogue"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The entry point of one group of workflows: what the group is, and the one workflow that\nstands for it.",
+      "is_enum": false,
+      "name": "WorkflowEntrypoint",
+      "properties": [
+        {
+          "description": "The group, as the justfile declares it.",
+          "name": "group",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The workflow that stands for the group.",
+          "name": "workflow",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command a person types.",
+          "name": "command",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The workflow's description, when it has one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WorkflowCatalogue"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One parameter of a workflow.",
+      "is_enum": false,
+      "name": "WorkflowParameter",
+      "properties": [
+        {
+          "description": "The name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it may be repeated (`*args`, `+args`).",
+          "name": "variadic",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether it must be given.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WorkflowDescriptor"
+      ],
+      "values": [],
       "variants": []
     }
   ],
@@ -8251,6 +9325,145 @@
           "result_schema": "ReleasesReport",
           "stability": "behaviorally_verified",
           "summary": "Published releases"
+        }
+      ]
+    },
+    {
+      "description": "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value.",
+      "name": "environment",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=4, ttl_seconds=3",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/environment?probe_services=false\"",
+          "description": "One snapshot of this checkout: project identity, repository identity, version control, declared toolchains, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services with the address a running server published. Every value carries where it came from.",
+          "id": "environment.status",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "environment",
+            "uri": "majordomus://environment"
+          },
+          "mcp_tool": "majordomus_environment",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Contact the local address a running server published, to say whether it answers.\nOff by default: a served request should not open a socket to another server on\nbehalf of its caller, and the caller usually is that server.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "false"
+                }
+              ],
+              "name": "probe_services",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
+          "path": "/api/v1/environment",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::environment",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The repository environment: the result.",
+              "schema": "RepositoryEnvironment",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "RepositoryEnvironment",
+          "stability": "behaviorally_verified",
+          "summary": "The repository environment"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/environment/explain?field=project.version\"",
+          "description": "The provenance of the snapshot: for each field, what decided it — a compile-time constant, a file, a command, or the cache — which resolver read it, and how far it can be trusted. Narrow it to one field, or to a prefix, by name.",
+          "id": "environment.explain",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_environment_explain",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The field in dotted form (`services.url`, `capabilities.objects`); every field when\nabsent.",
+              "examples": [
+                {
+                  "case": "one-field",
+                  "value": "\"project.version\""
+                }
+              ],
+              "name": "field",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/environment/explain",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::environment",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Where an environment value came from: the result.",
+              "schema": "EnvironmentProvenance",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EnvironmentProvenance",
+          "stability": "behaviorally_verified",
+          "summary": "Where an environment value came from"
         }
       ]
     },

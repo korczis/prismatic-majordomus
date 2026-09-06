@@ -41,6 +41,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 4
+  - id: environment
+    title: Repository environment
+    description: "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 2
   - id: graph
     title: Graphs
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
@@ -3058,6 +3064,754 @@ capabilities:
     cache:
       policy: disabled
     source_path: apps/majordomus-cli/src/capability/builtin/distribution.rs
+  - id: environment.explain
+    module: environment
+    kind: query
+    title: Where an environment value came from
+    description: "The provenance of the snapshot: for each field, what decided it — a compile-time constant, a file, a command, or the cache — which resolver read it, and how far it can be trusted. Narrow it to one field, or to a prefix, by name."
+    input:
+      name: ExplainInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          field:
+            type:
+              - string
+              - "null"
+            description: "The field in dotted form (`services.url`, `capabilities.objects`); every field when\nabsent."
+        description: "Which field's provenance to explain."
+        title: ExplainInput
+    output:
+      name: EnvironmentProvenance
+      schema:
+        type: object
+        properties:
+          resolution:
+            "$ref": "#/$defs/Resolution"
+            description: How the snapshot behind these entries was resolved.
+          fields:
+            type: array
+            items:
+              "$ref": "#/$defs/FieldSource"
+            description: "One entry per field, in the order the resolver produced them."
+        required:
+          - resolution
+          - fields
+        description: Where the values of one snapshot came from.
+        title: EnvironmentProvenance
+        "$defs":
+          Resolution:
+            oneOf:
+              - type: string
+                const: fast
+                description: Only what is cheap enough for a shell prompt; the rest from the cache.
+              - type: string
+                const: full
+                description: "Everything, including the index. Writes the cache."
+            description: "How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \"there is no server running\" from \"nobody looked\"."
+          FieldSource:
+            type: object
+            properties:
+              field:
+                type: string
+                description: "The field, in dotted form: `services.cockpit.url`, `vcs.branch`."
+              value:
+                type:
+                  - string
+                  - "null"
+                description: "The value as it appears in the snapshot, rendered for a person; absent for a field\nthat resolved to nothing."
+              source:
+                type: string
+                description: "What decided it: a file, a command, a compile-time constant, the cache."
+              resolver:
+                type: string
+                description: The part of this executable that read it.
+              confidence:
+                "$ref": "#/$defs/Confidence"
+                description: How certain the value is.
+            required:
+              - field
+              - source
+              - resolver
+              - confidence
+            description: "Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \"why does it say that\"\nis answered by the tool rather than by reading its source."
+          Confidence:
+            oneOf:
+              - type: string
+                const: exact
+                description: Read from its canonical source during this resolution.
+              - type: string
+                const: cached
+                description: Read from a cache whose fingerprint still matches its inputs.
+              - type: string
+                const: unknown
+                description: Not resolved.
+            description: How far a resolved value can be trusted.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::environment
+    exposure:
+      mcp:
+        tool: majordomus_environment_explain
+      http:
+        method: GET
+        path: /api/v1/environment/explain
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - environment
+      - provenance
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/environment.rs
+  - id: environment.status
+    module: environment
+    kind: query
+    title: The repository environment
+    description: "One snapshot of this checkout: project identity, repository identity, version control, declared toolchains, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services with the address a running server published. Every value carries where it came from."
+    input:
+      name: EnvironmentInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          probe_services:
+            type: boolean
+            description: "Contact the local address a running server published, to say whether it answers.\nOff by default: a served request should not open a socket to another server on\nbehalf of its caller, and the caller usually is that server."
+            default: false
+        description: What to include in the snapshot.
+        title: EnvironmentInput
+    output:
+      name: RepositoryEnvironment
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "The contract this document follows, `majordomus/repository-environment/v1`."
+          generated_at:
+            type: string
+            description: "When it was taken, RFC 3339 in UTC."
+          resolution:
+            "$ref": "#/$defs/Resolution"
+            description: How completely it was resolved.
+          project:
+            "$ref": "#/$defs/ProjectIdentity"
+            description: What the project is.
+          repository:
+            "$ref": "#/$defs/RepositoryIdentity"
+            description: What the checkout is.
+          vcs:
+            "$ref": "#/$defs/VcsState"
+            description: What version control says.
+          toolchains:
+            type: array
+            items:
+              "$ref": "#/$defs/ToolchainState"
+            description: "The toolchains the repository declares, sorted by id."
+          layer:
+            "$ref": "#/$defs/LayerSummary"
+            description: What the layer holds.
+          workflows:
+            "$ref": "#/$defs/WorkflowCatalogue"
+            description: The workflows a person can run.
+          providers:
+            type: array
+            items:
+              "$ref": "#/$defs/ProviderState"
+            description: "The provider projections the policy declares, in the policy's order."
+          services:
+            type: array
+            items:
+              "$ref": "#/$defs/ServiceState"
+            description: "The local services, in the order the service table declares them."
+          diagnostics:
+            type: array
+            items:
+              "$ref": "#/$defs/Diagnostic"
+            description: "Everything that went wrong or is worth knowing, in the order it was found."
+          provenance:
+            type: array
+            items:
+              "$ref": "#/$defs/FieldSource"
+            description: Where every field came from.
+        required:
+          - schema
+          - generated_at
+          - resolution
+          - project
+          - repository
+          - vcs
+          - toolchains
+          - layer
+          - workflows
+          - providers
+          - services
+          - diagnostics
+          - provenance
+        description: "The snapshot: what this checkout is, right now.\n\nEvery surface that reports any of this renders this value. Collections are in a\ndocumented, stable order — kinds and workflows by name, services and providers in the\norder their canonical source declares them, diagnostics in the order they were found —\nso that two snapshots of the same repository serialise identically apart from\n[`RepositoryEnvironment::generated_at`]."
+        title: RepositoryEnvironment
+        "$defs":
+          Resolution:
+            oneOf:
+              - type: string
+                const: fast
+                description: Only what is cheap enough for a shell prompt; the rest from the cache.
+              - type: string
+                const: full
+                description: "Everything, including the index. Writes the cache."
+            description: "How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \"there is no server running\" from \"nobody looked\"."
+          ProjectIdentity:
+            type: object
+            properties:
+              name:
+                type: string
+                description: The product name.
+              version:
+                type: string
+                description: "The version of this executable, from the crate manifest."
+              summary:
+                type: string
+                description: "One sentence: what this is."
+              license:
+                type: string
+                description: The SPDX licence identifier.
+              repository:
+                type: string
+                description: The source repository.
+              target:
+                type: string
+                description: The Rust target triple this executable was built for.
+              profile:
+                type: string
+                description: The cargo profile it was built with.
+              commit:
+                type: string
+                description: "The commit it was built from, or `unknown` outside a work tree."
+            required:
+              - name
+              - version
+              - summary
+              - license
+              - repository
+              - target
+              - profile
+              - commit
+            description: "What the project is, from the crate manifest and the prose written once in\n[`crate::about`]. Every field here is a compile-time constant of this executable: there\nis no file to read, nothing to parse, and nothing that can disagree with the binary\nthat answers."
+          RepositoryIdentity:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name a person calls it: the base name of the root directory."
+              root:
+                type: string
+                description: "The root, absolute. The same value `repository.info` reports."
+              layer_schema:
+                type: string
+                description: "The manifest's `schema`, `ai-repository/v1`."
+              sections:
+                type: object
+                additionalProperties:
+                  type: string
+                description: "Section name to repository-relative path, as the manifest declares them."
+              local_path:
+                type: string
+                description: "The checkout-local half of the layer, repository-relative. Never tracked, and\nwhere anything this checkout alone knows — the server's lease, this snapshot's\ncache — is kept."
+              linked_worktree:
+                type: boolean
+                description: Whether this checkout is a linked work tree rather than the main one.
+            required:
+              - name
+              - root
+              - layer_schema
+              - sections
+              - local_path
+              - linked_worktree
+            description: The checkout this snapshot is of.
+          VcsState:
+            oneOf:
+              - "$ref": "#/$defs/GitWorkingTree"
+                type: object
+                properties:
+                  state:
+                    type: string
+                    const: git
+                required:
+                  - state
+                description: "`git` answered."
+              - type: object
+                properties:
+                  reason:
+                    type: string
+                    description: What went wrong.
+                  state:
+                    type: string
+                    const: unavailable
+                required:
+                  - state
+                  - reason
+                description: "`git` could not be asked, or this is not a work tree."
+            description: "What version control says about the checkout, or why it could not be asked."
+          GitWorkingTree:
+            type: object
+            properties:
+              head:
+                type:
+                  - string
+                  - "null"
+                description: "The commit HEAD names, or `None` in a repository with no commits yet."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch, or `None` when HEAD is detached or unborn."
+              detached:
+                type: boolean
+                description: Whether HEAD names a commit directly rather than a branch.
+              upstream:
+                type:
+                  - string
+                  - "null"
+                description: "The upstream the branch tracks, when it tracks one."
+              ahead:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "Commits this branch has that its upstream does not; `None` without an upstream."
+              behind:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "Commits the upstream has that this branch does not; `None` without an upstream."
+              staged:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Tracked files with staged changes.
+              modified:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Tracked files changed in the work tree and not staged.
+              untracked:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Files git does not track and is not ignoring.
+              conflicted:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Files with an unresolved merge.
+              clean:
+                type: boolean
+                description: "Whether nothing at all is staged, modified, untracked or conflicted."
+              changed_paths:
+                type: array
+                items:
+                  type: string
+                description: "Every path that is not clean, repository-relative, in git's order. Used to decide\nwhether the cached tier is still valid, and shown to nobody."
+            required:
+              - detached
+              - staged
+              - modified
+              - untracked
+              - conflicted
+              - clean
+            description: "The state of one work tree, as porcelain v2 reports it."
+          ToolchainState:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "A stable id, `[a-z][a-z0-9-]*`: `rust`, `node`."
+              title:
+                type: string
+                description: The short name a person reads.
+              declared:
+                type:
+                  - string
+                  - "null"
+                description: "The version the repository declares, when it declares one."
+              declared_by:
+                type: string
+                description: The repository-relative file that declares it.
+              installed:
+                type:
+                  - string
+                  - "null"
+                description: "The version installed here, when it could be asked and the answer is not stale."
+              availability:
+                "$ref": "#/$defs/ToolchainAvailability"
+                description: Where the installed version stands.
+            required:
+              - id
+              - title
+              - declared_by
+              - availability
+            description: "A toolchain the repository declares, and what is installed for it. The three are kept\napart on purpose: a repository can declare a version nobody has, and a machine can have\na version no repository asked for, and reporting either as the other is how a version\nmismatch stays invisible for a week."
+          ToolchainAvailability:
+            oneOf:
+              - type: string
+                const: installed
+                description: "Installed, and its version answered."
+              - type: string
+                const: missing
+                description: The executable is not on the path.
+              - type: string
+                const: unknown
+                description: "Nobody asked: this resolution may not run a subprocess for it, and no cache held it."
+            description: Whether a declared toolchain is usable here.
+          LayerSummary:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/TierState"
+                description: Where these numbers came from.
+              kinds:
+                type: array
+                items:
+                  "$ref": "#/$defs/KindCount"
+                description: "One entry per kind present, sorted by kind."
+              objects:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: How many objects the index holds.
+              capabilities:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: How many capabilities the registry holds.
+              invalid:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: How many files the layer declared that did not become objects.
+              degraded:
+                type:
+                  - boolean
+                  - "null"
+                description: Whether the layer read cleanly.
+            required:
+              - state
+            description: "What the layer holds, counted per kind, plus the registry the executable composes.\nEvery number here comes from the index — the same objects every other surface serves —\nand never from counting files that match a pattern: a file that does not parse is not\na rule, and a count that says otherwise is a lie a person acts on."
+          TierState:
+            oneOf:
+              - type: string
+                const: resolved
+                description: Read from its canonical source during this resolution.
+              - type: string
+                const: cached
+                description: Taken from the cache written by an earlier full resolution.
+              - type: string
+                const: unavailable
+                description: Neither available; the values are absent and the reason is a diagnostic.
+            description: "Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n[`TierState::Unavailable`] with the reason, and its values are absent rather than zero."
+          KindCount:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: "The kind, as `share/kinds.yaml` declares it."
+              count:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many objects of it the index holds.
+            required:
+              - kind
+              - count
+            description: How many valid objects of one kind the layer holds.
+          WorkflowCatalogue:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/TierState"
+                description: Where these came from.
+              source:
+                type:
+                  - string
+                  - "null"
+                description: "The command that produced them, when one did."
+              workflows:
+                type: array
+                items:
+                  "$ref": "#/$defs/WorkflowDescriptor"
+                description: "Every public workflow, sorted by name."
+              entrypoints:
+                type: array
+                items:
+                  "$ref": "#/$defs/WorkflowEntrypoint"
+                description: "The entry point of each group, in the order the groups are declared: what a person\nnew to the repository runs first. Derived, never listed anywhere."
+            required:
+              - state
+            description: "The workflows a person can run here, as the workflow runner itself describes them."
+          WorkflowDescriptor:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name a person types after `just`."
+              namespace:
+                type:
+                  - string
+                  - "null"
+                description: "The module path, for a recipe in an imported module; empty at the root."
+              description:
+                type:
+                  - string
+                  - "null"
+                description: "The recipe's doc comment, when it has one."
+              group:
+                type:
+                  - string
+                  - "null"
+                description: "The `[group(...)]` it belongs to, when it declares one."
+              parameters:
+                type: array
+                items:
+                  "$ref": "#/$defs/WorkflowParameter"
+                description: "Its parameters, in declaration order."
+              dependencies:
+                type: array
+                items:
+                  type: string
+                description: "The recipes it runs first, in order."
+              confirm:
+                type: boolean
+                description: "Whether it asks before it runs (`[confirm]`)."
+            required:
+              - name
+              - confirm
+            description: "One workflow: a recipe of the repository's `justfile`, as `just` describes it."
+          WorkflowParameter:
+            type: object
+            properties:
+              name:
+                type: string
+                description: The name.
+              variadic:
+                type: boolean
+                description: "Whether it may be repeated (`*args`, `+args`)."
+              required:
+                type: boolean
+                description: Whether it must be given.
+            required:
+              - name
+              - variadic
+              - required
+            description: One parameter of a workflow.
+          WorkflowEntrypoint:
+            type: object
+            properties:
+              group:
+                type: string
+                description: "The group, as the justfile declares it."
+              workflow:
+                type: string
+                description: The workflow that stands for the group.
+              command:
+                type: string
+                description: The command a person types.
+              description:
+                type:
+                  - string
+                  - "null"
+                description: "The workflow's description, when it has one."
+            required:
+              - group
+              - workflow
+              - command
+            description: "The entry point of one group of workflows: what the group is, and the one workflow that\nstands for it."
+          ProviderState:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The provider id, as the policy names it: `agents`, `claude-code`."
+              target:
+                type: string
+                description: The repository-relative file it renders to.
+              state:
+                "$ref": "#/$defs/ProjectionState"
+                description: Whether the file matches what the policy renders now.
+              always_loaded:
+                type: boolean
+                description: Whether the provider loads this file into every context.
+            required:
+              - id
+              - target
+              - state
+              - always_loaded
+            description: "One provider projection the policy declares, and whether the file on disk still matches\nwhat the policy renders."
+          ProjectionState:
+            oneOf:
+              - type: string
+                const: current
+                description: The file matches the rendering byte for byte.
+              - type: string
+                const: stale
+                description: "The file differs: it was hand-edited, or the policy moved under it."
+              - type: string
+                const: absent
+                description: The file is not there.
+              - type: string
+                const: unknown
+                description: "It could not be rendered, so nothing can be said."
+            description: Where one provider projection stands against its policy.
+          ServiceState:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "A stable id, `[a-z][a-z0-9-]*`."
+              title:
+                type: string
+                description: The short name a person reads.
+              path:
+                type: string
+                description: The absolute path the router serves it under.
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "The full URL, when a server is running and published its address."
+              availability:
+                "$ref": "#/$defs/ServiceAvailability"
+                description: Whether anything answers there.
+            required:
+              - id
+              - title
+              - path
+              - availability
+            description: "One local service of this repository: what it is, where it is, and whether anything\nanswers there. The path is the one the router serves; the URL exists only while a\nserver does."
+          ServiceAvailability:
+            oneOf:
+              - type: string
+                const: available
+                description: The address accepted a connection.
+              - type: string
+                const: not_running
+                description: "No server holds the repository's lease, or the address refused the connection."
+              - type: string
+                const: unknown
+                description: "The probe did not finish in its budget, or this resolution did not probe."
+            description: "Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions."
+          Diagnostic:
+            type: object
+            properties:
+              severity:
+                "$ref": "#/$defs/Severity"
+                description: How bad.
+              code:
+                type: string
+                description: "A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`."
+              path:
+                type:
+                  - string
+                  - "null"
+                description: "Repository-relative path of the file concerned, when there is one."
+              message:
+                type: string
+                description: "What is wrong, for a person; the code is for a program."
+            required:
+              - severity
+              - code
+              - message
+            description: "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
+          Severity:
+            oneOf:
+              - type: string
+                const: info
+                description: Worth knowing; changes nothing.
+              - type: string
+                const: warning
+                description: Something to look at; the object is still served.
+              - type: string
+                const: error
+                description: The file is excluded and the index is degraded.
+            description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+          FieldSource:
+            type: object
+            properties:
+              field:
+                type: string
+                description: "The field, in dotted form: `services.cockpit.url`, `vcs.branch`."
+              value:
+                type:
+                  - string
+                  - "null"
+                description: "The value as it appears in the snapshot, rendered for a person; absent for a field\nthat resolved to nothing."
+              source:
+                type: string
+                description: "What decided it: a file, a command, a compile-time constant, the cache."
+              resolver:
+                type: string
+                description: The part of this executable that read it.
+              confidence:
+                "$ref": "#/$defs/Confidence"
+                description: How certain the value is.
+            required:
+              - field
+              - source
+              - resolver
+              - confidence
+            description: "Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \"why does it say that\"\nis answered by the tool rather than by reading its source."
+          Confidence:
+            oneOf:
+              - type: string
+                const: exact
+                description: Read from its canonical source during this resolution.
+              - type: string
+                const: cached
+                description: Read from a cache whose fingerprint still matches its inputs.
+              - type: string
+                const: unknown
+                description: Not resolved.
+            description: How far a resolved value can be trusted.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::environment
+    exposure:
+      mcp:
+        tool: majordomus_environment
+        resource:
+          uri: majordomus://environment
+          name: environment
+      http:
+        method: GET
+        path: /api/v1/environment
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - environment
+      - repository
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 4
+      ttl_seconds: 3
+    source_path: apps/majordomus-cli/src/capability/builtin/environment.rs
   - id: graph.get
     module: graph
     kind: query
