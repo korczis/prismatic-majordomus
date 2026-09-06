@@ -103,6 +103,13 @@ enforcement:
     path: scripts/pages
     args: [current]
     wired_by: git-hook:pre-commit
+  # The branch-to-worktree topology (ADR 0021, rule project.worktree-topology): a feature
+  # branch is committed from its canonical worktree, <repo>-wt/<branch>, and the trunk from
+  # the primary checkout. The hook asks the guard and carries no logic of its own.
+  - name: worktree-guard-on-commit
+    path: bin/majordomus-cli
+    args: [worktree, guard]
+    wired_by: git-hook:pre-commit
 
 projections:
   - provider: agents
