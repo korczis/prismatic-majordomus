@@ -5,7 +5,7 @@
 # the evidence recorded, tallied against every public command, guaranteed claim and MCP
 # tool, traced from a change to what it affects, and scaffolded where coverage is missing.
 #
-# A use case is a Markdown file with front matter (share/schemas/use-case.schema.json): a
+# A use case is a Markdown file with front matter (share/schemas/majordomus/use-case/use-case.v1.schema.json): a
 # task a person performs, the commands, rules, claims, responsibilities and applications
 # it names, and a scenario: a fresh repository prepared by a setup script, then real
 # invocations of bin/majordomus with their expected exit codes and output. Nothing here is
