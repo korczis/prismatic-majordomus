@@ -1,0 +1,37 @@
+id: I0925
+milestone: fly-deployment
+title: Every deployment rule is a check that runs
+slug: deployment-doctrine
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "State the durable deployment constraints as project rules in the repository's rule system, and give each one an executable check that CI runs."
+why: "The repository's own rule says a rule is a doctrine with enforcement. Deployment constraints written only as prose would be advice, and advice does not survive the first hurried change to a resource envelope."
+current_state: "Project rules exist for benchmarkable commands, derived files, hot paths, scope declaration, shared-server resilience and more, each with a check. None concerns deployment."
+desired_state: "Each deployment rule exists as a rule object with a check that executes, and a violation is refused rather than reported in a document nobody reads."
+scope:
+  - .ai/repo/rules/project
+non_scope:
+  - A rule with no executable check
+  - Restating an existing rule that already covers the constraint
+depends_on:
+  - I0915
+acceptance_criteria:
+  - Deployment configuration originates from the canonical object, and editing a generated provider artifact by hand is refused by a check
+  - Generated deployment artifacts must match the canonical object, and CI fails on drift
+  - Secrets must not enter generated artifacts, source control, build arguments, layers, documentation or the UI, and a check enforces it
+  - The production runtime image must contain only runtime dependencies and must run non-root, and a check enforces both
+  - Deployment documentation and UI must derive from the authoritative data, and a check enforces it
+  - A deployment must expose and test the canonical health and readiness behaviour, and a check enforces it
+  - The declared cost profile must stay resource-bounded, and a change to the envelope is visible in review because a check names it
+  - Each rule reuses an existing rule where one already covers the constraint rather than adding a near-duplicate
+validation:
+  - bin/majordomus doctor
+  - bash test/run.sh
+evidence_required:
+  - rules_authored
+  - checks_execute
+  - ci_runs_them
+risk: "Seven new rules is a lot of doctrine for one subsystem. Any constraint an existing rule already covers should be referenced rather than restated."
+created_at: 2026-09-06
+updated_at: 2026-09-06
