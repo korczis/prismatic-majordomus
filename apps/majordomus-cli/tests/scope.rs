@@ -28,7 +28,11 @@ out:
     - .ai/local/
     - '**/target/'
   binary: true
-  max_bytes: 2048
+  # Above the fixture's own sources.yaml, which grows with every source class the
+  # distribution adds, and below docs/big.md, which is what this limit is here to catch.
+  # At 2048 the layer's own declaration crossed the limit and was dropped as out of scope,
+  # which is a fixture that quietly stops describing itself rather than a size rule working.
+  max_bytes: 3072
   image:
     names: ['*.png']
   secret:
@@ -120,7 +124,7 @@ fn the_repository_scope_governs_discovery_and_names_what_it_drops() {
     assert!(dropped_paths.contains(&"CONTRIBUTING.md"), "{dropped:?}");
     let big = dropped.iter().find(|(p, _)| p == "docs/big.md").unwrap();
     assert!(
-        big.1.contains("over_limit") && big.1.contains("max_bytes 2048"),
+        big.1.contains("over_limit") && big.1.contains("max_bytes 3072"),
         "{}",
         big.1
     );
