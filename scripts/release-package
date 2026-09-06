@@ -95,6 +95,11 @@ mkdir -p "$out"
 # owner, one timestamp. Reproducibility beyond this needs a reproducible compiler run,
 # which docs/DISTRIBUTION.md records rather than claims.
 ( cd "$stage" && find "$rootdir" -print | LC_ALL=C sort > "$stage/.entries" )
-tar -czf "$out/$archive" -C "$stage" -T "$stage/.entries" 2>/dev/null \
+# --no-recursion is not an optimisation: the list already names every directory *and*
+# everything inside it, and a tar that recurses as well archives each file twice — GNU tar
+# writes the second copy as a hard link, which release-verify refuses by name, and bsdtar
+# writes it as a second regular entry, which it does not. Both are wrong; one of them is
+# also invisible on the machine most of this is written on.
+tar -czf "$out/$archive" -C "$stage" --no-recursion -T "$stage/.entries" 2>/dev/null \
   || tar -czf "$out/$archive" -C "$stage" "$rootdir"
 printf '%s\n' "$out/$archive"
