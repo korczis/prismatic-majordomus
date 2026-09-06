@@ -8,10 +8,12 @@
 # could afford to leave enabled.
 #
 # What is proved here: the denominator comes from `compose_modules!` and follows a change to
-# it; a module with its own test and its own doc example is silent; one with neither is
-# reported twice, once per absence; a module declared and composed by nobody is reported;
-# the coverage floor must be declared; and a repository with no crate is skipped rather than
-# failed, because the layer installs where there is no executable.
+# it; either accepted form of assertion — an in-file #[test] or a doc example cargo runs —
+# satisfies the rule on its own; a module with neither is reported exactly once, because
+# demanding a particular form would buy a token test beside a real example; a module declared
+# and composed by nobody is reported; a composed module with no file is reported; the coverage
+# floor must be declared; and a repository with no crate is skipped rather than failed,
+# because the layer installs where there is no executable.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 
@@ -49,6 +51,19 @@ mod tests {
 }
 RS
 }
+# a module whose only assertion is a doc example — cargo runs it, so the rule is satisfied
+# and no #[test] is owed. This is the form the rule must not quietly demand twice.
+doc_only_module() {
+  cat > "$B/$1.rs" <<'RS'
+//! A command module documented by an example that runs.
+//!
+//! ```
+//! assert_eq!("web.surfaces".split('.').next(), Some("web"));
+//! ```
+module!(docs_only);
+capability!(docs_only.thing);
+RS
+}
 # a module with no evidence of its own
 bare_module() { printf 'module!(%s);\ncapability!(%s.thing);\n' "$1" "$1" > "$B/$1.rs"; }
 
@@ -70,41 +85,46 @@ grep -qE '^(FAIL|WARN) *rust-command' doctor.txt \
 mkdir -p "$B" scripts
 printf '90\n' > scripts/rust-coverage-threshold
 good_module tested
+doc_only_module documented
 bare_module bare
 bare_module orphan
-compose tested bare
+compose tested documented bare
 doctor_out
 
-grep -q "rust-command bare .*no in-file #\[test\]" doctor.txt \
-  || { echo "    a module with no in-file test was not reported"; grep -i rust-command doctor.txt; exit 1; }
-grep -q "rust-command bare .*no doc example" doctor.txt \
-  || { echo "    a module with no doc example was not reported"; grep -i rust-command doctor.txt; exit 1; }
+grep -q "rust-command bare .*no assertion that runs" doctor.txt \
+  || { echo "    a module asserting nothing was not reported"; grep -i rust-command doctor.txt; exit 1; }
+# one finding, not one per missing form: demanding a particular form buys ceremony
+[ "$(grep -c 'rust-command bare ' doctor.txt)" = 1 ] \
+  || { echo "    a module asserting nothing produced more than one finding"; grep 'rust-command bare ' doctor.txt; exit 1; }
 grep -q "rust-command orphan .*does not compose" doctor.txt \
   || { echo "    a module composed by nobody was not reported"; grep -i rust-command doctor.txt; exit 1; }
-# the one that satisfies the rule is silent: its evidence is where the rule wants it
+# the ones that satisfy the rule are silent: their evidence is where the rule wants it, and
+# a doc example alone is enough — cargo runs it, so it is an assertion, not prose
 grep -q 'rust-command tested' doctor.txt \
-  && { echo "    a module with its own test and example was reported anyway"; grep -i rust-command doctor.txt; exit 1; }
+  && { echo "    a module with its own test was reported anyway"; grep -i rust-command doctor.txt; exit 1; }
+grep -q 'rust-command documented' doctor.txt \
+  && { echo "    a module asserting only through a doc example was reported; either form must count"; grep -i rust-command doctor.txt; exit 1; }
 
 # --- the denominator is the composition, not a list in the validator
 # composing the orphan makes it measured rather than orphaned, with no edit anywhere else
-compose tested bare orphan
+compose tested documented bare orphan
 doctor_out
 grep -q "rust-command orphan .*does not compose" doctor.txt \
   && { echo "    a module was still called uncomposed after being composed"; exit 1; }
-grep -q "rust-command orphan .*no in-file #\[test\]" doctor.txt \
+grep -q "rust-command orphan .*no assertion that runs" doctor.txt \
   || { echo "    composing a module did not bring it into the measurement"; grep -i rust-command doctor.txt; exit 1; }
 # and removing it from the composition takes it back out of the measurement
-compose tested bare
+compose tested documented bare
 doctor_out
-grep -q "rust-command orphan .*no in-file #\[test\]" doctor.txt \
+grep -q "rust-command orphan .*no assertion that runs" doctor.txt \
   && { echo "    an uncomposed module was still measured as a command"; exit 1; }
 
 # --- a module the composition names and the tree does not carry
-compose tested bare missing
+compose tested documented bare missing
 doctor_out
 grep -q 'rust-command missing .*has no module file' doctor.txt \
   || { echo "    a composed module with no file was not reported"; grep -i rust-command doctor.txt; exit 1; }
-compose tested bare
+compose tested documented bare
 
 # --- the coverage floor is declared, not assumed
 rm -f scripts/rust-coverage-threshold
