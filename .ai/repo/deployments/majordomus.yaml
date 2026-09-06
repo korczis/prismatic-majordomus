@@ -1,0 +1,67 @@
+# The deployment of this repository's executable. Authoritative: the container image
+# definition, its ignore file and the provider configuration are generated from this file
+# and `majordomus generate --check` fails when one of them is edited by hand.
+schema: deployment/v1
+kind: deployment
+id: majordomus
+title: The Majordomus layer, served from one machine
+description: One shared-CPU machine that stops when idle, serving this repository's AI layer over HTTP, MCP and the generated site.
+status: declared
+
+application: majordomus
+
+build:
+  package: majordomus-cli
+  binary: majordomus
+  profile: release
+  # The build context, and nothing else: the executable's own sources, the tool
+  # distribution it reads at run time, and the layer it serves.
+  inputs:
+    - apps/majordomus-cli
+    - share
+    - .ai
+    - Cargo.toml
+    - Cargo.lock
+  site: site/public
+
+listen:
+  # One port. The process, the image and the provider configuration all read this.
+  port: 8080
+  # A hosted process is reachable or it is nothing; `all` is the intent, not a suppressed
+  # warning. Local invocation keeps its loopback default and never reads this object.
+  interface: all
+
+health:
+  liveness: /healthz
+  readiness: /readyz
+  grace_seconds: 2
+  interval_seconds: 15
+  timeout_seconds: 2
+
+resources:
+  cpu_kind: shared
+  cpus: 1
+  # A hypothesis until a measured run under it passes; I0922 decides the final number.
+  memory_mb: 256
+
+machines:
+  count: 1
+  min_running: 0
+  autostart: true
+  autostop: true
+
+region: fra
+
+# No budget is declared yet. Each one is written by the run that measures it (I0921,
+# I0922, I0923); a number nobody measured would be a preference wearing a baseline's name.
+
+provider:
+  name: fly
+  fly:
+    force_https: true
+    concurrency:
+      soft_limit: 20
+      hard_limit: 40
+
+created_at: 2026-09-06
+updated_at: 2026-09-06

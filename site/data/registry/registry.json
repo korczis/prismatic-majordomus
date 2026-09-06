@@ -5,25 +5,25 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "41ceef4870b3449fffcdb6f9b4c4d128700a4123bff7e02204bea3de74b48f07",
+    "fingerprint": "958adbfa853a053e91435a5387b0f4ffbfeea62b5f9b8800804a4605e016965f",
     "summary": {
-      "total": 690,
+      "total": 694,
       "builtin": 14,
-      "declarative": 676,
+      "declarative": 680,
       "by_kind": {
         "command": 1,
         "query": 13,
-        "resource": 676
+        "resource": 680
       },
       "by_stability": {
         "behaviorally_verified": 14,
-        "implemented": 676
+        "implemented": 680
       },
       "mcp_tools": 14,
-      "mcp_resources": 680,
+      "mcp_resources": 684,
       "http_routes": 14,
       "cli_commands": 4,
-      "modules": 24,
+      "modules": 25,
       "benchmark_required": 14,
       "benchmark_waived": 0,
       "cached": 4
@@ -3957,6 +3957,14 @@
         "capability_ids": []
       },
       {
+        "id": "deployment",
+        "title": "deployment",
+        "description": "Declarative objects of kind 'deployment' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
         "id": "document",
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
@@ -3994,7 +4002,7 @@
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 37,
+        "capabilities": 38,
         "capability_ids": []
       },
       {
@@ -4095,7 +4103,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 79,
+        "capabilities": 80,
         "capability_ids": []
       },
       {
@@ -4135,7 +4143,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 90,
+        "capabilities": 91,
         "capability_ids": []
       },
       {
@@ -4149,12 +4157,13 @@
     ]
   },
   "index": {
-    "fingerprint": "6d63cb37e03ee053fbf469a91fec82f6843b5d52e103f84ff19cfe10a1a1fbf8",
+    "fingerprint": "0017c4627288fbd647da35cb11deb9c2bf23a1e9eb034da0d8c9a21865bd70d5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
       "adrs": ".ai/repo/adrs",
       "applications": ".ai/repo/applications",
+      "deployments": ".ai/repo/deployments",
       "knowledge": ".ai/repo/knowledge",
       "policy": ".ai/repo/policy.yaml",
       "profiles": ".ai/repo/profiles",
@@ -4171,19 +4180,20 @@
       "application": 5,
       "claim": 123,
       "context": 9,
+      "deployment": 1,
       "document": 172,
-      "implementation": 37,
+      "implementation": 38,
       "issue": 90,
       "milestone": 11,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "rule": 79,
+      "rule": 80,
       "scope": 1,
       "session": 1,
       "skill": 3,
       "taxonomy": 10,
-      "test": 90,
+      "test": 91,
       "use-case": 36
     },
     "diagnostics": {},
@@ -5555,6 +5565,17 @@
         "bytes": 943
       },
       {
+        "uri": "majordomus://deployment/majordomus",
+        "kind": "deployment",
+        "identity": "majordomus",
+        "title": "The Majordomus layer, served from one machine",
+        "description": "One shared-CPU machine that stops when idle, serving this repository's AI layer over HTTP, MCP and the generated site.",
+        "path": ".ai/repo/deployments/majordomus.yaml",
+        "section": "deployments",
+        "source_class": "deployment",
+        "bytes": 1843
+      },
+      {
         "uri": "majordomus://document/.ai/repo/knowledge/curated/start-here.md",
         "kind": "document",
         "identity": ".ai/repo/knowledge/curated/start-here.md",
@@ -5972,7 +5993,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 53736
+        "bytes": 57096
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -7187,7 +7208,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 48391
+        "bytes": 48716
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -7214,12 +7235,20 @@
         "bytes": 6095
       },
       {
+        "uri": "majordomus://implementation/lib/deployment.sh",
+        "kind": "implementation",
+        "identity": "lib/deployment.sh",
+        "path": "lib/deployment.sh",
+        "source_class": "library",
+        "bytes": 5576
+      },
+      {
         "uri": "majordomus://implementation/lib/doctor.sh",
         "kind": "implementation",
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 44840
+        "bytes": 44988
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -7403,7 +7432,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 45013
+        "bytes": 45774
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -8829,6 +8858,22 @@
         "bytes": 1088,
         "tags": [
           "principle"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/majordomus.deployment-contract@1",
+        "kind": "rule",
+        "identity": "majordomus.deployment-contract@1",
+        "title": "A deployment is described once, and every provider artifact is generated from it",
+        "description": "A deployment of the executable is a canonical object of the layer against a closed contract; the container definition and the provider configuration are projections of it, never a second description.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4151,
+        "tags": [
+          "deployment",
+          "schema",
+          "projection"
         ]
       },
       {
@@ -10586,6 +10631,14 @@
         "bytes": 2470
       },
       {
+        "uri": "majordomus://test/test/cases/84_deployment_contract.sh",
+        "kind": "test",
+        "identity": "test/cases/84_deployment_contract.sh",
+        "path": "test/cases/84_deployment_contract.sh",
+        "source_class": "case",
+        "bytes": 5323
+      },
+      {
         "uri": "majordomus://test/test/cases/90_mcp_shared_server.sh",
         "kind": "test",
         "identity": "test/cases/90_mcp_shared_server.sh",
@@ -10639,7 +10692,7 @@
         "identity": "test/cases/94_use_cases.sh",
         "path": "test/cases/94_use_cases.sh",
         "source_class": "case",
-        "bytes": 12776
+        "bytes": 14419
       },
       {
         "uri": "majordomus://test/test/cases/95_executable_reference.sh",
@@ -11129,6 +11182,16 @@
       "objects": 9
     },
     {
+      "name": "deployment",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "deployment",
+      "identity": [
+        "id"
+      ],
+      "objects": 1
+    },
+    {
       "name": "document",
       "format": "markdown",
       "front_matter": "optional",
@@ -11140,7 +11203,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 37
+      "objects": 38
     },
     {
       "name": "issue",
@@ -11209,7 +11272,7 @@
         "id",
         "version"
       ],
-      "objects": 79
+      "objects": 80
     },
     {
       "name": "scope",
@@ -11254,7 +11317,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 90
+      "objects": 91
     },
     {
       "name": "use-case",

@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/deployment.schema.json",
+  "title": "Deployment",
+  "description": "A deployment of this repository's executable, under .ai/repo/deployments/: the one place the application identity, the package and binary that are shipped, the address the process listens on, the routes a platform polls, the resources and machine count it is granted, the region it runs in, the inputs its image is built from and the budgets it is held to are stated. Every provider artifact — the container image definition, its ignore file, the provider configuration — is generated from this object and none of them is authoritative. Provider-specific facts live in the named provider block, never mixed through the generic ones.",
+  "x-majordomus-allow": "deployment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "kind", "id", "title", "application", "build", "listen", "health", "resources", "machines", "region", "provider"],
+  "properties": {
+    "schema": {
+      "description": "The format version of this object. A version the tool does not know is refused, never guessed.",
+      "const": "deployment/v1"
+    },
+    "kind": { "const": "deployment" },
+    "id": {
+      "description": "The identity of this deployment within the repository, `[a-z][a-z0-9-]*`.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "title": {
+      "description": "One line naming the deployment, for a listing.",
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "description": "One line: what this deployment serves and to whom.",
+      "type": "string"
+    },
+    "status": {
+      "description": "declared: the object exists and nothing is deployed from it yet. active: it is deployed. retired: it was, and is kept for the record.",
+      "enum": ["declared", "active", "retired"]
+    },
+    "application": {
+      "description": "The application's name at the provider. One deployment, one application; the provider block never restates it.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "build": { "$ref": "#/$defs/build" },
+    "listen": { "$ref": "#/$defs/listen" },
+    "health": { "$ref": "#/$defs/health" },
+    "resources": { "$ref": "#/$defs/resources" },
+    "machines": { "$ref": "#/$defs/machines" },
+    "region": {
+      "description": "The region the machines run in, in the provider's own vocabulary.",
+      "type": "string",
+      "minLength": 1
+    },
+    "budgets": { "$ref": "#/$defs/budgets" },
+    "provider": { "$ref": "#/$defs/provider" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  },
+  "$defs": {
+    "build": {
+      "description": "What is shipped and what it is built from. The package and the binary are workspace facts; validation refuses a name the workspace does not contain.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package", "binary", "profile", "inputs"],
+      "properties": {
+        "package": {
+          "description": "The Cargo package that is built.",
+          "type": "string",
+          "minLength": 1
+        },
+        "binary": {
+          "description": "The binary target the image runs.",
+          "type": "string",
+          "minLength": 1
+        },
+        "profile": {
+          "description": "The Cargo profile the image is built under.",
+          "type": "string",
+          "minLength": 1
+        },
+        "inputs": {
+          "description": "The repository-relative paths the image is built from, and the only ones the build context carries. A path that does not resolve is refused.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "site": {
+          "description": "The directory the canonical site pipeline writes, served by the deployed process. Absent means the image serves no site.",
+          "type": "string"
+        }
+      }
+    },
+    "listen": {
+      "description": "The address the process listens on. The port is stated here once; the process, the image and the provider configuration all read this one.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["port", "interface"],
+      "properties": {
+        "port": {
+          "description": "The TCP port. Privileged ports are refused: the process runs as a non-root user.",
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 65535
+        },
+        "interface": {
+          "description": "loopback: reachable only from the same host, the local default. all: every interface, which a hosted process needs and a local one never does. Stating `all` is the intent that replaces suppressing the warning.",
+          "enum": ["loopback", "all"]
+        }
+      }
+    },
+    "health": {
+      "description": "The routes the platform polls. Each must be registered by a capability; validation refuses a route the registry does not know.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["liveness", "readiness"],
+      "properties": {
+        "liveness": {
+          "description": "Is this process alive. Cheap: no filesystem traversal, no index build, no network.",
+          "type": "string",
+          "pattern": "^/"
+        },
+        "readiness": {
+          "description": "Can this process serve traffic. Local initialisation only; never an external dependency.",
+          "type": "string",
+          "pattern": "^/"
+        },
+        "grace_seconds": {
+          "description": "How long the platform waits before the first check counts.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "interval_seconds": {
+          "description": "How often the platform polls liveness.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "timeout_seconds": {
+          "description": "How long one check may take before it counts as failed.",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "resources": {
+      "description": "What one machine is granted. A memory figure held only as long as a measured run under it passes.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cpu_kind", "cpus", "memory_mb"],
+      "properties": {
+        "cpu_kind": {
+          "description": "shared: a fraction of a core, the cheap profile. performance: a dedicated one.",
+          "enum": ["shared", "performance"]
+        },
+        "cpus": {
+          "description": "How many CPUs one machine has.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "memory_mb": {
+          "description": "Memory per machine, in megabytes. Zero is refused.",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "machines": {
+      "description": "How many machines run, and whether the platform is allowed to stop them. The inventory is asserted after a deploy against exactly this.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "min_running", "autostart", "autostop"],
+      "properties": {
+        "count": {
+          "description": "How many machines the application has. A deployment that would leave more is refused.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "min_running": {
+          "description": "How many stay running when idle. Zero with autostop is the cheap profile: the machine stops and the next request starts it.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "autostart": {
+          "description": "Whether a request to a stopped machine starts it.",
+          "type": "boolean"
+        },
+        "autostop": {
+          "description": "Whether an idle machine is stopped.",
+          "type": "boolean"
+        }
+      }
+    },
+    "budgets": {
+      "description": "The measured figures this deployment is held to. Each is a baseline a run produced, not a preference; a regression past one is a failure with a number attached.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "image_bytes": { "description": "Largest accepted compressed image size.", "type": "integer", "minimum": 1 },
+        "binary_bytes": { "description": "Largest accepted stripped binary size.", "type": "integer", "minimum": 1 },
+        "build_context_bytes": { "description": "Largest accepted build context.", "type": "integer", "minimum": 1 },
+        "cold_start_ms": { "description": "Longest accepted time from a stopped machine to a served response.", "type": "integer", "minimum": 1 },
+        "resident_memory_mb": { "description": "Largest accepted resident set under load.", "type": "integer", "minimum": 1 },
+        "blocking_check_ms": { "description": "Longest accepted time for one liveness or readiness check.", "type": "integer", "minimum": 1 },
+        "request_p99_ms": { "description": "Longest accepted p99 for a served request.", "type": "integer", "minimum": 1 }
+      }
+    },
+    "provider": {
+      "description": "The hosting provider and the facts that belong to it alone. The generic keys above are never restated here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "description": "The provider this deployment targets. One provider is supported; a second one is an object of its own, not an abstraction over this one.",
+          "enum": ["fly"]
+        },
+        "fly": { "$ref": "#/$defs/fly" }
+      }
+    },
+    "fly": {
+      "description": "Fly.io's own facts: what has no meaning for any other provider.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "org": {
+          "description": "The organisation the application belongs to.",
+          "type": "string",
+          "minLength": 1
+        },
+        "force_https": {
+          "description": "Whether the edge redirects plain HTTP to HTTPS.",
+          "type": "boolean"
+        },
+        "concurrency": {
+          "description": "When the edge considers a machine loaded, in requests.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "soft_limit": { "type": "integer", "minimum": 1 },
+            "hard_limit": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    }
+  }
+}
