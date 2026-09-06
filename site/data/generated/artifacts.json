@@ -99,20 +99,6 @@
       "source": "share/distribution.yaml and the release records"
     },
     {
-      "document": "graph",
-      "format": "json",
-      "path": "docs/generated/graph.json",
-      "schema": "majordomus/capability-graph/v1",
-      "source": "the composed graph of the registry and the index"
-    },
-    {
-      "document": "graph-schema",
-      "format": "json",
-      "path": "docs/generated/graph.schema.json",
-      "schema": null,
-      "source": "the schema of the composed graph, generated from its types"
-    },
-    {
       "document": "modules/artifacts",
       "format": "markdown",
       "path": "docs/generated/modules/artifacts.md",
@@ -197,6 +183,13 @@
       "source": "the `repository` module of the canonical Majordomus capability registry"
     },
     {
+      "document": "modules/web",
+      "format": "markdown",
+      "path": "docs/generated/modules/web.md",
+      "schema": null,
+      "source": "the `web` module of the canonical Majordomus capability registry"
+    },
+    {
       "document": "modules/why",
       "format": "markdown",
       "path": "docs/generated/modules/why.md",
@@ -230,6 +223,20 @@
       "path": "docs/generated/registry.yaml",
       "schema": "majordomus/capability-registry/v1",
       "source": "the canonical capability registry"
+    },
+    {
+      "document": "web",
+      "format": "json",
+      "path": "docs/generated/web.json",
+      "schema": "majordomus/web-topology/v1",
+      "source": "the resolved web topology of this repository"
+    },
+    {
+      "document": "web",
+      "format": "yaml",
+      "path": "docs/generated/web.yaml",
+      "schema": "majordomus/web-topology/v1",
+      "source": "the resolved web topology of this repository"
     },
     {
       "document": "allow/adr",
@@ -537,14 +544,14 @@
       "format": "json",
       "path": "site/data/registry/why-graph.json",
       "schema": null,
-      "source": "the `why` graph of the Why catalogue"
+      "source": "the moments and what answers them, as the derived `why` graph"
     },
     {
       "document": "site-why",
       "format": "json",
       "path": "site/data/registry/why.json",
       "schema": "majordomus-site-why/v1",
-      "source": "the Why catalogue under .ai/repo/why/"
+      "source": "the operational moments, audiences and areas of this repository's layer"
     },
     {
       "document": "installer",
@@ -769,21 +776,6 @@
     },
     {
       "formats": [
-        "json"
-      ],
-      "id": "graph",
-      "schema": "majordomus/capability-graph/v1",
-      "source": "the composed graph of the registry and the index"
-    },
-    {
-      "formats": [
-        "json"
-      ],
-      "id": "graph-schema",
-      "source": "the schema of the composed graph, generated from its types"
-    },
-    {
-      "formats": [
         "markdown"
       ],
       "id": "install-guide",
@@ -879,6 +871,13 @@
       ],
       "id": "modules/repository",
       "source": "the `repository` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/web",
+      "source": "the `web` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -1058,14 +1057,23 @@
       ],
       "id": "site-why",
       "schema": "majordomus-site-why/v1",
-      "source": "the Why catalogue under .ai/repo/why/"
+      "source": "the operational moments, audiences and areas of this repository's layer"
     },
     {
       "formats": [
         "json"
       ],
       "id": "site-why-graph",
-      "source": "the `why` graph of the Why catalogue"
+      "source": "the moments and what answers them, as the derived `why` graph"
+    },
+    {
+      "formats": [
+        "json",
+        "yaml"
+      ],
+      "id": "web",
+      "schema": "majordomus/web-topology/v1",
+      "source": "the resolved web topology of this repository"
     }
   ],
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`",

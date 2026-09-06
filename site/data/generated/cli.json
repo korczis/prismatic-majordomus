@@ -12,7 +12,7 @@
           "route": "/docs/cli/mcp/"
         },
         {
-          "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
+          "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
           "command": "majordomus serve",
           "name": "serve",
           "route": "/docs/cli/serve/"
@@ -298,7 +298,7 @@
       "usage": "majordomus mcp [OPTIONS]"
     },
     {
-      "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
+      "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
       "ancestors": [
         {
           "command": "majordomus",
@@ -420,7 +420,7 @@
             "0"
           ],
           "command": "majordomus serve --port 0",
-          "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
+          "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. `/` is the home page, generated from the surfaces this process resolved; the document at /openapi.json is the same one `majordomus generate` commits; /swagger is the Swagger UI over it; /docs/ is this repository's documentation when it has been built for that mount.",
           "expectation": "binds a port, answers GET /openapi.json, exits 0 when stopped",
           "id": "serve-ephemeral-port",
           "setup": [],
@@ -1230,8 +1230,8 @@
               "name": "distribution"
             },
             {
-              "help": "docs/generated/graph.json and its schema: the composed graph as data",
-              "name": "graph"
+              "help": "`docs/generated/web.json`: the resolved web topology the site's route reference renders",
+              "name": "web"
             }
           ],
           "required": false,
@@ -2460,7 +2460,7 @@
           ],
           "command": "majordomus web list",
           "description": "The resolved topology, in route-precedence order: the routes the executable answers itself, the application's site, and every generated report that declared itself under the generated web root. Nothing is registered anywhere; each line was discovered.",
-          "expectation": "exits 0; prints MOUNT, /api/v1, /docs",
+          "expectation": "exits 0; prints MOUNT, /api/v1, /swagger",
           "id": "web-list",
           "setup": [],
           "title": "Every web surface this repository exposes"
