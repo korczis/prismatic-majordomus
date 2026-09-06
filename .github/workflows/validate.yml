@@ -50,6 +50,7 @@ jobs:
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
+      cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       macos: ${{ steps.plan.outputs.macos }}
     steps:
       - uses: actions/checkout@v4
@@ -295,6 +296,8 @@ jobs:
         uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
+      - name: vendor the lazy-loaded libraries the probe expects to find
+        run: scripts/ci/timed cockpit-assets cockpit-assets timings.tsv scripts/cockpit-assets
       - name: probe the Cockpit
         run: CHROME_BIN=google-chrome scripts/ci/timed cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
       - if: always()
