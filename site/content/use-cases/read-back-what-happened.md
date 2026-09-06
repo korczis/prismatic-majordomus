@@ -6,7 +6,7 @@ weight = 22
 id = "read-back-what-happened"
 source = ".ai/repo/use-cases/read-back-what-happened.md"
 category = "knowledge"
-maturity = "executable"
+maturity = "guaranteed"
 +++
 
 ## Situation
