@@ -1,0 +1,65 @@
+id: two-folder-integration
+title: A repository that adopts Majordomus gains two directories and two lines, and can give them back
+slug: two-folder-integration
+order: 90
+priority: p1
+problem: "What Majordomus leaves in a repository it adopts is not decided anywhere; it is the sum of what each subsystem happened to write. Provider files at the root, scripts, configuration beside configuration, generated registries that became inputs, and no record of which of them Majordomus put there. The costs compound in three directions at once. A person cannot tell what is theirs and what is the tool's, so nothing can be safely removed. A second provider means a second copy of the same instructions rather than a second adapter. And every subsystem rediscovers the repository for itself — the CLI, the environment entry, the documentation, the server — so the same facts are read four ways and disagree on the fourth."
+outcome: "Adoption is a reconciliation, not a template copy. One typed repository model is discovered once and every consumer reads it. A desired integration is computed from that model, diffed against what the repository actually holds, and applied as the smallest mutation that closes the gap — with everything Majordomus owns living under `.ai/` and `.majordomus/`, and anything outside those two namespaces reduced to a small managed bridge whose ownership is recorded. Running the reconciliation twice changes nothing the second time, and uninstalling gives back exactly what was taken and nothing a person authored."
+current_state: "`.ai/` and `.majordomus/` both exist and carry real material, and directory contracts are already enforced under `.ai/` (ADR 0011). Against that: provider bootstraps are generated to the root, the environment entry and the CLI each discover the repository their own way, `init` writes what it was written to write rather than what the repository lacks, no ledger records what was placed outside the two namespaces, and nothing can undo an adoption."
+desired_state: "`majordomus init` on a foreign repository adds `.ai/`, `.majordomus/`, a managed block in `AGENTS.md` and — when direnv is wanted — one stable line in `.envrc`. A second run reports no change. `majordomus uninstall` removes what the ledger records and leaves authored knowledge alone. Adding a valid artifact under a discoverable namespace registers it everywhere, and no list anywhere enumerates what discovery already finds."
+scope:
+  - apps/majordomus-cli/src
+  - .ai/repo/rules/project
+  - .ai/repo/adrs
+  - .majordomus
+  - share/schemas
+  - share/skeleton
+  - docs
+  - test/cases
+  - .github/workflows
+
+non_scope:
+  - A configuration format that restates what the repository can be inspected for
+  - Rewriting a working subsystem for symmetry rather than for a defect
+  - Deleting user-authored content on any path, under any flag, without an explicit and separate instruction
+  - A second worktree convention, a second handover format or a second doctor
+  - Provider-specific semantics anywhere but an adapter
+
+acceptance_criteria:
+  - Everything Majordomus persists in an adopted repository lives under `.ai/` or `.majordomus/`, and every exception outside them is a bridge recorded in the ownership ledger
+  - One typed repository model is discovered once per process and every consumer — CLI, environment, API, MCP, Cockpit, documentation, providers, completion — reads that model rather than the filesystem
+  - The desired integration is a value, the plan is a diff against what is there, and the apply is the smallest mutation that closes it
+  - A second `init` on a conforming repository produces no change, proved by a test rather than by observation
+  - `uninstall` reverses every recorded mutation, refuses to touch a bridge a person has edited, and leaves `.ai/` authored content in place by default
+  - Every generated artifact declares its provenance, its generator and the inputs it derives from, and no generated artifact is read back as canonical input
+  - No hand-maintained list enumerates artifacts that discovery finds, and adding a valid artifact registers it in every consumer with no second edit
+  - Environment entry stays local and bounded, with no network and no build, and its cost is measured against a declared budget
+  - Every invariant above is a project rule with a check that CI executes, each proved by a negative test
+
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - majordomus generate --check
+  - majordomus init --dry-run
+
+evidence_required:
+  - footprint_bounded
+  - one_model
+  - desired_state_diff
+  - init_idempotent
+  - uninstall_reverses
+  - provenance_declared
+  - no_manual_registry
+  - entry_budget
+  - rules_enforced
+
+risks:
+  - "A reconciler that computes a desired state can also impose one. Everything it would change outside the two namespaces has to be visible in a dry run before it is applied, and a bridge a person edited is a conflict rather than an overwrite."
+  - "One repository model is a bottleneck as well as a spine: every consumer that reads it pays its discovery cost. The cost has to be measured against the environment-entry budget before the model becomes mandatory, not after."
+  - "Migrating this repository's own footprint is the most dangerous phase, because the tool is being changed by the thing it is changing. The migration runs through the reconciler with a dry run first, never through a move script."
+  - "An ownership ledger that drifts from the filesystem is worse than none: it authorises deletions it cannot justify. Every recorded mutation carries the hash it was written with, and a mismatch stops the removal."
+  - "Provider adapters invite provider semantics to leak into the model. The test is whether a new provider is an implementation of one trait, or an edit in six places."
+
+created_at: 2026-09-06
+updated_at: 2026-09-06

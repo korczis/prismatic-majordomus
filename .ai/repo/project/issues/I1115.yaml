@@ -1,0 +1,32 @@
+id: I1115
+milestone: two-folder-integration
+title: Completion comes from the command model, not from a second list
+slug: derived-completion
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Derive shell completion from the same command model the CLI and its documentation already come from, so that a new command is completable without anything being listed."
+why: "A completion script is the least visible copy of a command list and therefore the one that drifts furthest. It is also the one people notice, because a missing completion reads as a missing feature."
+current_state: "The CLI is declared once and its reference is generated. Completion, where it exists, is not derived from that declaration."
+desired_state: "Completion is generated from the command model, refreshed as safe cached state, and never enumerated by hand."
+scope:
+  - apps/majordomus-cli/src/cli.rs
+  - .majordomus/generated
+non_scope:
+  - A completion script maintained by hand
+  - Regenerating completion on the environment-entry path if it costs more than the budget allows
+depends_on:
+  - I1114
+acceptance_criteria:
+  - Completion data is derived from the command model with no second enumeration
+  - A command added to the model is completable after the ordinary generation, with no further edit
+  - The refresh is cached state under the control-plane namespace and never a tracked-file mutation
+  - Whatever the entry path does for completion stays inside the entry budget
+validation:
+  - majordomus generate --check
+  - bash test/run.sh
+evidence_required:
+  - completion_derived
+risk: "Completion is where a fast path tempts a shortcut list. Deriving it is cheap only if the model is already cached; otherwise the budget decides."
+created_at: 2026-09-06
+updated_at: 2026-09-06

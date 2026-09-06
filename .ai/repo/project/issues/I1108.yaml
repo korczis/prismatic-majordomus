@@ -1,0 +1,35 @@
+id: I1108
+milestone: two-folder-integration
+title: The desired integration is a value, and the plan is a diff
+slug: desired-state-and-plan
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Compute what a repository's Majordomus integration should look like as a typed value, diff it against what the repository actually holds, and make the apply the smallest mutation that closes the gap."
+why: "`init` that writes what it was written to write cannot be run twice, cannot be previewed, and cannot be undone. A desired state that is a value can be compared, shown before it is applied, and reversed."
+current_state: "Initialisation writes a skeleton. Nothing computes what is missing, nothing reports what would change, and running it again is not a defined operation."
+desired_state: "One function produces the desired integration from the repository model, one produces the difference, and the apply consumes the difference — so a dry run is the same computation without the last step."
+scope:
+  - apps/majordomus-cli/src/commands/init.rs
+  - apps/majordomus-cli/src/integration
+non_scope:
+  - Applying anything the dry run did not show
+  - A desired state that depends on a configuration file rather than on the model
+depends_on:
+  - I1106
+acceptance_criteria:
+  - The desired integration is derived from the repository model, and a repository that already conforms produces an empty difference
+  - The difference is a typed value that names every path it would create, modify or remove, and why
+  - A dry run performs the same computation as an apply and mutates nothing
+  - The apply performs exactly the difference and nothing else, proved by comparing the tree before and after against the plan
+  - A mutation the plan did not name is a bug, and a test proves the apply cannot make one
+validation:
+  - majordomus init --dry-run
+  - cargo test --workspace --all-features
+evidence_required:
+  - desired_state_typed
+  - plan_is_diff
+  - dry_run_mutates_nothing
+risk: "A reconciler that computes what a repository should look like will eventually be wrong about one. Everything it would do outside the two namespaces must be visible before it is done."
+created_at: 2026-09-06
+updated_at: 2026-09-06

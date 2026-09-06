@@ -7,7 +7,7 @@
   },
   "active_milestone": "M003",
   "next_ready": "I0806",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::ready\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0817[\"I0817<br/>Phase timing and work counters behind MJ_TIMING\"]:::done\n    I0818[\"I0818<br/>The command registry is read in one pass\"]:::done\n    I0819[\"I0819<br/>The project model is loaded with one flatten per file and no per-file lookups\"]:::done\n    I0820[\"I0820<br/>Catalogue, DAG, context and command-surface validators read their inputs once\"]:::ready\n    I0821[\"I0821<br/>Flattened YAML is cached under .ai/local/cache by content hash\"]:::ready\n    I0822[\"I0822<br/>Every canonical file is flattened at most once per command\"]:::blocked\n    I0823[\"I0823<br/>majordomus bench: targets derived from the command registry\"]:::done\n    I0824[\"I0824<br/>Bench persists local runs and keeps a latest projection\"]:::done\n    I0825[\"I0825<br/>An explicit committed baseline\"]:::done\n    I0826[\"I0826<br/>bench --check refuses a regression by policy\"]:::done\n    I0827[\"I0827<br/>The benchmark policy block\"]:::done\n    I0828[\"I0828<br/>doctor under a declared budget, and the hook inherits it\"]:::blocked\n    I0829[\"I0829<br/>Performance doctrine as project rules\"]:::done\n    I0830[\"I0830<br/>docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference\"]:::done\n    I0831[\"I0831<br/>Performance claims at their proven status\"]:::blocked\n    I0832[\"I0832<br/>generate-site-data instrumented and its hot spots removed\"]:::ready\n    I0833[\"I0833<br/>knowledge nodes and edges read each source once\"]:::done\n    I0834[\"I0834<br/>The test runner reports per-case time and the suite budget\"]:::blocked\n    I0835[\"I0835<br/>CI runs the structural performance checks\"]:::blocked\n    I0836[\"I0836<br/>A synthetic repository generator for scaling cases\"]:::ready\n    I0837[\"I0837<br/>Timing report as JSON\"]:::ready\n    I0838[\"I0838<br/>bench compare and the top regressions report\"]:::ready\n    I0839[\"I0839<br/>watch inherits every doctor fix and its own budget\"]:::blocked\n    I0840[\"I0840<br/>context and its subcommands under a second\"]:::blocked\n    I0841[\"I0841<br/>Cache equivalence proved by property-shaped cases\"]:::blocked\n    I0842[\"I0842<br/>Before and after evidence for every optimisation\"]:::blocked\n    I0843[\"I0843<br/>The performance workflow is discoverable and complete\"]:::blocked\n    I0901[\"I0901<br/>The deployment description is a kind of the layer, not a provider file\"]:::ready\n    I0902[\"I0902<br/>The deployment object becomes typed Rust that refuses nonsense\"]:::blocked\n    I0903[\"I0903<br/>Deployment reads are declared once and projected everywhere\"]:::blocked\n    I0904[\"I0904<br/>The listen address is one fact with two projections\"]:::blocked\n    I0905[\"I0905<br/>Liveness and readiness are registered capabilities, not router hacks\"]:::blocked\n    I0906[\"I0906<br/>Termination is graceful and proved against the real container\"]:::blocked\n    I0907[\"I0907<br/>The running process says what it is, from an allowlist\"]:::blocked\n    I0908[\"I0908<br/>A hosted process has no repository, and says so instead of failing\"]:::blocked\n    I0909[\"I0909<br/>The production image is a generated projection of the build specification\"]:::blocked\n    I0910[\"I0910<br/>The release profile is chosen by measurement, not by folklore\"]:::blocked\n    I0911[\"I0911<br/>A source change does not rebuild the world, and the context stays small\"]:::blocked\n    I0912[\"I0912<br/>The image serves the site the canonical pipeline produced\"]:::blocked\n    I0913[\"I0913<br/>The provider configuration is generated, and the cheap profile is declared\"]:::blocked\n    I0914[\"I0914<br/>One deployment core, one command, and a dry run that mutates nothing\"]:::blocked\n    I0915[\"I0915<br/>Deployment joins the diagnostics that already exist\"]:::blocked\n    I0916[\"I0916<br/>The smoke suite is derived from the route registry, never written twice\"]:::blocked\n    I0917[\"I0917<br/>A bad deployment can be undone deterministically\"]:::blocked\n    I0918[\"I0918<br/>The bootstrap credential is used once and belongs to nothing\"]:::blocked\n    I0919[\"I0919<br/>Nothing secret and nothing local leaves in the image\"]:::blocked\n    I0920[\"I0920<br/>The image's dependencies are known and its advisories are policy\"]:::blocked\n    I0921[\"I0921<br/>Size is measured first and budgeted second\"]:::blocked\n    I0922[\"I0922<br/>The memory hypothesis is tested, not asserted\"]:::blocked\n    I0923[\"I0923<br/>Cold start and endpoint cost are benchmark targets like everything else\"]:::blocked\n    I0924[\"I0924<br/>The decision is recorded where architecture decisions are recorded\"]:::blocked\n    I0925[\"I0925<br/>Every deployment rule is a check that runs\"]:::blocked\n    I0926[\"I0926<br/>The deployment documentation is generated and reachable\"]:::blocked\n    I0927[\"I0927<br/>The cockpit shows the deployment from the same data\"]:::blocked\n    I0928[\"I0928<br/>A pull request cannot merge a deployment that would not work\"]:::blocked\n    I0929[\"I0929<br/>Production deploys from CI with a token scoped to one application\"]:::blocked\n    I0930[\"I0930<br/>The real image runs under the real limits before anything is deployed\"]:::blocked\n    I0931[\"I0931<br/>The application exists, one machine runs it, and the URL answers\"]:::blocked\n    I0932[\"I0932<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1001[\"I1001<br/>One typed graph composes the registries that already own their facts\"]:::done\n    I1002[\"I1002<br/>Relations are typed, inferred from stable identities, and never dangle\"]:::done\n    I1003[\"I1003<br/>Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves\"]:::done\n    I1004[\"I1004<br/>Availability and visibility are metadata, not conditions in a template\"]:::done\n    I1005[\"I1005<br/>The graph is a generated artifact with a schema and no unsafe field\"]:::ready\n    I1006[\"I1006<br/>The runtime reads the graph through the registry, like every other read\"]:::blocked\n    I1007[\"I1007<br/>The site renders the same graph, generated once\"]:::blocked\n    I1008[\"I1008<br/>The two projections are proved to be the same model\"]:::blocked\n    I1009[\"I1009<br/>Every menu in this repository comes from one derivation\"]:::blocked\n    I1010[\"I1010<br/>The overview is what exists, counted rather than claimed\"]:::blocked\n    I1011[\"I1011<br/>The coverage matrix reports evidence, and never a green cell without one\"]:::ready\n    I1012[\"I1012<br/>One detail view, assembled from what a node actually has\"]:::blocked\n    I1013[\"I1013<br/>Search over the graph, generated, with nothing to run\"]:::blocked\n    I1014[\"I1014<br/>The relation view reads the graph and holds no data of its own\"]:::blocked\n    I1015[\"I1015<br/>A surface with no server behind it is not offered as if it had one\"]:::ready\n    I1016[\"I1016<br/>The Cockpit works on a phone and before JavaScript runs\"]:::blocked\n    I1017[\"I1017<br/>Live state is an overlay that degrades to nothing\"]:::blocked\n    I1018[\"I1018<br/>The surface rules exist as checks, proved by making them fail\"]:::blocked\n    I1019[\"I1019<br/>One skill runs the whole loop, and is itself in the graph\"]:::blocked\n    I1020[\"I1020<br/>The graph's health is answered by the doctor that already answers everything else\"]:::blocked\n    I1021[\"I1021<br/>A browser proves the interface, at the widths people use\"]:::blocked\n    I1022[\"I1022<br/>Drift in any derived surface fails the build\"]:::blocked\n    I1023[\"I1023<br/>Nothing private reaches a published page\"]:::blocked\n    I1024[\"I1024<br/>The interface has a weight, and it is measured\"]:::blocked\n    I1025[\"I1025<br/>The federated model and its two projections are an architecture decision\"]:::done\n    I1026[\"I1026<br/>The architecture explains itself, from inside itself\"]:::blocked\n    I1027[\"I1027<br/>A synthetic capability proves the architecture instead of describing it\"]:::blocked\n    I1028[\"I1028<br/>The inventories this replaces are removed, not left running beside it\"]:::blocked\n    I1029[\"I1029<br/>The gate refuses what would silently break the interface\"]:::blocked\n    I1030[\"I1030<br/>The milestone is accepted on its evidence\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    I0817 --> I0818\n    I0817 --> I0819\n    I0817 --> I0821\n    I0817 --> I0823\n    I0817 --> I0832\n    I0817 --> I0833\n    I0817 --> I0837\n    I0818 --> I0820\n    I0818 --> I0822\n    I0818 --> I0828\n    I0818 --> I0842\n    I0819 --> I0820\n    I0819 --> I0822\n    I0819 --> I0828\n    I0819 --> I0832\n    I0819 --> I0836\n    I0819 --> I0842\n    I0820 --> I0822\n    I0820 --> I0828\n    I0820 --> I0840\n    I0820 --> I0842\n    I0821 --> I0840\n    I0821 --> I0841\n    I0822 --> I0831\n    I0822 --> I0835\n    I0823 --> I0824\n    I0823 --> I0827\n    I0823 --> I0830\n    I0824 --> I0825\n    I0825 --> I0826\n    I0826 --> I0830\n    I0826 --> I0831\n    I0826 --> I0835\n    I0826 --> I0838\n    I0827 --> I0828\n    I0828 --> I0834\n    I0828 --> I0839\n    I0829 --> I0830\n    I0830 --> I0843\n    I0831 --> I0843\n    I0832 --> I0842\n    I0833 --> I0842\n    I0835 --> I0843\n    I0841 --> I0843\n    I0842 --> I0843\n    I0901 --> I0902\n    I0901 --> I0924\n    I0902 --> I0903\n    I0902 --> I0904\n    I0902 --> I0905\n    I0902 --> I0907\n    I0902 --> I0908\n    I0902 --> I0909\n    I0902 --> I0913\n    I0902 --> I0918\n    I0903 --> I0913\n    I0903 --> I0914\n    I0903 --> I0926\n    I0903 --> I0927\n    I0904 --> I0906\n    I0904 --> I0909\n    I0905 --> I0909\n    I0905 --> I0916\n    I0906 --> I0930\n    I0909 --> I0910\n    I0909 --> I0911\n    I0909 --> I0912\n    I0909 --> I0914\n    I0909 --> I0919\n    I0909 --> I0920\n    I0909 --> I0930\n    I0910 --> I0921\n    I0911 --> I0921\n    I0912 --> I0930\n    I0913 --> I0914\n    I0913 --> I0926\n    I0913 --> I0931\n    I0914 --> I0915\n    I0914 --> I0916\n    I0914 --> I0917\n    I0914 --> I0931\n    I0915 --> I0925\n    I0916 --> I0931\n    I0917 --> I0931\n    I0918 --> I0929\n    I0918 --> I0931\n    I0919 --> I0928\n    I0920 --> I0932\n    I0921 --> I0928\n    I0922 --> I0931\n    I0923 --> I0932\n    I0924 --> I0926\n    I0925 --> I0932\n    I0926 --> I0932\n    I0927 --> I0932\n    I0928 --> I0932\n    I0929 --> I0932\n    I0930 --> I0922\n    I0930 --> I0923\n    I0930 --> I0928\n    I0930 --> I0931\n    I0931 --> I0929\n    I0931 --> I0932\n    I1001 --> I1002\n    I1001 --> I1003\n    I1001 --> I1004\n    I1001 --> I1025\n    I1002 --> I1005\n    I1002 --> I1011\n    I1002 --> I1014\n    I1002 --> I1020\n    I1004 --> I1005\n    I1004 --> I1009\n    I1004 --> I1015\n    I1005 --> I1006\n    I1005 --> I1007\n    I1005 --> I1009\n    I1005 --> I1010\n    I1005 --> I1012\n    I1005 --> I1023\n    I1006 --> I1008\n    I1006 --> I1017\n    I1007 --> I1008\n    I1007 --> I1013\n    I1007 --> I1014\n    I1007 --> I1020\n    I1007 --> I1022\n    I1009 --> I1016\n    I1009 --> I1028\n    I1010 --> I1030\n    I1011 --> I1018\n    I1012 --> I1026\n    I1013 --> I1030\n    I1014 --> I1021\n    I1014 --> I1024\n    I1015 --> I1018\n    I1015 --> I1021\n    I1016 --> I1021\n    I1017 --> I1030\n    I1018 --> I1019\n    I1018 --> I1027\n    I1019 --> I1027\n    I1020 --> I1030\n    I1021 --> I1029\n    I1022 --> I1029\n    I1023 --> I1029\n    I1024 --> I1030\n    I1025 --> I1026\n    I1026 --> I1030\n    I1027 --> I1030\n    I1028 --> I1030\n    I1029 --> I1030\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::ready\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0817[\"I0817<br/>Phase timing and work counters behind MJ_TIMING\"]:::done\n    I0818[\"I0818<br/>The command registry is read in one pass\"]:::done\n    I0819[\"I0819<br/>The project model is loaded with one flatten per file and no per-file lookups\"]:::done\n    I0820[\"I0820<br/>Catalogue, DAG, context and command-surface validators read their inputs once\"]:::ready\n    I0821[\"I0821<br/>Flattened YAML is cached under .ai/local/cache by content hash\"]:::ready\n    I0822[\"I0822<br/>Every canonical file is flattened at most once per command\"]:::blocked\n    I0823[\"I0823<br/>majordomus bench: targets derived from the command registry\"]:::done\n    I0824[\"I0824<br/>Bench persists local runs and keeps a latest projection\"]:::done\n    I0825[\"I0825<br/>An explicit committed baseline\"]:::done\n    I0826[\"I0826<br/>bench --check refuses a regression by policy\"]:::done\n    I0827[\"I0827<br/>The benchmark policy block\"]:::done\n    I0828[\"I0828<br/>doctor under a declared budget, and the hook inherits it\"]:::blocked\n    I0829[\"I0829<br/>Performance doctrine as project rules\"]:::done\n    I0830[\"I0830<br/>docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference\"]:::done\n    I0831[\"I0831<br/>Performance claims at their proven status\"]:::blocked\n    I0832[\"I0832<br/>generate-site-data instrumented and its hot spots removed\"]:::ready\n    I0833[\"I0833<br/>knowledge nodes and edges read each source once\"]:::done\n    I0834[\"I0834<br/>The test runner reports per-case time and the suite budget\"]:::blocked\n    I0835[\"I0835<br/>CI runs the structural performance checks\"]:::blocked\n    I0836[\"I0836<br/>A synthetic repository generator for scaling cases\"]:::ready\n    I0837[\"I0837<br/>Timing report as JSON\"]:::ready\n    I0838[\"I0838<br/>bench compare and the top regressions report\"]:::ready\n    I0839[\"I0839<br/>watch inherits every doctor fix and its own budget\"]:::blocked\n    I0840[\"I0840<br/>context and its subcommands under a second\"]:::blocked\n    I0841[\"I0841<br/>Cache equivalence proved by property-shaped cases\"]:::blocked\n    I0842[\"I0842<br/>Before and after evidence for every optimisation\"]:::blocked\n    I0843[\"I0843<br/>The performance workflow is discoverable and complete\"]:::blocked\n    I0901[\"I0901<br/>The deployment description is a kind of the layer, not a provider file\"]:::ready\n    I0902[\"I0902<br/>The deployment object becomes typed Rust that refuses nonsense\"]:::blocked\n    I0903[\"I0903<br/>Deployment reads are declared once and projected everywhere\"]:::blocked\n    I0904[\"I0904<br/>The listen address is one fact with two projections\"]:::blocked\n    I0905[\"I0905<br/>Liveness and readiness are registered capabilities, not router hacks\"]:::blocked\n    I0906[\"I0906<br/>Termination is graceful and proved against the real container\"]:::blocked\n    I0907[\"I0907<br/>The running process says what it is, from an allowlist\"]:::blocked\n    I0908[\"I0908<br/>A hosted process has no repository, and says so instead of failing\"]:::blocked\n    I0909[\"I0909<br/>The production image is a generated projection of the build specification\"]:::blocked\n    I0910[\"I0910<br/>The release profile is chosen by measurement, not by folklore\"]:::blocked\n    I0911[\"I0911<br/>A source change does not rebuild the world, and the context stays small\"]:::blocked\n    I0912[\"I0912<br/>The image serves the site the canonical pipeline produced\"]:::blocked\n    I0913[\"I0913<br/>The provider configuration is generated, and the cheap profile is declared\"]:::blocked\n    I0914[\"I0914<br/>One deployment core, one command, and a dry run that mutates nothing\"]:::blocked\n    I0915[\"I0915<br/>Deployment joins the diagnostics that already exist\"]:::blocked\n    I0916[\"I0916<br/>The smoke suite is derived from the route registry, never written twice\"]:::blocked\n    I0917[\"I0917<br/>A bad deployment can be undone deterministically\"]:::blocked\n    I0918[\"I0918<br/>The bootstrap credential is used once and belongs to nothing\"]:::blocked\n    I0919[\"I0919<br/>Nothing secret and nothing local leaves in the image\"]:::blocked\n    I0920[\"I0920<br/>The image's dependencies are known and its advisories are policy\"]:::blocked\n    I0921[\"I0921<br/>Size is measured first and budgeted second\"]:::blocked\n    I0922[\"I0922<br/>The memory hypothesis is tested, not asserted\"]:::blocked\n    I0923[\"I0923<br/>Cold start and endpoint cost are benchmark targets like everything else\"]:::blocked\n    I0924[\"I0924<br/>The decision is recorded where architecture decisions are recorded\"]:::blocked\n    I0925[\"I0925<br/>Every deployment rule is a check that runs\"]:::blocked\n    I0926[\"I0926<br/>The deployment documentation is generated and reachable\"]:::blocked\n    I0927[\"I0927<br/>The cockpit shows the deployment from the same data\"]:::blocked\n    I0928[\"I0928<br/>A pull request cannot merge a deployment that would not work\"]:::blocked\n    I0929[\"I0929<br/>Production deploys from CI with a token scoped to one application\"]:::blocked\n    I0930[\"I0930<br/>The real image runs under the real limits before anything is deployed\"]:::blocked\n    I0931[\"I0931<br/>The application exists, one machine runs it, and the URL answers\"]:::blocked\n    I0932[\"I0932<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1001[\"I1001<br/>One typed graph composes the registries that already own their facts\"]:::done\n    I1002[\"I1002<br/>Relations are typed, inferred from stable identities, and never dangle\"]:::done\n    I1003[\"I1003<br/>Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves\"]:::done\n    I1004[\"I1004<br/>Availability and visibility are metadata, not conditions in a template\"]:::done\n    I1005[\"I1005<br/>The graph is a generated artifact with a schema and no unsafe field\"]:::ready\n    I1006[\"I1006<br/>The runtime reads the graph through the registry, like every other read\"]:::blocked\n    I1007[\"I1007<br/>The site renders the same graph, generated once\"]:::blocked\n    I1008[\"I1008<br/>The two projections are proved to be the same model\"]:::blocked\n    I1009[\"I1009<br/>Every menu in this repository comes from one derivation\"]:::blocked\n    I1010[\"I1010<br/>The overview is what exists, counted rather than claimed\"]:::blocked\n    I1011[\"I1011<br/>The coverage matrix reports evidence, and never a green cell without one\"]:::ready\n    I1012[\"I1012<br/>One detail view, assembled from what a node actually has\"]:::blocked\n    I1013[\"I1013<br/>Search over the graph, generated, with nothing to run\"]:::blocked\n    I1014[\"I1014<br/>The relation view reads the graph and holds no data of its own\"]:::blocked\n    I1015[\"I1015<br/>A surface with no server behind it is not offered as if it had one\"]:::ready\n    I1016[\"I1016<br/>The Cockpit works on a phone and before JavaScript runs\"]:::blocked\n    I1017[\"I1017<br/>Live state is an overlay that degrades to nothing\"]:::blocked\n    I1018[\"I1018<br/>The surface rules exist as checks, proved by making them fail\"]:::blocked\n    I1019[\"I1019<br/>One skill runs the whole loop, and is itself in the graph\"]:::blocked\n    I1020[\"I1020<br/>The graph's health is answered by the doctor that already answers everything else\"]:::blocked\n    I1021[\"I1021<br/>A browser proves the interface, at the widths people use\"]:::blocked\n    I1022[\"I1022<br/>Drift in any derived surface fails the build\"]:::blocked\n    I1023[\"I1023<br/>Nothing private reaches a published page\"]:::blocked\n    I1024[\"I1024<br/>The interface has a weight, and it is measured\"]:::blocked\n    I1025[\"I1025<br/>The federated model and its two projections are an architecture decision\"]:::done\n    I1026[\"I1026<br/>The architecture explains itself, from inside itself\"]:::blocked\n    I1027[\"I1027<br/>A synthetic capability proves the architecture instead of describing it\"]:::blocked\n    I1028[\"I1028<br/>The inventories this replaces are removed, not left running beside it\"]:::blocked\n    I1029[\"I1029<br/>The gate refuses what would silently break the interface\"]:::blocked\n    I1030[\"I1030<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1031[\"I1031<br/>A served surface says which checkout it is serving\"]:::ready\n    I1101[\"I1101<br/>What this tool leaves behind, established by inspection rather than by memory\"]:::ready\n    I1102[\"I1102<br/>The two namespaces are a typed contract, not a habit\"]:::blocked\n    I1103[\"I1103<br/>Whether a file is authored or derived is a field, not a naming convention\"]:::blocked\n    I1104[\"I1104<br/>Both namespaces carry their contracts, all the way down\"]:::blocked\n    I1105[\"I1105<br/>The repository is discovered once, into one model\"]:::blocked\n    I1106[\"I1106<br/>The registries are views of the model, not separate discoveries\"]:::blocked\n    I1107[\"I1107<br/>Discovery is deterministic, cached, and its cost is known\"]:::blocked\n    I1108[\"I1108<br/>The desired integration is a value, and the plan is a diff\"]:::blocked\n    I1109[\"I1109<br/>Everything placed outside the two namespaces is recorded, with what it was\"]:::blocked\n    I1110[\"I1110<br/>The second run changes nothing, and a test says so\"]:::blocked\n    I1111[\"I1111<br/>Uninstall gives back exactly what was taken\"]:::blocked\n    I1112[\"I1112<br/>What touches the root is two small blocks, and they never change again\"]:::blocked\n    I1113[\"I1113<br/>Entering a directory is local, bounded and silent about the network\"]:::blocked\n    I1114[\"I1114<br/>A provider is an adapter over the model, and adding one is an implementation\"]:::blocked\n    I1115[\"I1115<br/>Completion comes from the command model, not from a second list\"]:::blocked\n    I1116[\"I1116<br/>This repository's own footprint moves, through the reconciler\"]:::blocked\n    I1117[\"I1117<br/>The hand-maintained lists are removed, not left running beside the derivation\"]:::blocked\n    I1118[\"I1118<br/>Every invariant of this milestone is a rule with a check that runs\"]:::blocked\n    I1119[\"I1119<br/>The budgets are measured, and a regression fails rather than being noticed\"]:::blocked\n    I1120[\"I1120<br/>A refusal says what to do about it\"]:::blocked\n    I1121[\"I1121<br/>Every surface shows the integration from the one model\"]:::blocked\n    I1122[\"I1122<br/>A foreign repository, adopted, upgraded and given back\"]:::blocked\n    I1123[\"I1123<br/>The milestone is accepted on its evidence\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    I0817 --> I0818\n    I0817 --> I0819\n    I0817 --> I0821\n    I0817 --> I0823\n    I0817 --> I0832\n    I0817 --> I0833\n    I0817 --> I0837\n    I0818 --> I0820\n    I0818 --> I0822\n    I0818 --> I0828\n    I0818 --> I0842\n    I0819 --> I0820\n    I0819 --> I0822\n    I0819 --> I0828\n    I0819 --> I0832\n    I0819 --> I0836\n    I0819 --> I0842\n    I0820 --> I0822\n    I0820 --> I0828\n    I0820 --> I0840\n    I0820 --> I0842\n    I0821 --> I0840\n    I0821 --> I0841\n    I0822 --> I0831\n    I0822 --> I0835\n    I0823 --> I0824\n    I0823 --> I0827\n    I0823 --> I0830\n    I0824 --> I0825\n    I0825 --> I0826\n    I0826 --> I0830\n    I0826 --> I0831\n    I0826 --> I0835\n    I0826 --> I0838\n    I0827 --> I0828\n    I0828 --> I0834\n    I0828 --> I0839\n    I0829 --> I0830\n    I0830 --> I0843\n    I0831 --> I0843\n    I0832 --> I0842\n    I0833 --> I0842\n    I0835 --> I0843\n    I0841 --> I0843\n    I0842 --> I0843\n    I0901 --> I0902\n    I0901 --> I0924\n    I0902 --> I0903\n    I0902 --> I0904\n    I0902 --> I0905\n    I0902 --> I0907\n    I0902 --> I0908\n    I0902 --> I0909\n    I0902 --> I0913\n    I0902 --> I0918\n    I0903 --> I0913\n    I0903 --> I0914\n    I0903 --> I0926\n    I0903 --> I0927\n    I0904 --> I0906\n    I0904 --> I0909\n    I0905 --> I0909\n    I0905 --> I0916\n    I0906 --> I0930\n    I0909 --> I0910\n    I0909 --> I0911\n    I0909 --> I0912\n    I0909 --> I0914\n    I0909 --> I0919\n    I0909 --> I0920\n    I0909 --> I0930\n    I0910 --> I0921\n    I0911 --> I0921\n    I0912 --> I0930\n    I0913 --> I0914\n    I0913 --> I0926\n    I0913 --> I0931\n    I0914 --> I0915\n    I0914 --> I0916\n    I0914 --> I0917\n    I0914 --> I0931\n    I0915 --> I0925\n    I0916 --> I0931\n    I0917 --> I0931\n    I0918 --> I0929\n    I0918 --> I0931\n    I0919 --> I0928\n    I0920 --> I0932\n    I0921 --> I0928\n    I0922 --> I0931\n    I0923 --> I0932\n    I0924 --> I0926\n    I0925 --> I0932\n    I0926 --> I0932\n    I0927 --> I0932\n    I0928 --> I0932\n    I0929 --> I0932\n    I0930 --> I0922\n    I0930 --> I0923\n    I0930 --> I0928\n    I0930 --> I0931\n    I0931 --> I0929\n    I0931 --> I0932\n    I1001 --> I1002\n    I1001 --> I1003\n    I1001 --> I1004\n    I1001 --> I1025\n    I1002 --> I1005\n    I1002 --> I1011\n    I1002 --> I1014\n    I1002 --> I1020\n    I1004 --> I1005\n    I1004 --> I1009\n    I1004 --> I1015\n    I1005 --> I1006\n    I1005 --> I1007\n    I1005 --> I1009\n    I1005 --> I1010\n    I1005 --> I1012\n    I1005 --> I1023\n    I1006 --> I1008\n    I1006 --> I1017\n    I1007 --> I1008\n    I1007 --> I1013\n    I1007 --> I1014\n    I1007 --> I1020\n    I1007 --> I1022\n    I1009 --> I1016\n    I1009 --> I1028\n    I1010 --> I1030\n    I1011 --> I1018\n    I1012 --> I1026\n    I1013 --> I1030\n    I1014 --> I1021\n    I1014 --> I1024\n    I1015 --> I1018\n    I1015 --> I1021\n    I1016 --> I1021\n    I1017 --> I1030\n    I1018 --> I1019\n    I1018 --> I1027\n    I1019 --> I1027\n    I1020 --> I1030\n    I1021 --> I1029\n    I1022 --> I1029\n    I1023 --> I1029\n    I1024 --> I1030\n    I1025 --> I1026\n    I1026 --> I1030\n    I1027 --> I1030\n    I1028 --> I1030\n    I1029 --> I1030\n    I1101 --> I1102\n    I1101 --> I1105\n    I1102 --> I1103\n    I1102 --> I1104\n    I1104 --> I1123\n    I1105 --> I1106\n    I1106 --> I1107\n    I1106 --> I1108\n    I1106 --> I1117\n    I1107 --> I1123\n    I1108 --> I1109\n    I1108 --> I1120\n    I1109 --> I1110\n    I1109 --> I1111\n    I1109 --> I1112\n    I1110 --> I1116\n    I1110 --> I1118\n    I1110 --> I1122\n    I1111 --> I1122\n    I1112 --> I1113\n    I1112 --> I1114\n    I1112 --> I1116\n    I1112 --> I1121\n    I1113 --> I1119\n    I1114 --> I1115\n    I1115 --> I1123\n    I1116 --> I1118\n    I1116 --> I1122\n    I1117 --> I1123\n    I1118 --> I1123\n    I1119 --> I1123\n    I1120 --> I1123\n    I1121 --> I1122\n    I1122 --> I1123\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "statuses": {
     "issue": [
       "READY",
@@ -648,14 +648,15 @@
         "I1027",
         "I1028",
         "I1029",
-        "I1030"
+        "I1030",
+        "I1031"
       ],
-      "mermaid": "flowchart LR\n    I1001[\"I1001<br/>One typed graph composes the registries that already own their facts\"]:::done\n    I1002[\"I1002<br/>Relations are typed, inferred from stable identities, and never dangle\"]:::done\n    I1003[\"I1003<br/>Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves\"]:::done\n    I1004[\"I1004<br/>Availability and visibility are metadata, not conditions in a template\"]:::done\n    I1005[\"I1005<br/>The graph is a generated artifact with a schema and no unsafe field\"]:::ready\n    I1006[\"I1006<br/>The runtime reads the graph through the registry, like every other read\"]:::blocked\n    I1007[\"I1007<br/>The site renders the same graph, generated once\"]:::blocked\n    I1008[\"I1008<br/>The two projections are proved to be the same model\"]:::blocked\n    I1009[\"I1009<br/>Every menu in this repository comes from one derivation\"]:::blocked\n    I1010[\"I1010<br/>The overview is what exists, counted rather than claimed\"]:::blocked\n    I1011[\"I1011<br/>The coverage matrix reports evidence, and never a green cell without one\"]:::ready\n    I1012[\"I1012<br/>One detail view, assembled from what a node actually has\"]:::blocked\n    I1013[\"I1013<br/>Search over the graph, generated, with nothing to run\"]:::blocked\n    I1014[\"I1014<br/>The relation view reads the graph and holds no data of its own\"]:::blocked\n    I1015[\"I1015<br/>A surface with no server behind it is not offered as if it had one\"]:::ready\n    I1016[\"I1016<br/>The Cockpit works on a phone and before JavaScript runs\"]:::blocked\n    I1017[\"I1017<br/>Live state is an overlay that degrades to nothing\"]:::blocked\n    I1018[\"I1018<br/>The surface rules exist as checks, proved by making them fail\"]:::blocked\n    I1019[\"I1019<br/>One skill runs the whole loop, and is itself in the graph\"]:::blocked\n    I1020[\"I1020<br/>The graph's health is answered by the doctor that already answers everything else\"]:::blocked\n    I1021[\"I1021<br/>A browser proves the interface, at the widths people use\"]:::blocked\n    I1022[\"I1022<br/>Drift in any derived surface fails the build\"]:::blocked\n    I1023[\"I1023<br/>Nothing private reaches a published page\"]:::blocked\n    I1024[\"I1024<br/>The interface has a weight, and it is measured\"]:::blocked\n    I1025[\"I1025<br/>The federated model and its two projections are an architecture decision\"]:::done\n    I1026[\"I1026<br/>The architecture explains itself, from inside itself\"]:::blocked\n    I1027[\"I1027<br/>A synthetic capability proves the architecture instead of describing it\"]:::blocked\n    I1028[\"I1028<br/>The inventories this replaces are removed, not left running beside it\"]:::blocked\n    I1029[\"I1029<br/>The gate refuses what would silently break the interface\"]:::blocked\n    I1030[\"I1030<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1001 --> I1002\n    I1001 --> I1003\n    I1001 --> I1004\n    I1001 --> I1025\n    I1002 --> I1005\n    I1002 --> I1011\n    I1002 --> I1014\n    I1002 --> I1020\n    I1004 --> I1005\n    I1004 --> I1009\n    I1004 --> I1015\n    I1005 --> I1006\n    I1005 --> I1007\n    I1005 --> I1009\n    I1005 --> I1010\n    I1005 --> I1012\n    I1005 --> I1023\n    I1006 --> I1008\n    I1006 --> I1017\n    I1007 --> I1008\n    I1007 --> I1013\n    I1007 --> I1014\n    I1007 --> I1020\n    I1007 --> I1022\n    I1009 --> I1016\n    I1009 --> I1028\n    I1010 --> I1030\n    I1011 --> I1018\n    I1012 --> I1026\n    I1013 --> I1030\n    I1014 --> I1021\n    I1014 --> I1024\n    I1015 --> I1018\n    I1015 --> I1021\n    I1016 --> I1021\n    I1017 --> I1030\n    I1018 --> I1019\n    I1018 --> I1027\n    I1019 --> I1027\n    I1020 --> I1030\n    I1021 --> I1029\n    I1022 --> I1029\n    I1023 --> I1029\n    I1024 --> I1030\n    I1025 --> I1026\n    I1026 --> I1030\n    I1027 --> I1030\n    I1028 --> I1030\n    I1029 --> I1030\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "mermaid": "flowchart LR\n    I1001[\"I1001<br/>One typed graph composes the registries that already own their facts\"]:::done\n    I1002[\"I1002<br/>Relations are typed, inferred from stable identities, and never dangle\"]:::done\n    I1003[\"I1003<br/>Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves\"]:::done\n    I1004[\"I1004<br/>Availability and visibility are metadata, not conditions in a template\"]:::done\n    I1005[\"I1005<br/>The graph is a generated artifact with a schema and no unsafe field\"]:::ready\n    I1006[\"I1006<br/>The runtime reads the graph through the registry, like every other read\"]:::blocked\n    I1007[\"I1007<br/>The site renders the same graph, generated once\"]:::blocked\n    I1008[\"I1008<br/>The two projections are proved to be the same model\"]:::blocked\n    I1009[\"I1009<br/>Every menu in this repository comes from one derivation\"]:::blocked\n    I1010[\"I1010<br/>The overview is what exists, counted rather than claimed\"]:::blocked\n    I1011[\"I1011<br/>The coverage matrix reports evidence, and never a green cell without one\"]:::ready\n    I1012[\"I1012<br/>One detail view, assembled from what a node actually has\"]:::blocked\n    I1013[\"I1013<br/>Search over the graph, generated, with nothing to run\"]:::blocked\n    I1014[\"I1014<br/>The relation view reads the graph and holds no data of its own\"]:::blocked\n    I1015[\"I1015<br/>A surface with no server behind it is not offered as if it had one\"]:::ready\n    I1016[\"I1016<br/>The Cockpit works on a phone and before JavaScript runs\"]:::blocked\n    I1017[\"I1017<br/>Live state is an overlay that degrades to nothing\"]:::blocked\n    I1018[\"I1018<br/>The surface rules exist as checks, proved by making them fail\"]:::blocked\n    I1019[\"I1019<br/>One skill runs the whole loop, and is itself in the graph\"]:::blocked\n    I1020[\"I1020<br/>The graph's health is answered by the doctor that already answers everything else\"]:::blocked\n    I1021[\"I1021<br/>A browser proves the interface, at the widths people use\"]:::blocked\n    I1022[\"I1022<br/>Drift in any derived surface fails the build\"]:::blocked\n    I1023[\"I1023<br/>Nothing private reaches a published page\"]:::blocked\n    I1024[\"I1024<br/>The interface has a weight, and it is measured\"]:::blocked\n    I1025[\"I1025<br/>The federated model and its two projections are an architecture decision\"]:::done\n    I1026[\"I1026<br/>The architecture explains itself, from inside itself\"]:::blocked\n    I1027[\"I1027<br/>A synthetic capability proves the architecture instead of describing it\"]:::blocked\n    I1028[\"I1028<br/>The inventories this replaces are removed, not left running beside it\"]:::blocked\n    I1029[\"I1029<br/>The gate refuses what would silently break the interface\"]:::blocked\n    I1030[\"I1030<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1031[\"I1031<br/>A served surface says which checkout it is serving\"]:::ready\n    I1001 --> I1002\n    I1001 --> I1003\n    I1001 --> I1004\n    I1001 --> I1025\n    I1002 --> I1005\n    I1002 --> I1011\n    I1002 --> I1014\n    I1002 --> I1020\n    I1004 --> I1005\n    I1004 --> I1009\n    I1004 --> I1015\n    I1005 --> I1006\n    I1005 --> I1007\n    I1005 --> I1009\n    I1005 --> I1010\n    I1005 --> I1012\n    I1005 --> I1023\n    I1006 --> I1008\n    I1006 --> I1017\n    I1007 --> I1008\n    I1007 --> I1013\n    I1007 --> I1014\n    I1007 --> I1020\n    I1007 --> I1022\n    I1009 --> I1016\n    I1009 --> I1028\n    I1010 --> I1030\n    I1011 --> I1018\n    I1012 --> I1026\n    I1013 --> I1030\n    I1014 --> I1021\n    I1014 --> I1024\n    I1015 --> I1018\n    I1015 --> I1021\n    I1016 --> I1021\n    I1017 --> I1030\n    I1018 --> I1019\n    I1018 --> I1027\n    I1019 --> I1027\n    I1020 --> I1030\n    I1021 --> I1029\n    I1022 --> I1029\n    I1023 --> I1029\n    I1024 --> I1030\n    I1025 --> I1026\n    I1026 --> I1030\n    I1027 --> I1030\n    I1028 --> I1030\n    I1029 --> I1030\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
       "counts": {
-        "total": 30,
-        "required": 30,
+        "total": 31,
+        "required": 31,
         "by_status": {
-          "READY": 3,
+          "READY": 4,
           "BLOCKED": 22,
           "ACTIVE": 0,
           "VERIFY": 0,
@@ -1132,6 +1133,111 @@
         "by_status": {
           "READY": 0,
           "BLOCKED": 5,
+          "ACTIVE": 0,
+          "VERIFY": 0,
+          "DONE": 0,
+          "CANCELLED": 0
+        }
+      }
+    },
+    {
+      "id": "two-folder-integration",
+      "slug": "two-folder-integration",
+      "status": "PLANNED",
+      "order": 90,
+      "priority": "p1",
+      "title": "A repository that adopts Majordomus gains two directories and two lines, and can give them back",
+      "problem": "What Majordomus leaves in a repository it adopts is not decided anywhere; it is the sum of what each subsystem happened to write. Provider files at the root, scripts, configuration beside configuration, generated registries that became inputs, and no record of which of them Majordomus put there. The costs compound in three directions at once. A person cannot tell what is theirs and what is the tool's, so nothing can be safely removed. A second provider means a second copy of the same instructions rather than a second adapter. And every subsystem rediscovers the repository for itself — the CLI, the environment entry, the documentation, the server — so the same facts are read four ways and disagree on the fourth.",
+      "outcome": "Adoption is a reconciliation, not a template copy. One typed repository model is discovered once and every consumer reads it. A desired integration is computed from that model, diffed against what the repository actually holds, and applied as the smallest mutation that closes the gap — with everything Majordomus owns living under `.ai/` and `.majordomus/`, and anything outside those two namespaces reduced to a small managed bridge whose ownership is recorded. Running the reconciliation twice changes nothing the second time, and uninstalling gives back exactly what was taken and nothing a person authored.",
+      "current_state": "`.ai/` and `.majordomus/` both exist and carry real material, and directory contracts are already enforced under `.ai/` (ADR 0011). Against that: provider bootstraps are generated to the root, the environment entry and the CLI each discover the repository their own way, `init` writes what it was written to write rather than what the repository lacks, no ledger records what was placed outside the two namespaces, and nothing can undo an adoption.",
+      "desired_state": "`majordomus init` on a foreign repository adds `.ai/`, `.majordomus/`, a managed block in `AGENTS.md` and — when direnv is wanted — one stable line in `.envrc`. A second run reports no change. `majordomus uninstall` removes what the ledger records and leaves authored knowledge alone. Adding a valid artifact under a discoverable namespace registers it everywhere, and no list anywhere enumerates what discovery already finds.",
+      "scope": [
+        "apps/majordomus-cli/src",
+        ".ai/repo/rules/project",
+        ".ai/repo/adrs",
+        ".majordomus",
+        "share/schemas",
+        "share/skeleton",
+        "docs",
+        "test/cases",
+        ".github/workflows"
+      ],
+      "non_scope": [
+        "A configuration format that restates what the repository can be inspected for",
+        "Rewriting a working subsystem for symmetry rather than for a defect",
+        "Deleting user-authored content on any path, under any flag, without an explicit and separate instruction",
+        "A second worktree convention, a second handover format or a second doctor",
+        "Provider-specific semantics anywhere but an adapter"
+      ],
+      "acceptance_criteria": [
+        "Everything Majordomus persists in an adopted repository lives under `.ai/` or `.majordomus/`, and every exception outside them is a bridge recorded in the ownership ledger",
+        "One typed repository model is discovered once per process and every consumer — CLI, environment, API, MCP, Cockpit, documentation, providers, completion — reads that model rather than the filesystem",
+        "The desired integration is a value, the plan is a diff against what is there, and the apply is the smallest mutation that closes it",
+        "A second `init` on a conforming repository produces no change, proved by a test rather than by observation",
+        "`uninstall` reverses every recorded mutation, refuses to touch a bridge a person has edited, and leaves `.ai/` authored content in place by default",
+        "Every generated artifact declares its provenance, its generator and the inputs it derives from, and no generated artifact is read back as canonical input",
+        "No hand-maintained list enumerates artifacts that discovery finds, and adding a valid artifact registers it in every consumer with no second edit",
+        "Environment entry stays local and bounded, with no network and no build, and its cost is measured against a declared budget",
+        "Every invariant above is a project rule with a check that CI executes, each proved by a negative test"
+      ],
+      "validation": [
+        "cargo test --workspace --all-features",
+        "bash test/run.sh",
+        "bin/majordomus doctor",
+        "majordomus generate --check",
+        "majordomus init --dry-run"
+      ],
+      "evidence_required": [
+        "footprint_bounded",
+        "one_model",
+        "desired_state_diff",
+        "init_idempotent",
+        "uninstall_reverses",
+        "provenance_declared",
+        "no_manual_registry",
+        "entry_budget",
+        "rules_enforced"
+      ],
+      "risks": [
+        "A reconciler that computes a desired state can also impose one. Everything it would change outside the two namespaces has to be visible in a dry run before it is applied, and a bridge a person edited is a conflict rather than an overwrite.",
+        "One repository model is a bottleneck as well as a spine: every consumer that reads it pays its discovery cost. The cost has to be measured against the environment-entry budget before the model becomes mandatory, not after.",
+        "Migrating this repository's own footprint is the most dangerous phase, because the tool is being changed by the thing it is changing. The migration runs through the reconciler with a dry run first, never through a move script.",
+        "An ownership ledger that drifts from the filesystem is worse than none: it authorises deletions it cannot justify. Every recorded mutation carries the hash it was written with, and a mismatch stops the removal.",
+        "Provider adapters invite provider semantics to leak into the model. The test is whether a new provider is an implementation of one trait, or an edit in six places."
+      ],
+      "evidence": [],
+      "issues": [
+        "I1101",
+        "I1102",
+        "I1103",
+        "I1104",
+        "I1105",
+        "I1106",
+        "I1107",
+        "I1108",
+        "I1109",
+        "I1110",
+        "I1111",
+        "I1112",
+        "I1113",
+        "I1114",
+        "I1115",
+        "I1116",
+        "I1117",
+        "I1118",
+        "I1119",
+        "I1120",
+        "I1121",
+        "I1122",
+        "I1123"
+      ],
+      "mermaid": "flowchart LR\n    I1101[\"I1101<br/>What this tool leaves behind, established by inspection rather than by memory\"]:::ready\n    I1102[\"I1102<br/>The two namespaces are a typed contract, not a habit\"]:::blocked\n    I1103[\"I1103<br/>Whether a file is authored or derived is a field, not a naming convention\"]:::blocked\n    I1104[\"I1104<br/>Both namespaces carry their contracts, all the way down\"]:::blocked\n    I1105[\"I1105<br/>The repository is discovered once, into one model\"]:::blocked\n    I1106[\"I1106<br/>The registries are views of the model, not separate discoveries\"]:::blocked\n    I1107[\"I1107<br/>Discovery is deterministic, cached, and its cost is known\"]:::blocked\n    I1108[\"I1108<br/>The desired integration is a value, and the plan is a diff\"]:::blocked\n    I1109[\"I1109<br/>Everything placed outside the two namespaces is recorded, with what it was\"]:::blocked\n    I1110[\"I1110<br/>The second run changes nothing, and a test says so\"]:::blocked\n    I1111[\"I1111<br/>Uninstall gives back exactly what was taken\"]:::blocked\n    I1112[\"I1112<br/>What touches the root is two small blocks, and they never change again\"]:::blocked\n    I1113[\"I1113<br/>Entering a directory is local, bounded and silent about the network\"]:::blocked\n    I1114[\"I1114<br/>A provider is an adapter over the model, and adding one is an implementation\"]:::blocked\n    I1115[\"I1115<br/>Completion comes from the command model, not from a second list\"]:::blocked\n    I1116[\"I1116<br/>This repository's own footprint moves, through the reconciler\"]:::blocked\n    I1117[\"I1117<br/>The hand-maintained lists are removed, not left running beside the derivation\"]:::blocked\n    I1118[\"I1118<br/>Every invariant of this milestone is a rule with a check that runs\"]:::blocked\n    I1119[\"I1119<br/>The budgets are measured, and a regression fails rather than being noticed\"]:::blocked\n    I1120[\"I1120<br/>A refusal says what to do about it\"]:::blocked\n    I1121[\"I1121<br/>Every surface shows the integration from the one model\"]:::blocked\n    I1122[\"I1122<br/>A foreign repository, adopted, upgraded and given back\"]:::blocked\n    I1123[\"I1123<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1101 --> I1102\n    I1101 --> I1105\n    I1102 --> I1103\n    I1102 --> I1104\n    I1104 --> I1123\n    I1105 --> I1106\n    I1106 --> I1107\n    I1106 --> I1108\n    I1106 --> I1117\n    I1107 --> I1123\n    I1108 --> I1109\n    I1108 --> I1120\n    I1109 --> I1110\n    I1109 --> I1111\n    I1109 --> I1112\n    I1110 --> I1116\n    I1110 --> I1118\n    I1110 --> I1122\n    I1111 --> I1122\n    I1112 --> I1113\n    I1112 --> I1114\n    I1112 --> I1116\n    I1112 --> I1121\n    I1113 --> I1119\n    I1114 --> I1115\n    I1115 --> I1123\n    I1116 --> I1118\n    I1116 --> I1122\n    I1117 --> I1123\n    I1118 --> I1123\n    I1119 --> I1123\n    I1120 --> I1123\n    I1121 --> I1122\n    I1122 --> I1123\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 23,
+        "required": 23,
+        "by_status": {
+          "READY": 1,
+          "BLOCKED": 22,
           "ACTIVE": 0,
           "VERIFY": 0,
           "DONE": 0,
@@ -9476,6 +9582,1285 @@
       "started_at": "",
       "verified_at": "",
       "completed_at": ""
+    },
+    {
+      "id": "I1031",
+      "slug": "served-identity-visible",
+      "milestone": "capability-graph",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "A served surface says which checkout it is serving",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/http/router.rs"
+      ],
+      "non_scope": [
+        "Publishing an absolute developer path to anything but a loopback surface",
+        "A second identity beside the one the repository model already holds",
+        "Changing what any surface serves; this changes only what it says about itself"
+      ],
+      "objective": "Make every surface a process serves name the repository it is serving — its root and its identity — so that a reader can tell at a glance whether the answers in front of them come from the tree they are working in.",
+      "why": "This cost a real hour. A browser held a Swagger page from a server that had exited, its requests failed with a message blaming CORS, and the live server on another port turned out to be serving a scratchpad worktree of a different session entirely — so even the document being read was that other tree's, including a sentence about the routes that this tree had already corrected. Nothing on the page said which checkout answered it. Several sessions share one machine and each may bind its own server; a surface that does not name its tree invites exactly this conclusion, that the tool is broken, when the tool is fine and the address is wrong.",
+      "current_state": "The home page lists the surfaces, the version and a repository identifier, and `/api/v1/repository` will name the root if asked. The Swagger shell and the served document name neither. A stale page fails with a transport error that names CORS before it names a closed socket.",
+      "desired_state": "Every served surface carries the repository root and identity it is answering for, close enough to the content that a reader sees it without asking for it.",
+      "acceptance_criteria": [
+        "The home page names the repository root and identity the process is serving, not only the surfaces it exposes",
+        "The interactive API shell names the same root, so a page fetched from one server cannot be mistaken for another's",
+        "The identity comes from the repository model rather than from a second inspection",
+        "No surface names the repository's location on the host: the identity says which checkout answered, never where it sits, and a test proves no served or published output carries an absolute path",
+        "The behaviour is exercised by a test that serves two roots and proves each surface names its own"
+      ],
+      "validation": [
+        "cargo test --workspace --all-features",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "identity_on_surfaces",
+        "published_carries_no_path"
+      ],
+      "evidence": [],
+      "risk": "The obvious fix — printing the root — is the one to refuse: it would leak the host's directory layout to whoever can reach the socket, and the incident is solved by saying which checkout answered, not where it lives.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1101",
+      "slug": "adoption-footprint-forensics",
+      "milestone": "two-folder-integration",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": true,
+      "title": "What this tool leaves behind, established by inspection rather than by memory",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I1102",
+        "I1105"
+      ],
+      "scope": [
+        "docs/INTEGRATION.md",
+        ".ai/repo/adrs"
+      ],
+      "non_scope": [
+        "Moving anything; this issue changes no path",
+        "A rewrite of a subsystem discovered along the way"
+      ],
+      "objective": "Establish, from the repository rather than from recollection, every path Majordomus writes, generates or mutates when a project adopts it — where each lands, which subsystem writes it, whether anything records it, and which are canonical, derived or accidental.",
+      "why": "The two-folder contract is a claim about a footprint nobody has measured. Every later phase — the layout, the reconciler, the ledger, the migration — is a decision about paths, and a decision about paths made from memory will be wrong in the way that only shows up in a foreign repository.",
+      "current_state": "`.ai/` and `.majordomus/` both exist. Provider bootstraps are generated to the root, root documents carry generated blocks, and no inventory says what else a subsystem writes or under what circumstances.",
+      "desired_state": "One document records the actual footprint with its writer, its lifecycle and its justification, and names which of them the target architecture keeps, moves or removes.",
+      "acceptance_criteria": [
+        "Every path written or mutated outside `.ai/` and `.majordomus/` is listed with the code that writes it, found by inspection rather than by assumption",
+        "Each is classified as canonical, derived, generated, cache, runtime or accidental, with the reason",
+        "The classification says which paths the two-folder contract keeps as bridges, which move into a namespace and which stop existing",
+        "Where an existing mechanism already does what a later phase would add, it is named so the phase extends it rather than replacing it",
+        "The architectural decision is recorded in the repository's own ADR mechanism, not in prose beside it"
+      ],
+      "validation": [
+        "bin/majordomus doctor",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "footprint_inventory",
+        "decision_recorded"
+      ],
+      "evidence": [],
+      "risk": "A forensic phase can become a rewrite the moment it finds something ugly. It records; the phases that follow change.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1102",
+      "slug": "canonical-two-folder-layout",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": true,
+      "title": "The two namespaces are a typed contract, not a habit",
+      "depends_on": [
+        "I1101"
+      ],
+      "blocked_by": [
+        "I1101"
+      ],
+      "dependents": [
+        "I1103",
+        "I1104"
+      ],
+      "scope": [
+        "share/schemas",
+        "share/skeleton"
+      ],
+      "non_scope": [
+        "A configuration file restating what a convention already fixes",
+        "Moving existing content; that is the migration issue"
+      ],
+      "objective": "Declare the canonical layout of `.ai/` and `.majordomus/` as typed, versioned data — what each namespace holds, what it must never hold, and which lifecycle each directory's contents carry — so that the boundary can be checked rather than remembered.",
+      "why": "The boundary between portable knowledge and control-plane mechanics is the whole architecture. Stated only in prose it survives until the first subsystem finds it convenient to write an index next to a rule.",
+      "current_state": "Both namespaces exist and are populated. Nothing declares what belongs in which, and nothing refuses a control-plane artifact written under `.ai/` or a copy of authored knowledge written under `.majordomus/`.",
+      "desired_state": "The layout is a schema-backed declaration; a check reads it and refuses a path that contradicts it.",
+      "acceptance_criteria": [
+        "Each namespace declares what it holds, in typed and versioned form, generated from the canonical Rust types where generation is available",
+        "`.ai/` is defined as portable semantic material that keeps its meaning without this tool and across providers, and `.majordomus/` as control-plane state that must never hold a second copy of it",
+        "A check refuses an artifact placed in the namespace whose contract excludes it, and names both the path and the contract it violates",
+        "The skeleton a new repository receives is derived from the same declaration rather than being a parallel copy of it"
+      ],
+      "validation": [
+        "cargo test --workspace --all-features",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "layout_declared",
+        "boundary_checked"
+      ],
+      "evidence": [],
+      "risk": "A layout schema can become a second description of the tree it describes. It declares intent and lifecycle; the tree remains what discovery finds.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1103",
+      "slug": "provenance-and-lifecycle",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Whether a file is authored or derived is a field, not a naming convention",
+      "depends_on": [
+        "I1102"
+      ],
+      "blocked_by": [
+        "I1102"
+      ],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/generate.rs",
+        "share/schemas"
+      ],
+      "non_scope": [
+        "Replacing the existing banner mechanism where it already answers the question",
+        "A provenance field that repeats what the schema id already fixes"
+      ],
+      "objective": "Give every machine-processable artifact an explicit provenance and lifecycle — authored, derived, generated, cache or runtime — with its generator, its inputs and whether it is disposable, so that no consumer has to infer from a path what a file is.",
+      "why": "A generated file that is indistinguishable from an authored one eventually becomes an input, and then it cannot be regenerated without losing something. Deciding that by directory name works until the first exception.",
+      "current_state": "Generated artifacts carry a banner or an extension member saying they are generated, which the manifest validator reads. Nothing states a generator's inputs or whether an artifact may be deleted and rebuilt.",
+      "desired_state": "Provenance and lifecycle are typed fields every artifact carries, and a consumer decides what it may do with a file by reading them.",
+      "acceptance_criteria": [
+        "Every generated artifact declares its generator, its version and the canonical inputs it derives from",
+        "Disposability is explicit, so a consumer can tell what may be deleted and rebuilt from what may not",
+        "A generated artifact is never read back as canonical input, and a check proves it",
+        "Authored artifacts are distinguishable from derived ones without consulting a path"
+      ],
+      "validation": [
+        "majordomus generate --check",
+        "cargo test --workspace --all-features"
+      ],
+      "evidence_required": [
+        "provenance_declared",
+        "disposability_explicit"
+      ],
+      "evidence": [],
+      "risk": "Recording inputs invites recording them by hand. The input list is derived from the generator, or it is not recorded.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1104",
+      "slug": "readme-hierarchy-both-namespaces",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Both namespaces carry their contracts, all the way down",
+      "depends_on": [
+        "I1102"
+      ],
+      "blocked_by": [
+        "I1102"
+      ],
+      "dependents": [
+        "I1123"
+      ],
+      "scope": [
+        ".majordomus"
+      ],
+      "non_scope": [
+        "A second contract format for the second namespace",
+        "Duplicating a parent's instructions in every child"
+      ],
+      "objective": "Extend the directory-contract discipline that already governs `.ai/` to `.majordomus/`, so every directory of either namespace explains its purpose, its ownership, its lifecycle, the schemas that apply and how its contents are discovered.",
+      "why": "A control-plane directory nobody documented is where the next copy of something appears. The mechanism for preventing that already exists on one side of the boundary and simply does not run on the other.",
+      "current_state": "ADR 0011 established that every directory of the layer carries a contract, and a validator enforces it under `.ai/`. `.majordomus/` has no such requirement.",
+      "desired_state": "The same validator covers both namespaces, and the effective context for an artifact composes from the contracts above it in either.",
+      "acceptance_criteria": [
+        "Every directory of both namespaces carries a contract with valid typed front matter, and a missing one fails the existing validator",
+        "Each states purpose, ownership and lifecycle, the schemas that apply, and how its contents are discovered and extended",
+        "Contracts compose rather than repeat: a child adds to its ancestors and never restates them",
+        "The same mechanism serves both namespaces, with no second format"
+      ],
+      "validation": [
+        "bin/majordomus doctor",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "contracts_present",
+        "composition_holds"
+      ],
+      "evidence": [],
+      "risk": "Mechanical coverage produces mechanical documents. A contract that says nothing a reader could not guess is a cost with no benefit, and the review has to say so.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1105",
+      "slug": "repository-model-spine",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": true,
+      "title": "The repository is discovered once, into one model",
+      "depends_on": [
+        "I1101"
+      ],
+      "blocked_by": [
+        "I1101"
+      ],
+      "dependents": [
+        "I1106"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/repository.rs",
+        "apps/majordomus-cli/src/discovery"
+      ],
+      "non_scope": [
+        "A second index beside the one that exists; this composes it",
+        "Discovery that reaches the network or builds anything"
+      ],
+      "objective": "Build the one typed model of a repository — identity, structure, capabilities, the layer's registries, workflows, environments, providers, services and version-control state — discovered once and read by every consumer.",
+      "why": "The CLI, the environment entry, the documentation and the server each discover the repository their own way today, which is four answers to one question and four places to fix when it is wrong. One model is the spine the rest of this milestone hangs from.",
+      "current_state": "An index of the layer exists and a capability registry exists. Repository facts beyond them — the environment, the providers, the workspace, the services — are read where they are needed, each time.",
+      "desired_state": "One discovery produces one typed value; consumers hold it rather than the filesystem.",
+      "acceptance_criteria": [
+        "One typed value carries what a consumer needs to know about a repository, composed from the registries that already own their parts",
+        "Discovery happens once per process, and a second consumer pays nothing for it",
+        "Nothing in the model requires a configuration file to state what inspection can establish",
+        "No consumer reads the filesystem for a fact the model already carries, proved by a check rather than by review"
+      ],
+      "validation": [
+        "cargo test --workspace --all-features",
+        "majordomus perf"
+      ],
+      "evidence_required": [
+        "one_model",
+        "discovered_once"
+      ],
+      "evidence": [],
+      "risk": "A model that knows everything is discovered slowly, and the environment entry pays that cost on every directory change. Its cost is measured in the same issue that makes it mandatory, not later.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1106",
+      "slug": "typed-registries-as-views",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "The registries are views of the model, not separate discoveries",
+      "depends_on": [
+        "I1105"
+      ],
+      "blocked_by": [
+        "I1105"
+      ],
+      "dependents": [
+        "I1107",
+        "I1108",
+        "I1117"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/capability/registry.rs"
+      ],
+      "non_scope": [
+        "A registry file that enumerates what discovery finds",
+        "Changing what any kind means; this changes where it is read from"
+      ],
+      "objective": "Make the typed registries — skills, rules, decisions, workflows, use cases, providers, capabilities — views over the one repository model, so that adding a valid artifact under a discoverable namespace registers it everywhere with no second edit.",
+      "why": "Registration by hand is the defect this repository has removed once per subsystem. Doing it once over one model is what stops the next subsystem from reinventing it.",
+      "current_state": "Kinds are discovered by source classes and indexed; capabilities are declared and projected. The two are joined only in the composed graph, and other consumers still enumerate.",
+      "desired_state": "Every registry is a projection of the model, and a new artifact appears in the CLI, the API, MCP, the Cockpit, the documentation and search without anything being listed.",
+      "acceptance_criteria": [
+        "Each registry is derived from the model, and no consumer builds its own",
+        "Adding a schema-valid artifact under a discoverable namespace exposes it to every applicable consumer with no further registration, proved by a synthetic artifact in a test",
+        "A malformed artifact fails loudly with its path and its schema violation rather than vanishing from a listing",
+        "Ordering is deterministic, so two runs over one tree produce one answer"
+      ],
+      "validation": [
+        "cargo test --workspace --all-features",
+        "majordomus generate --check"
+      ],
+      "evidence_required": [
+        "registries_derived",
+        "zero_registration"
+      ],
+      "evidence": [],
+      "risk": "Silent omission is the failure mode: an artifact that fails validation and simply does not appear is indistinguishable from one nobody wrote. It has to fail, not disappear.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1107",
+      "slug": "discovery-determinism-and-cost",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Discovery is deterministic, cached, and its cost is known",
+      "depends_on": [
+        "I1106"
+      ],
+      "blocked_by": [
+        "I1106"
+      ],
+      "dependents": [
+        "I1123"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/index.rs",
+        ".ai/repo/benchmarks/rust"
+      ],
+      "non_scope": [
+        "A cache that can serve a stale answer for a changed input",
+        "A persistent cache shared between repositories"
+      ],
+      "objective": "Make one discovery over one tree produce one answer, cache it by what it was derived from, and measure what it costs — because everything downstream now pays that cost.",
+      "why": "A model every consumer reads is on the hot path of every command, including the ones that run when a person changes directory. An unmeasured spine becomes the reason the tool is avoided.",
+      "current_state": "The layer's flattening is cached by content hash and the executable's phases are timed. The composed model's own cost has not been measured.",
+      "desired_state": "The cost is a benchmark with a baseline, the cache is keyed by the inputs, and a stale entry cannot be read for a changed tree.",
+      "acceptance_criteria": [
+        "Two discoveries over an unchanged tree produce structurally identical models, with no dependence on directory iteration order",
+        "The cache is keyed by the content it was derived from, so a stale entry costs a miss and never a wrong answer",
+        "Cold and warm discovery are benchmarked separately with a recorded baseline",
+        "A cache hit and a cache miss produce byte-identical output for every read-only command"
+      ],
+      "validation": [
+        "majordomus bench --check",
+        "cargo test --workspace --all-features"
+      ],
+      "evidence_required": [
+        "deterministic_model",
+        "cache_correct",
+        "cost_measured"
+      ],
+      "evidence": [],
+      "risk": "A cache is a second thing that can be believed. Keying it by content hash means a wrong key costs time, never correctness.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1108",
+      "slug": "desired-state-and-plan",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": true,
+      "title": "The desired integration is a value, and the plan is a diff",
+      "depends_on": [
+        "I1106"
+      ],
+      "blocked_by": [
+        "I1106"
+      ],
+      "dependents": [
+        "I1109",
+        "I1120"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/commands/init.rs",
+        "apps/majordomus-cli/src/integration"
+      ],
+      "non_scope": [
+        "Applying anything the dry run did not show",
+        "A desired state that depends on a configuration file rather than on the model"
+      ],
+      "objective": "Compute what a repository's Majordomus integration should look like as a typed value, diff it against what the repository actually holds, and make the apply the smallest mutation that closes the gap.",
+      "why": "`init` that writes what it was written to write cannot be run twice, cannot be previewed, and cannot be undone. A desired state that is a value can be compared, shown before it is applied, and reversed.",
+      "current_state": "Initialisation writes a skeleton. Nothing computes what is missing, nothing reports what would change, and running it again is not a defined operation.",
+      "desired_state": "One function produces the desired integration from the repository model, one produces the difference, and the apply consumes the difference — so a dry run is the same computation without the last step.",
+      "acceptance_criteria": [
+        "The desired integration is derived from the repository model, and a repository that already conforms produces an empty difference",
+        "The difference is a typed value that names every path it would create, modify or remove, and why",
+        "A dry run performs the same computation as an apply and mutates nothing",
+        "The apply performs exactly the difference and nothing else, proved by comparing the tree before and after against the plan",
+        "A mutation the plan did not name is a bug, and a test proves the apply cannot make one"
+      ],
+      "validation": [
+        "majordomus init --dry-run",
+        "cargo test --workspace --all-features"
+      ],
+      "evidence_required": [
+        "desired_state_typed",
+        "plan_is_diff",
+        "dry_run_mutates_nothing"
+      ],
+      "evidence": [],
+      "risk": "A reconciler that computes what a repository should look like will eventually be wrong about one. Everything it would do outside the two namespaces must be visible before it is done.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1109",
+      "slug": "ownership-ledger",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 4,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Everything placed outside the two namespaces is recorded, with what it was",
+      "depends_on": [
+        "I1108"
+      ],
+      "blocked_by": [
+        "I1108"
+      ],
+      "dependents": [
+        "I1110",
+        "I1111",
+        "I1112"
+      ],
+      "scope": [
+        ".majordomus/manifest.json",
+        "apps/majordomus-cli/src/integration/ownership.rs"
+      ],
+      "non_scope": [
+        "Recording anything inside the two namespaces, which are owned by construction",
+        "A ledger a person is expected to edit"
+      ],
+      "objective": "Record every mutation Majordomus makes outside `.ai/` and `.majordomus/` in a typed ledger: the path, the kind of mutation, the content hash as written, the generator and version that wrote it, and what was there before.",
+      "why": "Without a ledger the tool cannot tell its own edits from a person's, which means it can neither update them safely nor remove them at all. The ledger is what makes an uninstall possible and an overwrite refusable.",
+      "current_state": "Root documents carry generated blocks and provider bootstraps are written to the root. Nothing records that Majordomus put them there.",
+      "desired_state": "The ledger is the authority on what Majordomus owns outside its namespaces, and a mismatch between what it recorded and what is on disk stops a mutation rather than resolving it.",
+      "acceptance_criteria": [
+        "Every mutation outside the two namespaces is recorded with its path, its kind, the hash as written, the generator and version, and the prior state",
+        "A managed region records the markers that bound it, so the rest of the file is never in question",
+        "The ledger is typed and schema-backed, generated from the canonical type rather than hand-written",
+        "A path whose current hash does not match what the ledger recorded is reported as edited by a person, and no mutation proceeds on it silently",
+        "The ledger contains no secret and no absolute developer path"
+      ],
+      "validation": [
+        "cargo test --workspace --all-features",
+        "bin/majordomus doctor"
+      ],
+      "evidence_required": [
+        "ledger_records",
+        "mismatch_stops"
+      ],
+      "evidence": [],
+      "risk": "A ledger that drifts from the filesystem authorises deletions it cannot justify. The hash is what keeps it honest, and a mismatch has to stop the operation rather than warn about it.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1110",
+      "slug": "init-idempotent",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 5,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "The second run changes nothing, and a test says so",
+      "depends_on": [
+        "I1109"
+      ],
+      "blocked_by": [
+        "I1109"
+      ],
+      "dependents": [
+        "I1116",
+        "I1118",
+        "I1122"
+      ],
+      "scope": [
+        "test/cases"
+      ],
+      "non_scope": [
+        "Achieving stillness by making the second run skip work it should do",
+        "Ignoring a difference because it is only in a generated file"
+      ],
+      "objective": "Make reconciliation idempotent: running it against a conforming repository produces no change at all, and prove it with a test rather than with an observation.",
+      "why": "Idempotence is what separates a reconciler from a script that happens to run twice. It is also the cheapest possible regression test for the whole desired-state machinery: if the second run does something, the first one did something it could not describe.",
+      "current_state": "Initialisation is not idempotent and nothing measures whether it is.",
+      "desired_state": "A second reconciliation reports zero changes, the working tree is byte-identical, and a test fails the moment that stops being true.",
+      "acceptance_criteria": [
+        "Reconciling a conforming repository twice leaves the tree byte-identical, including every generated artifact",
+        "The second run reports no change rather than reporting changes it then does not make",
+        "The test covers a repository that was already adopted, one adopted by an older version, and one where a person edited a bridge",
+        "A deliberate divergence makes the test fail, proving it can"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "majordomus init --dry-run"
+      ],
+      "evidence_required": [
+        "second_run_empty",
+        "negative_test"
+      ],
+      "evidence": [],
+      "risk": "The easy way to pass this test is to make the second run do nothing on principle. The test has to distinguish a reconciler that found nothing to do from one that did not look.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1111",
+      "slug": "uninstall-reverses",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 5,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": true,
+      "title": "Uninstall gives back exactly what was taken",
+      "depends_on": [
+        "I1109"
+      ],
+      "blocked_by": [
+        "I1109"
+      ],
+      "dependents": [
+        "I1122"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/commands/uninstall.rs"
+      ],
+      "non_scope": [
+        "Removing authored content under any default",
+        "A broad recursive delete of any path not named by the ledger"
+      ],
+      "objective": "Implement removal that reverses every recorded mutation, refuses anything a person has since edited, and leaves authored knowledge in place unless removal is asked for separately and explicitly.",
+      "why": "A tool that cannot be removed is a tool people hesitate to adopt. And the half of the footprint that matters most — the decisions, the handovers, the knowledge accumulated over months — is the project's property, not the tool's leftovers.",
+      "current_state": "Nothing removes an adoption. What Majordomus wrote outside its namespaces can only be found by reading a diff.",
+      "desired_state": "One command reverses the ledger, one flag additionally removes generated state, and removing authored content is a separate decision the default never makes.",
+      "acceptance_criteria": [
+        "Every recorded mutation outside the two namespaces is reversed to the state the ledger recorded as prior",
+        "A managed region is removed without disturbing the rest of its file, and a file that exists only because Majordomus created it is removed whole",
+        "A bridge whose hash no longer matches is left in place and reported, never overwritten or deleted",
+        "The default leaves authored `.ai/` content untouched; removing generated state and removing authored content are separate, explicit requests",
+        "After the default removal, the repository is what it was before adoption apart from authored content, proved by comparing against a recorded starting state"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "cargo test --workspace --all-features"
+      ],
+      "evidence_required": [
+        "reverses_ledger",
+        "refuses_edited",
+        "authored_survives"
+      ],
+      "evidence": [],
+      "risk": "This is the operation where a mistake destroys somebody's work. Every deletion is justified by a ledger entry and a matching hash, or it does not happen.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1112",
+      "slug": "minimal-root-bridges",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 5,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "What touches the root is two small blocks, and they never change again",
+      "depends_on": [
+        "I1109"
+      ],
+      "blocked_by": [
+        "I1109"
+      ],
+      "dependents": [
+        "I1113",
+        "I1114",
+        "I1116",
+        "I1121"
+      ],
+      "scope": [
+        "AGENTS.md",
+        ".envrc"
+      ],
+      "non_scope": [
+        "Repository-domain logic in any root file",
+        "A bridge whose content depends on the version of the tool that wrote it"
+      ],
+      "objective": "Reduce every root-level integration to a small, stable, machine-owned bridge: a managed block in the agent document that points at the layer, and — when direnv is wanted — one line that sources the environment integration.",
+      "why": "Root files are where an integration becomes visible and where it becomes a nuisance. A bridge that carries no logic never has to change, which means an upgrade touches nothing a person has to re-approve.",
+      "current_state": "Root documents carry generated blocks whose content is regenerated as the layer changes, and provider bootstraps are written to the root.",
+      "desired_state": "A bridge names where the truth lives and stops. Upgrading Majordomus does not rewrite it, because there is nothing version-dependent inside it.",
+      "acceptance_criteria": [
+        "Each bridge is bounded by markers, recorded in the ledger, and carries no logic — only a reference to where the canonical material lives",
+        "Upgrading the tool leaves the bridges byte-identical, proved by reconciling with a newer version against an older adoption",
+        "A bridge is created only when the surface genuinely requires a root file; where a tool can be configured programmatically, nothing is written",
+        "The environment bridge is one stable line whose target lives under `.majordomus/`"
+      ],
+      "validation": [
+        "majordomus init --dry-run",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "bridges_minimal",
+        "stable_across_versions"
+      ],
+      "evidence": [],
+      "risk": "Every provider that wants a root file argues that its file is special. The answer is the same one: the file is an adapter, and its content is derived.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1113",
+      "slug": "environment-entry-budget",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Entering a directory is local, bounded and silent about the network",
+      "depends_on": [
+        "I1112"
+      ],
+      "blocked_by": [
+        "I1112"
+      ],
+      "dependents": [
+        "I1119"
+      ],
+      "scope": [
+        ".majordomus/env",
+        ".ai/repo/benchmarks/rust"
+      ],
+      "non_scope": [
+        "Any network call, any build, any repository mutation on the entry path",
+        "A banner that recomputes what a cache already holds"
+      ],
+      "objective": "Keep environment entry — the direnv hook, the banner, the shell integration — local, bounded and free of build and network work, and measure it against a declared budget.",
+      "why": "This runs every time a person changes directory. A second of it is a tax on every action of the day, and a network call in it turns a flaky connection into a broken shell.",
+      "current_state": "The environment integration exists and its shape is described in the supplied reference. Its cost under the new model is unmeasured.",
+      "desired_state": "The entry path reads cached, local state, its cost is benchmarked against a stated budget, and a regression fails a check rather than being noticed.",
+      "acceptance_criteria": [
+        "The entry path performs no network request, no build and no mutation of a tracked file",
+        "Its cost is measured against a declared budget, cold and warm, and a regression fails the check",
+        "What it displays is derived from the same model every other consumer reads, not from a parallel inspection",
+        "A repository that has not been adopted produces no error and no noise"
+      ],
+      "validation": [
+        "majordomus bench --check",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "entry_budget",
+        "no_network_no_build"
+      ],
+      "evidence": [],
+      "risk": "Cheap on this machine is not cheap on a cold cache over a network filesystem. The budget is measured on a cold cache, and the environment it was measured on is recorded with it.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1114",
+      "slug": "provider-adapters",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "A provider is an adapter over the model, and adding one is an implementation",
+      "depends_on": [
+        "I1112"
+      ],
+      "blocked_by": [
+        "I1112"
+      ],
+      "dependents": [
+        "I1115"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/providers.rs",
+        ".majordomus/generated"
+      ],
+      "non_scope": [
+        "Provider semantics in the canonical layer",
+        "A provider list maintained by hand"
+      ],
+      "objective": "Make every provider-specific representation a derived adapter over the repository model, so that supporting another provider is one implementation rather than a copy of the instructions in another file.",
+      "why": "Provider files are the fastest-growing part of any repository that works with several assistants, and each copy drifts from the layer it was copied from. The layer is provider-neutral by design; the adapters are where a provider's requirements are allowed to exist.",
+      "current_state": "Provider bootstraps are generated from the registry, which is the right shape, but they land at the root and their ownership is not recorded.",
+      "desired_state": "Adapters are generated into the control-plane namespace, bridged at the root only where a tool truly requires a root file, and a new provider is a trait implementation.",
+      "acceptance_criteria": [
+        "Every provider representation is derived from the model and declares its provenance",
+        "Adding a provider is one implementation of the adapter contract, with no edit to the layer and no new list",
+        "A provider that can be configured programmatically produces no repository file at all",
+        "Where a root file is unavoidable it is a managed bridge with recorded ownership, and its content is derived"
+      ],
+      "validation": [
+        "majordomus generate --check",
+        "cargo test --workspace --all-features"
+      ],
+      "evidence_required": [
+        "adapters_derived",
+        "new_provider_is_one_impl"
+      ],
+      "evidence": [],
+      "risk": "An adapter layer can grow provider-shaped holes in the model beneath it. The check is whether the model would still be complete if every adapter were deleted.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1115",
+      "slug": "derived-completion",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 7,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Completion comes from the command model, not from a second list",
+      "depends_on": [
+        "I1114"
+      ],
+      "blocked_by": [
+        "I1114"
+      ],
+      "dependents": [
+        "I1123"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/cli.rs",
+        ".majordomus/generated"
+      ],
+      "non_scope": [
+        "A completion script maintained by hand",
+        "Regenerating completion on the environment-entry path if it costs more than the budget allows"
+      ],
+      "objective": "Derive shell completion from the same command model the CLI and its documentation already come from, so that a new command is completable without anything being listed.",
+      "why": "A completion script is the least visible copy of a command list and therefore the one that drifts furthest. It is also the one people notice, because a missing completion reads as a missing feature.",
+      "current_state": "The CLI is declared once and its reference is generated. Completion, where it exists, is not derived from that declaration.",
+      "desired_state": "Completion is generated from the command model, refreshed as safe cached state, and never enumerated by hand.",
+      "acceptance_criteria": [
+        "Completion data is derived from the command model with no second enumeration",
+        "A command added to the model is completable after the ordinary generation, with no further edit",
+        "The refresh is cached state under the control-plane namespace and never a tracked-file mutation",
+        "Whatever the entry path does for completion stays inside the entry budget"
+      ],
+      "validation": [
+        "majordomus generate --check",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "completion_derived"
+      ],
+      "evidence": [],
+      "risk": "Completion is where a fast path tempts a shortcut list. Deriving it is cheap only if the model is already cached; otherwise the budget decides.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1116",
+      "slug": "migrate-own-footprint",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "This repository's own footprint moves, through the reconciler",
+      "depends_on": [
+        "I1110",
+        "I1112"
+      ],
+      "blocked_by": [
+        "I1110",
+        "I1112"
+      ],
+      "dependents": [
+        "I1118",
+        "I1122"
+      ],
+      "scope": [
+        "scripts",
+        ".majordomus"
+      ],
+      "non_scope": [
+        "A broad recursive delete anywhere",
+        "Moving user-authored content without recording where it went",
+        "A shell script that performs the migration outside the reconciler"
+      ],
+      "objective": "Migrate what this repository itself scatters — root scripts, provider files, configuration beside configuration, generated state outside the namespaces — into `.ai/` and `.majordomus/`, using the reconciler and its migrations rather than a move script.",
+      "why": "The tool has to survive its own contract. A repository that ships a two-folder promise while keeping a root full of exceptions is the least convincing possible demonstration, and it is also where every latent assumption about paths will surface.",
+      "current_state": "The footprint is what phase one recorded. Nothing has moved.",
+      "desired_state": "The repository conforms to its own contract, every move is recorded, and nothing that was working stopped working.",
+      "acceptance_criteria": [
+        "Every move goes through a recorded migration, previewable as a dry run before it is applied",
+        "Compatibility is preserved for the paths other work depends on, or the break is deliberate, documented and migrated",
+        "After the migration this repository conforms to its own contract, checked by the same validator a foreign repository would face",
+        "Nothing that was working before stops working, proved by the full suite rather than by inspection"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor",
+        "majordomus generate --check"
+      ],
+      "evidence_required": [
+        "footprint_migrated",
+        "conformance_self",
+        "nothing_broke"
+      ],
+      "evidence": [],
+      "risk": "This is the phase where the tool is changed by the thing it is changing, with several sessions working in the same repository. It runs once, as a dry run first, and not concurrently with other structural work.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1117",
+      "slug": "remove-manual-registries",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p1",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "The hand-maintained lists are removed, not left running beside the derivation",
+      "depends_on": [
+        "I1106"
+      ],
+      "blocked_by": [
+        "I1106"
+      ],
+      "dependents": [
+        "I1123"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src",
+        "site"
+      ],
+      "non_scope": [
+        "Deleting a list that is genuinely authoritative for something the model does not hold",
+        "Leaving a hand-written list in place as a fallback"
+      ],
+      "objective": "Find every list that enumerates what discovery already finds — indexes, menus, route tables, provider lists, documentation catalogues — and remove it, so that one derivation is the only one.",
+      "why": "Two systems doing the same job is worse than either alone: the old one keeps working just well enough that nobody notices it has diverged. This session alone found the same route list four times and a page list twice.",
+      "current_state": "Several such lists have been removed already; the rest are what phase one recorded and what the derivation makes redundant.",
+      "desired_state": "Each replaced list is deleted, its consumers read the derivation, and nothing survives as a fallback.",
+      "acceptance_criteria": [
+        "The lists that are replaced are enumerated from the repository rather than assumed, and each is removed or justified as authoritative for something else",
+        "Every consumer reads the derivation after the removal, and nothing removed remains reachable as a fallback",
+        "What the interfaces show is the same as before the removal, except where the derivation is more complete",
+        "A check refuses a new enumeration of a discoverable namespace"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "majordomus generate --check"
+      ],
+      "evidence_required": [
+        "duplicates_removed",
+        "enumeration_refused"
+      ],
+      "evidence": [],
+      "risk": "A list quietly holding something the model does not carry loses that content when it goes. Each removal is checked against what the derivation actually produces, item by item.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1118",
+      "slug": "two-folder-doctrine",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 7,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": true,
+      "title": "Every invariant of this milestone is a rule with a check that runs",
+      "depends_on": [
+        "I1110",
+        "I1116"
+      ],
+      "blocked_by": [
+        "I1110",
+        "I1116"
+      ],
+      "dependents": [
+        "I1123"
+      ],
+      "scope": [
+        ".ai/repo/rules/project"
+      ],
+      "non_scope": [
+        "A rule with no executable check",
+        "Restating a constraint an existing rule already enforces"
+      ],
+      "objective": "Turn the invariants — bounded footprint, no manual registration, disposable derived artifacts, reversible managed mutations, idempotent reconciliation, root files as adapters, zero-registration extension — into project rules, each with an executable check that CI runs and a negative test that proves it fires.",
+      "why": "Everything in this milestone decays the moment a change can land without a check noticing. A rule with no check is a suggestion, and this repository has a rule saying exactly that.",
+      "current_state": "The invariants exist as prose in the mission and as behaviour in the code. No rule states them and no check enforces them.",
+      "desired_state": "Each invariant is a rule with a check, each check has a negative test, and CI runs all of them.",
+      "acceptance_criteria": [
+        "Majordomus-owned persistent state outside the two namespaces fails a check unless the ledger records it as a bridge",
+        "A secondary registry enumerating a discoverable namespace fails a check",
+        "A generated artifact without provenance, or read back as canonical input, fails a check",
+        "A mutation outside the two namespaces without a ledger entry fails a check",
+        "A non-idempotent reconciliation fails a check",
+        "Each rule has a negative test proving its check fires, and CI executes every one"
+      ],
+      "validation": [
+        "bin/majordomus doctor",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "rules_authored",
+        "checks_fire",
+        "ci_runs_them"
+      ],
+      "evidence": [],
+      "risk": "Seven rules for one milestone is a lot of doctrine. Any constraint an existing rule already covers is referenced rather than restated, and the review has to insist on that.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1119",
+      "slug": "integration-budgets",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 7,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "The budgets are measured, and a regression fails rather than being noticed",
+      "depends_on": [
+        "I1113"
+      ],
+      "blocked_by": [
+        "I1113"
+      ],
+      "dependents": [
+        "I1123"
+      ],
+      "scope": [
+        ".ai/repo/benchmarks",
+        ".ai/repo/policy.yaml"
+      ],
+      "non_scope": [
+        "A second benchmark system",
+        "A threshold so tight that ordinary content growth fails the build"
+      ],
+      "objective": "Measure what this architecture costs — discovery, reconciliation, the environment entry, the generated artifacts — and hold each to a budget derived from its measured baseline.",
+      "why": "A spine every consumer reads is a cost every consumer pays. Measured once and then never again, it grows until somebody works around the tool instead of using it.",
+      "current_state": "The benchmark infrastructure records distributions per command against a committed baseline. The new paths are not among its targets.",
+      "desired_state": "Each new path is a benchmark target with a recorded baseline and a threshold that catches a material regression while tolerating ordinary growth.",
+      "acceptance_criteria": [
+        "Discovery, reconciliation, the dry run and the environment entry are benchmark targets with recorded baselines",
+        "The thresholds are policy data, and the check names the target, both values and the threshold when it fails",
+        "The environment it was measured on is recorded with each baseline",
+        "A material regression fails; a byte does not"
+      ],
+      "validation": [
+        "majordomus bench --check"
+      ],
+      "evidence_required": [
+        "budgets_measured",
+        "regression_refused"
+      ],
+      "evidence": [],
+      "risk": "Wall-clock thresholds are noisy across machines. The structural counters gate strictly and the timings conservatively, as the existing performance doctrine already decided.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1120",
+      "slug": "actionable-failures",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 4,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "A refusal says what to do about it",
+      "depends_on": [
+        "I1108"
+      ],
+      "blocked_by": [
+        "I1108"
+      ],
+      "dependents": [
+        "I1123"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/error.rs"
+      ],
+      "non_scope": [
+        "A second diagnostics framework",
+        "A message that reports a condition without naming the repair"
+      ],
+      "objective": "Make every refusal in this subsystem name the source of truth, what was observed, what was expected and the command that repairs it — through the diagnostics framework that already exists.",
+      "why": "The operations here refuse often by design: an edited bridge, a stale ledger, a non-conforming path, a plan that would touch something it does not own. A refusal that only says no turns a safety property into an obstacle.",
+      "current_state": "Errors in the executable carry structured detail in places and a bare message in others. The new operations have no convention yet.",
+      "desired_state": "Each refusal is actionable, and a person who has never read this code can act on it without reading this code.",
+      "acceptance_criteria": [
+        "A refusal names the file or path, what was found, what was expected and the command that repairs it",
+        "An edited bridge, a ledger mismatch, a non-conforming path and a plan touching something unowned each have their own message rather than a shared generic one",
+        "The messages are exercised by tests, so a change that degrades one is caught",
+        "Machine-readable output carries the same detail as the human-readable form"
+      ],
+      "validation": [
+        "cargo test --workspace --all-features",
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "failures_actionable"
+      ],
+      "evidence": [],
+      "risk": "Message quality is the first thing to decay under time pressure and the last thing anybody tests. Testing the messages is what keeps them.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1121",
+      "slug": "integration-projected-everywhere",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Every surface shows the integration from the one model",
+      "depends_on": [
+        "I1112"
+      ],
+      "blocked_by": [
+        "I1112"
+      ],
+      "dependents": [
+        "I1122"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/capability/builtin"
+      ],
+      "non_scope": [
+        "A mutating integration operation exposed to unauthenticated HTTP or to a browser",
+        "A hand-edited API document, route table or documentation list"
+      ],
+      "objective": "Project the integration state — what is adopted, what is owned, what is generated, what would change — through the CLI, the API and its document, MCP, the Cockpit and the documentation, from the one model and with no parallel definition.",
+      "why": "The question a person asks about an integration is what it did to my repository, and they will ask it wherever they happen to be. Answering it four ways is how the four answers begin to differ.",
+      "current_state": "The capability registry already projects declared operations into every surface. The integration state is not among them.",
+      "desired_state": "One declaration exposes the integration reads, and every surface derives from it as it does for everything else.",
+      "acceptance_criteria": [
+        "The integration reads are declared once and appear in the CLI, the API, the API document, MCP, the Cockpit and the generated reference with no second registration",
+        "No mutating operation is exposed to an untrusted surface; adoption and removal stay with the trusted command line",
+        "The Cockpit shows what is adopted, what is owned and what a reconciliation would change, from that declaration",
+        "The published documentation derives its integration reference from the same model, with no retyped value"
+      ],
+      "validation": [
+        "majordomus generate --check",
+        "cargo test --workspace --all-features"
+      ],
+      "evidence_required": [
+        "surfaces_derived",
+        "no_mutation_untrusted"
+      ],
+      "evidence": [],
+      "risk": "Showing what a reconciliation would change means running the plan on a request. Its cost belongs to the budget, and a read that builds a plan has to say so.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1122",
+      "slug": "adversarial-end-to-end",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 7,
+      "priority": "p0",
+      "profile": "deep-work",
+      "parallel_safe": false,
+      "title": "A foreign repository, adopted, upgraded and given back",
+      "depends_on": [
+        "I1110",
+        "I1111",
+        "I1116",
+        "I1121"
+      ],
+      "blocked_by": [
+        "I1110",
+        "I1111",
+        "I1116",
+        "I1121"
+      ],
+      "dependents": [
+        "I1123"
+      ],
+      "scope": [
+        "test/cases"
+      ],
+      "non_scope": [
+        "A fixture the implementation recognises as a test",
+        "Declaring success from the exit code of an adoption"
+      ],
+      "objective": "Prove the contract against a repository that is not this one: adopt it, verify the footprint, run it again, upgrade the tool, edit a bridge by hand, then remove the adoption and compare what is left against what was there before.",
+      "why": "Every claim in this milestone is about somebody else's repository. Proving it here, where the tool and the subject are the same tree, proves the easy half; the interesting failures are the ones this repository cannot exhibit.",
+      "current_state": "Nothing has been adopted anywhere but here.",
+      "desired_state": "One test drives the whole lifecycle on a foreign fixture and asserts each stage, including the ones designed to refuse.",
+      "acceptance_criteria": [
+        "Adoption of a repository with no prior Majordomus state adds the two namespaces and the declared bridges, and nothing else, verified against the tree rather than against the report",
+        "The second adoption changes nothing",
+        "An adoption made by an older version reconciles forward without rewriting a bridge that did not need to change",
+        "A bridge edited by a person is refused rather than overwritten, and reported",
+        "Removal returns the repository to what it was, apart from authored content, compared against a recorded starting state",
+        "The fixture is ordinary in every respect and nothing in the implementation recognises it"
+      ],
+      "validation": [
+        "bash test/run.sh"
+      ],
+      "evidence_required": [
+        "foreign_adoption",
+        "upgrade_path",
+        "removal_restores"
+      ],
+      "evidence": [],
+      "risk": "An end-to-end test with a fixture the implementation special-cases proves nothing. The fixture has to be indistinguishable from a real repository.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1123",
+      "slug": "two-folder-acceptance",
+      "milestone": "two-folder-integration",
+      "status": "BLOCKED",
+      "wave": 8,
+      "priority": "p0",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The milestone is accepted on its evidence",
+      "depends_on": [
+        "I1104",
+        "I1107",
+        "I1115",
+        "I1117",
+        "I1118",
+        "I1119",
+        "I1120",
+        "I1122"
+      ],
+      "blocked_by": [
+        "I1104",
+        "I1107",
+        "I1115",
+        "I1117",
+        "I1118",
+        "I1119",
+        "I1120",
+        "I1122"
+      ],
+      "dependents": [],
+      "scope": [
+        "docs/PLAN_STATUS.md",
+        ".ai/repo/project"
+      ],
+      "non_scope": [
+        "Reporting a mechanism as proved without the artifact that proves it"
+      ],
+      "objective": "Close the milestone: every acceptance criterion carries evidence, the measured baselines are recorded with the environment they were taken on, the adoption and removal run as documented on a clean checkout, and the remaining limitations are stated.",
+      "why": "A milestone is accepted by its evidence. What a later reader has is the record, not this session.",
+      "current_state": "Open.",
+      "desired_state": "Accepted with evidence against every criterion, with the footprint, the budgets and the limitations written where they will be found.",
+      "acceptance_criteria": [
+        "Every acceptance criterion of the milestone has evidence recorded against it",
+        "The measured footprint of an adoption is recorded — every path, with its namespace and its owner",
+        "The budgets are recorded with the machine and environment they were measured on",
+        "The documented adoption and removal run exactly as written on a clean checkout",
+        "Pre-existing failures, failures introduced here and failures fixed here are distinguished explicitly",
+        "Remaining limitations are stated rather than omitted"
+      ],
+      "validation": [
+        "bash test/run.sh",
+        "bin/majordomus doctor",
+        "majordomus generate --check"
+      ],
+      "evidence_required": [
+        "criteria_covered",
+        "footprint_recorded",
+        "limitations_stated"
+      ],
+      "evidence": [],
+      "risk": "The end of a long milestone is where intent gets recorded as outcome. Anything not demonstrated is written as a limitation.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
     }
   ],
   "waves": [
@@ -9495,7 +10880,9 @@
         "I0817",
         "I0829",
         "I0901",
-        "I1001"
+        "I1001",
+        "I1031",
+        "I1101"
       ]
     },
     {
@@ -9522,7 +10909,9 @@
         "I1002",
         "I1003",
         "I1004",
-        "I1025"
+        "I1025",
+        "I1102",
+        "I1105"
       ]
     },
     {
@@ -9552,7 +10941,10 @@
         "I0918",
         "I1005",
         "I1011",
-        "I1015"
+        "I1015",
+        "I1103",
+        "I1104",
+        "I1106"
       ]
     },
     {
@@ -9583,7 +10975,10 @@
         "I1010",
         "I1012",
         "I1018",
-        "I1023"
+        "I1023",
+        "I1107",
+        "I1108",
+        "I1117"
       ]
     },
     {
@@ -9616,7 +11011,9 @@
         "I1020",
         "I1022",
         "I1026",
-        "I1028"
+        "I1028",
+        "I1109",
+        "I1120"
       ]
     },
     {
@@ -9639,7 +11036,10 @@
         "I0930",
         "I1021",
         "I1024",
-        "I1027"
+        "I1027",
+        "I1110",
+        "I1111",
+        "I1112"
       ]
     },
     {
@@ -9654,7 +11054,11 @@
         "I0923",
         "I0925",
         "I0928",
-        "I1029"
+        "I1029",
+        "I1113",
+        "I1114",
+        "I1116",
+        "I1121"
       ]
     },
     {
@@ -9663,7 +11067,11 @@
         "I0012",
         "I0813",
         "I0931",
-        "I1030"
+        "I1030",
+        "I1115",
+        "I1118",
+        "I1119",
+        "I1122"
       ]
     },
     {
@@ -9671,7 +11079,8 @@
       "issues": [
         "I0015",
         "I0815",
-        "I0929"
+        "I0929",
+        "I1123"
       ]
     },
     {
@@ -10530,6 +11939,142 @@
     {
       "from": "I1029",
       "to": "I1030"
+    },
+    {
+      "from": "I1101",
+      "to": "I1102"
+    },
+    {
+      "from": "I1101",
+      "to": "I1105"
+    },
+    {
+      "from": "I1102",
+      "to": "I1103"
+    },
+    {
+      "from": "I1102",
+      "to": "I1104"
+    },
+    {
+      "from": "I1104",
+      "to": "I1123"
+    },
+    {
+      "from": "I1105",
+      "to": "I1106"
+    },
+    {
+      "from": "I1106",
+      "to": "I1107"
+    },
+    {
+      "from": "I1106",
+      "to": "I1108"
+    },
+    {
+      "from": "I1106",
+      "to": "I1117"
+    },
+    {
+      "from": "I1107",
+      "to": "I1123"
+    },
+    {
+      "from": "I1108",
+      "to": "I1109"
+    },
+    {
+      "from": "I1108",
+      "to": "I1120"
+    },
+    {
+      "from": "I1109",
+      "to": "I1110"
+    },
+    {
+      "from": "I1109",
+      "to": "I1111"
+    },
+    {
+      "from": "I1109",
+      "to": "I1112"
+    },
+    {
+      "from": "I1110",
+      "to": "I1116"
+    },
+    {
+      "from": "I1110",
+      "to": "I1118"
+    },
+    {
+      "from": "I1110",
+      "to": "I1122"
+    },
+    {
+      "from": "I1111",
+      "to": "I1122"
+    },
+    {
+      "from": "I1112",
+      "to": "I1113"
+    },
+    {
+      "from": "I1112",
+      "to": "I1114"
+    },
+    {
+      "from": "I1112",
+      "to": "I1116"
+    },
+    {
+      "from": "I1112",
+      "to": "I1121"
+    },
+    {
+      "from": "I1113",
+      "to": "I1119"
+    },
+    {
+      "from": "I1114",
+      "to": "I1115"
+    },
+    {
+      "from": "I1115",
+      "to": "I1123"
+    },
+    {
+      "from": "I1116",
+      "to": "I1118"
+    },
+    {
+      "from": "I1116",
+      "to": "I1122"
+    },
+    {
+      "from": "I1117",
+      "to": "I1123"
+    },
+    {
+      "from": "I1118",
+      "to": "I1123"
+    },
+    {
+      "from": "I1119",
+      "to": "I1123"
+    },
+    {
+      "from": "I1120",
+      "to": "I1123"
+    },
+    {
+      "from": "I1121",
+      "to": "I1122"
+    },
+    {
+      "from": "I1122",
+      "to": "I1123"
     }
   ],
   "findings": [

@@ -1,0 +1,37 @@
+id: I1122
+milestone: two-folder-integration
+title: A foreign repository, adopted, upgraded and given back
+slug: adversarial-end-to-end
+priority: p0
+profile: deep-work
+parallel_safe: false
+objective: "Prove the contract against a repository that is not this one: adopt it, verify the footprint, run it again, upgrade the tool, edit a bridge by hand, then remove the adoption and compare what is left against what was there before."
+why: "Every claim in this milestone is about somebody else's repository. Proving it here, where the tool and the subject are the same tree, proves the easy half; the interesting failures are the ones this repository cannot exhibit."
+current_state: "Nothing has been adopted anywhere but here."
+desired_state: "One test drives the whole lifecycle on a foreign fixture and asserts each stage, including the ones designed to refuse."
+scope:
+  - test/cases
+non_scope:
+  - A fixture the implementation recognises as a test
+  - Declaring success from the exit code of an adoption
+depends_on:
+  - I1110
+  - I1111
+  - I1116
+  - I1121
+acceptance_criteria:
+  - Adoption of a repository with no prior Majordomus state adds the two namespaces and the declared bridges, and nothing else, verified against the tree rather than against the report
+  - The second adoption changes nothing
+  - An adoption made by an older version reconciles forward without rewriting a bridge that did not need to change
+  - A bridge edited by a person is refused rather than overwritten, and reported
+  - Removal returns the repository to what it was, apart from authored content, compared against a recorded starting state
+  - The fixture is ordinary in every respect and nothing in the implementation recognises it
+validation:
+  - bash test/run.sh
+evidence_required:
+  - foreign_adoption
+  - upgrade_path
+  - removal_restores
+risk: "An end-to-end test with a fixture the implementation special-cases proves nothing. The fixture has to be indistinguishable from a real repository."
+created_at: 2026-09-06
+updated_at: 2026-09-06

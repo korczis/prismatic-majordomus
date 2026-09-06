@@ -1,0 +1,33 @@
+id: I1113
+milestone: two-folder-integration
+title: Entering a directory is local, bounded and silent about the network
+slug: environment-entry-budget
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Keep environment entry — the direnv hook, the banner, the shell integration — local, bounded and free of build and network work, and measure it against a declared budget."
+why: "This runs every time a person changes directory. A second of it is a tax on every action of the day, and a network call in it turns a flaky connection into a broken shell."
+current_state: "The environment integration exists and its shape is described in the supplied reference. Its cost under the new model is unmeasured."
+desired_state: "The entry path reads cached, local state, its cost is benchmarked against a stated budget, and a regression fails a check rather than being noticed."
+scope:
+  - .majordomus/env
+  - .ai/repo/benchmarks/rust
+non_scope:
+  - Any network call, any build, any repository mutation on the entry path
+  - A banner that recomputes what a cache already holds
+depends_on:
+  - I1112
+acceptance_criteria:
+  - The entry path performs no network request, no build and no mutation of a tracked file
+  - Its cost is measured against a declared budget, cold and warm, and a regression fails the check
+  - What it displays is derived from the same model every other consumer reads, not from a parallel inspection
+  - A repository that has not been adopted produces no error and no noise
+validation:
+  - majordomus bench --check
+  - bash test/run.sh
+evidence_required:
+  - entry_budget
+  - no_network_no_build
+risk: "Cheap on this machine is not cheap on a cold cache over a network filesystem. The budget is measured on a cold cache, and the environment it was measured on is recorded with it."
+created_at: 2026-09-06
+updated_at: 2026-09-06

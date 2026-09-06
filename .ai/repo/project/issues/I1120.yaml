@@ -1,0 +1,31 @@
+id: I1120
+milestone: two-folder-integration
+title: A refusal says what to do about it
+slug: actionable-failures
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make every refusal in this subsystem name the source of truth, what was observed, what was expected and the command that repairs it — through the diagnostics framework that already exists."
+why: "The operations here refuse often by design: an edited bridge, a stale ledger, a non-conforming path, a plan that would touch something it does not own. A refusal that only says no turns a safety property into an obstacle."
+current_state: "Errors in the executable carry structured detail in places and a bare message in others. The new operations have no convention yet."
+desired_state: "Each refusal is actionable, and a person who has never read this code can act on it without reading this code."
+scope:
+  - apps/majordomus-cli/src/error.rs
+non_scope:
+  - A second diagnostics framework
+  - A message that reports a condition without naming the repair
+depends_on:
+  - I1108
+acceptance_criteria:
+  - A refusal names the file or path, what was found, what was expected and the command that repairs it
+  - An edited bridge, a ledger mismatch, a non-conforming path and a plan touching something unowned each have their own message rather than a shared generic one
+  - The messages are exercised by tests, so a change that degrades one is caught
+  - Machine-readable output carries the same detail as the human-readable form
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - failures_actionable
+risk: "Message quality is the first thing to decay under time pressure and the last thing anybody tests. Testing the messages is what keeps them."
+created_at: 2026-09-06
+updated_at: 2026-09-06

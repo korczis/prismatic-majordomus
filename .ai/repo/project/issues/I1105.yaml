@@ -1,0 +1,33 @@
+id: I1105
+milestone: two-folder-integration
+title: The repository is discovered once, into one model
+slug: repository-model-spine
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Build the one typed model of a repository — identity, structure, capabilities, the layer's registries, workflows, environments, providers, services and version-control state — discovered once and read by every consumer."
+why: "The CLI, the environment entry, the documentation and the server each discover the repository their own way today, which is four answers to one question and four places to fix when it is wrong. One model is the spine the rest of this milestone hangs from."
+current_state: "An index of the layer exists and a capability registry exists. Repository facts beyond them — the environment, the providers, the workspace, the services — are read where they are needed, each time."
+desired_state: "One discovery produces one typed value; consumers hold it rather than the filesystem."
+scope:
+  - apps/majordomus-cli/src/repository.rs
+  - apps/majordomus-cli/src/discovery
+non_scope:
+  - A second index beside the one that exists; this composes it
+  - Discovery that reaches the network or builds anything
+depends_on:
+  - I1101
+acceptance_criteria:
+  - One typed value carries what a consumer needs to know about a repository, composed from the registries that already own their parts
+  - Discovery happens once per process, and a second consumer pays nothing for it
+  - Nothing in the model requires a configuration file to state what inspection can establish
+  - No consumer reads the filesystem for a fact the model already carries, proved by a check rather than by review
+validation:
+  - cargo test --workspace --all-features
+  - majordomus perf
+evidence_required:
+  - one_model
+  - discovered_once
+risk: "A model that knows everything is discovered slowly, and the environment entry pays that cost on every directory change. Its cost is measured in the same issue that makes it mandatory, not later."
+created_at: 2026-09-06
+updated_at: 2026-09-06

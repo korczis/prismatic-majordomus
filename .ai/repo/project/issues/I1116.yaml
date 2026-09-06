@@ -1,0 +1,37 @@
+id: I1116
+milestone: two-folder-integration
+title: This repository's own footprint moves, through the reconciler
+slug: migrate-own-footprint
+priority: p0
+profile: deep-work
+parallel_safe: false
+objective: "Migrate what this repository itself scatters — root scripts, provider files, configuration beside configuration, generated state outside the namespaces — into `.ai/` and `.majordomus/`, using the reconciler and its migrations rather than a move script."
+why: "The tool has to survive its own contract. A repository that ships a two-folder promise while keeping a root full of exceptions is the least convincing possible demonstration, and it is also where every latent assumption about paths will surface."
+current_state: "The footprint is what phase one recorded. Nothing has moved."
+desired_state: "The repository conforms to its own contract, every move is recorded, and nothing that was working stopped working."
+scope:
+  - scripts
+  - .majordomus
+non_scope:
+  - A broad recursive delete anywhere
+  - Moving user-authored content without recording where it went
+  - A shell script that performs the migration outside the reconciler
+depends_on:
+  - I1110
+  - I1112
+acceptance_criteria:
+  - Every move goes through a recorded migration, previewable as a dry run before it is applied
+  - Compatibility is preserved for the paths other work depends on, or the break is deliberate, documented and migrated
+  - After the migration this repository conforms to its own contract, checked by the same validator a foreign repository would face
+  - Nothing that was working before stops working, proved by the full suite rather than by inspection
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - majordomus generate --check
+evidence_required:
+  - footprint_migrated
+  - conformance_self
+  - nothing_broke
+risk: "This is the phase where the tool is changed by the thing it is changing, with several sessions working in the same repository. It runs once, as a dry run first, and not concurrently with other structural work."
+created_at: 2026-09-06
+updated_at: 2026-09-06

@@ -1,0 +1,34 @@
+id: I1109
+milestone: two-folder-integration
+title: Everything placed outside the two namespaces is recorded, with what it was
+slug: ownership-ledger
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Record every mutation Majordomus makes outside `.ai/` and `.majordomus/` in a typed ledger: the path, the kind of mutation, the content hash as written, the generator and version that wrote it, and what was there before."
+why: "Without a ledger the tool cannot tell its own edits from a person's, which means it can neither update them safely nor remove them at all. The ledger is what makes an uninstall possible and an overwrite refusable."
+current_state: "Root documents carry generated blocks and provider bootstraps are written to the root. Nothing records that Majordomus put them there."
+desired_state: "The ledger is the authority on what Majordomus owns outside its namespaces, and a mismatch between what it recorded and what is on disk stops a mutation rather than resolving it."
+scope:
+  - .majordomus/manifest.json
+  - apps/majordomus-cli/src/integration/ownership.rs
+non_scope:
+  - Recording anything inside the two namespaces, which are owned by construction
+  - A ledger a person is expected to edit
+depends_on:
+  - I1108
+acceptance_criteria:
+  - Every mutation outside the two namespaces is recorded with its path, its kind, the hash as written, the generator and version, and the prior state
+  - A managed region records the markers that bound it, so the rest of the file is never in question
+  - The ledger is typed and schema-backed, generated from the canonical type rather than hand-written
+  - A path whose current hash does not match what the ledger recorded is reported as edited by a person, and no mutation proceeds on it silently
+  - The ledger contains no secret and no absolute developer path
+validation:
+  - cargo test --workspace --all-features
+  - bin/majordomus doctor
+evidence_required:
+  - ledger_records
+  - mismatch_stops
+risk: "A ledger that drifts from the filesystem authorises deletions it cannot justify. The hash is what keeps it honest, and a mismatch has to stop the operation rather than warn about it."
+created_at: 2026-09-06
+updated_at: 2026-09-06
