@@ -150,6 +150,21 @@ mj_validate_wiring() {
           elif grep -E "${prog}[[:space:]]+$arg0" "$wirefile" | grep -qE '\|\|[[:space:]]*(true|exit[[:space:]]+0)'; then
             mj_doctrine_fail wiring "$name" "$rel invokes it but swallows the exit code (|| true)" "grep -n '$prog $arg0' $rel"
           else mj_doctrine_ok wiring "$name" "wired via $rel"; fi ;;
+        git-config)
+          # A gate that lives in the clone's own configuration rather than in a tracked file.
+          # `.gitattributes` can say `merge=derived`, but the driver it names is declared per
+          # clone and per worktree, and git falls back to the default text merge in silence
+          # when it is not — which is the failure this exists to catch: the repository looks
+          # configured, every file is committed, and the driver never runs. The value has to
+          # name the tool the entry declares, or it is some other driver wearing the name.
+          local cfg; cfg="$(mj_git config --get "$target" 2>/dev/null || true)"
+          if [ -z "$cfg" ]; then
+            mj_doctrine_fail wiring "$name" "git config $target is not set in this clone, so git merges $prog's paths with the default driver and conflicts on every one" "just derive-merge-driver"
+          elif ! printf '%s' "$cfg" | grep -qF "$prog"; then
+            mj_doctrine_fail wiring "$name" "git config $target is set but does not name $prog: '$cfg'" "just derive-merge-driver"
+          elif [ -z "$resolved" ]; then
+            mj_doctrine_fail wiring "$name" "git config $target names '$path' and it is not an executable here" "ls -l $path"
+          else mj_doctrine_ok wiring "$name" "declared in this clone as $target"; fi ;;
         ci)
           if [ ! -f "$MJ_ROOT/$target" ]; then mj_doctrine_fail wiring "$name" "ci file $target does not exist"
           elif ! grep -qE "${prog}[[:space:]]+$arg0" "$MJ_ROOT/$target"; then mj_doctrine_fail wiring "$name" "$target does not invoke $prog $arg0" "grep -n $prog $target"

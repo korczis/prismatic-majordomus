@@ -12,7 +12,7 @@ source = "docs/claims/adr-catalogue.md"
 ## What it means
 
 A decision is data, not prose the tool happens to store. `.ai/repo/adrs/<NNNN>-<slug>.md`
-carries front matter validated against `share/schemas/adr.schema.json` — the schema
+carries front matter validated against `share/schemas/majordomus/adr/adr.v1.schema.json` — the schema
 identifier, the identity `adr-NNNN`, the kind, the title, one of four statuses, the date it
 reached that status, and optionally tags, supersession and provenance — over a body with
 non-empty `# Context`, `# Decision` and `# Consequences`. An unknown key is an error, an
@@ -27,7 +27,7 @@ record makes — a decision it supersedes, a file or test it was derived from �
 
 ## How it works
 
-`share/kinds.yaml` declares the kind, `share/schemas/adr.schema.json` is its contract, and
+`share/kinds.yaml` declares the kind, `share/schemas/majordomus/adr/adr.v1.schema.json` is its contract, and
 the allow-list `share/allow/adr.txt` is generated from that schema. Discovery is the source
 class `adr` in `.ai/repo/knowledge/sources.yaml`; nothing else registers a decision, so
 adding the file is the whole registration.
