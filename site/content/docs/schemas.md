@@ -793,6 +793,62 @@ open session, exactly as a foreign task record is.
 
 ---
 
+## `.ai/local/session-contexts/<stamp>--<session-id>.md`
+
+The bounded working context of one episode, written by `session start` and appended to by
+`session close`. Its contract is `majordomus.session-context/v1`
+(`share/schemas/majordomus/session-context/`); the kind is declared in `share/kinds.yaml`
+like every other, and no source class discovers it.
+
+```markdown
+---
+schema: session-context/v1
+kind: session-context
+session_id: s-20260906035523-7b6c
+opened_at: 2026-09-06T03:55:23Z
+opened_by: hook                      # hook | hand
+provider: claude-code                # only when a provider's event opened it
+provider_session: "abc-123"          # the provider's own identity, as it sent it
+branch: master
+head: 9b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b
+task_id: none
+profile: none
+worker: "some-provider/some-model"   # optional; recorded only when supplied
+---
+
+# Working context of session s-20260906035523-7b6c
+
+## Context at open
+<the context builder's output, verbatim>
+
+## Notes
+<the worker's own account of the work>
+
+## Close                              # appended by `session close`
+- closed_at: 2026-09-06T05:12:04Z
+- outcome: closed
+- head: 9b1e2d4f…
+- record: .ai/repo/sessions/20260906T051204Z--s-…--master--9b1e2d4--c0ffee1234567890.md
+```
+
+`opened_by` is `hook` exactly when the open named the provider that delivered the event,
+which only something running inside that provider's hook can do; that is what makes it a
+fact rather than a claim. `provider_session` is the string that ties the episode to the
+prompt archive, whose records carry the same one.
+
+The document is **appended to, never rewritten**: the front matter describes the open, and
+the close adds a section, so whatever a worker typed between the two events survives. It is
+**not tracked**, and unlike the other local state it is not tracked for a second reason as
+well: it is a snapshot of a projection, so re-resolving it later produces a different
+document and no surface can reproduce it (ADR 0015).
+
+It is never a transcript. The derived half is the builder's output and the authored half
+summarises the work; a front-matter key naming a message list, a completion or a model's
+reply is refused by the `majordomus.session-lifecycle` doctrine, which is how
+`project.never-store-transcripts` is kept mechanically here rather than by memory.
+
+---
+
 ## `.ai/repo/sessions/<file>.md`
 
 The immutable record of a closed session. Filename:
