@@ -312,6 +312,15 @@ fn a_sessions_scratch_checkout_is_ephemeral_reported_refused_by_the_guard_and_ne
         .iter()
         .any(|d| d["code"] == "worktree.ephemeral" && d["severity"] == "warning"));
     assert_eq!(t["tallies"]["ephemeral"], 1);
+    // merged and clean as it is, a scratch checkout is never offered for cleanup
+    let branch = t["branches"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|b| b["name"] == "pr74")
+        .unwrap();
+    assert_eq!(branch["merged_into_trunk"], true);
+    assert_eq!(branch["cleanup_eligible"], false, "{branch:#}");
 
     // the guard still refuses a commit from there: a branch is being worked on where it
     // does not belong, and the remedy says what to do about it
