@@ -15,7 +15,12 @@ pub const SWAGGER_UI_VERSION: &str = "5.17.14";
 pub const SPEC_PATH: &str = "/openapi.json";
 
 /// The path the page is served at.
-pub const DOCS_PATH: &str = "/docs";
+///
+/// `/swagger`, not `/docs`: `/docs/**` is the documentation site, and a native route mounted
+/// over it takes every page beneath it — 52 of them, answering 404 to anybody using the
+/// running executable rather than the published site (ADR 0018). Every projection that names
+/// this route reads it from here, so the move was one line and a rebuild.
+pub const DOCS_PATH: &str = "/swagger";
 
 static PAGE: LazyLock<String> = LazyLock::new(|| {
     format!(

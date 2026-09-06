@@ -403,7 +403,7 @@ impl Runner {
                     SystemTarget::HttpCockpitOverview => "/cockpit",
                     SystemTarget::HttpCockpitCapabilities => "/cockpit/capabilities",
                     SystemTarget::HttpCockpitGraph => "/cockpit/graphs/registry",
-                    _ => "/docs",
+                    _ => crate::http::swagger::DOCS_PATH,
                 };
                 self.http("GET", path, &json!({}), CacheMode::NotApplicable)
             }

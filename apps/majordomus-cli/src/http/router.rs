@@ -297,8 +297,16 @@ impl Router {
         // own directory, and a surface discovered tomorrow is answered without an arm of
         // its own. The validator refuses a surface that would shadow a route below.
         if let Some(surfaces) = &self.surfaces {
-            if let Some(response) = surfaces.handle(&req.method, &req.path) {
-                return response;
+            // The root is the one path two things legitimately want. The application's
+            // landing page is what a person opening the server should see; the route index
+            // is what a client has always got from `GET /`, and a client that asked for JSON
+            // getting HTML instead is a break nobody notices until an integration does.
+            // Everything below the root goes to the surface without a question.
+            let contested_root = req.path == "/" && !prefers_html(req);
+            if !contested_root {
+                if let Some(response) = surfaces.handle(&req.method, &req.path) {
+                    return response;
+                }
             }
         }
         match (req.method.as_str(), req.path.as_str()) {
@@ -333,7 +341,7 @@ impl Router {
                 json_response(200, &index)
             }
             ("GET", "/openapi.json") => self.openapi(),
-            ("GET", "/docs") => Response::new(
+            ("GET", path) if path == swagger::DOCS_PATH => Response::new(
                 200,
                 "text/html; charset=utf-8",
                 swagger::page().to_string(),

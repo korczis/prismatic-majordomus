@@ -611,10 +611,9 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
                         .http
                         .as_ref()
                         .map(|h| format!("{} {}", h.method.as_str(), h.path)),
-                    c.exposure
-                        .http
-                        .as_ref()
-                        .map(|_| format!("/docs#/{}/{}", c.module, c.id)),
+                    c.exposure.http.as_ref().map(|_| {
+                        format!("{}#/{}/{}", crate::http::swagger::DOCS_PATH, c.module, c.id)
+                    }),
                 ),
                 projection_row(
                     "Command line",
@@ -1510,14 +1509,16 @@ pub fn api(ctx: &Context) -> Page {
             .map(|path| {
                 row(vec![
                     cell(mono(*path)),
-                    text_cell(match *path {
-                        "/" => "the index: what this server is and where its surfaces are",
-                        "/openapi.json" => {
-                            "the OpenAPI document, built from the registry per process"
-                        }
-                        "/docs" => "Swagger UI over that document",
-                        "/mcp" => "MCP over HTTP, when this process serves a shared server",
-                        _ => "a route of the projection itself",
+                    text_cell(if *path == "/" {
+                        "the index: what this server is and where its surfaces are"
+                    } else if *path == crate::http::swagger::SPEC_PATH {
+                        "the OpenAPI document, built from the registry per process"
+                    } else if *path == crate::http::swagger::DOCS_PATH {
+                        "Swagger UI over that document"
+                    } else if *path == crate::http::mcp::PATH {
+                        "MCP over HTTP, when this process serves a shared server"
+                    } else {
+                        "a route of the projection itself"
                     }),
                 ])
             })
@@ -1535,9 +1536,9 @@ pub fn api(ctx: &Context) -> Page {
             .class("mj-grid")
             .child(card_with(
                 "Swagger UI",
-                link("/docs", "Open"),
+                link(crate::http::swagger::DOCS_PATH, "Open"),
                 el("p").class("mj-prose").text(
-                    "Swagger UI is served from this process and reads /openapi.json, which is generated from the registry at first request. Nothing about an operation is written twice: the descriptions, the schemas and the examples are the capability's own.",
+                    format!("Swagger UI is served from this process and reads {}, which is generated from the registry at first request. Nothing about an operation is written twice: the descriptions, the schemas and the examples are the capability's own.", crate::http::swagger::SPEC_PATH),
                 ),
             ))
             .child(card(

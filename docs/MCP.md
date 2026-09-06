@@ -26,7 +26,7 @@ bin/majordomus-mcp                                           # the same, built f
 The log on stderr names it the moment it is up:
 
 ```
-shared server listening on http://127.0.0.1:8741 (swagger ui http://127.0.0.1:8741/docs, openapi http://127.0.0.1:8741/openapi.json, mcp over http http://127.0.0.1:8741/mcp); the one server for this repository ...
+shared server listening on http://127.0.0.1:8741 (swagger ui http://127.0.0.1:8741/swagger, openapi http://127.0.0.1:8741/openapi.json, mcp over http http://127.0.0.1:8741/mcp); the one server for this repository ...
 ```
 
 It is not a daemon: nothing starts it but a client, nothing keeps it alive but clients,

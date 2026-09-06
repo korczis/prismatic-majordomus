@@ -26,7 +26,16 @@ pub const OPENAPI_VERSION: &str = "3.1.0";
 pub const OAS_DIALECT: &str = "https://spec.openapis.org/oas/3.1/dialect/base";
 
 /// The routes that are the projection's own, not capabilities.
-pub const INFRASTRUCTURE_ROUTES: &[&str] = &["/", "/openapi.json", "/docs", "/cockpit", "/mcp"];
+pub static INFRASTRUCTURE_ROUTES: std::sync::LazyLock<Vec<&'static str>> =
+    std::sync::LazyLock::new(|| {
+        vec![
+            "/",
+            super::swagger::SPEC_PATH,
+            super::swagger::DOCS_PATH,
+            crate::cockpit::PREFIX,
+            super::mcp::PATH,
+        ]
+    });
 
 /// The error statuses the router answers, by code, with the reason each one is given.
 /// `refused` is a command's alone: a query has nothing to refuse.
@@ -165,7 +174,7 @@ pub fn document(
         "components": { "schemas": components },
         "x-majordomus": {
             "generator": format!("majordomus-cli {version}"),
-            "infrastructure": INFRASTRUCTURE_ROUTES,
+            "infrastructure": &*INFRASTRUCTURE_ROUTES,
             "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
             "errors": ERROR_STATUSES.iter().map(|(status, code, reason)| json!({ "status": status, "code": code, "reason": reason })).collect::<Vec<_>>()
         }

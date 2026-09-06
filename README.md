@@ -382,7 +382,7 @@ and the benchmarks — is rendered from that dataset and from nothing typed by h
 ```bash
 just build                      # cargo build of apps/majordomus-cli (or: cargo build --manifest-path apps/majordomus-cli/Cargo.toml)
 just mcp                        # MCP on stdio for the client that spawned it; the first one in a repository is the shared server
-just serve                      # the shared server alone: the Cockpit at /cockpit, Swagger UI at /docs, /openapi.json, /mcp
+just serve                      # the shared server alone: the Cockpit at /cockpit, Swagger UI at /swagger, /openapi.json, /mcp
 just cockpit                    # open the running server's Cockpit in a browser
 just cockpit-assets             # build the Cockpit's stylesheet and vendor its pinned libraries (needs npm ci)
 just capabilities               # every capability and its projections

@@ -47,7 +47,7 @@ done < "$S/out.txt"
 # the log names the shared server and its Swagger UI, with the URL
 grep -q 'shared server listening on http://127\.0\.0\.1:[0-9]*' "$S/err.txt" || { echo "    no listening line with a URL on stderr"; cat "$S/err.txt"; exit 1; }
 url="$(sed -n 's/.*listening on \(http:\/\/127\.0\.0\.1:[0-9]*\).*/\1/p' "$S/err.txt" | head -n 1)"
-grep -qF "$url/docs" "$S/err.txt" || { echo "    the log does not name Swagger UI at $url/docs"; exit 1; }
+grep -qF "$url/swagger" "$S/err.txt" || { echo "    the log does not name Swagger UI at $url/swagger"; exit 1; }
 grep -qF "$url/mcp" "$S/err.txt" || { echo "    the log does not name MCP over HTTP at $url/mcp"; exit 1; }
 # the client learns the URL and its peer id from initialize, and the board lists it
 sed -n 1p "$S/out.txt" | jq -e --arg url "$url" '.result.instructions | contains($url) and contains("You are peer p1")' >/dev/null \

@@ -21,7 +21,7 @@
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ repo }}/blob/master/{{ page.extra.source }}" class="font-mono underline">{{ page.extra.source }}</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="{{ get_url(path="/openapi.json") }}" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/docs</code>.</p>
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ repo }}/blob/master/{{ page.extra.source }}" class="font-mono underline">{{ page.extra.source }}</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="{{ get_url(path="/openapi.json") }}" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p>
 
     {#- About: the info block, in the words about.rs holds -#}
     <section id="about" class="scroll-mt-24">
@@ -113,7 +113,7 @@
         {%- endif -%}
 
         {%- if o.method == "POST" -%}
-        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Request body <span class="normal-case">— <a href="#schema-{{ o.body_schema }}" class="font-mono text-fg-brand hover:underline">{{ o.body_schema }}</a>, JSON</span></h4>
+        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Request body <span class="normal-case">— <a href="#schema-{{ o.body_schema }}" class="font-mono text-fg-brand underline">{{ o.body_schema }}</a>, JSON</span></h4>
         {%- for ex in o.body_examples -%}
         <p class="mt-2 font-mono text-xs text-body-subtle">example <span class="text-heading">{{ ex.case }}</span></p>
         <div class="mt-1 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ ex.json }}</pre></div>
@@ -166,7 +166,7 @@
               {%- for p in s.properties -%}
               <tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">{{ p.name }}</td>
-                <td class="px-3 py-2 font-mono text-body">{{ p.type }}{% if p.refs | length > 0 %} <span class="text-body-subtle">→</span> {% for r in p.refs %}<a href="#schema-{{ r }}" class="text-fg-brand hover:underline">{{ r }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</td>
+                <td class="px-3 py-2 font-mono text-body">{{ p.type }}{% if p.refs | length > 0 %} <span class="text-body-subtle">→</span> {% for r in p.refs %}<a href="#schema-{{ r }}" class="text-fg-brand underline">{{ r }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</td>
                 <td class="px-3 py-2 font-mono text-body">{% if p.required %}yes{% else %}no{% endif %}</td>
                 <td class="px-3 py-2 text-body">{{ p.description | markdown(inline=true) | safe }}</td>
               </tr>
@@ -181,7 +181,7 @@
           <table class="w-full min-w-[32rem] text-left text-sm">
             <tbody>
               {%- for p in v.properties -%}
-              <tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">{{ p.name }}</td><td class="px-3 py-2 font-mono text-body">{{ p.type }}{% if p.refs | length > 0 %} <span class="text-body-subtle">→</span> {% for r in p.refs %}<a href="#schema-{{ r }}" class="text-fg-brand hover:underline">{{ r }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</td><td class="px-3 py-2 font-mono text-body">{% if p.required %}yes{% else %}no{% endif %}</td><td class="px-3 py-2 text-body">{{ p.description }}</td></tr>
+              <tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">{{ p.name }}</td><td class="px-3 py-2 font-mono text-body">{{ p.type }}{% if p.refs | length > 0 %} <span class="text-body-subtle">→</span> {% for r in p.refs %}<a href="#schema-{{ r }}" class="text-fg-brand underline">{{ r }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</td><td class="px-3 py-2 font-mono text-body">{% if p.required %}yes{% else %}no{% endif %}</td><td class="px-3 py-2 text-body">{{ p.description }}</td></tr>
               {%- endfor -%}
             </tbody>
           </table>
@@ -190,7 +190,7 @@
         {%- if s.used_by | length > 0 or s.used_by_schemas | length > 0 -%}
         <p class="mt-3 text-xs text-body-subtle">Used by
           {%- for id in s.used_by %} <a href="#op-{{ id | replace(from=".", to="-") }}" class="font-mono text-fg-brand hover:underline">{{ id }}</a>{% endfor -%}
-          {%- for n in s.used_by_schemas %} <a href="#schema-{{ n }}" class="font-mono text-fg-brand hover:underline">{{ n }}</a>{% endfor -%}
+          {%- for n in s.used_by_schemas %} <a href="#schema-{{ n }}" class="font-mono text-fg-brand underline">{{ n }}</a>{% endfor -%}
         </p>
         {%- endif -%}
       </article>

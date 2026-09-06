@@ -514,7 +514,7 @@ pub fn dataset(
                 })
             })
             .collect(),
-        infrastructure: openapi::INFRASTRUCTURE_ROUTES,
+        infrastructure: &openapi::INFRASTRUCTURE_ROUTES,
         openapi_path: format!("{}/openapi.json", crate::generate::OUT_DIR),
     };
 

@@ -638,9 +638,12 @@ fn reference(registry: &CapabilityRegistry, version: &str) -> String {
             .collect::<Vec<_>>()
             .join(", "),
     );
-    s.push_str(
-        ". `/docs` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/mcp` is MCP over HTTP on the shared server.\n",
-    );
+    s.push_str(&format!(
+        ". `{swagger}` is a Swagger UI shell that loads `{spec}`; it embeds no specification. `{mcp}` is MCP over HTTP on the shared server.\n",
+        swagger = crate::http::swagger::DOCS_PATH,
+        spec = crate::http::swagger::SPEC_PATH,
+        mcp = crate::http::mcp::PATH,
+    ));
     let _ = CapabilityKind::Query; // the kind vocabulary is documented in docs/CAPABILITIES.md
     s
 }

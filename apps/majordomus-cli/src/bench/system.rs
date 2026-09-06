@@ -104,7 +104,7 @@ impl SystemTarget {
             SystemTarget::McpResourcesRead => "resources/read of the first declarative resource",
             SystemTarget::HttpIndex => "GET /",
             SystemTarget::HttpOpenApi => "GET /openapi.json",
-            SystemTarget::HttpDocs => "GET /docs (the Swagger UI shell)",
+            SystemTarget::HttpDocs => "GET the Swagger UI shell",
             SystemTarget::HttpCockpitOverview => {
                 "GET /cockpit (the Cockpit's landing page, server-rendered)"
             }

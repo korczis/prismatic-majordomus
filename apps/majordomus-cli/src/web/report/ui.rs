@@ -114,8 +114,10 @@ impl Run {
         for finding in &self.findings {
             *counts.entry(finding.rule.as_str()).or_default() += 1;
         }
-        let mut ordered: Vec<(String, usize)> =
-            counts.into_iter().map(|(k, v)| (k.to_string(), v)).collect();
+        let mut ordered: Vec<(String, usize)> = counts
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
         ordered.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
         ordered
     }
@@ -138,7 +140,9 @@ impl Run {
 pub fn parse(text: &str) -> Result<Run> {
     let run: Run = serde_json::from_str(text).map_err(|e| Error::InvalidSurface {
         surface: "ui".into(),
-        reason: format!("the results document does not parse: {e}; the contract is {RESULTS_SCHEMA}"),
+        reason: format!(
+            "the results document does not parse: {e}; the contract is {RESULTS_SCHEMA}"
+        ),
     })?;
     if run.schema != RESULTS_SCHEMA {
         return Err(Error::InvalidSurface {
@@ -154,8 +158,8 @@ pub fn parse(text: &str) -> Result<Run> {
 
 /// Read a results document from disk.
 pub fn read(path: &Path) -> Result<Run> {
-    let text = std::fs::read_to_string(path)
-        .map_err(|e| Error::io(path.display().to_string(), e))?;
+    let text =
+        std::fs::read_to_string(path).map_err(|e| Error::io(path.display().to_string(), e))?;
     parse(&text)
 }
 
@@ -209,9 +213,15 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
             .collect::<Vec<_>>()
             .join("<br>");
         finding_rows.push(vec![
-            format!("<span class=\"mono\">{}</span>", html::escape(&finding.route)),
+            format!(
+                "<span class=\"mono\">{}</span>",
+                html::escape(&finding.route)
+            ),
             format!("<span class=\"num\">{}</span>", finding.width),
-            format!("<span class=\"mono\">{}</span>", html::escape(&finding.rule)),
+            format!(
+                "<span class=\"mono\">{}</span>",
+                html::escape(&finding.rule)
+            ),
             html::escape(&finding.detail),
             format!("<span class=\"mono\">{elements}</span>"),
         ]);
@@ -236,7 +246,12 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
          <li>widths visited: <span class=\"mono\">{}</span></li></ul>\
          <p class=\"lede\">Nothing in this run names a page or a width. Add a page to the \
          site and it is audited; change a breakpoint in the theme and the widths follow.</p>",
-        html::escape(run.source.get("pages").map(String::as_str).unwrap_or("the built site")),
+        html::escape(
+            run.source
+                .get("pages")
+                .map(String::as_str)
+                .unwrap_or("the built site")
+        ),
         html::escape(
             run.source
                 .get("viewports")
@@ -261,7 +276,10 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
         format!(
             "<h2>By rule</h2>{}<h2>Every finding</h2>{}",
             html::table(&["rule", "findings", "pages", "first page"], &rule_rows),
-            html::table(&["page", "width", "rule", "detail", "elements"], &finding_rows),
+            html::table(
+                &["page", "width", "rule", "detail", "elements"],
+                &finding_rows
+            ),
         )
     };
 
@@ -332,13 +350,15 @@ mod unit {
         let tmp = tempfile::tempdir().unwrap();
         let suite = tests::parse_cases("a\tok\t1\tparallel\n").unwrap();
         tests::render(tmp.path(), &suite).unwrap();
-        let before =
-            std::fs::read_to_string(super::super::directory(tmp.path(), "tests").join("surface.json"))
-                .unwrap();
+        let before = std::fs::read_to_string(
+            super::super::directory(tmp.path(), "tests").join("surface.json"),
+        )
+        .unwrap();
         render(tmp.path(), &parse(RUN).unwrap()).unwrap();
-        let after =
-            std::fs::read_to_string(super::super::directory(tmp.path(), "tests").join("surface.json"))
-                .unwrap();
+        let after = std::fs::read_to_string(
+            super::super::directory(tmp.path(), "tests").join("surface.json"),
+        )
+        .unwrap();
         assert_eq!(before, after);
     }
 

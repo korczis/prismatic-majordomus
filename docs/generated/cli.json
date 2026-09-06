@@ -331,7 +331,7 @@
           {
             "id": "serve-ephemeral-port",
             "title": "Serve the same capabilities over HTTP on a free port",
-            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
+            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /swagger is the Swagger UI over it.",
             "argv": [
               "serve",
               "--port",
@@ -2086,7 +2086,7 @@
                 ],
                 "command": "majordomus web list",
                 "setup": [],
-                "expectation": "exits 0; prints MOUNT, /api/v1, /docs"
+                "expectation": "exits 0; prints MOUNT, /api/v1, /swagger"
               }
             ],
             "subcommands": []

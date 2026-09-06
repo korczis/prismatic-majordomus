@@ -167,7 +167,10 @@ mod tests {
     #[test]
     fn a_table_scrolls_inside_its_own_box() {
         let html = table(&["a"], &[vec!["1".into()]]);
-        assert!(html.starts_with("<div class=\"scroll\" tabindex=\"0\">"), "{html}");
+        assert!(
+            html.starts_with("<div class=\"scroll\" tabindex=\"0\">"),
+            "{html}"
+        );
     }
 
     #[test]

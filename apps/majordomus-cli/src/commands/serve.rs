@@ -31,7 +31,8 @@ pub fn run(args: ServeArgs) -> Result<u8> {
         Role::Peer { url } => {
             tracing::info!(
                 url = %url,
-                "a shared server for this repository is already running at {url} (swagger ui {url}/docs); not starting a second one"
+                "a shared server for this repository is already running at {url} (swagger ui {url}{swagger}); not starting a second one",
+                swagger = crate::http::swagger::DOCS_PATH
             );
             return Ok(0);
         }

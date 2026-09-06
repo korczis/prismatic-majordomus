@@ -121,7 +121,7 @@ majordomus serve [OPTIONS]
 
 Examples:
 
-- **Serve the same capabilities over HTTP on a free port** — Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.
+- **Serve the same capabilities over HTTP on a free port** — Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /swagger is the Swagger UI over it.
 
   ```console
   $ majordomus serve --port 0
@@ -523,7 +523,7 @@ Examples:
   $ majordomus web list
   ```
 
-  Verified: exits 0; prints MOUNT, /api/v1, /docs.
+  Verified: exits 0; prints MOUNT, /api/v1, /swagger.
 
 <a id="majordomus-web-explain"></a>
 ## `majordomus web explain`

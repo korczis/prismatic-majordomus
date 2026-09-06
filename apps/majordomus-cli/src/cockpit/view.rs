@@ -134,7 +134,7 @@ fn header(shell: &Shell<'_>) -> El {
             el("nav")
                 .class("mj-topbar-links")
                 .attr("aria-label", "External surfaces")
-                .child(link("/docs", "Swagger"))
+                .child(link(crate::http::swagger::DOCS_PATH, "Swagger"))
                 .child(link("/openapi.json", "OpenAPI"))
                 .child(
                     el("button")
@@ -194,7 +194,7 @@ fn footer(shell: &Shell<'_>) -> El {
         .child(el("span").text("·"))
         .child(link("/openapi.json", "openapi.json"))
         .child(el("span").text("·"))
-        .child(link("/docs", "Swagger UI"))
+        .child(link(crate::http::swagger::DOCS_PATH, "Swagger UI"))
         .child(el("span").text("·"))
         .child(link("/cockpit/health", "health"))
 }
@@ -309,12 +309,15 @@ pub fn table(headers: &[&str], rows: Vec<El>) -> El {
     });
     // the wrapper scrolls, so it is in the tab order: a scrolling region only a pointer can
     // reach is the accessibility defect the UI conformance check refuses (WCAG 2.1.1)
-    el("div").class("mj-table-wrap").attr("tabindex", "0").child(
-        el("table")
-            .class("mj-table")
-            .child(el("thead").child(head))
-            .child(el("tbody").children(rows)),
-    )
+    el("div")
+        .class("mj-table-wrap")
+        .attr("tabindex", "0")
+        .child(
+            el("table")
+                .class("mj-table")
+                .child(el("thead").child(head))
+                .child(el("tbody").children(rows)),
+        )
 }
 
 /// A row of cells.

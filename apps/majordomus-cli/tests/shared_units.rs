@@ -315,7 +315,10 @@ fn a_session_can_be_resumed_by_another_server() {
     let answer = first.handle(init()).unwrap().into_value();
     let text = answer["result"]["instructions"].as_str().unwrap();
     assert!(
-        text.contains("http://127.0.0.1:1/docs") && text.contains("You are peer p1"),
+        text.contains(&format!(
+            "http://127.0.0.1:1{}",
+            majordomus_cli::http::swagger::DOCS_PATH
+        )) && text.contains("You are peer p1"),
         "{text}"
     );
     first.handle(json!({ "jsonrpc": "2.0", "method": "notifications/initialized" }));

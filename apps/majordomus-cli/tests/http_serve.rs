@@ -49,7 +49,7 @@ fn openapi_docs_and_one_operation_over_a_real_socket() {
         "the document carries the checkout path"
     );
 
-    let (status, headers, html) = s.request("GET", "/docs", None);
+    let (status, headers, html) = s.request("GET", majordomus_cli::http::swagger::DOCS_PATH, None);
     assert_eq!(status, 200);
     assert!(headers
         .iter()
@@ -274,7 +274,7 @@ fn serving_from_a_nested_directory_finds_the_same_root_and_writes_nothing() {
     let (_, repo) = s.get("/api/v1/repository");
     assert_eq!(repo["repository"]["root"], f.root().to_str().unwrap());
     let _ = s.get("/openapi.json");
-    let (status, _, _) = s.request("GET", "/docs", None);
+    let (status, _, _) = s.request("GET", majordomus_cli::http::swagger::DOCS_PATH, None);
     assert_eq!(status, 200);
     let mut s = s;
     assert_eq!(s.stop(), 0, "closing stdin ends the server with 0");
@@ -293,7 +293,7 @@ fn outside_a_repository_serve_refuses_with_exit_12() {
 fn head_is_answered_and_a_bad_kind_filter_is_an_invalid_input() {
     let f = Fixture::new();
     let s = Served::start(&f.root(), &[]);
-    let (status, headers, body) = s.request("HEAD", "/docs", None);
+    let (status, headers, body) = s.request("HEAD", majordomus_cli::http::swagger::DOCS_PATH, None);
     assert_eq!(status, 200);
     assert!(headers
         .iter()

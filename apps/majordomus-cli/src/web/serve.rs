@@ -343,10 +343,10 @@ mod tests {
         assert_eq!(s.handle("GET", "/").unwrap().status, 200);
         // and never what the executable answers itself
         for path in [
-            "/docs",
-            "/openapi.json",
-            "/mcp",
-            "/cockpit",
+            crate::http::swagger::DOCS_PATH,
+            crate::http::swagger::SPEC_PATH,
+            crate::http::mcp::PATH,
+            crate::cockpit::PREFIX,
             "/api/v1/capabilities",
         ] {
             assert!(

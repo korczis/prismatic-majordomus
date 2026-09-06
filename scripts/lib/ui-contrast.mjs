@@ -139,6 +139,39 @@ export function backgroundOf(css) {
 }
 
 /**
+ * The ground a token is actually measured against: the code surface, with the darkest of the
+ * palette's translucent background overlays laid over it.
+ *
+ * A highlighting palette declares more than one background. The opaque ones replace the
+ * surface for a whole line — a diff row, a selection — and come with foregrounds chosen for
+ * them. The *translucent* ones are overlays: a few percent of ink over the code surface,
+ * under whatever token happens to fall there. A colour raised against the bare surface sits
+ * a little below the threshold as soon as one of those is under it, which is exactly what an
+ * engine reported on three tokens of one page after the first pass raised the rest.
+ *
+ * So the reference is the worst ground any token can land on without a foreground of its
+ * own: the surface under the darkest overlay.
+ */
+export function referenceBackground(css) {
+  const base = backgroundOf(css);
+  if (!base) return null;
+  const ground = parseHex(base);
+  if (!ground) return base;
+  let worst = { hex: base, luminance: luminance(ground.rgb) };
+  for (const match of css.matchAll(/background-color:\s*(#[0-9a-fA-F]{3,8})/g)) {
+    const overlay = parseHex(match[1]);
+    if (!overlay || overlay.alpha >= 1) continue; // opaque: a ground of its own, not an overlay
+    const composited = flatten(overlay, ground.rgb);
+    const value = luminance(composited);
+    // "worst" is whichever direction is harder for the foregrounds: away from the surface
+    if (Math.abs(value - luminance(ground.rgb)) > Math.abs(worst.luminance - luminance(ground.rgb))) {
+      worst = { hex: toHex(composited), luminance: value };
+    }
+  }
+  return worst.hex;
+}
+
+/**
  * A generated palette is one stylesheet per colour scheme, and the dark one is scoped under
  * `.dark` after Zola writes it. Neither shape changes what a normalisation has to do, so the
  * selector is read loosely — everything up to the brace — and used only for reporting.
@@ -146,7 +179,7 @@ export function backgroundOf(css) {
 
 /** Every `color:` declaration of a stylesheet, measured against its own background. */
 export function measure(css) {
-  const background = backgroundOf(css);
+  const background = referenceBackground(css);
   if (!background) return { background: null, colours: [] };
   const colours = [];
   for (const match of css.matchAll(/([.#][\w-]+)\s*\{[^}]*?(?<!-)\bcolor:\s*(#[0-9a-fA-F]{3,8})/g)) {
@@ -166,7 +199,7 @@ export function measure(css) {
  * theme that already conforms can be recognised by the zero.
  */
 export function enforce(css, minimum = MINIMUM) {
-  const background = backgroundOf(css);
+  const background = referenceBackground(css);
   if (!background) return { css, changed: 0, background: null };
   let changed = 0;
   // `background-color:` ends in `color:` too, and the palette's own surface is the reference

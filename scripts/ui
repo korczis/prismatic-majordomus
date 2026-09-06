@@ -137,11 +137,12 @@ if [ "$sub" = audit ]; then
     # while it is still taking over a stale lease, which is not the same as listening
     ready=0
     for _ in $(seq 1 150); do
-      curl -fsS -o /dev/null "$origin/" 2>/dev/null && { ready=1; break; }
+      curl -fsS --max-time 5 -o /dev/null "$origin/" 2>/dev/null && { ready=1; break; }
       kill -0 "$server_pid" 2>/dev/null || { cat "$log" >&2; echo "ui: the server exited before it answered on $origin" >&2; exit 12; }
       sleep 0.2
     done
     [ "$ready" = 1 ] || { cat "$log" >&2; echo "ui: the server did not answer on $origin" >&2; exit 12; }
+    echo "== serving $origin"
     rm -f "$log"
   fi
 

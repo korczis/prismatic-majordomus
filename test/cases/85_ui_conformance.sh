@@ -187,16 +187,25 @@ expect_grep 'ui-audit/v1' -
 
 # ---------------------------------------------------------------- a native route over the site
 # The topology exempts the root application from the nesting rule; that exemption was blind
-# to the application having pages at a path a native route claims. It is a warning, with the
-# count, because which of the two moves is a person's decision.
-mkdir -p site/public/docs/adoption
+# to the application having pages at a path a native route claims. Proved by mutation: the
+# site grows a page under a route the executable answers itself, and the validator says so
+# with the count. A warning, not an error, because which of the two moves is intent.
+mkdir -p site/public
 printf '<html></html>' > site/public/index.html
-printf '<html></html>' > site/public/docs/adoption/index.html
 cat > site/config.toml <<'TOML'
 base_url = "https://example.test"
 title = "fixture"
 TOML
+"$BIN" web validate > clean.txt 2>&1
+expect_no_grep 'surface.shadows-application' clean.txt
+
+SWAGGER="$("$BIN" web list | awk '$1=="swagger"{print $3}')"
+[ -n "$SWAGGER" ] || { echo "    the topology has no swagger surface to test against"; exit 1; }
+mkdir -p "site/public${SWAGGER}"
+printf '<html></html>' > "site/public${SWAGGER}/index.html"
 "$BIN" web validate > shadow.txt 2>&1
 expect_grep 'surface.shadows-application' shadow.txt
 expect_grep 'swagger' shadow.txt
 expect_grep '1 page' shadow.txt
+# and the executable still serves; a shadowing is reported, never refused
+expect_exit 0 "$BIN" web validate

@@ -46,7 +46,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `system.mcp.resources_read` | mcp | resources/read of the first declarative resource |
 | `system.http.index` | http | GET / |
 | `system.http.openapi` | http | GET /openapi.json |
-| `system.http.docs` | http | GET /docs (the Swagger UI shell) |
+| `system.http.docs` | http | GET the Swagger UI shell |
 | `system.http.cockpit_overview` | http | GET /cockpit (the Cockpit's landing page, server-rendered) |
 | `system.http.cockpit_capabilities` | http | GET /cockpit/capabilities (every capability as a table: the widest page) |
 | `system.http.cockpit_graph` | http | GET /cockpit/graphs/registry (a page whose content is a derived graph) |

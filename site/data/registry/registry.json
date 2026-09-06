@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "dd70187716b1edca4eb826f01b6eea6ed4113f4de62230c3e2d0074eed1d9b84",
+    "fingerprint": "d95d7f76a88c97e5dfe45fe3f28f3a83d684f99dac91fc715be57e33e1df6d41",
     "summary": {
       "total": 712,
       "builtin": 14,
@@ -4157,7 +4157,7 @@
     ]
   },
   "index": {
-    "fingerprint": "51dff4501cad349c9e44685535662d866736c4b047deea4eb7153d71510a4352",
+    "fingerprint": "f866ddc2b876449e577b3e9bf5ea766184065e825c48cf355f75468f5fa5ff11",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -5767,7 +5767,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 27840
+        "bytes": 27843
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -5794,7 +5794,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 31830
+        "bytes": 31833
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -5938,7 +5938,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 19124
+        "bytes": 19127
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -6577,7 +6577,7 @@
         "title": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
         "path": "docs/claims/mcp-client-autostart.md",
         "source_class": "claim_page",
-        "bytes": 3482
+        "bytes": 3485
       },
       {
         "uri": "majordomus://document/docs/claims/mcp-data-driven.md",
@@ -6622,7 +6622,7 @@
         "title": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
         "path": "docs/claims/mcp-shared-server.md",
         "source_class": "claim_page",
-        "bytes": 5222
+        "bytes": 5228
       },
       {
         "uri": "majordomus://document/docs/claims/mcp-stdio-surface.md",
@@ -10801,7 +10801,7 @@
         "identity": "test/cases/84_web_surfaces.sh",
         "path": "test/cases/84_web_surfaces.sh",
         "source_class": "case",
-        "bytes": 5510
+        "bytes": 5674
       },
       {
         "uri": "majordomus://test/test/cases/85_ui_conformance.sh",
@@ -10809,7 +10809,7 @@
         "identity": "test/cases/85_ui_conformance.sh",
         "path": "test/cases/85_ui_conformance.sh",
         "source_class": "case",
-        "bytes": 10165
+        "bytes": 10651
       },
       {
         "uri": "majordomus://test/test/cases/88_rust_command_tested.sh",
@@ -10825,7 +10825,7 @@
         "identity": "test/cases/90_mcp_shared_server.sh",
         "path": "test/cases/90_mcp_shared_server.sh",
         "source_class": "case",
-        "bytes": 10121
+        "bytes": 10127
       },
       {
         "uri": "majordomus://test/test/cases/91_canonical_architecture.sh",
@@ -11295,7 +11295,7 @@
         "path": ".ai/repo/use-cases/see-what-the-repository-holds-without-reading-it.md",
         "section": "use-cases",
         "source_class": "use_case",
-        "bytes": 4694
+        "bytes": 4697
       },
       {
         "uri": "majordomus://use-case/serve-the-layer-to-ai-clients",
@@ -11863,7 +11863,7 @@
           {
             "id": "serve-ephemeral-port",
             "title": "Serve the same capabilities over HTTP on a free port",
-            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
+            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /swagger is the Swagger UI over it.",
             "argv": [
               "serve",
               "--port",
@@ -13618,7 +13618,7 @@
                 ],
                 "command": "majordomus web list",
                 "setup": [],
-                "expectation": "exits 0; prints MOUNT, /api/v1, /docs"
+                "expectation": "exits 0; prints MOUNT, /api/v1, /swagger"
               }
             ],
             "subcommands": []
@@ -15074,7 +15074,7 @@
     "infrastructure": [
       "/",
       "/openapi.json",
-      "/docs",
+      "/swagger",
       "/cockpit",
       "/mcp"
     ],
@@ -16380,7 +16380,7 @@
       {
         "key": "system.http.docs",
         "transport": "http",
-        "description": "GET /docs (the Swagger UI shell)"
+        "description": "GET the Swagger UI shell"
       },
       {
         "key": "system.http.cockpit_overview",

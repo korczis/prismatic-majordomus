@@ -23,7 +23,7 @@ Nobody runs a server by hand. Open this repository in Claude Code, Gemini CLI or
 cat .mcp.json .gemini/settings.json .codex/config.toml            # the same launcher in each
 bin/majordomus-mcp --help                                         # builds if needed, then: Usage: majordomus mcp ...
 printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"you","version":"0"}}}\n' | bin/majordomus-mcp
-# stderr: shared server listening on http://127.0.0.1:8741 (swagger ui http://127.0.0.1:8741/docs, ...); stdout: the initialize result
+# stderr: shared server listening on http://127.0.0.1:8741 (swagger ui http://127.0.0.1:8741/swagger, ...); stdout: the initialize result
 claude                                                            # in this directory: approve the project server once; the majordomus_* tools are there
 ```
 

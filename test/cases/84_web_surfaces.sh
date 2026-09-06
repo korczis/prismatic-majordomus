@@ -18,7 +18,10 @@ MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 "$BIN" web list > list.txt
 expect_grep '^ID +KIND +MOUNT +SOURCE$' list.txt
 expect_grep '^api +native +/api/v1' list.txt
-expect_grep '^swagger +native +/docs' list.txt
+expect_grep '^swagger +native +/swagger' list.txt
+# and never at /docs: that prefix is the documentation site's, and a native route there takes
+# every page under it (ADR 0018)
+expect_no_grep ' /docs$' list.txt
 # a repository with no site and nothing generated has no static surface at all
 expect_no_grep '^app +static' list.txt
 expect_exit 0 "$BIN" web validate

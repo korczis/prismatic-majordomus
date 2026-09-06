@@ -19,6 +19,28 @@ const AXE = new URL('../../node_modules/axe-core/axe.min.js', import.meta.url);
 export const OVERFLOW_TOLERANCE = 1;
 
 /**
+ * How long one page-and-width visit may take before it is abandoned.
+ *
+ * Navigation has its own timeout; `page.evaluate` has none, and neither does the
+ * accessibility engine running inside it. A single large document can therefore hold a
+ * sixteen-hundred-visit sweep open indefinitely, which looks exactly like a slow machine
+ * until somebody checks after twenty minutes. The whole visit gets a deadline, and a visit
+ * that hits it is a finding about that page.
+ */
+export const VISIT_DEADLINE_MS = 60000;
+
+/** Run a promise against a deadline, rejecting with a message a report can print. */
+function withDeadline(work, ms, what) {
+  let timer;
+  return Promise.race([
+    work,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${what} did not finish within ${ms}ms`)), ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
+}
+
+/**
  * Visit one page at one width and return every finding, each already carrying the route, the
  * width, the rule it broke and enough of the DOM to find it again.
  */
@@ -210,11 +232,21 @@ export async function audit(origin, pages, { onVisit } = {}) {
   const page = await context.newPage();
   const visits = [];
   try {
+    // One throwaway visit first. The server answers its readiness probe before it has built
+    // anything, and the first real page pays for the index, the registry and every asset at
+    // once — long enough, on a loaded machine, to exceed a per-visit timeout and report the
+    // first page of the run as unreachable. Warming it costs one page load and removes a
+    // whole class of finding that says more about the machine than about the site.
+    await page.goto(origin, { waitUntil: 'load', timeout: 120000 }).catch(() => {});
     for (const target of pages) {
       for (const width of target.widths) {
         let visit;
         try {
-          visit = await auditPage(page, origin, target.route, width);
+          visit = await withDeadline(
+            auditPage(page, origin, target.route, width),
+            VISIT_DEADLINE_MS,
+            `${target.route} at ${width}px`,
+          );
         } catch (error) {
           // whatever went wrong on this page, the next page is still worth measuring
           visit = {
