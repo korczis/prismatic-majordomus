@@ -180,6 +180,13 @@ impl Release {
     pub fn public_json(&self, model: &Model) -> String {
         let mut s = String::from("{\n");
         s.push_str(&format!("  \"schema\": \"{}\",\n", SCHEMA));
+        // Generated like everything else this tool writes, and it says so in the member the
+        // typed-artifact check reads. Without it `majordomus generate` refuses to write the
+        // file the moment a record exists — which is to say, from the first release onwards.
+        s.push_str(&format!(
+            "  \"generated\": \"{}\",\n",
+            crate::generate::json_banner(&format!("{DIR}/{}.yaml", self.tag))
+        ));
         s.push_str(&format!("  \"version\": \"{}\",\n", self.version));
         s.push_str(&format!("  \"tag\": \"{}\",\n", self.tag));
         s.push_str(&format!(

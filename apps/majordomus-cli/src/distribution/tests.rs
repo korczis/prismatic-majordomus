@@ -278,6 +278,22 @@ fn the_public_metadata_holds_one_line_per_artifact() {
 }
 
 #[test]
+fn the_public_metadata_says_it_is_generated() {
+    // The typed-artifact check refuses a generated JSON document that does not declare
+    // itself one, and these two files are written only when a release exists — so nothing
+    // but this test notices before a publication does.
+    let model = real_model();
+    let release = sample_release(&model, "v0.2.0", Channel::Stable);
+    let parsed: serde_json::Value =
+        serde_json::from_str(&release.public_json(&model)).expect("valid JSON");
+    let banner = parsed["generated"].as_str().unwrap_or_default();
+    assert!(
+        banner.starts_with(crate::generate::HEADER),
+        "the public release metadata carries no generated banner: {banner:?}"
+    );
+}
+
+#[test]
 fn the_matrix_carries_the_tag_placeholder_and_never_a_tag() {
     let model = real_model();
     let json = render::matrix_json(&model);
