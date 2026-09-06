@@ -150,12 +150,23 @@ mj_validate_wiring() {
           # A hook that exists is not a hook that captures. The state comes from driving a
           # synthetic payload through the shim the provider would run, so "wired" and
           # "verified" stay different words with different evidence behind them.
-          local cst creason
-          cst="$(mj_capture_state "$target")"; creason="${cst#*"$MJ_TAB"}"; cst="${cst%%"$MJ_TAB"*}"
-          if [ "$cst" = verified ]; then mj_doctrine_ok wiring "$name" "$creason"
-          else mj_doctrine_fail wiring "$name" "$cst — $creason" "majordomus capture status"; fi ;;
+          #
+          # A provider is wired for more than one thing, so the target may name which:
+          # provider-hook:<provider> is the prompt archive, provider-hook:<provider>:session
+          # the episode boundary. They fail independently and are therefore declared
+          # independently — a repository that captures every prompt and never marks an
+          # episode must not read as wired.
+          local cst creason cprov="$target" caspect=prompt
+          case "$target" in *:*) cprov="${target%%:*}"; caspect="${target#*:}" ;; esac
+          case "$caspect" in
+            prompt|session)
+              cst="$(mj_capture_state "$cprov" "$caspect")"; creason="${cst#*"$MJ_TAB"}"; cst="${cst%%"$MJ_TAB"*}"
+              if [ "$cst" = verified ]; then mj_doctrine_ok wiring "$name" "$creason"
+              else mj_doctrine_fail wiring "$name" "$cst — $creason" "majordomus capture status"; fi ;;
+            *) mj_doctrine_fail wiring "$name" "unknown provider-hook aspect '$caspect' (provider-hook:<provider> | provider-hook:<provider>:session)" ;;
+          esac ;;
         manual) mj_doctrine_skip wiring "$name" "wired_by: manual — documented, not verified" ;;
-        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | ci:<path> | provider-hook:<provider> | manual)" ;;
+        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | ci:<path> | provider-hook:<provider>[:session] | manual)" ;;
       esac
     fi
     i=$((i+1))
