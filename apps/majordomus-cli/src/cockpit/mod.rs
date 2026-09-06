@@ -159,7 +159,10 @@ impl Cockpit {
             },
             "/cockpit/graphs" => pages::graphs(&self.ctx),
             "/cockpit/graphs/topology" => pages::topology(&self.ctx),
+            "/cockpit/continuity" => pages::continuity(&self.ctx),
+            "/cockpit/directories" => pages::directories(&self.ctx, query),
             "/cockpit/health" => pages::health(&self.ctx),
+            "/cockpit/artifacts" => pages::artifacts(&self.ctx),
             "/cockpit/api" => pages::api(&self.ctx),
             "/cockpit/search" => pages::search(&self.ctx, query),
             "/cockpit/activity" => pages::activity(&self.ctx),
@@ -179,7 +182,14 @@ impl Cockpit {
 /// The content-security policy every page carries. Scripts come from this origin and from
 /// nowhere else; the one inline script is allowed by the digest of its own bytes, so an
 /// injected inline script is refused even if one ever got through the escaping. No
-/// `unsafe-inline`, no `unsafe-eval`, no remote origin, and nothing may frame the page.
+/// `unsafe-eval`, no remote origin, and nothing may frame the page.
+///
+/// `style-src` allows `unsafe-inline` and `script-src` does not, which is the one asymmetry
+/// here and it is deliberate. A drawing library sets `style` attributes on the elements it
+/// creates — that is how Cytoscape sizes its canvas — and a policy that forbids them makes
+/// the optional views silently misrender rather than fail. The exposure is a style
+/// injection, which needs the escaping to have already failed and which cannot execute; the
+/// exposure `script-src 'unsafe-inline'` would carry is arbitrary code, and that stays shut.
 ///
 /// The digest is computed from [`view::THEME_BOOTSTRAP`] itself, so the policy cannot
 /// drift from the script it allows.
@@ -187,7 +197,7 @@ impl Cockpit {
 /// ```
 /// let policy = majordomus_cli::cockpit::csp();
 /// assert!(policy.starts_with("default-src 'none'"));
-/// assert!(!policy.contains("unsafe-inline"));
+/// assert!(!policy.contains("unsafe-eval"));
 /// ```
 pub fn csp() -> &'static str {
     static POLICY: std::sync::OnceLock<String> = std::sync::OnceLock::new();
@@ -197,9 +207,9 @@ pub fn csp() -> &'static str {
         hasher.update(view::THEME_BOOTSTRAP.as_bytes());
         let digest = base64(&hasher.finalize());
         format!(
-            "default-src 'none'; script-src 'self' 'sha256-{digest}'; style-src 'self'; \
-             img-src 'self' data:; connect-src 'self'; font-src 'self'; form-action 'self'; \
-             base-uri 'none'; frame-ancestors 'none'"
+            "default-src 'none'; script-src 'self' 'sha256-{digest}'; \
+             style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; \
+             font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
         )
     })
 }
@@ -246,8 +256,18 @@ mod tests {
     fn the_policy_allows_no_remote_origin_and_no_unsafe_source() {
         let policy = csp();
         assert!(policy.contains("script-src 'self' 'sha256-"), "{policy}");
-        assert!(!policy.contains("unsafe-inline"), "{policy}");
         assert!(!policy.contains("unsafe-eval"), "{policy}");
+        // the asymmetry, asserted rather than assumed: styles may be inline, scripts never
+        assert!(
+            policy.contains("style-src 'self' 'unsafe-inline'"),
+            "{policy}"
+        );
+        let script_src = policy
+            .split("script-src ")
+            .nth(1)
+            .and_then(|s| s.split(';').next())
+            .expect("a script-src directive");
+        assert!(!script_src.contains("unsafe-inline"), "{script_src}");
         assert!(!policy.contains("http"), "{policy}");
         assert!(policy.contains("frame-ancestors 'none'"), "{policy}");
     }

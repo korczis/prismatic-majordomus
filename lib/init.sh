@@ -76,16 +76,21 @@ H
   mj_init_tree "$skel/ai/repo/use-cases" "$MJ_AI_REPO_DIR/use-cases" '*'
   mj_init_tree "$skel/ai/repo/applications" "$MJ_AI_REPO_DIR/applications" '*'
   mkdir -p "$MJ_PROJECT_DIR"
-  # The sessions section, by the path the skeleton's manifest names: the resolved variable
-  # is empty on the first run, because the manifest that names the section is being seeded
-  # in this same pass, and a second run would then report a file the first should have made.
-  mkdir -p "$MJ_AI_REPO_DIR/sessions"
-  mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$MJ_AI_REPO_DIR/sessions/README.md"
+  # The sessions section, at the path the manifest names — or, on the first init, at the
+  # path the skeleton's manifest is about to name. The resolved variable is empty on that
+  # first run, because the manifest that names the section is being seeded in the same pass,
+  # so reading it alone would seed nothing here and seed it on the next --extend: a
+  # repository that reports work to do forever. The variable is still preferred when it does
+  # resolve, so a layer whose manifest names another path is honoured rather than overruled.
+  local sessions_dir="${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}"
+  mkdir -p "$sessions_dir"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$sessions_dir/README.md"
   # The deployments section, the same way: the contract is there from the start, so a
   # repository that later deploys something adds one file rather than a directory, a
   # context document, a manifest entry and a source class.
-  mkdir -p "$MJ_AI_REPO_DIR/deployments"
-  mj_init_file "$MJ_SKELETON_DIR/ai/repo/deployments/README.md" "$MJ_AI_REPO_DIR/deployments/README.md"
+  local deployments_dir="${MJ_DEPLOYMENTS_DIR:-$MJ_AI_REPO_DIR/deployments}"
+  mkdir -p "$deployments_dir"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/deployments/README.md" "$deployments_dir/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.

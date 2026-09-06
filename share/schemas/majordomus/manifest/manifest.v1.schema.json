@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/manifest/manifest.v1.schema.json",
+  "x-majordomus-schema": "majordomus.manifest/v1",
+  "title": "Manifest",
+  "description": "The section registry of the repository's AI layer, .ai/manifest.yaml. Discovery reads it and never walks the directory.",
+  "x-majordomus-allow": "manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "repo",
+    "local",
+    "sections"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-repository/v1"
+    },
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      }
+    },
+    "local": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "tracked",
+        "implicit_context"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "tracked": {
+          "type": "boolean"
+        },
+        "implicit_context": {
+          "type": "boolean"
+        }
+      }
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "profiles": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "string"
+        },
+        "prompts": {
+          "type": "string"
+        },
+        "skills": {
+          "type": "string"
+        },
+        "workflows": {
+          "type": "string"
+        },
+        "knowledge": {
+          "type": "string"
+        },
+        "adrs": {
+          "type": "string"
+        },
+        "project": {
+          "type": "string"
+        },
+        "use-cases": {
+          "type": "string"
+        },
+        "applications": {
+          "type": "string"
+        },
+        "sessions": {
+          "type": "string",
+          "description": "The closed execution episodes, one record each (ADR 0014)."
+        },
+        "deployments": {
+          "type": "string",
+          "description": "The deployments of this repository's executable, one canonical object each; every provider artifact is generated from one of them."
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

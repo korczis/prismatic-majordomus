@@ -39,7 +39,7 @@
       {%- for e in s.examples %}
       <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="text-base font-semibold text-heading">{{ e.title }}</h3>
-        <p class="mt-1 font-mono text-xs text-body-subtle">{{ e.path }}</p>
+        <p class="mt-1 break-all font-mono text-xs text-body-subtle">{{ e.path }}</p>
         <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full">{{ e.body | markdown | safe }}</div>
       </section>
       {%- endfor %}

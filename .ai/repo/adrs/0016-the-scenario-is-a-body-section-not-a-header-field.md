@@ -1,0 +1,89 @@
+---
+schema: adr/v1
+id: adr-0016
+kind: adr
+title: The scenario is a body section, not a header field
+status: accepted
+date: 2026-09-05
+tags:
+  - use-cases
+  - schemas
+  - context
+provenance:
+  origin: authored
+---
+
+# 16. The scenario is a body section, not a header field
+
+Refines ADR 8 (use cases are executable canonical objects), which established the
+scenario and put it in the front matter.
+
+## Context
+
+ADR 8 made the use-case scenario canonical data and stored it as a `scenario:` mapping in
+the document's YAML front matter. It works — every scenario runs — but it puts the largest
+and least declarative thing in the file into the half of the file reserved for the
+smallest and most declarative.
+
+Front matter is the machine side of a document: what the object *is*, and how it is
+classified. Every other key of a use case is one of those — an id, a title, a category, a
+list of commands it names. `scenario` is neither. It is a program: a setup, an ordered
+list of invocations, and an assertion on each one's exit code and output. In this
+repository the longest one runs past forty lines, so a reader opening a use-case file met
+forty lines of executable YAML before the first sentence of prose, and the narrative the
+document exists to tell — `# Situation`, `# Outcome` — was pushed below the fold.
+
+The allow-list showed the same distortion from the other side. Eleven of the twenty rows
+of `share/allow/use-case.txt` were `^scenario\.steps\.[0-9]+\....$` patterns: the
+front-matter contract was mostly not about front matter.
+
+Nothing about the scenario needs to be in the header. It is not identity, nothing
+classifies by it, and no listing sorts on it. The one thing readers and the tool both need
+is that it be found reliably and parsed exactly, and a fixed section name gives that as
+well as a fixed key does.
+
+## Decision
+
+The scenario moves out of the front matter into a body section named `# Scenario`,
+carrying exactly one fenced `yaml` block, positioned between `# Situation` and
+`# Outcome`.
+
+The front matter keeps identity and classification only. `Header.scenario` is gone from
+`share/schemas/majordomus/use-case/use-case.v1.proto`, and `Body` gains a required,
+non-empty `Scenario` section, so `majordomus generate` projects the section into
+`share/sections/use-case.txt` and drops every `scenario.*` row from
+`share/allow/use-case.txt`.
+
+The `Scenario`, `Step`, `Expect` and `FileContains` messages stay in the proto. They are
+reached from the body rather than from `Header`, and they remain the single written
+description of what the fenced block contains.
+
+The block is YAML rather than prose or a table because the scenario is still executed. It
+is raw text in a named section, which is what a reader wants, and a parseable document,
+which is what the runner needs; a prose or tabular form would have bought readability with
+quoting rules and a bespoke parser.
+
+`lib/usecase.sh` folds the parsed block back under the `scenario.` prefix of the same flat
+namespace the front matter produces, so every reader below the loader — `usecase list`,
+`validate`, `run`, `coverage`, `impact`, the site generator — is unchanged. The allow-list
+check drops those folded keys before measuring, because they came from the body, where the
+section list governs instead.
+
+## Consequences
+
+A use-case file now reads in the order things happen: the situation, the proof, the
+result. The front-matter contract is about front matter again.
+
+`majordomus usecase validate` requires `# Scenario` alongside `# Situation` and
+`# Outcome`, and `usecase scaffold` writes the section rather than the key. A use case
+written against the old shape parses, loses its scenario, and is reported as an active use
+case targeting a guarantee with no executable evidence — a named failure, not a silence.
+
+The generator learned nothing new: the change is expressible in the option vocabulary
+`share/schemas/majordomus/options.proto` already had. A section whose content has a
+declared shape is still only described by a comment and the message beside it; if more
+kinds grow fenced sections, that binding is worth making explicit in the option set.
+
+The scenario is no longer visible to a consumer that reads only front matter. Nothing in
+the tool did — the Rust indexer never referenced it — but an external reader that parsed
+the YAML header alone would now have to read the body.

@@ -4,10 +4,10 @@
 //! added to `share/kinds.yaml`, a graph added to the derivation table — each appears here
 //! with no edit to the Cockpit.
 //!
-//! What *is* written here is the six areas: Overview, Capabilities, Objects, Graphs,
-//! Health, API. Those are concepts rather than entities, they change when the Cockpit's
-//! own shape changes, and deriving them from anything would be deriving them from a list
-//! of exactly themselves.
+//! What *is* written here is the nine areas: Overview, Capabilities, Objects,
+//! Directories, Graphs, Continuity, Health, Artifacts, API. Those are concepts rather than
+//! entities, they change when the Cockpit's own shape changes, and deriving them from
+//! anything would be deriving them from a list of exactly themselves.
 
 use crate::capability::registry::ModuleSource;
 use crate::capability::Context;
@@ -24,10 +24,16 @@ pub enum Area {
     Capabilities,
     /// The declarative objects of the layer.
     Objects,
+    /// The layer's directory contracts and their hierarchy.
+    Directories,
     /// The derived graphs.
     Graphs,
+    /// What this checkout's lifecycle is holding.
+    Continuity,
     /// The health report.
     Health,
+    /// What the generator writes.
+    Artifacts,
     /// The HTTP and MCP surfaces.
     Api,
     /// A page that belongs to no area (search results, an error).
@@ -95,13 +101,34 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 here,
             ),
             item(
+                "Directories",
+                "/cockpit/directories",
+                Area::Directories,
+                None,
+                here,
+            ),
+            item(
                 "Graphs",
                 "/cockpit/graphs",
                 Area::Graphs,
                 Some(graph::ids().len()),
                 here,
             ),
+            item(
+                "Continuity",
+                "/cockpit/continuity",
+                Area::Continuity,
+                None,
+                here,
+            ),
             item("Health", "/cockpit/health", Area::Health, None, here),
+            item(
+                "Artifacts",
+                "/cockpit/artifacts",
+                Area::Artifacts,
+                None,
+                here,
+            ),
             item(
                 "API",
                 "/cockpit/api",

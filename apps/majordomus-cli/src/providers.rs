@@ -122,10 +122,17 @@ pub fn artifacts(
                 }
             }
         }
-        out.push(Artifact {
-            path: target.clone(),
+        out.push(Artifact::verbatim(
+            target.clone(),
+            format!("providers/{}", projection.provider),
+            crate::generate::ArtifactFormat::of_path(target),
+            None,
+            format!(
+                "the policy `{}` and the `{}` template, stamped by the projection itself",
+                policy.path, projection.provider
+            ),
             content,
-        });
+        ));
     }
     Ok(out)
 }

@@ -210,7 +210,7 @@ mj_project_unknown_keys() {
   # ran thousands of processes and was most of plan validate.
   local out
   out="$(awk -v ms=" $MJ_PJ_MILESTONES " -v allow="$MJ_ALLOW_DIR" '
-    function load(kind,   f, line) { f = allow "/" kind ".txt"; while ((getline line < f) > 0) if (line != "") pat[kind, ++np[kind]] = line; close(f) }
+    function load(kind,   f, line) { f = allow "/" kind ".txt"; while ((getline line < f) > 0) if (line != "" && line !~ /^#/) pat[kind, ++np[kind]] = line; close(f) }
     BEGIN { load("project"); load("milestone"); load("issue") }
     FNR == 1 { id = FILENAME; sub(/.*\//, "", id)
       kind = (id == "PROJECT") ? "project" : (index(ms, " " id " ") ? "milestone" : "issue") }

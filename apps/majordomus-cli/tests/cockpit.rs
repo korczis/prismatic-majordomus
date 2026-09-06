@@ -15,9 +15,13 @@ const PAGES: &[&str] = &[
     "/cockpit",
     "/cockpit/capabilities",
     "/cockpit/objects",
+    "/cockpit/directories",
+    "/cockpit/directories?path=.ai/repo/rules",
     "/cockpit/graphs",
     "/cockpit/graphs/topology",
+    "/cockpit/continuity",
     "/cockpit/health",
+    "/cockpit/artifacts",
     "/cockpit/api",
     "/cockpit/search",
     "/cockpit/activity",
@@ -58,7 +62,16 @@ fn every_page_renders_complete_html_with_the_shell_and_the_security_headers() {
         let policy = header("content-security-policy");
         assert!(policy.contains("default-src 'none'"), "{page}: {policy}");
         assert!(!policy.contains("unsafe-eval"), "{page}: {policy}");
-        assert!(!policy.contains("unsafe-inline"), "{page}: {policy}");
+        // styles may be inline (a drawing library sets style attributes); scripts never
+        let script_src = policy
+            .split("script-src ")
+            .nth(1)
+            .and_then(|s| s.split(';').next())
+            .unwrap_or_default();
+        assert!(
+            !script_src.contains("unsafe-inline"),
+            "{page}: {script_src}"
+        );
         assert_eq!(header("x-content-type-options"), "nosniff", "{page}");
         assert_eq!(header("referrer-policy"), "no-referrer", "{page}");
     }
@@ -211,6 +224,155 @@ fn a_graph_page_lists_every_node_and_edge_before_any_library_loads() {
     assert_eq!(missing["error"]["code"], "not_found");
 }
 
+/// The artifacts page is the reading half of the generator, and it holds no list of its
+/// own: it shows what the committed manifest declares. In a fixture that has never run
+/// `majordomus generate` it says so instead of failing, and after a generation every
+/// document it names is there in every encoding it is committed in.
+#[test]
+fn the_artifacts_page_and_route_report_the_generated_tree_and_say_when_there_is_none() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+
+    // nothing generated yet: a fact, not a failure
+    let (status, page) = html(&s, "/cockpit/artifacts");
+    assert_eq!(status, 200);
+    assert!(
+        page.contains("no generated tree yet"),
+        "the page does not say the manifest is absent"
+    );
+    let (status, report) = s.get("/api/v1/artifacts");
+    assert_eq!(status, 200);
+    assert_eq!(report["present"], false);
+    assert_eq!(report["tallies"]["artifacts"], 0);
+    assert_eq!(report["manifest"], "docs/generated/artifacts.json");
+    drop(s);
+
+    // generate, and every encoding of every document is named, current, and typed
+    let (code, _, err) = common::run_in(&f.root(), &["generate"], "");
+    assert_eq!(code, 0, "{err}");
+    let s = Served::start(&f.root(), &[]);
+    let (status, report) = s.get("/api/v1/artifacts");
+    assert_eq!(status, 200);
+    assert_eq!(report["present"], true);
+    assert_eq!(report["schema"], "majordomus/generated-artifacts/v1");
+    assert_eq!(report["tallies"]["stale"], 0, "{report}");
+    assert_eq!(report["tallies"]["missing"], 0, "{report}");
+    assert!(report["tallies"]["current"].as_u64().unwrap() > 5);
+    let documents = report["documents"].as_array().unwrap();
+    let registry = documents
+        .iter()
+        .find(|d| d["id"] == "registry")
+        .expect("the registry document");
+    let formats: Vec<&str> = registry["formats"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|f| f.as_str().unwrap())
+        .collect();
+    assert!(
+        formats.contains(&"json") && formats.contains(&"yaml"),
+        "the registry is committed in both encodings: {formats:?}"
+    );
+
+    // the page shows the same answer, and one filter narrows it
+    let (status, page) = html(&s, "/cockpit/artifacts");
+    assert_eq!(status, 200);
+    assert!(page.contains("docs/generated/registry.yaml"), "{page}");
+    assert!(page.contains("majordomus/capability-registry/v1"));
+    let (status, only_yaml) = s.get("/api/v1/artifacts?format=yaml");
+    assert_eq!(status, 200);
+    assert!(only_yaml["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|a| a["format"] == "yaml"));
+
+    // an edited artifact is stale, by hash, without regenerating anything
+    let path = f.path("docs/generated/registry.yaml");
+    std::fs::write(
+        &path,
+        format!("{}\n", std::fs::read_to_string(&path).unwrap()),
+    )
+    .unwrap();
+    drop(s);
+    let s = Served::start(&f.root(), &[]);
+    let (_, report) = s.get("/api/v1/artifacts?document=registry");
+    assert_eq!(report["tallies"]["stale"], 1, "{report}");
+    assert!(report["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|a| a["path"] == "docs/generated/registry.yaml" && a["state"] == "stale"));
+}
+
+/// What the reading half says when the manifest is not what it should be, and when a file
+/// it names is gone. Both are facts about the tree, reported rather than guessed at.
+#[test]
+fn the_artifacts_capability_reports_a_missing_file_and_refuses_a_manifest_it_cannot_read() {
+    let f = Fixture::new();
+    let (code, _, err) = common::run_in(&f.root(), &["generate"], "");
+    assert_eq!(code, 0, "{err}");
+
+    // a file the manifest names and the tree no longer has
+    std::fs::remove_file(f.path("docs/generated/benchmarks.yaml")).unwrap();
+    let s = Served::start(&f.root(), &[]);
+    let (status, report) = s.get("/api/v1/artifacts?document=benchmarks");
+    assert_eq!(status, 200);
+    assert_eq!(report["tallies"]["missing"], 1, "{report}");
+    assert_eq!(
+        report["tallies"]["documents"], 1,
+        "one document was asked for"
+    );
+    assert!(report["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|a| a["path"] == "docs/generated/benchmarks.yaml" && a["state"] == "missing"));
+    assert!(report["documents"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|d| d["id"] == "benchmarks"));
+    drop(s);
+
+    // a manifest carrying a schema this executable does not read
+    let path = f.path("docs/generated/artifacts.json");
+    let text = std::fs::read_to_string(&path).unwrap();
+    std::fs::write(
+        &path,
+        text.replace(
+            "majordomus/generated-artifacts/v1",
+            "majordomus/generated-artifacts/v99",
+        ),
+    )
+    .unwrap();
+    let s = Served::start(&f.root(), &[]);
+    let (status, body) = s.get("/api/v1/artifacts");
+    assert_eq!(status, 500);
+    assert!(
+        body["error"]["message"].as_str().unwrap().contains("v99"),
+        "{body}"
+    );
+    drop(s);
+
+    // a manifest that is not the document at all
+    std::fs::write(&path, "{\"schema\": 1}\n").unwrap();
+    let s = Served::start(&f.root(), &[]);
+    let (status, body) = s.get("/api/v1/artifacts");
+    assert_eq!(status, 500);
+    assert!(
+        body["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("not the manifest this executable writes"),
+        "{body}"
+    );
+    // and the page says so rather than showing a blank one
+    let (status, page) = html(&s, "/cockpit/artifacts");
+    assert_eq!(status, 500);
+    assert!(page.contains("did not answer"), "{page}");
+}
+
 #[test]
 fn the_health_page_shows_the_verdicts_the_engines_reach() {
     let f = Fixture::new();
@@ -237,6 +399,99 @@ fn the_health_page_shows_the_verdicts_the_engines_reach() {
     assert_eq!(status, 200);
     assert!(health["checks"].as_array().unwrap().len() >= 6);
     assert!(health["status"].is_string());
+}
+
+#[test]
+fn the_continuity_page_shows_what_the_lifecycle_is_holding_and_labels_what_not_to_trust() {
+    // The empty page is covered by the sweep over PAGES. This is the other half: a checkout
+    // that has been worked in, where every card has something to render and one of the
+    // records must be marked as not safe to read as current knowledge.
+    let f = Fixture::new();
+    let root = f.root();
+    let root_s = root.to_string_lossy().to_string();
+    let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    let branch = f
+        .git(&["symbolic-ref", "--short", "HEAD"])
+        .trim()
+        .to_string();
+
+    let record = |created: &str, task: &str, at: &str| {
+        format!(
+            "---\nschema_version: 1\ncreated_at: {created}\ntask_id: {task}\nprofile: implementation\n\
+             owner: \"tester\"\nrepository_id: {root_s}/.git\nworktree: {root_s}\nbranch: {branch}\n\
+             head: {at}\nworking_tree: clean\nchanged_files:\n---\n\n# Objective\n\nDo the thing.\n\n\
+             # Current State\n\nHalf done.\n\n# Next Action\n\nFinish the thing.\n"
+        )
+    };
+    // written on a commit this repository has never had: the label must say so
+    f.write(
+        ".ai/local/state/handovers/a.md",
+        &record(
+            "2026-01-01T00:00:00Z",
+            "t-1",
+            "0123456789abcdef0123456789abcdef01234567",
+        ),
+    );
+    f.write(
+        ".ai/local/state/checkpoints/c.md",
+        &record("2026-01-02T00:00:00Z", "t-1", &head),
+    );
+    f.write(
+        ".ai/local/state/session-current.yaml",
+        &format!(
+            "session_id: s-here\nstarted_at: 2026-01-01T00:00:00Z\nowner: \"tester\"\n\
+             worker: claude\nprovider: claude-code\nrepository_id: {root_s}/.git\n\
+             worktree: {root_s}\nbranch: {branch}\nstart_head: {head}\nstart_working_tree: clean\n"
+        ),
+    );
+    f.write(
+        ".ai/local/state/current.yaml",
+        &format!(
+            "id: t-1\ntask: \"Do the thing\"\nprofile: implementation\nowner: \"tester\"\n\
+             scope:\n  - lib\n  - docs\nstarted_at: 2026-01-01T00:00:00Z\noutcome: active\n\
+             repository_id: {root_s}/.git\nworktree: {root_s}\nbranch: {branch}\nhead: {head}\n\
+             working_tree: clean\n"
+        ),
+    );
+    f.write(
+        ".ai/local/state/open-questions.md",
+        "# Open questions\n\n- [unresolved] t-1 — Which budget applies? (2026-01-01)\n",
+    );
+
+    let s = Served::start(&root, &[]);
+    let (status, page) = html(&s, "/cockpit/continuity");
+    assert_eq!(status, 200);
+
+    for text in [
+        "s-here",                // the open episode
+        "claude-code",           // the provider that opened it
+        "Do the thing",          // the active task
+        "Finish the thing.",     // the section a resuming worker acts on
+        "Which budget applies?", // the blocker
+        "diverged",              // the label on the handover
+    ] {
+        assert!(
+            page.contains(text),
+            "the continuity page lacks '{text}':\n{page}"
+        );
+    }
+    assert!(
+        page.contains("Trust git over anything it says"),
+        "a record from a history that no longer exists must say so, not only be labelled"
+    );
+    assert!(
+        page.contains("refuses"),
+        "an open question must say what it refuses"
+    );
+
+    // and the same state as data, over the capability the page itself called
+    let (status, c) = s.get("/api/v1/continuity");
+    assert_eq!(status, 200);
+    assert_eq!(c["session"]["session_id"], "s-here");
+    assert_eq!(c["handover"]["divergence"], "diverged");
+    assert_eq!(c["checkpoint"]["divergence"], "exact");
+    assert_eq!(c["blockers"].as_array().unwrap().len(), 1);
+    assert_eq!(c["task"]["scope"].as_array().unwrap().len(), 2);
 }
 
 #[test]

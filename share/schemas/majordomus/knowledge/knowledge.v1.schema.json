@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/knowledge/knowledge.v1.schema.json",
+  "x-majordomus-schema": "majordomus.knowledge/v1",
+  "x-majordomus-derived-from": "majordomus/knowledge/knowledge.v1.proto",
+  "x-majordomus-allow": "knowledge",
+  "description": "The whole record: the front matter, then the statement and its evidence in prose.",
+  "title": "knowledge",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "body"
+  ],
+  "properties": {
+    "header": {
+      "$ref": "#/$defs/Header"
+    },
+    "body": {
+      "$ref": "#/$defs/Body"
+    }
+  },
+  "$defs": {
+    "Header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "id",
+        "kind",
+        "class",
+        "title",
+        "description",
+        "status",
+        "epistemics",
+        "date"
+      ],
+      "properties": {
+        "schema": {
+          "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+          "const": "knowledge/v1"
+        },
+        "id": {
+          "description": "The identity, lower-case letters, digits and hyphens. It fixes the file name and survives a retitle.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "kind": {
+          "const": "knowledge"
+        },
+        "class": {
+          "enum": [
+            "fact",
+            "convention",
+            "constraint",
+            "memory",
+            "lesson"
+          ]
+        },
+        "title": {
+          "description": "The statement itself, in one line, as an assertion rather than a topic.",
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "description": "One line saying what the statement is for or when it applies.",
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "candidate",
+            "verified",
+            "superseded"
+          ]
+        },
+        "epistemics": {
+          "enum": [
+            "observed",
+            "inferred",
+            "decided"
+          ]
+        },
+        "date": {
+          "description": "The day the record reached its current status, YYYY-MM-DD.",
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
+        },
+        "superseded_by": {
+          "description": "The record that replaced this one. Present exactly when the status is superseded.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Relation"
+          }
+        }
+      }
+    },
+    "Provenance": {
+      "description": "Where the statement came from. Required for `verified`: nothing is confirmed by having been written down.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin"
+      ],
+      "properties": {
+        "origin": {
+          "enum": [
+            "authored",
+            "extracted"
+          ]
+        },
+        "derived_from": {
+          "description": "Typed references to the evidence: `decision:<task-id>`, `session:<id>`, `commit:<sha>`, `issue:<id>`, `file:<repository-relative path>`, `test:<repository-relative path>`. A file or test reference must resolve.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(decision|session|commit|issue|file|test):.+$"
+          }
+        }
+      }
+    },
+    "Relation": {
+      "description": "A typed link to another record of this layer. A target that looks like an identity of this layer must resolve.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "target"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "relates_to",
+            "depends_on",
+            "documents",
+            "supports",
+            "contradicts",
+            "supersedes",
+            "derived_from"
+          ]
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "Section": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "heading": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "empty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Body": {
+      "description": "The body carries the statement and, where it helps, the evidence in prose. No section is required: the title is already the statement, and a record whose evidence is one sentence should be one sentence.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sections"
+      ],
+      "properties": {
+        "sections": {
+          "description": "Every heading of the body, in document order, as the reader flattens it.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Section"
+          }
+        }
+      },
+      "x-majordomus-sections": []
+    }
+  },
+  "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`; regenerate with `majordomus generate`",
+  "x-majordomus-generator": "majordomus-cli 0.1.0"
+}

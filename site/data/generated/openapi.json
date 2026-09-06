@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 19,
-    "schemas": 87,
-    "tags": 8
+    "operations": 17,
+    "schemas": 83,
+    "tags": 10
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -68,6 +68,69 @@
   "openapi": "3.1.0",
   "schema": 1,
   "schemas": [
+    {
+      "description": "The active task of this checkout, when there is one.",
+      "is_enum": false,
+      "name": "ActiveTask",
+      "properties": [
+        {
+          "description": "The task id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is being worked on.",
+          "name": "task",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The execution profile it runs under.",
+          "name": "profile",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its typed outcome so far: `active`, `handed_over`, or a finished one.",
+          "name": "outcome",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The paths it claims.",
+          "name": "scope",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "When it started.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The commit it started at.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Continuity"
+      ],
+      "values": [],
+      "variants": []
+    },
     {
       "description": "The input of `peers.announce`: what the calling peer is working on.",
       "is_enum": false,
@@ -220,6 +283,275 @@
       "variants": []
     },
     {
+      "description": "The encoding one generated artifact is written in.",
+      "is_enum": true,
+      "name": "ArtifactFormat",
+      "properties": [],
+      "type": "\"json\" | \"yaml\" | \"markdown\" | \"text\"",
+      "used_by": [
+        "artifacts.list"
+      ],
+      "used_by_schemas": [
+        "ArtifactView",
+        "DocumentView"
+      ],
+      "values": [
+        {
+          "description": "A JSON document: pretty-printed, one trailing newline, provenance as members.",
+          "value": "json"
+        },
+        {
+          "description": "The same document in the layer's YAML, provenance as a comment banner.",
+          "value": "yaml"
+        },
+        {
+          "description": "Markdown for a reader, provenance as an HTML comment.",
+          "value": "markdown"
+        },
+        {
+          "description": "Line-oriented text another program reads: the shell tool's allow-lists,\nprovenance as `#` comments.",
+          "value": "text"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `artifacts.list`.",
+      "is_enum": false,
+      "name": "ArtifactReport",
+      "properties": [
+        {
+          "description": "The manifest this was read from, repository-relative.",
+          "name": "manifest",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the manifest is committed in this repository at all. A repository that has\nnever run `majordomus generate` has no generated tree, which is a fact about it and\nnot a failure of this call: every list below is then empty and every tally zero.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The schema the manifest carries, empty when there is none to read.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The documents, in the manifest's order.",
+          "name": "documents",
+          "refs": [
+            "DocumentView"
+          ],
+          "required": true,
+          "type": "array of DocumentView"
+        },
+        {
+          "description": "The files, in the manifest's order, after any filter.",
+          "name": "artifacts",
+          "refs": [
+            "ArtifactView"
+          ],
+          "required": true,
+          "type": "array of ArtifactView"
+        },
+        {
+          "description": "The counts.",
+          "name": "tallies",
+          "refs": [
+            "ArtifactTallies"
+          ],
+          "required": true,
+          "type": "ArtifactTallies"
+        },
+        {
+          "description": "The command that rewrites every one of them.",
+          "name": "regenerate",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that decides staleness byte for byte, which is stronger than the hash.",
+          "name": "verify",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "artifacts.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where one generated file stands against the tree it is committed in.",
+      "is_enum": true,
+      "name": "ArtifactState",
+      "properties": [],
+      "type": "\"current\" | \"stale\" | \"missing\" | \"present\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ArtifactView"
+      ],
+      "values": [
+        {
+          "description": "The file is there and its bytes hash to what the manifest recorded.",
+          "value": "current"
+        },
+        {
+          "description": "The file is there and its bytes differ: it was edited, or the generator moved on.",
+          "value": "stale"
+        },
+        {
+          "description": "The manifest names it and the tree does not have it.",
+          "value": "missing"
+        },
+        {
+          "description": "The file is there and the manifest records no hash for it: the manifest's own\nencodings, which cannot hash themselves. `generate --check` compares them.",
+          "value": "present"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How many of each, so a caller needs no arithmetic of its own.",
+      "is_enum": false,
+      "name": "ArtifactTallies",
+      "properties": [
+        {
+          "description": "Documents in the manifest.",
+          "name": "documents",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Files in the manifest, after any filter.",
+          "name": "artifacts",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Hashes that match.",
+          "name": "current",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Hashes that do not.",
+          "name": "stale",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Files the manifest names and the tree lacks.",
+          "name": "missing",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Files the manifest records no hash for.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ArtifactReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One generated file, as the manifest declares it and as the tree has it.",
+      "is_enum": false,
+      "name": "ArtifactView",
+      "properties": [
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document it projects.",
+          "name": "document",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The encoding.",
+          "name": "format",
+          "refs": [
+            "ArtifactFormat"
+          ],
+          "required": true,
+          "type": "ArtifactFormat"
+        },
+        {
+          "description": "The JSON Schema its content satisfies, when it declares one.",
+          "name": "schema",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line: what it was derived from.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The size the manifest recorded.",
+          "name": "bytes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The hash the manifest recorded.",
+          "name": "sha256",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where the file stands against it.",
+          "name": "state",
+          "refs": [
+            "ArtifactState"
+          ],
+          "required": true,
+          "type": "ArtifactState"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ArtifactReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides.",
       "is_enum": false,
       "name": "BenchmarkPolicy",
@@ -268,132 +600,6 @@
           "type": "object"
         }
       ]
-    },
-    {
-      "description": "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence.",
-      "is_enum": false,
-      "name": "Budgets",
-      "properties": [
-        {
-          "description": "Largest accepted compressed image size.",
-          "name": "image_bytes",
-          "refs": [
-            "Positive"
-          ],
-          "required": false,
-          "type": "Positive | null"
-        },
-        {
-          "description": "Largest accepted stripped binary size.",
-          "name": "binary_bytes",
-          "refs": [
-            "Positive"
-          ],
-          "required": false,
-          "type": "Positive | null"
-        },
-        {
-          "description": "Largest accepted build context.",
-          "name": "build_context_bytes",
-          "refs": [
-            "Positive"
-          ],
-          "required": false,
-          "type": "Positive | null"
-        },
-        {
-          "description": "Longest accepted time from a stopped machine to a served response.",
-          "name": "cold_start_ms",
-          "refs": [
-            "Positive"
-          ],
-          "required": false,
-          "type": "Positive | null"
-        },
-        {
-          "description": "Largest accepted resident set under load.",
-          "name": "resident_memory_mb",
-          "refs": [
-            "Positive"
-          ],
-          "required": false,
-          "type": "Positive | null"
-        },
-        {
-          "description": "Longest accepted time for one liveness or readiness check.",
-          "name": "blocking_check_ms",
-          "refs": [
-            "Positive"
-          ],
-          "required": false,
-          "type": "Positive | null"
-        },
-        {
-          "description": "Longest accepted p99 for a served request.",
-          "name": "request_p99_ms",
-          "refs": [
-            "Positive"
-          ],
-          "required": false,
-          "type": "Positive | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "What is shipped and what it is built from.",
-      "is_enum": false,
-      "name": "Build",
-      "properties": [
-        {
-          "description": "The Cargo package that is built.",
-          "name": "package",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The binary target the image runs.",
-          "name": "binary",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The Cargo profile the image is built under.",
-          "name": "profile",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The repository-relative paths the build context carries, and the only ones.",
-          "name": "inputs",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "The directory the canonical site pipeline writes; absent means the image serves no\nsite.",
-          "name": "site",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [],
-      "variants": []
     },
     {
       "description": "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry.",
@@ -1034,33 +1240,212 @@
       "variants": []
     },
     {
-      "description": "When the edge considers a machine loaded, in requests.",
+      "description": "What the lifecycle of this checkout is holding.",
       "is_enum": false,
-      "name": "Concurrency",
+      "name": "Continuity",
       "properties": [
         {
-          "description": "Where the edge starts preferring another machine.",
-          "name": "soft_limit",
-          "refs": [
-            "Positive"
-          ],
+          "description": "Whether this checkout's lifecycle has ever run: a ledger line, a task, an episode or\na record. False in a fresh clone, which is not a fault.\n\nIt is not \"the directory exists\". Several things create that directory before\nanything has been recorded in it, so a reader that took its presence for evidence\nwould be told the lifecycle had run in a checkout where it never had.",
+          "name": "present",
+          "refs": [],
           "required": true,
-          "type": "Positive"
+          "type": "boolean"
         },
         {
-          "description": "Where it stops sending requests to this one.",
-          "name": "hard_limit",
-          "refs": [
-            "Positive"
-          ],
+          "description": "The worktree this answer is about. Every selection below is scoped to it.",
+          "name": "worktree",
+          "refs": [],
           "required": true,
-          "type": "Positive"
+          "type": "string"
+        },
+        {
+          "description": "The branch, or `DETACHED`.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit this checkout is on.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "`clean` or `dirty`.",
+          "name": "working_tree",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The open episode, or `None`.",
+          "name": "session",
+          "refs": [
+            "OpenSession"
+          ],
+          "required": false,
+          "type": "OpenSession | null"
+        },
+        {
+          "description": "The active task, or `None`.",
+          "name": "task",
+          "refs": [
+            "ActiveTask"
+          ],
+          "required": false,
+          "type": "ActiveTask | null"
+        },
+        {
+          "description": "The record the next worker would resume from, or `None` when nothing resolves here.",
+          "name": "handover",
+          "refs": [
+            "Record"
+          ],
+          "required": false,
+          "type": "Record | null"
+        },
+        {
+          "description": "The newest progress note for this worktree and branch, or `None`.",
+          "name": "checkpoint",
+          "refs": [
+            "Record"
+          ],
+          "required": false,
+          "type": "Record | null"
+        },
+        {
+          "description": "Unresolved questions on this branch. Every one refuses `finish --outcome completed`,\nwhichever task opened it.",
+          "name": "blockers",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "How many records of each kind this checkout holds, against the policy's caps.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "What a reader should know before trusting any of the above: a diverged record, a\nforeign open session, a malformed file that was skipped. Empty is the good case.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.state"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A directory contract as the document declares it, before anything is inherited.",
+      "is_enum": false,
+      "name": "ContractView",
+      "properties": [
+        {
+          "description": "The document's identity; it survives a move, the file name does not.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document's path, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming the directory.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line saying what the directory is for.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`active` or `deprecated`; a deprecated document is listed and never applied.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`directory`, `subtree` or `explicit`: how far the document reaches.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`extend`, `replace` or `final`: how it composes with what is above it.",
+          "name": "composition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Ties within one depth are broken by this, then by path.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "`*`, or the providers the document is written for.",
+          "name": "providers",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Who it addresses; both when it says nothing.",
+          "name": "audience",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Pathspecs whose change names this document for review.",
+          "name": "tracks",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether the directories below owe a contract, when this document says.",
+          "name": "children_require_contract",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Subtrees below this one that owe nothing: carried, not authored here.",
+          "name": "children_exempt",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "Fly"
+        "DirectoryNode"
       ],
       "values": [],
       "variants": []
@@ -1180,28 +1565,6 @@
       "variants": []
     },
     {
-      "description": "What a machine's CPU is.",
-      "is_enum": true,
-      "name": "CpuKind",
-      "properties": [],
-      "type": "\"shared\" | \"performance\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Resources"
-      ],
-      "values": [
-        {
-          "description": "A fraction of a core: the cheap profile.",
-          "value": "shared"
-        },
-        {
-          "description": "A dedicated one.",
-          "value": "performance"
-        }
-      ],
-      "variants": []
-    },
-    {
       "description": "`scope.yaml`, typed. Unknown keys are refused by the type and by the `scope` schema.",
       "is_enum": false,
       "name": "Declaration",
@@ -1234,240 +1597,6 @@
       "used_by": [],
       "used_by_schemas": [
         "ScopeReport"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "Whether the deployments this repository declares would work, decided locally: against\nthe capability registry this process built and the workspace it sits in.",
-      "is_enum": false,
-      "name": "DeploymentCheck",
-      "properties": [
-        {
-          "description": "True when no deployment earned a refusal.",
-          "name": "ok",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        },
-        {
-          "description": "How many deployments were decided.",
-          "name": "decided",
-          "refs": [],
-          "required": true,
-          "type": "integer (uint)"
-        },
-        {
-          "description": "Every refusal, in the order the objects and their keys appear.",
-          "name": "refusals",
-          "refs": [
-            "Refusal"
-          ],
-          "required": true,
-          "type": "array of Refusal"
-        }
-      ],
-      "type": "object",
-      "used_by": [
-        "deploy.check"
-      ],
-      "used_by_schemas": [],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "Every deployment the layer declares.",
-      "is_enum": false,
-      "name": "DeploymentList",
-      "properties": [
-        {
-          "description": "How many.",
-          "name": "count",
-          "refs": [],
-          "required": true,
-          "type": "integer (uint)"
-        },
-        {
-          "description": "Each, in identity order.",
-          "name": "deployments",
-          "refs": [
-            "DeploymentView"
-          ],
-          "required": true,
-          "type": "array of DeploymentView"
-        },
-        {
-          "description": "Objects of the deployment kind this executable could not read, with why. A\nmalformed object is reported here rather than hidden by being skipped.",
-          "name": "unreadable",
-          "refs": [
-            "Refusal"
-          ],
-          "required": false,
-          "type": "array of Refusal"
-        }
-      ],
-      "type": "object",
-      "used_by": [
-        "deploy.list"
-      ],
-      "used_by_schemas": [],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "One deployment as this process reads it, with where it came from.",
-      "is_enum": false,
-      "name": "DeploymentView",
-      "properties": [
-        {
-          "description": "The repository-relative file the object lives in.",
-          "name": "file",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The format version; a version this executable does not read is refused.",
-          "name": "schema",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "Always `deployment`.",
-          "name": "kind",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The identity within the repository.",
-          "name": "id",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "One line naming it.",
-          "name": "title",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "One line: what it serves and to whom.",
-          "name": "description",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "Where it stands.",
-          "name": "status",
-          "refs": [
-            "Status"
-          ],
-          "required": false,
-          "type": "Status | null"
-        },
-        {
-          "description": "The application's name at the provider.",
-          "name": "application",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "What is shipped and what it is built from.",
-          "name": "build",
-          "refs": [
-            "Build"
-          ],
-          "required": true,
-          "type": "Build"
-        },
-        {
-          "description": "The address the process listens on.",
-          "name": "listen",
-          "refs": [
-            "Listen"
-          ],
-          "required": true,
-          "type": "Listen"
-        },
-        {
-          "description": "The routes a platform polls.",
-          "name": "health",
-          "refs": [
-            "HealthRoutes"
-          ],
-          "required": true,
-          "type": "HealthRoutes"
-        },
-        {
-          "description": "What one machine is granted.",
-          "name": "resources",
-          "refs": [
-            "Resources"
-          ],
-          "required": true,
-          "type": "Resources"
-        },
-        {
-          "description": "How many machines run.",
-          "name": "machines",
-          "refs": [
-            "Machines"
-          ],
-          "required": true,
-          "type": "Machines"
-        },
-        {
-          "description": "The region they run in.",
-          "name": "region",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The measured figures it is held to.",
-          "name": "budgets",
-          "refs": [
-            "Budgets"
-          ],
-          "required": false,
-          "type": "Budgets"
-        },
-        {
-          "description": "The provider and its own facts.",
-          "name": "provider",
-          "refs": [
-            "Provider"
-          ],
-          "required": true,
-          "type": "Provider"
-        },
-        {
-          "description": "When the object was written.",
-          "name": "created_at",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "When it was last changed.",
-          "name": "updated_at",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [
-        "deploy.get"
-      ],
-      "used_by_schemas": [
-        "DeploymentList"
       ],
       "values": [],
       "variants": []
@@ -1517,6 +1646,290 @@
       "variants": []
     },
     {
+      "description": "One directory of the layer, what it owes, and what applies to it.",
+      "is_enum": false,
+      "name": "DirectoryNode",
+      "properties": [
+        {
+          "description": "Repository-relative, forward slashes.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Segments below the layer root; the root itself is 0.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The directory above, when it is inside the layer.",
+          "name": "parent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The directories immediately below, sorted.",
+          "name": "children",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether it carries the contract it owes.",
+          "name": "state",
+          "refs": [
+            "DirectoryState"
+          ],
+          "required": true,
+          "type": "DirectoryState"
+        },
+        {
+          "description": "Whether a contract is owed here at all.",
+          "name": "requires_contract",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The contract that made the requirement explicit, when one did.",
+          "name": "governed_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The contract that released this subtree, when one did.",
+          "name": "exempted_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many objects of any kind the index holds directly in this directory.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The contract this directory declares, before inheritance.",
+          "name": "contract",
+          "refs": [
+            "ContractView"
+          ],
+          "required": false,
+          "type": "ContractView | null"
+        },
+        {
+          "description": "The contracts that apply here once inheritance is resolved, least specific first.\nPresent when the request asked for it, or when it asked about one path.",
+          "name": "effective",
+          "refs": [
+            "EffectiveEntry"
+          ],
+          "required": false,
+          "type": "array of EffectiveEntry"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The layer's directories, what each owes, and the contracts that apply.",
+      "is_enum": false,
+      "name": "DirectoryReport",
+      "properties": [
+        {
+          "description": "The layer root the tree is rooted at.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The directories in each state.",
+          "name": "tallies",
+          "refs": [
+            "DirectoryTallies"
+          ],
+          "required": true,
+          "type": "DirectoryTallies"
+        },
+        {
+          "description": "Every directory asked for, sorted by path.",
+          "name": "directories",
+          "refs": [
+            "DirectoryNode"
+          ],
+          "required": true,
+          "type": "array of DirectoryNode"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "directories.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a directory of the layer carries the contract it owes.",
+      "is_enum": true,
+      "name": "DirectoryState",
+      "properties": [],
+      "type": "\"documented\" | \"exempt\" | \"owed\"",
+      "used_by": [
+        "directories.list"
+      ],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [
+        {
+          "description": "It carries a context document of its own.",
+          "value": "documented"
+        },
+        {
+          "description": "It owes none, because a contract above it says so.",
+          "value": "exempt"
+        },
+        {
+          "description": "It owes one and has none.",
+          "value": "owed"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How many directories are in each state.",
+      "is_enum": false,
+      "name": "DirectoryTallies",
+      "properties": [
+        {
+          "description": "Every directory of the layer the index knows.",
+          "name": "directories",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Carrying a contract of their own.",
+          "name": "documented",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Released by a contract above them.",
+          "name": "exempt",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Owing a contract and carrying none.",
+          "name": "owed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.",
+      "is_enum": true,
+      "name": "Divergence",
+      "properties": [],
+      "type": "\"exact\" | \"advanced\" | \"diverged\" | \"different_context\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Record"
+      ],
+      "values": [
+        {
+          "description": "Written at this commit. Trust it.",
+          "value": "exact"
+        },
+        {
+          "description": "Git has moved forward since. Trust it, and expect some of it to be done.",
+          "value": "advanced"
+        },
+        {
+          "description": "The recorded commit is not an ancestor: history was rewritten. Trust git, not this.",
+          "value": "diverged"
+        },
+        {
+          "description": "Another branch or another worktree. This record is not about your work.",
+          "value": "different_context"
+        },
+        {
+          "description": "Git could not answer, so this process says so rather than guessing `exact`.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One document, and the encodings it is committed in.",
+      "is_enum": false,
+      "name": "DocumentView",
+      "properties": [
+        {
+          "description": "The document id, shared by every encoding of it.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The schema id its structured encodings carry.",
+          "name": "schema",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line: what it was derived from.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The encodings, in the manifest's order.",
+          "name": "formats",
+          "refs": [
+            "ArtifactFormat"
+          ],
+          "required": true,
+          "type": "array of ArtifactFormat"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ArtifactReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One directed edge. Both ends are node ids of the same graph; a derivation that cannot\nresolve an end adds an external node rather than a dangling edge.",
       "is_enum": false,
       "name": "Edge",
@@ -1552,6 +1965,69 @@
       "variants": []
     },
     {
+      "description": "One contract in a directory's effective chain, in the order it is applied.",
+      "is_enum": false,
+      "name": "EffectiveEntry",
+      "properties": [
+        {
+          "description": "The document's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document's path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Depth below the layer root; less is less specific and applies first.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The declared order, the second sort key.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "`extend`, `replace` or `final`.",
+          "name": "composition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it applies to this directory, in words.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True for the directory's own document, false for one it inherits.",
+          "name": "local",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The body of every error response.",
       "is_enum": false,
       "name": "ErrorBody",
@@ -1568,21 +2044,19 @@
       ],
       "type": "object",
       "used_by": [
+        "artifacts.list",
         "capabilities.list",
         "capabilities.describe",
-        "deploy.get",
-        "deploy.list",
-        "deploy.check",
+        "continuity.state",
+        "directories.list",
         "graph.get",
         "graph.list",
         "health.report",
-        "health.live",
         "objects.get",
         "objects.list",
         "peers.list",
         "peers.announce",
         "perf.counters",
-        "health.ready",
         "repository.info",
         "repository.scope",
         "repository.scope_classify",
@@ -1693,43 +2167,6 @@
       "used_by": [],
       "used_by_schemas": [
         "Out"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "Fly.io's own facts: what has no meaning for any other provider.",
-      "is_enum": false,
-      "name": "Fly",
-      "properties": [
-        {
-          "description": "The organisation the application belongs to.",
-          "name": "org",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "Whether the edge redirects plain HTTP to HTTPS.",
-          "name": "force_https",
-          "refs": [],
-          "required": false,
-          "type": "boolean | null"
-        },
-        {
-          "description": "When the edge considers a machine loaded.",
-          "name": "concurrency",
-          "refs": [
-            "Concurrency"
-          ],
-          "required": false,
-          "type": "Concurrency | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "Provider"
       ],
       "values": [],
       "variants": []
@@ -2125,63 +2562,6 @@
       "variants": []
     },
     {
-      "description": "The routes a platform polls, and how often.",
-      "is_enum": false,
-      "name": "HealthRoutes",
-      "properties": [
-        {
-          "description": "Is this process alive.",
-          "name": "liveness",
-          "refs": [
-            "Route"
-          ],
-          "required": true,
-          "type": "Route"
-        },
-        {
-          "description": "Can this process serve traffic.",
-          "name": "readiness",
-          "refs": [
-            "Route"
-          ],
-          "required": true,
-          "type": "Route"
-        },
-        {
-          "description": "How long the platform waits before the first check counts.",
-          "name": "grace_seconds",
-          "refs": [],
-          "required": false,
-          "type": "integer | null"
-        },
-        {
-          "description": "How often the platform polls liveness.",
-          "name": "interval_seconds",
-          "refs": [
-            "Positive"
-          ],
-          "required": false,
-          "type": "Positive | null"
-        },
-        {
-          "description": "How long one check may take before it counts as failed.",
-          "name": "timeout_seconds",
-          "refs": [
-            "Positive"
-          ],
-          "required": false,
-          "type": "Positive | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole.",
       "is_enum": true,
       "name": "HealthStatus",
@@ -2190,8 +2570,7 @@
       "used_by": [],
       "used_by_schemas": [
         "Health",
-        "HealthCheck",
-        "Readiness"
+        "HealthCheck"
       ],
       "values": [
         {
@@ -2266,129 +2645,25 @@
       "variants": []
     },
     {
-      "description": "Which interface a process listens on.",
+      "description": "Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered.",
       "is_enum": true,
-      "name": "Interface",
+      "name": "Match",
       "properties": [],
-      "type": "\"loopback\" | \"all\"",
+      "type": "\"same_worktree_same_branch\" | \"same_branch\"",
       "used_by": [],
       "used_by_schemas": [
-        "Listen"
+        "Record"
       ],
       "values": [
         {
-          "description": "Reachable from this host alone: the local default, and what every local invocation\nkeeps.",
-          "value": "loopback"
+          "description": "Same repository, same worktree, same branch.",
+          "value": "same_worktree_same_branch"
         },
         {
-          "description": "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning.",
-          "value": "all"
+          "description": "Same repository, same branch, another worktree of it.",
+          "value": "same_branch"
         }
       ],
-      "variants": []
-    },
-    {
-      "description": "The address the process listens on.",
-      "is_enum": false,
-      "name": "Listen",
-      "properties": [
-        {
-          "description": "The port, stated once for the process, the image and the provider configuration.",
-          "name": "port",
-          "refs": [
-            "Port"
-          ],
-          "required": true,
-          "type": "Port"
-        },
-        {
-          "description": "Which interface.",
-          "name": "interface",
-          "refs": [
-            "Interface"
-          ],
-          "required": true,
-          "type": "Interface"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for.",
-      "is_enum": false,
-      "name": "Liveness",
-      "properties": [
-        {
-          "description": "Always `true`. A process that could not answer would not answer at all, which is\nthe signal.",
-          "name": "alive",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        },
-        {
-          "description": "This executable's version, so a rolling deployment can tell which build answered.",
-          "name": "version",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        }
-      ],
-      "type": "object",
-      "used_by": [
-        "health.live"
-      ],
-      "used_by_schemas": [],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "How many machines run, and whether the platform may stop them.",
-      "is_enum": false,
-      "name": "Machines",
-      "properties": [
-        {
-          "description": "How many machines the application has.",
-          "name": "count",
-          "refs": [
-            "Positive"
-          ],
-          "required": true,
-          "type": "Positive"
-        },
-        {
-          "description": "How many stay running when idle.",
-          "name": "min_running",
-          "refs": [],
-          "required": true,
-          "type": "integer (uint32)"
-        },
-        {
-          "description": "Whether a request to a stopped machine starts it.",
-          "name": "autostart",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        },
-        {
-          "description": "Whether an idle machine is stopped.",
-          "name": "autostop",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [],
       "variants": []
     },
     {
@@ -2769,6 +3044,76 @@
       "variants": []
     },
     {
+      "description": "The open episode of this worktree, when there is one.",
+      "is_enum": false,
+      "name": "OpenSession",
+      "properties": [
+        {
+          "description": "The episode's id.",
+          "name": "session_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it opened.",
+          "name": "started_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who opened it.",
+          "name": "owner",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The worker identity, when one was supplied. Never inferred.",
+          "name": "worker",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The provider whose event opened it, when one did.",
+          "name": "provider",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The branch it opened on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The commit it opened at.",
+          "name": "start_head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "True when the open record here belongs to another checkout. Such a record is\nreported and never treated as this checkout's episode.",
+          "name": "foreign",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Continuity"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where the declaration was read from.",
       "is_enum": true,
       "name": "Origin",
@@ -3083,137 +3428,6 @@
       "variants": []
     },
     {
-      "description": "A TCP port a deployed process may bind. Privileged ports are not among them: the\nprocess runs as a non-root user and could not bind one.",
-      "is_enum": false,
-      "name": "Port",
-      "properties": [],
-      "type": "integer (uint16)",
-      "used_by": [],
-      "used_by_schemas": [
-        "Listen"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused\nwherever zero would mean \"a deployment that cannot run\".",
-      "is_enum": false,
-      "name": "Positive",
-      "properties": [],
-      "type": "integer (uint32)",
-      "used_by": [],
-      "used_by_schemas": [
-        "Budgets",
-        "Concurrency",
-        "HealthRoutes",
-        "Machines",
-        "Resources"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "The provider and the facts that belong to it alone.",
-      "is_enum": false,
-      "name": "Provider",
-      "properties": [
-        {
-          "description": "Which provider.",
-          "name": "name",
-          "refs": [
-            "ProviderName"
-          ],
-          "required": true,
-          "type": "ProviderName"
-        },
-        {
-          "description": "Fly's own block, when the provider is Fly.",
-          "name": "fly",
-          "refs": [
-            "Fly"
-          ],
-          "required": false,
-          "type": "Fly | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one.",
-      "is_enum": true,
-      "name": "ProviderName",
-      "properties": [],
-      "type": "\"fly\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Provider"
-      ],
-      "values": [
-        {
-          "description": "Fly.io.",
-          "value": "fly"
-        }
-      ],
-      "variants": []
-    },
-    {
-      "description": "The answer to \"can this process serve traffic\": the local initialisation a request\nwould need, and nothing beyond this process. A readiness check that grew a dependency\nprobe fails a deployment because an unrelated service is down.",
-      "is_enum": false,
-      "name": "Readiness",
-      "properties": [
-        {
-          "description": "Whether every part below is in place.",
-          "name": "ready",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        },
-        {
-          "description": "This executable's version.",
-          "name": "version",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "How many capabilities the registry holds; zero would mean nothing to serve.",
-          "name": "capabilities",
-          "refs": [],
-          "required": true,
-          "type": "integer (uint)"
-        },
-        {
-          "description": "How many objects the index holds. Read from the index this process built at\nstart-up: it is already in memory, and reading it walks nothing.",
-          "name": "objects",
-          "refs": [],
-          "required": true,
-          "type": "integer (uint)"
-        },
-        {
-          "description": "Whether the layer read cleanly. A degraded layer is still served — the diagnostics\nare the point — so this reports rather than refuses.",
-          "name": "layer",
-          "refs": [
-            "HealthStatus"
-          ],
-          "required": true,
-          "type": "HealthStatus"
-        }
-      ],
-      "type": "object",
-      "used_by": [
-        "health.ready"
-      ],
-      "used_by_schemas": [],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "Why a path is out. The order is the order the rules decide in.",
       "is_enum": true,
       "name": "Reason",
@@ -3277,51 +3491,82 @@
       "variants": []
     },
     {
-      "description": "Why a deployment object is refused: what was read, where, and what to do about it.",
+      "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file.",
       "is_enum": false,
-      "name": "Refusal",
+      "name": "Record",
       "properties": [
         {
-          "description": "The repository-relative file the value came from.",
-          "name": "file",
+          "description": "Repository-relative path. The body is at the path; it is not copied here.",
+          "name": "path",
           "refs": [],
           "required": true,
           "type": "string"
         },
         {
-          "description": "The key path within it, as the contract names it.",
-          "name": "key",
+          "description": "When the record says it was written.",
+          "name": "created_at",
           "refs": [],
           "required": true,
           "type": "string"
         },
         {
-          "description": "The value observed, rendered as it was read.",
-          "name": "found",
+          "description": "The task it belongs to, or `none`.",
+          "name": "task_id",
           "refs": [],
           "required": true,
           "type": "string"
         },
         {
-          "description": "What is wrong with it, in one line.",
-          "name": "problem",
+          "description": "The branch it was written on.",
+          "name": "branch",
           "refs": [],
           "required": true,
           "type": "string"
         },
         {
-          "description": "What to do instead.",
-          "name": "correction",
+          "description": "The commit it was written at.",
+          "name": "head",
           "refs": [],
           "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the working tree was clean or dirty then.",
+          "name": "working_tree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which tier of the resolution rule matched.",
+          "name": "matched",
+          "refs": [
+            "Match"
+          ],
+          "required": true,
+          "type": "Match"
+        },
+        {
+          "description": "How far its commit is from this one.",
+          "name": "divergence",
+          "refs": [
+            "Divergence"
+          ],
+          "required": true,
+          "type": "Divergence"
+        },
+        {
+          "description": "The section a resuming worker acts on, when the record has one. A handover's `Next\nAction`; empty for a record that carries no sections.",
+          "name": "next_action",
+          "refs": [],
+          "required": false,
           "type": "string"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "DeploymentCheck",
-        "DeploymentList"
+        "Continuity"
       ],
       "values": [],
       "variants": []
@@ -3510,60 +3755,6 @@
           "type": "AnswerView"
         }
       ]
-    },
-    {
-      "description": "What one machine is granted.",
-      "is_enum": false,
-      "name": "Resources",
-      "properties": [
-        {
-          "description": "Shared or dedicated.",
-          "name": "cpu_kind",
-          "refs": [
-            "CpuKind"
-          ],
-          "required": true,
-          "type": "CpuKind"
-        },
-        {
-          "description": "How many CPUs one machine has.",
-          "name": "cpus",
-          "refs": [
-            "Positive"
-          ],
-          "required": true,
-          "type": "Positive"
-        },
-        {
-          "description": "Memory per machine, in megabytes.",
-          "name": "memory_mb",
-          "refs": [
-            "Positive"
-          ],
-          "required": true,
-          "type": "Positive"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state.",
-      "is_enum": false,
-      "name": "Route",
-      "properties": [],
-      "type": "string",
-      "used_by": [],
-      "used_by_schemas": [
-        "HealthRoutes"
-      ],
-      "values": [],
-      "variants": []
     },
     {
       "description": "The scope: the declaration as read, its origin, and every tracked file against it.",
@@ -3811,32 +4002,6 @@
       "variants": []
     },
     {
-      "description": "Where a deployment stands.",
-      "is_enum": true,
-      "name": "Status",
-      "properties": [],
-      "type": "\"declared\" | \"active\" | \"retired\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "DeploymentView"
-      ],
-      "values": [
-        {
-          "description": "The object exists and nothing is deployed from it yet.",
-          "value": "declared"
-        },
-        {
-          "description": "It is deployed.",
-          "value": "active"
-        },
-        {
-          "description": "It was, and the object is kept for the record.",
-          "value": "retired"
-        }
-      ],
-      "variants": []
-    },
-    {
       "description": "The registry counted: by source, kind, stability and projection.",
       "is_enum": false,
       "name": "Summary",
@@ -4073,6 +4238,87 @@
   "source": "docs/generated/openapi.json",
   "tags": [
     {
+      "description": "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list.",
+      "name": "artifacts",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=8, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/artifacts?format=yaml\"",
+          "description": "The manifest `majordomus generate` commits as docs/generated/artifacts.json, reconciled with the working tree: every document with the encodings it is written in, and every file with its format, schema, source, size, hash and whether the file on disk still matches. Optionally narrowed to one document or one encoding. Reads only; `majordomus generate` writes and `majordomus generate --check` is the byte-for-byte verdict.",
+          "id": "artifacts.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "artifacts",
+            "uri": "majordomus://artifacts"
+          },
+          "mcp_tool": "majordomus_artifacts",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only the artifacts of this document (`registry`, `cli`, `openapi`, ...).",
+              "examples": [],
+              "name": "document",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only the artifacts written in this encoding.",
+              "examples": [
+                {
+                  "case": "one-encoding",
+                  "value": "\"yaml\""
+                }
+              ],
+              "name": "format",
+              "required": false,
+              "type": "ArtifactFormat | null"
+            }
+          ],
+          "path": "/api/v1/artifacts",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::artifacts",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "List the generated artifacts: the result.",
+              "schema": "ArtifactReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ArtifactReport",
+          "stability": "behaviorally_verified",
+          "summary": "List the generated artifacts"
+        }
+      ]
+    },
+    {
       "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.",
       "name": "capabilities",
       "operations": [
@@ -4216,102 +4462,37 @@
       ]
     },
     {
-      "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
-      "name": "deploy",
+      "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes.",
+      "name": "continuity",
       "operations": [
         {
           "benchmark": "required",
           "benchmark_reason": "",
           "body_examples": [],
           "body_schema": "",
-          "cache": "disabled",
-          "cache_detail": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2, ttl_seconds=2",
           "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/deployment?id=majordomus\"",
-          "description": "One deployment by its identity, typed, with the repository-relative file it was read from.",
-          "id": "deploy.get",
-          "kind": "query",
-          "mcp_resource": "",
-          "mcp_tool": "majordomus_deployment",
-          "method": "GET",
-          "parameters": [
-            {
-              "description": "The deployment's `id`.",
-              "examples": [
-                {
-                  "case": "first-deployment",
-                  "value": "\"majordomus\""
-                }
-              ],
-              "name": "id",
-              "required": true,
-              "type": "string"
-            }
-          ],
-          "path": "/api/v1/deployment",
-          "provenance": {
-            "module": "majordomus_cli::capability::builtin::deploy",
-            "source": "builtin"
-          },
-          "responses": [
-            {
-              "description": "One deployment: the result.",
-              "schema": "DeploymentView",
-              "status": "200"
-            },
-            {
-              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
-              "schema": "ErrorBody",
-              "status": "400"
-            },
-            {
-              "description": "`not_found`: The input names something the repository does not hold.",
-              "schema": "ErrorBody",
-              "status": "404"
-            },
-            {
-              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
-              "schema": "ErrorBody",
-              "status": "500"
-            },
-            {
-              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
-              "schema": "ErrorBody",
-              "status": "default"
-            }
-          ],
-          "result_schema": "DeploymentView",
-          "stability": "behaviorally_verified",
-          "summary": "One deployment"
-        },
-        {
-          "benchmark": "required",
-          "benchmark_reason": "",
-          "body_examples": [],
-          "body_schema": "",
-          "cache": "disabled",
-          "cache_detail": "",
-          "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/deployments\"",
-          "description": "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped.",
-          "id": "deploy.list",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/continuity\"",
+          "description": "The open episode, the active task, the handover and checkpoint that resolve for this worktree and branch, each with its divergence label, the unresolved questions that refuse completion, and the record tallies. Selection is two-tiered and never repository-wide: a record from an unrelated worktree or branch is not offered, because a briefing that is quietly about somebody else is worse than none. Absence is reported as absence.",
+          "id": "continuity.state",
           "kind": "query",
           "mcp_resource": {
-            "name": "deployments",
-            "uri": "majordomus://deployments"
+            "name": "continuity",
+            "uri": "majordomus://continuity"
           },
-          "mcp_tool": "majordomus_deployments",
+          "mcp_tool": "majordomus_continuity",
           "method": "GET",
           "parameters": [],
-          "path": "/api/v1/deployments",
+          "path": "/api/v1/continuity",
           "provenance": {
-            "module": "majordomus_cli::capability::builtin::deploy",
+            "module": "majordomus_cli::capability::builtin::continuity",
             "source": "builtin"
           },
           "responses": [
             {
-              "description": "Deployments: the result.",
-              "schema": "DeploymentList",
+              "description": "What the lifecycle is holding: the result.",
+              "schema": "Continuity",
               "status": "200"
             },
             {
@@ -4335,35 +4516,81 @@
               "status": "default"
             }
           ],
-          "result_schema": "DeploymentList",
+          "result_schema": "Continuity",
           "stability": "behaviorally_verified",
-          "summary": "Deployments"
-        },
+          "summary": "What the lifecycle is holding"
+        }
+      ]
+    },
+    {
+      "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
+      "name": "directories",
+      "operations": [
         {
           "benchmark": "required",
           "benchmark_reason": "",
           "body_examples": [],
           "body_schema": "",
           "cache": "process",
-          "cache_detail": "max_entries=2, ttl_seconds=5",
+          "cache_detail": "max_entries=8, ttl_seconds=5",
           "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/deployments/check\"",
-          "description": "Every refusal the declared deployments earn locally: a health route no capability registers, a package or binary the workspace does not produce, a build input that does not resolve, more machines running than exist, a hosted process that would bind loopback. Each names the file, the key, the value observed and the correction. Nothing here contacts the provider.",
-          "id": "deploy.check",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/directories?path=.ai%2Frepo%2Frules&effective=true&state=owed\"",
+          "description": "Every directory of the layer the index knows, with the contract it declares, whether it owes one and which contract decided, and — for a named path, or when asked for everywhere — the effective chain composed from the root down, least specific first.",
+          "id": "directories.list",
           "kind": "query",
-          "mcp_resource": "",
-          "mcp_tool": "majordomus_deploy_check",
+          "mcp_resource": {
+            "name": "directories",
+            "uri": "majordomus://directories"
+          },
+          "mcp_tool": "majordomus_directories",
           "method": "GET",
-          "parameters": [],
-          "path": "/api/v1/deployments/check",
+          "parameters": [
+            {
+              "description": "One directory, repository-relative and inside the layer. Its effective chain is\nalways resolved. Absent means every directory of the layer.",
+              "examples": [
+                {
+                  "case": "one-directory",
+                  "value": "\".ai/repo/rules\""
+                }
+              ],
+              "name": "path",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Resolve the effective chain for every directory, not only for a named one.",
+              "examples": [
+                {
+                  "case": "effective-everywhere",
+                  "value": "true"
+                }
+              ],
+              "name": "effective",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Only directories in this state: `documented`, `exempt` or `owed`.",
+              "examples": [
+                {
+                  "case": "owed",
+                  "value": "\"owed\""
+                }
+              ],
+              "name": "state",
+              "required": false,
+              "type": "DirectoryState | null"
+            }
+          ],
+          "path": "/api/v1/directories",
           "provenance": {
-            "module": "majordomus_cli::capability::builtin::deploy",
+            "module": "majordomus_cli::capability::builtin::directories",
             "source": "builtin"
           },
           "responses": [
             {
-              "description": "Would these deployments work: the result.",
-              "schema": "DeploymentCheck",
+              "description": "The layer's directory contracts: the result.",
+              "schema": "DirectoryReport",
               "status": "200"
             },
             {
@@ -4387,9 +4614,9 @@
               "status": "default"
             }
           ],
-          "result_schema": "DeploymentCheck",
+          "result_schema": "DirectoryReport",
           "stability": "behaviorally_verified",
-          "summary": "Would these deployments work"
+          "summary": "The layer's directory contracts"
         }
       ]
     },
@@ -4593,110 +4820,6 @@
           "result_schema": "Health",
           "stability": "behaviorally_verified",
           "summary": "Health of this process"
-        },
-        {
-          "benchmark": "required",
-          "benchmark_reason": "",
-          "body_examples": [],
-          "body_schema": "",
-          "cache": "disabled",
-          "cache_detail": "",
-          "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/live\"",
-          "description": "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say.",
-          "id": "health.live",
-          "kind": "query",
-          "mcp_resource": "",
-          "mcp_tool": "",
-          "method": "GET",
-          "parameters": [],
-          "path": "/api/v1/live",
-          "provenance": {
-            "module": "majordomus_cli::capability::builtin::health",
-            "source": "builtin"
-          },
-          "responses": [
-            {
-              "description": "Liveness: the result.",
-              "schema": "Liveness",
-              "status": "200"
-            },
-            {
-              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
-              "schema": "ErrorBody",
-              "status": "400"
-            },
-            {
-              "description": "`not_found`: The input names something the repository does not hold.",
-              "schema": "ErrorBody",
-              "status": "404"
-            },
-            {
-              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
-              "schema": "ErrorBody",
-              "status": "500"
-            },
-            {
-              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
-              "schema": "ErrorBody",
-              "status": "default"
-            }
-          ],
-          "result_schema": "Liveness",
-          "stability": "behaviorally_verified",
-          "summary": "Liveness"
-        },
-        {
-          "benchmark": "required",
-          "benchmark_reason": "",
-          "body_examples": [],
-          "body_schema": "",
-          "cache": "disabled",
-          "cache_detail": "",
-          "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/ready\"",
-          "description": "Can this process serve traffic: the registry and the index it built at start-up, already resident, and how the layer read. Only local initialisation — never an external provider, a database or another service, because a readiness check that probes a dependency fails a deployment for something that is not this process.",
-          "id": "health.ready",
-          "kind": "query",
-          "mcp_resource": "",
-          "mcp_tool": "",
-          "method": "GET",
-          "parameters": [],
-          "path": "/api/v1/ready",
-          "provenance": {
-            "module": "majordomus_cli::capability::builtin::health",
-            "source": "builtin"
-          },
-          "responses": [
-            {
-              "description": "Readiness: the result.",
-              "schema": "Readiness",
-              "status": "200"
-            },
-            {
-              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
-              "schema": "ErrorBody",
-              "status": "400"
-            },
-            {
-              "description": "`not_found`: The input names something the repository does not hold.",
-              "schema": "ErrorBody",
-              "status": "404"
-            },
-            {
-              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
-              "schema": "ErrorBody",
-              "status": "500"
-            },
-            {
-              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
-              "schema": "ErrorBody",
-              "status": "default"
-            }
-          ],
-          "result_schema": "Readiness",
-          "stability": "behaviorally_verified",
-          "summary": "Readiness"
         }
       ]
     },

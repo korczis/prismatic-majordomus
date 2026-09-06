@@ -57,7 +57,10 @@ build_css "$OUT/cockpit.css"
 echo "==> cockpit-assets: vendoring the pinned libraries"
 mkdir -p "$OUT/vendor"
 # committed: the Cockpit's interaction depends on it, and it is 55 kB
-cp "$ROOT/node_modules/@alpinejs/csp/dist/cdn.min.js" "$OUT/vendor/alpine.csp.min.js"
+# the ES module build, not the CDN one: the CDN build calls Alpine.start() on a microtask
+# of its own, which runs before this page's module registers Alpine.data('cockpit') and
+# leaves every x- attribute bound to an undefined variable
+cp "$ROOT/node_modules/@alpinejs/csp/dist/module.esm.min.js" "$OUT/vendor/alpine.csp.min.js"
 # not committed: lazy, optional, and large
 cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$OUT/vendor/cytoscape.min.js"
 # three ships ES modules only; the module build imports its core from beside itself, so

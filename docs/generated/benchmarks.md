@@ -9,25 +9,23 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 19 | 19 | 0 | 0 |
-| http | 19 | 19 | 0 | 0 |
+| direct | 17 | 17 | 0 | 0 |
+| http | 17 | 17 | 0 | 0 |
 | mcp | 17 | 17 | 0 | 0 |
 | system | 12 | 12 | 0 | 0 |
-| total | 67 | 67 | 0 | 0 |
+| total | 63 | 63 | 0 | 0 |
 
 ## Capabilities
 
 | capability | module | kind | cache | direct | mcp | http | cases |
 |---|---|---|---|---|---|---|---|
+| `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
 | `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
-| `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
-| `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
-| `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
+| `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
-| `health.live` | health | query | — | covered | — | covered | `default` |
-| `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
