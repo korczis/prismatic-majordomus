@@ -241,6 +241,93 @@ fn the_health_page_shows_the_verdicts_the_engines_reach() {
 }
 
 #[test]
+fn the_continuity_page_shows_what_the_lifecycle_is_holding_and_labels_what_not_to_trust() {
+    // The empty page is covered by the sweep over PAGES. This is the other half: a checkout
+    // that has been worked in, where every card has something to render and one of the
+    // records must be marked as not safe to read as current knowledge.
+    let f = Fixture::new();
+    let root = f.root();
+    let root_s = root.to_string_lossy().to_string();
+    let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    let branch = f.git(&["symbolic-ref", "--short", "HEAD"]).trim().to_string();
+
+    let record = |created: &str, task: &str, at: &str| {
+        format!(
+            "---\nschema_version: 1\ncreated_at: {created}\ntask_id: {task}\nprofile: implementation\n\
+             owner: \"tester\"\nrepository_id: {root_s}/.git\nworktree: {root_s}\nbranch: {branch}\n\
+             head: {at}\nworking_tree: clean\nchanged_files:\n---\n\n# Objective\n\nDo the thing.\n\n\
+             # Current State\n\nHalf done.\n\n# Next Action\n\nFinish the thing.\n"
+        )
+    };
+    // written on a commit this repository has never had: the label must say so
+    f.write(
+        ".ai/local/state/handovers/a.md",
+        &record(
+            "2026-01-01T00:00:00Z",
+            "t-1",
+            "0123456789abcdef0123456789abcdef01234567",
+        ),
+    );
+    f.write(
+        ".ai/local/state/checkpoints/c.md",
+        &record("2026-01-02T00:00:00Z", "t-1", &head),
+    );
+    f.write(
+        ".ai/local/state/session-current.yaml",
+        &format!(
+            "session_id: s-here\nstarted_at: 2026-01-01T00:00:00Z\nowner: \"tester\"\n\
+             worker: claude\nprovider: claude-code\nrepository_id: {root_s}/.git\n\
+             worktree: {root_s}\nbranch: {branch}\nstart_head: {head}\nstart_working_tree: clean\n"
+        ),
+    );
+    f.write(
+        ".ai/local/state/current.yaml",
+        &format!(
+            "id: t-1\ntask: \"Do the thing\"\nprofile: implementation\nowner: \"tester\"\n\
+             scope:\n  - lib\n  - docs\nstarted_at: 2026-01-01T00:00:00Z\noutcome: active\n\
+             repository_id: {root_s}/.git\nworktree: {root_s}\nbranch: {branch}\nhead: {head}\n\
+             working_tree: clean\n"
+        ),
+    );
+    f.write(
+        ".ai/local/state/open-questions.md",
+        "# Open questions\n\n- [unresolved] t-1 — Which budget applies? (2026-01-01)\n",
+    );
+
+    let s = Served::start(&root, &[]);
+    let (status, page) = html(&s, "/cockpit/continuity");
+    assert_eq!(status, 200);
+
+    for text in [
+        "s-here",                 // the open episode
+        "claude-code",            // the provider that opened it
+        "Do the thing",           // the active task
+        "Finish the thing.",      // the section a resuming worker acts on
+        "Which budget applies?",  // the blocker
+        "diverged",               // the label on the handover
+    ] {
+        assert!(page.contains(text), "the continuity page lacks '{text}':\n{page}");
+    }
+    assert!(
+        page.contains("Trust git over anything it says"),
+        "a record from a history that no longer exists must say so, not only be labelled"
+    );
+    assert!(
+        page.contains("refuses"),
+        "an open question must say what it refuses"
+    );
+
+    // and the same state as data, over the capability the page itself called
+    let (status, c) = s.get("/api/v1/continuity");
+    assert_eq!(status, 200);
+    assert_eq!(c["session"]["session_id"], "s-here");
+    assert_eq!(c["handover"]["divergence"], "diverged");
+    assert_eq!(c["checkpoint"]["divergence"], "exact");
+    assert_eq!(c["blockers"].as_array().unwrap().len(), 1);
+    assert_eq!(c["task"]["scope"].as_array().unwrap().len(), 2);
+}
+
+#[test]
 fn assets_are_served_from_the_distribution_with_immutable_urls_and_no_traversal() {
     let f = Fixture::new();
     let s = Served::start(&f.root(), &[]);
