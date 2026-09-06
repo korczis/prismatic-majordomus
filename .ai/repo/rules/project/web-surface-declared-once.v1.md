@@ -70,11 +70,19 @@ the projection it edits is not derived and must be made so.
 
 # Failure behaviour
 
-`majordomus web validate` reports a finding for a duplicate mount, a nested claim the outer
-surface did not declare, an unknown category or visibility, a native surface with no handler
-behind it, and a reserved namespace held by the wrong producer; it exits `10` when any
-finding is an error. Router construction refuses the same conditions rather than starting,
-naming the surfaces that collide. `majordomus generate --check` fails when the committed
+`majordomus web validate` reports a finding for a duplicate mount within one world, a nested
+claim the outer surface did not declare, an unknown category or visibility, and a native
+surface with no handler behind it; it exits `10` when any finding is an error. Router
+construction refuses the same conditions rather than starting, naming the surfaces that
+collide.
+
+The two reserved names are held one step earlier, because a validator that ran only when
+somebody chose to run it would be the weaker guard: moving the Swagger UI onto `/docs` while
+the documentation still holds it is a mount collision the validator and the router both
+refuse, and moving it there after removing the documentation fails
+`the_reserved_mounts_belong_to_the_surfaces_that_own_them` in `http/surfaces.rs` and case
+`89_web_surface`, which assert the mounts against the producers that must own them. The
+names are enforced by tests that cannot be skipped, not by a runtime finding. `majordomus generate --check` fails when the committed
 topology projection under `docs/generated/` is not what the registry now resolves, and
 `scripts/generate-site-data --check` fails when the website's derived copy has drifted from
 it — so a surface added without regenerating is a red build rather than a stale page.
