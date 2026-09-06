@@ -10,10 +10,9 @@
 use serde_json::{json, Value};
 
 use crate::capability::builtin::{
-    ArtifactReport, Continuity, GraphList, Health, HealthStatus, ObjectList, Record,
-    RepositoryReport,
+    ArtifactReport, Continuity, DirectoryReport, DirectoryState, GraphList, Health, HealthStatus,
+    ObjectList, Record, RepositoryReport,
 };
-    DirectoryReport, DirectoryState, GraphList, Health, HealthStatus, ObjectList, RepositoryReport,
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::generate;
 use crate::graph::Graph;
