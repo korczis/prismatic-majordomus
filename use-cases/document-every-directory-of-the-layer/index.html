@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Refuse a directory of the layer that documents nothing — Prismatic Majordomus</title>
-<meta name="description" content="A directory added under the layer without a context document fails validation by name, and nothing resolves against the tree until it says what it is for.">
+<meta name="description" content="A directory added under the layer without a context document fails validation by name, nothing resolves against the tree until it says what it is for, and the same hierarchy is readable over MCP and the API without running the gate.">
 <link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/use-cases/document-every-directory-of-the-layer/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="Refuse a directory of the layer that documents nothing — Prismatic Majordomus">
-<meta property="og:description" content="A directory added under the layer without a context document fails validation by name, and nothing resolves against the tree until it says what it is for.">
+<meta property="og:description" content="A directory added under the layer without a context document fails validation by name, nothing resolves against the tree until it says what it is for, and the same hierarchy is readable over MCP and the API without running the gate.">
 <meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/use-cases/document-every-directory-of-the-layer/">
 <meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -166,7 +166,7 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Refuse a directory of the layer that documents nothing</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">A directory added under the layer without a context document fails validation by name, and nothing resolves against the tree until it says what it is for.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">A directory added under the layer without a context document fails validation by name, nothing resolves against the tree until it says what it is for, and the same hierarchy is readable over MCP and the API without running the gate.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -209,7 +209,8 @@
 <span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
 <span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a directory of the layer with no context document is a named failure, not a silence</span><span class="z-l-8 z-d-8">&#39;</span></span>
 <span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the finding names the directory, so the fix is one file in one place</span><span class="z-l-8 z-d-8">&#39;</span></span>
-<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the tree refuses to resolve until it is fixed, so nobody reads a half-documented layer</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the tree refuses to resolve until it is fixed, so nobody reads a half-documented layer</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the same tree, and what each directory owes, is readable through majordomus_directories and GET /api/v1/directories without running the gate</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
 <p>The obligation to document a directory is enforced rather than remembered. The fix is one file: a <code>README.md</code> carrying <code>schema: context/v1</code>, saying what the directory is for and what belongs in it. Where the directories below a contract are instances of a kind rather than sections — a skill and its examples — the governing contract exempts them with <code>children.require_contract: false</code>, and the exemption travels with the tree it describes.</p>
 </article>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
@@ -218,6 +219,7 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/context/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm font-medium text-fg-brand">majordomus context</span><span class="text-sm text-body">What the next worker needs to know now, in authority order and within a budget.</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctor/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm font-medium text-fg-brand">majordomus doctor</span><span class="text-sm text-body">Is Majordomus itself healthy, and is every enforcement it declares actually wired here?</span></a></li></ul>
+    <p class="mt-3 text-sm text-body">Over MCP the same layer is reached through <code class="font-mono text-heading">majordomus_directories</code> (<a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/" class="text-fg-brand hover:underline">the MCP surface</a>).</p>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The rules that make it hold</h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/context-integrity/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">blocking</span></span><span class="text-sm font-medium text-heading">Context integrity</span><span class="text-sm text-body">Every directory of the AI layer carries a context document, each one carries the contract, they compose into one deterministic chain for every path, and a tree that does not validate resolves nothing.</span></a></li></ul>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Guarantees exercised</h2>
@@ -269,7 +271,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/abef20060380deecb9bf5fe94adeed8caead695c" class="font-mono hover:underline">abef200</a> · inputs <span class="font-mono">dd5ebfe44b8e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7a4bba74e6fb9eaf6286681ce5acbc299d4f6594" class="font-mono hover:underline">7a4bba7</a> · inputs <span class="font-mono">f2e70628659c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -461,6 +461,7 @@ tree; today that is <code>README.md</code>. See <a href="https://korczis.github.
 <span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">racks</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">l</span><span class="z-l-8 z-d-8">ib/rules.sh</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> git pathspecs this document describes</span></span>
 <span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">hildren</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> subtree only: what the directories below owe</span></span>
 <span class="giallo-l"><span class="z-l-4 z-d-1">  r</span><span class="z-l-4 z-d-1">equire_contract</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> true | false; the default where nothing declares it is true</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  e</span><span class="z-l-4 z-d-1">xempt</span><span class="z-l-6 z-d-9">:</span><span> [</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> subtrees this layer carries but does not author</span></span>
 <span class="giallo-l"><span>---</span></span></code></pre><div class="overflow-x-auto">
 <table><thead><tr><th>field</th><th>required</th><th>meaning</th></tr></thead><tbody>
 <tr><td><code>schema</code></td><td>yes</td><td><code>context/v1</code>; a newer value is refused, never guessed at</td></tr>
@@ -477,6 +478,7 @@ tree; today that is <code>README.md</code>. See <a href="https://korczis.github.
 <tr><td><code>supersedes</code></td><td>with <code>replace</code></td><td>ids in the ancestor chain this document stands in for; a <code>final</code> ancestor cannot be named</td></tr>
 <tr><td><code>tracks</code></td><td>no</td><td>pathspecs whose change names this document for review</td></tr>
 <tr><td><code>children.require_contract</code></td><td>no</td><td><code>subtree</code> only: whether every directory below this one owes a context document. Absent everywhere above a directory means <code>true</code>. A descendant may raise <code>false</code> to <code>true</code>; lowering an inherited <code>true</code> is <code>illegal-override</code></td></tr>
+<tr><td><code>children.exempt</code></td><td>no</td><td><code>subtree</code> only: repository-relative directories inside this document's own scope that owe no context document, and nor does anything below them — a subtree the layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Naming a directory outside the document's scope, or its own directory, is <code>illegal-override</code>; a directory that does not exist is <code>broken-reference</code></td></tr>
 </tbody></table>
 </div>
 <p>The allowed keys are <code>share/allow/context.txt</code>; any other key is an error. There are no
@@ -1207,7 +1209,7 @@ the note but does not validate that block. On success the note is copied to
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/abef20060380deecb9bf5fe94adeed8caead695c" class="font-mono hover:underline">abef200</a> · inputs <span class="font-mono">dd5ebfe44b8e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7a4bba74e6fb9eaf6286681ce5acbc299d4f6594" class="font-mono hover:underline">7a4bba7</a> · inputs <span class="font-mono">f2e70628659c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

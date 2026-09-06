@@ -178,7 +178,8 @@
       <li><a href="#errors" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Errors</a></li>
       <li><a href="#infrastructure" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Server routes</a></li><li><a href="#tag-capabilities" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">capabilities</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-capabilities-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capabilities</a></li><li><a href="#op-capabilities-describe" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capability</a></li></ul></li><li><a href="#tag-continuity" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">continuity</a>
-        <ul class="ml-3 hidden lg:block"><li><a href="#op-continuity-state" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/continuity</a></li></ul></li><li><a href="#tag-graph" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">graph</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-continuity-state" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/continuity</a></li></ul></li><li><a href="#tag-directories" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">directories</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-directories-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/directories</a></li></ul></li><li><a href="#tag-graph" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">graph</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-graph-get" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/graph</a></li><li><a href="#op-graph-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/graphs</a></li></ul></li><li><a href="#tag-health" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">health</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-health-report" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/health</a></li></ul></li><li><a href="#tag-objects" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">objects</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-objects-get" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/object</a></li><li><a href="#op-objects-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/objects</a></li><li><a href="#op-objects-search" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/search</a></li></ul></li><li><a href="#tag-peers" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">peers</a>
@@ -361,6 +362,76 @@
                 <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
                 <td class="px-3 py-2 font-mono"><a href="#schema-Continuity" class="text-fg-brand hover:underline">Continuity</a></td>
                 <td class="px-3 py-2 text-body">What the lifecycle is holding: the result.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+              </tr></tbody>
+          </table>
+        </div>
+      </article></section><section id="tag-directories" class="mt-12 scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">directories</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">The layer&#39;s directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.</p><article id="op-directories-list" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+          <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/directories</code>
+          <a href="#op-directories-list" class="font-mono text-xs text-body-subtle hover:underline">directories.list</a>
+        </div>
+        <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The layer&#39;s directory contracts</h3>
+        <p class="mt-1 text-sm text-body">Every directory of the layer the index knows, with the contract it declares, whether it owes one and which contract decided, and — for a named path, or when asked for everywhere — the effective chain composed from the root down, least specific first.</p>
+        <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+          <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=8, ttl_seconds=5)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_directories</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;directories&quot;, &quot;uri&quot;: &quot;majordomus://directories&quot;}</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[36rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">One directory, repository-relative and inside the layer. Its effective chain is
+always resolved. Absent means every directory of the layer.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"><span class="block"><span class="text-body-subtle">one-directory:</span> &quot;.ai/repo/rules&quot;</span></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">effective</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Resolve the effective chain for every directory, not only for a named one.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"><span class="block"><span class="text-body-subtle">effective-everywhere:</span> true</span></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+                <td class="px-3 py-2 font-mono text-body">DirectoryState | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Only directories in this state: `documented`, `exempt` or `owed`.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"><span class="block"><span class="text-body-subtle">owed:</span> &quot;owed&quot;</span></td>
+              </tr></tbody>
+          </table>
+        </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+        <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading">curl -s &quot;http://127.0.0.1:8741/api/v1/directories?path=.ai%2Frepo%2Frules&amp;effective=true&amp;state=owed&quot;</pre></div>
+
+        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[28rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-DirectoryReport" class="text-fg-brand hover:underline">DirectoryReport</a></td>
+                <td class="px-3 py-2 text-body">The layer's directory contracts: the result.</td>
               </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
                 <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
@@ -1577,7 +1648,81 @@ whichever task opened it.</td>
 foreign open session, a malformed file that was skipped. Empty is the good case.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a></p></article><article id="schema-CounterSnapshot" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a></p></article><article id="schema-ContractView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">ContractView</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">A directory contract as the document declares it, before anything is inherited.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The document's identity; it survives a move, the file name does not.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The document's path, repository-relative.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">One line naming the directory.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">description</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">One line saying what the directory is for.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body"><code>active</code> or <code>deprecated</code>; a deprecated document is listed and never applied.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">scope</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body"><code>directory</code>, <code>subtree</code> or <code>explicit</code>: how far the document reaches.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">composition</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body"><code>extend</code>, <code>replace</code> or <code>final</code>: how it composes with what is above it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">order</td>
+                <td class="px-3 py-2 font-mono text-body">integer (int64)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Ties within one depth are broken by this, then by path.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">providers</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body"><code>*</code>, or the providers the document is written for.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">audience</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Who it addresses; both when it says nothing.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">tracks</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Pathspecs whose change names this document for review.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">children_require_contract</td>
+                <td class="px-3 py-2 font-mono text-body">boolean | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Whether the directories below owe a contract, when this document says.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">children_exempt</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Subtrees below this one that owe nothing: carried, not authored here.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-DirectoryNode" class="font-mono text-fg-brand hover:underline">DirectoryNode</a></p></article><article id="schema-CounterSnapshot" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">CounterSnapshot</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -1711,7 +1856,129 @@ there is one, and carrying the command that reproduces it where there is one.</p
                 <td class="px-3 py-2 text-body">What is wrong, for a person; the code is for a program.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-RepositoryReport" class="font-mono text-fg-brand hover:underline">RepositoryReport</a></p></article><article id="schema-Divergence" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-RepositoryReport" class="font-mono text-fg-brand hover:underline">RepositoryReport</a></p></article><article id="schema-DirectoryNode" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">DirectoryNode</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">One directory of the layer, what it owes, and what applies to it.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Repository-relative, forward slashes.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">depth</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Segments below the layer root; the root itself is 0.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">parent</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The directory above, when it is inside the layer.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">children</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The directories immediately below, sorted.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+                <td class="px-3 py-2 font-mono text-body">DirectoryState <span class="text-body-subtle">→</span> <a href="#schema-DirectoryState" class="text-fg-brand hover:underline">DirectoryState</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Whether it carries the contract it owes.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">requires_contract</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Whether a contract is owed here at all.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">governed_by</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The contract that made the requirement explicit, when one did.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">exempted_by</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The contract that released this subtree, when one did.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">objects</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">How many objects of any kind the index holds directly in this directory.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">contract</td>
+                <td class="px-3 py-2 font-mono text-body">ContractView | null <span class="text-body-subtle">→</span> <a href="#schema-ContractView" class="text-fg-brand hover:underline">ContractView</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The contract this directory declares, before inheritance.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">effective</td>
+                <td class="px-3 py-2 font-mono text-body">array of EffectiveEntry <span class="text-body-subtle">→</span> <a href="#schema-EffectiveEntry" class="text-fg-brand hover:underline">EffectiveEntry</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The contracts that apply here once inheritance is resolved, least specific first.
+Present when the request asked for it, or when it asked about one path.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-DirectoryReport" class="font-mono text-fg-brand hover:underline">DirectoryReport</a></p></article><article id="schema-DirectoryReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">DirectoryReport</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">The layer's directories, what each owes, and the contracts that apply.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">root</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The layer root the tree is rooted at.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">tallies</td>
+                <td class="px-3 py-2 font-mono text-body">DirectoryTallies <span class="text-body-subtle">→</span> <a href="#schema-DirectoryTallies" class="text-fg-brand hover:underline">DirectoryTallies</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The directories in each state.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">directories</td>
+                <td class="px-3 py-2 font-mono text-body">array of DirectoryNode <span class="text-body-subtle">→</span> <a href="#schema-DirectoryNode" class="text-fg-brand hover:underline">DirectoryNode</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Every directory asked for, sorted by path.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a></p></article><article id="schema-DirectoryState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">DirectoryState</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;documented&quot; | &quot;exempt&quot; | &quot;owed&quot;</span>
+        </div><p class="mt-2 text-sm text-body">Whether a directory of the layer carries the contract it owes.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">documented</code><span class="min-w-0 text-body">It carries a context document of its own.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">exempt</code><span class="min-w-0 text-body">It owes none, because a contract above it says so.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">owed</code><span class="min-w-0 text-body">It owes one and has none.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#schema-DirectoryNode" class="font-mono text-fg-brand hover:underline">DirectoryNode</a></p></article><article id="schema-DirectoryTallies" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">DirectoryTallies</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">How many directories are in each state.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">directories</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Every directory of the layer the index knows.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">documented</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Carrying a contract of their own.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">exempt</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Released by a contract above them.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">owed</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Owing a contract and carrying none.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-DirectoryReport" class="font-mono text-fg-brand hover:underline">DirectoryReport</a></p></article><article id="schema-Divergence" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Divergence</h3>
           <span class="font-mono text-xs text-body-subtle">&quot;exact&quot; | &quot;advanced&quot; | &quot;diverged&quot; | &quot;different_context&quot; | &quot;unknown&quot;</span>
@@ -1742,7 +2009,51 @@ resolve an end adds an external node rather than a dangling edge.</p><div class=
                 <td class="px-3 py-2 text-body">One of the graph's declared edge kinds.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Graph" class="font-mono text-fg-brand hover:underline">Graph</a></p></article><article id="schema-ErrorBody" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Graph" class="font-mono text-fg-brand hover:underline">Graph</a></p></article><article id="schema-EffectiveEntry" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">EffectiveEntry</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">One contract in a directory's effective chain, in the order it is applied.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The document's identity.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The document's path.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">depth</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Depth below the layer root; less is less specific and applies first.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">order</td>
+                <td class="px-3 py-2 font-mono text-body">integer (int64)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The declared order, the second sort key.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">composition</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body"><code>extend</code>, <code>replace</code> or <code>final</code>.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">reason</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Why it applies to this directory, in words.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">local</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">True for the directory's own document, false for one it inherits.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-DirectoryNode" class="font-mono text-fg-brand hover:underline">DirectoryNode</a></p></article><article id="schema-ErrorBody" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">ErrorBody</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -1756,7 +2067,7 @@ resolve an end adds an external node rather than a dangling edge.</p><div class=
                 <td class="px-3 py-2 text-body">The one error.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">ErrorDetail</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -3028,7 +3339,7 @@ reason for resources and is never written by hand.</p><ul class="mt-3 space-y-1 
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/abef20060380deecb9bf5fe94adeed8caead695c" class="font-mono hover:underline">abef200</a> · inputs <span class="font-mono">dd5ebfe44b8e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7a4bba74e6fb9eaf6286681ce5acbc299d4f6594" class="font-mono hover:underline">7a4bba7</a> · inputs <span class="font-mono">f2e70628659c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
