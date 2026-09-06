@@ -49,6 +49,7 @@ then:
   - 'a directory of the layer with no context document is a named failure, not a silence'
   - 'the finding names the directory, so the fix is one file in one place'
   - 'the tree refuses to resolve until it is fixed, so nobody reads a half-documented layer'
+  - 'the same tree, and what each directory owes, is readable through majordomus_directories and GET /api/v1/directories without running the gate'
 ```
 
 ## Outcome
