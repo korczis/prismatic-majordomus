@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.1.0
 coverage:
   - scope: direct
-    required: 15
-    covered: 15
+    required: 17
+    covered: 17
     missing: 0
     waived: 0
   - scope: http
-    required: 15
-    covered: 15
+    required: 17
+    covered: 17
     missing: 0
     waived: 0
   - scope: mcp
-    required: 15
-    covered: 15
+    required: 17
+    covered: 17
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 57
-    covered: 57
+    required: 63
+    covered: 63
     missing: 0
     waived: 0
 capabilities:
@@ -60,6 +60,27 @@ capabilities:
     cases:
       - all
       - queries
+  - id: continuity.state
+    module: continuity
+    kind: query
+    cache: "process, 2 entries, 2s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: directories.list
+    module: directories
+    kind: query
+    cache: "process, 8 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - whole-tree
+      - one-directory
+      - effective-everywhere
+      - owed
   - id: graph.get
     module: graph
     kind: query
