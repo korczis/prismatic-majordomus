@@ -1095,6 +1095,15 @@
       "note": "The record lives under the manifest's sessions section. Every field is derived - times from the clock, heads and commits from git, the reference lists from the ledger's events for the episode - and the body is the only authored part. The repository is named by its remote and the working copy by a hash, so the resolver can tell one checkout's records from another's without disclosing a path. One source class discovers them; the index, MCP, the object routes, the graph and the site follow."
     },
     {
+      "id": "claim:session-lifecycle",
+      "kind": "claim",
+      "label": "A provider hook opens and closes the execution episode below the model, and the context resolved at the open is frozen beside it",
+      "status": "guaranteed",
+      "route": "/guarantees/session-lifecycle/",
+      "external": false,
+      "note": "The provider's own SessionStart and SessionEnd events draw the boundary; both are idempotent because the events are, neither writes to stdout because a start hook's output reaches the model's context, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation."
+    },
+    {
       "id": "claim:adr-catalogue",
       "kind": "claim",
       "label": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
@@ -1426,6 +1435,13 @@
       "id": "impl:lib/session.sh",
       "kind": "implementation",
       "label": "lib/session.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/session_context.sh",
+      "kind": "implementation",
+      "label": "lib/session_context.sh",
       "route": null,
       "external": false
     },
@@ -1946,6 +1962,13 @@
       "label": "test/cases/51_derived_artifacts_committed.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/51_derived_artifacts_committed.sh"
+    },
+    {
+      "id": "test:test/cases/54_session_lifecycle_hooks.sh",
+      "kind": "test",
+      "label": "test/cases/54_session_lifecycle_hooks.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/54_session_lifecycle_hooks.sh"
     },
     {
       "id": "test:test/cases/63_session_records.sh",
@@ -2697,6 +2720,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:session-lifecycle",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -3272,6 +3300,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:session-lifecycle",
+      "target": "impl:lib/session_context.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
@@ -3844,6 +3877,11 @@
     {
       "source": "claim:session-records",
       "target": "test:test/cases/63_session_records.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:session-lifecycle",
+      "target": "test:test/cases/54_session_lifecycle_hooks.sh",
       "kind": "proved_by"
     },
     {

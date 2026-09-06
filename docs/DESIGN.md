@@ -368,6 +368,12 @@ Rules:
 - **Append-only stores have a retention cap.** One repository accumulated 10 GB of
   metrics snapshots that nothing ever read. `ledger.jsonl` and `handovers/` declare a
   cap and `doctor` reports when it is exceeded.
+- **Every directory of the layer has a producer.** `local/session-contexts/` was created
+  by `init` and filled by nothing for as long as the layout existed, which reads as a
+  feature that does not work. It now holds one document per episode, written when
+  `session start` freezes the context the builder resolved and appended to when the episode
+  closes. A directory the skeleton creates and no command writes into is a defect of the
+  same kind as a claim with no test.
 - **Records are never staged or committed by Majordomus.** The writer creates one new
   file atomically under `local/` and prints its path. A record reaches another checkout
   only by being carried there — a handover names it, git does not move it.

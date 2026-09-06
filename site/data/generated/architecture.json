@@ -100,6 +100,16 @@
       "external": false
     },
     {
+      "id": "lib/session.sh",
+      "kind": "module",
+      "label": "session",
+      "command": "session",
+      "summary": "open, inspect and close one execution episode",
+      "read_only": null,
+      "route": "/commands/session/",
+      "external": false
+    },
+    {
       "id": "lib/check.sh",
       "kind": "module",
       "label": "check",
@@ -330,16 +340,6 @@
       "external": false
     },
     {
-      "id": "lib/session.sh",
-      "kind": "module",
-      "label": "session",
-      "command": "session",
-      "summary": "open, inspect and close one execution episode",
-      "read_only": null,
-      "route": "/commands/session/",
-      "external": false
-    },
-    {
       "id": "lib/project.sh",
       "kind": "module",
       "label": "project",
@@ -510,9 +510,9 @@
       "external": false
     },
     {
-      "id": ".ai/repo/sessions/README.md",
+      "id": ".ai/repo/sessions}",
       "kind": "artifact",
-      "label": "repo/sessions/README.md",
+      "label": "repo/sessions}",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -580,6 +580,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/sessions/README.md",
+      "kind": "artifact",
+      "label": "repo/sessions/README.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/templates/README.md",
       "kind": "artifact",
       "label": "repo/templates/README.md",
@@ -637,6 +647,16 @@
       "summary": "find durable records without reading all of them",
       "read_only": true,
       "route": "/commands/search/",
+      "external": false
+    },
+    {
+      "id": "lib/session_context.sh",
+      "kind": "module",
+      "label": "session_context",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
       "external": false
     },
     {
@@ -972,6 +992,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/capture.sh",
+      "target": "lib/session.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/check.sh",
       "target": "lib/commands.sh",
       "kind": "sources"
@@ -1144,6 +1169,16 @@
     {
       "source": "lib/session.sh",
       "target": "lib/project.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": "lib/session_context.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session_context.sh",
+      "target": "lib/context.sh",
       "kind": "sources"
     },
     {
@@ -1363,7 +1398,7 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/repo/sessions/README.md",
+      "target": ".ai/repo/sessions}",
       "kind": "uses"
     },
     {

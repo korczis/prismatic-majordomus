@@ -319,7 +319,7 @@ commands:
 
   - id: capture
     title: capture
-    summary: Record the person's raw prompts from a provider hook as a JSON record and a Markdown rendering, install that hook, and report what each provider actually does here.
+    summary: Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.
     category: memory
     stage: work
     visibility: public
@@ -330,10 +330,10 @@ commands:
     json: true
     syntax: majordomus capture status [--json]
     reads: [.claude/settings.json, .ai/repo/policy.yaml]
-    writes: [.ai/local/prompts/, .claude/hooks/majordomus-capture, .claude/settings.json]
+    writes: [.ai/local/prompts/, .ai/local/session-contexts/, .claude/hooks/majordomus-capture, .claude/settings.json]
     exit_codes: [0, 2, 12, 13, 15]
     demo: capture-status
-    note: "Every prompt is kept twice under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<namespace>/<version>, as .schema.json for the record and .proto for the document. 'capture prompt' never exits 2: it runs inside a provider hook, where that exit code can reject the person's prompt. install refuses to rewrite a configuration it did not write, and prints the entry to add."
+    note: "Every prompt is kept three times under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person and the .yaml the same for a machine. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<vendor>/<name>/<name>.v<n>, as .schema.json for the record and .proto for the document. 'capture prompt' and 'capture session' never exit 2: they run inside a provider hook, where that exit code can reject the person's prompt. Neither writes to stdout on a start event, because the provider adds it to the model's context. install refuses to rewrite a configuration it did not write, and prints the entries to add."
 
   - id: search
     title: search
@@ -418,12 +418,12 @@ commands:
     requires_installed: true
     requires_task: none
     json: true
-    syntax: majordomus session <start|status|close|list|show|latest> [options]
-    reads: [.ai/local/state/session-current.yaml, .ai/local/state/sessions/, .ai/local/state/ledger.jsonl]
-    writes: [.ai/local/state/session-current.yaml, .ai/local/state/sessions/, .ai/local/state/ledger.jsonl]
+    syntax: majordomus session <start|status|close|list|show|latest|context> [options]
+    reads: [.ai/local/state/session-current.yaml, .ai/repo/sessions/, .ai/local/state/ledger.jsonl]
+    writes: [.ai/local/state/session-current.yaml, .ai/repo/sessions/, .ai/local/session-contexts/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: session-episode
-    note: One open session per worktree; the open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range.
+    note: One open session per worktree; the open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store and close appends the outcome to it; --if-open and --if-none are what let a provider hook run both on every event.
 
   - id: knowledge
     title: knowledge

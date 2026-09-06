@@ -359,6 +359,19 @@ mj_uc_cmd_validate() {
 # Normalise what the tool printed so that two runs of one scenario are byte-identical
 # wherever the behaviour is: the scenario repository's path, the tool's own path, the
 # home directory, timestamps, task and session ids, record hashes, durations.
+# The owner is the operating system's user name: `start` records ${USER} when nobody names
+# one, so the evidence would read `korczis` on one machine and `runner` on another, and the
+# committed artifact generated from it differs by who generated it. That is the same defect
+# the branch name had, with the same consequence — generate-site-data --check fails on the
+# next machine — so it is normalised here rather than fixed in every scenario. All three
+# renderings of the same field are covered: the aligned column a command prints, the
+# flattened `owner=` a record dump shows, and the JSON member.
+#
+# The EPIPE diagnostic goes for the same reason. A reader that stops early closes the pipe
+# under the writer, and bash reports the failed write on stderr, which the recorder captures
+# along with everything else. Whether the race fires depends on the machine, so recording it
+# makes the artifact differ by where it was generated. It is a fact about the recording, not
+# about the command, and the pipes that produce it are removed where they are ours.
 mj_uc_normalise() { # repo-path
   local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
@@ -385,7 +398,11 @@ mj_uc_normalise() { # repo-path
     -e 's/[0-9]+ ms of/<n> ms of/g' \
     -e 's/\([0-9]+m ago/(<n>m ago/g' \
     -e 's/ [0-9]+m ago/ <n>m ago/g' \
-    -e 's/(bash|git|jq|shellcheck) [0-9][0-9.]*/\1 <version>/g'
+    -e 's/(bash|git|jq|shellcheck) [0-9][0-9.]*/\1 <version>/g' \
+    -e 's/^(owner +).*$/\1<owner>/' \
+    -e 's/^( *owner=).*$/\1<owner>/' \
+    -e 's/"owner":"[^"]*"/"owner":"<owner>"/g' \
+    -e '/: printf: write error: Broken pipe$/d'
 }
 # a JSON string body: backslash and quote escaped, newlines and tabs as escapes, every
 # other control byte dropped; the newlines of a command's output are its structure
@@ -507,11 +524,22 @@ mj_uc_cmd_run() {
     fi
     ev="$MJ_UC_EVIDENCE/$id.json"; rc="$(cat "$tmp/$id" 2>/dev/null || echo 13)"
     ran=$((ran+1))
+    # A scenario's verdict is a fact about the run, not about how it is being printed.
+    # Counting failures inside the text branch left `--json` reporting "failed":0 and
+    # exiting 0 however the scenarios went, which made the exit code generate-site-data
+    # relies on to refuse a broken demonstration permanently green.
+    [ "$rc" = 0 ] || fails=$((fails+1))
     [ -z "$outdir" ] || cp "$ev" "$outdir/$id.json"
-    if [ "$json" = 1 ]; then [ "$first" = 1 ] || printf ','; first=0; tr -d '\n' < "$ev"
+    if [ "$json" = 1 ]; then
+      [ "$first" = 1 ] || printf ','; first=0
+      # A scenario killed before it wrote evidence must not vanish from the document: an
+      # absent result reads downstream as "not demonstrated" and silently lowers a
+      # maturity, which is the difference between not knowing and knowing it is bad.
+      if [ -s "$ev" ]; then tr -d '\n' < "$ev"
+      else printf '{"use_case":"%s","result":"fail","reason":"the scenario wrote no evidence (exit %s)"}' "$id" "$rc"; fi
     else
       if [ "$rc" = 0 ]; then printf '%-38s pass  %s step(s)\n' "$id" "$(grep -o '"id":"' "$ev" | wc -l | tr -d ' ')"
-      else fails=$((fails+1)); printf '%-38s FAIL  %s\n' "$id" "$(grep -o '"reason":"[^"]*"' "$ev" | grep -v 'null' | head -1 | cut -d'"' -f4)"
+      else printf '%-38s FAIL  %s\n' "$id" "$(grep -o '"reason":"[^"]*"' "$ev" | grep -v 'null' | head -1 | cut -d'"' -f4)"
         grep -o '"output":"[^"]*"' "$ev" | tail -1 | cut -d'"' -f4 | sed 's/\\n/\n/g' | sed 's/^/      | /' | head -20; fi
     fi
   done
