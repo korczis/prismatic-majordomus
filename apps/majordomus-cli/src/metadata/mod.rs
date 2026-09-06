@@ -135,9 +135,7 @@ fn derived_schemas(dir: &std::path::Path, source: &str) -> Result<Vec<(String, V
 }
 
 fn rel_or_abs(path: &std::path::Path, root: &std::path::Path) -> String {
-    path.strip_prefix(root)
-        .map(|p| p.display().to_string())
-        .unwrap_or_else(|_| path.display().to_string())
+    crate::generate::relative_to(path, root)
 }
 
 /// One JSON Schema, compiled, with where it came from.

@@ -28,10 +28,10 @@ out:
     - .ai/local/
     - '**/target/'
   binary: true
-  # Comfortably above every file the fixture's own layer carries, so that the one file
-  # this case puts over the limit is the only one over it. The limit was 2048 and
-  # `sources.yaml` grew past it as kinds were added, which made the tally count a file
-  # the case had not put there.
+  # Above the fixture's own sources.yaml, which grows with every source class the
+  # distribution adds, and below docs/big.md, which is what this limit is here to catch.
+  # At 2048 the layer's own declaration crossed the limit and was dropped as out of scope,
+  # which is a fixture that quietly stops describing itself rather than a size rule working.
   max_bytes: 4096
   image:
     names: ['*.png']

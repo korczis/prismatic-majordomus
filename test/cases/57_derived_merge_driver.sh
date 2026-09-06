@@ -22,13 +22,24 @@ expect_file "$ROOT/scripts/merge-derived"
 # of the file, because what matters is the attribute that applies to the path, however the
 # pattern that grants it is written. A derived file nobody marked conflicts exactly as before,
 # which is the failure this loop exists to notice.
-for p in docs/PLAN_STATUS.md docs/PAGES_STATUS.md docs/SITE_CLAIMS.md \
-         site/data/generated/source.json site/data/registry/registry.json \
-         docs/generated/registry.json site/content/docs/pages-status.md; do
-  attr="$(git -C "$ROOT" check-attr merge -- "$p" | sed 's/.*: //')"
-  [ "$attr" = derived ] || {
-    echo "    $p carries merge=$attr, not merge=derived"; exit 1; }
-done
+# Every path the generator writes, out of the generator's own inventory rather than a list
+# kept by hand here. A driver that covers some of the derived files is this mechanism failing
+# in the costume of a success: the merge runs, a few paths resolve, and everything nobody
+# thought of still conflicts. A list written into this case would fall behind the generator
+# the first time a target is added; asking `git check-attr` about the inventory cannot.
+python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+sys.stdout.write("\n".join(a["path"] for a in d["artifacts"]))
+' "$ROOT/docs/generated/artifacts.json" > "$T/artifacts.txt" \
+  || { echo "    docs/generated/artifacts.json does not list artifacts"; exit 1; }
+[ -s "$T/artifacts.txt" ] || { echo "    the artifacts inventory is empty; this would pass vacuously"; exit 1; }
+uncovered="$(xargs git -C "$ROOT" check-attr merge -- < "$T/artifacts.txt" | grep -v 'merge: derived' | sed 's/: merge:.*//')"
+[ -z "$uncovered" ] || {
+  echo "    $(printf '%s\n' "$uncovered" | wc -l | tr -d ' ') generated artifact(s) carry no merge=derived rule, so they conflict on every merge:"
+  printf '%s\n' "$uncovered" | head -10 | sed 's/^/    | /'
+  echo "    add a pattern to .gitattributes that covers them"
+  exit 1; }
 
 # and a file that is not derived is left alone: marking the whole tree would be worse than
 # marking none of it
@@ -84,3 +95,10 @@ if git -C "$R" merge theirs >/dev/null 2>&1; then
   echo "    an unwired clone merged the marked file anyway; the resolution must not be silent"; exit 1
 fi
 git -C "$R" merge --abort 2>/dev/null || true
+
+# ---------------------------------------------------------------- and something requires it
+# The declaration is per clone and git falls back to the default text merge in silence when
+# it is missing, so a clone looks configured, every file is committed, and the driver never
+# runs. The policy entry is what lets doctor — and therefore the pre-commit hook — refuse it.
+grep -q 'wired_by: git-config:merge.derived.driver' "$ROOT/.ai/repo/policy.yaml" || {
+  echo "    the driver is not an enforcement entry, so doctor cannot require it of a clone"; exit 1; }
