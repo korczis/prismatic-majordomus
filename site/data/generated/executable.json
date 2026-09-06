@@ -303,7 +303,15 @@
         "test": "test/cases/91_canonical_architecture.sh"
       }
     ],
-    "cli": [],
+    "cli": [
+      {
+        "id": "cli-documentation-executable",
+        "implementation": "apps/majordomus-cli/src/cli.rs",
+        "route": "/guarantees/cli-documentation-executable/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/cli_docs.rs"
+      }
+    ],
     "executable": [
       {
         "id": "mcp-data-driven",
@@ -439,7 +447,7 @@
   },
   "counts": {
     "capabilities": 15,
-    "claims": 21,
+    "claims": 22,
     "modules": 8
   },
   "generator": "majordomus-cli 0.1.0",

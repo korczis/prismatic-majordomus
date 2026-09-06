@@ -1,7 +1,7 @@
 +++
 title = "A provider hook opens and closes the execution episode below the model, and the context resolved at the open is frozen beside it"
 description = "Where a provider fires session events, the episode boundary is drawn by that provider's own hook rather than by the model working inside it. SessionStart opens the episode, SessionEnd closes it into the shared record under .ai/repo/sessions/, and neither depends on a worker remembering to run a command. At the open, the context the builder resolved is written to .ai/local/session-contexts/ and kept for the episode, so what the worker was told is evidence rather than recollection."
-weight = 136
+weight = 137
 [extra]
 claim_id = "session-lifecycle"
 status = "guaranteed"

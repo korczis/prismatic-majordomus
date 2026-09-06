@@ -269,6 +269,43 @@ impl Artifact {
         }
     }
 
+    /// A JSON artifact whose own specification fixes its member names — a JSON Schema,
+    /// the OpenAPI document — so its provenance goes in `x-majordomus-` extensions rather
+    /// than in members the specification does not define. Both forms are read back by
+    /// [`violations`]; neither is more generated than the other.
+    pub fn json_extension(
+        path: impl Into<String>,
+        document: impl Into<String>,
+        source: impl Into<String>,
+        version: &str,
+        value: Value,
+    ) -> Artifact {
+        let source = source.into();
+        let stamped = match value {
+            Value::Object(members) => {
+                let mut out = members;
+                out.insert(
+                    "x-majordomus-generated".into(),
+                    Value::String(json_banner(&source)),
+                );
+                out.insert(
+                    "x-majordomus-generator".into(),
+                    Value::String(format!("majordomus-cli {version}")),
+                );
+                Value::Object(out)
+            }
+            other => other,
+        };
+        Artifact {
+            path: path.into(),
+            document: document.into(),
+            format: ArtifactFormat::Json,
+            schema: None,
+            source,
+            content: openapi::render(&stamped),
+        }
+    }
+
     /// An artifact whose content is taken as it stands: a projection another module
     /// renders whole and stamps itself (the provider bootstraps, the site dataset).
     pub fn verbatim(
@@ -742,15 +779,14 @@ pub fn document_artifacts(
             "{schemas}/{}",
             crate::proto::project::schema_path(&file.schema_id)?
         );
-        out.push(Artifact::verbatim(
+        out.push(Artifact::json_extension(
             path.clone(),
             format!("schemas/{}", file.schema_id),
-            ArtifactFormat::Json,
-            None,
             source.clone(),
-            serde_json::to_string_pretty(&schema).map_err(|e| Error::KindSchema {
+            version,
+            serde_json::to_value(&schema).map_err(|e| Error::KindSchema {
                 reason: format!("{}: cannot render the projected schema: {e}", file.source),
-            })? + "\n",
+            })?,
         ));
         if let Some(name) = &file.allow_list {
             let lines = crate::proto::project::section_lines(file);
